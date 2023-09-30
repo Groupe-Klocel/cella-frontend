@@ -1,0 +1,211 @@
+/**
+CELLA Frontend
+Website and Mobile templates that can be used to communicate
+with CELLA WMS APIs.
+Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+**/
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import { AppHead, LinkButton } from '@components';
+import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import { Button, Modal, Space } from 'antd';
+import MainLayout from 'components/layouts/MainLayout';
+import { useAppState } from 'context/AppContext';
+import { ModeEnum } from 'generated/graphql';
+import { DeliveryModelV2 as model } from 'models/DeliveryModelV2';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import useTranslation from 'next-translate/useTranslation';
+import { BulkEditDeliveriesRenderModal } from 'modules/Deliveries/Forms/BulkEditDeliveriesModal';
+import { FC, useState } from 'react';
+import configs from '../../../common/configs.json';
+import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
+type PageComponent = FC & { layout: typeof MainLayout };
+
+const DeliveryPages: PageComponent = () => {
+    const { permissions } = useAppState();
+    const { t } = useTranslation();
+    const modes = getModesFromPermissions(permissions, model.tableName);
+    const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [loading, setLoading] = useState(false);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [showModal, setShowModal] = useState(false);
+    const headerData: HeaderData = {
+        title: t('common:deliveries'),
+        routes: itemRoutes,
+        actionsComponent:
+            modes.length > 0 && modes.includes(ModeEnum.Create) ? (
+                <LinkButton
+                    title={t('actions:add2', { name: t('common:delivery') })}
+                    path={`${rootPath}/add`}
+                    type="primary"
+                />
+            ) : null
+    };
+
+    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:delete-confirm'),
+                onOk: () => {
+                    setId(id);
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
+            });
+        };
+    };
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+    // Checkbox
+    const bulkCubingAction = () => {
+        setLoading(true);
+
+        //TODO: Call mutation for different action (cubing/round association)
+
+        setTimeout(() => {
+            setSelectedRowKeys([]);
+            setLoading(false);
+        }, 1000);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange
+    };
+    const hasSelected = selectedRowKeys.length > 0;
+    const actionButtons: ActionButtons = {
+        actionsComponent:
+            modes.length > 0 && modes.includes(ModeEnum.Update) ? (
+                <>
+                    <>
+                        <span style={{ marginLeft: 16 }}>
+                            {hasSelected
+                                ? `${t('messages:selected-items-number', {
+                                      number: selectedRowKeys.length
+                                  })}`
+                                : ''}
+                        </span>
+                        <span style={{ marginLeft: 16 }}>
+                            <Button
+                                type="primary"
+                                onClick={bulkCubingAction}
+                                disabled={!hasSelected}
+                                loading={loading}
+                            >
+                                {t('actions:cubing')}
+                            </Button>
+                        </span>
+                        <span style={{ marginLeft: 16 }}>
+                            <Button
+                                type="primary"
+                                onClick={() => {
+                                    setShowModal(true);
+                                }}
+                                disabled={!hasSelected}
+                                loading={loading}
+                            >
+                                {t('actions:edit')}
+                            </Button>
+                        </span>
+                        <BulkEditDeliveriesRenderModal
+                            visible={showModal}
+                            rows={rowSelection}
+                            showhideModal={() => {
+                                setShowModal(!showModal);
+                            }}
+                        />
+                    </>
+                </>
+            ) : null
+    };
+
+    return (
+        <>
+            <AppHead title={META_DEFAULTS.title} />
+            <ListComponent
+                headerData={headerData}
+                dataModel={model}
+                triggerDelete={{ idToDelete, setIdToDelete }}
+                triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                actionColumns={[
+                    {
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: { id: string; status: number }) => (
+                            <Space>
+                                {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams(`${rootPath}/[id]`, record.id)}
+                                    />
+                                ) : (
+                                    <></>
+                                )}
+                                {modes.length > 0 &&
+                                modes.includes(ModeEnum.Update) &&
+                                model.isEditable &&
+                                record.status < configs.DELIVERY_STATUS_CANCELED ? (
+                                    <LinkButton
+                                        icon={<EditTwoTone />}
+                                        path={pathParams(`${rootPath}/edit/[id]`, record.id)}
+                                    />
+                                ) : (
+                                    <></>
+                                )}
+                                {modes.length > 0 &&
+                                modes.includes(ModeEnum.Delete) &&
+                                model.isSoftDeletable &&
+                                record?.status < configs.DELIVERY_STATUS_PREPARED ? (
+                                    <Button
+                                        icon={<StopOutlined />}
+                                        onClick={() =>
+                                            confirmAction(record.id, setIdToDisable, 'disable')()
+                                        }
+                                    ></Button>
+                                ) : (
+                                    <></>
+                                )}
+                                {modes.length > 0 &&
+                                modes.includes(ModeEnum.Delete) &&
+                                model.isDeletable ? (
+                                    <Button
+                                        icon={<DeleteOutlined />}
+                                        danger
+                                        onClick={() =>
+                                            confirmAction(record.id, setIdToDelete, 'delete')()
+                                        }
+                                    ></Button>
+                                ) : (
+                                    <></>
+                                )}
+                            </Space>
+                        )
+                    }
+                ]}
+                routeDetailPage={`${rootPath}/:id`}
+                checkbox={true}
+                actionButtons={actionButtons}
+                rowSelection={rowSelection}
+            />
+        </>
+    );
+};
+
+DeliveryPages.layout = MainLayout;
+
+export default DeliveryPages;

@@ -1,0 +1,101 @@
+html,
+body {
+    padding: 0;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell,
+        Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    overflow: hidden;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.row-dragging {
+    background: #fafafa;
+    border: 1px solid #ccc;
+}
+.login > h2,
+.ant-input-prefix,
+.ant-input-affix-wrapper > input.ant-input,
+input::-webkit-input-placeholder {
+    color: rgba(0, 0, 0, 0.65) !important;
+}
+
+.ant-layout-sider-children > ul {
+    border: 1px;
+}
+.sortableHelper {
+    z-index: 2000;
+}
+
+.row-dragging td {
+    padding: 16px;
+}
+
+.row-dragging .drag-visible {
+    visibility: visible;
+}
+
+.column {
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    padding: 10px;
+}
+.scrollbar {
+    overflow: auto;
+    scrollbar-width: auto;
+    scrollbar-color: #8f54a0 #ffffff;
+}
+
+::-webkit-scrollbar {
+    width: 14px;
+}
+
+::-webkit-scrollbar-track {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #262630;
+    border-radius: 10px;
+    border: 3px solid #ffffff;
+}
+
+/* Responsive layout - makes the columns stack on top of each other instead of next to each other */
+@media (max-width: 600px) {
+    .row {
+        -webkit-flex-direction: column;
+        flex-direction: column;
+    }
+}
+
+.edit-article-modal {
+    width: 50%;
+    margin: 0 auto;
+    top: 0;
+}
+
+.edit-article-modal .ant-modal {
+    width: 100% !important;
+}
+
+.edit-article-modal .ant-modal-body {
+    display: inline-block;
+    width: 100%;
+}
+.edit-article-modal .ant-modal-footer {
+    margin-top: 50px;
+}
+/* .ant-modal-body {
+height: calc(100vh - 110px);
+} */
+.ant-menu > .ant-menu-submenu-selected {
+    background-color: #093452;
+}

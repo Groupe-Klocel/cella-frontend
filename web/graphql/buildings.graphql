@@ -1,0 +1,121 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query getStatusConfigs {
+    listConfigsForAScope(scope: "building_status") {
+        id
+        scope
+        code
+        text
+    }
+}
+
+query GetAllBuildings(
+    $filters: BuildingSearchFilters
+    $orderBy: [BuildingOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    buildings(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            entityAddress1
+            entityAddress2
+            entityAddress3
+            entityPostCode
+            entityCity
+            entityCountry
+            contactName
+            contactPhone
+            contactMobile
+            contactEmail
+            status
+            statusText
+            created
+            createdBy
+            modified
+            modifiedBy
+        }
+    }
+}
+
+query GetBuildingById($id: String!) {
+    building(id: $id) {
+        id
+        name
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityPostCode
+        entityCity
+        entityCountry
+        contactName
+        contactPhone
+        contactMobile
+        contactEmail
+        status
+        statusText
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation CreateBuilding($input: CreateBuildingInput!) {
+    createBuilding(input: $input) {
+        id
+        name
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityPostCode
+        entityCity
+        entityCountry
+        contactName
+        contactPhone
+        contactMobile
+        contactEmail
+        status
+    }
+}
+
+mutation DeleteBuilding($id: String!) {
+    deleteBuilding(id: $id)
+}
+
+mutation UpdateBuilding($id: String!, $input: UpdateBuildingInput!) {
+    updateBuilding(id: $id, input: $input) {
+        id
+        name
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityPostCode
+        entityCity
+        entityCountry
+        contactName
+        contactPhone
+        contactMobile
+        contactEmail
+        status
+    }
+}

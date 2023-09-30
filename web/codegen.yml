@@ -1,0 +1,11 @@
+overwrite: true
+schema: 'https://api.staging.cella.cloud/graphql'
+documents: '**/**/*.graphql'
+generates:
+    generated/graphql.ts:
+        plugins:
+            - 'typescript'
+            - 'typescript-operations'
+            - 'typescript-react-query'
+        config:
+            fetcher: graphql-request

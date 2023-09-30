@@ -1,0 +1,19 @@
+name: Github tag branch
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Bump version and push Tag
+        uses: anothrNick/github-tag-action@1.66.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GPAT_PACKAGE_TOKEN }}
+          WITH_V: true

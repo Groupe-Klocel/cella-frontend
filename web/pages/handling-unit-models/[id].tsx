@@ -1,0 +1,128 @@
+/**
+CELLA Frontend
+Website and Mobile templates that can be used to communicate
+with CELLA WMS APIs.
+Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+**/
+import { AppHead, LinkButton } from '@components';
+import { HandlingUnitModelDetailsExtra } from 'modules/HandlingUnitModels/Elements/HandlingUnitModelDetailsExtra';
+import { HandlingUnitModelModelV2 as model } from 'models/HandlingUnitModelModelV2';
+import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
+import { useRouter } from 'next/router';
+import { Button, Modal, Space } from 'antd';
+import { ModeEnum } from 'generated/graphql';
+import { FC, useState } from 'react';
+import { useAppState } from 'context/AppContext';
+import { handlingUnitModelsRoutes as itemRoutes } from 'modules/HandlingUnitModels/Static/handlingUnitModelsRoutes';
+import useTranslation from 'next-translate/useTranslation';
+import MainLayout from '../../components/layouts/MainLayout';
+import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import configs from '../../../common/configs.json';
+
+type PageComponent = FC & { layout: typeof MainLayout };
+
+const HandlingUnitModelPage: PageComponent = () => {
+    const router = useRouter();
+    const [data, setData] = useState<any>();
+    const { id } = router.query;
+    const { permissions } = useAppState();
+    const { t } = useTranslation();
+    const modes = getModesFromPermissions(permissions, model.tableName);
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+
+    // #region to customize information
+    const breadCrumb = [
+        ...itemRoutes,
+        {
+            breadcrumbName: `${data?.name}`
+        }
+    ];
+
+    const pageTitle = `${t('common:handling-unit-model')} ${data?.name}`;
+    // #endregions
+
+    // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
+    const rootPath = itemRoutes[itemRoutes.length - 1].path;
+
+    const confirmAction = (id: string | undefined, setId: any) => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:delete-confirm'),
+                onOk: () => {
+                    setId(id);
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
+            });
+        };
+    };
+
+    const headerData: HeaderData = {
+        title: pageTitle,
+        routes: breadCrumb,
+        onBackRoute: '/handling-unit-models',
+        actionsComponent: (
+            <Space>
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                model.isEditable &&
+                data?.status !== configs.HANDLING_UNIT_MODEL_STATUS_CLOSED ? (
+                    <LinkButton
+                        title={t('actions:edit')}
+                        path={`${rootPath}/edit/${id}`}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isSoftDeletable &&
+                data?.status !== configs.HANDLING_UNIT_MODEL_STATUS_CLOSED ? (
+                    <Button
+                        onClick={() => confirmAction(id as string, setIdToDisable)()}
+                        type="primary"
+                    >
+                        {t('actions:disable')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+            </Space>
+        )
+    };
+    // #endregion
+
+    return (
+        <>
+            <AppHead title={META_DEFAULTS.title} />
+            <ItemDetailComponent
+                extraDataComponent={<HandlingUnitModelDetailsExtra handlingUnitModelId={id!} />}
+                id={id!}
+                headerData={headerData}
+                dataModel={model}
+                setData={setData}
+                triggerDelete={{ idToDelete, setIdToDelete }}
+                triggerSoftDelete={{ idToDisable, setIdToDisable }}
+            />
+        </>
+    );
+};
+
+HandlingUnitModelPage.layout = MainLayout;
+
+export default HandlingUnitModelPage;

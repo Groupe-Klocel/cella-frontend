@@ -1,0 +1,166 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query handlingUnitContentFeaturesByHandlingUnitContentId($handlingUnitContentId: String!) {
+    handlingUnitContentFeaturesByHandlingUnitContentId(
+        handlingUnitContentId: $handlingUnitContentId
+    ) {
+        id
+        featureCode {
+            id
+            name
+        }
+        value
+    }
+}
+
+query GetAllHandlingUnitContents(
+    $filters: HandlingUnitContentSearchFilters
+    $orderBy: [HandlingUnitContentOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+    $language: String
+) {
+    handlingUnitContents(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+        language: $language
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            handlingUnitId
+            handlingUnit {
+                name
+                locationId
+                location {
+                    name
+                }
+                stockOwnerId
+                stockOwner {
+                    name
+                }
+            }
+            articleId
+            article {
+                name
+                description
+            }
+            quantity
+            stockStatus
+            reservation
+            created
+            createdBy
+            modified
+            modifiedBy
+        }
+    }
+}
+
+query GetHandlingUnitContentById($id: String!) {
+    handlingUnitContent(id: $id) {
+        id
+        handlingUnitId
+        handlingUnit {
+            name
+            locationId
+            location {
+                name
+            }
+            stockOwnerId
+            stockOwner {
+                name
+            }
+        }
+        articleId
+        article {
+            name
+            description
+        }
+        quantity
+        stockStatus
+        reservation
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation CreateHandlingUnitWithContent($input: CreateHandlingUnitWithContentInput!) {
+    createHandlingUnitWithContent(input: $input) {
+        id
+        handlingUnitId
+        handlingUnit {
+            name
+            locationId
+            location {
+                name
+            }
+            stockOwnerId
+            stockOwner {
+                name
+            }
+        }
+        articleId
+        article {
+            name
+            description
+        }
+        quantity
+        stockStatus
+        reservation
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation UpdateHandlingUnitContent($id: String!, $input: UpdateHandlingUnitContentInput!) {
+    updateHandlingUnitContent(id: $id, input: $input) {
+        id
+        handlingUnitId
+        handlingUnit {
+            name
+            locationId
+            location {
+                name
+            }
+            stockOwnerId
+            stockOwner {
+                name
+            }
+        }
+        articleId
+        article {
+            name
+            description
+        }
+        quantity
+        stockStatus
+        reservation
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}

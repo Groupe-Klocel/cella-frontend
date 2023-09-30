@@ -1,0 +1,468 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query GetAllArticles(
+    $filters: ArticleSearchFilters
+    $orderBy: [ArticleOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    articles(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            extras
+            created
+            createdBy
+            modified
+            modifiedBy
+            status
+            description
+            name
+            additionalDescription
+            supplierName
+            translation
+            length
+            width
+            height
+            baseUnitPrice
+            baseUnitWeight
+            baseUnitPicking
+            baseUnitRotation
+            cubingType
+            featureType
+            permanentProduct
+            tariffClassification
+            family
+            subfamily
+            groupingId
+            countryOfOrigin
+            newProduct
+            endOfLife
+            supportQuantity
+            stockOwnerId
+            statusText
+            cubingTypeText
+            baseUnitRotationText
+            featureTypeText
+        }
+    }
+}
+
+query GetArticleById($id: String!, $language: String = "en") {
+    article(id: $id, language: $language) {
+        id
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+        status
+        description
+        name
+        additionalDescription
+        supplierName
+        translation
+        length
+        width
+        height
+        baseUnitPrice
+        baseUnitWeight
+        baseUnitPicking
+        baseUnitRotation
+        cubingType
+        featureType
+        permanentProduct
+        tariffClassification
+        family
+        subfamily
+        groupingId
+        countryOfOrigin
+        newProduct
+        endOfLife
+        supportQuantity
+        stockOwnerId
+        statusText
+        cubingTypeText
+        baseUnitRotationText
+        featureTypeText
+    }
+}
+
+query GetArticleIds(
+    $filters: ArticleSearchFilters
+    $orderBy: [ArticleOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    articles(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            description
+            stockOwnerId
+        }
+    }
+}
+
+mutation CreateArticle($input: CreateArticleInput!) {
+    createArticle(input: $input) {
+        id
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+        status
+        description
+        name
+        additionalDescription
+        supplierName
+        translation
+        length
+        width
+        height
+        baseUnitPrice
+        baseUnitWeight
+        baseUnitPicking
+        baseUnitRotation
+        cubingType
+        featureType
+        permanentProduct
+        tariffClassification
+        family
+        subfamily
+        groupingId
+        countryOfOrigin
+        newProduct
+        endOfLife
+        supportQuantity
+        stockOwnerId
+        statusText
+        cubingTypeText
+        baseUnitRotationText
+        featureTypeText
+    }
+}
+
+mutation ExportArticles(
+    $format: ExportFormat
+    $compression: ExportCompression
+    $separator: String
+    $orderBy: [ArticleOrderByCriterionExport!]
+    $filters: ArticleExportFilters
+) {
+    exportArticles(
+        format: $format
+        compression: $compression
+        separator: $separator
+        orderBy: $orderBy
+        filters: $filters
+    ) {
+        url
+    }
+}
+
+mutation DeleteArticle($id: String!) {
+    deleteArticle(id: $id)
+}
+
+mutation UpdateArticle($id: String!, $input: UpdateArticleInput!) {
+    updateArticle(id: $id, input: $input) {
+        id
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+        status
+        description
+        name
+        additionalDescription
+        supplierName
+        translation
+        length
+        width
+        height
+        baseUnitPrice
+        baseUnitWeight
+        baseUnitPicking
+        baseUnitRotation
+        cubingType
+        featureType
+        permanentProduct
+        tariffClassification
+        family
+        subfamily
+        groupingId
+        countryOfOrigin
+        newProduct
+        endOfLife
+        supportQuantity
+        stockOwnerId
+        statusText
+        cubingTypeText
+        baseUnitRotationText
+        featureTypeText
+    }
+}
+
+query getArticleStatusConfigs {
+    listConfigsForAScope(scope: "article_status") {
+        id
+        scope
+        code
+        text
+    }
+}
+
+query getArticleCubingTypeConfigs {
+    listConfigsForAScope(scope: "article_cubing_type") {
+        id
+        scope
+        code
+        text
+    }
+}
+
+query getArticleRotationParameters {
+    listParametersForAScope(scope: "rotation") {
+        id
+        scope
+        code
+        text
+    }
+}
+
+query getArticleFeatureTypeParameters {
+    listParametersForAScope(scope: "feature_type") {
+        id
+        scope
+        code
+        text
+    }
+}
+
+query SimpleGetAllStockOwners {
+    stockOwners {
+        results {
+            id
+            name
+        }
+    }
+}
+
+query SimpleGetArticles {
+    articles {
+        results {
+            id
+            name
+            stockOwnerId
+        }
+    }
+}
+
+mutation SoftDeleteArticle($id: String!) {
+    softDeleteArticle(id: $id)
+}
+
+# ARTICLE_LU
+query GetAllArticleLus(
+    $filters: ArticleLuSearchFilters
+    $orderBy: [ArticleLuOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    articleLus(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            extras
+            created
+            createdBy
+            modified
+            modifiedBy
+            stockOwnerId
+            articleId
+            length
+            width
+            height
+            baseUnitWeight
+            rotation
+            replenish
+            quantity
+            rotationText
+        }
+    }
+}
+
+query GetArticleLuById($id: String!, $language: String = "en") {
+    articleLu(id: $id, language: $language) {
+        id
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+        stockOwnerId
+        articleId
+        length
+        width
+        height
+        baseUnitWeight
+        rotation
+        rotationText
+        replenish
+        quantity
+        rotationText
+    }
+}
+
+query GetArticleLuIds(
+    $filters: ArticleLuSearchFilters
+    $orderBy: [ArticleLuOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    articleLus(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+        }
+    }
+}
+
+mutation DeleteArticleLu($id: String!) {
+    deleteArticleLu(id: $id)
+}
+
+mutation UpdateArticleLu($id: String!, $input: UpdateArticleLuInput!) {
+    updateArticleLu(id: $id, input: $input) {
+        id
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+        stockOwnerId
+        articleId
+        length
+        width
+        height
+        baseUnitWeight
+        rotation
+        rotationText
+        replenish
+        quantity
+    }
+}
+mutation CreateArticleLu($input: CreateArticleLuInput!) {
+    createArticleLu(input: $input) {
+        id
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+        stockOwnerId
+        articleId
+        length
+        width
+        height
+        baseUnitWeight
+        rotation
+        rotationText
+        replenish
+        quantity
+    }
+}
+
+query getArticleLuRotationsParams {
+    listParametersForAScope(scope: "rotation") {
+        id
+        scope
+        code
+        text
+    }
+}
+
+#ArticleLuBarcode
+mutation DeleteArticleLuBarcode($id: String!) {
+    deleteArticleLuBarcode(id: $id)
+}
+
+query GetArticleLuBarcodeById($id: String!, $language: String = "en") {
+    articleLuBarcode(id: $id, language: $language) {
+        id
+        articleId
+        articleLuId
+        barcodeId
+        stockOwnerId
+        article {
+            name
+            description
+            supplierName
+            length
+            width
+            height
+            baseUnitWeight
+        }
+        articleLu {
+            id
+            length
+            width
+            height
+            baseUnitWeight
+            rotation
+            rotationText
+            replenish
+            quantity
+            rotationText
+            stockOwnerId
+            model
+            name
+            length
+            width
+            height
+            order
+        }
+        barcode {
+            id
+            name
+            supplierName
+            supplierArticleCode
+            blacklisted
+        }
+        stockOwner {
+            id
+            name
+        }
+    }
+}
+
+mutation bulkUpdateArticles($inputs: UpdateArticleInput!, $articlesId: [String!]!) {
+    bulkUpdateArticles(inputs: $inputs, articlesId: $articlesId)
+}
