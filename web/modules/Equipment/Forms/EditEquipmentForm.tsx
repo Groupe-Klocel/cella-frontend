@@ -26,13 +26,13 @@ import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import {
-    GetEquipmentLimitTypeConfigsQuery,
     GetListOfPrioritiesQuery,
     SimpleGetAllStockOwnersQuery,
     UpdateEquipmentMutation,
     UpdateEquipmentMutationVariables,
-    useGetEquipmentLimitTypeConfigsQuery,
     useGetListOfPrioritiesQuery,
+    useListConfigsForAScopeQuery,
+    useListParametersForAScopeQuery,
     useSimpleGetAllStockOwnersQuery,
     useUpdateEquipmentMutation
 } from 'generated/graphql';
@@ -56,6 +56,9 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [stockOwners, setStockOwners] = useState<any>();
     const [equipmentLimitTypes, setEquipmentLimitTypes] = useState<any>();
+    const [equipmentMechanizedSystem, setEquipmentMechanizedSystem] = useState<any>();
+    const [equipmentAutomaticLabelPrinting, setEquipmentAutomaticLabelPrinting] = useState<any>();
+    const [printers, setPrinter] = useState<any>();
     const [disableTypeRelated] = useState<boolean>(
         details.type === configs['EQUIPMENT_TYPE_MONO-PRODUCT_EQUIPMENT'] ? true : false
     );
@@ -73,8 +76,13 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     const [allowPickingOrderFreeValue, setAllowPickingOrderFreeValue] = useState(
         details.allowPickingOrderFree
     );
+    const [monoDeliveryValue, setMonoDeliveryValue] = useState(details.monoDelivery);
+    const [forceRepackingValue, setForceRepackingValue] = useState(details.forceRepacking);
+    const [forcePickingCheckValue, setForcePickingCheckValue] = useState(details.forcePickingCheck);
     const [equipmentWithPriorities, setEquipmentWithPriorities] = useState<any>();
     const [maxPriority, setMaxPriority] = useState<number>(details.priority);
+
+    console.log('DLA-det', details);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -113,16 +121,54 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     }, [stockOwnerList]);
 
     //To render Equipment Limit types list configs
-    const equipmentLimitTypeList = useGetEquipmentLimitTypeConfigsQuery<
-        Partial<GetEquipmentLimitTypeConfigsQuery>,
-        Error
-    >(graphqlRequestClient);
+    const equipmentLimitTypeList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'equipment_limit_type',
+        language: router.locale
+    });
 
     useEffect(() => {
         if (equipmentLimitTypeList) {
             setEquipmentLimitTypes(equipmentLimitTypeList?.data?.listConfigsForAScope);
         }
     }, [equipmentLimitTypeList]);
+
+    //To render Equipment mechanizedSystem list configs
+    const equipmentMechanizedSystemList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'equipment_mechanized_system',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (equipmentMechanizedSystemList) {
+            setEquipmentMechanizedSystem(equipmentMechanizedSystemList?.data?.listConfigsForAScope);
+        }
+    }, [equipmentMechanizedSystemList]);
+
+    //To render Equipment automaticLabelPrinting list configs
+    const equipmentAutomaticLabelPrintingList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'equipment_automatic_label_printing',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (equipmentAutomaticLabelPrintingList) {
+            setEquipmentAutomaticLabelPrinting(
+                equipmentAutomaticLabelPrintingList?.data?.listConfigsForAScope
+            );
+        }
+    }, [equipmentAutomaticLabelPrintingList]);
+
+    //To render printers list params
+    const printersList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'printer',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (printersList) {
+            setPrinter(printersList?.data?.listParametersForAScope);
+        }
+    }, [printersList]);
 
     //To render existing priorities list
     const priorityList = useGetListOfPrioritiesQuery<Partial<GetListOfPrioritiesQuery>, Error>(
@@ -209,6 +255,18 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
         setAllowPickingOrderFreeValue(!allowPickingOrderFreeValue);
         form.setFieldsValue({ allowPickingOrderFree: e.target.checked });
     };
+    const onMonoDeliveryChange = (e: CheckboxChangeEvent) => {
+        setMonoDeliveryValue(!monoDeliveryValue);
+        form.setFieldsValue({ monoDelivery: e.target.checked });
+    };
+    const onForceRepackingChange = (e: CheckboxChangeEvent) => {
+        setForceRepackingValue(!forceRepackingValue);
+        form.setFieldsValue({ forceRepacking: e.target.checked });
+    };
+    const onForcePickingCheckChange = (e: CheckboxChangeEvent) => {
+        setForcePickingCheckValue(!forcePickingCheckValue);
+        form.setFieldsValue({ forcePickingCheck: e.target.checked });
+    };
     //handle call back on equipment Type change for displays
     const handleEquipmentLimitTypeChange = (value: any) => {
         if (value === configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY) {
@@ -265,6 +323,8 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                 delete formData['stockOwner'];
                 delete formData['typeText'];
                 delete formData['limitTypeText'];
+                delete formData['mechanizedSystemText'];
+                delete formData['automaticLabelPrintingText'];
                 delete formData['statusText'];
                 updateEquipment({ id: equipmentId, input: formData });
                 setUnsavedChanges(false);
@@ -500,15 +560,96 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         </Form.Item>
                     </Col>
                 </Row>
-                <Form.Item name="allowPickingOrderFree">
-                    <Checkbox
-                        checked={allowPickingOrderFreeValue}
-                        onChange={onAllowPickingOrderFreeChange}
-                        disabled={!disableTypeRelated}
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
+                    <Col xs={24} xl={12}>
+                        <Form.Item name="allowPickingOrderFree">
+                            <Checkbox
+                                checked={allowPickingOrderFreeValue}
+                                onChange={onAllowPickingOrderFreeChange}
+                                disabled={!disableTypeRelated}
+                            >
+                                {t('d:allow-picking-order-free')}
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={24} xl={12}>
+                        <Form.Item name="monoDelivery">
+                            <Checkbox onChange={onMonoDeliveryChange}>
+                                {t('d:monoDelivery')}
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                </Row>
+                <Form.Item label={t('d:mechanizedSystem')} name="mechanizedSystem">
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:mechanizedSystem')
+                        })}`}
                     >
-                        {t('d:allow-picking-order-free')}
-                    </Checkbox>
+                        {equipmentMechanizedSystem?.map(
+                            // think about changing once configs available
+                            (mechanizedSystem: any) => (
+                                <Option
+                                    key={mechanizedSystem.id}
+                                    value={parseInt(mechanizedSystem.code)}
+                                >
+                                    {mechanizedSystem.text}
+                                </Option>
+                            )
+                        )}
+                    </Select>
                 </Form.Item>
+                <Form.Item label={t('d:automaticLabelPrinting')} name="automaticLabelPrinting">
+                    <Select
+                        placeholder={`${t('messages:please-select-an', {
+                            name: t('d:automaticLabelPrinting')
+                        })}`}
+                    >
+                        {equipmentAutomaticLabelPrinting?.map((automaticLabelPrinting: any) => (
+                            <Option
+                                key={automaticLabelPrinting.id}
+                                value={parseInt(automaticLabelPrinting.code)}
+                            >
+                                {automaticLabelPrinting.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:printer')} name="printer">
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:printer')
+                        })}`}
+                    >
+                        {printers?.map((printer: any) => (
+                            <Option key={printer.id} value={parseInt(printer.code)}>
+                                {printer.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
+                    <Col xs={24} xl={12}>
+                        <Form.Item name="forceRepacking">
+                            <Checkbox
+                                checked={forceRepackingValue}
+                                onChange={onForceRepackingChange}
+                            >
+                                {t('d:forceRepacking')}
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={24} xl={12}>
+                        <Form.Item name="forcePickingCheck">
+                            <Checkbox
+                                checked={forcePickingCheckValue}
+                                onChange={onForcePickingCheckChange}
+                            >
+                                {t('d:forcePickingCheck')}
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                </Row>
                 <Form.Item label={t('common:comment')} name="comment">
                     <TextArea></TextArea>
                 </Form.Item>

@@ -82,18 +82,6 @@ const SideMenu: FC = () => {
                         <></>
                     )}
                 </SubMenu>
-
-                <SubMenu key="administration-feedbacks" title={t('feedbacks')}>
-                    <Menu.Item key="administration-feedbacks-force-reading">
-                        <Link href="/force-reading">{t('force-reading')}</Link>
-                    </Menu.Item>
-                    <Menu.Item key="administration-feedbacks-force-writing">
-                        <Link href="/force-writing">{t('force-writing')}</Link>
-                    </Menu.Item>
-                    <Menu.Item key="administration-feedbacks-send-stock-image">
-                        <Link href="/send-stock-image">{t('send-stock-image')}</Link>
-                    </Menu.Item>
-                </SubMenu>
                 {getModesFromPermissions(permissions, Table.Config).includes(ModeEnum.Read) ? (
                     <Menu.Item key="administration-configurations">
                         <Link href="/configurations">{t('configurations')}</Link>
@@ -154,7 +142,6 @@ const SideMenu: FC = () => {
                 )}
                 {getModesFromPermissions(permissions, Table.ArticleSet).includes(ModeEnum.Read) ? (
                     <Menu.Item key="articles-sets">
-                        {' '}
                         <Link href="/article-sets">{t('sets')}</Link>
                     </Menu.Item>
                 ) : (
