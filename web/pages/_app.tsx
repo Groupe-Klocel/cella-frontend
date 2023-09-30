@@ -154,7 +154,7 @@ const App = ({ Component, pageProps }: AppLayoutProps) => {
                         </AppProvider>
                     </ThemeSwitcherProvider>
                 </AuthProvider>
-                <ReactQueryDevtools initialIsOpen={false} />
+                {/* <ReactQueryDevtools initialIsOpen={false} /> */}
             </QueryClientProvider>
         </>
     );

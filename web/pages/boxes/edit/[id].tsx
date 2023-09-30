@@ -17,26 +17,54 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
-import { EditBox } from 'modules/Boxes/PagesContainer/EditBox';
-
+import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
+import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
+
+import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
+import useTranslation from 'next-translate/useTranslation';
+import { META_DEFAULTS } from '@helpers';
+import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditBoxPage: PageComponent = () => {
+    const { t } = useTranslation();
+
     const router = useRouter();
     const { id } = router.query;
-
     const [data, setData] = useState<any>();
+
+    const breadsCrumb = [
+        ...itemRoutes,
+        {
+            breadcrumbName: `${data?.name}`
+        }
+    ];
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <EditBox id={id!} name={data?.name} setData={setData} />
+            <EditItemComponent
+                id={id!}
+                setData={setData}
+                dataModel={model}
+                headerComponent={
+                    data ? (
+                        <HeaderContent
+                            title={`${t('common:box')} ${data?.name}`}
+                            routes={breadsCrumb}
+                            onBack={() => router.push(`/boxes/${id}`)}
+                        />
+                    ) : (
+                        <ContentSpin />
+                    )
+                }
+                routeAfterSuccess={`/boxes/${id}`}
+                routeOnCancel={`/boxes/${id}`}
+            />
         </>
     );
 };

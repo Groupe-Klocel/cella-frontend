@@ -19,7 +19,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import {
+    getModesFromPermissions,
+    META_DEFAULTS,
+    pathParams,
+    showError,
+    showSuccess
+} from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -31,11 +37,14 @@ import { BulkEditDeliveriesRenderModal } from 'modules/Deliveries/Forms/BulkEdit
 import { FC, useState } from 'react';
 import configs from '../../../common/configs.json';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const DeliveryPages: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
+    const { graphqlRequestClient } = useAuth();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
@@ -43,6 +52,7 @@ const DeliveryPages: PageComponent = () => {
     const [loading, setLoading] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [showModal, setShowModal] = useState(false);
+    const [refetch, setRefetch] = useState<boolean>(false);
     const headerData: HeaderData = {
         title: t('common:deliveries'),
         routes: itemRoutes,
@@ -71,16 +81,60 @@ const DeliveryPages: PageComponent = () => {
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
         setSelectedRowKeys(newSelectedRowKeys);
     };
-    // Checkbox
-    const bulkCubingAction = () => {
-        setLoading(true);
 
-        //TODO: Call mutation for different action (cubing/round association)
+    // CUBING
+    const [isCubingLoading, setIsCubingLoading] = useState(false);
+    //RESTART HERE: adapt to multi deliverylines
+    const cubingDelivery = () => {
+        Modal.confirm({
+            title: t('messages:cubing-confirm'),
+            onOk: async () => {
+                setIsCubingLoading(true);
+                const deliveries: Array<any> = [];
+                selectedRowKeys?.forEach((deliveryId) => {
+                    deliveries.push({ id: deliveryId });
+                });
 
-        setTimeout(() => {
-            setSelectedRowKeys([]);
-            setLoading(false);
-        }, 1000);
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+
+                const variables = {
+                    functionName: 'K_customCubing',
+                    event: {
+                        deliveries: deliveries
+                    }
+                };
+
+                try {
+                    const cubingResult = await graphqlRequestClient.request(query, variables);
+                    if (cubingResult.executeFunction.status === 'ERROR') {
+                        showError(cubingResult.executeFunction.output);
+                    } else if (
+                        cubingResult.executeFunction.status === 'OK' &&
+                        cubingResult.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(t(`errors:${cubingResult.executeFunction.output.output.code}`));
+                        console.log('Backend_message', cubingResult.executeFunction.output.output);
+                    } else {
+                        showSuccess(t('messages:success-cubing'));
+                        setRefetch(true);
+                    }
+                    setIsCubingLoading(false);
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                    setIsCubingLoading(false);
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
     };
 
     const rowSelection = {
@@ -103,7 +157,7 @@ const DeliveryPages: PageComponent = () => {
                         <span style={{ marginLeft: 16 }}>
                             <Button
                                 type="primary"
-                                onClick={bulkCubingAction}
+                                onClick={cubingDelivery}
                                 disabled={!hasSelected}
                                 loading={loading}
                             >
@@ -142,6 +196,7 @@ const DeliveryPages: PageComponent = () => {
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                refetch={refetch}
                 actionColumns={[
                     {
                         title: 'actions:actions',

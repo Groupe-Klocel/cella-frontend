@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Col, Input, InputNumber, Row, Form, Checkbox, Select } from 'antd';
+import { Button, Col, Input, InputNumber, Row, Form, Checkbox, Select, Modal, Space } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -29,15 +29,13 @@ import {
     CreateEquipmentMutationVariables,
     useSimpleGetAllStockOwnersQuery,
     SimpleGetAllStockOwnersQuery,
-    useGetEquipmentTypesConfigsQuery,
-    GetEquipmentTypesConfigsQuery,
-    useGetEquipmentLimitTypeConfigsQuery,
-    GetEquipmentLimitTypeConfigsQuery,
     useGetListOfPrioritiesQuery,
     GetListOfPrioritiesQuery,
     useUpdateEquipmentMutation,
     UpdateEquipmentMutation,
-    UpdateEquipmentMutationVariables
+    UpdateEquipmentMutationVariables,
+    useListConfigsForAScopeQuery,
+    useListParametersForAScopeQuery
 } from 'generated/graphql';
 import { showError, showSuccess, showInfo } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
@@ -54,17 +52,42 @@ export const AddEquipmentForm = () => {
     const name = t('common:name');
     const comment = t('common:comment');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
+    const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     const [stockOwners, setStockOwners] = useState<any>();
     const [equipmentWithPriorities, setEquipmentWithPriorities] = useState<any>();
     const [equipmentTypes, setEquipmentTypes] = useState<any>();
     const [equipmentLimitTypes, setEquipmentLimitTypes] = useState<any>();
+    const [equipmentMechanizedSystem, setEquipmentMechanizedSystem] = useState<any>();
+    const [equipmentAutomaticLabelPrinting, setEquipmentAutomaticLabelPrinting] = useState<any>();
+    const [printers, setPrinter] = useState<any>();
     const [boxLineGroupedValue, setBoxLineGroupValue] = useState<boolean>(false);
     const [boxMonoArticleChange, setBoxMonoArticleChange] = useState<boolean>();
     const [freePickingOrderChange, setFreePickingOrderChange] = useState<boolean>();
     const [disableTypeRelated, setDisableTypeRelated] = useState<boolean>(false);
     const [displayLimitTypeRelated, setDisplayLimitTypeRelated] = useState<boolean>(false);
     const [maxPriority, setMaxPriority] = useState<number>(0);
+
+    // prompt the user if they try and leave with unsaved changes
+    useEffect(() => {
+        const handleWindowClose = (e: BeforeUnloadEvent) => {
+            if (!unsavedChanges) return;
+            e.preventDefault();
+            return (e.returnValue = t('messages:confirm-leaving-page'));
+        };
+        const handleBrowseAway = () => {
+            if (!unsavedChanges) return;
+            if (window.confirm(t('messages:confirm-leaving-page'))) return;
+            router.events.emit('routeChangeError');
+            throw 'routeChange aborted.';
+        };
+        window.addEventListener('beforeunload', handleWindowClose);
+        router.events.on('routeChangeStart', handleBrowseAway);
+        return () => {
+            window.removeEventListener('beforeunload', handleWindowClose);
+            router.events.off('routeChangeStart', handleBrowseAway);
+        };
+    }, [unsavedChanges]);
 
     //To render Simple stock owners list
     const stockOwnerList = useSimpleGetAllStockOwnersQuery<
@@ -127,10 +150,10 @@ export const AddEquipmentForm = () => {
     };
 
     //To render Equipment types list configs
-    const equipmentTypesList = useGetEquipmentTypesConfigsQuery<
-        Partial<GetEquipmentTypesConfigsQuery>,
-        Error
-    >(graphqlRequestClient);
+    const equipmentTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'equipment_type',
+        language: router.locale
+    });
 
     useEffect(() => {
         if (equipmentTypesList) {
@@ -139,16 +162,54 @@ export const AddEquipmentForm = () => {
     }, [equipmentTypesList]);
 
     //To render Equipment Limit types list configs
-    const equipmentLimitTypeList = useGetEquipmentLimitTypeConfigsQuery<
-        Partial<GetEquipmentLimitTypeConfigsQuery>,
-        Error
-    >(graphqlRequestClient);
+    const equipmentLimitTypeList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'equipment_limit_type',
+        language: router.locale
+    });
 
     useEffect(() => {
         if (equipmentLimitTypeList) {
             setEquipmentLimitTypes(equipmentLimitTypeList?.data?.listConfigsForAScope);
         }
     }, [equipmentLimitTypeList]);
+
+    //To render Equipment mechanizedSystem list configs
+    const equipmentMechanizedSystemList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'equipment_mechanized_system',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (equipmentMechanizedSystemList) {
+            setEquipmentMechanizedSystem(equipmentMechanizedSystemList?.data?.listConfigsForAScope);
+        }
+    }, [equipmentMechanizedSystemList]);
+
+    //To render Equipment automaticLabelPrinting list configs
+    const equipmentAutomaticLabelPrintingList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'equipment_automatic_label_printing',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (equipmentAutomaticLabelPrintingList) {
+            setEquipmentAutomaticLabelPrinting(
+                equipmentAutomaticLabelPrintingList?.data?.listConfigsForAScope
+            );
+        }
+    }, [equipmentAutomaticLabelPrintingList]);
+
+    //To render printers list params
+    const printersList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'printer',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (printersList) {
+            setPrinter(printersList?.data?.listParametersForAScope);
+        }
+    }, [printersList]);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -184,8 +245,6 @@ export const AddEquipmentForm = () => {
                 qtyMaxArticle: 1,
                 boxLineGrouped: true,
                 boxMonoArticle: true
-                // limitType: configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY,
-                // limitTypeText: equipmentLimitTypes?.find((e: any) => e.code == configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY).text
             });
         } else {
             setDisableTypeRelated(false);
@@ -243,9 +302,18 @@ export const AddEquipmentForm = () => {
     const onVirtualChange = (e: CheckboxChangeEvent) => {
         form.setFieldsValue({ virtual: e.target.checked });
     };
+    const onMonoDeliveryChange = (e: CheckboxChangeEvent) => {
+        form.setFieldsValue({ monoDelivery: e.target.checked });
+    };
     const onAllowPickingOrderFreeChange = (e: CheckboxChangeEvent) => {
         form.setFieldsValue({ allowPickingOrderFree: e.target.checked });
         setFreePickingOrderChange(e.target.checked);
+    };
+    const onForceRepackingChange = (e: CheckboxChangeEvent) => {
+        form.setFieldsValue({ forceRepacking: e.target.checked });
+    };
+    const onForcePickingCheckChange = (e: CheckboxChangeEvent) => {
+        form.setFieldsValue({ forcePickingCheck: e.target.checked });
     };
 
     const onFinish = () => {
@@ -264,6 +332,7 @@ export const AddEquipmentForm = () => {
                 formData['status'] = configs.EQUIPMENT_STATUS_IN_PROGRESS;
                 delete formData['limitTypeText'];
                 createEquipment({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));
@@ -276,9 +345,28 @@ export const AddEquipmentForm = () => {
         }
     }, [createLoading]);
 
+    const onCancel = () => {
+        setUnsavedChanges(false);
+        Modal.confirm({
+            title: t('messages:confirm-leaving-page'),
+            onOk: () => {
+                router.back();
+            },
+            okText: t('common:bool-yes'),
+            cancelText: t('common:bool-no')
+        });
+    };
+
     return (
         <WrapperForm>
-            <Form form={form} layout="vertical" scrollToFirstError>
+            <Form
+                form={form}
+                layout="vertical"
+                scrollToFirstError
+                onValuesChange={() => {
+                    setUnsavedChanges(true);
+                }}
+            >
                 <Form.Item label={t('common:stock-owner')} name="stockOwnerId">
                     <Select
                         placeholder={`${t('messages:please-select-a', {
@@ -489,23 +577,101 @@ export const AddEquipmentForm = () => {
                         </Form.Item>
                     </Col>
                 </Row>
-                <Form.Item name="allowPickingOrderFree">
-                    <Checkbox
-                        onChange={onAllowPickingOrderFreeChange}
-                        disabled={disableTypeRelated === true ? false : true}
-                        checked={freePickingOrderChange}
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
+                    <Col xs={24} xl={12}>
+                        <Form.Item name="allowPickingOrderFree">
+                            <Checkbox
+                                onChange={onAllowPickingOrderFreeChange}
+                                disabled={disableTypeRelated === true ? false : true}
+                                checked={freePickingOrderChange}
+                            >
+                                {t('d:allow-picking-order-free')}
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={24} xl={12}>
+                        <Form.Item name="monoDelivery">
+                            <Checkbox onChange={onMonoDeliveryChange}>
+                                {t('d:monoDelivery')}
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                </Row>
+                <Form.Item label={t('d:mechanizedSystem')} name="mechanizedSystem">
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:mechanizedSystem')
+                        })}`}
                     >
-                        {t('d:allow-picking-order-free')}
-                    </Checkbox>
+                        {equipmentMechanizedSystem?.map(
+                            // think about changing once configs available
+                            (mechanizedSystem: any) => (
+                                <Option
+                                    key={mechanizedSystem.id}
+                                    value={parseInt(mechanizedSystem.code)}
+                                >
+                                    {mechanizedSystem.text}
+                                </Option>
+                            )
+                        )}
+                    </Select>
                 </Form.Item>
+                <Form.Item label={t('d:automaticLabelPrinting')} name="automaticLabelPrinting">
+                    <Select
+                        placeholder={`${t('messages:please-select-an', {
+                            name: t('d:automaticLabelPrinting')
+                        })}`}
+                    >
+                        {equipmentAutomaticLabelPrinting?.map((automaticLabelPrinting: any) => (
+                            <Option
+                                key={automaticLabelPrinting.id}
+                                value={parseInt(automaticLabelPrinting.code)}
+                            >
+                                {automaticLabelPrinting.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:printer')} name="printer">
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:printer')
+                        })}`}
+                    >
+                        {printers?.map((printer: any) => (
+                            <Option key={printer.id} value={parseInt(printer.code)}>
+                                {printer.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
+                    <Col xs={24} xl={12}>
+                        <Form.Item name="forceRepacking">
+                            <Checkbox onChange={onForceRepackingChange}>
+                                {t('d:forceRepacking')}
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={24} xl={12}>
+                        <Form.Item name="forcePickingCheck">
+                            <Checkbox onChange={onForcePickingCheckChange}>
+                                {t('d:forcePickingCheck')}
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                </Row>
                 <Form.Item label={comment} name="comment">
                     <TextArea>{comment}</TextArea>
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>
-                <Button type="primary" loading={createLoading} onClick={onFinish}>
-                    {t('actions:submit')}
-                </Button>
+                <Space>
+                    <Button type="primary" loading={createLoading} onClick={onFinish}>
+                        {t('actions:submit')}
+                    </Button>
+                    <Button onClick={onCancel}>{t('actions:cancel')}</Button>
+                </Space>
             </div>
         </WrapperForm>
     );

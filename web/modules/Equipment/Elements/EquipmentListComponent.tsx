@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { CaretDownOutlined, CaretUpOutlined, SearchOutlined } from '@ant-design/icons';
-import { AppTable, ContentSpin, HeaderContent, LinkButton } from '@components';
+import { CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
+import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components';
 import { Space, Form, Button, Alert, Empty } from 'antd';
 import { EyeTwoTone } from '@ant-design/icons';
 import { useDrawerDispatch } from 'context/DrawerContext';
@@ -37,8 +37,8 @@ import {
     useList,
     flatten
 } from '@helpers';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FilterFieldType, ModelType } from 'models/Models';
+import { useCallback, useEffect, useState } from 'react';
+import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
 import {
     ExportFormat,
@@ -93,6 +93,89 @@ const EquipmentListComponent = (props: IListProps) => {
             setMaxPriority(Math.max(...receivedList));
         }
     }, [priorityList]);
+
+    // #region extract data from modelV2
+    const listFields = Object.keys(props.dataModel.fieldsInfo).filter(
+        (key) => props.dataModel.fieldsInfo[key].isListRequested
+    );
+
+    const sortableFields =
+        Object.keys(props.dataModel.fieldsInfo).filter(
+            (key) => props.dataModel.fieldsInfo[key].isSortable
+        ) || [];
+    const displayedLabels = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].displayName !== null)
+        .reduce((obj: any, key) => {
+            let newKey = key;
+            if (key.includes('{')) {
+                newKey = key.replaceAll('{', '_').replaceAll('}', '');
+            }
+            obj[newKey] = props.dataModel.fieldsInfo[key].displayName;
+            return obj;
+        }, {});
+
+    const excludedListFields = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].isExcludedFromList)
+        .map((obj) => {
+            if (obj.includes('{')) {
+                obj = obj.replaceAll('{', '_').replaceAll('}', '');
+            }
+            return obj;
+        });
+
+    const hiddenListFields = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].isDefaultHiddenList)
+        .map((obj) => {
+            if (obj.includes('{')) {
+                obj = obj.replaceAll('{', '_').replaceAll('}', '');
+            }
+            return obj;
+        });
+
+    const filterFields = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].searchingFormat !== null)
+        .map((key) => {
+            // handle uppercase for fields with {}
+            let name = key;
+            if (name.includes('{')) {
+                const index = name.indexOf('{');
+                name = `${name.substring(0, index)}_${name[
+                    index + 1
+                ].toUpperCase()}${name.substring(index + 2)}`.replaceAll('}', '');
+            }
+            return {
+                displayName: t(
+                    `d:${(props.dataModel.fieldsInfo[key].displayName ?? key)
+                        .replaceAll('{', '_')
+                        .replaceAll('}', '')}`
+                ),
+                name: name,
+                type: FormDataType[
+                    props.dataModel.fieldsInfo[key].searchingFormat as keyof typeof FormDataType
+                ],
+                maxLength: props.dataModel.fieldsInfo[key].maxLength ?? undefined,
+                config: props.dataModel.fieldsInfo[key].config ?? undefined,
+                param: props.dataModel.fieldsInfo[key].param ?? undefined,
+                optionTable: props.dataModel.fieldsInfo[key].optionTable ?? undefined,
+                isMultipleSearch: props.dataModel.fieldsInfo[key].isMultipleSearch ?? undefined
+            };
+        });
+
+    // extract id, name and link from props.dataModel.fieldsInfo where link is not null
+    const linkFields = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].link !== null)
+        .map((key) => ({
+            link: props.dataModel.fieldsInfo[key].link,
+            name: key.replaceAll('{', '_').replaceAll('}', '')
+        }));
+    const sortParameter = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].defaultSort)
+        .map((key) => ({
+            field: key.includes('{') ? key.replaceAll('{', '_').replaceAll('}', '') : key,
+            ascending: props.dataModel.fieldsInfo[key].defaultSort === 'ascending' ? true : false
+        }));
+
+    // #endregion
 
     // #region DEFAULT PROPS
     const defaultProps = {
@@ -225,7 +308,7 @@ const EquipmentListComponent = (props: IListProps) => {
     } = useList(
         props.dataModel.resolverName,
         props.dataModel.endpoints.list,
-        props.dataModel.listFields,
+        listFields,
         search,
         pagination.current,
         pagination.itemsPerPage,
@@ -309,16 +392,22 @@ const EquipmentListComponent = (props: IListProps) => {
                     });
 
                     // iterate over the first result and get list of columns to define table structure
-                    Object.keys(listData['results'][0]).forEach((column_name) => {
-                        const sortableFields = props.dataModel.sortableFields || [];
+                    listFields.forEach((column_name: any, index: number) => {
+                        if (column_name.includes('{')) {
+                            column_name = column_name.replaceAll('{', '_').replaceAll('}', '');
+                        }
+                        // Customize title name
+                        let title = `d:${column_name}`;
+                        if (displayedLabels && column_name in displayedLabels) {
+                            title = `d:${displayedLabels[column_name]}`;
+                        }
 
                         const row_data: any = {
-                            title: `d:${column_name}`,
+                            title: title,
                             dataIndex: column_name,
                             key: column_name,
                             showSorterTooltip: false
                         };
-
                         // if column is in sortable list add sorter property
                         if (sortableFields.length > 0 && sortableFields.includes(column_name)) {
                             row_data['sorter'] = { multiple: sort_index };
@@ -327,10 +416,7 @@ const EquipmentListComponent = (props: IListProps) => {
                         }
 
                         // Hide fields if there is any hidden selected.
-                        if (
-                            !props.dataModel.excludedListFields ||
-                            !props.dataModel.excludedListFields.includes(row_data.key)
-                        ) {
+                        if (!excludedListFields || !excludedListFields.includes(row_data.key)) {
                             result_list.push(row_data);
                         }
                     });
@@ -454,18 +540,19 @@ const EquipmentListComponent = (props: IListProps) => {
                         )}
                         {!isLoading && rows?.results ? (
                             rows?.results && rows.results.length > 0 ? (
-                                <AppTable
+                                <AppTableV2
                                     type={props.dataModel.endpoints.list}
-                                    columns={columns
+                                    columns={props.actionColumns
                                         .concat(props.extraColumns)
-                                        .concat(props.actionColumns)}
+                                        .concat(columns)}
                                     data={rows!.results}
                                     pagination={pagination}
                                     isLoading={isLoading}
                                     setPagination={onChangePagination}
                                     stickyActions={stickyActions}
                                     onChange={undefined}
-                                    hiddenColumns={props.dataModel.hiddenListFields}
+                                    hiddenColumns={hiddenListFields}
+                                    linkFields={linkFields}
                                 />
                             ) : (
                                 <Empty description={<span>{t('messages:no-data')}</span>} />

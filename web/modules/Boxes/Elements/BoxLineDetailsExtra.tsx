@@ -19,13 +19,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
 import { EyeTwoTone } from '@ant-design/icons';
-import { pathParams, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
+import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Divider, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponent';
-import { BoxLineFeatureModel } from 'models/BoxLineFeatureModel';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { HandlingUnitContentFeatureModelV2 } from 'models/HandlingUnitContentFeatureModelV2';
+import { useState } from 'react';
 
 export interface IItemDetailsProps {
     boxLineId?: string | any;
@@ -33,7 +34,7 @@ export interface IItemDetailsProps {
     boxLineName?: string | any;
 }
 
-const BoxLineDetailsExtra = ({ boxLineId, contentId, boxLineName }: IItemDetailsProps) => {
+const BoxLineDetailsExtra = ({ contentId, boxLineName }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
     const { permissions } = useAppState();
@@ -41,6 +42,10 @@ const BoxLineDetailsExtra = ({ boxLineId, contentId, boxLineName }: IItemDetails
         permissions,
         Table.HandlingUnitContentFeature
     );
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+
+    const [, setHandlingUnitContentFeaturesData] = useState<any>();
 
     const boxLineFeatureHeaderData: HeaderData = {
         title: t('common:associated', { name: t('d:boxLineFeatures') }),
@@ -59,8 +64,10 @@ const BoxLineDetailsExtra = ({ boxLineId, contentId, boxLineName }: IItemDetails
                         searchCriteria={{
                             handlingUnitContentId: contentId
                         }}
-                        dataModel={BoxLineFeatureModel}
+                        dataModel={HandlingUnitContentFeatureModelV2}
                         headerData={boxLineFeatureHeaderData}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
                         routeDetailPage={'/boxes/boxLine/feature/:id'}
                         actionColumns={[
                             {
@@ -85,6 +92,8 @@ const BoxLineDetailsExtra = ({ boxLineId, contentId, boxLineName }: IItemDetails
                             }
                         ]}
                         searchable={false}
+                        setData={setHandlingUnitContentFeaturesData}
+                        sortDefault={[{ field: 'created', ascending: true }]}
                     />
                 </>
             ) : (

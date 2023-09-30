@@ -35,7 +35,7 @@ import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/ModelsV2';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { isNumeric, useList } from '@helpers';
+import { isNumeric, pluralize, useList } from '@helpers';
 import { gql } from 'graphql-request';
 import { ContentSpin } from '@components';
 
@@ -180,7 +180,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({ form, columns }: IGeneralSearchP
         fieldToDisplay: string | undefined
     ): Promise<{ [key: string]: any } | undefined> {
         if (tableName && fieldToDisplay) {
-            const queryName = `${tableName.charAt(0).toLowerCase() + tableName.slice(1)}s`;
+            const queryName = pluralize(tableName.charAt(0).toLowerCase() + tableName.slice(1));
             const queriedFields: any = ['id', `${fieldToDisplay}`];
             const query = gql`
         query CustomListQuery(

@@ -17,26 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppTable, ContentSpin, LinkButton } from '@components';
-import { EyeTwoTone } from '@ant-design/icons';
-import {
-    pathParams,
-    getModesFromPermissions,
-    DataQueryType,
-    PaginationType,
-    DEFAULT_PAGE_NUMBER,
-    DEFAULT_ITEMS_PER_PAGE,
-    useBoxLines,
-    flatten
-} from '@helpers';
+import { LinkButton } from '@components';
+import { EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
-import { Button, Col, Divider, Empty, Row, Space, Typography } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import { Button, Divider, Modal, Space } from 'antd';
+import { useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponent';
-
-const { Title } = Typography;
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';
+import configs from '../../../../common/configs.json';
 
 export interface IItemDetailsProps {
     boxId?: string | any;
@@ -46,221 +37,114 @@ export interface IItemDetailsProps {
 const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
-    const [boxLines, setBoxLines] = useState<DataQueryType>();
     const { permissions } = useAppState();
-    const BoxLineModes = getModesFromPermissions(permissions, Table.HandlingUnitContentOutbound);
-
-    const [pagination, setPagination] = useState<PaginationType>({
-        total: undefined,
-        current: DEFAULT_PAGE_NUMBER,
-        itemsPerPage: DEFAULT_ITEMS_PER_PAGE
-    });
-
-    const { isLoading, data, error } = useBoxLines(
-        { handlingUnitOutboundId: boxId },
-        pagination.current,
-        pagination.itemsPerPage,
-        {
-            field: 'lineNumber',
-            ascending: true
-        }
+    const huContentOutboundModes = getModesFromPermissions(
+        permissions,
+        Table.HandlingUnitContentOutbound
     );
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
-    useEffect(() => {
-        if (data) {
-            setBoxLines(data?.handlingUnitContentOutbounds);
-            setPagination({
-                ...pagination,
-                total: data?.handlingUnitContentOutbounds?.count
+    const [, setHandlingUnitContentOutboundsData] = useState<any>();
+
+    const huContentOutboundHeaderData: HeaderData = {
+        title: t('common:associated', { name: t('common:boxLines') }),
+        routes: [],
+        actionsComponent: undefined
+    };
+
+    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:action-confirm'),
+                onOk: () => {
+                    setId(id);
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
             });
-        }
-    }, [data]);
-
-    //explore and create fields to make them accessible to columns
-    const dataByBoxId = data?.handlingUnitContentOutbounds?.results.map((item: any) => {
-        return flatten(item);
-    });
-
-    // make wrapper function to give child
-    const onChangePagination = useCallback(
-        (currentPage, itemsPerPage) => {
-            // Re fetch data for new current page or items per page
-            setPagination({
-                total: boxLines?.count,
-                current: currentPage,
-                itemsPerPage: itemsPerPage
-            });
-        },
-        [setPagination, boxLines]
-    );
-
-    const boxLinesColumns = [
-        {
-            title: t('d:lineNumber'),
-            dataIndex: 'lineNumber',
-            key: 'lineNumber',
-            sorter: {
-                multiple: 1
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: t('d:status'),
-            dataIndex: 'statusText',
-            key: 'status',
-            sorter: {
-                multiple: 2
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: t('d:delivery_name'),
-            dataIndex: 'delivery_name',
-            key: 'delivery_name',
-            sorter: {
-                multiple: 3
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: t('d:deliveryLine_lineNumber'),
-            dataIndex: 'deliveryLine_lineNumber',
-            key: 'deliveryLine_lineNumber',
-            sorter: {
-                multiple: 4
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: t('d:logisticUnit'),
-            dataIndex: 'handlingUnitContent_articleLuBarcode_articleLu_lu_name',
-            key: 'handlingUnitContent_articleLuBarcode_articleLu_lu_name',
-            sorter: {
-                multiple: 5
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: 'd:handlingUnitContent_article_name',
-            dataIndex: 'handlingUnitContent_article_name',
-            key: 'handlingUnitContent_article_name',
-            sorter: {
-                multiple: 6
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: 'd:handlingUnitContent_article_additionalDescription',
-            dataIndex: 'handlingUnitContent_article_additionalDescription',
-            key: 'handlingUnitContent_article_additionalDescription',
-            sorter: {
-                multiple: 7
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: t('d:pickingLocationName'),
-            dataIndex: 'pickingLocation_name',
-            key: 'pickingLocation_name',
-            sorter: {
-                multiple: 4
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: 'd:quantityToBePicked',
-            dataIndex: 'quantityToBePicked',
-            key: 'quantityToBePicked',
-            sorter: {
-                multiple: 8
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: 'd:pickedQuantity',
-            dataIndex: 'pickedQuantity',
-            key: 'pickedQuantity',
-            sorter: {
-                multiple: 9
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: 'd:missingQuantity',
-            dataIndex: 'missingQuantity',
-            key: 'missingQuantity',
-            sorter: {
-                multiple: 10
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: 'd:preparationModeText',
-            dataIndex: 'preparationModeText',
-            key: 'preparationModeText',
-            sorter: {
-                multiple: 11
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: 'd:handlingUnitContent_reservation',
-            dataIndex: 'handlingUnitContent_reservation',
-            key: 'handlingUnitContent_reservation',
-            sorter: {
-                multiple: 12
-            },
-            showSorterTooltip: false
-        },
-        {
-            title: t('actions:actions'),
-            key: 'actions',
-            render: (record: { id: string }) => (
-                <LinkButton
-                    icon={<EyeTwoTone />}
-                    path={pathParams('/boxes/boxLine/[id]', record.id)}
-                />
-            )
-        }
-    ];
+        };
+    };
 
     return (
         <>
-            {BoxLineModes.length > 0 && BoxLineModes.includes(ModeEnum.Read) ? (
+            {huContentOutboundModes.length > 0 && huContentOutboundModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
-                    <Row justify="space-between">
-                        <Col span={6}>
-                            <Title level={4}>
-                                {t('common:associated', { name: t('menu:boxLines') })}
-                            </Title>
-                        </Col>
-                        <Col span={6}>
-                            {/* <LinkButton
-                        title={t('actions:add2', { name: t('menu:boxLine') })}
-                        // path="/add-boxLine"
-                        path={pathParams('/add-boxLine', id)}
-                        type="primary"
-                    /> */}
-                        </Col>
-                    </Row>
-                    {!isLoading ? (
-                        dataByBoxId && dataByBoxId.length != 0 ? (
-                            <AppTable
-                                type="associatedBoxLines"
-                                columns={boxLinesColumns}
-                                data={dataByBoxId}
-                                pagination={pagination}
-                                isLoading={isLoading}
-                                setPagination={onChangePagination}
-                                filter={false}
-                            />
-                        ) : (
-                            <Empty />
-                        )
-                    ) : (
-                        <ContentSpin />
-                    )}
+                    <ListComponent
+                        searchCriteria={{ handlingUnitOutboundId: boxId }}
+                        dataModel={HandlingUnitContentOutboundModelV2}
+                        headerData={huContentOutboundHeaderData}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        routeDetailPage={'/boxes/:id'}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string; status: number }) => (
+                                    <Space>
+                                        {huContentOutboundModes.length == 0 ||
+                                        !huContentOutboundModes.includes(ModeEnum.Read) ? (
+                                            <></>
+                                        ) : (
+                                            <>
+                                                <LinkButton
+                                                    icon={<EyeTwoTone />}
+                                                    path={pathParamsFromDictionary(
+                                                        '/boxes/boxLine/[id]',
+                                                        {
+                                                            id: record.id
+                                                        }
+                                                    )}
+                                                />
+                                            </>
+                                        )}
+                                        {huContentOutboundModes.length > 0 &&
+                                        huContentOutboundModes.includes(ModeEnum.Update) &&
+                                        HandlingUnitContentOutboundModelV2.isEditable &&
+                                        record?.status <
+                                            configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
+                                            <LinkButton
+                                                icon={<EditTwoTone />}
+                                                path={pathParamsFromDictionary(
+                                                    '/boxes/boxLine/edit/[id]',
+                                                    {
+                                                        id: record.id,
+                                                        boxId
+                                                    }
+                                                )}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {huContentOutboundModes.length > 0 &&
+                                        huContentOutboundModes.includes(ModeEnum.Delete) &&
+                                        HandlingUnitContentOutboundModelV2.isSoftDeletable &&
+                                        record?.status <
+                                            configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
+                                            <Button
+                                                icon={<StopOutlined />}
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        record.id,
+                                                        setIdToDisable,
+                                                        'disable'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                        setData={setHandlingUnitContentOutboundsData}
+                        sortDefault={[{ field: 'created', ascending: true }]}
+                    />
+                    <Divider />
                 </>
             ) : (
                 <></>

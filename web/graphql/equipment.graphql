@@ -160,6 +160,14 @@ query GetEquipmentById($id: String!) {
         toleranceDimension
         allowPickingOrderFree
         extras
+        monoDelivery
+        mechanizedSystem
+        mechanizedSystemText
+        automaticLabelPrinting
+        automaticLabelPrintingText
+        printer
+        forceRepacking
+        forcePickingCheck
         created
         createdBy
         modified

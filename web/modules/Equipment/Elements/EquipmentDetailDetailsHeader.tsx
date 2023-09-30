@@ -63,7 +63,7 @@ const EquipmentDetailDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemPr
     const breadsCrumb = [
         ...equipmentDetailBreadCrumb,
         {
-            breadcrumbName: `${props.handlingUnitModelName}`
+            breadcrumbName: `details/${props.handlingUnitModelName}`
         }
     ];
 

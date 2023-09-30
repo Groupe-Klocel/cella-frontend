@@ -64,7 +64,7 @@ function CameraScanner({ camData: { setCamData }, handleCleanData }: ICameraScan
                     ) : (
                         <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
                             <BarcodeScannerComponent
-                                width={200}
+                                width={400}
                                 height={200}
                                 onUpdate={(err, result) => {
                                     if (result) setCamData(result.getText());
