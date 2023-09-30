@@ -135,9 +135,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     createArticleLuBarcodeResponse.createArticleLuBarcode ?? undefined
             }
         });
-        console.log('DLA-res', res);
     } catch (error: any) {
-        console.log('DLA-err', error);
         await graphqlRequestClient.request(rollbackTransaction, rollbackVariable, requestHeader);
         res.status(500).json({ error });
         if (error.response.errors[0].extensions) {

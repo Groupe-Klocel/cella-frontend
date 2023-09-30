@@ -63,6 +63,7 @@ const MainLayout: FC<IMainLayoutProps> = ({ children }: IMainLayoutProps) => {
                     <Header />
                     <StyledMainLayout>
                         <Layout.Sider
+                            width={250}
                             collapsible
                             collapsed={isSessionMenuCollapsed}
                             onCollapse={onCollapseMenu}

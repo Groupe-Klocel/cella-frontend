@@ -99,6 +99,7 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
 
     // function to reset data in case of fields dependencies
     const [changedFormValues, setChangedFormValues] = useState<any>({});
+
     useEffect(() => {
         if (
             form.getFieldsValue(true) &&

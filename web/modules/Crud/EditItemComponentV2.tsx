@@ -24,7 +24,6 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import {
-    checkOperator,
     flatten,
     getModesFromPermissions,
     isNumeric,
@@ -362,6 +361,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
             const queriedFields: any = statusToRemove
                 ? ['id', `${fieldToDisplay}`, 'status']
                 : ['id', `${fieldToDisplay}`];
+
             const query = gql`
             query CustomListQuery(
                 $filters: ${tableName}SearchFilters
@@ -391,17 +391,24 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                 page: 1,
                 itemsPerPage: 100
             };
+
             const options = await graphqlRequestClient.request(query, variables);
             const result: { [key: string]: any } = {};
 
             options[queryName].results.forEach((item: any) => {
+                let valueToDisplay: any = item.name;
+
+                Object.values(item).forEach((subItem: any) => {
+                    valueToDisplay = subItem?.name ? subItem?.name : valueToDisplay;
+                });
+
                 if (!result[tableName]) {
                     result[tableName] = [];
                 }
                 if (!statusToRemove || item.status !== statusToRemove) {
                     result[tableName].push({
                         key: item.id,
-                        text: item.name
+                        text: valueToDisplay
                     });
                 }
             });

@@ -25,7 +25,7 @@ import { ModeEnum } from 'generated/graphql';
 import { HeaderData } from 'modules/Crud/ListComponent';
 import useTranslation from 'next-translate/useTranslation';
 import { FC } from 'react';
-import { EquipmentModel } from 'models/EquipmentModel';
+import { EquipmentModelV2 } from 'models/EquipmentModelV2';
 import { equipmentRoutes } from 'modules/Equipment/Static/equipmentRoutes';
 import { EquipmentListComponent } from 'modules/Equipment/Elements/EquipmentListComponent';
 
@@ -34,7 +34,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 const EquipmentPage: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
-    const modes = getModesFromPermissions(permissions, EquipmentModel.tableName);
+    const modes = getModesFromPermissions(permissions, EquipmentModelV2.tableName);
 
     const headerData: HeaderData = {
         title: t('common:equipments'),
@@ -54,7 +54,7 @@ const EquipmentPage: PageComponent = () => {
             <AppHead title={META_DEFAULTS.title} />
             <EquipmentListComponent
                 headerData={headerData}
-                dataModel={EquipmentModel}
+                dataModel={EquipmentModelV2}
                 routeDetailPage={'/equipment/:id'}
             />
         </>

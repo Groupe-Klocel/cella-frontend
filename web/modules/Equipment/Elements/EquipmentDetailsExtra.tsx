@@ -18,15 +18,16 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
-import { EyeTwoTone } from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
-import { Divider, Space, Typography } from 'antd';
+import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponent';
-import { EquipmentDetailModel } from 'models/EquipmentDetailModel';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { EquipmentDetailModelV2 } from 'models/EquipmentDetailModelV2';
 import configs from '../../../../common/configs.json';
+import { useState } from 'react';
 
 const { Title } = Typography;
 
@@ -47,12 +48,15 @@ const EquipmentDetailsExtra = ({
 
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.EquipmentDetail);
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     const equipmentDetailsHeaderData: HeaderData = {
-        title: t('common:equipment-detail'),
+        title: t('common:equipment-details'),
         routes: [],
         actionsComponent:
-            modes.length > 0 && modes.includes(ModeEnum.Create) &&
+            modes.length > 0 &&
+            modes.includes(ModeEnum.Create) &&
             equipmentStatus != configs.EQUIPMENT_STATUS_CLOSED ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:equipment-detail') })}
@@ -66,6 +70,20 @@ const EquipmentDetailsExtra = ({
                 />
             ) : null
     };
+
+    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:delete-confirm'),
+                onOk: () => {
+                    setId(id);
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
+            });
+        };
+    };
+
     return (
         <>
             {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
@@ -73,9 +91,11 @@ const EquipmentDetailsExtra = ({
                     <Divider />
                     <ListComponent
                         searchCriteria={{ equipmentId: equipmentId }}
-                        dataModel={EquipmentDetailModel}
+                        dataModel={EquipmentDetailModelV2}
                         headerData={equipmentDetailsHeaderData}
                         routeDetailPage={'/equipment/details/:id'}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
@@ -90,6 +110,57 @@ const EquipmentDetailsExtra = ({
                                             icon={<EyeTwoTone />}
                                             path={pathParams('/equipment/details/[id]', record.id)}
                                         />
+                                        {modes.length > 0 &&
+                                        modes.includes(ModeEnum.Update) &&
+                                        EquipmentDetailModelV2.isEditable ? (
+                                            <LinkButton
+                                                icon={<EditTwoTone />}
+                                                path={pathParamsFromDictionary(
+                                                    '/equipment/details/add',
+                                                    {
+                                                        equipmentId: equipmentId,
+                                                        equipmentName: equipmentName,
+                                                        equipmentStatus: equipmentStatus,
+                                                        stockOwnerId: stockOwnerId
+                                                    }
+                                                )}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {modes.length > 0 &&
+                                        modes.includes(ModeEnum.Delete) &&
+                                        EquipmentDetailModelV2.isSoftDeletable ? (
+                                            <Button
+                                                icon={<StopOutlined />}
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        record.id,
+                                                        setIdToDisable,
+                                                        'disable'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {modes.length > 0 &&
+                                        modes.includes(ModeEnum.Delete) &&
+                                        EquipmentDetailModelV2.isDeletable ? (
+                                            <Button
+                                                icon={<DeleteOutlined />}
+                                                danger
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        record.id,
+                                                        setIdToDelete,
+                                                        'delete'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
+                                        )}
                                     </Space>
                                 )
                             }

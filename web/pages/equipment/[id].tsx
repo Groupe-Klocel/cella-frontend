@@ -30,7 +30,6 @@ import { equipmentRoutes as itemRoutes } from 'modules/Equipment/Static/equipmen
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
-import { EquipmentDetailsHeader } from 'modules/Equipment/Elements/EquipmentDetailsHeader';
 import { EquipmentDetailsExtra } from 'modules/Equipment/Elements/EquipmentDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -77,7 +76,7 @@ const EquipmentPage: PageComponent = () => {
         routes: breadCrumb,
         onBackRoute: rootPath,
         actionsComponent:
-            data?.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
+            data?.status !== configs.EQUIPMENT_STATUS_CLOSED ? (
                 <Space>
                     {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                         <LinkButton

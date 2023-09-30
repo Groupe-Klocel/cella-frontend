@@ -44,6 +44,7 @@ import configs from '../../../common/configs.json';
 import { DeliveryDetailsExtra } from 'modules/Deliveries/Elements/DeliveryDetailsExtra';
 import moment from 'moment';
 import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -147,37 +148,50 @@ const DeliveryPage: PageComponent = () => {
     };
 
     // CUBING
+    const [isCubingLoading, setIsCubingLoading] = useState(false);
     const cubingDelivery = (deliveryId: string) => {
         Modal.confirm({
             title: t('messages:cubing-confirm'),
             onOk: async () => {
+                setIsCubingLoading(true);
                 const deliveries: Array<any> = [];
                 deliveries.push({ id: deliveryId });
 
-                const res = await fetch(`/api/preparation/cubing`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        deliveries: deliveries
-                    })
-                });
-
-                const response = await res.json();
-
-                if (res.ok) {
-                    // cubing success
-                    showSuccess(t('messages:success-cubing'));
-                    router.reload();
-                } else {
-                    if (response.error.is_error) {
-                        // specific error
-                        showError(t(`errors:${response.error.code}`));
-                    } else {
-                        // generic error
-                        showError(t('messages:error-cubing'));
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
                     }
+                `;
+
+                const variables = {
+                    functionName: 'K_customCubing',
+                    event: {
+                        deliveries: deliveries
+                    }
+                };
+
+                try {
+                    const cubingResult = await graphqlRequestClient.request(query, variables);
+                    if (cubingResult.executeFunction.status === 'ERROR') {
+                        showError(cubingResult.executeFunction.output);
+                    } else if (
+                        cubingResult.executeFunction.status === 'OK' &&
+                        cubingResult.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(t(`errors:${cubingResult.executeFunction.output.output.code}`));
+                        console.log('Backend_message', cubingResult.executeFunction.output.output);
+                    } else {
+                        showSuccess(t('messages:success-cubing'));
+                        router.reload();
+                    }
+                    setIsCubingLoading(false);
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                    setIsCubingLoading(false);
                 }
             },
             okText: t('messages:confirm'),
@@ -251,7 +265,10 @@ const DeliveryPage: PageComponent = () => {
                                 data?.status <= configs.DELIVERY_STATUS_TO_BE_ESTIMATED &&
                                 deliveryLines?.data?.deliveryLines &&
                                 deliveryLines?.data?.deliveryLines?.count > 0 ? (
-                                    <Button onClick={() => cubingDelivery(data?.id)}>
+                                    <Button
+                                        loading={isCubingLoading}
+                                        onClick={() => cubingDelivery(data?.id)}
+                                    >
                                         {t('actions:cubing')}
                                     </Button>
                                 ) : (

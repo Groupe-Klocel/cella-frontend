@@ -18,12 +18,6 @@
 mutation UpdateRoundAdvisedAddress($id: String!, $input: UpdateRoundAdvisedAddressInput!) {
     updateRoundAdvisedAddress(id: $id, input: $input) {
         id
-        articleId
-        article {
-            id
-            name
-            additionalDescription
-        }
         handlingUnitContentOutboundId
         handlingUnitContentOutbound {
             id
@@ -41,7 +35,6 @@ mutation UpdateRoundAdvisedAddress($id: String!, $input: UpdateRoundAdvisedAddre
             id
             reservation
         }
-        userTread
         created
         createdBy
         modified

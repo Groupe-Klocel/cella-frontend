@@ -96,7 +96,7 @@ const EditEquipmentDetail: FC<IEditEquipmentDetailProps> = ({ id }: IEditEquipme
                 ) : (
                     <>
                         <HeaderContent
-                            title={`${t('actions:edit')} ${t('common:equipment')} ${
+                            title={`${t('actions:edit')} ${t('common:equipment-detail')} ${
                                 data?.equipmentDetail?.equipment?.name
                             } - ${data?.equipmentDetail?.handlingUnitModel?.name}`}
                             routes={breadCrumb}

@@ -17,14 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead } from '@components';
+import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import useTranslation from 'next-translate/useTranslation';
-import { boxesRoutes } from 'modules/Boxes/Static/boxesRoutes';
+import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 import { META_DEFAULTS } from '@helpers';
-import { EditBoxLine } from 'modules/Boxes/PagesContainer/EditBoxLine';
+import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';
+import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -32,20 +33,43 @@ const EditBoxLinePage: PageComponent = () => {
     const { t } = useTranslation();
 
     const router = useRouter();
-    const { id } = router.query;
     const [data, setData] = useState<any>();
+    const { id } = router.query;
+
+    const boxDetailBreadCrumb = [
+        ...itemRoutes,
+        {
+            breadcrumbName: `${data?.handlingUnitOutbound_name}`,
+            path: '/boxes/' + data?.handlingUnitOutboundId
+        }
+    ];
+
+    const breadCrumb = [
+        ...boxDetailBreadCrumb,
+        {
+            breadcrumbName: `${t('common:line')} ${data?.lineNumber}`
+        }
+    ];
+
+    const pageTitle = `${data?.handlingUnitOutbound_name} - ${t('common:line')} ${
+        data?.lineNumber
+    }`;
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <EditBoxLine
+            <EditItemComponent
                 id={id!}
-                name={
-                    data?.handlingUnitContentOutbound_handlingUnitContent_handlingUnit_handlingUnitOutbounds_name +
-                    '-' +
-                    data?.handlingUnitContentOutbound_lineNumber
-                }
                 setData={setData}
+                dataModel={HandlingUnitContentOutboundModelV2}
+                headerComponent={
+                    <HeaderContent
+                        title={pageTitle}
+                        routes={breadCrumb}
+                        onBack={() => router.push(`/boxes/boxLine/${id}`)}
+                    />
+                }
+                routeAfterSuccess={`/boxes/boxLine/:id`}
             />
         </>
     );
