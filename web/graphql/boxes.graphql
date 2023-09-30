@@ -1,0 +1,243 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query GetAllBoxes(
+    $filters: HandlingUnitOutboundSearchFilters
+    $orderBy: [HandlingUnitOutboundOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+    $language: String
+) {
+    handlingUnitOutbounds(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+        language: $language
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            deliveryId
+            delivery {
+                name
+            }
+            handlingUnitModelId
+            handlingUnitModel {
+                name
+            }
+            preparationMode
+            preparationModeText
+            roundId
+            round {
+                name
+            }
+            handlingUnit {
+                id
+                name
+                stockOwnerId
+                stockOwner {
+                    name
+                }
+                status
+                statusText
+                warehouseCode
+            }
+            createdBy
+            created
+            modifiedBy
+            modified
+            extras
+        }
+    }
+}
+
+query GetBoxById($id: String!) {
+    handlingUnitOutbound(id: $id) {
+        id
+        handlingUnit {
+            id
+            name
+            stockOwnerId
+            stockOwner {
+                name
+            }
+            status
+            statusText
+            warehouseCode
+        }
+        deliveryId
+        delivery {
+            name
+        }
+        handlingUnitModelId
+        handlingUnitModel {
+            name
+        }
+        preparationMode
+        preparationModeText
+        roundId
+        round {
+            name
+        }
+        carrierId
+        carrier {
+            name
+        }
+        carrierService
+        carrierBox
+        loadId
+        load {
+            name
+        }
+        finalWeight
+        toBeChecked
+        comment
+        created
+        createdBy
+        modified
+        modifiedBy
+        extras
+    }
+}
+
+query GetBoxIds(
+    $filters: HandlingUnitOutboundSearchFilters
+    $orderBy: [HandlingUnitOutboundOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    handlingUnitOutbounds(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            deliveryId
+            delivery {
+                name
+            }
+            handlingUnitModelId
+            handlingUnitModel {
+                name
+            }
+            preparationMode
+            preparationModeText
+            roundId
+            round {
+                name
+            }
+            handlingUnit {
+                id
+                name
+                stockOwnerId
+                stockOwner {
+                    name
+                }
+                status
+                statusText
+                warehouseCode
+            }
+        }
+    }
+}
+
+mutation CreateBox($input: CreateHandlingUnitOutboundInput!) {
+    createHandlingUnitOutbound(input: $input) {
+        id
+        handlingUnit {
+            id
+            name
+        }
+    }
+}
+
+mutation DeleteBox($id: String!) {
+    deleteHandlingUnitOutbound(id: $id)
+}
+
+# mutation ExportBoxes(
+#     $format: ExportFormat
+#     $compression: ExportCompression
+#     $separator: String
+#     $orderBy: [BoxOrderByCriterion!]
+#     $filters: BoxExportFilters
+# ) {
+#     exportBoxes(
+#         format: $format
+#         compression: $compression
+#         separator: $separator
+#         orderBy: $orderBy
+#         filters: $filters
+#     ) {
+#         url
+#     }
+# }
+
+# mutation RenderDocument($templateFilename: String!, $context: JSON!) {
+#     renderDocument(templateFilename: $templateFilename, context: $context) {
+#         __typename
+#         ... on RenderedDocument {
+#             url
+#         }
+#         ... on TemplateDoesNotExist {
+#             message
+#         }
+#         ... on TemplateError {
+#             message
+#         }
+#         ... on MissingContext {
+#             message
+#         }
+#     }
+# }
+
+mutation UpdateBox($id: String!, $input: UpdateHandlingUnitOutboundInput!) {
+    updateHandlingUnitOutbound(id: $id, input: $input) {
+        id
+        handlingUnit {
+            id
+            name
+        }
+    }
+}
+
+query getBoxesStatusParams {
+    listParametersForAScope(scope: "status") {
+        id
+        scope
+        code
+        text
+    }
+}
+
+query getBoxesPreparationModesParams {
+    listParametersForAScope(scope: "preparation_mode") {
+        id
+        scope
+        code
+        text
+    }
+}

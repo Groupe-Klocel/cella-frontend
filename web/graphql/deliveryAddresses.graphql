@@ -1,0 +1,254 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query GetAllDeliveryAddresses(
+    $filters: DeliveryAddressSearchFilters
+    $orderBy: [DeliveryAddressOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    deliveryAddresses(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            deliveryId
+            delivery {
+                name
+            }
+            category
+            categoryText
+            contactName
+            contactCivility
+            contactFirstName
+            contactLastName
+            contactPhone
+            contactMobile
+            contactEmail
+            contactLanguage
+            entityName
+            entityAddress1
+            entityAddress2
+            entityAddress3
+            entityStreetNumber
+            entityPostCode
+            entityCity
+            entityState
+            entityDistrict
+            entityCountry
+            entityCountryCode
+            entityVatCode
+            entityEoriCode
+            entityAccountingCode
+            entityIdentificationNumber
+            entityLanguage
+            entityDeliveryPointNumber
+            category
+            thirdPartyId
+            thirdPartyAddressId
+            thirdPartyAddressContactId
+            reference1
+            reference2
+            reference3
+            created
+            createdBy
+            modified
+            modifiedBy
+        }
+    }
+}
+
+query GetDeliveryAddressById($id: String!) {
+    deliveryAddress(id: $id) {
+        id
+        deliveryId
+        delivery {
+            name
+        }
+        category
+        categoryText
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactEmail
+        contactLanguage
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        category
+        thirdPartyId
+        thirdPartyAddressId
+        thirdPartyAddressContactId
+        reference1
+        reference2
+        reference3
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation CreateDeliveryAddress($input: CreateDeliveryAddressInput!) {
+    createDeliveryAddress(input: $input) {
+        id
+        deliveryId
+        delivery {
+            name
+        }
+        category
+        categoryText
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactEmail
+        contactLanguage
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        category
+        thirdPartyId
+        thirdPartyAddressId
+        thirdPartyAddressContactId
+        reference1
+        reference2
+        reference3
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation DeleteDeliveryAddress($id: String!) {
+    deleteDeliveryAddress(id: $id)
+}
+
+mutation UpdateDeliveryAddress($id: String!, $input: UpdateDeliveryAddressInput!) {
+    updateDeliveryAddress(id: $id, input: $input) {
+        id
+        deliveryId
+        delivery {
+            name
+        }
+        category
+        categoryText
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactEmail
+        contactLanguage
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        category
+        thirdPartyId
+        thirdPartyAddressId
+        thirdPartyAddressContactId
+        reference1
+        reference2
+        reference3
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+query GetDeliveryAddressIds(
+    $filters: DeliveryAddressSearchFilters
+    $orderBy: [DeliveryAddressOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    deliveryAddresses(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            deliveryId
+            delivery {
+                name
+            }
+            category
+            categoryText
+        }
+    }
+}

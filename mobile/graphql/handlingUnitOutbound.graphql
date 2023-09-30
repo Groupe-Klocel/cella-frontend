@@ -1,0 +1,108 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query GetAllBoxes(
+    $filters: HandlingUnitOutboundSearchFilters
+    $orderBy: [HandlingUnitOutboundOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+    $language: String
+) {
+    handlingUnitOutbounds(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+        language: $language
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            status
+            statusText
+            preparationMode
+            preparationModeText
+            theoriticalWeight
+            carrier {
+                id
+                name
+            }
+            carrierShippingMode {
+                id
+                toBePalletized
+            }
+            delivery {
+                id
+                name
+            }
+            handlingUnitModel {
+                id
+                name
+            }
+            round {
+                id
+                name
+            }
+            load {
+                id
+                name
+            }
+            handlingUnit {
+                id
+                name
+                type
+                typeText
+                stockOwnerId
+                stockOwner {
+                    name
+                }
+                status
+                statusText
+                warehouseCode
+                parentHandlingUnitId
+            }
+            handlingUnitContentOutbounds {
+                id
+                lineNumber
+                status
+                statusText
+                pickedQuantity
+                quantityToBePicked
+                pickingLocation {
+                    id
+                    name
+                }
+                handlingUnitContent {
+                    id
+                    articleId
+                    article {
+                        name
+                        description
+                    }
+                }
+            }
+            createdBy
+            created
+            modifiedBy
+            modified
+            extras
+        }
+    }
+}

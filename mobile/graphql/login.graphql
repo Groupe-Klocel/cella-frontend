@@ -1,0 +1,52 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+mutation WarehouseLogin($username: String!, $password: String!, $warehouseId: ID!) {
+    warehouseLogin(username: $username, password: $password, warehouseId: $warehouseId) {
+        accessToken
+    }
+}
+
+mutation IntegratorLogin($email: String!, $password: String!, $integratorId: ID!) {
+    integratorLogin(email: $email, password: $password, integratorId: $integratorId) {
+        accessToken
+    }
+}
+
+mutation ResetPassword($email: String!, $callbackUrl: String!) {
+    resetPassword(email: $email, callbackUrl: $callbackUrl) {
+        __typename
+        ... on ResetPasswordSuccess {
+            message
+        }
+        ... on ResetPasswordFailure {
+            message
+        }
+    }
+}
+
+mutation ChangePassword($token: String!, $password: String!, $password2: String!) {
+    changePassword(token: $token, password: $password, password2: $password2) {
+        __typename
+        ... on ChangePasswordFailure {
+            message
+        }
+        ... on ChangePasswordSuccess {
+            message
+        }
+    }
+}

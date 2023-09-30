@@ -1,0 +1,153 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query SimpleGetAllBLocks {
+    blocks {
+        results {
+            id
+            name
+        }
+    }
+}
+
+query SimpleGetAllBuildings {
+    buildings {
+        results {
+            id
+            name
+        }
+    }
+}
+
+query getBlockLevelsParams {
+    listParametersForAScope(scope: "block_level") {
+        id
+        scope
+        code
+        text
+    }
+}
+
+query GetAllBlocks(
+    $filters: BlockSearchFilters
+    $orderBy: [BlockOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    blocks(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            building {
+                name
+            }
+            name
+            created
+            createdBy
+            modified
+            modifiedBy
+            moveable
+            bulk
+            comment
+            level
+            blockGroup
+        }
+    }
+}
+
+query GetBlockById($id: String!) {
+    block(id: $id) {
+        id
+        building {
+            name
+        }
+        name
+        created
+        createdBy
+        modified
+        modifiedBy
+        moveable
+        bulk
+        comment
+        level
+        blockGroup
+    }
+}
+
+query GetBlockIds(
+    $filters: BlockSearchFilters
+    $orderBy: [BlockOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    blocks(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            created
+            createdBy
+            modified
+            modifiedBy
+            moveable
+            bulk
+            comment
+            level
+            blockGroup
+        }
+    }
+}
+
+mutation CreateBlock($input: CreateBlockInput!) {
+    createBlock(input: $input) {
+        id
+        name
+        created
+        createdBy
+        modified
+        modifiedBy
+        moveable
+        bulk
+        comment
+        level
+        blockGroup
+    }
+}
+
+mutation DeleteBlock($id: String!) {
+    deleteBlock(id: $id)
+}
+
+mutation UpdateBlock($id: String!, $input: UpdateBlockInput!) {
+    updateBlock(id: $id, input: $input) {
+        id
+        name
+        created
+        createdBy
+        modified
+        modifiedBy
+        moveable
+        bulk
+        comment
+        level
+        blockGroup
+    }
+}

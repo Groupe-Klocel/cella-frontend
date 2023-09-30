@@ -1,0 +1,233 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query GetAllDeliveries(
+    $filters: DeliverySearchFilters
+    $orderBy: [DeliveryOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    deliveries(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            stockOwnerId
+            stockOwner {
+                id
+                name
+            }
+            name
+            status
+            type
+            priority
+            toBePalletized
+            cubingResult
+            equipmentId
+            equipment {
+                id
+                name
+            }
+            orderDate
+            expectedDeliveryDate
+            carrierService
+            carrierImposed
+            printDeliveryNote
+            comment
+            printLanguage
+            codPaymentMode
+            codAmount
+            codCurrency
+            transportationAmount
+            invoiceReference
+            invoiceDevise
+            invoiceDiscount
+            invoiceTotalIncludingTaxes
+            invoiceTotalExcludingTaxes
+            invoiceShipping
+            carrierSpecificInfo1
+            carrierSpecificInfo2
+            extendDeliveryInformations
+            companyOrigin
+            extras
+            created
+            createdBy
+            modified
+            modifiedBy
+        }
+    }
+}
+
+query GetDeliveryById($id: String!) {
+    delivery(id: $id) {
+        id
+        stockOwnerId
+        stockOwner {
+            id
+            name
+        }
+        name
+        status
+        type
+        priority
+        toBePalletized
+        cubingResult
+        equipmentId
+        equipment {
+            id
+            name
+        }
+        orderDate
+        expectedDeliveryDate
+        carrierService
+        carrierImposed
+        printDeliveryNote
+        comment
+        printLanguage
+        codPaymentMode
+        codAmount
+        codCurrency
+        transportationAmount
+        invoiceReference
+        invoiceDevise
+        invoiceDiscount
+        invoiceTotalIncludingTaxes
+        invoiceTotalExcludingTaxes
+        invoiceShipping
+        carrierSpecificInfo1
+        carrierSpecificInfo2
+        extendDeliveryInformations
+        companyOrigin
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation CreateDelivery($input: CreateDeliveryInput!) {
+    createDelivery(input: $input) {
+        id
+        stockOwnerId
+        name
+        status
+        type
+        priority
+        toBePalletized
+        cubingResult
+        equipmentId
+        orderDate
+        expectedDeliveryDate
+        carrierService
+        carrierImposed
+        printDeliveryNote
+        comment
+        printLanguage
+        codPaymentMode
+        codAmount
+        codCurrency
+        transportationAmount
+        invoiceReference
+        invoiceDevise
+        invoiceDiscount
+        invoiceTotalIncludingTaxes
+        invoiceTotalExcludingTaxes
+        invoiceShipping
+        carrierSpecificInfo1
+        carrierSpecificInfo2
+        extendDeliveryInformations
+        companyOrigin
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation DeleteDelivery($id: String!) {
+    deleteDelivery(id: $id)
+}
+
+mutation UpdateDelivery($id: String!, $input: UpdateDeliveryInput!) {
+    updateDelivery(id: $id, input: $input) {
+        id
+        stockOwnerId
+        name
+        status
+        type
+        priority
+        toBePalletized
+        cubingResult
+        equipmentId
+        orderDate
+        expectedDeliveryDate
+        carrierService
+        carrierImposed
+        printDeliveryNote
+        comment
+        printLanguage
+        codPaymentMode
+        codAmount
+        codCurrency
+        transportationAmount
+        invoiceReference
+        invoiceDevise
+        invoiceDiscount
+        invoiceTotalIncludingTaxes
+        invoiceTotalExcludingTaxes
+        invoiceShipping
+        carrierSpecificInfo1
+        carrierSpecificInfo2
+        extendDeliveryInformations
+        companyOrigin
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+query GetDeliveryIds(
+    $filters: DeliverySearchFilters
+    $orderBy: [DeliveryOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    deliveries(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            stockOwnerId
+            status
+        }
+    }
+}
+
+mutation CancelDelivery($id: String!) {
+    softDeleteDelivery(id: $id)
+}
+
+mutation bulkUpdateDeliveries($inputs: UpdateDeliveryInput!, $deliveriesId: [String!]!) {
+    bulkUpdateDeliveries(inputs: $inputs, deliveriesId: $deliveriesId)
+}
