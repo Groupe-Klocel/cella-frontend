@@ -41,5 +41,6 @@
     "PURCHASEORDERLINE-000301": "Suppression impossible: cette ligne a déjà une quantité reçue",
     "PURCHASEORDERLINE-000302": "Suppression impossible: cette ligne a une quantité réservée",
     "PURCHASEORDERLINE-000333": "Vous ne pouvez pas effectuer cette action sur une ligne de commande fournisseur de type L3",
-    "PURCHASEORDERLINE-000777": "Vous ne pouvez pas effectuer cette action sur une ligne de commande avec ce statut"
+    "PURCHASEORDERLINE-000777": "Vous ne pouvez pas effectuer cette action sur une ligne de commande avec ce statut",
+    "ROUND-000130": "Désactivation impossible : au moins une ramasse est associée à cet élément"
 }

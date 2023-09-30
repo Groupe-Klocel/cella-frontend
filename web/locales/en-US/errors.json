@@ -41,5 +41,6 @@
     "PURCHASEORDERLINE-000301": "Delete impossible: this line already has some received quantity",
     "PURCHASEORDERLINE-000302": "Delete impossible: this line has some reserved quantity",
     "PURCHASEORDERLINE-000333": "You cannot perform this action on a L3 type purchase order line",
-    "PURCHASEORDERLINE-000777": "You cannot perform this action on purchase order line with this status"
+    "PURCHASEORDERLINE-000777": "You cannot perform this action on purchase order line with this status",
+    "ROUND-000130": "Delete impossible: at least one round associated with this item"
 }
