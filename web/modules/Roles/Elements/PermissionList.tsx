@@ -37,6 +37,7 @@ import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { useRouter } from 'next/router';
 
 export interface IPermissionListProps {
+    tables: any;
     searchCriteria?: any;
     setEnableUpdate?: any;
     setUpdatedRows?: any;
@@ -45,6 +46,7 @@ export interface IPermissionListProps {
 }
 
 const PermissionList = ({
+    tables,
     searchCriteria,
     setEnableUpdate,
     setUpdatedRows,
@@ -65,7 +67,7 @@ const PermissionList = ({
         itemsPerPage: DEFAULT_ITEMS_PER_PAGE
     });
 
-    const { isLoading, data, error } = useGetPermissions(
+    const { isLoading, data, error, refetch } = useGetPermissions(
         searchCriteria,
         pagination.current,
         pagination.itemsPerPage,
@@ -85,15 +87,14 @@ const PermissionList = ({
     useEffect(() => {
         // Initialization of Rows
         const rows: Row[] = [];
-
-        Object.values(Table).forEach((table) => {
-            const row: Row = { table: t(table.toLowerCase()) };
+        Object.values(tables).forEach((table: any) => {
+            const row: Row = { table: table.text, key: table.code };
 
             Object.keys(ModeEnum).forEach((mode) => {
                 row[mode.toLowerCase()] = false;
             });
 
-            if (row.table != 'integrator' && row.table != 'integrator_user') rows.push(row);
+            rows.push(row);
         });
 
         // For pagination
@@ -108,7 +109,7 @@ const PermissionList = ({
         // Set Rows values
         data?.permissions?.results.forEach((permission) => {
             Object.values(rows).forEach((row: any) => {
-                if (permission.table == row.table) {
+                if (permission.table == row.key) {
                     row[permission.mode] = true;
                 }
             });
@@ -123,10 +124,10 @@ const PermissionList = ({
         Object.values(rows).forEach((row: any) => {
             row[key] = state;
         });
-        setRows(rows);
         if (setEnableUpdate && warehouseId) setEnableUpdate(true);
         if (setUpdatedRows) setUpdatedRows(rows);
         setUnsavedChanges(true);
+        refetch();
     }
 
     // Row Switch onChange
@@ -137,10 +138,10 @@ const PermissionList = ({
                 row[key] = e;
             }
         });
-        setRows(rows);
         if (setEnableUpdate && warehouseId) setEnableUpdate(true);
         if (setUpdatedRows) setUpdatedRows(rows);
         setUnsavedChanges(true);
+        refetch();
     }
 
     // Set Columns

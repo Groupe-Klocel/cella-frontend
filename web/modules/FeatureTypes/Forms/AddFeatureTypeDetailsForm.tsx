@@ -69,6 +69,9 @@ export const AddFeatureTypeDetailsForm = () => {
         }
     }, [featureCodesList]);
     useEffect(() => {
+        console.log('SCH');
+        console.log(parameterId);
+        console.log(featureTypeById);
         if (featureTypeById) {
             const formData = form.getFieldsValue(true);
             //handle translations from parameters:

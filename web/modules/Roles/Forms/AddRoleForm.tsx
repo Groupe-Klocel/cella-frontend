@@ -33,7 +33,7 @@ import { useAppState } from 'context/AppContext';
 
 export const AddRoleForm = () => {
     const { t } = useTranslation();
-    const [input, setInput] = useState(true);
+    const [whOnly, setWhOnly] = useState(true);
     const { graphqlRequestClient } = useAuth();
     const { user } = useAppState();
     const router = useRouter();
@@ -125,6 +125,7 @@ export const AddRoleForm = () => {
         if (createLoading) {
             showInfo(t('messages:info-create-wip'));
         }
+        form.setFieldsValue({ warehouseOnly: true });
     }, [createLoading]);
 
     return (
@@ -152,9 +153,9 @@ export const AddRoleForm = () => {
                 </Form.Item>
                 <Form.Item name="warehouseOnly" label={warehouseOnly}>
                     <Switch
-                        checked={input}
+                        checked={whOnly}
                         onChange={() => {
-                            setInput(!input);
+                            setWhOnly(!whOnly);
                         }}
                     />
                 </Form.Item>

@@ -12,6 +12,7 @@
     "CONTENT-000130": "Suppression impossible : au moins un contenu est associé à cet élément",
     "CUBING-000100": "Erreur lors du colisage de cette livraison",
     "CONFIG-000001": "Vous n'êtes pas autorisé à modifier une configuration système",
+    "CYCLECOUNT-000777": "Vous ne pouvez pas effectuer cette action sur un inventaire avec ce statut",
     "DB-000100": "Elément non trouvé",
     "DB-000110": "Erreur lors de l'écriture en base de données",
     "DB-000111": "Certains champs sont invalides",

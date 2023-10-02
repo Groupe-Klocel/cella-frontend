@@ -82,8 +82,6 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     const [equipmentWithPriorities, setEquipmentWithPriorities] = useState<any>();
     const [maxPriority, setMaxPriority] = useState<number>(details.priority);
 
-    console.log('DLA-det', details);
-
     // TYPED SAFE ALL
     const [form] = Form.useForm();
 

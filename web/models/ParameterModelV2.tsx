@@ -67,7 +67,7 @@ export const ParameterModelV2: ModelType = {
             isExcludedFromDetail: false,
             detailGroup: null,
             link: null,
-            addEditFormat: 'Dropdown',
+            addEditFormat: 'String',
             addEditStep: null,
             maxLength: null,
             displayName: null,
@@ -223,6 +223,7 @@ export const ParameterModelV2: ModelType = {
             isMandatory: false,
             minRule: null,
             maxRule: null,
+            defaultSort: 'descending',
             config: null,
             param: null,
             optionTable: null

@@ -31,6 +31,7 @@ import {
     Table,
     UpdateRoleMutation,
     UpdateRoleMutationVariables,
+    useListConfigsForAScopeQuery,
     useUpdateRoleMutation
 } from 'generated/graphql';
 import { PermissionList } from '../Elements/PermissionList';
@@ -101,7 +102,6 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
             ) => {
                 if (!softDeleteLoading) {
                     showSuccess(t('messages:success-updated'));
-                    router.reload();
                 }
             },
             onError: (err) => {
@@ -129,7 +129,7 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
             Object.keys(row).forEach((mode: any) => {
                 if (row[mode] === true) {
                     updatedPermissions.push({
-                        table: row.table.toUpperCase(),
+                        table: row.key.toUpperCase(),
                         mode: mode.toUpperCase()
                     });
                 }
@@ -140,6 +140,20 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
             permissions: updatedPermissions
         });
     };
+
+    //To render Simple tables list
+    const tablesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'object_name',
+        language: router.locale
+    });
+
+    const [tables, setTables] = useState<any>();
+    useEffect(() => {
+        if (tablesList) {
+            tablesList?.data?.listConfigsForAScope.sort((a, b) => a.text.localeCompare(b.text));
+            setTables(tablesList?.data?.listConfigsForAScope);
+        }
+    }, [tablesList.data]);
 
     return (
         <>
@@ -177,13 +191,16 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
                                 </>
                             }
                         />
-                        <PermissionList
-                            searchCriteria={{ roleId: roleId }}
-                            setEnableUpdate={setEnableUpdate}
-                            setUpdatedRows={setUpdatedRows}
-                            setUnsavedChanges={setUnsavedChanges}
-                            warehouseId={roleData.data?.roles?.results[0].warehouseId}
-                        />
+                        {tables && (
+                            <PermissionList
+                                searchCriteria={{ roleId: roleId }}
+                                setEnableUpdate={setEnableUpdate}
+                                setUpdatedRows={setUpdatedRows}
+                                setUnsavedChanges={setUnsavedChanges}
+                                warehouseId={roleData.data?.roles?.results[0].warehouseId}
+                                tables={tables!}
+                            />
+                        )}
                     </>
                 )
             ) : (

@@ -389,8 +389,7 @@ const AddConfigParamComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps
         <>
             <StyledPageContent>
                 {permissions ? (
-                    !modes.includes(ModeEnum.Create) ||
-                    props.dataModel.tableName == Table.Config ? (
+                    !modes.includes(ModeEnum.Create) ? (
                         <>
                             <Alert
                                 message={t('messages:error')}
