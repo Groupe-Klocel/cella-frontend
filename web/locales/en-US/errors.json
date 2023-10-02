@@ -12,6 +12,7 @@
     "CONTENT-000130": "Delete impossible: at least one content associated with this item",
     "CUBING-000100": "Error detected during the cubing of this delivery",
     "CONFIG-000001": "You are not authorised to modify a system configuration",
+    "CYCLECOUNT-000777": "You cannot perform this action on cylcle count with this status",
     "DB-000100": "Element is not found",
     "DB-000110": "Error writing in database",
     "DB-000111": "Some fields are invalid",

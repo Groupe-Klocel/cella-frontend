@@ -310,7 +310,7 @@ const SideMenu: FC = () => {
                             <Link href="/cycle-counts">{t('cycle-counts')}</Link>
                         </Menu.Item>
                         <Menu.Item key="stock-management-cycle-counts-recommended">
-                            <Link href="/recommended">{t('recommended')}</Link>
+                            <Link href="/recommended-cycle-counts">{t('recommended')}</Link>
                         </Menu.Item>
                     </SubMenu>
                 ) : (
