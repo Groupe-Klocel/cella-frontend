@@ -85,7 +85,7 @@ export const EditBoxForm: FC<IEditBoxFormProps> = (props: IEditBoxFormProps) => 
         }
         const response = await res.json();
 
-        showSuccess(t('messages:success-update-data'));
+        showSuccess(t('messages:success-updated'));
         router.push(props.routeAfterSuccess.replace(':id', props.id));
     };
 
