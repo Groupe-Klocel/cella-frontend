@@ -278,9 +278,8 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
             .then(() => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
-                form.setFieldsValue({
-                    luIdStr: formData.logisticUnit
-                });
+                formData.luIdStr = formData.logisticUnit;
+                formData.status = configs.ARTICLE_LU_STATUS_IN_PROGRESS;
 
                 delete formData.articleName;
                 delete formData.stockOwnerName;
