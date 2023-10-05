@@ -97,66 +97,6 @@ const SideMenu: FC = () => {
                     <></>
                 )}
             </SubMenu>
-            <SubMenu icon={<AppstoreAddOutlined />} key="articles" title={t('articles')}>
-                {getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-articles">
-                        {' '}
-                        <Link href="/articles">{t('articles')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                <SubMenu key="articles-features" title={t('features')}>
-                    {getModesFromPermissions(permissions, Table.FeatureCode).includes(
-                        ModeEnum.Read
-                    ) ? (
-                        <Menu.Item key="articles-feature-codes">
-                            <Link href="/feature-codes">{t('feature-codes')}</Link>
-                        </Menu.Item>
-                    ) : (
-                        <></>
-                    )}
-                    {getModesFromPermissions(permissions, Table.FeatureTypeDetail).includes(
-                        ModeEnum.Read
-                    ) ? (
-                        <Menu.Item key="articles-feature-types">
-                            <Link href="/feature-types">{t('features-types')}</Link>
-                        </Menu.Item>
-                    ) : (
-                        <></>
-                    )}
-                </SubMenu>
-                {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-barcodes">
-                        <Link href="/barcodes">{t('barcodes')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-blacklisted-barcodes">
-                        <Link href="/blacklisted-barcodes">{t('blacklisted-barcodes')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.ArticleSet).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-sets">
-                        <Link href="/article-sets">{t('sets')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.LogisticUnit).includes(
-                    ModeEnum.Read
-                ) ? (
-                    <Menu.Item key="articles-logistic-unit-models">
-                        <Link href="/logistic-units">{t('logistic-unit-models')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-            </SubMenu>
             <SubMenu key="configuration" icon={<SettingOutlined />} title={t('configuration')}>
                 {getModesFromPermissions(permissions, Table.StockOwner).includes(ModeEnum.Read) ? (
                     <Menu.Item key="configuration-stock-owners">
@@ -260,6 +200,66 @@ const SideMenu: FC = () => {
                 {getModesFromPermissions(permissions, Table.Conversion).includes(ModeEnum.Read) ? (
                     <Menu.Item key="configuration-conversions">
                         <Link href="/conversions">{t('conversions')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+            </SubMenu>
+            <SubMenu icon={<AppstoreAddOutlined />} key="articles" title={t('articles')}>
+                {getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-articles">
+                        {' '}
+                        <Link href="/articles">{t('articles')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                <SubMenu key="articles-features" title={t('features')}>
+                    {getModesFromPermissions(permissions, Table.FeatureCode).includes(
+                        ModeEnum.Read
+                    ) ? (
+                        <Menu.Item key="articles-feature-codes">
+                            <Link href="/feature-codes">{t('feature-codes')}</Link>
+                        </Menu.Item>
+                    ) : (
+                        <></>
+                    )}
+                    {getModesFromPermissions(permissions, Table.FeatureTypeDetail).includes(
+                        ModeEnum.Read
+                    ) ? (
+                        <Menu.Item key="articles-feature-types">
+                            <Link href="/feature-types">{t('features-types')}</Link>
+                        </Menu.Item>
+                    ) : (
+                        <></>
+                    )}
+                </SubMenu>
+                {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-barcodes">
+                        <Link href="/barcodes">{t('barcodes')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-blacklisted-barcodes">
+                        <Link href="/blacklisted-barcodes">{t('blacklisted-barcodes')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.ArticleSet).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-sets">
+                        <Link href="/article-sets">{t('sets')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.LogisticUnit).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="articles-logistic-unit-models">
+                        <Link href="/logistic-units">{t('logistic-unit-models')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
