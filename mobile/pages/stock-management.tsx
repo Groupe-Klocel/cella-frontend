@@ -30,8 +30,8 @@ const menuItemDatas = [
         path: '/reception-movement'
     },
     {
-        title: 'menu:quantity-movement',
-        path: '/quantity-movement'
+        title: 'menu:content-movement',
+        path: '/content-movement'
     },
     {
         title: 'menu:pallet-movement',

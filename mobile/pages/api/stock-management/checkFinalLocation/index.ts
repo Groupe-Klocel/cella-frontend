@@ -51,7 +51,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     };
 
     let checkFinalLocation: any | null;
-    if (req.body.movementType == 'quantityMvt') {
+    if (req.body.movementType == 'contentMvt') {
         checkFinalLocation = gql`
             query checkFinalLocationQuantity(
                 $originLocationId: String!

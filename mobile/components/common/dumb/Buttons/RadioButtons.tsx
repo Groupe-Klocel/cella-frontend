@@ -87,7 +87,7 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                     type="primary"
                     hidden={locButtonTrigger ? false : true}
                     onClick={() => {
-                        output?.setHeaderContent(!input?.headerContent);
+                        output?.headerContent.setHeaderContent(!input?.headerContent);
                         output?.setShowSimilarLocations(!input?.showSimilarLocations);
                         setEmptyButton(!emptyButton);
                         setBackTrigger(!backTrigger);

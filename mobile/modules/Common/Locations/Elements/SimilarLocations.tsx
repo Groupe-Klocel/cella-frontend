@@ -23,6 +23,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useRouter } from 'next/router';
+import parameters from '../../../../../common/parameters.json';
 
 export interface ISimilarLocationsProps {
     articleId: string;
@@ -58,7 +59,8 @@ export const SimilarLocations = ({ articleId, chosenContentId }: ISimilarLocatio
                 .filter(
                     (e: any) =>
                         e.id !== chosenContentId &&
-                        e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_STOCK
+                        e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_STOCK &&
+                        e.handlingUnit.category === parameters.HANDLING_UNIT_CATEGORY_STOCK
                 )
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {

@@ -19,38 +19,32 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useBoxes, useLocationIds } from '@helpers';
+import { useHandlingUnits } from '@helpers';
 import { LsIsSecured } from '@helpers';
-import { useRouter } from 'next/router';
+import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
+import graphqlRequestClient from 'graphql/graphqlRequestClient';
 
-export interface IScanLocationProps {
+export interface IScanHandlingUnitProps {
     process: string;
     stepNumber: number;
     label: string;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
-    showEmptyLocations?: any;
-    showSimilarLocations?: any;
     checkComponent: any;
-    headerContent?: any;
 }
 
-export const ScanLocation = ({
+export const ScanHandlingUnit = ({
     process,
     stepNumber,
     label,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    showEmptyLocations,
-    showSimilarLocations,
-    checkComponent,
-    headerContent
-}: IScanLocationProps) => {
+    checkComponent
+}: IScanHandlingUnitProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
-    const router = useRouter();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -64,30 +58,23 @@ export const ScanLocation = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    // ScanLocation-2: launch query
-    const locationInfos = useLocationIds(
-        { barcode: `${scannedInfo}` },
-        1,
-        100,
-        null,
-        router.locale
-    );
-
-    //ScanLocation-3: manage information for persistence storage and front-end errors
-    useEffect(() => {
-        if (locationInfos.data) {
-            if (locationInfos.data.locations?.count !== 0) {
-                showEmptyLocations?.setShowEmptyLocations(false);
-                showSimilarLocations?.setShowSimilarLocations(false);
-            }
+    // ScanHandlingUnit-2: launch query
+    // const handlingUnitInfos = useHandlingUnits({ barcode: `${scannedInfo}` }, 1, 100, null);
+    const handlingUnitInfos = useGetHandlingUnitsQuery<Partial<GetHandlingUnitsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: { barcode: [`${scannedInfo}`] },
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 100
         }
-    }, [locationInfos]);
+    );
 
     const dataToCheck = {
         process,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        locationInfos,
+        handlingUnitInfos,
         trigger: { triggerRender, setTriggerRender },
         setResetForm
     };
@@ -102,10 +89,7 @@ export const ScanLocation = ({
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
-                    showEmptyLocations={showEmptyLocations}
-                    showSimilarLocations={showSimilarLocations}
                     resetForm={{ resetForm, setResetForm }}
-                    headerContent={headerContent}
                 ></ScanForm>
                 {checkComponent(dataToCheck)}
             </>
