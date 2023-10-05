@@ -19,38 +19,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useBoxes, useLocationIds } from '@helpers';
+import { useBoxes } from '@helpers';
 import { LsIsSecured } from '@helpers';
-import { useRouter } from 'next/router';
 
-export interface IScanLocationProps {
+export interface IScanEANorIDProps {
     process: string;
     stepNumber: number;
     label: string;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
-    showEmptyLocations?: any;
-    showSimilarLocations?: any;
     checkComponent: any;
-    headerContent?: any;
 }
 
-export const ScanLocation = ({
+export const ScanEANorID = ({
     process,
     stepNumber,
     label,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    showEmptyLocations,
-    showSimilarLocations,
-    checkComponent,
-    headerContent
-}: IScanLocationProps) => {
+    checkComponent
+}: IScanEANorIDProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
-    const router = useRouter();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -64,51 +56,26 @@ export const ScanLocation = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    // ScanLocation-2: launch query
-    const locationInfos = useLocationIds(
-        { barcode: `${scannedInfo}` },
-        1,
-        100,
-        null,
-        router.locale
-    );
-
-    //ScanLocation-3: manage information for persistence storage and front-end errors
-    useEffect(() => {
-        if (locationInfos.data) {
-            if (locationInfos.data.locations?.count !== 0) {
-                showEmptyLocations?.setShowEmptyLocations(false);
-                showSimilarLocations?.setShowSimilarLocations(false);
-            }
-        }
-    }, [locationInfos]);
-
     const dataToCheck = {
         process,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        locationInfos,
         trigger: { triggerRender, setTriggerRender },
         setResetForm
     };
 
     return (
         <>
-            <>
-                <ScanForm
-                    process={process}
-                    stepNumber={stepNumber}
-                    label={label}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ ...buttons }}
-                    setScannedInfo={setScannedInfo}
-                    showEmptyLocations={showEmptyLocations}
-                    showSimilarLocations={showSimilarLocations}
-                    resetForm={{ resetForm, setResetForm }}
-                    headerContent={headerContent}
-                ></ScanForm>
-                {checkComponent(dataToCheck)}
-            </>
+            <ScanForm
+                process={process}
+                stepNumber={stepNumber}
+                label={label}
+                trigger={{ triggerRender, setTriggerRender }}
+                buttons={{ ...buttons }}
+                setScannedInfo={setScannedInfo}
+                resetForm={{ resetForm, setResetForm }}
+            ></ScanForm>
+            {checkComponent(dataToCheck)}
         </>
     );
 };

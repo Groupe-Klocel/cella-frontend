@@ -33,7 +33,10 @@ export interface IScanProps {
     buttons: { [label: string]: any };
     setScannedInfo: (value: string) => void;
     showEmptyLocations?: any;
+    showSimilarLocations?: any;
     resetForm: { [label: string]: any };
+    headerContent?: any;
+    levelOfBack?: number;
 }
 
 export const ScanForm = ({
@@ -44,7 +47,10 @@ export const ScanForm = ({
     buttons,
     setScannedInfo,
     showEmptyLocations,
-    resetForm: { resetForm, setResetForm }
+    showSimilarLocations,
+    resetForm: { resetForm, setResetForm },
+    headerContent,
+    levelOfBack
 }: IScanProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -58,6 +64,8 @@ export const ScanForm = ({
         setScannedInfo(values.scannedItem);
     };
 
+    console.log(levelOfBack);
+
     // Scan-2: manage form reset in case of error
     useEffect(() => {
         if (resetForm) {
@@ -70,6 +78,21 @@ export const ScanForm = ({
     //Scan-1b: handle back to previous step settings
     const onBack = () => {
         setTriggerRender(!triggerRender);
+        if (levelOfBack == 2) {
+            for (
+                let i =
+                    storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`]
+                        .previousStep;
+                i <= stepNumber;
+                i++
+            ) {
+                delete storedObject[`step${i}`]?.data;
+            }
+            storedObject.currentStep =
+                storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
+            storage.set(process, JSON.stringify(storedObject));
+        }
+
         for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
             delete storedObject[`step${i}`]?.data;
         }
@@ -113,10 +136,13 @@ export const ScanForm = ({
                 <RadioButtons
                     input={{
                         ...buttons,
+                        showSimilarLocations: showSimilarLocations?.showSimilarLocations,
                         showEmptyLocations: showEmptyLocations?.showEmptyLocations
                     }}
                     output={{
                         setShowEmptyLocations: showEmptyLocations?.setShowEmptyLocations,
+                        setShowSimilarLocations: showSimilarLocations?.setShowSimilarLocations,
+                        headerContent: headerContent ? headerContent : undefined,
                         onBack
                     }}
                 ></RadioButtons>
