@@ -74,6 +74,7 @@ const ArticleInfo: PageComponent = () => {
                 ')';
             object[t('common:article-description')] =
                 chosenArticleLuBarcode.article.additionalDescription;
+            object[t('common:barcode')] = chosenArticleLuBarcode.barcode.name;
         }
         setOriginDisplay(object);
         setFinalDisplay(object);

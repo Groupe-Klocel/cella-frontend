@@ -23,6 +23,7 @@ import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@componen
 import { showError, useLocationIds, LsIsSecured } from '@helpers';
 import { Form, Input } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 export interface IScanLocationFormProps {
@@ -52,6 +53,7 @@ export const ScanLocationForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
+    const router = useRouter();
 
     // TYPED SAFE ALL
     useEffect(() => {
@@ -72,7 +74,13 @@ export const ScanLocationForm = ({
     };
 
     // ScanLocation-2: launch query
-    const locationInfos = useLocationIds({ barcode: `${locationBarcode}` }, 1, 100, null);
+    const locationInfos = useLocationIds(
+        { barcode: `${locationBarcode}` },
+        1,
+        100,
+        null,
+        router.locale
+    );
 
     //ScanLocation-3: manage information for persistence storage and front-end errors
     useEffect(() => {

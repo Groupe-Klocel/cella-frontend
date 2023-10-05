@@ -66,7 +66,7 @@ const BoxInfo: PageComponent = () => {
             object[t('common:order_abbr')] = infoBox.delivery.name;
             object[t('common:status')] = infoBox.statusText;
             object[t('common:stock-owner_abbr')] = infoBox.handlingUnit.stockOwner.name;
-            object[t('common:handling-unit-model')] = infoBox.HandlingUnitModel.name;
+            object[t('common:handling-unit-model')] = infoBox.handlingUnitModel.name;
         }
         setOriginDisplay(object);
         setFinalDisplay(object);

@@ -23,6 +23,7 @@ import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@componen
 import { showError, useArticleLuBarcodeIds, useHandlingUnitContents, LsIsSecured } from '@helpers';
 import { Form, Input } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 export interface IScanArticleByLocationProps {
@@ -47,6 +48,7 @@ export const ScanArticleByLocationForm = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [form] = Form.useForm();
+    const router = useRouter();
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -102,7 +104,8 @@ export const ScanArticleByLocationForm = ({
         },
         1,
         100,
-        null
+        null,
+        router.locale
     );
 
     //ScanArticleByLocation-5: send the articleLuBarcode value when specified contents are not empty or show error

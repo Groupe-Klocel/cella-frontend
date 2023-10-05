@@ -20,8 +20,15 @@ query GetAllLocations(
     $orderBy: [LocationOrderByCriterion!]
     $page: Int!
     $itemsPerPage: Int!
+    $language: String = "en"
 ) {
-    locations(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+    locations(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+        language: $language
+    ) {
         count
         itemsPerPage
         totalPages
@@ -76,8 +83,15 @@ query GetLocationIds(
     $orderBy: [LocationOrderByCriterion!]
     $page: Int!
     $itemsPerPage: Int!
+    $language: String = "en"
 ) {
-    locations(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+    locations(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+        language: $language
+    ) {
         count
         itemsPerPage
         totalPages

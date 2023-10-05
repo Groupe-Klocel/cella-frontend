@@ -236,7 +236,6 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     };
 
     const onFinish = () => {
-        console.log('IKI2', form.getFieldsValue(true));
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);

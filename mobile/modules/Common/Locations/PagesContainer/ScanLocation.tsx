@@ -21,6 +21,7 @@ import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { useBoxes, useLocationIds } from '@helpers';
 import { LsIsSecured } from '@helpers';
+import { useRouter } from 'next/router';
 
 export interface IScanLocationProps {
     process: string;
@@ -45,6 +46,7 @@ export const ScanLocation = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
+    const router = useRouter();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -59,7 +61,13 @@ export const ScanLocation = ({
     }, []);
 
     // ScanLocation-2: launch query
-    const locationInfos = useLocationIds({ barcode: `${scannedInfo}` }, 1, 100, null);
+    const locationInfos = useLocationIds(
+        { barcode: `${scannedInfo}` },
+        1,
+        100,
+        null,
+        router.locale
+    );
 
     const dataToCheck = {
         process,

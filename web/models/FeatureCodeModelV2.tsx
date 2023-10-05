@@ -71,7 +71,7 @@ export const FeatureCodeModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: 'stockOwner',
-            isMandatory: true,
+            isMandatory: false,
             minRule: null,
             maxRule: null,
             config: null,
