@@ -18,9 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { showError, showInfo, useHandlingUnitModels, useStockOwnerIds } from '@helpers';
+import {
+    showError,
+    showInfo,
+    showSuccess,
+    useHandlingUnitModels,
+    useStockOwnerIds
+} from '@helpers';
 import { Button, Col, Form, InputNumber, Row, Select, Typography } from 'antd';
 import { useAuth } from 'context/AuthContext';
+import { useListParametersForAScopeQuery } from 'generated/graphql';
+import { gql } from 'graphql-request';
 import { FormOptionType, idNameObjectType } from 'models/Models';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
@@ -30,43 +38,109 @@ const { Option } = Select;
 
 export const GenerateDummyHuForm = () => {
     const { t } = useTranslation('common');
+    const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [handlingUnitType, setHandlingUnitType] = useState<Array<FormOptionType>>();
+    const [printers, setPrinters] = useState<Array<FormOptionType>>();
+
+    // Get all handling unit types
+    const handlingUnitTypeList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'handling_unit_type'
+    });
+    useEffect(() => {
+        if (handlingUnitTypeList) {
+            const newHandlingUnitType: Array<FormOptionType> = [];
+
+            const cData = handlingUnitTypeList?.data?.listParametersForAScope;
+            if (cData) {
+                cData.forEach((item) => {
+                    newHandlingUnitType.push({ key: parseInt(item.code), text: item.text });
+                });
+                setHandlingUnitType(newHandlingUnitType);
+            }
+        }
+    }, [handlingUnitTypeList.data]);
+
+    // Get all handling unit types
+    const printerList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'printer'
+    });
+    useEffect(() => {
+        if (printerList) {
+            const newPrinters: Array<FormOptionType> = [];
+
+            const cData = printerList?.data?.listParametersForAScope;
+            if (cData) {
+                cData.forEach((item) => {
+                    newPrinters.push({ key: item.code, text: item.text });
+                });
+                setPrinters(newPrinters);
+            }
+        }
+    }, [printerList.data]);
+
+    const [isGenerateDummyHULoading, setIsGenerateDummyHULoading] = useState(false);
+    // call generateDummyHu function
+    async function generateDummyHu(functionName: string, formData: any) {
+        setIsGenerateDummyHULoading(true);
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName,
+            event: {
+                input: formData
+            }
+        };
+
+        try {
+            const generateDummyHu_result = await graphqlRequestClient.request(query, variables);
+            if (generateDummyHu_result.executeFunction.status === 'ERROR') {
+                showError(generateDummyHu_result.executeFunction.output);
+            } else if (
+                generateDummyHu_result.executeFunction.status === 'OK' &&
+                generateDummyHu_result.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${generateDummyHu_result.executeFunction.output.output.code}`));
+                console.log(
+                    'Backend_message',
+                    generateDummyHu_result.executeFunction.output.output
+                );
+            } else {
+                console.log('generateDummyHu_result', generateDummyHu_result);
+                window.open(generateDummyHu_result.executeFunction.output.url, '_blank');
+            }
+            setIsGenerateDummyHULoading(false);
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            setIsGenerateDummyHULoading(false);
+        }
+    }
 
     // Call api to generate HUs
     const onFinish = () => {
         form.validateFields()
             .then(() => {
                 // Here make api call of something else
-                const { huNb } = form.getFieldsValue(true);
-                setIsLoading(true);
-                const fetchData = async () => {
-                    const res = await fetch(`/api/handling-units/dummy-hu-generator/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            huNb
-                        })
-                    });
-                    if (!res.ok) {
-                        setIsLoading(false);
-                        showError(t('messages:error-print-data'));
-                    }
-                    const response = await res.json();
-                    if (response.url) {
-                        setIsLoading(false);
-                        window.open(response.url, '_blank');
-                    } else {
-                        setIsLoading(false);
-                        showError(t('messages:error-print-data'));
-                    }
-                    form.resetFields();
-                };
-                fetchData();
+                const formData = form.getFieldsValue(true);
+                generateDummyHu('K_generateDummyHu', {
+                    type: formData.handlingUnitType,
+                    printer: formData.printer,
+                    huNb: formData.huNb,
+                    language: router.locale == 'en-US' ? 'en' : router.locale
+                });
             })
             .catch((err) => {
                 setIsLoading(false);
@@ -84,6 +158,34 @@ export const GenerateDummyHuForm = () => {
     return (
         <WrapperForm>
             <Form form={form} scrollToFirstError layout="vertical">
+                <Form.Item label={t('d:handlingUnitType')} name="handlingUnitType">
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:handlingUnitType')
+                        })}`}
+                    >
+                        {handlingUnitType?.map((huType: any) => (
+                            <Option key={huType.key} value={huType.key}>
+                                {huType.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:printer')} name="printer">
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:printer')
+                        })}`}
+                        allowClear
+                    >
+                        {printers?.map((printer: any) => (
+                            <Option key={printer.key} value={printer.key}>
+                                {printer.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
                 <Form.Item
                     label={t('nb-generate')}
                     name="huNb"
