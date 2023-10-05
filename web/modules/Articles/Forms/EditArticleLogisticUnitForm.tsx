@@ -136,7 +136,11 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
 
     // Retrieve Packagings list
     useEffect(() => {
-        if (handlingUnitModelData.data) {
+        if (
+            handlingUnitModelData.data &&
+            handlingUnitModelData?.data?.handlingUnitModels &&
+            handlingUnitModelData?.data?.handlingUnitModels?.count > 0
+        ) {
             const newIdOpts: Array<FormOptionType> = [];
             handlingUnitModelData.data.handlingUnitModels?.results.forEach(
                 ({ id, name, status }) => {
@@ -174,7 +178,11 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         }
 
         // if we select a new value, we fill the form
-        if (handlingUnitModelData.data) {
+        if (
+            handlingUnitModelData.data &&
+            handlingUnitModelData?.data?.handlingUnitModels &&
+            handlingUnitModelData?.data?.handlingUnitModels?.count > 0
+        ) {
             handlingUnitModelData.data.handlingUnitModels?.results.forEach((huModel: any) => {
                 if (
                     huModel.id == key &&
