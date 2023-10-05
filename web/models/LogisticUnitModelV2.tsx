@@ -132,7 +132,7 @@ export const LogisticUnitModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
-            isMandatory: true,
+            isMandatory: false,
             minRule: null,
             maxRule: null,
             config: null,
