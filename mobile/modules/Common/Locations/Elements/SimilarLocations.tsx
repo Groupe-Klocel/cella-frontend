@@ -22,6 +22,7 @@ import { useHandlingUnitContents } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
+import { useRouter } from 'next/router';
 
 export interface ISimilarLocationsProps {
     articleId: string;
@@ -30,6 +31,7 @@ export interface ISimilarLocationsProps {
 
 export const SimilarLocations = ({ articleId, chosenContentId }: ISimilarLocationsProps) => {
     const { t } = useTranslation();
+    const router = useRouter();
 
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
     //ENHANCEMENT: nbMaxLocations will be used to change according to a parameter
@@ -38,7 +40,7 @@ export const SimilarLocations = ({ articleId, chosenContentId }: ISimilarLocatio
         isLoading: huContentLoading,
         data: huContentData,
         error: huContentError
-    } = useHandlingUnitContents({ articleId: `${articleId}` }, 1, 100, null);
+    } = useHandlingUnitContents({ articleId: `${articleId}` }, 1, 100, null, router.locale);
 
     useEffect(() => {
         function compare(a: any, b: any) {
@@ -55,7 +57,8 @@ export const SimilarLocations = ({ articleId, chosenContentId }: ISimilarLocatio
             huContentData?.handlingUnitContents?.results
                 .filter(
                     (e: any) =>
-                        e.id !== chosenContentId && e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_STOCK
+                        e.id !== chosenContentId &&
+                        e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_STOCK
                 )
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {
@@ -69,7 +72,8 @@ export const SimilarLocations = ({ articleId, chosenContentId }: ISimilarLocatio
             huContentData?.handlingUnitContents?.results
                 .filter(
                     (e: any) =>
-                        e.id !== chosenContentId && e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_PICKING
+                        e.id !== chosenContentId &&
+                        e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_PICKING
                 )
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {

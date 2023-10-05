@@ -25,10 +25,10 @@ import useTranslation from 'next-translate/useTranslation';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const menuItemDatas = [
-    {
-        title: 'menu:round',
-        path: '/'
-    },
+    // {
+    //     title: 'menu:round',
+    //     path: '/'
+    // },
     {
         title: 'menu:box-preparation',
         path: '/box-preparation'

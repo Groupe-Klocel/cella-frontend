@@ -29,7 +29,7 @@ query GetLoadLines(
             id
             status
             loadId
-            loads {
+            load {
                 name
             }
             handlingUnitId
@@ -49,7 +49,7 @@ mutation CreateLoadLine($input: CreateLoadLineInput!) {
         modified
         modifiedBy
         loadId
-        loads {
+        load {
             name
         }
         handlingUnitId
