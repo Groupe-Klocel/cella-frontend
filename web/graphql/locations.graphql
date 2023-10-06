@@ -46,6 +46,10 @@ query GetAllLocations(
         results {
             id
             name
+            status
+            statusText
+            category
+            categoryText
             barcode
             aisle
             column
@@ -61,6 +65,9 @@ query GetAllLocations(
             comment
             baseUnitRotation
             allowCycleCountStockMin
+            huManagement
+            stockStatus
+            locationGroupId
         }
     }
 }
@@ -85,6 +92,9 @@ query GetLocationById($id: String!) {
         comment
         baseUnitRotation
         allowCycleCountStockMin
+        huManagement
+        stockStatus
+        locationGroupId
     }
 }
 
@@ -116,6 +126,9 @@ query GetLocationIds(
             comment
             baseUnitRotation
             allowCycleCountStockMin
+            huManagement
+            stockStatus
+            locationGroupId
         }
     }
 }
@@ -141,6 +154,9 @@ mutation CreateLocation($input: CreateLocationInput!) {
             comment
             baseUnitRotation
             allowCycleCountStockMin
+            huManagement
+            stockStatus
+            locationGroupId
         }
         ... on ValidationError {
             message
@@ -169,6 +185,9 @@ mutation BulkCreateLocations($input: BulkCreateLocationsInput!) {
             comment
             baseUnitRotation
             allowCycleCountStockMin
+            huManagement
+            stockStatus
+            locationGroupId
         }
     }
 }
@@ -196,6 +215,9 @@ mutation UpdateLocation($id: String!, $input: UpdateLocationInput!) {
         comment
         baseUnitRotation
         allowCycleCountStockMin
+        huManagement
+        stockStatus
+        locationGroupId
     }
 }
 
@@ -218,6 +240,9 @@ query GetLocationsRange($originLocationName: String!, $finalLocationName: String
         comment
         baseUnitRotation
         allowCycleCountStockMin
+        huManagement
+        stockStatus
+        locationGroupId
     }
 }
 

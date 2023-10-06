@@ -30,8 +30,10 @@ import {
     SimpleGetAllFeatureCodesQuery,
     useCreateFeatureTypeDetailMutation,
     useGetParameterByIdQuery,
+    useListParametersForAScopeQuery,
     useSimpleGetAllFeatureCodesQuery
 } from 'generated/graphql';
+import { FormOptionType } from 'models/ModelsV2';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -47,6 +49,7 @@ export const AddFeatureTypeDetailsForm = () => {
     const searchedLanguage = globalLocale == 'en-us' ? 'en' : globalLocale;
     const [featureCodes, setFeatureCodes] = useState<any>();
     const [featureTypeObject, setFeatureTypeObject] = useState<any>();
+    const [sortTypes, setSortTypes] = useState<Array<FormOptionType>>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     // TYPED SAFE ALL
@@ -87,6 +90,25 @@ export const AddFeatureTypeDetailsForm = () => {
                 : featureTypeObject?.value
             : featureTypeObject?.value;
     }, [featureTypeObject]);
+
+    // PARAMETER : sort types
+    const sortTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'stock_sort_type'
+    });
+    useEffect(() => {
+        if (sortTypesList) {
+            const newSortType: Array<FormOptionType> = [];
+
+            const parameters = sortTypesList?.data?.listParametersForAScope;
+            if (parameters) {
+                parameters.forEach((item) => {
+                    newSortType.push({ key: parseInt(item.code), text: item.text });
+                });
+                setSortTypes(newSortType);
+            }
+        }
+    }, [sortTypesList.data]);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -133,19 +155,19 @@ export const AddFeatureTypeDetailsForm = () => {
     };
     const onFeatureCodeChange = (e: any) => {
         const tmp_stockOwner = featureCodes.find((item: any) => item.id == e).stockOwnerId;
-        form.setFieldsValue({ stockOwnerId: tmp_stockOwner });
+        if (tmp_stockOwner) {
+            form.setFieldsValue({ stockOwnerId: tmp_stockOwner });
+        }
     };
-    const createFeatureTypeDetail = ({ input }: CreateFeatureTypeDetailMutationVariables) => {
-        mutate({ input });
-    };
-    // Call api to create new group
+
+    // // Call api to create new group
     const onFinish = () => {
         form.validateFields()
             .then(() => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 delete formData['associatedFeatureType'];
-                createFeatureTypeDetail({ input: formData });
+                mutate({ input: formData });
                 setUnsavedChanges(false);
             })
             .catch((err) => {
@@ -200,7 +222,19 @@ export const AddFeatureTypeDetailsForm = () => {
                 <Form.Item name="atPreparation">
                     <Checkbox onChange={onAtPreparationChange}>{t('d:atPreparation')}</Checkbox>
                 </Form.Item>
-
+                <Form.Item label={t('d:sortType')} name="sortType" hasFeedback>
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:sortType')
+                        })}`}
+                    >
+                        {sortTypes?.map((sortType: any) => (
+                            <Option key={sortType.key} value={sortType.key}>
+                                {sortType.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
                 <Row>
                     <Col span={24} style={{ textAlign: 'center' }}>
                         <Space>

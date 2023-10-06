@@ -18,18 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import {
-    showError,
-    showInfo,
-    showSuccess,
-    useHandlingUnitModels,
-    useStockOwnerIds
-} from '@helpers';
-import { Button, Col, Form, InputNumber, Row, Select, Typography } from 'antd';
+import { showError, showInfo, showSuccess } from '@helpers';
+import { Button, Col, Form, InputNumber, Row, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
 import { gql } from 'graphql-request';
-import { FormOptionType, idNameObjectType } from 'models/Models';
+import { FormOptionType } from 'models/Models';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -46,6 +40,17 @@ export const GenerateDummyHuForm = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [handlingUnitType, setHandlingUnitType] = useState<Array<FormOptionType>>();
     const [printers, setPrinters] = useState<Array<FormOptionType>>();
+    const [printLanguage, setPrintLanguage] = useState<string>();
+
+    // Get default printing language
+    const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'default_print_language'
+    });
+    useEffect(() => {
+        if (defaultPrintLanguage) {
+            setPrintLanguage(defaultPrintLanguage.data?.listParametersForAScope[0].text);
+        }
+    }, [defaultPrintLanguage.data]);
 
     // Get all handling unit types
     const handlingUnitTypeList = useListParametersForAScopeQuery(graphqlRequestClient, {
@@ -120,7 +125,12 @@ export const GenerateDummyHuForm = () => {
                 );
             } else {
                 console.log('generateDummyHu_result', generateDummyHu_result);
-                window.open(generateDummyHu_result.executeFunction.output.url, '_blank');
+                if (generateDummyHu_result.executeFunction.output.isPrinted) {
+                    showSuccess(t('messages:success-generate-dummy-hu-on-printer'));
+                } else {
+                    window.open(generateDummyHu_result.executeFunction.output.url, '_blank');
+                }
+                form.resetFields();
             }
             setIsGenerateDummyHULoading(false);
         } catch (error) {
@@ -139,7 +149,7 @@ export const GenerateDummyHuForm = () => {
                     type: formData.handlingUnitType,
                     printer: formData.printer,
                     huNb: formData.huNb,
-                    language: router.locale == 'en-US' ? 'en' : router.locale
+                    language: printLanguage
                 });
             })
             .catch((err) => {
@@ -158,7 +168,13 @@ export const GenerateDummyHuForm = () => {
     return (
         <WrapperForm>
             <Form form={form} scrollToFirstError layout="vertical">
-                <Form.Item label={t('d:handlingUnitType')} name="handlingUnitType">
+                <Form.Item
+                    label={t('d:handlingUnitType')}
+                    name="handlingUnitType"
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {

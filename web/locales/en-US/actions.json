@@ -106,5 +106,6 @@
     "add-logistic-unit-model": "Add Logistic Unit Model",
     "add-shipping-mode": "Add Shipping Mode",
     "edit-shipping-mode": "Edit Shipping Mode",
-    "add-pattern-path": "Add Pattern Path"
+    "add-pattern-path": "Add Pattern Path",
+    "add-hook-config": "Add Hook Config"
 }

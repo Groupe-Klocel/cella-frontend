@@ -16,7 +16,7 @@
     "buildings": "Bâtiments",
     "carrier": "Transporteur",
     "carriers": "Transporteurs",
-    "dummy-hu-generator": "Générateur de supports",
+    "dummy-hu-generator": "Générateur d'unités de manutention",
     "location": "Emplacement",
     "logistic-unit": "Unité Logistique",
     "logistic-units": "Unités Logistiques",
@@ -99,5 +99,6 @@
     "record-history": "Historique",
     "logistic-unit-models": "Modèles d'Unité Logistique",
     "shipping-mode": "Mode d'expédition",
-    "shipping-modes": "Modes d'expédition"
+    "shipping-modes": "Modes d'expédition",
+    "hook-configs": "Hook Configs"
 }

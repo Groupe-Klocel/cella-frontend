@@ -38,7 +38,9 @@ import {
     useHandlingUnitModels,
     getRulesWithNoSpacesValidator,
     useLogisticUnits,
-    useArticleLus
+    useArticleLus,
+    useLocations,
+    usePatternIds
 } from '@helpers';
 
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
@@ -104,6 +106,15 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
     const submit = t('actions:submit');
     const cancel = t('actions:cancel');
     const preparationModeLabel = t('d:preparationMode');
+    const sortType = t('d:sortType');
+    const pickingType = t('d:pickingType');
+    const pickingLocation = t('d:pickingLocation');
+    const automaticPickingLocationPattern = t('d:automaticPickingLocationPattern');
+    const automaticStorageLocationPattern = t('d:automaticStorageLocationPattern');
+    const expansionCoefficient = t('d:expansionCoefficient');
+    const emptyCoefficient = t('d:emptyCoefficient');
+    const minimumReplenishmentThreshold = t('d:minimumReplenishmentThreshold');
+    const maximumReplenishmentThreshold = t('d:maximumReplenishmentThreshold');
     // END TEXTS TRANSLATION
 
     // TYPED SAFE ALL
@@ -114,9 +125,15 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
     const [articleLuRotations, setArticleLuRotations] = useState<any>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
     const logisticUnitModelData = useLogisticUnits({}, 1, 100, null);
+    const locationData = useLocations({}, 1, 100, null);
+    const patternData = usePatternIds({}, 1, 100, null);
     const articleLuData = useArticleLus({}, 1, 100, null);
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
     const [disableReplenish, setDisableReplenish] = useState<boolean>(false);
+    const [sortTypes, setSortTypes] = useState<Array<FormOptionType>>();
+    const [pickingTypes, setPickingTypes] = useState<Array<FormOptionType>>();
+    const [locations, setLocations] = useState<Array<FormOptionType>>();
+    const [patterns, setPatterns] = useState<Array<FormOptionType>>();
 
     // Retrieve Preparation Modes list
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
@@ -186,6 +203,70 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
         }
     }, [articleLuData.data]);
 
+    // Retrieve sort types
+    const sortTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'stock_sort_type'
+    });
+    useEffect(() => {
+        if (sortTypesList) {
+            const newSortType: Array<FormOptionType> = [];
+
+            const parameters = sortTypesList?.data?.listParametersForAScope;
+            if (parameters) {
+                parameters.forEach((item) => {
+                    newSortType.push({ key: parseInt(item.code), text: item.text });
+                });
+                setSortTypes(newSortType);
+            }
+        }
+    }, [sortTypesList.data]);
+
+    // Retrieve picking types
+    const pickingTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'picking_type'
+    });
+    useEffect(() => {
+        if (pickingTypesList) {
+            const newPickingType: Array<FormOptionType> = [];
+
+            const parameters = pickingTypesList?.data?.listParametersForAScope;
+            if (parameters) {
+                parameters.forEach((item) => {
+                    newPickingType.push({ key: parseInt(item.code), text: item.text });
+                });
+                setPickingTypes(newPickingType);
+            }
+        }
+    }, [pickingTypesList.data]);
+
+    // Retrieve locations list
+    useEffect(() => {
+        if (locationData.data) {
+            const newIdOpts: Array<FormOptionType> = [];
+            locationData.data.locations?.results.forEach(({ id, name, status, category }) => {
+                if (
+                    status != configs.LOCATION_STATUS_NOT_AVAILABLE &&
+                    category === configs.LOCATION_CATEGORY_PICKING
+                )
+                    newIdOpts.push({ text: name!, key: id! });
+            });
+            setLocations(newIdOpts);
+        }
+    }, [locationData.data]);
+
+    // Retrieve patterns list
+    useEffect(() => {
+        if (patternData.data) {
+            const newIdOpts: Array<FormOptionType> = [];
+            patternData.data.patterns?.results.forEach(({ id, name }) => {
+                newIdOpts.push({ text: name!, key: id! });
+            });
+            setPatterns(newIdOpts);
+        }
+    }, [patternData.data]);
+
     //manage call back on LU Model change
     const handleLUModelChange = (key: any, value: any) => {
         // if we clear the select, we clear the form
@@ -253,6 +334,17 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
             setArticleLuRotations(articleLuRotationList?.data?.listParametersForAScope);
         }
     }, [articleLuRotationList]);
+
+    const [isPickingLocationDisplay, setIsPickingLocationDisplay] = useState<boolean>(false);
+    // handle call back on Cycle Count Type change for displays
+    const handlePickingTypeChange = (value: any) => {
+        console.log(value);
+        setIsPickingLocationDisplay(false);
+
+        if (value == parameters.PICKING_TYPE_FIXED) {
+            setIsPickingLocationDisplay(true);
+        }
+    };
 
     // Create Mutation
     const { mutate, isLoading: createLoading } = useCreateArticleLuMutation<Error>(
@@ -486,6 +578,125 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
                             >
                                 {replenish}
                             </Checkbox>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item label={sortType} name="sortType">
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:sortType')
+                                })}`}
+                            >
+                                {sortTypes?.map((sortType: any) => (
+                                    <Option key={sortType.key} value={sortType.key}>
+                                        {sortType.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                </Row>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
+                    <Col xs={8} xl={12}>
+                        <Form.Item label={pickingType} name="pickingType">
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:pickingType')
+                                })}`}
+                                onChange={handlePickingTypeChange}
+                            >
+                                {pickingTypes?.map((pickingType: any) => (
+                                    <Option key={pickingType.key} value={pickingType.key}>
+                                        {pickingType.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                    {isPickingLocationDisplay && (
+                        <Col xs={8} xl={12}>
+                            <Form.Item label={pickingLocation} name="pickingLocationId">
+                                <Select
+                                    allowClear
+                                    placeholder={`${t('messages:please-select-a', {
+                                        name: t('d:pickingLocation')
+                                    })}`}
+                                >
+                                    {locations?.map((location: any) => (
+                                        <Option key={location.key} value={location.key}>
+                                            {location.text}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    )}
+                </Row>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
+                    <Col xs={8} xl={12}>
+                        <Form.Item
+                            label={automaticPickingLocationPattern}
+                            name="automaticPickingLocationPatternId"
+                        >
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:automaticPickingLocationPattern')
+                                })}`}
+                            >
+                                {patterns?.map((pattern: any) => (
+                                    <Option key={pattern.key} value={pattern.key}>
+                                        {pattern.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item
+                            label={automaticStorageLocationPattern}
+                            name="automaticStorageLocationPatternId"
+                        >
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:automaticStorageLocationPattern')
+                                })}`}
+                            >
+                                {patterns?.map((pattern: any) => (
+                                    <Option key={pattern.key} value={pattern.key}>
+                                        {pattern.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item label={expansionCoefficient} name="expansionCoefficient">
+                            <InputNumber />
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item label={emptyCoefficient} name="emptyCoefficient">
+                            <InputNumber />
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item
+                            label={minimumReplenishmentThreshold}
+                            name="minimumReplenishmentThreshold"
+                        >
+                            <InputNumber min={0} />
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item
+                            label={maximumReplenishmentThreshold}
+                            name="maximumReplenishmentThreshold"
+                        >
+                            <InputNumber min={0} />
                         </Form.Item>
                     </Col>
                 </Row>

@@ -65,6 +65,7 @@
     "success-updated": "L'élément a été mis à jour avec succès",
     "success-exported": "Les éléments ont été exporté avec succès",
     "success-enabled": "L'élément a été activé avec succès",
+    "success-generate-dummy-hu-on-printer": "Etiquette(s) d'unité de manutation générée avec succès. Veuillez vérifier l'imprimante sélectionnée",
     "success-reopened": "Les éléments ont été rouverts avec succès",
     "success-password-reset": "Le mot de passe a été réinitialisé avec succès",
     "success-canceled": "Les éléments ont été annulés avec succès",

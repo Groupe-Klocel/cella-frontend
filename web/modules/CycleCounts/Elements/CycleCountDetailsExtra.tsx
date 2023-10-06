@@ -17,22 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
-import { AppHead, LinkButton } from '@components';
-import {
-    getModesFromPermissions,
-    META_DEFAULTS,
-    pathParams,
-    pathParamsFromDictionary
-} from '@helpers';
-import { Button, Divider, Modal, Space } from 'antd';
+import { EyeTwoTone } from '@ant-design/icons';
+import { LinkButton } from '@components';
+import { getModesFromPermissions, pathParams } from '@helpers';
+import { Divider, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { CycleCountLineModelV2 } from 'models/CycleCountLineModelV2';
 import { CycleCountMovementModelV2 } from 'models/CycleCountMovementModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
-import { useState } from 'react';
 import configs from '../../../../common/configs.json';
 
 export interface IItemDetailsProps {
@@ -109,7 +103,7 @@ const CycleCountDetailsExtra = ({
             ) : (
                 <></>
             )}
-            {cycleCountModel != configs.CYCLE_COUNT_MODEL_RECOMMANDED &&
+            {cycleCountModel != configs.CYCLE_COUNT_MODEL_RECOMMENDED &&
             cycleCountStatus != configs.CYCLE_COUNT_STATUS_CREATED &&
             cycleCountMovementModes.length > 0 &&
             cycleCountMovementModes.includes(ModeEnum.Read) ? (
