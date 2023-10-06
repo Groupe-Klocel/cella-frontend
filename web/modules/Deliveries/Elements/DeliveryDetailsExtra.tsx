@@ -58,8 +58,12 @@ const DeliveryDetailsExtra = ({
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
-    const [idToDelete, setIdToDelete] = useState<string | undefined>();
-    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [idToDeleteAddress, setIdToDeleteAddress] = useState<string | undefined>();
+    const [idToDisableAddress, setIdToDisableAddress] = useState<string | undefined>();
+    const [idToDeleteLine, setIdToDeleteLine] = useState<string | undefined>();
+    const [idToDisableLine, setIdToDisableLine] = useState<string | undefined>();
+    const [idToDeleteBox, setIdToDeleteBox] = useState<string | undefined>();
+    const [idToDisableBox, setIdToDisableBox] = useState<string | undefined>();
     const deliveryAddressModes = getModesFromPermissions(permissions, Table.DeliveryAddress);
     const deliveryLineModes = getModesFromPermissions(permissions, Table.DeliveryLine);
     const huOutboundModes = getModesFromPermissions(permissions, Table.HandlingUnitOutbound);
@@ -196,8 +200,14 @@ const DeliveryDetailsExtra = ({
                         searchCriteria={{ deliveryId: deliveryId }}
                         dataModel={DeliveryAddressModelV2}
                         headerData={deliveryAddressHeaderData}
-                        triggerDelete={{ idToDelete, setIdToDelete }}
-                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        triggerDelete={{
+                            idToDelete: idToDeleteAddress,
+                            setIdToDelete: setIdToDeleteAddress
+                        }}
+                        triggerSoftDelete={{
+                            idToDisable: idToDisableAddress,
+                            setIdToDisable: setIdToDisableAddress
+                        }}
                         routeDetailPage={'/deliveries/detail/:id'}
                         actionColumns={[
                             {
@@ -246,7 +256,7 @@ const DeliveryDetailsExtra = ({
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDisable,
+                                                        setIdToDisableAddress,
                                                         'disable'
                                                     )()
                                                 }
@@ -263,7 +273,7 @@ const DeliveryDetailsExtra = ({
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDelete,
+                                                        setIdToDeleteAddress,
                                                         'delete'
                                                     )()
                                                 }
@@ -291,8 +301,14 @@ const DeliveryDetailsExtra = ({
                         searchCriteria={{ deliveryId: deliveryId }}
                         dataModel={DeliveryLineModelV2}
                         headerData={deliveryLineHeaderData}
-                        triggerDelete={{ idToDelete, setIdToDelete }}
-                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        triggerDelete={{
+                            idToDelete: idToDeleteLine,
+                            setIdToDelete: setIdToDeleteLine
+                        }}
+                        triggerSoftDelete={{
+                            idToDisable: idToDisableLine,
+                            setIdToDisable: setIdToDisableLine
+                        }}
                         routeDetailPage={'/deliveries/detail/:id'}
                         actionColumns={[
                             {
@@ -348,7 +364,7 @@ const DeliveryDetailsExtra = ({
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDisable,
+                                                        setIdToDisableLine,
                                                         'disable'
                                                     )()
                                                 }
@@ -366,7 +382,7 @@ const DeliveryDetailsExtra = ({
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDelete,
+                                                        setIdToDeleteLine,
                                                         'delete'
                                                     )()
                                                 }
@@ -394,8 +410,14 @@ const DeliveryDetailsExtra = ({
                         searchCriteria={{ deliveryId: deliveryId }}
                         dataModel={HandlingUnitOutboundModelV2}
                         headerData={huOutboundHeaderData}
-                        triggerDelete={{ idToDelete, setIdToDelete }}
-                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        triggerDelete={{
+                            idToDelete: idToDeleteBox,
+                            setIdToDelete: setIdToDeleteBox
+                        }}
+                        triggerSoftDelete={{
+                            idToDisable: idToDisableBox,
+                            setIdToDisable: setIdToDisableBox
+                        }}
                         routeDetailPage={'/deliveries/detail/:id'}
                         actionColumns={[
                             {
@@ -440,7 +462,7 @@ const DeliveryDetailsExtra = ({
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDisable,
+                                                        setIdToDisableBox,
                                                         'disable'
                                                     )()
                                                 }

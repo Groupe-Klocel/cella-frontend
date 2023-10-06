@@ -25,6 +25,7 @@ import { useHandlingUnitContents, LsIsSecured } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import useTranslation from 'next-translate/useTranslation';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
@@ -82,6 +83,7 @@ export const SelectContentForArticleForm = ({
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
+    const router = useRouter();
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -101,7 +103,16 @@ export const SelectContentForArticleForm = ({
     if (locationId) {
         filter = { ...defaultFilter, ...locationFilter };
     }
-    const { isLoading, data, error } = useHandlingUnitContents(filter, 1, 100, null);
+    const { isLoading, data, error } = useHandlingUnitContents(
+        filter,
+        1,
+        100,
+        {
+            field: 'handlingUnit_location_category',
+            ascending: true
+        },
+        router.locale
+    );
 
     //SelectContentForArticle-2: set contents to provide to carousel
     const [contents, setContents] = useState<any>([]);
@@ -204,6 +215,23 @@ export const SelectContentForArticleForm = ({
                                         </Col>
                                     </Row>
                                 )}
+                                {!hideSelect ? (
+                                    <></>
+                                ) : (
+                                    <Row>
+                                        <Col span={8}>
+                                            <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                                {t('common:category')}:
+                                            </Typography>
+                                        </Col>
+                                        <Col span={16}>
+                                            <Typography style={{ fontSize: '10px' }}>
+                                                {content?.handlingUnit?.location?.categoryText}
+                                            </Typography>
+                                        </Col>
+                                    </Row>
+                                )}
+
                                 {content.handlingUnitContentFeatures.map(
                                     (huContentFeature: any, index: number) => (
                                         <Row key={index}>

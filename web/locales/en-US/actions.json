@@ -12,6 +12,9 @@
     "add-carriers": "Add Carriers",
     "add-carrier-shipping-mode": "Add Carrier Shipping Mode",
     "add-conversion": "Add Conversion",
+    "add-cycle-count": "Add Cycle Count",
+    "add-cycle-count-line": "Add Cycle count line",
+    "add-cycle-count-movement": "Add Cycle count movement",
     "add-equipment": "Add Equipment",
     "add-feature-code": "Add Feature Code",
     "add-feature-type": "Add Feature Type",
@@ -39,6 +42,7 @@
     "chose-locations-range": "Chose locations range",
     "close": "Close",
     "collapse-menu": "Collapse Menu",
+    "cycleCountLines": "Cycle Count Lines",
     "dark-mode": "Dark Mode",
     "delete": "Delete",
     "delete-location": "Delete location(s)",
@@ -102,5 +106,6 @@
     "add-logistic-unit-model": "Add Logistic Unit Model",
     "add-shipping-mode": "Add Shipping Mode",
     "edit-shipping-mode": "Edit Shipping Mode",
-    "add-pattern-path": "Add Pattern Path"
+    "add-pattern-path": "Add Pattern Path",
+    "add-hook-config": "Add Hook Config"
 }

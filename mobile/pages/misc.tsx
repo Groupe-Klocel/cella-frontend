@@ -25,10 +25,10 @@ import useTranslation from 'next-translate/useTranslation';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const menuItemDatas = [
-    {
-        title: 'menu:location-check',
-        path: '/'
-    },
+    // {
+    //     title: 'menu:location-check',
+    //     path: '/'
+    // },
     {
         title: 'menu:article-info',
         path: '/article-info'
@@ -41,22 +41,22 @@ const menuItemDatas = [
         title: 'menu:location-info',
         path: '/location-info'
     },
-    {
-        title: 'menu:box-check',
-        path: '/'
-    },
-    {
-        title: 'menu:equipment-check',
-        path: '/'
-    },
-    {
-        title: 'menu:set-unbuilding',
-        path: '/'
-    },
-    {
-        title: 'menu:set-building',
-        path: '/'
-    },
+    // {
+    //     title: 'menu:box-check',
+    //     path: '/'
+    // },
+    // {
+    //     title: 'menu:equipment-check',
+    //     path: '/'
+    // },
+    // {
+    //     title: 'menu:set-unbuilding',
+    //     path: '/'
+    // },
+    // {
+    //     title: 'menu:set-building',
+    //     path: '/'
+    // },
     { title: 'menu:generate-sscc', path: '/sscc-generator' }
 ];
 

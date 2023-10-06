@@ -42,8 +42,10 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
     const { permissions } = useAppState();
     const FeatureTypeDetailModes = getModesFromPermissions(permissions, Table.FeatureTypeDetail);
     const ArticleModes = getModesFromPermissions(permissions, Table.Article);
-    const [idToDelete, setIdToDelete] = useState<string | undefined>();
-    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [idToDeleteFT, setIdToDeleteFT] = useState<string | undefined>();
+    const [idToDisableFT, setIdToDisableFT] = useState<string | undefined>();
+    const [idToDeleteArticle, setIdToDeleteArticle] = useState<string | undefined>();
+    const [idToDisableArticle, setIdToDisableArticle] = useState<string | undefined>();
 
     const FeatureTypeDetailHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:feature-codes') }),
@@ -90,8 +92,11 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
                         searchCriteria={{ featureType: featureType }}
                         dataModel={FeatureTypeDetailModelV2}
                         headerData={FeatureTypeDetailHeaderData}
-                        triggerDelete={{ idToDelete, setIdToDelete }}
-                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        triggerDelete={{ idToDelete: idToDeleteFT, setIdToDelete: setIdToDeleteFT }}
+                        triggerSoftDelete={{
+                            idToDisable: idToDisableFT,
+                            setIdToDisable: setIdToDisableFT
+                        }}
                         routeDetailPage={'/feature-types/detail/:id'}
                         actionColumns={[
                             {
@@ -138,7 +143,7 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDisable,
+                                                        setIdToDisableFT,
                                                         'disable'
                                                     )()
                                                 }
@@ -155,7 +160,7 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDelete,
+                                                        setIdToDeleteFT,
                                                         'delete'
                                                     )()
                                                 }
@@ -180,8 +185,14 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
                         searchCriteria={{ featureType: featureType }}
                         dataModel={ArticleModelV2}
                         headerData={ArticleData}
-                        triggerDelete={{ idToDelete, setIdToDelete }}
-                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        triggerDelete={{
+                            idToDelete: idToDeleteArticle,
+                            setIdToDelete: setIdToDeleteArticle
+                        }}
+                        triggerSoftDelete={{
+                            idToDisable: idToDisableArticle,
+                            setIdToDisable: setIdToDisableArticle
+                        }}
                         routeDetailPage={'/articles/:id'}
                         actionColumns={[
                             {
@@ -226,7 +237,7 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDisable,
+                                                        setIdToDisableArticle,
                                                         'disable'
                                                     )()
                                                 }
@@ -243,7 +254,7 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
-                                                        setIdToDelete,
+                                                        setIdToDeleteArticle,
                                                         'delete'
                                                     )()
                                                 }

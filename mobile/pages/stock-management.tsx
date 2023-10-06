@@ -30,33 +30,33 @@ const menuItemDatas = [
         path: '/reception-movement'
     },
     {
-        title: 'menu:quantity-movement',
-        path: '/quantity-movement'
+        title: 'menu:content-movement',
+        path: '/content-movement'
     },
     {
         title: 'menu:pallet-movement',
         path: '/pallet-movement'
-    },
-    {
-        title: 'menu:replenishment-movement',
-        path: '/'
-    },
-    {
-        title: 'menu:stock-init',
-        path: '/'
-    },
-    {
-        title: 'menu:cycle-counts',
-        path: '/'
-    },
-    {
-        title: 'menu:set-unbuilding',
-        path: '/'
-    },
-    {
-        title: 'menu:set-building',
-        path: '/'
     }
+    // {
+    //     title: 'menu:replenishment-movement',
+    //     path: '/'
+    // },
+    // {
+    //     title: 'menu:stock-init',
+    //     path: '/'
+    // },
+    // {
+    //     title: 'menu:cycle-counts',
+    //     path: '/'
+    // },
+    // {
+    //     title: 'menu:set-unbuilding',
+    //     path: '/'
+    // },
+    // {
+    //     title: 'menu:set-building',
+    //     path: '/'
+    // }
 ];
 
 const StockManagementPage: PageComponent = () => {

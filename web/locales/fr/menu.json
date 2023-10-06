@@ -16,7 +16,7 @@
     "buildings": "Bâtiments",
     "carrier": "Transporteur",
     "carriers": "Transporteurs",
-    "dummy-hu-generator": "Générateur de supports",
+    "dummy-hu-generator": "Générateur d'unités de manutention",
     "location": "Emplacement",
     "logistic-unit": "Unité Logistique",
     "logistic-units": "Unités Logistiques",
@@ -27,12 +27,14 @@
     "add-configuration": "Ajouter Configuration",
     "contents": "Contenus",
     "conversions": "Conversions",
+    "cycle-count": "Inventaire",
     "cycle-counts": "Inventaires",
+    "recommended-cycle-counts": "Inventaires recommendés",
     "dashboard": "Tableau de bord",
     "bi-solution": "Metabase",
     "deliveries": "Livraisons",
     "equipments": "Equipements",
-    "equipment": "Equipements",
+    "equipment": "Equipement",
     "equipment-detail": "Détail d'équipement",
     "equipment-piece": "Equipement",
     "features": "Traçabilités",
@@ -97,5 +99,6 @@
     "record-history": "Historique",
     "logistic-unit-models": "Modèles d'Unité Logistique",
     "shipping-mode": "Mode d'expédition",
-    "shipping-modes": "Modes d'expédition"
+    "shipping-modes": "Modes d'expédition",
+    "hook-configs": "Hook Configs"
 }

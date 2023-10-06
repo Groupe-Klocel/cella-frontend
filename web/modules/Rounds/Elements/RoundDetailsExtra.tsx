@@ -31,12 +31,13 @@ import {
     UpdateRoundAdvisedAddressMutationVariables,
     useUpdateRoundAdvisedAddressMutation
 } from 'generated/graphql';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponent';
-import { BoxModel } from 'models/BoxModel';
-import { RoundAdvisedAddressModel } from 'models/RoundAdvisedAddressModel';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
+import { RoundAdvisedAddressModelV2 } from 'models/RoundAdvisedAddressModelV2';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
+import { RoundLineModelV2 } from 'models/RoundLineModelV2';
 
 const { Title } = Typography;
 
@@ -52,15 +53,20 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const { permissions } = useAppState();
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const RoundLineModes = getModesFromPermissions(permissions, Table.RoundLine);
     const RoundAdvisedAddressModes = getModesFromPermissions(
         permissions,
         Table.RoundAdvisedAddress
     );
+    const [refetchAddresses, setRefetchAddresses] = useState<boolean>(false);
     const HandlingUnitOutboundModes = getModesFromPermissions(
         permissions,
         Table.HandlingUnitOutbound
     );
     const router = useRouter();
+    const [form] = Form.useForm();
     const errorMessageUpdateData = t('messages:error-update-data');
     const successMessageUpdateData = t('messages:success-updated');
 
@@ -70,16 +76,17 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
         actionsComponent: <></>
     };
 
+    const roundAdvisedAddressData: HeaderData = {
+        title: t('common:associated', { name: t('common:round-advised-address') }),
+        routes: [],
+        actionsComponent: <></>
+    };
+
     const boxHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:boxes') }),
         routes: [],
         actionsComponent: <></>
     };
-
-    // To delete userTread
-    const [form] = Form.useForm();
-    form.setFieldsValue({ userTread: null });
-    const formData = form.getFieldsValue(true);
 
     // UPDATE Round
     const {
@@ -93,21 +100,19 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
             _context: any
         ) => {
             showSuccess(successMessageUpdateData);
-            router.reload();
+            setRefetchAddresses(true);
         },
         onError: () => {
             showError(errorMessageUpdateData);
         }
     });
 
-    const UpdateRoundAdvisedAddress = ({
-        id,
-        input
-    }: UpdateRoundAdvisedAddressMutationVariables) => {
+    const UpdateRoundAdvisedAddress = ({ id }: UpdateRoundAdvisedAddressMutationVariables) => {
         Modal.confirm({
             title: t('messages:reset-confirm'),
             onOk: () => {
-                userMutate({ id: id, input: formData });
+                form.setFieldsValue({ userTread: null });
+                userMutate({ id: id, input: form.getFieldsValue(true) });
             },
             okText: t('messages:confirm'),
             cancelText: t('messages:cancel')
@@ -116,14 +121,53 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
 
     return (
         <>
+            {RoundLineModes.length > 0 && RoundLineModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ roundId: roundId }}
+                        dataModel={RoundLineModelV2}
+                        headerData={roundLineData}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string }) => (
+                                    <Space>
+                                        {RoundLineModes.length == 0 ||
+                                        !RoundLineModes.includes(ModeEnum.Read) ? (
+                                            <></>
+                                        ) : (
+                                            <>
+                                                <LinkButton
+                                                    icon={<EyeTwoTone />}
+                                                    path={pathParams('line/[id]', record.id)}
+                                                />
+                                            </>
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
             {RoundAdvisedAddressModes.length > 0 &&
             RoundAdvisedAddressModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
                     <ListComponent
                         searchCriteria={{ roundId: roundId }}
-                        dataModel={RoundAdvisedAddressModel}
-                        headerData={roundLineData}
+                        dataModel={RoundAdvisedAddressModelV2}
+                        headerData={roundAdvisedAddressData}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        refetch={refetchAddresses}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
@@ -171,8 +215,10 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                     <Divider />
                     <ListComponent
                         searchCriteria={{ roundId: roundId }}
-                        dataModel={BoxModel}
+                        dataModel={HandlingUnitOutboundModelV2}
                         headerData={boxHeaderData}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
                         actionColumns={[
                             {
                                 title: 'actions:actions',

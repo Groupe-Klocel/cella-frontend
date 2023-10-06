@@ -135,11 +135,7 @@ export const AddArticleSetDetailForm = (props: ISingleItemProps) => {
                     </Form.Item>
                 </Col>
                 <Col>
-                    <Form.Item
-                        name="stockOwnerName"
-                        label={stockOwner}
-                        rules={[{ required: true, message: errorMessageEmptyInput }]}
-                    >
+                    <Form.Item name="stockOwnerName" label={stockOwner}>
                         <Input disabled />
                     </Form.Item>
                 </Col>
@@ -163,7 +159,11 @@ export const AddArticleSetDetailForm = (props: ISingleItemProps) => {
                     </Form.Item>
                 </Col>
                 <Col>
-                    <Form.Item name="quantity" label={quantity}>
+                    <Form.Item
+                        name="quantity"
+                        label={quantity}
+                        rules={[{ required: true, message: errorMessageEmptyInput }]}
+                    >
                         <InputNumber />
                     </Form.Item>
                 </Col>

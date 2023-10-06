@@ -112,9 +112,14 @@ const ListComponent = (props: IListProps) => {
     );
 
     const sortableFields =
-        Object.keys(props.dataModel.fieldsInfo).filter(
-            (key) => props.dataModel.fieldsInfo[key].isSortable
-        ) || [];
+        Object.keys(props.dataModel.fieldsInfo)
+            .filter((key) => props.dataModel.fieldsInfo[key].isSortable)
+            .map((obj) => {
+                if (obj.includes('{')) {
+                    obj = obj.replaceAll('{', '_').replaceAll('}', '');
+                }
+                return obj;
+            }) || [];
     const displayedLabels = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].displayName !== null)
         .reduce((obj: any, key) => {
@@ -150,10 +155,9 @@ const ListComponent = (props: IListProps) => {
             // handle uppercase for fields with {}
             let name = key;
             if (name.includes('{')) {
-                const index = name.indexOf('{');
-                name = `${name.substring(0, index)}_${name[
-                    index + 1
-                ].toUpperCase()}${name.substring(index + 2)}`.replaceAll('}', '');
+                name = name
+                    .replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`)
+                    .replaceAll('}', '');
             }
             return {
                 displayName: t(

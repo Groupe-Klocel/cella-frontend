@@ -29,7 +29,7 @@ import { useRouter } from 'next/router';
 import { EmptyLocations, ScanLocation, SelectLocationByLevelForm } from '@CommonRadio';
 import { CheckFinalLocationPalletForm } from 'modules/StockManagement/Forms/CheckFinalLocationPalletForm';
 import { ValidatePalletMoveForm } from 'modules/StockManagement/Forms/ValidatePalletMove';
-import { ScanPallet } from 'modules/Common/HandlingUnits/PagesContainer/ScanPallet';
+import { ScanHandlingUnit } from 'modules/Common/HandlingUnits/PagesContainer/ScanHandlingUnit';
 import { HandlingUnitChecks } from 'modules/StockManagement/Movement-Reception/ChecksAndRecords/HandlingUnitChecks';
 import { LocationChecks } from 'modules/StockManagement/Movement-Reception/ChecksAndRecords/LocationsChecks';
 
@@ -133,14 +133,14 @@ const ReceptionMovement: PageComponent = () => {
                 <></>
             )}
             {!storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
-                <ScanPallet
+                <ScanHandlingUnit
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[0]}
                     label={t('common:pallet-origin')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ submitButton: true, backButton: false }}
                     checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
-                ></ScanPallet>
+                ></ScanHandlingUnit>
             ) : (
                 <></>
             )}

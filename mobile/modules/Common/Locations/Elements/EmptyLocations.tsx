@@ -22,6 +22,7 @@ import { useHandlingUnits, useLocationIds } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
+import { useRouter } from 'next/router';
 
 export interface IEmptyLocationsProps {
     withAvailableHU?: boolean;
@@ -29,6 +30,7 @@ export interface IEmptyLocationsProps {
 
 export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
     const { t } = useTranslation();
+    const router = useRouter();
 
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
@@ -36,7 +38,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
         isLoading: emptyLocLoading,
         data: emptyLocData,
         error
-    } = useLocationIds({ autocountHandlingUnit: 0 }, 1, 100, null);
+    } = useLocationIds({ autocountHandlingUnit: 0 }, 1, 100, null, router.locale);
     const {
         isLoading: availableHULoading,
         data: availableHUData,
@@ -76,7 +78,10 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
                         locData.push({
                             locationId: e.locationId,
                             locationName: e.location.name,
-                            type: e.location.category === configs.LOCATION_CATEGORY_PICKING ? 'Picking' : 'Stock',
+                            type:
+                                e.location.category === configs.LOCATION_CATEGORY_PICKING
+                                    ? 'Picking'
+                                    : 'Stock',
                             withHU: true
                         });
                     });

@@ -73,6 +73,7 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);
+                if (formData['stockOwnerId'] == '') formData['stockOwnerId'] = null;
                 setIsLoading(true);
                 const fetchData = async () => {
                     const res = await fetch(`/api/barcodes/barcode_create/`, {
@@ -117,8 +118,8 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
         const tmp_details = {
             articleName: props.articleName,
             articleId: props.articleId,
-            stockOwnerId: props.stockOwnerId,
-            stockOwnerName: props.stockOwnerName
+            stockOwnerId: props?.stockOwnerId,
+            stockOwnerName: props?.stockOwnerName
         };
         form.setFieldsValue(tmp_details);
     }, []);
@@ -144,11 +145,7 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
-                        <Form.Item
-                            name="stockOwnerName"
-                            label={stockOwner}
-                            rules={[{ required: true, message: errorMessageEmptyInput }]}
-                        >
+                        <Form.Item name="stockOwnerName" label={stockOwner}>
                             <Input disabled />
                         </Form.Item>
                     </Col>

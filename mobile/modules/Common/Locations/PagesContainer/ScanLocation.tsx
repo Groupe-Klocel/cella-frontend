@@ -21,6 +21,7 @@ import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { useBoxes, useLocationIds } from '@helpers';
 import { LsIsSecured } from '@helpers';
+import { useRouter } from 'next/router';
 
 export interface IScanLocationProps {
     process: string;
@@ -29,7 +30,9 @@ export interface IScanLocationProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     showEmptyLocations?: any;
+    showSimilarLocations?: any;
     checkComponent: any;
+    headerContent?: any;
 }
 
 export const ScanLocation = ({
@@ -39,12 +42,15 @@ export const ScanLocation = ({
     trigger: { triggerRender, setTriggerRender },
     buttons,
     showEmptyLocations,
-    checkComponent
+    showSimilarLocations,
+    checkComponent,
+    headerContent
 }: IScanLocationProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
+    const router = useRouter();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -59,7 +65,23 @@ export const ScanLocation = ({
     }, []);
 
     // ScanLocation-2: launch query
-    const locationInfos = useLocationIds({ barcode: `${scannedInfo}` }, 1, 100, null);
+    const locationInfos = useLocationIds(
+        { barcode: `${scannedInfo}` },
+        1,
+        100,
+        null,
+        router.locale
+    );
+
+    //ScanLocation-3: manage information for persistence storage and front-end errors
+    useEffect(() => {
+        if (locationInfos.data) {
+            if (locationInfos.data.locations?.count !== 0) {
+                showEmptyLocations?.setShowEmptyLocations(false);
+                showSimilarLocations?.setShowSimilarLocations(false);
+            }
+        }
+    }, [locationInfos]);
 
     const dataToCheck = {
         process,
@@ -81,7 +103,9 @@ export const ScanLocation = ({
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     showEmptyLocations={showEmptyLocations}
+                    showSimilarLocations={showSimilarLocations}
                     resetForm={{ resetForm, setResetForm }}
+                    headerContent={headerContent}
                 ></ScanForm>
                 {checkComponent(dataToCheck)}
             </>

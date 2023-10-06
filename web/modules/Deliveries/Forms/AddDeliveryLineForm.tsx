@@ -28,7 +28,15 @@ import {
     CreateDeliveryLineMutationVariables,
     CreateDeliveryLineMutation
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo, useArticleIds, useDeliveryLineIds } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    useArticleIds,
+    useDeliveryLineIds,
+    useStockOwners,
+    useArticles
+} from '@helpers';
 import { debounce } from 'lodash';
 import configs from '../../../../common/configs.json';
 
@@ -86,12 +94,7 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     }, [deliveryLines]);
 
     // to render autocompleted articles list
-    const articleData = useArticleIds(
-        { name: `${articleName}%`, stockOwnerId: props.stockOwnerId },
-        1,
-        100,
-        null
-    );
+    const articleData = useArticles({ name: `${articleName}%` }, 1, 100, null);
 
     useEffect(() => {
         const formValue = form.getFieldsValue(true);
@@ -101,12 +104,14 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     useEffect(() => {
         if (articleData.data) {
             const newIdOpts: Array<IOption> = [];
-            articleData.data.articles?.results.forEach(({ id, name }) => {
+            articleData.data.articles?.results.forEach(({ id, name, status }) => {
                 if (form.getFieldsValue(true).articleId === id) {
                     setArticleName(name!);
                     setAId(id!);
                 }
-                newIdOpts.push({ value: name!, id: id! });
+                if (status != configs.ARTICLE_STATUS_CLOSED) {
+                    newIdOpts.push({ value: name!, id: id! });
+                }
             });
             setAIdOptions(newIdOpts);
         }
@@ -115,6 +120,22 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     const onChange = (data: string) => {
         setArticleName(data);
     };
+
+    //To render Simple stockOwners list
+    const [stockOwners, setStockOwners] = useState<any>();
+    const stockOwnerData = useStockOwners({}, 1, 100, null);
+
+    useEffect(() => {
+        if (stockOwnerData) {
+            const newIdOpts: { text: string; key: string }[] = [];
+            stockOwnerData.data?.stockOwners?.results.forEach(({ id, name, status }) => {
+                if (status != configs.STOCK_OWNER_STATUS_CLOSED) {
+                    newIdOpts.push({ text: name!, key: id! });
+                }
+            });
+            setStockOwners(newIdOpts);
+        }
+    }, [stockOwnerData.data]);
 
     //CREATE delivery line
     const { mutate, isLoading: createLoading } = useCreateDeliveryLineMutation<Error>(
@@ -157,8 +178,6 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
         const tmp_details = {
             deliveryName: props.deliveryName,
             deliveryId: props.deliveryId,
-            stockOwnerId: props.stockOwnerId,
-            stockOwnerName: props.stockOwnerName,
             status: configs.DELIVERY_STATUS_CREATED,
             toBeCubed: true
         };
@@ -171,8 +190,23 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
-                <Form.Item name="stockOwnerName" label={stockOwner}>
-                    <Input disabled />
+                <Form.Item
+                    name="stockOwnerId"
+                    label={stockOwner}
+                    rules={[{ required: true, message: errorMessageEmptyInput }]}
+                >
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:stockOwner')
+                        })}`}
+                    >
+                        {stockOwners?.map((so: any) => (
+                            <Option key={so.key} value={so.key}>
+                                {so.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
                 <Form.Item label={delivery} name="deliveryName">
                     <Input disabled />

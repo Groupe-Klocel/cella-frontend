@@ -45,7 +45,14 @@ const ConfigurationPages: PageComponent = () => {
     const headerData: HeaderData = {
         title: t('common:configurations'),
         routes: itemRoutes,
-        actionsComponent: null
+        actionsComponent:
+            modes.length > 0 && modes.includes(ModeEnum.Create) ? (
+                <LinkButton
+                    title={t('actions:add2', { name: t('common:configuration') })}
+                    path={`${rootPath}/add`}
+                    type="primary"
+                />
+            ) : null
     };
 
     // specific to configs view

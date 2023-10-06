@@ -62,42 +62,47 @@ export const ValidateQuantityMoveForm = ({
         originalLocation.id = storedObject.step15.data.chosenLocation.id;
         originalLocation.name = storedObject.step15.data.chosenLocation.name;
     }
-    if (storedObject.step35.data.chosenContent) {
+    let articleInfo: { [k: string]: any } = {};
+    let articleLuBarcodeId: string;
+    if (storedObject.step35.data.chosenArticleLuBarcode) {
+        articleInfo.articleId = storedObject.step35.data.chosenArticleLuBarcode.articleId;
+        articleInfo.articleName = storedObject.step35.data.chosenArticleLuBarcode.article.name;
+        articleInfo.stockOwnerId =
+            storedObject.step35.data.chosenArticleLuBarcode.stockOwnerId ?? undefined;
+        articleInfo.stockOwnerName =
+            storedObject.step35.data.chosenArticleLuBarcode.stockOwner.name ?? undefined;
+        articleLuBarcodeId = storedObject.step35.data.chosenArticleLuBarcode.id ?? undefined;
+    }
+    if (storedObject.step40.data.chosenContent) {
         let originalContent: { [label: string]: any } | null;
         originalContent = {
-            id: storedObject.step35.data.chosenContent.id,
-            quantity: storedObject.step35.data.chosenContent.quantity
+            id: storedObject.step40.data.chosenContent.id,
+            quantity: storedObject.step40.data.chosenContent.quantity
         };
-        if (storedObject.step35.data.chosenContent.handlingUnit) {
+        if (storedObject.step40.data.chosenContent.handlingUnit) {
             let originalHu: { [label: string]: any } | null;
             originalHu = {
-                id: storedObject.step35.data.chosenContent.handlingUnitId,
-                name: storedObject.step35.data.chosenContent.handlingUnit.name,
-                category: storedObject.step35.data.chosenContent.handlingUnit.category,
-                code: storedObject.step35.data.chosenContent.handlingUnit.code,
-                type: storedObject.step35.data.chosenContent.handlingUnit.type
+                id: storedObject.step40.data.chosenContent.handlingUnitId,
+                name: storedObject.step40.data.chosenContent.handlingUnit.name,
+                category: storedObject.step40.data.chosenContent.handlingUnit.category,
+                code: storedObject.step40.data.chosenContent.handlingUnit.code,
+                type: storedObject.step40.data.chosenContent.handlingUnit.type
             };
             originalLocation['originalHu'] = originalHu;
         }
         originalLocation['originalContent'] = originalContent;
     }
-    let articleInfo: { [k: string]: any } = {};
-    let articleLuBarcodeId: string;
-    if (storedObject.step30.data.chosenArticleLuBarcode) {
-        articleInfo.articleId = storedObject.step30.data.chosenArticleLuBarcode.articleId;
-        articleInfo.articleName = storedObject.step30.data.chosenArticleLuBarcode.article.name;
-        articleInfo.stockOwnerId = storedObject.step30.data.chosenArticleLuBarcode.stockOwnerId;
-        articleInfo.stockOwnerName =
-            storedObject.step30.data.chosenArticleLuBarcode.stockOwner.name;
-        articleLuBarcodeId = storedObject.step30.data.chosenArticleLuBarcode.id;
-    }
     let movingQuantity: number;
-    if (storedObject.step40.data.movingQuantity) {
-        movingQuantity = storedObject.step40.data.movingQuantity;
+    if (storedObject.step50.data.movingQuantity) {
+        movingQuantity = storedObject.step50.data.movingQuantity;
     }
     let finalLocation: { [k: string]: any } = {};
-    if (storedObject.step65.data.chosenLocation) {
-        finalLocation = storedObject.step65.data.chosenLocation;
+    if (storedObject.step70.data.chosenLocation) {
+        finalLocation = storedObject.step70.data.chosenLocation;
+    }
+    let finalHandlingUnit: { [k: string]: any } = {};
+    if (storedObject.step80.data.finalHandlingUnit) {
+        finalHandlingUnit = storedObject.step80.data.finalHandlingUnit;
     }
 
     //ValidateQuantityMove-1a: retrieve chosen level from select and set information
@@ -113,7 +118,8 @@ export const ValidateQuantityMoveForm = ({
                 articleInfo,
                 articleLuBarcodeId,
                 movingQuantity,
-                finalLocation
+                finalLocation,
+                finalHandlingUnit
             })
         });
         if (res.ok) {
@@ -133,16 +139,10 @@ export const ValidateQuantityMoveForm = ({
     //ValidateQuantityMove-1b: handle back to previous - previous step settings (specific since check is automatic)
     const onBack = () => {
         setTriggerRender(!triggerRender);
-        for (
-            let i =
-                storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
-            i <= stepNumber;
-            i++
-        ) {
+        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
             delete storedObject[`step${i}`]?.data;
         }
-        storedObject.currentStep =
-            storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
+        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
         storage.set(process, JSON.stringify(storedObject));
     };
 

@@ -25,6 +25,7 @@ import { useHandlingUnitContents, LsIsSecured } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import useTranslation from 'next-translate/useTranslation';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
@@ -80,6 +81,7 @@ export const SelectContentForHandlingUnitForm = ({
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
+    const router = useRouter();
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -97,7 +99,8 @@ export const SelectContentForHandlingUnitForm = ({
         { handlingUnitId: `${HandlingUnitId}` },
         1,
         100,
-        null
+        null,
+        router.locale
     );
 
     //SelectContentForHandlingUnit-2: set contents to provide to carousel
@@ -193,6 +196,18 @@ export const SelectContentForHandlingUnitForm = ({
                                     <Col span={16}>
                                         <Typography style={{ fontSize: '10px' }}>
                                             {content.quantity}
+                                        </Typography>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col span={8}>
+                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                            {t('common:stock-status')}:
+                                        </Typography>
+                                    </Col>
+                                    <Col span={16}>
+                                        <Typography style={{ fontSize: '10px' }}>
+                                            {content.stockStatusText}
                                         </Typography>
                                     </Col>
                                 </Row>

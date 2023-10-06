@@ -117,8 +117,7 @@ const ParameterPages: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
-                                model.isEditable &&
-                                record.system == false ? (
+                                model.isEditable ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -140,8 +139,7 @@ const ParameterPages: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isDeletable &&
-                                record.system == false ? (
+                                model.isDeletable ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger
@@ -165,5 +163,3 @@ const ParameterPages: PageComponent = () => {
 ParameterPages.layout = MainLayout;
 
 export default ParameterPages;
-
-// {record.system == false ? (
