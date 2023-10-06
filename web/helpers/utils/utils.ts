@@ -343,7 +343,7 @@ function formatUTCLocaleDateTime(date: any, locale: any) {
 }
 
 function removeDuplicatesAndSort(arr: any[]) {
-    return Array.from(new Set(arr)).sort();
+    return Array.from(new Set(arr)).sort((a, b) => a - b);
 }
 
 function pascalToSnakeUpper(pascalCase: string): string {

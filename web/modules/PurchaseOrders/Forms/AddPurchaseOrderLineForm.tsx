@@ -27,11 +27,22 @@ import {
     useCreatePurchaseOrderLineMutation,
     CreatePurchaseOrderLineMutationVariables,
     CreatePurchaseOrderLineMutation,
-    useListParametersForAScopeQuery
+    useListParametersForAScopeQuery,
+    useSimpleGetAllStockOwnersQuery,
+    SimpleGetAllStockOwnersQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo, useArticleIds, usePurchaseOrderLineIds } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    useArticleIds,
+    usePurchaseOrderLineIds,
+    useArticles,
+    useStockOwners
+} from '@helpers';
 import { debounce } from 'lodash';
 import configs from '../../../../common/configs.json';
+import { FormOptionType } from 'models/Models';
 
 interface IOption {
     value: string;
@@ -42,8 +53,6 @@ const { Option } = Select;
 export interface ISingleItemProps {
     purchaseOrderId: string | any;
     purchaseOrderName: string | any;
-    stockOwnerId: string | any;
-    stockOwnerName: string | any;
 }
 
 export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
@@ -67,8 +76,24 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
     const [aId, setAId] = useState<string>();
     const [articleName, setArticleName] = useState<string>('');
+    const [stockOwners, setStockOwners] = useState<any>();
     const [blockingStatuses, setBlockingStatuses] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+
+    //To render Simple stockOwners list
+    const stockOwnerData = useStockOwners({}, 1, 100, null);
+
+    useEffect(() => {
+        if (stockOwnerData) {
+            const newIdOpts: { text: string; key: string }[] = [];
+            stockOwnerData.data?.stockOwners?.results.forEach(({ id, name, status }) => {
+                if (status != configs.STOCK_OWNER_STATUS_CLOSED) {
+                    newIdOpts.push({ text: name!, key: id! });
+                }
+            });
+            setStockOwners(newIdOpts);
+        }
+    }, [stockOwnerData.data]);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -111,12 +136,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     }, [purchaseOrderLines]);
 
     // to render autocompleted articles list
-    const articleData = useArticleIds(
-        { name: `${articleName}%`, stockOwnerId: props.stockOwnerId },
-        1,
-        100,
-        null
-    );
+    const articleData = useArticles({ name: `${articleName}%` }, 1, 100, null);
 
     useEffect(() => {
         const formValue = form.getFieldsValue(true);
@@ -126,12 +146,14 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     useEffect(() => {
         if (articleData.data) {
             const newIdOpts: Array<IOption> = [];
-            articleData.data.articles?.results.forEach(({ id, name }) => {
+            articleData.data.articles?.results.forEach(({ id, name, status }) => {
                 if (form.getFieldsValue(true).articleId === id) {
                     setArticleName(name!);
                     setAId(id!);
                 }
-                newIdOpts.push({ value: name!, id: id! });
+                if (status != configs.ARTICLE_STATUS_CLOSED) {
+                    newIdOpts.push({ value: name!, id: id! });
+                }
             });
             setAIdOptions(newIdOpts);
         }
@@ -142,7 +164,8 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     };
 
     const stockStatusTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'stock_statuses'
+        scope: 'stock_statuses',
+        language: router.locale
     });
 
     useEffect(() => {
@@ -193,8 +216,6 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
         const tmp_details = {
             purchaseOrderName: props.purchaseOrderName,
             purchaseOrderId: props.purchaseOrderId,
-            stockOwnerId: props.stockOwnerId,
-            stockOwnerName: props.stockOwnerName,
             status: configs.PURCHASE_ORDER_LINE_STATUS_CREATED
         };
         form.setFieldsValue(tmp_details);
@@ -218,8 +239,23 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
-                <Form.Item name="stockOwnerName" label={stockOwner}>
-                    <Input disabled />
+                <Form.Item
+                    name="stockOwnerId"
+                    label={stockOwner}
+                    rules={[{ required: true, message: errorMessageEmptyInput }]}
+                >
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:stockOwner')
+                        })}`}
+                    >
+                        {stockOwners?.map((so: any) => (
+                            <Option key={so.key} value={so.key}>
+                                {so.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
                 <Form.Item label={purchaseOrder} name="purchaseOrderName">
                     <Input disabled />

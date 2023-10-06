@@ -71,7 +71,7 @@ export const PurchaseOrderModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
-            isMandatory: true,
+            isMandatory: false,
             minRule: null,
             maxRule: null,
             config: null,
@@ -97,8 +97,7 @@ export const PurchaseOrderModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            defaultSort: 'ascending',
-            isEditDisabled: true
+            defaultSort: 'ascending'
         },
         name: {
             isListRequested: true,

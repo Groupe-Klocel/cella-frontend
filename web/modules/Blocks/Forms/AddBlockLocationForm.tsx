@@ -35,6 +35,7 @@ import {
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import configs from '../../../../common/configs.json';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -160,6 +161,7 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
                 formData.replenishType = parseInt(formData.replenishType);
                 if (formData['replenish'] == false) formData.replenishType = 0;
                 formData.baseUnitRotation = parseInt(formData.rotation);
+                formData.status = configs.LOCATION_STATUS_AVAILABLE;
                 delete formData.rotation;
                 delete formData.blockName;
                 delete formData.buildingName;
@@ -285,15 +287,6 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
                 <Form.Item
                     label={t('d:nb-level')}
                     name="numberOfLevel"
-                    rules={[
-                        { required: true, message: `${t('messages:error-message-empty-input')}` }
-                    ]}
-                >
-                    <InputNumber min={0} />
-                </Form.Item>
-                <Form.Item
-                    label={t('d:step')}
-                    name="levelStep"
                     rules={[
                         { required: true, message: `${t('messages:error-message-empty-input')}` }
                     ]}

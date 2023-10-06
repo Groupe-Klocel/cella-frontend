@@ -190,11 +190,7 @@ export const AddBarcodeForm = () => {
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
-                        <Form.Item
-                            name="stockOwnerId"
-                            label={stockOwner}
-                            rules={[{ required: true, message: errorMessageEmptyInput }]}
-                        >
+                        <Form.Item name="stockOwnerId" label={stockOwner}>
                             <Select
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('common:stock-owner')

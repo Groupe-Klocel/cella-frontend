@@ -217,16 +217,17 @@ export const DeleteLocationForm = () => {
 
         const response = await res.json();
 
+        setUnsavedChanges(false);
+
         if (res.ok) {
             // delete success
-            showSuccess(t('messages:success-update-data'));
+            showSuccess(t('messages:success-deleted'));
             router.push(`/locations/`);
         } else {
             // error
             if (response.error.is_error) {
                 // specific error
                 showError(t(`errors:${response.error.code}`));
-                setUnsavedChanges(false);
             } else {
                 // generic error
                 showError(t('messages:error-delete-location-impossible'));

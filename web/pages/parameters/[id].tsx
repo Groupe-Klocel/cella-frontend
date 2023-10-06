@@ -73,7 +73,7 @@ const ParameterPage: PageComponent = () => {
         title: pageTitle,
         routes: breadCrumb,
         onBackRoute: rootPath,
-        actionsComponent: !data?.system ? (
+        actionsComponent: (
             <Space>
                 {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                     <LinkButton
@@ -102,8 +102,6 @@ const ParameterPage: PageComponent = () => {
                     <></>
                 )}
             </Space>
-        ) : (
-            <></>
         )
     };
     // #endregion

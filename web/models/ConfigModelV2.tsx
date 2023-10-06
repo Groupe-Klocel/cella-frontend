@@ -23,8 +23,8 @@ import { ModelType } from './ModelsV2';
 export const ConfigModelV2: ModelType = {
     tableName: Table.Config,
     resolverName: 'Config',
-    isEditable: false,
-    isDeletable: false,
+    isEditable: true,
+    isDeletable: true,
     isSoftDeletable: false,
 
     endpoints: {
@@ -67,7 +67,7 @@ export const ConfigModelV2: ModelType = {
             isExcludedFromDetail: false,
             detailGroup: null,
             link: null,
-            addEditFormat: 'Dropdown',
+            addEditFormat: 'String',
             addEditStep: null,
             maxLength: null,
             displayName: null,
@@ -164,6 +164,27 @@ export const ConfigModelV2: ModelType = {
             param: null,
             optionTable: null
         },
+        extras: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: 'String',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: null
+        },
         created: {
             isListRequested: true,
             isDefaultHiddenList: true,
@@ -222,6 +243,7 @@ export const ConfigModelV2: ModelType = {
             displayName: null,
             isMandatory: false,
             minRule: null,
+            defaultSort: 'descending',
             maxRule: null,
             config: null,
             param: null,

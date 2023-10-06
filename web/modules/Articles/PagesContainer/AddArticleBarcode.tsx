@@ -53,7 +53,7 @@ const AddArticleBarcode = (props: ISingleItemProps) => {
     const breadsCrumb = [
         ...articleDetailBreadCrumb,
         {
-            breadcrumbName: t('add', { name: t('common:barcode') })
+            breadcrumbName: t('add2', { name: t('common:barcode') })
         }
     ];
 
@@ -75,7 +75,7 @@ const AddArticleBarcode = (props: ISingleItemProps) => {
                 ) : (
                     <>
                         <HeaderContent
-                            title={t('add', { name: t('common:barcode') })}
+                            title={t('add2', { name: t('common:barcode') })}
                             routes={breadsCrumb}
                             onBack={() => router.push('/articles/' + props?.articleId)}
                         />

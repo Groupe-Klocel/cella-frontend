@@ -52,7 +52,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         query GetHandlingUnitModelById($id: String!) {
             handlingUnitModel(id: $id) {
                 name
-                number
+                description
             }
         }
     `;
