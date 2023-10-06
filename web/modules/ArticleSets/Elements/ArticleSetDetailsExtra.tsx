@@ -77,7 +77,7 @@ const ArticleSetDetailsExtra = ({
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:set-detail') })}
-                    path={pathParamsFromDictionary('/article-sets/details/add', {
+                    path={pathParamsFromDictionary('/article-sets/detail/add', {
                         articleSetId: articleSetId,
                         articleSetName: articleSetName,
                         stockOwnerId: stockOwnerId,

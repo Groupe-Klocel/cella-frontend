@@ -158,11 +158,14 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
             const newIdOpts: Array<FormOptionType> = [];
             logisticUnitModelData.data.logisticUnits?.results.forEach(
                 ({ id, name, status, stockOwnerId }) => {
-                    if (
-                        status != configs.LOGISTIC_UNIT_STATUS_CLOSED &&
-                        stockOwnerId == props.stockOwnerId
-                    )
-                        newIdOpts.push({ text: name!, key: id! });
+                    if (status != configs.LOGISTIC_UNIT_STATUS_CLOSED) {
+                        if (
+                            (props.stockOwnerId && stockOwnerId == props.stockOwnerId) ||
+                            (!props.stockOwnerId && stockOwnerId == null)
+                        ) {
+                            newIdOpts.push({ text: name!, key: id! });
+                        }
+                    }
                 }
             );
             setLogisticUnitModels(newIdOpts);
@@ -278,6 +281,8 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
             .then(() => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
+
+                if (formData['stockOwnerId'] == '') formData['stockOwnerId'] = null;
                 formData.luIdStr = formData.logisticUnit;
                 formData.status = configs.ARTICLE_LU_STATUS_IN_PROGRESS;
 

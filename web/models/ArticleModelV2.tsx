@@ -93,13 +93,12 @@ export const ArticleModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
-            isMandatory: true,
+            isMandatory: false,
             minRule: null,
             maxRule: null,
             config: null,
             param: null,
-            optionTable: '{"table": "StockOwner", "fieldToDisplay": "name"}',
-            isEditDisabled: true
+            optionTable: '{"table": "StockOwner", "fieldToDisplay": "name"}'
         },
         'stockOwner{name}': {
             isListRequested: true,

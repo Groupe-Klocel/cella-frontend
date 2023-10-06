@@ -64,7 +64,7 @@ const AddBarcode = () => {
                         <HeaderContent
                             title={t('add-barcode', { name: t('common:barcode') })}
                             routes={breadsCrumb}
-                            //onBack={() => router.push('/barcodes/' + id)}
+                            onBack={() => router.back()}
                         />
                         <StyledPageContent>
                             <AddBarcodeForm />

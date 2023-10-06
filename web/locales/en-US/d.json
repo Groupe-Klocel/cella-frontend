@@ -112,9 +112,11 @@
     "handlingUnitModel": "Packaging",
     "pickedQuantity": "Picked quantity",
     "preparationModeText": "Preparation Mode",
+    "processedQuantity": "Processed quantity",
     "printer": "Printer",
     "qty-max-article": "Max articles quantity",
     "qtyMaxArticle": "Max articles quantity",
+    "quantityToBeProcessed": "Quantity to be processed",
     "reasonText": "Reason",
     "returnCodeText": "Return Code",
     "toleranceDimension": "Dimensions Tolerance (+/- %)",
@@ -391,6 +393,7 @@
     "rampNumber": "Ramp number",
     "round_name": "Round",
     "round": "Round",
+    "roundLine": "Round Line",
     "toBeChecked": "To be checked",
     "theoreticalWeight": "Theoretical weight (g)",
     "theoriticalWeight": "Theoretical weight (g)",
@@ -578,5 +581,7 @@
     "operatorPass2": "Operator passe 2",
     "operatorPass3": "Operator passe 3",
     "date": "Date",
-    "handlingUnitContent": "Content"
+    "handlingUnitContent": "Content",
+    "articleLu": "Logistic Unit",
+    "numberHuLoaded": "Number of HU loaded"
 }

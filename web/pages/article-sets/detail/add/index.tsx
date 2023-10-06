@@ -37,8 +37,8 @@ const AddArticleSetDetailPage: PageComponent = () => {
                 articleSetName={router.query.articleSetName}
                 articleId={router.query.articleId}
                 articleName={router.query.articleName}
-                stockOwnerId={router.query.stockOwnerId}
-                stockOwnerName={router.query.stockOwnerName}
+                stockOwnerId={router.query?.stockOwnerId}
+                stockOwnerName={router.query?.stockOwnerName}
             />
         </>
     );

@@ -73,17 +73,6 @@ const ArticlePages: PageComponent = () => {
 
     const hasSelected = selectedRowKeys.length > 0;
     const [refetch, setRefetch] = useState<boolean>(false);
-    // Checkbox
-    const startRounds = () => {
-        setLoading(true);
-
-        //TODO: Call mutation
-
-        setTimeout(() => {
-            setSelectedRowKeys([]);
-            setLoading(false);
-        }, 1000);
-    };
 
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
         setSelectedRowKeys(newSelectedRowKeys);

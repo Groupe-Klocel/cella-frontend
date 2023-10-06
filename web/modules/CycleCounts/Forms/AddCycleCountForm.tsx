@@ -542,16 +542,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 </Form.Item>
                 {articleDisplayGroup && (
                     <>
-                        <Form.Item
-                            label={t('common:stock-owner')}
-                            name="stockOwnerId"
-                            rules={[
-                                {
-                                    required: articleDisplayGroup,
-                                    message: t('messages:error-message-empty-input')
-                                }
-                            ]}
-                        >
+                        <Form.Item label={t('common:stock-owner')} name="stockOwnerId">
                             <Select
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('common:stock-owner')

@@ -46,6 +46,7 @@ export const AddFeatureTypeDetailsForm = () => {
     const { globalLocale } = useAppState();
     const searchedLanguage = globalLocale == 'en-us' ? 'en' : globalLocale;
     const [featureCodes, setFeatureCodes] = useState<any>();
+    const [featureTypeObject, setFeatureTypeObject] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     // TYPED SAFE ALL
@@ -68,22 +69,24 @@ export const AddFeatureTypeDetailsForm = () => {
             setFeatureCodes(featureCodesList?.data?.featureCodes?.results);
         }
     }, [featureCodesList]);
+
     useEffect(() => {
-        console.log('SCH');
-        console.log(parameterId);
-        console.log(featureTypeById);
         if (featureTypeById) {
-            const formData = form.getFieldsValue(true);
-            //handle translations from parameters:
-            const featureTypeObject = featureTypeById?.data?.parameter;
-            if (featureTypeObject) {
-                formData['featureType'] = parseInt(featureTypeObject?.code);
-            }
-            formData['associatedFeatureType'] = globalLocale
-                ? featureTypeObject?.translation[searchedLanguage]
-                : featureTypeObject?.value;
+            setFeatureTypeObject(featureTypeById?.data?.parameter);
         }
     }, [featureTypeById]);
+
+    useEffect(() => {
+        const formData = form.getFieldsValue(true);
+        if (featureTypeObject) {
+            formData['featureType'] = parseInt(featureTypeObject?.code);
+        }
+        formData['associatedFeatureType'] = globalLocale
+            ? featureTypeObject?.translation
+                ? featureTypeObject?.translation[searchedLanguage]
+                : featureTypeObject?.value
+            : featureTypeObject?.value;
+    }, [featureTypeObject]);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -170,13 +173,12 @@ export const AddFeatureTypeDetailsForm = () => {
     return (
         <WrapperForm>
             <Form form={form} scrollToFirstError onValuesChange={() => setUnsavedChanges(true)}>
-                <Form.Item label={t('feature Type')} name="associatedFeatureType">
+                <Form.Item label={t('common:feature-type')} name="associatedFeatureType">
                     <Input disabled />
                 </Form.Item>
                 <Form.Item
                     label={t('menu:feature-code')}
                     name="featureCodeId"
-                    hasFeedback
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                 >
                     <Select
@@ -193,10 +195,10 @@ export const AddFeatureTypeDetailsForm = () => {
                     </Select>
                 </Form.Item>
                 <Form.Item name="atReception">
-                    <Checkbox onChange={onAtReceptionChange}>{t('At Reception')}</Checkbox>
+                    <Checkbox onChange={onAtReceptionChange}>{t('d:atReception')}</Checkbox>
                 </Form.Item>
                 <Form.Item name="atPreparation">
-                    <Checkbox onChange={onAtPreparationChange}>{t('At Preparation')}</Checkbox>
+                    <Checkbox onChange={onAtPreparationChange}>{t('d:atPreparation')}</Checkbox>
                 </Form.Item>
 
                 <Row>
