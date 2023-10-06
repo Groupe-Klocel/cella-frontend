@@ -64,8 +64,6 @@ export const ScanForm = ({
         setScannedInfo(values.scannedItem);
     };
 
-    console.log(levelOfBack);
-
     // Scan-2: manage form reset in case of error
     useEffect(() => {
         if (resetForm) {
