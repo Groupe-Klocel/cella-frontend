@@ -89,7 +89,7 @@ const EditEquipment: FC<EditEquipmentProps> = ({ id, router }: EditEquipmentProp
                 ) : (
                     <>
                         <HeaderContent
-                            title={`${t('menu:equipment')}: ${data?.equipment?.name}`}
+                            title={`${t('menu:equipment')} ${data?.equipment?.name}`}
                             routes={breadsCrumb}
                             onBack={() => router.back()}
                         />

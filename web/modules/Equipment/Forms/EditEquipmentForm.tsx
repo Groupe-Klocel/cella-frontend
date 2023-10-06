@@ -335,7 +335,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     useEffect(() => {
         const tmp_details = {
             ...details,
-            stockOwnerName: details.stockOwner.name
+            stockOwnerName: details?.stockOwner?.name
         };
         delete tmp_details['id'];
         delete tmp_details['created'];
@@ -364,8 +364,18 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
-                <Form.Item name="stockOwnerName" label={t('common:stock-owner')}>
-                    <Input disabled />
+                <Form.Item label={t('common:stock-owner')} name="stockOwnerId">
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('common:stock-owner')
+                        })}`}
+                    >
+                        {stockOwners?.map((stockOwner: any) => (
+                            <Option key={stockOwner.id} value={stockOwner.id}>
+                                {stockOwner.name}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
                 <Form.Item
                     label={t('d:type')}

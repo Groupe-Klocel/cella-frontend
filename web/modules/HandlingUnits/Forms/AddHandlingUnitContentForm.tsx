@@ -36,7 +36,8 @@ import {
     getRulesWithNoSpacesValidator,
     useArticleIds,
     useStockOwners,
-    useLocationIds
+    useLocationIds,
+    useArticles
 } from '@helpers';
 import configs from '../../../../common/configs.json';
 
@@ -63,7 +64,7 @@ export const AddHandlingUnitContentForm = () => {
     const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
     const [aId, setAId] = useState<string>();
     const [articleName, setArticleName] = useState<string>('');
-    const articleData = useArticleIds({ name: `${articleName}%` }, 1, 100, null);
+    const articleData = useArticles({ name: `${articleName}%` }, 1, 100, null);
     const [lIdOptions, setLIdOptions] = useState<Array<IOption>>([]);
     const [lId, setLId] = useState<string>();
     const [locationName, setLocationName] = useState<string>('');
@@ -151,7 +152,7 @@ export const AddHandlingUnitContentForm = () => {
     useEffect(() => {
         if (stockOwnerData.data) {
             const newIdOpts: Array<FormOptionType> = [];
-            stockOwnerData.data.stockOwners?.results.forEach(({ id, name, status }) => {
+            stockOwnerData.data?.stockOwners?.results.forEach(({ id, name, status }) => {
                 if (status != configs.STOCK_OWNER_STATUS_CLOSED) {
                     newIdOpts.push({ text: name!, key: id! });
                 }
@@ -169,18 +170,24 @@ export const AddHandlingUnitContentForm = () => {
     useEffect(() => {
         if (articleData.data) {
             const newIdOpts: Array<IOption> = [];
-            articleData.data.articles?.results.forEach(({ id, name, stockOwnerId }) => {
-                if (form.getFieldsValue(true).stockOwnerId === stockOwnerId) {
+            articleData.data.articles?.results.forEach(({ id, name, stockOwnerId, status }) => {
+                if (
+                    (form.getFieldsValue(true).stockOwnerId != undefined &&
+                        form.getFieldsValue(true).stockOwnerId === stockOwnerId) ||
+                    (form.getFieldsValue(true).stockOwnerId == undefined && stockOwnerId === null)
+                ) {
                     if (form.getFieldsValue(true).articleId === id) {
                         setArticleName(name!);
                         setAId(id!);
                     }
-                    newIdOpts.push({ value: name!, id: id! });
+                    if (status != configs.ARTICLE_STATUS_CLOSED) {
+                        newIdOpts.push({ value: name!, id: id! });
+                    }
                 }
             });
             setAIdOptions(newIdOpts);
         }
-    }, [articleName, articleData.data]);
+    }, [articleName, articleData.data, form.getFieldsValue(true).stockOwnerId]);
 
     const onChangeArticle = (data: string) => {
         if (!data?.length) {
@@ -218,6 +225,11 @@ export const AddHandlingUnitContentForm = () => {
         } else {
             setLocationName(data);
         }
+    };
+
+    const onChangeStockOwner = (data: string) => {
+        setArticleName('');
+        setAId('');
     };
 
     // CREATE MUTATION
@@ -334,15 +346,10 @@ export const AddHandlingUnitContentForm = () => {
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
-                        <Form.Item
-                            label={t('d:stockOwner')}
-                            name="stockOwnerId"
-                            rules={[
-                                { required: true, message: t('messages:error-message-empty-input') }
-                            ]}
-                        >
+                        <Form.Item label={t('d:stockOwner')} name="stockOwnerId">
                             <Select
                                 allowClear
+                                onChange={onChangeStockOwner}
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:stockOwner')
                                 })}`}

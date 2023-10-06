@@ -19,7 +19,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import {
+    getModesFromPermissions,
+    META_DEFAULTS,
+    pathParams,
+    showError,
+    showSuccess
+} from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -29,7 +35,10 @@ import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListCompo
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
-import { BulkEditRoundsRenderModal } from 'modules/Rounds/Forms/BulkEditRoundsModal';
+// import { BulkEditRoundsRenderModal } from 'modules/Rounds/Forms/BulkEditRoundsModal';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
+import configs from '../../../common/configs.json';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const RoundPages: PageComponent = () => {
@@ -40,25 +49,75 @@ const RoundPages: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [startRoundLoading, setStartRoundLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
-    const roundCalculation = () => {
-        setLoading(true);
+    const { graphqlRequestClient } = useAuth();
 
-        //TODO: Call mutation
-
-        setTimeout(() => {
-            setSelectedRowKeys([]);
-            setLoading(false);
-        }, 1000);
+    const [isRoundCalculationLoading, setIsRoundCalculationLoading] = useState(false);
+    const confirmRoundCalculation = () => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:round-calculation-confirm'),
+                onOk: async () => {
+                    setIsRoundCalculationLoading(true);
+                    const query = gql`
+                        mutation executeFunction($functionName: String!, $event: JSON!) {
+                            executeFunction(functionName: $functionName, event: $event) {
+                                status
+                                output
+                            }
+                        }
+                    `;
+                    const variables = {
+                        functionName: 'K_estimateRounds',
+                        event: {}
+                    };
+                    try {
+                        const launchRoundsResult = await graphqlRequestClient.request(
+                            query,
+                            variables
+                        );
+                        if (launchRoundsResult.executeFunction.status === 'ERROR') {
+                            showError(launchRoundsResult.executeFunction.output);
+                        } else if (
+                            launchRoundsResult.executeFunction.status === 'OK' &&
+                            launchRoundsResult.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(
+                                t(`errors:${launchRoundsResult.executeFunction.output.output.code}`)
+                            );
+                            console.log(
+                                'Backend_message',
+                                launchRoundsResult.executeFunction.output.output
+                            );
+                        } else {
+                            showSuccess(t('messages:success-round-calculation'));
+                            setRefetch(true);
+                        }
+                        setIsRoundCalculationLoading(false);
+                    } catch (error) {
+                        showError(t('messages:error-executing-function'));
+                        console.log('executeFunctionError', error);
+                        setIsRoundCalculationLoading(false);
+                    }
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
+            });
+        };
     };
+
     const headerData: HeaderData = {
         title: t('common:rounds'),
         routes: itemRoutes,
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (
                 <>
-                    <Button type="primary" onClick={roundCalculation} loading={loading}>
+                    <Button
+                        type="primary"
+                        onClick={confirmRoundCalculation()}
+                        loading={isRoundCalculationLoading}
+                    >
                         {t('actions:roundCalculation')}
                     </Button>
                 </>
@@ -80,15 +139,43 @@ const RoundPages: PageComponent = () => {
     const hasSelected = selectedRowKeys.length > 0;
     const [refetch, setRefetch] = useState<boolean>(false);
     // Checkbox
-    const startRounds = () => {
-        setLoading(true);
+    const startRounds = async () => {
+        setStartRoundLoading(true);
+        const rounds = selectedRowKeys?.map((item) => ({ id: item }));
 
         //TODO: Call mutation
-
-        setTimeout(() => {
-            setSelectedRowKeys([]);
-            setLoading(false);
-        }, 1000);
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+        const variables = {
+            functionName: 'K_updateRoundsStatus',
+            event: { input: { rounds: rounds, status: configs.ROUND_STATUS_STARTED } }
+        };
+        try {
+            const launchRoundsResult = await graphqlRequestClient.request(query, variables);
+            if (launchRoundsResult.executeFunction.status === 'ERROR') {
+                showError(launchRoundsResult.executeFunction.output);
+            } else if (
+                launchRoundsResult.executeFunction.status === 'OK' &&
+                launchRoundsResult.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${launchRoundsResult.executeFunction.output.output.code}`));
+                console.log('Backend_message', launchRoundsResult.executeFunction.output.output);
+            } else {
+                showSuccess(t('messages:success-round-calculation'));
+                setRefetch(true);
+            }
+            setStartRoundLoading(false);
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+            setStartRoundLoading(false);
+        }
     };
 
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
@@ -96,8 +183,12 @@ const RoundPages: PageComponent = () => {
     };
     const rowSelection = {
         selectedRowKeys,
-        onChange: onSelectChange
+        onChange: onSelectChange,
+        getCheckboxProps: (record: any) => ({
+            disabled: record.status < configs.ROUND_STATUS_ESTIMATED ? true : false
+        })
     };
+
     const actionButtons: ActionButtons = {
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Update) ? (
@@ -115,11 +206,12 @@ const RoundPages: PageComponent = () => {
                                 type="primary"
                                 onClick={startRounds}
                                 disabled={!hasSelected}
-                                loading={loading}
+                                loading={startRoundLoading}
                             >
                                 {t('actions:startRounds')}
                             </Button>
                         </span>
+                        {/* N.B.: commented for later enhancement since it requires additional development to work with round launching on selected rows
                         <span style={{ marginLeft: 16 }}>
                             <Button
                                 type="primary"
@@ -142,7 +234,7 @@ const RoundPages: PageComponent = () => {
                             setRefetch={() => {
                                 setRefetch(!refetch);
                             }}
-                        />
+                        /> */}
                     </>
                 </>
             ) : null

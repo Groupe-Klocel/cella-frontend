@@ -92,7 +92,7 @@ const GoodsInDetailsExtra = ({ handlingUnitInboundId, handlingUnitId }: IItemDet
             ) : (
                 <></>
             )}
-            {MovementModes.length > 0 && MovementModes.includes(ModeEnum.Read) ? (
+            {/* {MovementModes.length > 0 && MovementModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
                     <ListComponent
@@ -124,7 +124,7 @@ const GoodsInDetailsExtra = ({ handlingUnitInboundId, handlingUnitId }: IItemDet
                 </>
             ) : (
                 <></>
-            )}
+            )} */}
         </>
     );
 };

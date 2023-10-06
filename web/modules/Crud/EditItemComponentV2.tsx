@@ -325,17 +325,31 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
             const matchingKeys = checkValueInKey(obj);
             const dependenciesArray: Array<any> = [];
             matchingKeys.map((matchingKey) => {
-                if (formInfos && formInfos[matchingKey] !== undefined) {
+                if (
+                    formInfos &&
+                    formInfos[matchingKey] !== undefined &&
+                    formInfos[matchingKey] !== null
+                ) {
                     const filtersToApply = { ...obj.optionTable.filtersToApply };
                     filtersToApply[matchingKey] = formInfos[matchingKey];
                     obj.optionTable.filtersToApply = filtersToApply;
                     dependenciesArray.push({ triggerField: matchingKey, changingField: obj.field });
-                } else if (detail && detail.data[props.dataModel.endpoints.detail] !== undefined) {
+                } else if (
+                    detail &&
+                    detail.data[props.dataModel.endpoints.detail] !== undefined &&
+                    detail.data[props.dataModel.endpoints.detail] !== null
+                ) {
                     const previousData = detail.data[props.dataModel.endpoints.detail];
-                    const filtersToApply = { ...obj.optionTable.filtersToApply };
-                    filtersToApply[matchingKey] = previousData[matchingKey];
-                    obj.optionTable.filtersToApply = filtersToApply;
-                    dependenciesArray.push({ triggerField: matchingKey, changingField: obj.field });
+
+                    if (previousData[matchingKey] !== null) {
+                        const filtersToApply = { ...obj.optionTable.filtersToApply };
+                        filtersToApply[matchingKey] = previousData[matchingKey];
+                        obj.optionTable.filtersToApply = filtersToApply;
+                        dependenciesArray.push({
+                            triggerField: matchingKey,
+                            changingField: obj.field
+                        });
+                    }
                 }
                 return obj;
             });
@@ -431,18 +445,24 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
 
             const optionsObject: { [key: string]: any } = {};
             options.forEach((item: any) => {
-                if (detail && detail.data[props.dataModel.endpoints.detail] !== undefined) {
-                    const itemId = detail.data[props.dataModel.endpoints.detail].id;
-                    //remove id from option object if present
-                    const key = Object.keys(item)[0];
-                    const index = item[key].findIndex((element: any) => element.key === itemId);
-                    if (index > -1) {
-                        item[key].splice(index, 1);
+                if (Object.keys(item).length > 0) {
+                    if (
+                        detail &&
+                        detail.data[props.dataModel.endpoints.detail] !== undefined &&
+                        detail.data[props.dataModel.endpoints.detail] !== null
+                    ) {
+                        const itemId = detail.data[props.dataModel.endpoints.detail].id;
+                        //remove id from option object if present
+                        const key = Object.keys(item)[0];
+                        const index = item[key].findIndex((element: any) => element.key === itemId);
+                        if (index > -1) {
+                            item[key].splice(index, 1);
+                        }
                     }
-                }
-                if (item) {
-                    const key = Object.keys(item)[0];
-                    optionsObject[key] = item[key];
+                    if (item) {
+                        const key = Object.keys(item)[0];
+                        optionsObject[key] = item[key];
+                    }
                 }
             });
             if (Object.keys(optionsObject).length > 0) {

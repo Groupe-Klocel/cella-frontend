@@ -241,13 +241,13 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
-                {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
+                {/* {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
                     <Menu.Item key="articles-blacklisted-barcodes">
                         <Link href="/blacklisted-barcodes">{t('blacklisted-barcodes')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
-                )}
+                )} */}
                 {getModesFromPermissions(permissions, Table.ArticleSet).includes(ModeEnum.Read) ? (
                     <Menu.Item key="articles-sets">
                         <Link href="/article-sets">{t('sets')}</Link>

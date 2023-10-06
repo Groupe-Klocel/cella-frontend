@@ -239,6 +239,8 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);
+
+                if (formData['stockOwnerId'] == '') formData['stockOwnerId'] = null;
                 delete formData['stockOwner'];
                 delete formData['stockOwnerName'];
                 delete formData['article'];
@@ -270,7 +272,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         const tmp_details = {
             ...details,
             articleName: details.article.name,
-            stockOwnerName: details.stockOwner.name
+            stockOwnerName: details?.stockOwner?.name
         };
         delete tmp_details['id'];
         delete tmp_details['created'];
@@ -279,7 +281,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         delete tmp_details['modifiedBy'];
 
         if (
-            details.handlingUnitModel.category == parameters.HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND
+            details?.handlingUnitModel?.category == parameters.HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND
         ) {
             setDisableReplenish(true);
             setReplenishValue(details.replenish);

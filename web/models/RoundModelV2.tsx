@@ -301,7 +301,7 @@ export const RoundModelV2: ModelType = {
         blockId: {
             isListRequested: true,
             isDefaultHiddenList: false,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: false,
             searchingFormat: 'Dropdown',
             isDetailRequested: true,
