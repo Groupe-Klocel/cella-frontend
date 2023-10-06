@@ -130,19 +130,6 @@ mutation CreateBarcode($input: CreateBarcodeInput!) {
     }
 }
 
-mutation CreateBarcodeArticleLuBarcode(
-    $input: CreateBarcodeInput2!
-    $input2: CreateArticleLuBarcodeExtendedInput!
-) {
-    createBarcodeArticlelubarcodeExtended(input: $input, input2: $input2) {
-        id
-        name
-        articleLuBarcodes {
-            id
-        }
-    }
-}
-
 mutation DeleteBarcode($id: String!) {
     deleteBarcode(id: $id)
 }

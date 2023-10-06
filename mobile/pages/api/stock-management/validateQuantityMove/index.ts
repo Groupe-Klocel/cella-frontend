@@ -19,6 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import configs from '../../../../../common/configs.json';
+import parameters from '../../../../../common/parameters.json';
 
 const parseCookie = (str: string) =>
     str
@@ -45,17 +47,23 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     // retrieve information from front
-    const { originalLocation, articleInfo, articleLuBarcodeId, movingQuantity, finalLocation } =
-        req.body;
+    const {
+        originalLocation,
+        articleInfo,
+        articleLuBarcodeId,
+        movingQuantity,
+        finalLocation,
+        finalHandlingUnit
+    } = req.body;
 
     const movementCodes = {
-        initialStatus: 14000,
-        finalStatus: 14000,
-        status: 1000,
-        type: 20010,
-        model: 10300,
-        code: 10025,
-        priority: 1
+        initialStatus: parameters.STOCK_STATUSES_SALE,
+        finalStatus: parameters.STOCK_STATUSES_SALE,
+        status: configs.MOVEMENT_STATUS_VALIDATED,
+        type: configs.MOVEMENT_TYPE_STOCK,
+        model: configs.MOVEMENT_MODEL_NORMAL,
+        code: parameters.MOVEMENT_CODE_TRANSFER,
+        priority: parameters.PRIORITY_NORMAL
     };
 
     //Transaction management
@@ -113,29 +121,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         let destinationHuResult: { [k: string]: any } | null;
         if (finalLocation.type == 'empty') {
             try {
-                const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_WMS_URL}/api/handling-units/sscc-generator`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            origin: `${req.headers.origin}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            extensionDigit: 0,
-                            requestHeader
-                        })
-                    }
-                );
-                const SSCC = await res.json();
-
-                if (SSCC) {
+                if (finalHandlingUnit) {
                     const newHUVariables = {
                         input: {
-                            name: SSCC.response,
+                            name: finalHandlingUnit.name,
                             code: originalLocation.originalHu.code,
                             category: originalLocation.originalHu.category,
-                            status: 450,
+                            status: configs.HANDLING_UNIT_MODEL_STATUS_IN_PROGRESS,
                             type: originalLocation.originalHu.type,
                             stockOwnerId: articleInfo.stockOwnerId,
                             locationId: finalLocation.id,
@@ -173,7 +165,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         if (finalLocation.type == 'HU_without_HUC' || finalLocation.type == 'empty') {
             const newHUCVariables = {
                 input: {
-                    stockStatus: 14000,
+                    stockStatus: parameters.STOCK_STATUSES_SALE,
                     handlingUnitId: finalLocation.destinationHu.destinationHuId,
                     articleId: articleInfo.articleId,
                     articleLuBarcodeId,
@@ -195,6 +187,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 newHUCVariables,
                 requestHeader
             );
+
             //inject id in the finalLocation const
             if (destinationHucResult) {
                 const destinationContent = {

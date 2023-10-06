@@ -25,7 +25,8 @@ import { useEffect, useState } from 'react';
 export interface IEnterQuantityProps {
     process: string;
     stepNumber: number;
-    label: string;
+    label?: string;
+    defaultValue?: number;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     availableQuantity: number;
@@ -36,6 +37,7 @@ export const EnterQuantity = ({
     process,
     stepNumber,
     label,
+    defaultValue,
     trigger: { triggerRender, setTriggerRender },
     buttons,
     availableQuantity,
@@ -49,7 +51,14 @@ export const EnterQuantity = ({
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
     useEffect(() => {
-        if (storedObject.currentStep < stepNumber) {
+        //automatically set movingQuantity when defaultValue is provided
+        if (defaultValue) {
+            // N.B.: in this case previous step is kept at its previous value
+            const data: { [label: string]: any } = {};
+            data['movingQuantity'] = defaultValue;
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            setTriggerRender(!triggerRender);
+        } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
             storedObject.currentStep = stepNumber;

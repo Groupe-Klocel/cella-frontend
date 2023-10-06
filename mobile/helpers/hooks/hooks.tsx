@@ -221,7 +221,13 @@ const useHandlingUnitOutbounds = (search: any, page: number, itemsPerPage: numbe
     return hu_outbounds;
 };
 
-const useHandlingUnitContents = (search: any, page: number, itemsPerPage: number, sort: any) => {
+const useHandlingUnitContents = (
+    search: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any,
+    language: any
+) => {
     const { graphqlRequestClient } = useAuth();
 
     const sortByDate = {
@@ -244,13 +250,20 @@ const useHandlingUnitContents = (search: any, page: number, itemsPerPage: number
         filters: search,
         orderBy: newSort,
         page: page,
-        itemsPerPage: itemsPerPage
+        itemsPerPage: itemsPerPage,
+        language: language
     });
 
     return hu_contents;
 };
 
-const useLocationIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+const useLocationIds = (
+    search: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any,
+    language: any
+) => {
     const { graphqlRequestClient } = useAuth();
 
     const sortByDate = {
@@ -272,7 +285,8 @@ const useLocationIds = (search: any, page: number, itemsPerPage: number, sort: a
             filters: search,
             orderBy: newSort,
             page: page,
-            itemsPerPage: itemsPerPage
+            itemsPerPage: itemsPerPage,
+            language: language
         }
     );
 
