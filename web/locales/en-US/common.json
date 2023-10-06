@@ -244,5 +244,7 @@
     "associated-roles": "Associated Roles",
     "associated-warehouse-workers": "Associated Users",
     "logistic-unit-model": "Logistic Unit Model",
-    "logistic-unit-models": "Logistic Unit Models"
+    "logistic-unit-models": "Logistic Unit Models",
+    "hook-config": "Hook Config",
+    "hook-configs": "Hook Configs"
 }

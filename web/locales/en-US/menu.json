@@ -15,7 +15,7 @@
     "conversions": "Conversions",
     "block": "Block",
     "buildings": "Buildings",
-    "dummy-hu-generator": "Support generator",
+    "dummy-hu-generator": "Handling unit generator",
     "location": "Location",
     "logistic-unit": "Logistic Unit",
     "logistic-units": "Logistic Units",
@@ -98,5 +98,6 @@
     "record-history": "History",
     "logistic-unit-models": "Logistic Unit Models",
     "shipping-modes": "Shipping Modes",
-    "shipping-mode": "Shipping Mode"
+    "shipping-mode": "Shipping Mode",
+    "hook-configs": "Hook Configs"
 }

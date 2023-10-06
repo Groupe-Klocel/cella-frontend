@@ -293,15 +293,6 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
                 >
                     <InputNumber min={0} />
                 </Form.Item>
-                <Form.Item
-                    label={t('d:step')}
-                    name="levelStep"
-                    rules={[
-                        { required: true, message: `${t('messages:error-message-empty-input')}` }
-                    ]}
-                >
-                    <InputNumber min={0} />
-                </Form.Item>
                 <Divider />
                 <Form.Item
                     label={t('d:position')}

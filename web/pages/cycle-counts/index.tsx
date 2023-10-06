@@ -110,7 +110,7 @@ const CycleCountPages: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Read) &&
                                 record.status == configs.CYCLE_COUNT_STATUS_CREATED &&
-                                record.model == configs.CYCLE_COUNT_MODEL_RECOMMANDED ? (
+                                record.model == configs.CYCLE_COUNT_MODEL_RECOMMENDED ? (
                                     <Button
                                         icon={<CaretRightOutlined />}
                                         onClick={() =>

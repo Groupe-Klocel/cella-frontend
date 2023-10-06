@@ -65,6 +65,7 @@
     "success-updated": "The element has been successfully updated",
     "success-exported": "The element has been successfully exported",
     "success-enabled": "The element has been successfully enabled",
+    "success-generate-dummy-hu-on-printer": "Handling Unit label(s) successfully generated. Please check selected printer",
     "success-reopened": "The element has been successfully reopened",
     "success-password-reset": "The password has been successfully reset",
     "success-canceled": "The element has been successfully canceled",

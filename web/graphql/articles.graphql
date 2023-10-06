@@ -358,6 +358,28 @@ query GetArticleLuById($id: String!, $language: String = "en") {
         preparationMode
         preparationModeText
         replenish
+        sortType
+        sortTypeText
+        pickingType
+        pickingTypeText
+        pickingLocationId
+        pickingLocation {
+            name
+        }
+        automaticPickingLocationPatternId
+        automaticPickingLocationPattern {
+            name
+        }
+        automaticStorageLocationPatternId
+        automaticStorageLocationPattern {
+            name
+        }
+        expansionCoefficient
+        emptyCoefficient
+        minimumReplenishmentThreshold
+        maximumReplenishmentThreshold
+        status
+        statusText
     }
 }
 

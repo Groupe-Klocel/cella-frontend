@@ -32,6 +32,7 @@ import {
     useGetReplenishTypesConfigsQuery,
     useGetRotationsParamsQuery,
     useListConfigsForAScopeQuery,
+    useListParametersForAScopeQuery,
     useSimpleGetAllBLocksQuery
 } from 'generated/graphql';
 import { FormOptionType } from 'models/Models';
@@ -56,6 +57,8 @@ export const AddLocationForm = () => {
     const [selectedReplenishType, setSelectedReplenishType] = useState<any>(null);
     const [categoriesTexts, setCategoriesTexts] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [stockStatusesTexts, setStockStatusesTexts] = useState<any>();
+    const [locationGroupIdsTexts, setLocationGroupIdsTexts] = useState<any>();
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -93,6 +96,28 @@ export const AddLocationForm = () => {
             setCategoriesTexts(categoriesTextList?.data?.listConfigsForAScope);
         }
     }, [categoriesTextList.data]);
+
+    //To render Simple stock statuses list
+    const stockStatusesTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'stock_statuses'
+    });
+
+    useEffect(() => {
+        if (stockStatusesTextList) {
+            setStockStatusesTexts(stockStatusesTextList?.data?.listParametersForAScope);
+        }
+    }, [stockStatusesTextList.data]);
+
+    //To render Simple location groups list
+    const locationGroupIdsTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'location_location_group_id'
+    });
+
+    useEffect(() => {
+        if (locationGroupIdsTextList) {
+            setLocationGroupIdsTexts(locationGroupIdsTextList?.data?.listParametersForAScope);
+        }
+    }, [locationGroupIdsTextList.data]);
 
     //To render simple blocks list for attached block selection (id and name without any filter)
     const blocksList = useSimpleGetAllBLocksQuery<Partial<SimpleGetAllBLocksQuery>, Error>(
@@ -165,6 +190,10 @@ export const AddLocationForm = () => {
 
     const onStockMiniChange = (e: CheckboxChangeEvent) => {
         form.setFieldsValue({ allowCycleCountStockMin: e.target.checked });
+    };
+
+    const onHuManagementChange = (e: CheckboxChangeEvent) => {
+        form.setFieldsValue({ huManagement: e.target.checked });
     };
 
     // Call api to create new group
@@ -316,15 +345,6 @@ export const AddLocationForm = () => {
                 >
                     <InputNumber min={0} />
                 </Form.Item>
-                <Form.Item
-                    label={t('d:step')}
-                    name="levelStep"
-                    rules={[
-                        { required: true, message: `${t('messages:error-message-empty-input')}` }
-                    ]}
-                >
-                    <InputNumber min={0} />
-                </Form.Item>
                 <Divider />
                 <Form.Item
                     label={t('d:position')}
@@ -414,6 +434,29 @@ export const AddLocationForm = () => {
                     <Checkbox onChange={onStockMiniChange}>
                         {t('d:allowCycleCountStockMin')}
                     </Checkbox>
+                </Form.Item>
+                <Form.Item name="huManagement">
+                    <Checkbox onChange={onHuManagementChange}>{t('d:huManagement')}</Checkbox>
+                </Form.Item>
+                <Form.Item label={t('d:stockStatus')} name="stockStatus" rules={[]}>
+                    <Select defaultValue="">
+                        <Option value="">-</Option>
+                        {stockStatusesTexts?.map((stockStatus: any) => (
+                            <Option key={stockStatus.id} value={parseInt(stockStatus.code)}>
+                                {stockStatus.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:locationGroupIdText')} name="locationGroupId" rules={[]}>
+                    <Select defaultValue="">
+                        <Option value="">-</Option>
+                        {locationGroupIdsTexts?.map((locationGroupId: any) => (
+                            <Option key={locationGroupId.id} value={parseInt(locationGroupId.code)}>
+                                {locationGroupId.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>

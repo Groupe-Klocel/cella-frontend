@@ -202,12 +202,13 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
                     ? item.translation[`${filterLanguage}`]
                     : item.value;
             //check if item.scope is in filteringConfigValues
+
             if (filteringConfigValues?.find?.((obj: any) => obj.scope === item.scope)) {
                 const filter = filteringConfigValues.find((obj: any) => obj.scope === item.scope);
                 if (filter.filter.includedValues?.includes?.(item[filter.filter.field])) {
                     tmp_results[item.scope].push({
                         key:
-                            isNumeric(item.code) &&
+                            !isNumeric(item.code) &&
                             props.stringCodeScopes &&
                             props.stringCodeScopes.includes(item.scope)
                                 ? item.code
@@ -217,7 +218,7 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
                 } else if (!filter.filter.excludedValues?.includes?.(item[filter.filter.field])) {
                     tmp_results[item.scope].push({
                         key:
-                            isNumeric(item.code) &&
+                            !isNumeric(item.code) &&
                             props.stringCodeScopes &&
                             props.stringCodeScopes.includes(item.scope)
                                 ? item.code
@@ -228,7 +229,7 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
             } else {
                 tmp_results[item.scope].push({
                     key:
-                        isNumeric(item.code) &&
+                        !isNumeric(item.code) &&
                         props.stringCodeScopes &&
                         props.stringCodeScopes.includes(item.scope)
                             ? item.code

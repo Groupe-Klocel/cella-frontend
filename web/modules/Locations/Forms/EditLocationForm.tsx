@@ -32,7 +32,8 @@ import {
     GetReplenishTypesConfigsQuery,
     useGetRotationsParamsQuery,
     GetRotationsParamsQuery,
-    useListConfigsForAScopeQuery
+    useListConfigsForAScopeQuery,
+    useListParametersForAScopeQuery
 } from 'generated/graphql';
 import { showError, showSuccess, showInfo } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
@@ -64,6 +65,9 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
     const [selectedReplenish, setSelectedReplenish] = useState<any>(details.replenish);
     const [selectedReplenishType, setSelectedReplenishType] = useState<any>(details.replenishType);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [huManagementValue, setHuManagement] = useState(details.huManagement);
+    const [stockStatusesTexts, setStockStatusesTexts] = useState<any>();
+    const [locationGroupsTexts, setLocationGroupsTexts] = useState<any>();
 
     //To render replenish types from config table for the given scope
     const replenishTypesList = useGetReplenishTypesConfigsQuery<
@@ -76,6 +80,14 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
             setReplenishTypes(replenishTypesList?.data?.listConfigsForAScope);
         }
     }, [replenishTypesList]);
+
+    useEffect(() => {
+        if (details) {
+            setHuManagement(details?.huManagement);
+            setStockMinValue(details?.allowCycleCountStockMin);
+            setReplenishValue(details?.replenish);
+        }
+    }, [details]);
 
     //To render rotations from parameters table for the given scope
     const rotationsList = useGetRotationsParamsQuery<Partial<GetRotationsParamsQuery>, Error>(
@@ -104,6 +116,30 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
             setCategoriesTexts(categoriesTextList?.data?.listConfigsForAScope);
         }
     }, [categoriesTextList.data]);
+
+    //To render Simple stock statuses list
+    const stockStatusesTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'stock_statuses',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (stockStatusesTextList) {
+            setStockStatusesTexts(stockStatusesTextList?.data?.listParametersForAScope);
+        }
+    }, [stockStatusesTextList.data]);
+
+    //To render Simple location groups list
+    const locationGroupsTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'location_location_group_id',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (locationGroupsTextList) {
+            setLocationGroupsTexts(locationGroupsTextList?.data?.listParametersForAScope);
+        }
+    }, [locationGroupsTextList.data]);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -158,6 +194,11 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
         form.setFieldsValue({ allowCycleCountStockMin: e.target.checked });
     };
 
+    const onHuManagementChange = (e: CheckboxChangeEvent) => {
+        setHuManagement(!huManagementValue);
+        form.setFieldsValue({ huManagement: e.target.checked });
+    };
+
     // to validate empty field when replenish is false
     useEffect(() => {
         form.validateFields(['replenishType']);
@@ -194,6 +235,10 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                 if (formData.replenishType != configs.LOCATION_REPLENISH_TYPE_SAME_ROTATION) {
                     formData['baseUnitRotation'] = null;
                 }
+                formData.huManagement = huManagementValue;
+                formData.allowCycleCountStockMin = stockMinValue;
+                formData.replenish = replenishValue;
+
                 delete formData['associatedBlock'];
                 delete formData['replenishTypeText'];
                 delete formData['baseUnitRotationText'];
@@ -258,6 +303,24 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                     ]}
                 >
                     <Input disabled={true} />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:name')}
+                    name="name"
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
+                    <Input />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:barcode')}
+                    name="barcode"
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
+                    <Input />
                 </Form.Item>
                 <Form.Item
                     label={t('d:category')}
@@ -332,6 +395,31 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                     <Checkbox checked={stockMinValue} onChange={onStockMinChange}>
                         {t('d:allowCycleCountStockMin')}
                     </Checkbox>
+                </Form.Item>
+                <Form.Item name="huManagement">
+                    <Checkbox checked={huManagementValue} onChange={onHuManagementChange}>
+                        {t('d:huManagement')}
+                    </Checkbox>
+                </Form.Item>
+                <Form.Item label={t('d:blockingStatus')} name="stockStatus" rules={[]}>
+                    <Select>
+                        <Option value="">-</Option>
+                        {stockStatusesTexts?.map((stockStatus: any) => (
+                            <Option key={stockStatus.id} value={parseInt(stockStatus.code)}>
+                                {stockStatus.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:locationGroupIdText')} name="locationGroupId" rules={[]}>
+                    <Select>
+                        <Option value="">-</Option>
+                        {locationGroupsTexts?.map((locationGroupId: any) => (
+                            <Option key={locationGroupId.id} value={parseInt(locationGroupId.code)}>
+                                {locationGroupId.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>

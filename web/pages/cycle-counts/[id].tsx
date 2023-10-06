@@ -119,7 +119,7 @@ const CycleCountPage: PageComponent = () => {
                 modes.includes(ModeEnum.Delete) &&
                 model.isDeletable &&
                 data?.status == configs.CYCLE_COUNT_STATUS_CREATED &&
-                data?.model == configs.CYCLE_COUNT_MODEL_RECOMMANDED ? (
+                data?.model == configs.CYCLE_COUNT_MODEL_RECOMMENDED ? (
                     <Button onClick={() => startCycleCount(data?.id as string, data?.status)}>
                         {t('actions:start')}
                     </Button>

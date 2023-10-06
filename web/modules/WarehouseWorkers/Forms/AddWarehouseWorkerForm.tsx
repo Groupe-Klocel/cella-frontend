@@ -110,6 +110,7 @@ export const AddWarehouseWorkerForm = () => {
                     showError(errorWrongPassword);
                 } else {
                     delete formData.password2;
+                    formData['resetPassword'] = true;
                     createWarehouseWorker({ input: formData });
                     setUnsavedChanges(false);
                 }

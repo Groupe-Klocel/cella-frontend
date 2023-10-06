@@ -197,6 +197,13 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.HookConfig).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-hook-configs">
+                        <Link href="/hook-configs">{t('hook-configs')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 {getModesFromPermissions(permissions, Table.Conversion).includes(ModeEnum.Read) ? (
                     <Menu.Item key="configuration-conversions">
                         <Link href="/conversions">{t('conversions')}</Link>
