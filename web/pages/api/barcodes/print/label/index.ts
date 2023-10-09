@@ -52,8 +52,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         query GetArticleLuBarcodeById($id: String!) {
             articleLuBarcode(id: $id) {
                 article {
-                    additionalDescription
-                    code
+                    name
+                    description
                 }
                 barcode {
                     name
