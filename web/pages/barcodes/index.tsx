@@ -137,9 +137,7 @@ const BarcodePage: PageComponent = () => {
                                         setIdToPrint(record.articleLuBarcodes_id as string);
                                     }}
                                     icon={<BarcodeOutlined />}
-                                >
-                                    {record.articleLuBarcodes_id}
-                                </Button>
+                                />
                             </Space>
                         )
                     }

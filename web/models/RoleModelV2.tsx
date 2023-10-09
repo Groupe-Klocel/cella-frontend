@@ -82,7 +82,7 @@ export const RoleModelV2: ModelType = {
         warehouseId: {
             isListRequested: true,
             isDefaultHiddenList: false,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: false,
             searchingFormat: null,
             isDetailRequested: true,
@@ -101,10 +101,10 @@ export const RoleModelV2: ModelType = {
             optionTable: null
         },
         'warehouse{name}': {
-            isListRequested: false,
+            isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: false,
+            isSortable: true,
             searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: false,

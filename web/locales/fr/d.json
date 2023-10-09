@@ -613,5 +613,8 @@
     "hookType": "Type de hook",
     "hookTypeText": "Type de hook",
     "filter": "Filtre",
-    "argument": "Argument"
+    "argument": "Argument",
+    "UN-code": "Code UN",
+    "dangerous-goods-weight1": "Poids matière dangereuse",
+    "dangerous-goods-weight2": "Poids batterie"
 }
