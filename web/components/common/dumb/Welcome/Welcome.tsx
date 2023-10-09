@@ -27,7 +27,7 @@ const StyledWelcomeWrapper = styled.div`
     flex-direction: column;
     flex-grow: 1;
     align-items: center;
-    justify-content: center;
+    padding-top: 70px;
 `;
 
 export interface IWelcomeProps {
@@ -39,6 +39,9 @@ const Welcome: FC<IWelcomeProps> = ({ text }: IWelcomeProps) => {
         <Page>
             <StyledWelcomeWrapper>
                 <Space direction="vertical" size="large">
+                    <Row align="middle" className="welcomeLogo" justify="center">
+                        <img alt="logo" src="/cella-logo.png" width={'200'} />
+                    </Row>
                     <Row align="middle" justify="center">
                         <Typography.Title level={3}>{text}</Typography.Title>
                     </Row>
