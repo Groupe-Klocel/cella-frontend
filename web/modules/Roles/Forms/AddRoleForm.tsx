@@ -41,8 +41,6 @@ export const AddRoleForm = () => {
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const name = t('d:name');
-    const warehouseOnly = t('d:warehouseOnly');
-    const allWarehouses = t('d:allWarehouses');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const submit = t('actions:submit');
     // END TEXTS TRANSLATION
@@ -97,10 +95,7 @@ export const AddRoleForm = () => {
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);
-                if (formData.warehouseOnly === true) {
-                    formData.warehouseId = user.warehouseId;
-                }
-                delete formData.warehouseOnly;
+                formData.warehouseId = user.warehouseId;
                 createRole({ input: formData });
                 setUnsavedChanges(false);
             })
@@ -125,7 +120,6 @@ export const AddRoleForm = () => {
         if (createLoading) {
             showInfo(t('messages:info-create-wip'));
         }
-        form.setFieldsValue({ warehouseOnly: true });
     }, [createLoading]);
 
     return (
@@ -150,14 +144,6 @@ export const AddRoleForm = () => {
                     )}
                 >
                     <Input />
-                </Form.Item>
-                <Form.Item name="warehouseOnly" label={warehouseOnly}>
-                    <Switch
-                        checked={whOnly}
-                        onChange={() => {
-                            setWhOnly(!whOnly);
-                        }}
-                    />
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>

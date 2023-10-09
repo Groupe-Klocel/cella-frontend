@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModal } from '@components';
 import { ArticleLuBarcodeModelV2 as model } from 'models/ArticleLuBarcodeModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
@@ -29,6 +29,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { useAppState } from 'context/AppContext';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
+import { BarcodeOutlined } from '@ant-design/icons';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -41,6 +42,8 @@ const ArticleLuBarcodePage: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const modes = getModesFromPermissions(permissions, model.tableName);
+    const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
 
     const articleRoutes = [
         ...itemRoutes,
@@ -107,6 +110,23 @@ const ArticleLuBarcodePage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                <Button
+                    type="primary"
+                    ghost
+                    onClick={() => {
+                        setShowNumberOfPrintsModal(true);
+                        setIdToPrint(data?.id as string);
+                    }}
+                    icon={<BarcodeOutlined />}
+                />
+                <NumberOfPrintsModal
+                    showModal={{
+                        showNumberOfPrintsModal,
+                        setShowNumberOfPrintsModal
+                    }}
+                    id={idToPrint}
+                    path="/api/barcodes/print/label"
+                />
             </Space>
         )
     };

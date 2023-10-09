@@ -45,5 +45,6 @@
     "PURCHASEORDERLINE-000777": "Vous ne pouvez pas effectuer cette action sur une ligne de commande avec ce statut",
     "ROUND-000130": "Désactivation impossible : au moins une ramasse est associée à cet élément",
     "DELIVERYLINE-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné",
-    "PURCHASEORDERLINE-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné"
+    "PURCHASEORDERLINE-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné",
+    "HANDLINGUNIT-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné"
 }

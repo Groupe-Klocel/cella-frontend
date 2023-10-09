@@ -266,7 +266,7 @@ export const HookConfigModelV2: ModelType = {
             isExcludedFromDetail: false,
             detailGroup: null,
             link: null,
-            addEditFormat: 'String',
+            addEditFormat: 'TextArea',
             addEditStep: null,
             maxLength: null,
             displayName: null,
