@@ -616,6 +616,6 @@
     "minimumReplenishmentThreshold": "Minimum replenishment threshold",
     "maximumReplenishmentThreshold": "Maximum replenishment threshold",
     "UN-code": "UN code",
-    "dangerous-goods-weight1": "Dangerous material weight",
-    "dangerous-goods-weight2": "Battery weight"
+    "dangerous-goods-weight1": "Dangerous material weight (g)",
+    "dangerous-goods-weight2": "Battery weight (g)"
 }
