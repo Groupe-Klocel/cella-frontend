@@ -19,6 +19,7 @@
     "movement-success": "Your movement has been done successfully",
     "no-article-location": "Article not found for this location",
     "no-article": "No article found",
+    "no-article-in-hu": "This article is not found into this handling unit",
     "no-article-for-hui": "Article not expected anymore for this goods-in",
     "no-article-for-po": "Article not expected for this purchase order",
     "no-box": "No box found",
