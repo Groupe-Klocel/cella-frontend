@@ -19,6 +19,7 @@
     "movement-success": "Votre mouvement a été effectué avec succès",
     "no-article-location": "Article non-trouvé pour cet emplacement",
     "no-article": "Aucun article trouvé",
+    "no-article-in-hu": "Cet article n'est pas trouvé dans cette unité de manutention",
     "no-article-for-hui": "Cet article n'est plus attendu pour cet arrivage",
     "no-article-for-po": "Cet article n'est pas attendu pour cette commande fournisseur",
     "no-box": "Aucun colis trouvé",

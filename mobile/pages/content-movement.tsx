@@ -33,14 +33,14 @@ import {
     SelectArticleByStockOwnerForm,
     SelectContentForArticleForm,
     ScanLocation,
-    EnterQuantity
+    EnterQuantity,
+    ScanArticleOrFeature,
+    ScanHandlingUnit,
+    ScanFinalHandlingUnit
 } from '@CommonRadio';
 import { LocationChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/LocationChecks';
-import { ScanEANorID } from 'modules/StockManagement/Forms/ScanEANorIDForm';
-import { EANorIDChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/EANorIDChecks';
+import { ArticleOrFeatureChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/ArticleOrFeatureChecks';
 import { QuantityChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/QuantityChecks';
-import { ScanHandlingUnit } from 'modules/Common/HandlingUnits/PagesContainer/ScanHandlingUnit';
-import { ScanFinalHandlingUnit } from 'modules/Common/HandlingUnits/PagesContainer/ScanFinalHandlingUnit';
 import { HandlingUnitOriginChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitOriginChecks';
 import { HandlingUnitFinalChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitFinalChecks';
 import { CheckFinalLocationQuantityForm } from 'modules/StockManagement/Forms/CheckFinalLocationQuantityForm';
@@ -286,14 +286,14 @@ const ContentMvmt: PageComponent = () => {
             )}
             {storedObject[`step${workflow.expectedSteps[2]}`]?.data &&
             !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
-                <ScanEANorID
+                <ScanArticleOrFeature
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[3]}
                     label={t('common:article')}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
-                    checkComponent={(data: any) => <EANorIDChecks dataToCheck={data} />}
-                ></ScanEANorID>
+                    checkComponent={(data: any) => <ArticleOrFeatureChecks dataToCheck={data} />}
+                ></ScanArticleOrFeature>
             ) : (
                 <></>
             )}
