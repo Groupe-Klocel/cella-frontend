@@ -104,6 +104,10 @@ export const ValidateQuantityMoveForm = ({
     if (storedObject.step80.data.finalHandlingUnit) {
         finalHandlingUnit = storedObject.step80.data.finalHandlingUnit;
     }
+    let isHuToCreate: { [k: string]: any } = {};
+    if (storedObject.step80.data.isHuToCreate) {
+        isHuToCreate = storedObject.step80.data.isHuToCreate;
+    }
 
     //ValidateQuantityMove-1a: retrieve chosen level from select and set information
     const onFinish = async () => {
@@ -119,7 +123,8 @@ export const ValidateQuantityMoveForm = ({
                 articleLuBarcodeId,
                 movingQuantity,
                 finalLocation,
-                finalHandlingUnit
+                finalHandlingUnit,
+                isHuToCreate
             })
         });
         if (res.ok) {

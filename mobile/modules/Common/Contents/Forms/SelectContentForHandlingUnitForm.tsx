@@ -169,11 +169,14 @@ export const SelectContentForHandlingUnitForm = ({
                                             {t('common:barcode_abbr')}:
                                         </Typography>
                                     </Col>
-                                    <Col span={16}>
-                                        <Typography style={{ fontSize: '10px' }}>
-                                            {content.articleLuBarcode.barcode.name}
-                                        </Typography>
-                                    </Col>
+
+                                    {content.articleLuBarcode?.barcode && (
+                                        <Col span={16}>
+                                            <Typography style={{ fontSize: '10px' }}>
+                                                {content.articleLuBarcode.barcode.name}
+                                            </Typography>
+                                        </Col>
+                                    )}
                                 </Row>
                                 <Row>
                                     <Col span={8}>

@@ -19,8 +19,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
+import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect } from 'react';
+import configs from '../../../../../common/configs.json';
+import parameters from '../../../../../common/parameters.json';
+import { useAuth } from 'context/AuthContext';
 
 export interface IHandlingUnitFinalChecksProps {
     dataToCheck: any;
@@ -29,27 +33,83 @@ export interface IHandlingUnitFinalChecksProps {
 export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
+    const { graphqlRequestClient } = useAuth();
 
     const {
         process,
         stepNumber,
-        scannedInfo: { scannedInfo },
+        scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
-        trigger: { triggerRender, setTriggerRender }
+        trigger: { triggerRender, setTriggerRender },
+        setResetForm
     } = dataToCheck;
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
+    console.log('DLA-hui2', handlingUnitInfos);
+
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo) {
-            const data: { [label: string]: any } = {};
-            data['finalHandlingUnit'] = { name: scannedInfo };
-            setTriggerRender(!triggerRender);
-            storedObject[`step${stepNumber}`] = {
-                ...storedObject[`step${stepNumber}`],
-                data
-            };
+            if (handlingUnitInfos && handlingUnitInfos?.data?.handlingUnits) {
+                const handlingUnit = handlingUnitInfos.data.handlingUnits.results[0];
+                // HU origin/final identical = error
+                if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {
+                    showError(t('messages:hu-origin-final-identical'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                }
+                // HU with different Location = error
+                else if (handlingUnit.locationId == storedObject['step70'].data.chosenLocation.id) {
+                    showError(t('messages:no-hu-location'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                }
+                // final HU with different article = error
+                else if (
+                    handlingUnit.handlingUnitContents[0].article_id !=
+                    storedObject['step20'].data.handlingUnit.handlingUnitContents[0].article_id
+                ) {
+                    showError(t('messages:unexpected-hu-article'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                } else {
+                    // HU ok = next step
+                    const data: { [label: string]: any } = {};
+                    data['finalHandlingUnit'] = handlingUnit;
+                    setTriggerRender(!triggerRender);
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
+                }
+            } else {
+                // dummy HU creation
+                const type =
+                    scannedInfo[0] == '0' || scannedInfo[0] == 'P'
+                        ? parameters.HANDLING_UNIT_TYPE_PALLET
+                        : parameters.HANDLING_UNIT_TYPE_BOX;
+
+                const handlingUnitToCreate = {
+                    name: scannedInfo,
+                    barcode: scannedInfo,
+                    code: scannedInfo,
+                    type: parameters.HANDLING_UNIT_TYPE_PALLET,
+                    status: configs.HANDLING_UNIT_STATUS_VALIDATED,
+                    category: parameters.HANDLING_UNIT_CATEGORY_STOCK,
+                    locationId: storedObject['step70'].data.chosenLocation.id,
+                    stockOwnerId: storedObject['step20'].data.handlingUnit.stockOwnerId
+                };
+
+                const data: { [label: string]: any } = {};
+                data['isHuToCreate'] = true;
+                data['finalHandlingUnit'] = handlingUnitToCreate;
+                setTriggerRender(!triggerRender);
+                storedObject[`step${stepNumber}`] = {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                };
+            }
         }
         if (
             storedObject[`step${stepNumber}`] &&

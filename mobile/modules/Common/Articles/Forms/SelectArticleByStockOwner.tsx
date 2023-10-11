@@ -70,7 +70,9 @@ export const SelectArticleByStockOwnerForm = ({
     useEffect(() => {
         const newIdOpts: Array<any> = [];
         articleLuBarcodes?.forEach((e: any) => {
-            newIdOpts.push({ text: e.stockOwner.name!, key: e.stockOwnerId! });
+            if (e.stockowner) {
+                newIdOpts.push({ text: e.stockOwner.name!, key: e.stockOwnerId! });
+            }
         });
         function compare(a: any, b: any) {
             if (a.text < b.text) {
