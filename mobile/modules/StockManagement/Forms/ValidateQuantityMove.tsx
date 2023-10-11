@@ -70,7 +70,7 @@ export const ValidateQuantityMoveForm = ({
         articleInfo.stockOwnerId =
             storedObject.step35.data.chosenArticleLuBarcode.stockOwnerId ?? undefined;
         articleInfo.stockOwnerName =
-            storedObject.step35.data.chosenArticleLuBarcode.stockOwner.name ?? undefined;
+            storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ?? undefined;
         articleLuBarcodeId = storedObject.step35.data.chosenArticleLuBarcode.id ?? undefined;
     }
     if (storedObject.step40.data.chosenContent) {

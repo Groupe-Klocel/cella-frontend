@@ -40,8 +40,10 @@
     "group": "Groupe",
     "handling-unit": "Unité de manutention",
     "handling-unit_abbr": "UM",
-    "handling-unit-origin_abbr": "UM orig.",
+    "handling-unit-origin_abbr": "UM origine",
+    "handling-unit-origin": "UM orig.",
     "handling-unit-final_abbr": "UM dest.",
+    "handling-unit-final": "UM destination",
     "height": "Hauteur",
     "label": "Libellé",
     "hu": "Support",
@@ -122,5 +124,6 @@
     "weight": "Poids",
     "welcome": "Bienvenue!",
     "width": "Largeur",
-    "workspace": "ID Espace de travail"
+    "workspace": "ID Espace de travail",
+    "hu-movement": "Mouvement d'UM"
 }

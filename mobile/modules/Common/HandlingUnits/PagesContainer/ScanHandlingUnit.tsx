@@ -31,6 +31,7 @@ export interface IScanHandlingUnitProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     checkComponent: any;
+    defaultValue?: any;
 }
 
 export const ScanHandlingUnit = ({
@@ -39,7 +40,8 @@ export const ScanHandlingUnit = ({
     label,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    checkComponent
+    checkComponent,
+    defaultValue
 }: IScanHandlingUnitProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -48,11 +50,16 @@ export const ScanHandlingUnit = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        //check workflow direction and assign current step accordingly
-        if (storedObject.currentStep < stepNumber) {
-            storedObject[`step${stepNumber}`] = {
-                previousStep: storedObject.currentStep
-            };
+        //automatically set handlingUnit when defaultValue is provided
+        if (defaultValue) {
+            // N.B.: in this case previous step is kept at its previous value
+            const data: { [label: string]: any } = {};
+            data['handlingUnit'] = defaultValue;
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            setTriggerRender(!triggerRender);
+        } else if (storedObject.currentStep < stepNumber) {
+            //check workflow direction and assign current step accordingly
+            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
             storedObject.currentStep = stepNumber;
         }
         storage.set(process, JSON.stringify(storedObject));
