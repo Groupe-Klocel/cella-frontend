@@ -41,7 +41,9 @@
     "handling-unit": "Handling unit",
     "handling-unit_abbr": "HU",
     "handling-unit-origin_abbr": "Orig. HU",
+    "handling-unit-origin": "Original HU",
     "handling-unit-final_abbr": "Dest. HU",
+    "handling-unit-final": "Destination HU",
     "height": "Height",
     "label": "Label",
     "hu": "Support",
@@ -122,5 +124,6 @@
     "weight": "Weight",
     "welcome": "Welcome!",
     "width": "Width",
-    "workspace": "Workspace ID"
+    "workspace": "Workspace ID",
+    "hu-movement": "HU Movement"
 }

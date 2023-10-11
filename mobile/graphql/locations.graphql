@@ -52,6 +52,10 @@ query GetAllLocations(
             allowCycleCountStockMin
             category
             categoryText
+            stockStatus
+            stockStatusText
+            status
+            statusText
         }
     }
 }
@@ -75,6 +79,10 @@ query GetLocationById($id: String!) {
         comment
         baseUnitRotation
         allowCycleCountStockMin
+        stockStatus
+        stockStatusText
+        status
+        statusText
     }
 }
 
@@ -115,6 +123,10 @@ query GetLocationIds(
             allowCycleCountStockMin
             category
             categoryText
+            stockStatus
+            stockStatusText
+            status
+            statusText
         }
     }
 }

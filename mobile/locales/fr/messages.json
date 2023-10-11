@@ -48,5 +48,9 @@
     "wrong-status": "Votre élément n'a pas l'état pertinent pour effectuer cette action",
     "unexpected-scanned-item": "Element scannée non attendu",
     "unload-success": "Votre déchargement a été enregistrée avec succès",
-    "box-preparation-failed": "Erreur lors de la préparation du colis"
+    "box-preparation-failed": "Erreur lors de la préparation du colis",
+    "no-location-hu": "Aucun emplacement trouvé pour cette UM",
+    "hu-origin-final-identical": "L'UM de destination est identique à l'UM d'origine",
+    "unexpected-hu-type": "Type d'UM non attendu",
+    "unexpected-hu-article": "Cette UM ne possède pas le même article que l'UM d'origine"
 }
