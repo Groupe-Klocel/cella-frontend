@@ -53,7 +53,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         articleLuBarcodeId,
         movingQuantity,
         finalLocation,
-        finalHandlingUnit
+        finalHandlingUnit,
+        isHuToCreate
     } = req.body;
 
     const movementCodes = {
@@ -121,6 +122,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         let destinationHuResult: { [k: string]: any } | null;
         if (finalLocation.type == 'empty') {
             try {
+                // if (isHuToCreate) {
+
+                // }
                 if (finalHandlingUnit) {
                     const newHUVariables = {
                         input: {

@@ -68,11 +68,12 @@ const ArticleInfo: PageComponent = () => {
             const chosenArticleLuBarcode =
                 articleInfo[`step${workflow.expectedSteps[1]}`]?.data?.chosenArticleLuBarcode;
 
-            object[t('common:article_abbr')] =
-                chosenArticleLuBarcode.article.name +
-                ' (' +
-                chosenArticleLuBarcode.stockOwner.name +
-                ')';
+            object[t('common:article_abbr')] = chosenArticleLuBarcode.stockOwner
+                ? chosenArticleLuBarcode.article.name +
+                  ' (' +
+                  chosenArticleLuBarcode.stockOwner.name +
+                  ')'
+                : chosenArticleLuBarcode.article.name;
             object[t('common:article-description')] = chosenArticleLuBarcode.article.description;
             chosenArticleLuBarcode.barcode
                 ? (object[t('common:barcode')] = chosenArticleLuBarcode.barcode.name)
