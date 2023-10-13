@@ -25,17 +25,22 @@ export interface IRadioButtonsProps {
     input?: any;
     output?: any;
     submitLoading?: boolean;
+    alternativeSubmitLabel?: any;
 }
 
 const RadioButtons: FC<IRadioButtonsProps> = ({
     input,
     output,
-    submitLoading
+    submitLoading,
+    alternativeSubmitLabel
 }: IRadioButtonsProps) => {
     const { t } = useTranslation();
     const [backTrigger, setBackTrigger] = useState<Boolean>(input?.backButton);
     const [locButtonTrigger, setLocButtonTrigger] = useState<Boolean>(input?.locationButton);
     const [emptyButton, setEmptyButton] = useState<Boolean>(input?.emptyButton);
+    const [alternativeSubmitButtonTrigger, setAlternativeSubmitButtonTrigger] = useState<Boolean>(
+        input?.alternativeSubmit
+    );
 
     const onBack = () => {
         output.onBack();
@@ -53,12 +58,28 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                 >
                     {t('actions:submit')}
                 </StyledButton>
+                <StyledButton
+                    type="primary"
+                    block
+                    htmlType="submit"
+                    hidden={alternativeSubmitButtonTrigger ? false : true}
+                    onClick={() => {
+                        output?.setShowAlternativeSubmit(!input?.showAlternativeSubmitButton);
+                        setAlternativeSubmitButtonTrigger(!alternativeSubmitButtonTrigger);
+                    }}
+                    loading={submitLoading}
+                >
+                    {!input?.showAlternativeSubmitButton
+                        ? alternativeSubmitLabel
+                        : t('actions:back')}
+                </StyledButton>
                 {!input.emptyButton ? (
                     <StyledButton
                         type="primary"
                         hidden={emptyButton ? false : true}
                         onClick={() => {
                             output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                            output?.setShowSimilarLocations(!input?.showSimilarLocations);
                             output?.setShowSimilarLocations(!input?.showSimilarLocations);
                             setLocButtonTrigger(!locButtonTrigger);
                             setBackTrigger(false);

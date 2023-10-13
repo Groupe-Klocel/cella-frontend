@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
+import useTranslation from 'next-translate/useTranslation';
 
 export interface IScanHuOrLocationProps {
     process: string;
@@ -27,7 +28,11 @@ export interface IScanHuOrLocationProps {
     label: string;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
+    showEmptyLocations?: any;
+    showSimilarLocations?: any;
+    showAlternativeSubmit?: any;
     checkComponent: any;
+    headerContent?: any;
 }
 
 export const ScanHuOrLocation = ({
@@ -36,8 +41,13 @@ export const ScanHuOrLocation = ({
     label,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    checkComponent
+    showEmptyLocations,
+    showSimilarLocations,
+    showAlternativeSubmit,
+    checkComponent,
+    headerContent
 }: IScanHuOrLocationProps) => {
+    const { t } = useTranslation();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
@@ -60,6 +70,7 @@ export const ScanHuOrLocation = ({
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
+        showAlternativeSubmit,
         setResetForm
     };
 
@@ -71,8 +82,13 @@ export const ScanHuOrLocation = ({
                 label={label}
                 trigger={{ triggerRender, setTriggerRender }}
                 buttons={{ ...buttons }}
+                showEmptyLocations={showEmptyLocations}
+                showSimilarLocations={showSimilarLocations}
+                showAlternativeSubmit={showAlternativeSubmit}
+                headerContent={headerContent}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
+                alternativeSubmitLabel={t('common:move-hu_abbr')}
             ></ScanForm>
             {checkComponent(dataToCheck)}
         </>

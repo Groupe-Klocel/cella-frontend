@@ -26,7 +26,12 @@ import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import { EmptyLocations, SelectLocationByLevelForm, ScanLocation } from '@CommonRadio';
+import {
+    EmptyLocations,
+    SelectLocationByLevelForm,
+    ScanLocation,
+    SimilarLocations
+} from '@CommonRadio';
 import { LocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/LocationChecks';
 import { HandlingUnitOriginChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HandlingUnitOriginChecks';
 import { HandlingUnitFinalChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HandlingUnitFinalChecks';
@@ -47,7 +52,9 @@ const HuMovement: PageComponent = () => {
     const [finalDisplay, setFinalDisplay] = useState<any>({});
     const [headerContent, setHeaderContent] = useState<boolean>(false);
     const [displayed, setDisplayed] = useState<any>({});
+    const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
+    const [showAlternativeSubmit, setShowAlternativeSubmit] = useState<boolean>(false);
     const workflow = {
         processName: 'huMvt',
         expectedSteps: [10, 15, 20, 30, 35, 40, 50]
@@ -167,10 +174,26 @@ const HuMovement: PageComponent = () => {
                     }}
                 ></RadioInfosHeader>
             )}
+            {showSimilarLocations &&
+            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                .handlingUnitContents[0].articleId ? (
+                <SimilarLocations
+                    articleId={
+                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                            .handlingUnitContents[0].articleId
+                    }
+                    chosenContentId={
+                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                            .handlingUnitContents[0].id
+                    }
+                />
+            ) : (
+                <></>
+            )}
             {showEmptyLocations &&
-            storedObject[`step${workflow.expectedSteps[4]}`].data.chosenArticleLuBarcode
-                .articleId ? (
-                <EmptyLocations withAvailableHU={true} />
+            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                .handlingUnitContents[0].articleId ? (
+                <EmptyLocations withAvailableHU={false} />
             ) : (
                 <></>
             )}
@@ -217,8 +240,17 @@ const HuMovement: PageComponent = () => {
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[3]}
                     label={t('common:location-final') + ' / ' + t('common:handling-unit')}
-                    buttons={{ submitButton: true, backButton: true }}
+                    buttons={{
+                        submitButton: true,
+                        backButton: true,
+                        locationButton: true,
+                        alternativeSubmit: true
+                    }}
                     trigger={{ triggerRender, setTriggerRender }}
+                    showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
+                    showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
+                    showAlternativeSubmit={{ showAlternativeSubmit, setShowAlternativeSubmit }}
+                    headerContent={{ headerContent, setHeaderContent }}
                     checkComponent={(data: any) => <HuOrLocationChecks dataToCheck={data} />}
                 ></ScanHuOrLocation>
             ) : (

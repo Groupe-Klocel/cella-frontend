@@ -37,6 +37,7 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
+        showAlternativeSubmit,
         setResetForm
     } = dataToCheck;
 
@@ -88,6 +89,13 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
             }
 
             if (fetchResult.resType === 'handlingUnit') {
+                // wrong button = error
+                if (showAlternativeSubmit?.showAlternativeSubmit) {
+                    showError(t('messages:unexpected-scanned-item'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                }
+
                 // HU without Location = error
                 if (!fetchResult.location) {
                     showError(t('messages:no-location-hu'));
@@ -135,6 +143,11 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
             // Location : next step
             if (fetchResult.resType === 'location' && fetchResult.location) {
                 const data: { [label: string]: any } = {};
+
+                if (showAlternativeSubmit?.showAlternativeSubmit) {
+                    data['finalHandlingUnit'] = storedObject['step20'].data.handlingUnit;
+                }
+
                 data['resType'] = fetchResult.resType;
                 data['finalLocation'] = [fetchResult.location];
                 setTriggerRender(!triggerRender);

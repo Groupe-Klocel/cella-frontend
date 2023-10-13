@@ -85,6 +85,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         transactionId: lastTransactionId
     };
 
+    let canRollbackTransaction = false;
+
     //update hu section
     try {
         // create dummy hu if needed
@@ -114,6 +116,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
             const createdHu = await graphqlRequestClient.request(createHUquery, createHUvariables);
             finalHandlingUnit.id = createdHu.createHandlingUnit.id;
+            canRollbackTransaction = true;
         }
         // end create dummy hu if needed
 
@@ -133,9 +136,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 ? parameters.HANDLING_UNIT_CATEGORY_STOCK
                 : finalHandlingUnit.category;
 
-        // update originHandlingUnit.parent_hu_id if there a finalHandlingUnit
+        // update originHandlingUnit.parent_hu_id if there a finalHandlingUnit and it is different from originHandlingUnit
         let parentHandlingUnitId = null;
-        if (finalHandlingUnit) {
+        if (finalHandlingUnit && finalHandlingUnit.id != originHandlingUnit.id) {
             parentHandlingUnitId = finalHandlingUnit.id;
         }
 
@@ -154,6 +157,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             updateHUVariables,
             requestHeader
         );
+
+        canRollbackTransaction = true;
         //end handling unit update section
 
         // update huc stock statuses
@@ -239,7 +244,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         });
     } catch (error) {
         console.log(error);
-        await graphqlRequestClient.request(rollbackTransaction, rollbackVariable, requestHeader);
+        if (canRollbackTransaction)
+            await graphqlRequestClient.request(
+                rollbackTransaction,
+                rollbackVariable,
+                requestHeader
+            );
         res.status(500).json({ error });
     }
 };

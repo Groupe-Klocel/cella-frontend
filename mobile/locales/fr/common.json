@@ -125,5 +125,6 @@
     "welcome": "Bienvenue!",
     "width": "Largeur",
     "workspace": "ID Espace de travail",
-    "hu-movement": "Mouvement d'UM"
+    "hu-movement": "Mouvement d'UM",
+    "move-hu_abbr": "Dépl. UM"
 }

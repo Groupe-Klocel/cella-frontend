@@ -65,7 +65,7 @@ export const ValidateHuMoveForm = ({
     if (storedObject.step40.data.handlingUnit) {
         finalHandlingUnit = storedObject.step40.data.handlingUnit;
     }
-    let isHuToCreate: { [k: string]: any } = {};
+    let isHuToCreate = false;
     if (storedObject.step40.data.isHuToCreate) {
         isHuToCreate = storedObject.step40.data.isHuToCreate;
     }
