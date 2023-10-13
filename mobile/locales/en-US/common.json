@@ -125,5 +125,6 @@
     "welcome": "Welcome!",
     "width": "Width",
     "workspace": "Workspace ID",
-    "hu-movement": "HU Movement"
+    "hu-movement": "HU Movement",
+    "move-hu_abbr": "Move HU"
 }
