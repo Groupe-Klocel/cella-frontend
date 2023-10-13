@@ -46,8 +46,6 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
-    console.log('DLA-hui2', handlingUnitInfos);
-
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo) {
@@ -84,7 +82,6 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                     };
                 }
             } else {
-                // dummy HU creation
                 const type =
                     scannedInfo[0] == '0' || scannedInfo[0] == 'P'
                         ? parameters.HANDLING_UNIT_TYPE_PALLET
@@ -94,7 +91,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                     name: scannedInfo,
                     barcode: scannedInfo,
                     code: scannedInfo,
-                    type: parameters.HANDLING_UNIT_TYPE_PALLET,
+                    type,
                     status: configs.HANDLING_UNIT_STATUS_VALIDATED,
                     category: parameters.HANDLING_UNIT_CATEGORY_STOCK,
                     locationId: storedObject['step70'].data.chosenLocation.id,

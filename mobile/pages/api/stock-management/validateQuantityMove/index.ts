@@ -88,6 +88,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         transactionId: lastTransactionId
     };
 
+    let canRollbackTransaction = false;
+
     //update mutation is shared for origin and destination
     const updateHUCMutation = gql`
         mutation updateHandlingUnitContent($id: String!, $input: UpdateHandlingUnitContentInput!) {
@@ -122,21 +124,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         let destinationHuResult: { [k: string]: any } | null;
         if (finalLocation.type == 'empty') {
             try {
-                // if (isHuToCreate) {
-
-                // }
-                if (finalHandlingUnit) {
+                if (isHuToCreate) {
                     const newHUVariables = {
-                        input: {
-                            name: finalHandlingUnit.name,
-                            code: originalLocation.originalHu.code,
-                            category: originalLocation.originalHu.category,
-                            status: configs.HANDLING_UNIT_MODEL_STATUS_IN_PROGRESS,
-                            type: originalLocation.originalHu.type,
-                            stockOwnerId: articleInfo.stockOwnerId,
-                            locationId: finalLocation.id,
-                            lastTransactionId
-                        }
+                        input: { ...finalHandlingUnit, lastTransactionId }
                     };
                     const createHUMutation = gql`
                         mutation createHandlingUnit($input: CreateHandlingUnitInput!) {
@@ -160,12 +150,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         };
                         finalLocation['destinationHu'] = destinationHu;
                     }
+                    canRollbackTransaction = true;
                 }
             } catch (error) {
                 res.status(500).json({ message: 'Internal server error' });
             }
         }
-        //RESTART: check that code is still working after SSCC generator adding
         if (finalLocation.type == 'HU_without_HUC' || finalLocation.type == 'empty') {
             const newHUCVariables = {
                 input: {
@@ -215,6 +205,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 requestHeader
             );
         }
+        canRollbackTransaction = true;
         //end final content creation or update section
 
         //movement creation section
@@ -267,7 +258,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         });
     } catch (error) {
         console.log(error);
-        await graphqlRequestClient.request(rollbackTransaction, rollbackVariable, requestHeader);
+        if (canRollbackTransaction)
+            await graphqlRequestClient.request(
+                rollbackTransaction,
+                rollbackVariable,
+                requestHeader
+            );
         res.status(500).json({ error });
     }
 };

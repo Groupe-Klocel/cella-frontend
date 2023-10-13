@@ -104,7 +104,7 @@ export const ValidateQuantityMoveForm = ({
     if (storedObject.step80.data.finalHandlingUnit) {
         finalHandlingUnit = storedObject.step80.data.finalHandlingUnit;
     }
-    let isHuToCreate: { [k: string]: any } = {};
+    let isHuToCreate = false;
     if (storedObject.step80.data.isHuToCreate) {
         isHuToCreate = storedObject.step80.data.isHuToCreate;
     }

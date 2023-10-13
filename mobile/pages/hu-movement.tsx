@@ -61,7 +61,7 @@ const HuMovement: PageComponent = () => {
     };
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
-    console.log('storedObject', storedObject);
+    // console.log('huMvt', storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
@@ -133,8 +133,6 @@ const HuMovement: PageComponent = () => {
     useEffect(() => {
         headerContent ? setDisplayed(originDisplay) : setDisplayed(originDisplay);
     }, [originDisplay, finalDisplay, headerContent]);
-
-    console.log('DLA-hC', headerContent);
 
     const onReset = () => {
         storage.removeAll();
