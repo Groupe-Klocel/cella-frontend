@@ -111,7 +111,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             `;
 
             const createHUvariables = {
-                input: finalHandlingUnit
+                input: { ...finalHandlingUnit, lastTransactionId }
             };
 
             const createdHu = await graphqlRequestClient.request(createHUquery, createHUvariables);
