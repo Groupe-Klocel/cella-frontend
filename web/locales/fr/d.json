@@ -616,5 +616,6 @@
     "argument": "Argument",
     "UN-code": "Code UN",
     "dangerous-goods-weight1": "Poids matière dangereuse (g)",
-    "dangerous-goods-weight2": "Poids batterie (g)"
+    "dangerous-goods-weight2": "Poids batterie (g)",
+    "parentHandlingUnit": "UM parent"
 }
