@@ -56,6 +56,7 @@ const AddDeliveryPage: PageComponent = () => {
                         : undefined
                 }
                 routeAfterSuccess={`/deliveries/:id`}
+                stringCodeScopes={['shipping_type']}
             />
         </>
     );

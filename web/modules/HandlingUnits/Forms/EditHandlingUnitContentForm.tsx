@@ -335,7 +335,6 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                     <Col xs={8} xl={12}>
                         <Form.Item label={t('d:stockOwner')} name="stockOwnerId">
                             <Select
-                                disabled
                                 allowClear
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:stockOwner')

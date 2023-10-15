@@ -96,6 +96,13 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.HookConfig).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="administration-hook-configs">
+                        <Link href="/hook-configs">{t('hook-configs')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
             </SubMenu>
             <SubMenu key="configuration" icon={<SettingOutlined />} title={t('configuration')}>
                 {getModesFromPermissions(permissions, Table.StockOwner).includes(ModeEnum.Read) ? (
@@ -194,13 +201,6 @@ const SideMenu: FC = () => {
                             <Link href="/action-codes">{t('action-codes')}</Link>
                         </Menu.Item>
                     </SubMenu>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.HookConfig).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="configuration-hook-configs">
-                        <Link href="/hook-configs">{t('hook-configs')}</Link>
-                    </Menu.Item>
                 ) : (
                     <></>
                 )}

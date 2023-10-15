@@ -37,9 +37,11 @@ import {
     useArticleIds,
     useStockOwners,
     useLocationIds,
-    useArticles
+    useArticles,
+    useHandlingUnitModels
 } from '@helpers';
 import configs from '../../../../common/configs.json';
+import parameters from '../../../../common/parameters.json';
 
 import { FormOptionType } from 'models/Models';
 import { debounce } from 'lodash';
@@ -57,7 +59,6 @@ export const AddHandlingUnitContentForm = () => {
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [form] = Form.useForm();
     const [handlingUnitType, setHandlingUnitType] = useState<Array<FormOptionType>>();
-    const [handlingUnitCategory, setHandlingUnitCategory] = useState<Array<FormOptionType>>();
     const [stockStatus, setStockStatus] = useState<Array<FormOptionType>>();
     const [stockOwners, setStockOwners] = useState<any>();
     const stockOwnerData = useStockOwners({}, 1, 100, null);
@@ -69,6 +70,8 @@ export const AddHandlingUnitContentForm = () => {
     const [lId, setLId] = useState<string>();
     const [locationName, setLocationName] = useState<string>('');
     const locationData = useLocationIds({ name: `${locationName}%` }, 1, 100, null);
+    const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
+    const [handlingUnitModels, setHandlingUnitModels] = useState<any>();
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -110,25 +113,6 @@ export const AddHandlingUnitContentForm = () => {
         }
     }, [handlingUnitTypeList.data]);
 
-    // PARAMETER : handling_unit_category
-    const handlingUnitCategoryList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'handling_unit_category'
-    });
-    useEffect(() => {
-        if (handlingUnitCategoryList) {
-            const newHandlingUnitCategory: Array<FormOptionType> = [];
-
-            const parameters = handlingUnitCategoryList?.data?.listParametersForAScope;
-            if (parameters) {
-                parameters.forEach((item) => {
-                    newHandlingUnitCategory.push({ key: parseInt(item.code), text: item.text });
-                });
-                setHandlingUnitCategory(newHandlingUnitCategory);
-            }
-        }
-    }, [handlingUnitCategoryList.data]);
-
     // PARAMETER : stock_status
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
         language: router.locale,
@@ -161,6 +145,21 @@ export const AddHandlingUnitContentForm = () => {
         }
     }, [stockOwnerData.data]);
 
+    // DROPDOWN : handling_unit_model
+    useEffect(() => {
+        if (handlingUnitModelData.data) {
+            const newIdOpts: Array<FormOptionType> = [];
+            handlingUnitModelData.data?.handlingUnitModels?.results.forEach(
+                ({ id, name, status }) => {
+                    if (status != configs.HANDLING_UNIT_MODEL_STATUS_CLOSED) {
+                        newIdOpts.push({ text: name!, key: name! });
+                    }
+                }
+            );
+            setHandlingUnitModels(newIdOpts);
+        }
+    }, [handlingUnitModelData.data]);
+
     // AUTOCOMPLETE DROPDOWN : article
     useEffect(() => {
         const formValue = form.getFieldsValue(true);
@@ -170,19 +169,13 @@ export const AddHandlingUnitContentForm = () => {
     useEffect(() => {
         if (articleData.data) {
             const newIdOpts: Array<IOption> = [];
-            articleData.data.articles?.results.forEach(({ id, name, stockOwnerId, status }) => {
-                if (
-                    (form.getFieldsValue(true).stockOwnerId != undefined &&
-                        form.getFieldsValue(true).stockOwnerId === stockOwnerId) ||
-                    (form.getFieldsValue(true).stockOwnerId == undefined && stockOwnerId === null)
-                ) {
-                    if (form.getFieldsValue(true).articleId === id) {
-                        setArticleName(name!);
-                        setAId(id!);
-                    }
-                    if (status != configs.ARTICLE_STATUS_CLOSED) {
-                        newIdOpts.push({ value: name!, id: id! });
-                    }
+            articleData.data.articles?.results.forEach(({ id, name, status }) => {
+                if (form.getFieldsValue(true).articleId === id) {
+                    setArticleName(name!);
+                    setAId(id!);
+                }
+                if (status != configs.ARTICLE_STATUS_CLOSED) {
+                    newIdOpts.push({ value: name!, id: id! });
                 }
             });
             setAIdOptions(newIdOpts);
@@ -227,11 +220,6 @@ export const AddHandlingUnitContentForm = () => {
         }
     };
 
-    const onChangeStockOwner = (data: string) => {
-        setArticleName('');
-        setAId('');
-    };
-
     // CREATE MUTATION
     const { mutate, isLoading: createLoading } = useCreateHandlingUnitWithContentMutation<Error>(
         graphqlRequestClient,
@@ -244,8 +232,25 @@ export const AddHandlingUnitContentForm = () => {
                 router.push(`/handling-unit-contents/${data.createHandlingUnitWithContent.id}`);
                 showSuccess(t('messages:success-created'));
             },
-            onError: (err) => {
-                showError(t('messages:error-creating-data'));
+            onError: (error: any) => {
+                if (error.response && error.response.errors[0].extensions) {
+                    const errorCode = error.response.errors[0].extensions.code;
+                    if (
+                        error.response.errors[0].extensions.variables &&
+                        error.response.errors[0].extensions.variables.table_name
+                    ) {
+                        const errorTableName =
+                            error.response.errors[0].extensions.variables.table_name;
+                        showError(
+                            t(`errors:${errorCode}`, { tableName: t(`common:${errorTableName}`) })
+                        );
+                    } else {
+                        showError(t(`errors:${errorCode}`));
+                    }
+                } else {
+                    showError(t('messages:error-creating-data'));
+                    console.log(error);
+                }
             }
         }
     );
@@ -262,7 +267,8 @@ export const AddHandlingUnitContentForm = () => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 formData.status = configs.HANDLING_UNIT_STATUS_VALIDATED;
-                formData.barcode = formData.code;
+                formData.category = parameters.HANDLING_UNIT_MODEL_CATEGORY_STOCK;
+                formData.barcode = formData.name;
                 delete formData.locationName;
                 delete formData.articleName;
                 CreateHandlingUnitWithContent({ input: formData });
@@ -297,7 +303,7 @@ export const AddHandlingUnitContentForm = () => {
                     <Col xs={8} xl={12}>
                         <Form.Item
                             label={t('d:handlingUnit')}
-                            name="code"
+                            name="name"
                             rules={getRulesWithNoSpacesValidator(
                                 [
                                     {
@@ -313,43 +319,36 @@ export const AddHandlingUnitContentForm = () => {
                     </Col>
                     <Col xs={8} xl={12}>
                         <Form.Item
-                            label={t('d:location')}
-                            name="locationName"
+                            label={t('d:handlingUnitModel')}
+                            name="code"
                             rules={[
                                 { required: true, message: t('messages:error-message-empty-input') }
                             ]}
                         >
-                            <AutoComplete
-                                placeholder={`${t('messages:please-fill-letter-your', {
-                                    name: t('d:location')
-                                })}`}
-                                style={{ width: '100%' }}
-                                options={lIdOptions}
-                                value={locationName}
-                                filterOption={(inputValue, option) =>
-                                    option!.value
-                                        .toUpperCase()
-                                        .indexOf(inputValue.toUpperCase()) !== -1
-                                }
-                                onKeyUp={(e: any) => {
-                                    debounce(() => {
-                                        setLocationName(e.target.value);
-                                    }, 3000);
-                                }}
-                                onSelect={(value, option) => {
-                                    setLId(option.id);
-                                    setLocationName(value);
-                                }}
+                            <Select
                                 allowClear
-                                onChange={onChangeLocation}
-                            />
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:handlingUnitModels')
+                                })}`}
+                            >
+                                {handlingUnitModels?.map((so: any) => (
+                                    <Option key={so.key} value={so.key}>
+                                        {so.text}
+                                    </Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
-                        <Form.Item label={t('d:stockOwner')} name="stockOwnerId">
+                        <Form.Item
+                            label={t('d:stockOwner')}
+                            name="stockOwnerId"
+                            rules={[
+                                { required: true, message: t('messages:error-message-empty-input') }
+                            ]}
+                        >
                             <Select
                                 allowClear
-                                onChange={onChangeStockOwner}
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:stockOwner')
                                 })}`}
@@ -431,28 +430,6 @@ export const AddHandlingUnitContentForm = () => {
                     </Col>
                     <Col xs={8} xl={12}>
                         <Form.Item
-                            label={t('d:category')}
-                            name="category"
-                            rules={[
-                                { required: true, message: t('messages:error-message-empty-input') }
-                            ]}
-                        >
-                            <Select
-                                allowClear
-                                placeholder={`${t('messages:please-select-a', {
-                                    name: t('d:category')
-                                })}`}
-                            >
-                                {handlingUnitCategory?.map((huc: any) => (
-                                    <Option key={huc.key} value={huc.key}>
-                                        {huc.text}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col xs={8} xl={12}>
-                        <Form.Item
                             label={t('d:type')}
                             name="type"
                             rules={[
@@ -471,6 +448,40 @@ export const AddHandlingUnitContentForm = () => {
                                     </Option>
                                 ))}
                             </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item
+                            label={t('d:location')}
+                            name="locationName"
+                            rules={[
+                                { required: true, message: t('messages:error-message-empty-input') }
+                            ]}
+                        >
+                            <AutoComplete
+                                placeholder={`${t('messages:please-fill-letter-your', {
+                                    name: t('d:location')
+                                })}`}
+                                style={{ width: '100%' }}
+                                options={lIdOptions}
+                                value={locationName}
+                                filterOption={(inputValue, option) =>
+                                    option!.value
+                                        .toUpperCase()
+                                        .indexOf(inputValue.toUpperCase()) !== -1
+                                }
+                                onKeyUp={(e: any) => {
+                                    debounce(() => {
+                                        setLocationName(e.target.value);
+                                    }, 3000);
+                                }}
+                                onSelect={(value, option) => {
+                                    setLId(option.id);
+                                    setLocationName(value);
+                                }}
+                                allowClear
+                                onChange={onChangeLocation}
+                            />
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>

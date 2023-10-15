@@ -134,7 +134,7 @@ const BarcodePage: PageComponent = () => {
                                     ghost
                                     onClick={() => {
                                         setShowNumberOfPrintsModal(true);
-                                        setIdToPrint(record.id);
+                                        setIdToPrint(record.articleLuBarcodes_id as string);
                                     }}
                                     icon={<BarcodeOutlined />}
                                 />
@@ -150,7 +150,7 @@ const BarcodePage: PageComponent = () => {
                     setShowNumberOfPrintsModal
                 }}
                 id={idToPrint}
-                path="/api/barcode/print/label"
+                path="/api/barcodes/print/label"
             />
         </>
     );
