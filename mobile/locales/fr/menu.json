@@ -73,6 +73,7 @@
     "stock-init": "Initialisation de stock",
     "quantity-movement": "Mouvement de quantité",
     "pallet-movement": "Mouvement de palette",
+    "hu-movement": "Mouvement d'UM",
     "fabrication": "Fabrication",
     "change-package": "Modification colis",
     "personal-info": "Infos préparation",

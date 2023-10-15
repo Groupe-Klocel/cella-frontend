@@ -40,7 +40,7 @@ const menuItemDatas = [
     {
         title: 'menu:location-info',
         path: '/location-info'
-    },
+    }
     // {
     //     title: 'menu:box-check',
     //     path: '/'
@@ -57,7 +57,7 @@ const menuItemDatas = [
     //     title: 'menu:set-building',
     //     path: '/'
     // },
-    { title: 'menu:generate-sscc', path: '/sscc-generator' }
+    // { title: 'menu:generate-sscc', path: '/sscc-generator' }
 ];
 
 const MiscPage: PageComponent = () => {

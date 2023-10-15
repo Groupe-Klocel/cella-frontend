@@ -19,6 +19,7 @@
     "movement-success": "Your movement has been done successfully",
     "no-article-location": "Article not found for this location",
     "no-article": "No article found",
+    "no-article-in-hu": "This article is not found into this handling unit",
     "no-article-for-hui": "Article not expected anymore for this goods-in",
     "no-article-for-po": "Article not expected for this purchase order",
     "no-box": "No box found",
@@ -47,5 +48,9 @@
     "wait-support": "Waits a support not a box",
     "wrong-status": "Your item does not have the relevant status to perform this action",
     "unexpected-scanned-item": "Unexpected scanned item",
-    "box-preparation-failed": "Box preparation failed"
+    "box-preparation-failed": "Box preparation failed",
+    "no-location-hu": "Location not found for this handling unit",
+    "hu-origin-final-identical": "The origin and final handling unit are identical",
+    "unexpected-hu-type": "HU with unexpected type",
+    "unexpected-hu-article": "HU with unexpected article"
 }

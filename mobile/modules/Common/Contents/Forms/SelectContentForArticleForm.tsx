@@ -38,6 +38,7 @@ export interface ISelectContentForArticleProps {
     articleId: string;
     locationId?: string;
     hideSelect?: boolean;
+    uniqueId?: string;
 }
 
 const StyledTitle = styled(Title)`
@@ -78,7 +79,8 @@ export const SelectContentForArticleForm = ({
     buttons,
     articleId,
     locationId,
-    hideSelect
+    hideSelect,
+    uniqueId
 }: ISelectContentForArticleProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -123,6 +125,21 @@ export const SelectContentForArticleForm = ({
             }
         }
     }, [data]);
+
+    useEffect(() => {
+        if (uniqueId) {
+            const uniqueIdContent = contents.filter((e: any) => {
+                const hucFeatures = e.handlingUnitContentFeatures;
+                for (let i = 0; i < hucFeatures.length; i++) {
+                    if (hucFeatures[i].value === uniqueId) {
+                        return e;
+                    }
+                }
+            });
+
+            setContents(uniqueIdContent);
+        }
+    }, [uniqueId]);
 
     //SelectContentForArticle-3Auto: automatically set stored chosenContent when only one content is present
     useEffect(() => {
@@ -183,7 +200,7 @@ export const SelectContentForArticleForm = ({
                                     </Col>
                                     <Col span={16}>
                                         <Typography style={{ fontSize: '10px' }}>
-                                            {content.quantity}
+                                            {content.quantity ? content.quantity : 1}
                                         </Typography>
                                     </Col>
                                 </Row>

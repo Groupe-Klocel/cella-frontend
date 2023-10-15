@@ -34,9 +34,13 @@ const menuItemDatas = [
         path: '/content-movement'
     },
     {
-        title: 'menu:pallet-movement',
-        path: '/pallet-movement'
+        title: 'menu:hu-movement',
+        path: '/hu-movement'
     }
+    // {
+    //     title: 'menu:pallet-movement',
+    //     path: '/pallet-movement'
+    // }
     // {
     //     title: 'menu:replenishment-movement',
     //     path: '/'
