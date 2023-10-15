@@ -614,5 +614,9 @@
     "automaticStorageLocationPatternId": "Automatic storage location pattern",
     "automaticStorageLocationPattern_name": "Automatic storage location pattern",
     "minimumReplenishmentThreshold": "Minimum replenishment threshold",
-    "maximumReplenishmentThreshold": "Maximum replenishment threshold"
+    "maximumReplenishmentThreshold": "Maximum replenishment threshold",
+    "UN-code": "UN code",
+    "dangerous-goods-weight1": "Dangerous material weight (g)",
+    "dangerous-goods-weight2": "Battery weight (g)",
+    "parentHandlingUnit": "Parent handling unit"
 }

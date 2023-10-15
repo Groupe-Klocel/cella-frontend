@@ -37,6 +37,8 @@ export interface IScanProps {
     resetForm: { [label: string]: any };
     headerContent?: any;
     levelOfBack?: number;
+    showAlternativeSubmit?: any;
+    alternativeSubmitLabel?: any;
 }
 
 export const ScanForm = ({
@@ -50,7 +52,9 @@ export const ScanForm = ({
     showSimilarLocations,
     resetForm: { resetForm, setResetForm },
     headerContent,
-    levelOfBack
+    levelOfBack,
+    showAlternativeSubmit,
+    alternativeSubmitLabel
 }: IScanProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -135,14 +139,17 @@ export const ScanForm = ({
                     input={{
                         ...buttons,
                         showSimilarLocations: showSimilarLocations?.showSimilarLocations,
-                        showEmptyLocations: showEmptyLocations?.showEmptyLocations
+                        showEmptyLocations: showEmptyLocations?.showEmptyLocations,
+                        showAlternativeSubmit: showAlternativeSubmit?.showAlternativeSubmit
                     }}
                     output={{
                         setShowEmptyLocations: showEmptyLocations?.setShowEmptyLocations,
                         setShowSimilarLocations: showSimilarLocations?.setShowSimilarLocations,
+                        setShowAlternativeSubmit: showAlternativeSubmit?.setShowAlternativeSubmit,
                         headerContent: headerContent ? headerContent : undefined,
                         onBack
                     }}
+                    alternativeSubmitLabel={alternativeSubmitLabel}
                 ></RadioButtons>
             </StyledForm>
         </WrapperForm>

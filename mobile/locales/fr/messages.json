@@ -19,6 +19,7 @@
     "movement-success": "Votre mouvement a été effectué avec succès",
     "no-article-location": "Article non-trouvé pour cet emplacement",
     "no-article": "Aucun article trouvé",
+    "no-article-in-hu": "Cet article n'est pas trouvé dans cette unité de manutention",
     "no-article-for-hui": "Cet article n'est plus attendu pour cet arrivage",
     "no-article-for-po": "Cet article n'est pas attendu pour cette commande fournisseur",
     "no-box": "Aucun colis trouvé",
@@ -47,5 +48,9 @@
     "wrong-status": "Votre élément n'a pas l'état pertinent pour effectuer cette action",
     "unexpected-scanned-item": "Element scannée non attendu",
     "unload-success": "Votre déchargement a été enregistrée avec succès",
-    "box-preparation-failed": "Erreur lors de la préparation du colis"
+    "box-preparation-failed": "Erreur lors de la préparation du colis",
+    "no-location-hu": "Aucun emplacement trouvé pour cette UM",
+    "hu-origin-final-identical": "L'UM de destination est identique à l'UM d'origine",
+    "unexpected-hu-type": "Type d'UM non attendu",
+    "unexpected-hu-article": "Cette UM ne possède pas le même article que l'UM d'origine"
 }

@@ -308,6 +308,15 @@ const ArticleDetailsExtra = ({
                                         ) : (
                                             <></>
                                         )}
+                                        <Button
+                                            type="primary"
+                                            ghost
+                                            onClick={() => {
+                                                setShowNumberOfPrintsModal(true);
+                                                setIdToPrint(record.id as string);
+                                            }}
+                                            icon={<BarcodeOutlined />}
+                                        />
                                     </Space>
                                 )
                             }

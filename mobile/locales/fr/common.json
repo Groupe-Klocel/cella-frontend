@@ -40,8 +40,10 @@
     "group": "Groupe",
     "handling-unit": "Unité de manutention",
     "handling-unit_abbr": "UM",
-    "handling-unit-origin_abbr": "UM orig.",
+    "handling-unit-origin_abbr": "UM origine",
+    "handling-unit-origin": "UM orig.",
     "handling-unit-final_abbr": "UM dest.",
+    "handling-unit-final": "UM destination",
     "height": "Hauteur",
     "label": "Libellé",
     "hu": "Support",
@@ -99,6 +101,7 @@
     "reference": "Référence",
     "search": "Recherche",
     "search-criteria": "Critères de recherche",
+    "serial-number": "ID",
     "settings": "Paramètres",
     "shipping-notice": "Avis d'expédition",
     "status": "Statut",
@@ -121,5 +124,7 @@
     "weight": "Poids",
     "welcome": "Bienvenue!",
     "width": "Largeur",
-    "workspace": "ID Espace de travail"
+    "workspace": "ID Espace de travail",
+    "hu-movement": "Mouvement d'UM",
+    "move-hu_abbr": "Dépl. UM"
 }

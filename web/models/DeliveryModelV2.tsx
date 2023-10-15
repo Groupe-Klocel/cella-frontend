@@ -92,7 +92,7 @@ export const DeliveryModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
-            isMandatory: false,
+            isMandatory: true,
             minRule: null,
             maxRule: null,
             config: null,

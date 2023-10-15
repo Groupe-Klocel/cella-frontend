@@ -99,3 +99,26 @@ height: calc(100vh - 110px);
 .ant-menu > .ant-menu-submenu-selected {
     background-color: #093452;
 }
+
+.welcomeLogo {
+    animation: rotate 3s cubic-bezier(0.01, 0.1, 0.25, 1) 1, appear 3s linear forwards;
+    opacity: 0;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotateY(0deg);
+    }
+    to {
+        transform: rotateY(720deg);
+    }
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

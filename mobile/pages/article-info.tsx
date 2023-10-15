@@ -27,10 +27,11 @@ import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import {
-    ScanArticleForm,
     SelectArticleByStockOwnerForm,
-    SelectContentForArticleForm
+    SelectContentForArticleForm,
+    ScanArticleOrFeature
 } from '@CommonRadio';
+import { ArticleOrFeatureChecks } from 'modules/Misc/ArticleInfo/ChecksAndRecords/ArticleOrFeatureChecks';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -67,14 +68,16 @@ const ArticleInfo: PageComponent = () => {
             const chosenArticleLuBarcode =
                 articleInfo[`step${workflow.expectedSteps[1]}`]?.data?.chosenArticleLuBarcode;
 
-            object[t('common:article_abbr')] =
-                chosenArticleLuBarcode.article.name +
-                ' (' +
-                chosenArticleLuBarcode.stockOwner.name +
-                ')';
-            object[t('common:article-description')] =
-                chosenArticleLuBarcode.article.additionalDescription;
-            object[t('common:barcode')] = chosenArticleLuBarcode.barcode.name;
+            object[t('common:article_abbr')] = chosenArticleLuBarcode.stockOwner
+                ? chosenArticleLuBarcode.article.name +
+                  ' (' +
+                  chosenArticleLuBarcode.stockOwner.name +
+                  ')'
+                : chosenArticleLuBarcode.article.name;
+            object[t('common:article-description')] = chosenArticleLuBarcode.article.description;
+            chosenArticleLuBarcode.barcode
+                ? (object[t('common:barcode')] = chosenArticleLuBarcode.barcode.name)
+                : undefined;
         }
         setOriginDisplay(object);
         setFinalDisplay(object);
@@ -123,6 +126,18 @@ const ArticleInfo: PageComponent = () => {
                 ></RadioInfosHeader>
             )}
             {!articleInfo[`step${workflow.expectedSteps[0]}`]?.data ? (
+                <ScanArticleOrFeature
+                    process={workflow.processName}
+                    stepNumber={workflow.expectedSteps[0]}
+                    label={t('common:article')}
+                    buttons={{ submitButton: true, backButton: true }}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    checkComponent={(data: any) => <ArticleOrFeatureChecks dataToCheck={data} />}
+                ></ScanArticleOrFeature>
+            ) : (
+                <></>
+            )}
+            {/* {!articleInfo[`step${workflow.expectedSteps[0]}`]?.data ? (
                 <ScanArticleForm
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[0]}
@@ -132,7 +147,7 @@ const ArticleInfo: PageComponent = () => {
                 ></ScanArticleForm>
             ) : (
                 <></>
-            )}
+            )} */}
             {articleInfo[`step${workflow.expectedSteps[0]}`]?.data &&
             !articleInfo[`step${workflow.expectedSteps[1]}`]?.data ? (
                 <SelectArticleByStockOwnerForm
@@ -158,6 +173,10 @@ const ArticleInfo: PageComponent = () => {
                             .articleId
                     }
                     hideSelect={true}
+                    uniqueId={
+                        articleInfo[`step${workflow.expectedSteps[0]}`].data?.feature?.value ??
+                        undefined
+                    }
                 ></SelectContentForArticleForm>
             ) : (
                 <></>

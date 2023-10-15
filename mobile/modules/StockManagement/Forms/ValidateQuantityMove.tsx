@@ -70,7 +70,7 @@ export const ValidateQuantityMoveForm = ({
         articleInfo.stockOwnerId =
             storedObject.step35.data.chosenArticleLuBarcode.stockOwnerId ?? undefined;
         articleInfo.stockOwnerName =
-            storedObject.step35.data.chosenArticleLuBarcode.stockOwner.name ?? undefined;
+            storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ?? undefined;
         articleLuBarcodeId = storedObject.step35.data.chosenArticleLuBarcode.id ?? undefined;
     }
     if (storedObject.step40.data.chosenContent) {
@@ -104,6 +104,10 @@ export const ValidateQuantityMoveForm = ({
     if (storedObject.step80.data.finalHandlingUnit) {
         finalHandlingUnit = storedObject.step80.data.finalHandlingUnit;
     }
+    let isHuToCreate = false;
+    if (storedObject.step80.data.isHuToCreate) {
+        isHuToCreate = storedObject.step80.data.isHuToCreate;
+    }
 
     //ValidateQuantityMove-1a: retrieve chosen level from select and set information
     const onFinish = async () => {
@@ -119,7 +123,8 @@ export const ValidateQuantityMoveForm = ({
                 articleLuBarcodeId,
                 movingQuantity,
                 finalLocation,
-                finalHandlingUnit
+                finalHandlingUnit,
+                isHuToCreate
             })
         });
         if (res.ok) {
