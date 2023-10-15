@@ -51,22 +51,12 @@ export const EditRoleForm: FC<EditRoleFormProps> = ({
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const nameText = t('d:name');
-    const warehouseOnlyText = t('d:warehouseOnly');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const errorMessageUpdateData = t('messages:error-update-data');
     const successMessageUpdateData = t('messages:success-updated');
     const infoMessageUpdateData = t('messages:info-update-wip');
     const submit = t('actions:submit');
     // END TEXTS TRANSLATION
-
-    let warehouseOnly;
-    if (warehouseId) {
-        warehouseOnly = true;
-    } else {
-        warehouseOnly = false;
-        warehouseId = null;
-    }
-    const [switchInput, setSwitchInput] = useState(warehouseOnly);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -175,15 +165,6 @@ export const EditRoleForm: FC<EditRoleFormProps> = ({
                     )}
                 >
                     <Input />
-                </Form.Item>
-                <Form.Item name="warehouseOnly" label={warehouseOnlyText}>
-                    <Switch
-                        defaultChecked={warehouseOnly}
-                        checked={switchInput}
-                        onChange={() => {
-                            setSwitchInput(!switchInput);
-                        }}
-                    />
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>
