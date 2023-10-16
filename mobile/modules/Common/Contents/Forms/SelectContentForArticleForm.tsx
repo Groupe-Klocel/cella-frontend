@@ -195,6 +195,42 @@ export const SelectContentForArticleForm = ({
                                 <Row>
                                     <Col span={8}>
                                         <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                            {t('common:handling-unit-parent_abbr')}:
+                                        </Typography>
+                                    </Col>
+                                    <Col span={16}>
+                                        <Typography style={{ fontSize: '10px' }}>
+                                            {content.handlingUnit?.parentHandlingUnit?.name}
+                                        </Typography>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col span={8}>
+                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                            {t('common:handling-unit_abbr')}:
+                                        </Typography>
+                                    </Col>
+                                    <Col span={16}>
+                                        <Typography style={{ fontSize: '10px' }}>
+                                            {content.handlingUnit?.name}
+                                        </Typography>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col span={8}>
+                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                            {t('common:stock-owner')}:
+                                        </Typography>
+                                    </Col>
+                                    <Col span={16}>
+                                        <Typography style={{ fontSize: '10px' }}>
+                                            {content.handlingUnit?.stockOwner?.name}
+                                        </Typography>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col span={8}>
+                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
                                             {t('common:quantity')}:
                                         </Typography>
                                     </Col>

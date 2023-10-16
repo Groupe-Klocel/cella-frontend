@@ -54,6 +54,12 @@ query GetHandlingUnitContents(
                     category
                     categoryText
                 }
+                parentHandlingUnit {
+                    name
+                }
+                stockOwner {
+                    name
+                }
             }
             articleLuBarcodeId
             articleLuBarcode {
