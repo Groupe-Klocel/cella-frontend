@@ -32,6 +32,7 @@ import {
     ScanArticleOrFeature
 } from '@CommonRadio';
 import { ArticleOrFeatureChecks } from 'modules/Misc/ArticleInfo/ChecksAndRecords/ArticleOrFeatureChecks';
+import { DisplayContentByArticleSerialForm } from 'modules/Common/Contents/Forms/DisplayContentByArticleSerialForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -60,10 +61,17 @@ const ArticleInfo: PageComponent = () => {
         storage.set(workflow.processName, JSON.stringify(articleInfo));
     }
 
+    console.log('articleInfo', articleInfo);
+
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
         const object: { [k: string]: any } = {};
 
+        if (articleInfo[`step${workflow.expectedSteps[0]}`]?.data?.resType === 'serialNumber') {
+            const serialNumber =
+                articleInfo[`step${workflow.expectedSteps[0]}`]?.data?.feature.value;
+            object[t('common:serial-number')] = serialNumber;
+        }
         if (articleInfo[`step${workflow.expectedSteps[1]}`]?.data?.chosenArticleLuBarcode) {
             const chosenArticleLuBarcode =
                 articleInfo[`step${workflow.expectedSteps[1]}`]?.data?.chosenArticleLuBarcode;
@@ -137,17 +145,6 @@ const ArticleInfo: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {/* {!articleInfo[`step${workflow.expectedSteps[0]}`]?.data ? (
-                <ScanArticleForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[0]}
-                    label={t('common:article')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true }}
-                ></ScanArticleForm>
-            ) : (
-                <></>
-            )} */}
             {articleInfo[`step${workflow.expectedSteps[0]}`]?.data &&
             !articleInfo[`step${workflow.expectedSteps[1]}`]?.data ? (
                 <SelectArticleByStockOwnerForm
@@ -163,21 +160,30 @@ const ArticleInfo: PageComponent = () => {
                 <></>
             )}
             {articleInfo[`step${workflow.expectedSteps[1]}`]?.data ? (
-                <SelectContentForArticleForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[2]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: false }}
-                    articleId={
-                        articleInfo[`step${workflow.expectedSteps[1]}`].data.chosenArticleLuBarcode
-                            .articleId
-                    }
-                    hideSelect={true}
-                    uniqueId={
-                        articleInfo[`step${workflow.expectedSteps[0]}`].data?.feature?.value ??
-                        undefined
-                    }
-                ></SelectContentForArticleForm>
+                !articleInfo[`step${workflow.expectedSteps[0]}`].data?.feature?.value ? (
+                    <SelectContentForArticleForm
+                        process={workflow.processName}
+                        stepNumber={workflow.expectedSteps[2]}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: false }}
+                        articleId={
+                            articleInfo[`step${workflow.expectedSteps[1]}`].data
+                                .chosenArticleLuBarcode.articleId
+                        }
+                        hideSelect={true}
+                    ></SelectContentForArticleForm>
+                ) : (
+                    <DisplayContentByArticleSerialForm
+                        process={workflow.processName}
+                        stepNumber={workflow.expectedSteps[2]}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: false }}
+                        uniqueId={
+                            articleInfo[`step${workflow.expectedSteps[0]}`].data?.feature?.value
+                        }
+                        hideSelect={true}
+                    ></DisplayContentByArticleSerialForm>
+                )
             ) : (
                 <></>
             )}

@@ -44,6 +44,7 @@
     "handling-unit-origin": "Original HU",
     "handling-unit-final_abbr": "Dest. HU",
     "handling-unit-final": "Destination HU",
+    "handling-unit-parent_abbr": "Parent HU",
     "height": "Height",
     "label": "Label",
     "hu": "Support",

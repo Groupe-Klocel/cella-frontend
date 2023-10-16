@@ -44,6 +44,7 @@
     "handling-unit-origin": "UM orig.",
     "handling-unit-final_abbr": "UM dest.",
     "handling-unit-final": "UM destination",
+    "handling-unit-parent_abbr": "UM parent",
     "height": "Hauteur",
     "label": "Libellé",
     "hu": "Support",
