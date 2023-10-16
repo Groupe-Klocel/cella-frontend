@@ -278,10 +278,10 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
 
     useEffect(() => {
         const tmp_details = {
-            code: details?.handlingUnit.name,
-            locationName: details?.handlingUnit.location.name,
-            stockOwnerId: details?.handlingUnit.stockOwner.name,
-            articleName: details?.article.name,
+            code: details?.handlingUnit?.name,
+            locationName: details?.handlingUnit?.location?.name,
+            stockOwnerId: details?.handlingUnit?.stockOwner?.name,
+            articleName: details?.article?.name,
             quantity: details?.quantity,
             stockStatus: details?.stockStatus,
             comment: details?.comment,
@@ -292,7 +292,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
             showInfo(t('messages:info-update-wip'));
             showSuccess(t('messages:success-updated'));
         }
-    }, [updateLoading]);
+    }, [details, updateLoading]);
 
     return (
         <WrapperForm>

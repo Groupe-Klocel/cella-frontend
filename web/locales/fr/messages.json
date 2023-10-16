@@ -68,6 +68,7 @@
     "success-generate-dummy-hu-on-printer": "Etiquette(s) d'unité de manutation générée avec succès. Veuillez vérifier l'imprimante sélectionnée",
     "success-reopened": "Les éléments ont été rouverts avec succès",
     "success-password-reset": "Le mot de passe a été réinitialisé avec succès",
+    "success-print-data": "Impression effectuée avec succès. Veuillez vérifier l'imprimante sélectionnée",
     "success-canceled": "Les éléments ont été annulés avec succès",
     "success-cubing": "Le colisage a été effectué avec succès",
     "success-start": "Le lancement a été effectué avec succès",

@@ -68,6 +68,7 @@
     "success-generate-dummy-hu-on-printer": "Handling Unit label(s) successfully generated. Please check selected printer",
     "success-reopened": "The element has been successfully reopened",
     "success-password-reset": "The password has been successfully reset",
+    "success-print-data": "Printed successfully. Please check selected printer",
     "success-canceled": "The element has been successfully canceled",
     "success-cubing": "Cubing successfully executed",
     "success-start": "Preparation successfully started",
