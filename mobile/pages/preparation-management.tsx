@@ -30,6 +30,10 @@ const menuItemDatas = [
     //     path: '/'
     // },
     {
+        title: 'menu:round-picking',
+        path: '/round-picking'
+    },
+    {
         title: 'menu:box-preparation',
         path: '/box-preparation'
     },

@@ -46,11 +46,13 @@
     "support-box-children": "Ce support / colis a un support parent",
     "wait-support": "Attend un support pas un colis",
     "wrong-status": "Votre élément n'a pas l'état pertinent pour effectuer cette action",
-    "unexpected-scanned-item": "Element scannée non attendu",
+    "unexpected-scanned-item": "Element scanné non attendu",
     "unload-success": "Votre déchargement a été enregistrée avec succès",
     "box-preparation-failed": "Erreur lors de la préparation du colis",
     "no-location-hu": "Aucun emplacement trouvé pour cette UM",
     "hu-origin-final-identical": "L'UM de destination est identique à l'UM d'origine",
     "unexpected-hu-type": "Type d'UM non attendu",
-    "unexpected-hu-article": "Cette UM ne possède pas le même article que l'UM d'origine"
+    "unexpected-hu-article": "Cette UM ne possède pas le même article que l'UM d'origine",
+    "round-picking-success": "Votre prélèvement de ramasse a été effectué",
+    "round-preparation-failed": "Erreur lors du prélèvement de la ramasse"
 }

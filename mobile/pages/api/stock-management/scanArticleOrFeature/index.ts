@@ -76,6 +76,18 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 name
                             }
                         }
+                        handlingUnitId
+                        handlingUnit {
+                            id
+                            name
+                            barcode
+                            status
+                            statusText
+                            type
+                            typeText
+                            category
+                            categoryText
+                        }
                     }
                 }
             }
