@@ -46,7 +46,9 @@ query GetHandlingUnitContents(
                 name
                 code
                 type
+                typeText
                 category
+                categoryText
                 locationId
                 location {
                     name

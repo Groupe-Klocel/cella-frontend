@@ -26,6 +26,7 @@
     "no-content": "Aucun contenu trouvé",
     "no-handling-unit": "No handling unit found",
     "no-goodsIn": "Aucun arrivage trouvé",
+    "no-hu": "Unité de manutention non trouvée",
     "no-hu-location": "Unité de manutention non-trouvée pour cet emplacement",
     "no-hu-or-empty": "Aucune unité de manutention trouvée avec ce code à barres ou cette unité de manutention est vide",
     "no-hu-or-not-empty": "Support inexistant ou non vide",

@@ -19,7 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useHandlingUnits } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
 import graphqlRequestClient from 'graphql/graphqlRequestClient';
@@ -66,7 +65,7 @@ export const ScanHandlingUnit = ({
     }, []);
 
     // ScanHandlingUnit-2: launch query
-    // const handlingUnitInfos = useHandlingUnits({ barcode: `${scannedInfo}` }, 1, 100, null);
+
     const handlingUnitInfos = useGetHandlingUnitsQuery<Partial<GetHandlingUnitsQuery>, Error>(
         graphqlRequestClient,
         {

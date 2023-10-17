@@ -29,12 +29,25 @@ query GetHandlingUnits(
             id
             name
             type
+            typeText
             barcode
             category
+            categoryText
             code
             parentHandlingUnitId
+            parentHandlingUnit {
+                id
+                name
+                type
+                typeText
+            }
             childrenHandlingUnits {
                 id
+                name
+                type
+                typeText
+                category
+                categoryText
             }
             reservation
             status

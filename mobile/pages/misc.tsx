@@ -40,6 +40,10 @@ const menuItemDatas = [
     {
         title: 'menu:location-info',
         path: '/location-info'
+    },
+    {
+        title: 'menu:hu-info',
+        path: '/hu-info'
     }
     // {
     //     title: 'menu:box-check',
