@@ -617,5 +617,8 @@
     "UN-code": "Code UN",
     "dangerous-goods-weight1": "Poids matière dangereuse (g)",
     "dangerous-goods-weight2": "Poids batterie (g)",
-    "parentHandlingUnit": "UM parent"
+    "parentHandlingUnit": "UM parent",
+    "pickingUser": "Opérateur de prélèvement",
+    "roundOrderId": "Ordre de ramasse",
+    "handlingUnit_parentHandlingUnit": "UM parent"
 }

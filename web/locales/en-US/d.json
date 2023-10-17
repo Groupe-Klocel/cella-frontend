@@ -618,5 +618,8 @@
     "UN-code": "UN code",
     "dangerous-goods-weight1": "Dangerous material weight (g)",
     "dangerous-goods-weight2": "Battery weight (g)",
-    "parentHandlingUnit": "Parent handling unit"
+    "parentHandlingUnit": "Parent handling unit",
+    "PickingUser": "Picking User",
+    "roundOrderId": "Round order",
+    "handlingUnit_parentHandlingUnit": "Parent handling unit"
 }

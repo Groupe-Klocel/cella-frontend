@@ -26,6 +26,7 @@
     "no-content": "No content found",
     "no-handling-unit": "No handling unit found",
     "no-goodsIn": "No goods-in found",
+    "no-hu": "Handling unit not found",
     "no-hu-location": "Handling unit not found for this location",
     "no-hu-or-empty": "No handling unit found with this barcode or this handling unit is empty",
     "no-hu-or-not-empty": "Not existing or not empty support",

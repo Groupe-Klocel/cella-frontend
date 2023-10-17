@@ -189,8 +189,8 @@ const HuMovement: PageComponent = () => {
                 <></>
             )}
             {showEmptyLocations &&
-            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                .handlingUnitContents[0].articleId ? (
+            storedObject[`step${workflow.expectedSteps[2]}`].data?.handlingUnit
+                ?.handlingUnitContents[0]?.articleId ? (
                 <EmptyLocations withAvailableHU={false} />
             ) : (
                 <></>

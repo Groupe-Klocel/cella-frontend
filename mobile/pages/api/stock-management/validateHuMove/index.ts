@@ -173,7 +173,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         `;
 
-        if (!finalLocation.stockStatus) finalLocation.stockStatus = -1;
+        if (!finalLocation.stockStatus) finalLocation.stockStatus = originLocation.stockStatus;
 
         const updateHUCVariables = {
             ids: hucIds,

@@ -66,6 +66,7 @@ export const ScanPalletForm = ({
 
     // ScanPallet-2: launch query
     const handlingUnitInfos = useHandlingUnits({ name: `${handlingUnitBarcode}` }, 1, 100, null);
+    
 
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {

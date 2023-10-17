@@ -126,21 +126,6 @@ export const SelectContentForArticleForm = ({
         }
     }, [data]);
 
-    useEffect(() => {
-        if (uniqueId) {
-            const uniqueIdContent = contents.filter((e: any) => {
-                const hucFeatures = e.handlingUnitContentFeatures;
-                for (let i = 0; i < hucFeatures.length; i++) {
-                    if (hucFeatures[i].value === uniqueId) {
-                        return e;
-                    }
-                }
-            });
-
-            setContents(uniqueIdContent);
-        }
-    }, [uniqueId]);
-
     //SelectContentForArticle-3Auto: automatically set stored chosenContent when only one content is present
     useEffect(() => {
         if (contents.length == 1) {

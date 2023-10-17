@@ -56,7 +56,7 @@
     "error-dispatching-data": "Une erreur s'est produite lors de l'expédition de cet élément",
     "reset-confirm": "Etes-vous sûr(e) de vouloir réinitialiser cet utilisateur ?",
     "password-reset-confirm": "Etes-vous sûr(e) de vouloir réinitialiser le mot de passe de cet utilisateur ?",
-    "round-calculation-confirm": "Etes-vous sûr(e) de vouloir lancer un calcul de rammasse ?",
+    "round-calculation-confirm": "Etes-vous sûr(e) de vouloir lancer un calcul de ramasse ?",
     "success-deleted": "L'élément a été supprimé avec succès",
     "success-closed": "L'élément a été terminé avec succès",
     "success-disabled": "L'élément a été désactivé avec succès",
