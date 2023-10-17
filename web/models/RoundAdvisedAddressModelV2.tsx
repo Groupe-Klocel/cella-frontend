@@ -76,7 +76,7 @@ export const RoundAdvisedAddressModelV2: ModelType = {
             config: null,
             param: null
         },
-        'handlingUnitContentOutbound{quantityToBePicked}': {
+        roundOrderId: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
@@ -96,27 +96,7 @@ export const RoundAdvisedAddressModelV2: ModelType = {
             config: null,
             param: null
         },
-        'handlingUnitContentOutbound{pickedQuantity}': {
-            isListRequested: true,
-            isDefaultHiddenList: false,
-            isExcludedFromList: false,
-            isSortable: true,
-            searchingFormat: null,
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
-            detailGroup: null,
-            link: null,
-            addEditFormat: null,
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: false,
-            minRule: null,
-            maxRule: null,
-            config: null,
-            param: null
-        },
-        'handlingUnitContentOutbound{missingQuantity}': {
+        quantity: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
