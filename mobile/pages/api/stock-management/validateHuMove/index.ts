@@ -161,34 +161,37 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         canRollbackTransaction = true;
         //end handling unit update section
 
-        // update huc stock statuses
-        const hucIds = originHandlingUnit.handlingUnitContents.map((huc: { id: any }) => huc.id);
+        let updateHucResult = null;
+        if (finalLocation.stockStatus) {
+            // update huc stock statuses
+            const hucIds = originHandlingUnit.handlingUnitContents.map(
+                (huc: { id: any }) => huc.id
+            );
 
-        const updateHUCMutation = gql`
-            mutation updateHandlingUnitContent(
-                $ids: [String!]!
-                $input: UpdateHandlingUnitContentInput!
-            ) {
-                updateHandlingUnitContents(ids: $ids, input: $input)
-            }
-        `;
+            const updateHUCMutation = gql`
+                mutation updateHandlingUnitContent(
+                    $ids: [String!]!
+                    $input: UpdateHandlingUnitContentInput!
+                ) {
+                    updateHandlingUnitContents(ids: $ids, input: $input)
+                }
+            `;
 
-        if (!finalLocation.stockStatus) finalLocation.stockStatus = originLocation.stockStatus;
+            const updateHUCVariables = {
+                ids: hucIds,
+                input: {
+                    stockStatus: finalLocation.stockStatus,
+                    lastTransactionId
+                }
+            };
 
-        const updateHUCVariables = {
-            ids: hucIds,
-            input: {
-                stockStatus: finalLocation.stockStatus,
-                lastTransactionId
-            }
-        };
-
-        const updateHucResult = await graphqlRequestClient.request(
-            updateHUCMutation,
-            updateHUCVariables,
-            requestHeader
-        );
-        // end update huc stock statuses
+            const updateHucResult = await graphqlRequestClient.request(
+                updateHUCMutation,
+                updateHUCVariables,
+                requestHeader
+            );
+            // end update huc stock statuses
+        }
 
         //movements creation section
         const createMovement = gql`
