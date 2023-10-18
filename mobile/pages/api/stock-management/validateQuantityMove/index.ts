@@ -57,6 +57,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         isHuToCreate
     } = req.body;
 
+    console.log('DLA-I', req.body);
+
     const movementCodes = {
         initialStatus: parameters.STOCK_STATUSES_SALE,
         finalStatus: parameters.STOCK_STATUSES_SALE,
@@ -118,6 +120,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         );
         //end origin content update section
 
+        console.log('DLA-o_HUC', originHucResult);
+
         //final content creation or update section
         let destinationHucResult: { [k: string]: any } | null;
         // final content HU creation when needed
@@ -142,6 +146,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         newHUVariables,
                         requestHeader
                     );
+                    console.log('DLA-d_HU', destinationHuResult);
+
                     //inject id in the finalLocation const
                     if (destinationHuResult) {
                         const destinationHu = {
@@ -181,6 +187,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 newHUCVariables,
                 requestHeader
             );
+
+            console.log('DLA-d_HUC', destinationHucResult);
 
             //inject id in the finalLocation const
             if (destinationHucResult) {
