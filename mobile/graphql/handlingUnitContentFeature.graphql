@@ -36,6 +36,7 @@ query GetHandlingUnitContentFeatures(
             id
             handlingUnitContentId
             handlingUnitContent {
+                id
                 handlingUnit {
                     name
                     location {

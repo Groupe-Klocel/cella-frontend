@@ -67,7 +67,7 @@ const ContentMvmt: PageComponent = () => {
     };
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
-    // console.log('contentMvt', storedObject);
+    console.log('contentMvt', storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
