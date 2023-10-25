@@ -26,8 +26,6 @@ export interface IQuantityChecksProps {
     dataToCheck: any;
 }
 
-// TO BE REVIEWED : BASIC VERSION ASSESS REVIEW REQUIRED ?
-
 export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -44,16 +42,9 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
     useEffect(() => {
         if (enteredInfo) {
             const data: { [label: string]: any } = {};
-
-            if (enteredInfo == storedObject['step10'].data.proposedRoundAdvisedAddress.quantity) {
-                data['movingQuantity'] = enteredInfo;
-                storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-                storage.set(process, JSON.stringify(storedObject));
-            } else {
-                showError(t('messages:erroneous-quantity'));
-                setEnteredInfo(undefined);
-            }
-
+            data['movingQuantity'] = enteredInfo;
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            storage.set(process, JSON.stringify(storedObject));
             setTriggerRender(!triggerRender);
         }
         if (

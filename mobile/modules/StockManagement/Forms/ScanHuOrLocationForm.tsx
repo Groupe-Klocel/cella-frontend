@@ -30,7 +30,7 @@ export interface IScanHuOrLocationProps {
     buttons: { [label: string]: any };
     showEmptyLocations?: any;
     showSimilarLocations?: any;
-    showAlternativeSubmit?: any;
+    triggerAlternativeSubmit?: any;
     checkComponent: any;
     headerContent?: any;
 }
@@ -43,7 +43,7 @@ export const ScanHuOrLocation = ({
     buttons,
     showEmptyLocations,
     showSimilarLocations,
-    showAlternativeSubmit,
+    triggerAlternativeSubmit,
     checkComponent,
     headerContent
 }: IScanHuOrLocationProps) => {
@@ -70,7 +70,7 @@ export const ScanHuOrLocation = ({
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
-        showAlternativeSubmit,
+        triggerAlternativeSubmit,
         setResetForm
     };
 
@@ -84,7 +84,7 @@ export const ScanHuOrLocation = ({
                 buttons={{ ...buttons }}
                 showEmptyLocations={showEmptyLocations}
                 showSimilarLocations={showSimilarLocations}
-                showAlternativeSubmit={showAlternativeSubmit}
+                triggerAlternativeSubmit={triggerAlternativeSubmit}
                 headerContent={headerContent}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}

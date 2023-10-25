@@ -26,12 +26,13 @@ import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import { EnterQuantity, ScanArticleOrFeature, ScanHandlingUnit } from '@CommonRadio';
+import { EnterQuantity, ScanHandlingUnit } from '@CommonRadio';
 import { QuantityChecks } from 'modules/Preparation/RoundPicking/ChecksAndRecords/QuantityChecks';
 import { SelectRoundForm } from 'modules/Preparation/RoundPicking/Forms/SelectRoundForm';
 import { ArticleOrFeatureChecks } from 'modules/Preparation/RoundPicking/ChecksAndRecords/ArticleOrFeatureChecks';
 import { HandlingUnitChecks } from 'modules/Preparation/RoundPicking/ChecksAndRecords/HandlingUnitChecks';
 import { ValidateRoundPickingForm } from 'modules/Preparation/RoundPicking/Forms/ValidateRoundPickingForm';
+import { ScanArticleOrFeature } from 'modules/Preparation/RoundPicking/PagesContainer/ScanArticleOrFeature';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -55,7 +56,7 @@ const RoundPicking: PageComponent = () => {
     };
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
-    // console.log('roundPicking', storedObject);
+    console.log('roundPicking', storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
@@ -67,43 +68,30 @@ const RoundPicking: PageComponent = () => {
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
         const object: { [k: string]: any } = {};
-        // if (storedObject?.currentStep <= 50) {
-        //     setHeaderContent(false);
-        // }
-        if (storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round) {
+        if (
+            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round &&
+            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddress
+        ) {
             const round = storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round;
+            const proposedRoundAdvisedAddress =
+                storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddress;
             object[t('common:round')] = round.name;
-        }
-        if (
-            storedObject[`step${workflow.expectedSteps[1]}`]?.data?.locations &&
-            storedObject[`step${workflow.expectedSteps[1]}`]?.data?.locations?.length > 1
-        ) {
-            const locationsList = storedObject[`step${workflow.expectedSteps[1]}`]?.data?.locations;
-            object[t('common:location_abbr')] = locationsList[1].barcode;
-        }
-        if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.chosenLocation) {
-            const location = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.chosenLocation;
-            object[t('common:location_abbr')] = location.name;
-        }
-        if (storedObject[`step${workflow.expectedSteps[3]}`]?.data?.articleLuBarcode) {
-            const articleLuBarcode =
-                storedObject[`step${workflow.expectedSteps[3]}`]?.data?.articleLuBarcode;
-            object[t('common:article-description_abbr')] = articleLuBarcode.article.description;
-            object[t('common:article_abbr')] = articleLuBarcode.article.name;
-            object[t('common:article-barcode')] = articleLuBarcode.barcode.name;
-        }
-        if (
-            storedObject[`step${workflow.expectedSteps[3]}`]?.data?.articleLuBarcode &&
-            storedObject[`step${workflow.expectedSteps[4]}`]?.data?.movingQuantity
-        ) {
-            const articleLuBarcode =
-                storedObject[`step${workflow.expectedSteps[3]}`]?.data?.articleLuBarcode;
-            const movingQuantity =
-                storedObject[`step${workflow.expectedSteps[4]}`]?.data?.movingQuantity;
+            object[t('common:location_abbr')] = proposedRoundAdvisedAddress.location.name;
             object[t('common:article_abbr')] =
-                movingQuantity + ' x ' + articleLuBarcode.article.name;
+                proposedRoundAdvisedAddress.handlingUnitContent.article.name;
+            object[t('common:quantity_abbr')] = proposedRoundAdvisedAddress.quantity;
+        }
+        if (
+            storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit &&
+            storedObject[`step${workflow.expectedSteps[3]}`]?.data
+        ) {
+            const handlingUnit =
+                storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
+            object[t('common:handling-unit_abbr')] = handlingUnit.name;
+            object[t('common:stock-owner_abbr')] = handlingUnit.stockOwner.name;
         }
         setOriginDisplay(object);
+        setFinalDisplay(object);
     }, [triggerRender]);
 
     // retrieve location, article and qty to propose
@@ -113,11 +101,15 @@ const RoundPicking: PageComponent = () => {
                 storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddress
                     .location?.name
             );
+            setArticleToPropose(
+                storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddress
+                    ?.handlingUnitContent?.article?.name
+            );
         }
     }, [storedObject, triggerRender]);
 
     useEffect(() => {
-        headerContent ? setDisplayed(originDisplay) : setDisplayed(originDisplay);
+        headerContent ? setDisplayed(finalDisplay) : setDisplayed(originDisplay);
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
@@ -173,7 +165,7 @@ const RoundPicking: PageComponent = () => {
                 <ScanArticleOrFeature
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[1]}
-                    label={t('common:article') + ' (' + `${locationToPropose}` + ')'}
+                    label={t('common:article')}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     checkComponent={(data: any) => <ArticleOrFeatureChecks dataToCheck={data} />}

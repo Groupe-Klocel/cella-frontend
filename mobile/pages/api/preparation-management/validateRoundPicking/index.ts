@@ -48,8 +48,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     // retrieve information from front
-    const { proposedRoundAdvisedAddress, round, articleInfos, feature, movingQuantity, resType } =
-        req.body;
+    const {
+        proposedRoundAdvisedAddress,
+        round,
+        articleInfos,
+        feature,
+        handlingUnit,
+        movingQuantity,
+        resType
+    } = req.body;
 
     //Transaction management
     const generateTransactionId = gql`
@@ -194,10 +201,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 createHUMutation,
                 createHUvariables
             );
+
+            console.log('createdHu', createdHu);
+
             finalHandlingUnitId = createdHu.createHandlingUnit.id;
             canRollbackTransaction = true;
         } else {
             finalHandlingUnitId = handlingUnitResult.handlingUnits.results[0].id;
+            console.log('finalHandlingUnitId', finalHandlingUnitId);
         }
 
         // 2a- Check Final HUC
@@ -208,6 +219,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     results {
                         id
                         articleId
+                        quantity
                     }
                 }
             }
@@ -239,6 +251,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 input: {
                     handlingUnitId: finalHandlingUnitId,
                     articleId: articleInfos.articleId,
+                    quantity: movingQuantity,
                     stockStatus: parameters.STOCK_STATUSES_SALE, // 14000
                     lastTransactionId
                 }
@@ -249,11 +262,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 createHUCvariables
             );
 
+            console.log('createdHuc', createdHuc);
+
             finalHandlingUnitContentId = createdHuc.createHandlingUnitContent.id;
             canRollbackTransaction = true;
         } else {
-            finalHandlingUnitContentId = handlingUnitResult.handlingUnits.results[0].id;
+            finalHandlingUnitContentId =
+                handlingUnitContentResult?.handlingUnitContents?.results[0].id;
+            console.log('finalHandlingUnitContentId', finalHandlingUnitContentId);
         }
+
+        console.log('resType', resType);
 
         // 3- Update original HUC ( qty-- ) if resType= EAN OR Update original HUCF (huc = new huc) if resType=  serialNumber
         if (resType === 'serialNumber') {
@@ -282,36 +301,50 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 updateHUCFMutation,
                 updateHUCFvariable
             );
-        } else {
-            // resType = EAN
-            const updateHUCMutation = gql`
-                mutation updateHandlingUnitContent(
-                    $id: String!
-                    $input: UpdateHandlingUnitContentInput!
-                ) {
-                    updateHandlingUnitContent(id: $id, input: $input) {
-                        id
-                        lastTransactionId
-                    }
-                }
-            `;
 
-            const stockQuantity =
-                proposedRoundAdvisedAddress.handlingUnitContent.quantity - movingQuantity;
+            console.log('resType', resType);
+        }
 
-            const updateHUCvariable = {
-                id: proposedRoundAdvisedAddress.handlingUnitContentId,
-                input: {
-                    quantity: stockQuantity,
+        // get origin huc
+        const originalHandlingUnitContentVariables = {
+            filters: { handlingUnitId: handlingUnit.id, articleId: articleInfos.articleId }
+        };
+
+        const originalHandlingUnitContentResult = await graphqlRequestClient.request(
+            handlingUnitContentQuery,
+            originalHandlingUnitContentVariables,
+            requestHeader
+        );
+
+        // update origin huc
+        const updateHUCMutation = gql`
+            mutation updateHandlingUnitContent(
+                $id: String!
+                $input: UpdateHandlingUnitContentInput!
+            ) {
+                updateHandlingUnitContent(id: $id, input: $input) {
+                    id
                     lastTransactionId
                 }
-            };
+            }
+        `;
 
-            const updatedHUC = await graphqlRequestClient.request(
-                updateHUCMutation,
-                updateHUCvariable
-            );
-        }
+        const stockQuantity =
+            originalHandlingUnitContentResult?.handlingUnitContents?.results[0].quantity -
+            movingQuantity;
+
+        const updateHUCvariable = {
+            id: originalHandlingUnitContentResult?.handlingUnitContents?.results[0].id,
+            input: {
+                quantity: stockQuantity,
+                lastTransactionId
+            }
+        };
+
+        const updatedHUC = await graphqlRequestClient.request(updateHUCMutation, updateHUCvariable);
+
+        console.log('updatedOriginHUC', updatedHUC);
+
         canRollbackTransaction = true;
 
         // 5- Update RoundAdvisedAddress status (To be verified - 457)
@@ -322,32 +355,92 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             ) {
                 updateRoundAdvisedAddress(id: $id, input: $input) {
                     id
+                    roundOrderId
                     quantity
                     status
                     statusText
-                    roundOrderId
+                    locationId
+                    location {
+                        name
+                    }
+                    handlingUnitContentId
+                    handlingUnitContent {
+                        quantity
+                        articleId
+                        article {
+                            name
+                        }
+                        handlingUnitContentFeatures {
+                            featureCode {
+                                name
+                                unique
+                            }
+                            value
+                        }
+                        handlingUnitId
+                        handlingUnit {
+                            id
+                            name
+                            barcode
+                            status
+                            statusText
+                            type
+                            typeText
+                            category
+                            categoryText
+                        }
+                    }
+                    roundLineDetailId
+                    roundLineDetail {
+                        status
+                        statusText
+                        quantityToBeProcessed
+                        processedQuantity
+                        roundLineId
+                        roundLine {
+                            lineNumber
+                            articleId
+                            status
+                            statusText
+                        }
+                        deliveryLineId
+                        deliveryLine {
+                            id
+                            stockOwnerId
+                            deliveryId
+                        }
+                    }
                     lastTransactionId
                 }
             }
         `;
 
         const newQuantity = (proposedRoundAdvisedAddress.quantity -= movingQuantity);
-
-        const updateRoundAdvisedAddressVariables = {
-            id: proposedRoundAdvisedAddress.id,
-            input: {
-                status:
-                    newQuantity == 0
-                        ? configs.ROUND_ADVISED_ADDRESS_STATUS_TO_BE_VERIFIED
-                        : proposedRoundAdvisedAddress.status,
-                quantity: newQuantity,
-                lastTransactionId
-            }
-        };
+        let updateRoundAdvisedAddressVariables = {};
+        if (newQuantity == 0) {
+            updateRoundAdvisedAddressVariables = {
+                id: proposedRoundAdvisedAddress.id,
+                input: {
+                    status: configs.ROUND_ADVISED_ADDRESS_STATUS_TO_BE_VERIFIED,
+                    quantity: newQuantity,
+                    lastTransactionId
+                }
+            };
+        } else {
+            updateRoundAdvisedAddressVariables = {
+                id: proposedRoundAdvisedAddress.id,
+                input: {
+                    quantity: newQuantity,
+                    lastTransactionId
+                }
+            };
+        }
         const updateRoundAdvisedAddressResponse = await graphqlRequestClient.request(
             updateRoundAdvisedAddressMutation,
             updateRoundAdvisedAddressVariables
         );
+
+        console.log('updateRoundAdvisedAddressResponse', updateRoundAdvisedAddressResponse);
 
         // 6- Update RoundLineDetail processed quantity (To be verified - 457) (RLD + RL + R statuses will be updated if needed)
         const updateRoundLineDetailMutation = gql`
@@ -387,6 +480,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 handlingUnitContent {
                                     quantity
                                     articleId
+                                    article {
+                                        name
+                                    }
                                     handlingUnitContentFeatures {
                                         featureCode {
                                             name
@@ -435,12 +531,19 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         `;
 
-        proposedRoundAdvisedAddress.roundLineDetail.processedQuantity += movingQuantity;
+        const newProcessedQuantity =
+            proposedRoundAdvisedAddress.roundLineDetail.processedQuantity + movingQuantity;
+
+        console.log('newProcessedQuantity', newProcessedQuantity);
+        console.log(
+            'newProcessedQuantity',
+            proposedRoundAdvisedAddress.roundLineDetail.processedQuantity
+        );
 
         const updateRoundLineDetailVariables = {
             id: proposedRoundAdvisedAddress.roundLineDetailId,
             input: {
-                processedQuantity: proposedRoundAdvisedAddress.roundLineDetail.processedQuantity,
+                processedQuantity: newProcessedQuantity,
                 extraNumber1: movingQuantity,
                 lastTransactionId
             }
@@ -449,6 +552,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             updateRoundLineDetailMutation,
             updateRoundLineDetailVariables
         );
+
+        console.log('updateRoundLineDetailResponse', updateRoundLineDetailResponse);
 
         // 7- Create Movement (from stock to roundHU)
         const createMovement = gql`
@@ -477,11 +582,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 ...movementCodes,
                 originalLocationIdStr: proposedRoundAdvisedAddress.locationId,
                 originalLocationNameStr: proposedRoundAdvisedAddress.location.name,
-                originalHandlingUnitIdStr:
-                    proposedRoundAdvisedAddress.handlingUnitContent.handlingUnitId,
-                originalHandlingUnitNameStr:
-                    proposedRoundAdvisedAddress.handlingUnitContent.handlingUnit.name,
-                originalContentIdStr: proposedRoundAdvisedAddress.handlingUnitContentId,
+                originalHandlingUnitIdStr: handlingUnit.id,
+                originalHandlingUnitNameStr: handlingUnit.name,
+                originalContentIdStr:
+                    originalHandlingUnitContentResult?.handlingUnitContents?.results[0].id,
                 finalLocationIdStr: defaultRoundLocationResult?.locations?.results[0].id,
                 finalLocationNameStr: defaultRoundLocationResult?.locations?.results[0].name,
                 finalHandlingUnitIdStr: finalHandlingUnitId,
@@ -496,6 +600,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             movementVariables,
             requestHeader
         );
+
         //end movement creation section
 
         //merge results

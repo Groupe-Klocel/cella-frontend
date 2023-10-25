@@ -19,8 +19,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
-import { HeaderContent, MenuItem } from '@components';
+import { HeaderContent, MenuItem, NavButton } from '@components';
 import useTranslation from 'next-translate/useTranslation';
+import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/router';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -66,9 +68,19 @@ const menuItemDatas = [
 
 const MiscPage: PageComponent = () => {
     const { t } = useTranslation();
+    const router = useRouter();
+
     return (
         <>
-            <HeaderContent title={t('menu:misc')} />
+            <HeaderContent
+                title={t('menu:misc')}
+                actionsRight={
+                    <NavButton
+                        icon={<ArrowLeftOutlined />}
+                        onClick={() => router.push('/')}
+                    ></NavButton>
+                }
+            />
             {menuItemDatas.map(function (data, index) {
                 return <MenuItem key={index} title={t(data.title)} path={data.path} />;
             })}

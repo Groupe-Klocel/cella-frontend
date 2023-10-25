@@ -69,7 +69,20 @@ query GetHandlingUnits(
                 stockStatusText
                 articleId
                 article {
+                    id
                     name
+                    stockOwnerId
+                    stockOwner {
+                        name
+                    }
+                }
+                handlingUnitContentFeatures {
+                    id
+                    featureCode {
+                        name
+                        unique
+                    }
+                    value
                 }
             }
         }

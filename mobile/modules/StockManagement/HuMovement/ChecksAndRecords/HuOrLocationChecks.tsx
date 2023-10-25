@@ -37,7 +37,7 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
-        showAlternativeSubmit,
+        triggerAlternativeSubmit,
         setResetForm
     } = dataToCheck;
 
@@ -90,7 +90,7 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
 
             if (fetchResult.resType === 'handlingUnit') {
                 // wrong button = error
-                if (showAlternativeSubmit?.showAlternativeSubmit) {
+                if (triggerAlternativeSubmit?.triggerAlternativeSubmit) {
                     showError(t('messages:unexpected-scanned-item'));
                     setResetForm(true);
                     setScannedInfo(undefined);
@@ -120,8 +120,9 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                 }
                 // final HU with different article = error
                 else if (
+                    storedObject['step20'].data.handlingUnit.handlingUnitContents &&
                     fetchResult.handlingUnit.handlingUnitContents[0].article_id !=
-                    storedObject['step20'].data.handlingUnit.handlingUnitContents[0].article_id
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].article_id
                 ) {
                     showError(t('messages:unexpected-hu-article'));
                     setResetForm(true);
@@ -144,7 +145,7 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
             if (fetchResult.resType === 'location' && fetchResult.location) {
                 const data: { [label: string]: any } = {};
 
-                if (showAlternativeSubmit?.showAlternativeSubmit) {
+                if (triggerAlternativeSubmit?.triggerAlternativeSubmit) {
                     data['finalHandlingUnit'] = storedObject['step20'].data.handlingUnit;
                 }
 

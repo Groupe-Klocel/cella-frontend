@@ -61,14 +61,19 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             handlingUnitContentFeatures(filters: $filters, orderBy: $orderBy) {
                 count
                 results {
+                    id
                     featureCode {
                         name
                         unique
                     }
                     value
+                    handlingUnitContentId
                     handlingUnitContent {
+                        id
                         articleId
+                        quantity
                         article {
+                            id
                             name
                             description
                             stockOwnerId
@@ -87,6 +92,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             typeText
                             category
                             categoryText
+                            locationId
+                            location {
+                                name
+                            }
+                            stockOwnerId
+                            stockOwner {
+                                name
+                            }
                         }
                     }
                 }
@@ -111,8 +124,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     id
                     articleId
                     article {
+                        id
                         name
                         description
+                        stockOwnerId
+                        stockOwner {
+                            name
+                        }
                     }
                     barcodeId
                     barcode {
@@ -137,17 +155,26 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     let response;
     if (HUCFeatureResponse && HUCFeatureResponse.handlingUnitContentFeatures.count === 1) {
         const extractHUCFResponse = HUCFeatureResponse.handlingUnitContentFeatures?.results[0];
-        const { articleId, article } = extractHUCFResponse.handlingUnitContent;
-        const { featureCode, value } = extractHUCFResponse;
+        const { articleId, article, handlingUnit } = extractHUCFResponse.handlingUnitContent;
+        const { id, featureCode, handlingUnitContentId, handlingUnitContent, value } =
+            extractHUCFResponse;
         response = {
             resType: 'serialNumber',
             article: {
                 articleId,
-                article: { description: article.description, name: article.name },
+                description: article.description,
+                name: article.name,
                 stockOwnerId: article?.stockOwnerId,
                 stockOwner: article?.stockOwner
             },
-            handlingUnitContentFeature: { featureCode, value }
+            handlingUnit,
+            handlingUnitContentFeature: {
+                id,
+                featureCode,
+                handlingUnitContentId,
+                handlingUnitContent,
+                value
+            }
         };
     } else {
         const articleLuBarcodeResponse = await graphqlRequestClient.request(
