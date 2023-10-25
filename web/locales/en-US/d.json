@@ -125,7 +125,7 @@
     "virtual": "Virtual equipment",
     "width": "Width (mm)",
     "height": "Height (mm)",
-    "baseUnitWeight": "Base Unit Weight",
+    "baseUnitWeight": "Base Unit Weight (g)",
     "blockGroup": "Blocks group",
     "blockLevel": "Level for the block",
     "boxWeight": "Box Weight",

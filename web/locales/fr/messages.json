@@ -72,7 +72,7 @@
     "success-canceled": "Les éléments ont été annulés avec succès",
     "success-cubing": "Le colisage a été effectué avec succès",
     "success-start": "Le lancement a été effectué avec succès",
-    "success-round-association": "La ramasse est associée avec succès",
+    "success-round-start": "La ramasse est démarrée avec succès",
     "success-round-calculation": "Calcul de ramasse traité avec succès",
     "info-export-wip": "Export en cours",
     "info-create-wip": "Création en cours",

@@ -55,6 +55,7 @@ export type EditEquipmentFormProps = {
 export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const router = useRouter();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [form] = Form.useForm();
@@ -223,44 +224,47 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
         }
     };
 
-    // CREATE MUTATION
-    const { mutate, isLoading: updateLoading } = useUpdateHandlingUnitContentMutation<Error>(
-        graphqlRequestClient,
-        {
-            onSuccess: (
-                data: UpdateHandlingUnitContentMutation,
-                _variables: UpdateHandlingUnitContentMutationVariables,
-                _context: any
-            ) => {
-                router.push(`/handling-unit-contents/${data?.updateHandlingUnitContent?.id}`);
-                showSuccess(t('messages:success-updated'));
-            },
-            onError: (err: any) => {
-                console.log(err);
-                showError(t('messages:error-creating-data'));
-            }
-        }
-    );
-
-    const updateHandlingUnitContent = ({
-        id,
-        input
-    }: UpdateHandlingUnitContentMutationVariables) => {
-        mutate({ id, input });
-    };
     const onFinish = () => {
         form.validateFields()
             .then(() => {
-                // Here make api call of something else
                 const formData = form.getFieldsValue(true);
-                delete formData.code;
-                delete formData.locationName;
-                delete formData.stockOwnerId;
-                delete formData.articleName;
-                updateHandlingUnitContent({ id: details.id, input: formData });
+                setIsLoading(true);
+                const fetchData = async () => {
+                    const res = await fetch(`/api/handling-unit-contents/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            input: formData,
+                            id: details.id,
+                            handlingUnitId: details.handlingUnitId
+                        })
+                    });
+                    if (res.ok) {
+                        router.push(`/handling-unit-contents/${details.id}`);
+                        showSuccess(t('messages:success-updated'));
+                    }
+                    if (!res.ok) {
+                        const errorResponse = await res.json();
+                        if (errorResponse.error.response.errors[0].extensions) {
+                            showError(
+                                t(
+                                    `errors:${errorResponse.error.response.errors[0].extensions.code}`
+                                )
+                            );
+                        } else {
+                            showError(t('messages:error-update-data'));
+                        }
+                    }
+                    if (res) {
+                        setIsLoading(false);
+                    }
+                };
+                fetchData();
             })
             .catch((err) => {
-                showError(t('messages:error-creating-data'));
+                showError(t('messages:error-update-data'));
             });
     };
 
@@ -280,7 +284,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
         const tmp_details = {
             code: details?.handlingUnit?.name,
             locationName: details?.handlingUnit?.location?.name,
-            stockOwnerId: details?.handlingUnit?.stockOwner?.name,
+            stockOwnerId: details?.handlingUnit?.stockOwnerId,
             articleName: details?.article?.name,
             quantity: details?.quantity,
             stockStatus: details?.stockStatus,
@@ -288,11 +292,10 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
             reservation: details?.reservation
         };
         form.setFieldsValue(tmp_details);
-        if (updateLoading) {
+        if (isLoading) {
             showInfo(t('messages:info-update-wip'));
-            showSuccess(t('messages:success-updated'));
         }
-    }, [details, updateLoading]);
+    }, [details, isLoading]);
 
     return (
         <WrapperForm>
@@ -433,7 +436,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
             <div style={{ textAlign: 'center' }}>
                 <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
                     <Col xs={24} xl={12}>
-                        <Button type="primary" loading={updateLoading} onClick={onFinish}>
+                        <Button type="primary" loading={isLoading} onClick={onFinish}>
                             {t('actions:submit')}
                         </Button>
                     </Col>

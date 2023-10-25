@@ -24,8 +24,8 @@ export const LocationModelV2: ModelType = {
     tableName: Table.Location,
     resolverName: 'Location',
     isEditable: true,
-    isDeletable: false,
-    isSoftDeletable: true,
+    isDeletable: true,
+    isSoftDeletable: false,
 
     endpoints: {
         detail: 'location',

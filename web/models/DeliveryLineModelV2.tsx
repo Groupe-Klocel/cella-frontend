@@ -195,7 +195,7 @@ export const DeliveryLineModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
-            link: null,
+            link: 'articles/articleId',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,

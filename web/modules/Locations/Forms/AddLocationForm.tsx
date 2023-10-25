@@ -196,6 +196,10 @@ export const AddLocationForm = () => {
         form.setFieldsValue({ huManagement: e.target.checked });
     };
 
+    const onlocationGroupIdChange = (e: CheckboxChangeEvent) => {
+        form.setFieldsValue({ locationGroupId: e.target.checked });
+    };
+
     // Call api to create new group
     const onFinish = () => {
         form.validateFields()
@@ -207,6 +211,7 @@ export const AddLocationForm = () => {
                 formData.baseUnitRotation = parseInt(formData.rotation);
                 formData.status = configs.LOCATION_STATUS_AVAILABLE;
                 delete formData.rotation;
+
                 bulkCreateLocation({ input: formData });
             })
             .catch((err) => {
@@ -448,11 +453,12 @@ export const AddLocationForm = () => {
                         ))}
                     </Select>
                 </Form.Item>
+
                 <Form.Item label={t('d:locationGroupIdText')} name="locationGroupId" rules={[]}>
                     <Select defaultValue="">
                         <Option value="">-</Option>
                         {locationGroupIdsTexts?.map((locationGroupId: any) => (
-                            <Option key={locationGroupId.id} value={parseInt(locationGroupId.code)}>
+                            <Option key={locationGroupId.id} value={locationGroupId.code}>
                                 {locationGroupId.text}
                             </Option>
                         ))}

@@ -41,10 +41,11 @@ import {
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
-import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
+import { FilterFieldType, FormDataType, FormOptionType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
+import { type } from 'os';
 
 export type HeaderData = {
     title: string;
@@ -309,10 +310,20 @@ const ListComponent = (props: IListProps) => {
             .then(() => {
                 // Here make api call of something else
                 const searchValues = formSearch.getFieldsValue(true);
+
                 const newSearchValues = {
                     ...searchValues,
                     ...search
                 };
+
+                for (const i in newSearchValues) {
+                    if (newSearchValues.hasOwnProperty(i)) {
+                        if (typeof newSearchValues[i] === 'string') {
+                            newSearchValues[i] += '%';
+                        }
+                    }
+                }
+
                 setSearch(newSearchValues);
                 closeDrawer();
             })
