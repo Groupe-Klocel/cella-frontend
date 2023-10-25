@@ -55,5 +55,10 @@
     "unexpected-hu-type": "Type d'UM non attendu",
     "unexpected-hu-article": "Cette UM ne possède pas le même article que l'UM d'origine",
     "round-picking-success": "Votre prélèvement de ramasse a été effectué",
-    "round-preparation-failed": "Erreur lors du prélèvement de la ramasse"
+    "round-packing-success": "Votre emballage de ramasse a été effectué",
+    "round-preparation-failed": "Erreur lors du prélèvement de la ramasse",
+    "round-packing-finalization-failed": "Erreur lors de la finalisation de l'emballage de la ramasse",
+    "round-packing-failed": "Erreur lors de l'emballage de la ramasse",
+    "no-box-to-close": "Aucun colis à fermer",
+    "closure-failed": "Erreur lors de la fermeture du colis"
 }

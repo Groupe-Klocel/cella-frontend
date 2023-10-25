@@ -77,13 +77,17 @@ export const ValidateRoundPickingForm = ({
     if (storedObject.step20.data.feature) {
         feature = storedObject.step20.data.feature;
     }
+    let handlingUnit: { [k: string]: any } = {};
+    if (storedObject.step25.data.handlingUnit) {
+        handlingUnit = storedObject.step25.data.handlingUnit;
+    }
     let movingQuantity: number;
     if (storedObject.step30.data.movingQuantity) {
         movingQuantity = storedObject.step30.data.movingQuantity;
     }
     let resType: string;
     if (storedObject.step20.data.resType) {
-        resType = storedObject.step30.data.resType;
+        resType = storedObject.step20.data.resType;
     }
 
     //ValidateRoundPicking-1a: fetch front API
@@ -99,6 +103,7 @@ export const ValidateRoundPickingForm = ({
                 round,
                 articleInfos,
                 feature,
+                handlingUnit,
                 movingQuantity,
                 resType
             })
@@ -108,10 +113,15 @@ export const ValidateRoundPickingForm = ({
 
             storage.remove(process);
             const storedObject = JSON.parse(storage.get(process) || '{}');
+            console.log('storedObjectAfterRemove', storedObject);
 
             if (response.response.updatedRoundAdvisedAddress) {
                 const currentRoundAdvisedAddress =
                     response.response.updatedRoundAdvisedAddress.updateRoundAdvisedAddress;
+
+                console.log('currentRoundAdvisedAddress', currentRoundAdvisedAddress);
+                console.log('currentRoundAdvisedAddress.status', currentRoundAdvisedAddress.status);
+
                 if (
                     currentRoundAdvisedAddress.status ==
                     configs.ROUND_ADVISED_ADDRESS_STATUS_TO_BE_VERIFIED
@@ -122,12 +132,16 @@ export const ValidateRoundPickingForm = ({
                             .sort((a: any, b: any) => {
                                 return a.roundOrderId - b.roundOrderId;
                             });
+
+                    console.log('roundAdvisedAddresses', roundAdvisedAddresses);
+
                     if (roundAdvisedAddresses.length > 0) {
                         const data = {
                             proposedRoundAdvisedAddress: roundAdvisedAddresses[0],
                             round: response.response.updatedRoundLineDetail.updateRoundLineDetail
                                 .roundLine.round
                         };
+                        console.log('data', data);
                         storedObject['currentStep'] = 20;
                         storedObject[`step10`] = { previousStep: 0, data };
                         storedObject[`step20`] = { previousStep: 10 };
@@ -135,6 +149,17 @@ export const ValidateRoundPickingForm = ({
                     } else {
                         showSuccess(t('messages:round-picking-success'));
                     }
+                } else {
+                    const data = {
+                        proposedRoundAdvisedAddress: currentRoundAdvisedAddress,
+                        round: response.response.updatedRoundLineDetail.updateRoundLineDetail
+                            .roundLine.round
+                    };
+                    console.log('data1', data);
+                    storedObject['currentStep'] = 20;
+                    storedObject[`step10`] = { previousStep: 0, data };
+                    storedObject[`step20`] = { previousStep: 10 };
+                    storage.set(process, JSON.stringify(storedObject));
                 }
             }
             setTriggerRender(!triggerRender);
@@ -149,16 +174,10 @@ export const ValidateRoundPickingForm = ({
     //ValidateRoundPicking-1b: handle back to previous - previous step settings (specific since check is automatic)
     const onBack = () => {
         setTriggerRender(!triggerRender);
-        for (
-            let i =
-                storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
-            i <= stepNumber;
-            i++
-        ) {
+        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
             delete storedObject[`step${i}`]?.data;
         }
-        storedObject.currentStep =
-            storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
+        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
         storage.set(process, JSON.stringify(storedObject));
     };
 

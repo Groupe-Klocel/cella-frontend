@@ -133,7 +133,7 @@
     "constraint": "Contrainte",
     "width": "Largeur (mm)",
     "height": "Hauteur (mm)",
-    "baseUnitWeight": "Poids unitaire",
+    "baseUnitWeight": "Poids unitaire (g)",
     "blockGroup": "Groupe de blocs",
     "blockLevel": "Niveau du block",
     "boxWeight": "Poids Boite",

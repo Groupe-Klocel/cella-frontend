@@ -323,7 +323,9 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
     useEffect(() => {
         const processedOptionsTables = optionsTables.map((obj) => {
             const matchingKeys = checkValueInKey(obj);
+
             const dependenciesArray: Array<any> = [];
+
             matchingKeys.map((matchingKey) => {
                 if (
                     formInfos &&
@@ -356,6 +358,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
             setDependentFields(dependenciesArray);
             return obj;
         });
+
         setProcessedOptions(processedOptionsTables);
     }, [formInfos, detail]);
     //#end sub-region
@@ -399,6 +402,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                 }
             }
         `;
+
             const variables = {
                 filters: filtersToApply,
                 orderBy: null,
@@ -407,6 +411,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
             };
 
             const options = await graphqlRequestClient.request(query, variables);
+
             const result: { [key: string]: any } = {};
 
             options[queryName].results.forEach((item: any) => {
@@ -441,6 +446,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                     element!.optionTable.filtersToApply
                 )
             );
+
             const options = await Promise.all(promises);
 
             const optionsObject: { [key: string]: any } = {};

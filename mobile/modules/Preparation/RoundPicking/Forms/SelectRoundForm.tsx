@@ -25,7 +25,6 @@ import { Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useGetRoundsQuery, GetRoundsQuery } from 'generated/graphql';
 import useTranslation from 'next-translate/useTranslation';
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';
@@ -47,8 +46,6 @@ export const SelectRoundForm = ({
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
-    const router = useRouter();
-    const { locale } = router;
 
     // TYPED SAFE ALL
     const [rounds, setRounds] = useState<Array<any>>();
@@ -66,7 +63,7 @@ export const SelectRoundForm = ({
     //SelectRound-1: retrieve rounds choices for select
     const configsToFilterOn = extractGivenConfigsParams(configs, 'round_status', {
         min: configs.ROUND_STATUS_ESTIMATED,
-        max: configs.ROUND_STATUS_TO_BE_PACKED
+        max: configs.ROUND_STATUS_TO_BE_VERIFIED
     });
 
     const roundsList = useGetRoundsQuery<Partial<GetRoundsQuery>, Error>(graphqlRequestClient, {
@@ -96,46 +93,61 @@ export const SelectRoundForm = ({
             return e.id == values.rounds;
         });
         data['round'] = selectedRound;
-        const roundAdvisedAddresses = selectedRound?.roundAdvisedAddresses?.sort(
-            (a: any, b: any) => {
+        const roundAdvisedAddresses = selectedRound?.roundAdvisedAddresses
+            ?.filter((raa: any) => raa.quantity != 0)
+            .sort((a: any, b: any) => {
                 return a.roundOrderId - b.roundOrderId;
-            }
-        );
+            });
 
         if (roundAdvisedAddresses) {
             data['proposedRoundAdvisedAddress'] = roundAdvisedAddresses[0];
         }
 
-        const query = gql`
-            mutation executeFunction($functionName: String!, $event: JSON!) {
-                executeFunction(functionName: $functionName, event: $event) {
-                    status
-                    output
+        if (selectedRound?.status == configs.ROUND_STATUS_STARTED) {
+            const query = gql`
+                mutation executeFunction($functionName: String!, $event: JSON!) {
+                    executeFunction(functionName: $functionName, event: $event) {
+                        status
+                        output
+                    }
                 }
+            `;
+
+            let roundIds = rounds?.map((item) => ({ id: item.key }));
+
+            const variables = {
+                functionName: 'K_updateRoundsStatus',
+                event: { input: { rounds: roundIds, status: configs.ROUND_STATUS_IN_PREPARATION } }
+            };
+            try {
+                const launchRoundsResult = await graphqlRequestClient.request(query, variables);
+                if (launchRoundsResult.executeFunction.status === 'ERROR') {
+                    showError(launchRoundsResult.executeFunction.output);
+                } else if (
+                    launchRoundsResult.executeFunction.status === 'OK' &&
+                    launchRoundsResult.executeFunction.output.status === 'KO'
+                ) {
+                    showError(t(`errors:${launchRoundsResult.executeFunction.output.output.code}`));
+                    console.log(
+                        'Backend_message',
+                        launchRoundsResult.executeFunction.output.output
+                    );
+                } else {
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
+                    storage.set(process, JSON.stringify(storedObject));
+                    setTriggerRender(!triggerRender);
+                }
+            } catch (error) {
+                showError(t('messages:error-executing-function'));
+                console.log('executeFunctionError', error);
             }
-        `;
-        const variables = {
-            functionName: 'K_updateRoundsStatus',
-            event: { input: { rounds: rounds, status: configs.ROUND_STATUS_IN_PREPARATION } }
-        };
-        try {
-            const launchRoundsResult = await graphqlRequestClient.request(query, variables);
-            if (launchRoundsResult.executeFunction.status === 'ERROR') {
-                showError(launchRoundsResult.executeFunction.output);
-            } else if (
-                launchRoundsResult.executeFunction.status === 'OK' &&
-                launchRoundsResult.executeFunction.output.status === 'KO'
-            ) {
-                showError(t(`errors:${launchRoundsResult.executeFunction.output.output.code}`));
-                console.log('Backend_message', launchRoundsResult.executeFunction.output.output);
-            } else {
-                storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-                storage.set(process, JSON.stringify(storedObject));
-                setTriggerRender(!triggerRender);
-            }
-        } catch (error) {
-            showError(t('messages:error-executing-function'));
-            console.log('executeFunctionError', error);
+        } else {
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            storage.set(process, JSON.stringify(storedObject));
+            setTriggerRender(!triggerRender);
         }
     };
 

@@ -37,8 +37,10 @@ export interface IScanProps {
     resetForm: { [label: string]: any };
     headerContent?: any;
     levelOfBack?: number;
-    showAlternativeSubmit?: any;
+    triggerAlternativeSubmit?: any;
     alternativeSubmitLabel?: any;
+    action1Label?: any;
+    action1Trigger?: any;
 }
 
 export const ScanForm = ({
@@ -53,8 +55,10 @@ export const ScanForm = ({
     resetForm: { resetForm, setResetForm },
     headerContent,
     levelOfBack,
-    showAlternativeSubmit,
-    alternativeSubmitLabel
+    triggerAlternativeSubmit,
+    alternativeSubmitLabel,
+    action1Label,
+    action1Trigger
 }: IScanProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -140,16 +144,21 @@ export const ScanForm = ({
                         ...buttons,
                         showSimilarLocations: showSimilarLocations?.showSimilarLocations,
                         showEmptyLocations: showEmptyLocations?.showEmptyLocations,
-                        showAlternativeSubmit: showAlternativeSubmit?.showAlternativeSubmit
+                        triggerAlternativeSubmit:
+                            triggerAlternativeSubmit?.triggerAlternativeSubmit,
+                        action1Trigger: action1Trigger?.action1Trigger
                     }}
                     output={{
                         setShowEmptyLocations: showEmptyLocations?.setShowEmptyLocations,
                         setShowSimilarLocations: showSimilarLocations?.setShowSimilarLocations,
-                        setShowAlternativeSubmit: showAlternativeSubmit?.setShowAlternativeSubmit,
+                        setTriggerAlternativeSubmit:
+                            triggerAlternativeSubmit?.setTriggerAlternativeSubmit,
+                        setAction1Trigger: action1Trigger?.setAction1Trigger,
                         headerContent: headerContent ? headerContent : undefined,
                         onBack
                     }}
                     alternativeSubmitLabel={alternativeSubmitLabel}
+                    action1Label={action1Label}
                 ></RadioButtons>
             </StyledForm>
         </WrapperForm>

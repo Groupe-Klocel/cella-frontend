@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import { useAuth } from 'context/AuthContext';
-import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -33,9 +32,6 @@ export interface IHandlingUnitFinalChecksProps {
 export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
-    const { graphqlRequestClient } = useAuth();
-    const [huCreation, sethuCreation] = useState<boolean>(false);
-    const [createdHandlingUnit, setCreatedHandlingUnit] = useState<any>();
 
     const {
         process,
@@ -51,11 +47,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
     // TYPED SAFE ALL
     useEffect(() => {
         if (scannedInfo) {
-            if (
-                handlingUnitInfos &&
-                handlingUnitInfos?.data?.handlingUnits &&
-                handlingUnitInfos?.data?.handlingUnits?.count != 0
-            ) {
+            if (handlingUnitInfos.data && handlingUnitInfos.data.handlingUnits) {
                 const handlingUnit = handlingUnitInfos.data.handlingUnits.results[0];
                 // HU origin/final identical = error
                 if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {
@@ -129,7 +121,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
         ) {
             storage.set(process, JSON.stringify(storedObject));
         }
-    }, [handlingUnitInfos]);
+    }, [handlingUnitInfos.data]);
 
     return <WrapperForm>{scannedInfo && !handlingUnitInfos ? <ContentSpin /> : <></>}</WrapperForm>;
 };

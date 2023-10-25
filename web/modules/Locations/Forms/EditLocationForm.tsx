@@ -415,7 +415,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                     <Select>
                         <Option value="">-</Option>
                         {locationGroupsTexts?.map((locationGroupId: any) => (
-                            <Option key={locationGroupId.id} value={parseInt(locationGroupId.code)}>
+                            <Option key={locationGroupId.id} value={locationGroupId.code}>
                                 {locationGroupId.text}
                             </Option>
                         ))}

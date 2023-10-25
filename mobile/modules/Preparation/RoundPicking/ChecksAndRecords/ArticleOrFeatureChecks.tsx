@@ -26,8 +26,6 @@ export interface IArticleOrFeatureChecksProps {
     dataToCheck: any;
 }
 
-// TO BE REVIEWED: THIS IS A COPY COMING FROM CONTENT MOVEMENT
-
 export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -49,7 +47,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         if (scannedInfo) {
             setIsLoading(true);
             const fetchData = async () => {
-                const res = await fetch(`/api/stock-management/scanArticleOrFeature/`, {
+                const res = await fetch(`/api/stock-management/scanArticleOrFeature`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -86,19 +84,23 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 storedObject['step10'].data.proposedRoundAdvisedAddress.handlingUnitContent;
             if (fetchResult.resType === 'serialNumber') {
                 // HUCF scanned
-                const handlingUnitContentFeatures = handlingUnitContent.handlingUnitContentFeatures;
-                for (let i = 0; i < handlingUnitContentFeatures.length; i++) {
-                    if (handlingUnitContentFeatures[i].value === scannedInfo) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) {
+                // const handlingUnitContentFeatures = handlingUnitContent.handlingUnitContentFeatures;
+                // for (let i = 0; i < handlingUnitContentFeatures.length; i++) {
+                //     if (handlingUnitContentFeatures[i].value === scannedInfo) {
+                //         found = true;
+                //         break;
+                //     }
+                // }
+                if (
+                    storedObject['step10'].data.proposedRoundAdvisedAddress.locationId ==
+                    fetchResult.handlingUnit.locationId
+                ) {
+                    found = true;
                     const data: { [label: string]: any } = {};
                     data['resType'] = fetchResult.resType;
                     data['articleLuBarcodes'] = [fetchResult.article];
                     data['feature'] = fetchResult.handlingUnitContentFeature;
-                    data['handlingUnit'] = handlingUnitContent.handlingUnit;
+                    data['handlingUnit'] = fetchResult.handlingUnit;
                     data['defaultQuantity'] = 1;
                     setTriggerRender(!triggerRender);
                     storedObject[`step${stepNumber}`] = {

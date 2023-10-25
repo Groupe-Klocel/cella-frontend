@@ -103,6 +103,7 @@
     "reference": "Référence",
     "round": "Ramasse",
     "rounds": "Ramasses",
+    "round-packing": "Emballage ramasse",
     "round-picking": "Prélèvement ramasse",
     "search": "Recherche",
     "search-criteria": "Critères de recherche",
@@ -131,5 +132,7 @@
     "width": "Largeur",
     "workspace": "ID Espace de travail",
     "hu-movement": "Mouvement d'UM",
-    "move-hu_abbr": "Dépl. UM"
+    "move-hu_abbr": "Dépl. UM",
+    "other-articles": "Autres articles",
+    "close-box": "Fermer le colis"
 }

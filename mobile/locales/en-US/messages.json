@@ -55,5 +55,10 @@
     "unexpected-hu-type": "HU with unexpected type",
     "unexpected-hu-article": "HU with unexpected article",
     "round-picking-success": "Round picking has been successfully recorded",
-    "round-preparation-failed": "Round picking has failed"
+    "round-packing-success": "Round packing has been successfully recorded",
+    "round-preparation-failed": "Round picking has failed",
+    "round-packing-finalization-failed": "Round picking finalization has failed",
+    "round-packing-failed": "Round paking has failed",
+    "no-box-to-close": "No box to close",
+    "closure-failed": "Closure failed"
 }

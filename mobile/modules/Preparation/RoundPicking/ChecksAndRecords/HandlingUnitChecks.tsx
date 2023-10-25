@@ -28,8 +28,6 @@ export interface IHandlingUnitChecksProps {
     dataToCheck: any;
 }
 
-// TO BE REVIEWED: THIS IS A COPY COMING FROM RECEPTION
-
 export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -52,9 +50,8 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 handlingUnitInfos.data.handlingUnits?.count !== 0 &&
                 handlingUnitInfos.data.handlingUnits?.results[0].category ===
                     parameters.HANDLING_UNIT_CATEGORY_STOCK &&
-                handlingUnitInfos.data.handlingUnits?.results[0].id ==
-                    storedObject['step10'].data.proposedRoundAdvisedAddress.handlingUnitContent
-                        .handlingUnitId
+                handlingUnitInfos.data.handlingUnits?.results[0].locationId ==
+                    storedObject['step10'].data.proposedRoundAdvisedAddress.locationId
             ) {
                 const data: { [label: string]: any } = {};
                 data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];

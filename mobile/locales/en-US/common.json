@@ -103,6 +103,7 @@
     "reference": "Reference",
     "round": "Round",
     "rounds": "Rounds",
+    "round-packing": "Round packing",
     "round-picking": "Round Picking",
     "search": "Search",
     "search-criteria": "Search criteria",
@@ -131,5 +132,7 @@
     "width": "Width",
     "workspace": "Workspace ID",
     "hu-movement": "HU Movement",
-    "move-hu_abbr": "Move HU"
+    "move-hu_abbr": "Move HU",
+    "other-articles": "Other articles",
+    "close-box": "Close box"
 }

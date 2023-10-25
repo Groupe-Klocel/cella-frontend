@@ -275,6 +275,15 @@ const RecordHistoryListComponent = (props: IListProps) => {
                     ...searchValues,
                     ...search
                 };
+
+                for (const i in newSearchValues) {
+                    if (newSearchValues.hasOwnProperty(i)) {
+                        if (typeof newSearchValues[i] === 'string') {
+                            newSearchValues[i] += '%';
+                        }
+                    }
+                }
+
                 setSearch(newSearchValues);
                 closeDrawer();
             })
