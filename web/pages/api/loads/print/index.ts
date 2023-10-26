@@ -54,9 +54,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 carrier {
                     name
                 }
-                counter
                 weight
-                handlingUnitOutbound {
+                handlingUnitOutbounds {
                     name
                     handlingUnitModel {
                         name
