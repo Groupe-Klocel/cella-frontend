@@ -76,10 +76,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     let canRollbackTransaction = false;
 
     try {
-        // delete HUO if required
+        // 1- delete Declarative HUO + update Round if required
 
-        // get DEFAULT_DECLARATIVE_LU
-        const defaultDeclarativeLuParameterQuery = gql`
+        // 1a- get DEFAULT_DECLARATIVE_LU
+        const parameterQuery = gql`
             query parameters($filters: ParameterSearchFilters) {
                 parameters(filters: $filters) {
                     results {
@@ -96,7 +96,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         };
 
         const defaultDeclarativeLuParameterResult = await graphqlRequestClient.request(
-            defaultDeclarativeLuParameterQuery,
+            parameterQuery,
             defaultDeclarativeLuParameterVariables,
             requestHeader
         );
@@ -122,7 +122,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             requestHeader
         );
 
-        // get declarative HUO
+        // 1b- get declarative HUO
         const declarativeHUOQuery = gql`
             query handlingUnitOutbounds($filters: HandlingUnitOutboundSearchFilters) {
                 handlingUnitOutbounds(filters: $filters) {
@@ -149,7 +149,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         );
 
         if (deleteDeclarativeHUO) {
-            // Delete HUO
+            // 1c- Delete HUO
             const deleteHUOMutation = gql`
                 mutation deleteDeliveryBoxes(
                     $deliveryId: String!
@@ -172,7 +172,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 requestHeader
             );
 
-            // update Round status
+            // 1d- update Round status
             const updateRoundMutation = gql`
                 mutation updateRound($id: String!, $input: UpdateRoundInput!) {
                     updateRound(id: $id, input: $input) {
@@ -194,7 +194,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             );
         }
 
-        // update HUO status
+        // 2- update HUO status
         const updateHandlingUnitOutboundMutation = gql`
             mutation updateHandlingUnitOutbound(
                 $id: String!
@@ -220,7 +220,88 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             updateHandlingUnitOutboundvariable
         );
 
-        // 6- Get updated origin HU
+        // 3- Print HUO label
+
+        // 3a- Get default print language
+        const defaultPrintLanguageParameterVariables = {
+            filters: { scope: 'global', code: 'default_print_language' }
+        };
+
+        const defaultPrintLanguageParameterResult = await graphqlRequestClient.request(
+            parameterQuery,
+            defaultPrintLanguageParameterVariables,
+            requestHeader
+        );
+
+        // 3b- Get default printer value
+        const defaultPrinterParameterVariables = {
+            filters: { scope: 'global', code: 'default_printer' }
+        };
+
+        const defaultPrinterParameterResult = await graphqlRequestClient.request(
+            parameterQuery,
+            defaultPrinterParameterVariables,
+            requestHeader
+        );
+
+        // 3c- Get printer code
+        const printerParameterVariables = {
+            filters: {
+                scope: 'printer',
+                value: defaultPrinterParameterResult.parameters.results[0].value
+            }
+        };
+
+        const printerParameterResult = await graphqlRequestClient.request(
+            parameterQuery,
+            printerParameterVariables,
+            requestHeader
+        );
+
+        // 3d- PRINT HUO LABEL
+        const documentMutation = gql`
+            mutation generateDocument(
+                $documentName: String!
+                $language: String!
+                $printer: String
+                $context: JSON!
+            ) {
+                generateDocument(
+                    documentName: $documentName
+                    language: $language
+                    printer: $printer
+                    context: $context
+                ) {
+                    __typename
+                    ... on RenderedDocument {
+                        url
+                    }
+                    ... on TemplateDoesNotExist {
+                        message
+                    }
+                    ... on TemplateError {
+                        message
+                    }
+                    ... on MissingContext {
+                        message
+                    }
+                }
+            }
+        `;
+
+        const documentVariables = {
+            documentName: 'K_OutboundHandlingUnitLabel',
+            language: defaultPrintLanguageParameterResult.parameters.results[0].value,
+            printer: printerParameterResult.parameters.results[0].code,
+            context: { id: handlingUnitOutbound.id }
+        };
+
+        const documentResult = await graphqlRequestClient.request(
+            documentMutation,
+            documentVariables
+        );
+
+        // 4- Get updated origin HU
         const updatedRoundHUQuery = gql`
             query handlingUnits($filters: HandlingUnitSearchFilters) {
                 handlingUnits(filters: $filters) {
@@ -305,7 +386,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             response: {
                 updatedHandlingUnitOutbound,
                 updatedRoundHU: updatedRoundHUResult?.handlingUnits?.results[0],
-                lastTransactionId
+                lastTransactionId,
+                printResult: documentResult.generateDocument.__typename
             }
         });
     } catch (error) {

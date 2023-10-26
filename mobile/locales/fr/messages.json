@@ -60,5 +60,6 @@
     "round-packing-finalization-failed": "Erreur lors de la finalisation de l'emballage de la ramasse",
     "round-packing-failed": "Erreur lors de l'emballage de la ramasse",
     "no-box-to-close": "Aucun colis à fermer",
-    "closure-failed": "Erreur lors de la fermeture du colis"
+    "closure-failed": "Erreur lors de la fermeture du colis",
+    "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu"
 }
