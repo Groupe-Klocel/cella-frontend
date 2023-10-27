@@ -605,8 +605,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             input: {
                 articleIdStr: articleInfos.id,
                 articleNameStr: articleInfos.name,
-                stockOwnerIdStr: articleInfos.stockOwnerId,
-                stockOwnerNameStr: articleInfos.stockOwner.name,
+                stockOwnerIdStr: articleInfos?.stockOwnerId,
+                stockOwnerNameStr: articleInfos?.stockOwner?.name,
                 quantity: movingQuantity,
                 ...movementCodes,
                 originalLocationIdStr: roundHU.locationId,
