@@ -364,6 +364,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     deliveryId:
                         round.roundAdvisedAddresses[0].roundLineDetail.deliveryLine.deliveryId,
                     handlingUnitId: finalHandlingUnit.id,
+                    stockOwnerId: finalHandlingUnit.stockOwnerId,
                     lastTransactionId
                 }
             };
@@ -466,6 +467,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     status: configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_PACKING_IN_PROGRESS,
                     deliveryId: roundAdvisedAddress.roundLineDetail.deliveryLine.deliveryId,
                     deliveryLineId: roundAdvisedAddress.roundLineDetail.deliveryLineId,
+                    pickedQuantity: movingQuantity,
                     lastTransactionId
                 }
             };
@@ -510,6 +512,57 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             );
 
             canRollbackTransaction = true;
+
+            // 2d- Check Final HUCO
+            const handlingUnitContentOutboundQuery = gql`
+                query handlingUnitContentOutbounds(
+                    $filters: HandlingUnitContentOutboundSearchFilters
+                ) {
+                    handlingUnitContentOutbounds(filters: $filters) {
+                        count
+                        results {
+                            id
+                            articleId
+                            quantity
+                        }
+                    }
+                }
+            `;
+
+            const handlingUnitContentOutboundVariables = {
+                filters: { handlingUnitContentId: finalHandlingUnitContent.id }
+            };
+
+            const handlingUnitContentOutboundResult = await graphqlRequestClient.request(
+                handlingUnitContentOutboundQuery,
+                handlingUnitContentOutboundVariables,
+                requestHeader
+            );
+
+            // 2e-  we update final HUCO quantity
+            const updateFinalHUCOMutation = gql`
+                mutation updateHandlingUnitContentOutbound(
+                    $id: String!
+                    $input: UpdateHandlingUnitContentOutboundInput!
+                ) {
+                    updateHandlingUnitContentOutbound(id: $id, input: $input) {
+                        id
+                        lastTransactionId
+                    }
+                }
+            `;
+
+            const updateFinalHUCOvariable = {
+                id: handlingUnitContentOutboundResult?.handlingUnitContentOutbounds?.results[0].id,
+                input: {
+                    pickedQuantity: newHUCQuantity,
+                    lastTransactionId
+                }
+            };
+            const updatedFinalHUCO = await graphqlRequestClient.request(
+                updateFinalHUCOMutation,
+                updateFinalHUCOvariable
+            );
         }
 
         console.log('resType', resType);

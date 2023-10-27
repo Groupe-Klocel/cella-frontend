@@ -130,6 +130,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     results {
                         id
                         deliveryId
+                        carrierShippingModeId
                     }
                 }
             }
@@ -211,6 +212,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             id: handlingUnitOutbound.id,
             input: {
                 status: configs.HANDLING_UNIT_OUTBOUND_STATUS_PREPARED,
+                carrierShippingModeId:
+                    declarativeHUOResult.handlingUnitOutbounds.results[0].carrierShippingModeId,
+                theoriticalWeight: 1000, // TODO : TO BE CALCULATED !
                 lastTransactionId
             }
         };
@@ -293,7 +297,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             documentName: 'K_OutboundHandlingUnitLabel',
             language: defaultPrintLanguageParameterResult.parameters.results[0].value,
             printer: printerParameterResult.parameters.results[0].code,
-            context: { id: handlingUnitOutbound.id }
+            context: { boxes: [handlingUnitOutbound.id] }
         };
 
         const documentResult = await graphqlRequestClient.request(
