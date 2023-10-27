@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError, LsIsSecured, showSuccess } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 
@@ -194,6 +194,11 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     setIsClosureLoading(false);
                     triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
                     setTriggerRender(!triggerRender);
+                    if (response.response.printResult == 'RenderedDocument') {
+                        showSuccess(t('messages:success-print-data'));
+                    } else {
+                        showError(t('messages:error-print-data'));
+                    }
                 }
                 if (!res.ok) {
                     if (response.error.is_error) {

@@ -143,17 +143,28 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                                 handlingUnitOutboundInfos.data.handlingUnitOutbounds?.results[0]
                                     .status == 1400
                             ) {
-                                // Save in local storage
-                                const data: { [label: string]: any } = {};
-                                data['handlingUnitOutbound'] =
-                                    handlingUnitOutboundInfos.data?.handlingUnitOutbounds?.results[0];
-                                const nextStep = 30;
-                                setTriggerRender(!triggerRender);
-                                storedObject[`step${stepNumber}`] = {
-                                    ...storedObject[`step${stepNumber}`],
-                                    data,
-                                    nextStep
-                                };
+                                // Check HU carrier vs load carrier
+                                if (
+                                    handlingUnitOutboundInfos.data.handlingUnitOutbounds.results[0]
+                                        .delivery.carrierShippingMode.carrier.id !==
+                                    storedObject.step10.data.load.carrierId
+                                ) {
+                                    showError(t('messages:incorrect-hu-carrier'));
+                                    setResetForm(true);
+                                    setScannedInfo(undefined);
+                                } else {
+                                    // Save in local storage
+                                    const data: { [label: string]: any } = {};
+                                    data['handlingUnitOutbound'] =
+                                        handlingUnitOutboundInfos.data?.handlingUnitOutbounds?.results[0];
+                                    const nextStep = 30;
+                                    setTriggerRender(!triggerRender);
+                                    storedObject[`step${stepNumber}`] = {
+                                        ...storedObject[`step${stepNumber}`],
+                                        data,
+                                        nextStep
+                                    };
+                                }
                             } else {
                                 if (
                                     // Support/Box status is < 1400 (to be loaded)

@@ -148,6 +148,11 @@ export const ValidateRoundPackingForm = ({
                     if (res.ok) {
                         const response = await res.json();
                         console.log('response', response);
+                        if (response.response.printResult == 'RenderedDocument') {
+                            showSuccess(t('messages:success-print-data'));
+                        } else {
+                            showError(t('messages:error-print-data'));
+                        }
                         showSuccess(t('messages:round-packing-success'));
                     } else {
                         showError(t('messages:round-packing-finalization-failed'));

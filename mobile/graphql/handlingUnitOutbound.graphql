@@ -53,6 +53,13 @@ query GetAllBoxes(
             delivery {
                 id
                 name
+                carrierShippingMode {
+                    carrierId
+                    carrier {
+                        id
+                        name
+                    }
+                }
             }
             handlingUnitModelId
             handlingUnitModel {

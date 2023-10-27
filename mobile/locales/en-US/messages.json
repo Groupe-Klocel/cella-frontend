@@ -60,5 +60,6 @@
     "round-packing-finalization-failed": "Round picking finalization has failed",
     "round-packing-failed": "Round paking has failed",
     "no-box-to-close": "No box to close",
-    "closure-failed": "Closure failed"
+    "closure-failed": "Closure failed",
+    "incorrect-hu-carrier": "Carrier is not the expected one"
 }
