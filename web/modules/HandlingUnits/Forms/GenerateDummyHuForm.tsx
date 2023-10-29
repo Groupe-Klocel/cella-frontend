@@ -44,7 +44,8 @@ export const GenerateDummyHuForm = () => {
 
     // Get default printing language
     const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'default_print_language'
+        scope: 'global',
+        code: 'default_print_language'
     });
     useEffect(() => {
         if (defaultPrintLanguage) {

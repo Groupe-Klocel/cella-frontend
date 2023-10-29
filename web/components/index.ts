@@ -44,6 +44,7 @@ export * from './common/smart/Header/Header';
 export * from './common/smart/HeaderContent/HeaderContent';
 export * from './common/smart/LanguageSelector/LanguageSelector';
 export * from './common/smart/Modals/NumberOfPrintsModal';
+export * from './common/smart/Modals/NumberOfHuPrintsModalV2';
 export * from './common/smart/Page/Page';
 export * from './common/smart/SideMenu/SideMenu';
 export * from './common/smart/Switchs/MenuSwitch';

@@ -125,7 +125,7 @@
     "virtual": "Virtual equipment",
     "width": "Width (mm)",
     "height": "Height (mm)",
-    "baseUnitWeight": "Base Unit Weight",
+    "baseUnitWeight": "Base Unit Weight (g)",
     "blockGroup": "Blocks group",
     "blockLevel": "Level for the block",
     "boxWeight": "Box Weight",
@@ -589,9 +589,9 @@
     "hookTypeText": "Hook Type",
     "filter": "Filter",
     "argument": "Argument",
-    "shippedLocationId": "Customer stock",
+    "shippedLocationId": "Location after shipping",
     "shippingLocationId": "Shipping dock",
-    "shippedLocation_name": "Customer stock",
+    "shippedLocation_name": "Location after shipping",
     "shippingLocation_name": "Shipping dock",
     "sortType": "Sort type",
     "sortTypeText": "Sort type",
@@ -618,5 +618,8 @@
     "UN-code": "UN code",
     "dangerous-goods-weight1": "Dangerous material weight (g)",
     "dangerous-goods-weight2": "Battery weight (g)",
-    "parentHandlingUnit": "Parent handling unit"
+    "parentHandlingUnit": "Parent handling unit",
+    "PickingUser": "Picking User",
+    "roundOrderId": "Round order",
+    "handlingUnit_parentHandlingUnit": "Parent handling unit"
 }
