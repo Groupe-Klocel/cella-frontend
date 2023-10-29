@@ -26,21 +26,24 @@ export interface IRadioButtonsProps {
     output?: any;
     submitLoading?: boolean;
     alternativeSubmitLabel?: any;
+    action1Label?: any;
 }
 
 const RadioButtons: FC<IRadioButtonsProps> = ({
     input,
     output,
     submitLoading,
-    alternativeSubmitLabel
+    alternativeSubmitLabel,
+    action1Label
 }: IRadioButtonsProps) => {
     const { t } = useTranslation();
     const [backTrigger, setBackTrigger] = useState<Boolean>(input?.backButton);
     const [locButtonTrigger, setLocButtonTrigger] = useState<Boolean>(input?.locationButton);
     const [emptyButton, setEmptyButton] = useState<Boolean>(input?.emptyButton);
     const [alternativeSubmitButtonTrigger, setAlternativeSubmitButtonTrigger] = useState<Boolean>(
-        input?.alternativeSubmit
+        input?.alternativeSubmitButton
     );
+    const [action1ButtonTrigger, setAction1ButtonTrigger] = useState<Boolean>(input?.action1Button);
 
     const onBack = () => {
         output.onBack();
@@ -64,12 +67,12 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                     htmlType="submit"
                     hidden={alternativeSubmitButtonTrigger ? false : true}
                     onClick={() => {
-                        output?.setShowAlternativeSubmit(!input?.showAlternativeSubmitButton);
+                        output?.setTriggerAlternativeSubmit(!input?.triggerAlternativeSubmit);
                         setAlternativeSubmitButtonTrigger(!alternativeSubmitButtonTrigger);
                     }}
                     loading={submitLoading}
                 >
-                    {!input?.showAlternativeSubmitButton
+                    {!input?.triggerAlternativeSubmitButton
                         ? alternativeSubmitLabel
                         : t('actions:back')}
                 </StyledButton>
@@ -115,6 +118,18 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                     }}
                 >
                     {!input?.showSimilarLocations ? t('common:locations_abbr') : t('actions:back')}
+                </StyledButton>
+                <StyledButton
+                    type="primary"
+                    block
+                    hidden={action1ButtonTrigger ? false : true}
+                    onClick={() => {
+                        output?.setAction1Trigger(!input?.action1Trigger);
+                        setAction1ButtonTrigger(!action1ButtonTrigger);
+                    }}
+                    loading={submitLoading}
+                >
+                    {action1Label ?? 'Action'}
                 </StyledButton>
                 <StyledButton
                     type="primary"

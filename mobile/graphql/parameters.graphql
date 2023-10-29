@@ -23,3 +23,13 @@ query ListParametersForAScope($scope: String!, $code: String, $language: String)
         text
     }
 }
+
+query parameters($filters: ParameterSearchFilters) {
+    parameters(filters: $filters) {
+        results {
+            code
+            value
+            scope
+        }
+    }
+}

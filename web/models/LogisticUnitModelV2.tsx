@@ -163,7 +163,7 @@ export const LogisticUnitModelV2: ModelType = {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: true,
-            isSortable: false,
+            isSortable: true,
             searchingFormat: 'Dropdown',
             isDetailRequested: true,
             isExcludedFromDetail: true,
@@ -178,8 +178,7 @@ export const LogisticUnitModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable:
-                '{"table": "LogisticUnit", "fieldToDisplay": "name","filtersToApply": {"stockOwnerId":"stockOwnerId"}}'
+            optionTable: '{"table": "LogisticUnit", "fieldToDisplay": "name"}'
         },
         'parentLogisticUnit{name}': {
             isListRequested: true,

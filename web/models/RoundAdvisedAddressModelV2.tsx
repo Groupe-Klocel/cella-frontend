@@ -76,7 +76,7 @@ export const RoundAdvisedAddressModelV2: ModelType = {
             config: null,
             param: null
         },
-        'handlingUnitContentOutbound{quantityToBePicked}': {
+        roundOrderId: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
@@ -96,11 +96,31 @@ export const RoundAdvisedAddressModelV2: ModelType = {
             config: null,
             param: null
         },
-        'handlingUnitContentOutbound{pickedQuantity}': {
+        status: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        statusText: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: true,
+            isSortable: false,
             searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: false,
@@ -116,7 +136,7 @@ export const RoundAdvisedAddressModelV2: ModelType = {
             config: null,
             param: null
         },
-        'handlingUnitContentOutbound{missingQuantity}': {
+        quantity: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
@@ -170,6 +190,46 @@ export const RoundAdvisedAddressModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        'roundLineDetail{roundLine{articleId}}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        'roundLineDetail{roundLine{article{name}}}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: 'articles/articleId',
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'article',
             isMandatory: false,
             minRule: null,
             maxRule: null,

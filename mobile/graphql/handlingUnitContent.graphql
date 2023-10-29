@@ -46,13 +46,21 @@ query GetHandlingUnitContents(
                 name
                 code
                 type
+                typeText
                 category
+                categoryText
                 locationId
                 location {
                     name
                     replenish
                     category
                     categoryText
+                }
+                parentHandlingUnit {
+                    name
+                }
+                stockOwner {
+                    name
                 }
             }
             articleLuBarcodeId

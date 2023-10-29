@@ -21,6 +21,7 @@
     "carrier": "Transport",
     "category": "Catégorie",
     "check-position": "Vérifier la position",
+    "child-handling-unit": "Unité de manutention fille",
     "city": "Ville",
     "code": "Code",
     "comment": "Commentaire",
@@ -44,6 +45,7 @@
     "handling-unit-origin": "UM orig.",
     "handling-unit-final_abbr": "UM dest.",
     "handling-unit-final": "UM destination",
+    "handling-unit-parent_abbr": "UM parent",
     "height": "Hauteur",
     "label": "Libellé",
     "hu": "Support",
@@ -99,6 +101,10 @@
     "quantity-var": "Quantité ({{number}})",
     "reception": "Réception",
     "reference": "Référence",
+    "round": "Ramasse",
+    "rounds": "Ramasses",
+    "round-packing": "Emballage ramasse",
+    "round-picking": "Prélèvement ramasse",
     "search": "Recherche",
     "search-criteria": "Critères de recherche",
     "serial-number": "ID",
@@ -126,5 +132,7 @@
     "width": "Largeur",
     "workspace": "ID Espace de travail",
     "hu-movement": "Mouvement d'UM",
-    "move-hu_abbr": "Dépl. UM"
+    "move-hu_abbr": "Dépl. UM",
+    "other-articles": "Autres articles",
+    "close-box": "Fermer le colis"
 }

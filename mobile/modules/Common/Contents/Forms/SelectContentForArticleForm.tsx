@@ -126,21 +126,6 @@ export const SelectContentForArticleForm = ({
         }
     }, [data]);
 
-    useEffect(() => {
-        if (uniqueId) {
-            const uniqueIdContent = contents.filter((e: any) => {
-                const hucFeatures = e.handlingUnitContentFeatures;
-                for (let i = 0; i < hucFeatures.length; i++) {
-                    if (hucFeatures[i].value === uniqueId) {
-                        return e;
-                    }
-                }
-            });
-
-            setContents(uniqueIdContent);
-        }
-    }, [uniqueId]);
-
     //SelectContentForArticle-3Auto: automatically set stored chosenContent when only one content is present
     useEffect(() => {
         if (contents.length == 1) {
@@ -192,6 +177,42 @@ export const SelectContentForArticleForm = ({
                                     {t('common:content')} {index + 1}/{array.length}
                                 </StyledTitle>
                                 <Divider style={{ margin: 2 }} />
+                                <Row>
+                                    <Col span={8}>
+                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                            {t('common:handling-unit-parent_abbr')}:
+                                        </Typography>
+                                    </Col>
+                                    <Col span={16}>
+                                        <Typography style={{ fontSize: '10px' }}>
+                                            {content.handlingUnit?.parentHandlingUnit?.name}
+                                        </Typography>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col span={8}>
+                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                            {t('common:handling-unit_abbr')}:
+                                        </Typography>
+                                    </Col>
+                                    <Col span={16}>
+                                        <Typography style={{ fontSize: '10px' }}>
+                                            {content.handlingUnit?.name}
+                                        </Typography>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col span={8}>
+                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                            {t('common:stock-owner')}:
+                                        </Typography>
+                                    </Col>
+                                    <Col span={16}>
+                                        <Typography style={{ fontSize: '10px' }}>
+                                            {content.handlingUnit?.stockOwner?.name}
+                                        </Typography>
+                                    </Col>
+                                </Row>
                                 <Row>
                                     <Col span={8}>
                                         <Typography style={{ color: 'grey', fontSize: '10px' }}>

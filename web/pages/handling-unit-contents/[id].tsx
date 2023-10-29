@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, NumberOfHuPrintsModalV2 } from '@components';
 import { HandlingUnitContentModelV2 as model } from 'models/HandlingUnitContentModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
@@ -31,6 +31,7 @@ import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { HandlingUnitContentDetailsExtra } from 'modules/HandlingUnits/Elements/HandlingUnitContentDetailsExtra';
+import { BarcodeOutlined } from '@ant-design/icons';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -43,6 +44,8 @@ const HandlingUnitContentPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
+    const [infoToPrint, setInfoToPrint] = useState<string>();
 
     // #region to customize information
     const breadCrumb = [
@@ -105,6 +108,23 @@ const HandlingUnitContentPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                <Button
+                    type="primary"
+                    ghost
+                    onClick={() => {
+                        setShowNumberOfPrintsModal(true);
+                        setInfoToPrint(data?.handlingUnit_barcode as string);
+                    }}
+                    icon={<BarcodeOutlined />}
+                />
+                <NumberOfHuPrintsModalV2
+                    showModal={{
+                        showNumberOfPrintsModal,
+                        setShowNumberOfPrintsModal
+                    }}
+                    handlingUnits={[{ barcode: infoToPrint }]}
+                    documentName="K_HandlingUnitLabel"
+                />
             </Space>
         )
     };

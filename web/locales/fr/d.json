@@ -133,7 +133,7 @@
     "constraint": "Contrainte",
     "width": "Largeur (mm)",
     "height": "Hauteur (mm)",
-    "baseUnitWeight": "Poids unitaire",
+    "baseUnitWeight": "Poids unitaire (g)",
     "blockGroup": "Groupe de blocs",
     "blockLevel": "Niveau du block",
     "boxWeight": "Poids Boite",
@@ -584,9 +584,9 @@
     "handlingUnitContent": "Contenu",
     "articleLu": "Unité logistique",
     "numberHuLoaded": "Nombre d'UM chargées",
-    "shippedLocationId": "Stock client",
+    "shippedLocationId": "Emplacement après expédition",
     "shippingLocationId": "Quai d'expédition",
-    "shippedLocation_name": "Stock client",
+    "shippedLocation_name": "Emplacement après expédition",
     "shippingLocation_name": "Quai d'expédition",
     "sortType": "Type de tri",
     "sortTypeText": "Type de tri",
@@ -617,5 +617,8 @@
     "UN-code": "Code UN",
     "dangerous-goods-weight1": "Poids matière dangereuse (g)",
     "dangerous-goods-weight2": "Poids batterie (g)",
-    "parentHandlingUnit": "UM parent"
+    "parentHandlingUnit": "UM parent",
+    "pickingUser": "Opérateur de prélèvement",
+    "roundOrderId": "Ordre de ramasse",
+    "handlingUnit_parentHandlingUnit": "UM parent"
 }

@@ -19,7 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
-import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect } from 'react';
 import configs from '../../../../../common/configs.json';

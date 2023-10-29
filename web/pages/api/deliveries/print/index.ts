@@ -93,7 +93,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     `;
 
     const variables = {
-        filters: { deliveryId, category: configs.THIRD_PARTY_ADDRESS_CATEGORY_SHIPPING }
+        filters: { deliveryId, category: configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY }
     };
 
     const deliveryResponse = await graphqlRequestClient.request(query, variables, requestHeader);

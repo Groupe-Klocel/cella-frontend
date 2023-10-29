@@ -38,7 +38,6 @@ import { HandlingUnitFinalChecks } from 'modules/StockManagement/HuMovement/Chec
 import { ScanHandlingUnit } from 'modules/Common/HandlingUnits/PagesContainer/ScanHandlingUnit';
 import { ScanHuOrLocation } from 'modules/StockManagement/Forms/ScanHuOrLocationForm';
 import { HuOrLocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HuOrLocationChecks';
-import { log } from 'console';
 import { ValidateHuMoveForm } from 'modules/StockManagement/Forms/ValidateHuMoveForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -54,14 +53,14 @@ const HuMovement: PageComponent = () => {
     const [displayed, setDisplayed] = useState<any>({});
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
-    const [showAlternativeSubmit, setShowAlternativeSubmit] = useState<boolean>(false);
+    const [triggerAlternativeSubmit, setTriggerAlternativeSubmit] = useState<boolean>(false);
     const workflow = {
         processName: 'huMvt',
         expectedSteps: [10, 15, 20, 30, 35, 40, 50]
     };
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
-    // console.log('huMvt', storedObject);
+    console.log('huMvt', storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
@@ -90,7 +89,10 @@ const HuMovement: PageComponent = () => {
         if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit) {
             const originalHu = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
             object[t('common:handling-unit-origin_abbr')] = originalHu.name;
-            object[t('common:article')] = originalHu.handlingUnitContents[0].article.name;
+            object[t('common:article')] =
+                originalHu.handlingUnitContents.length > 0
+                    ? originalHu.handlingUnitContents[0].article.name
+                    : null;
         }
         if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenLocation) {
             const location = storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenLocation;
@@ -115,7 +117,10 @@ const HuMovement: PageComponent = () => {
         if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit) {
             const originalHu = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
             finalObject[t('common:handling-unit-origin_abbr')] = originalHu.name;
-            finalObject[t('common:article')] = originalHu.handlingUnitContents[0].article.name;
+            finalObject[t('common:article')] =
+                originalHu.handlingUnitContents.length > 0
+                    ? originalHu.handlingUnitContents[0].article.name
+                    : null;
         }
         if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenLocation) {
             const chosenLocation =
@@ -173,6 +178,8 @@ const HuMovement: PageComponent = () => {
                 ></RadioInfosHeader>
             )}
             {showSimilarLocations &&
+            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit.handlingUnitContents
+                .length > 0 &&
             storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
                 .handlingUnitContents[0].articleId ? (
                 <SimilarLocations
@@ -189,8 +196,8 @@ const HuMovement: PageComponent = () => {
                 <></>
             )}
             {showEmptyLocations &&
-            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                .handlingUnitContents[0].articleId ? (
+            storedObject[`step${workflow.expectedSteps[2]}`]?.data &&
+            !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
                 <EmptyLocations withAvailableHU={false} />
             ) : (
                 <></>
@@ -241,13 +248,25 @@ const HuMovement: PageComponent = () => {
                     buttons={{
                         submitButton: true,
                         backButton: true,
-                        locationButton: true,
-                        alternativeSubmit: true
+                        locationButton:
+                            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                                .handlingUnitContents.length > 0
+                                ? true
+                                : false,
+                        emptyButton:
+                            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                                .handlingUnitContents.length <= 0
+                                ? true
+                                : false,
+                        alternativeSubmitButton: true
                     }}
                     trigger={{ triggerRender, setTriggerRender }}
                     showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
                     showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
-                    showAlternativeSubmit={{ showAlternativeSubmit, setShowAlternativeSubmit }}
+                    triggerAlternativeSubmit={{
+                        triggerAlternativeSubmit,
+                        setTriggerAlternativeSubmit
+                    }}
                     headerContent={{ headerContent, setHeaderContent }}
                     checkComponent={(data: any) => <HuOrLocationChecks dataToCheck={data} />}
                 ></ScanHuOrLocation>

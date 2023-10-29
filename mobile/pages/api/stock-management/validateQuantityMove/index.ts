@@ -142,6 +142,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         newHUVariables,
                         requestHeader
                     );
+
                     //inject id in the finalLocation const
                     if (destinationHuResult) {
                         const destinationHu = {

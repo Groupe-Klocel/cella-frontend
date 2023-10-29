@@ -39,7 +39,7 @@ const StyledButton = styled(Button)`
     border: 1px solid #f5c73d !important;
     color: #000000 !important;
     font-size: 10px !important;
-    max-width: 30%;
+    max-width: 25%;
     height: auto !important;
     white-space: normal !important;
     min-height: 35px;

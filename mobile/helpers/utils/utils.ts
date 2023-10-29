@@ -204,6 +204,37 @@ function removeDuplicatesAndSort(arr: any[]) {
     return Array.from(new Set(arr)).sort();
 }
 
+function extractGivenConfigsParams(
+    json: Object,
+    scope: string,
+    options: {
+        include?: string[];
+        exclude?: string[];
+        min?: number;
+        max?: number;
+    } = {}
+): number[] {
+    const values: number[] = [];
+    for (const key in json) {
+        if (key.startsWith(scope.toUpperCase())) {
+            if (
+                (options.include &&
+                    options.include.some((value) => key.endsWith(value.toUpperCase()))) ||
+                (options.exclude &&
+                    options.exclude.some((value) => key.endsWith(value.toUpperCase()))) ||
+                (options.min !== undefined &&
+                    (json as { [key: string]: number })[key] <= options.min) ||
+                (options.max !== undefined &&
+                    (json as { [key: string]: number })[key] >= options.max)
+            ) {
+                continue;
+            }
+            values.push((json as { [key: string]: number })[key]);
+        }
+    }
+    return values;
+}
+
 export {
     isEmpty,
     pathParams,
@@ -227,5 +258,6 @@ export {
     getLanguageNameFromISOCode,
     getKeys,
     LsIsSecured,
-    removeDuplicatesAndSort
+    removeDuplicatesAndSort,
+    extractGivenConfigsParams
 };

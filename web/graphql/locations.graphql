@@ -61,6 +61,7 @@ query GetAllLocations(
                 name
             }
             replenishType
+            replenishTypeText
             constraint
             comment
             baseUnitRotation
@@ -88,6 +89,7 @@ query GetLocationById($id: String!) {
         }
         category
         replenishType
+        replenishTypeText
         constraint
         comment
         baseUnitRotation
@@ -122,6 +124,7 @@ query GetLocationIds(
                 name
             }
             replenishType
+            replenishTypeText
             constraint
             comment
             baseUnitRotation
@@ -150,6 +153,7 @@ mutation CreateLocation($input: CreateLocationInput!) {
                 name
             }
             replenishType
+            replenishTypeText
             constraint
             comment
             baseUnitRotation
@@ -211,6 +215,7 @@ mutation UpdateLocation($id: String!, $input: UpdateLocationInput!) {
             name
         }
         replenishType
+        replenishTypeText
         constraint
         comment
         baseUnitRotation
@@ -236,6 +241,7 @@ query GetLocationsRange($originLocationName: String!, $finalLocationName: String
             name
         }
         replenishType
+        replenishTypeText
         constraint
         comment
         baseUnitRotation

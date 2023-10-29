@@ -167,7 +167,7 @@ const RoundPages: PageComponent = () => {
                 showError(t(`errors:${launchRoundsResult.executeFunction.output.output.code}`));
                 console.log('Backend_message', launchRoundsResult.executeFunction.output.output);
             } else {
-                showSuccess(t('messages:success-round-calculation'));
+                showSuccess(t('messages:success-round-start'));
                 setRefetch(true);
             }
             setStartRoundLoading(false);
