@@ -44,26 +44,39 @@ query GetAllBoxes(
                 id
                 name
             }
+            carrierShippingModeId
             carrierShippingMode {
                 id
                 toBePalletized
             }
+            deliveryId
             delivery {
                 id
                 name
+                carrierShippingMode {
+                    carrierId
+                    carrier {
+                        id
+                        name
+                    }
+                }
             }
+            handlingUnitModelId
             handlingUnitModel {
                 id
                 name
             }
+            roundId
             round {
                 id
                 name
             }
+            loadId
             load {
                 id
                 name
             }
+            handlingUnitId
             handlingUnit {
                 id
                 name
@@ -85,16 +98,23 @@ query GetAllBoxes(
                 statusText
                 pickedQuantity
                 quantityToBePicked
+                pickingLocationId
                 pickingLocation {
                     id
                     name
                 }
+                handlingUnitContentId
                 handlingUnitContent {
                     id
                     articleId
                     article {
+                        id
                         name
                         description
+                        stockOwnerId
+                        stockOwner {
+                            name
+                        }
                     }
                 }
             }

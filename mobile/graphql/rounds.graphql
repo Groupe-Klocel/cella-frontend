@@ -1,0 +1,118 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query GetRounds(
+    $filters: RoundSearchFilters
+    $orderBy: [RoundOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    rounds(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            status
+            statusText
+            priority
+            priorityText
+            nbPickArticle
+            nbBox
+            nbRoundLine
+            pickingTime
+            productivity
+            expectedDeliveryDate
+            handlingUnitOutbounds {
+                id
+                name
+                status
+                statusText
+                roundId
+                handlingUnitModelId
+            }
+            roundAdvisedAddresses {
+                id
+                roundOrderId
+                quantity
+                status
+                statusText
+                locationId
+                location {
+                    name
+                }
+                handlingUnitContentId
+                handlingUnitContent {
+                    quantity
+                    articleId
+                    article {
+                        id
+                        name
+                        stockOwnerId
+                        stockOwner {
+                            name
+                        }
+                    }
+                    handlingUnitContentFeatures {
+                        featureCode {
+                            name
+                            unique
+                        }
+                        value
+                    }
+                    handlingUnitId
+                    handlingUnit {
+                        id
+                        name
+                        barcode
+                        status
+                        statusText
+                        type
+                        typeText
+                        category
+                        categoryText
+                        stockOwnerId
+                        stockOwner {
+                            name
+                        }
+                    }
+                }
+                roundLineDetailId
+                roundLineDetail {
+                    status
+                    statusText
+                    quantityToBeProcessed
+                    processedQuantity
+                    roundLineId
+                    roundLine {
+                        lineNumber
+                        articleId
+                        status
+                        statusText
+                    }
+                    deliveryLineId
+                    deliveryLine {
+                        id
+                        stockOwnerId
+                        deliveryId
+                    }
+                }
+            }
+        }
+    }
+}

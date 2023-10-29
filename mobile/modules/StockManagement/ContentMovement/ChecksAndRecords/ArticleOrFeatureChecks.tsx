@@ -47,7 +47,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         if (scannedInfo) {
             setIsLoading(true);
             const fetchData = async () => {
-                const res = await fetch(`/api/stock-management/scanArticleOrFeature/`, {
+                const res = await fetch(`/api/stock-management/scanArticleOrFeature`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

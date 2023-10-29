@@ -46,8 +46,7 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
         if (scannedInfo && handlingUnitInfos.data) {
             const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
             if (
-                handlingUnitInfos.data.handlingUnits?.count !== 0 &&
-                handlingUnitInfos.data.handlingUnits.results[0].handlingUnitContents.length !== 0
+                handlingUnitInfos.data.handlingUnits?.count !== 0
             ) {
                 if (
                     handlingUnitInfos.data.handlingUnits.results[0].locationId === chosenLocationId

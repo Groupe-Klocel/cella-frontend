@@ -161,34 +161,37 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         canRollbackTransaction = true;
         //end handling unit update section
 
-        // update huc stock statuses
-        const hucIds = originHandlingUnit.handlingUnitContents.map((huc: { id: any }) => huc.id);
+        let updateHucResult = null;
+        if (finalLocation.stockStatus && originHandlingUnit.handlingUnitContents.length > 0) {
+            // update huc stock statuses
+            const hucIds = originHandlingUnit.handlingUnitContents.map(
+                (huc: { id: any }) => huc.id
+            );
 
-        const updateHUCMutation = gql`
-            mutation updateHandlingUnitContent(
-                $ids: [String!]!
-                $input: UpdateHandlingUnitContentInput!
-            ) {
-                updateHandlingUnitContents(ids: $ids, input: $input)
-            }
-        `;
+            const updateHUCMutation = gql`
+                mutation updateHandlingUnitContent(
+                    $ids: [String!]!
+                    $input: UpdateHandlingUnitContentInput!
+                ) {
+                    updateHandlingUnitContents(ids: $ids, input: $input)
+                }
+            `;
 
-        if (!finalLocation.stockStatus) finalLocation.stockStatus = -1;
+            const updateHUCVariables = {
+                ids: hucIds,
+                input: {
+                    stockStatus: finalLocation.stockStatus,
+                    lastTransactionId
+                }
+            };
 
-        const updateHUCVariables = {
-            ids: hucIds,
-            input: {
-                stockStatus: finalLocation.stockStatus,
-                lastTransactionId
-            }
-        };
-
-        const updateHucResult = await graphqlRequestClient.request(
-            updateHUCMutation,
-            updateHUCVariables,
-            requestHeader
-        );
-        // end update huc stock statuses
+            const updateHucResult = await graphqlRequestClient.request(
+                updateHUCMutation,
+                updateHUCVariables,
+                requestHeader
+            );
+            // end update huc stock statuses
+        }
 
         //movements creation section
         const createMovement = gql`
@@ -199,38 +202,77 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             }
         `;
-        let movementResults: any = [];
-        await Promise.all(
-            originHandlingUnit.handlingUnitContents.map(async (handlingUnitContent: any) => {
-                const movementVariables = {
-                    input: {
-                        originalLocationIdStr: originLocation.id,
-                        originalLocationNameStr: originLocation.name,
-                        originalHandlingUnitIdStr: originHandlingUnit.id,
-                        originalHandlingUnitNameStr: originHandlingUnit.name,
-                        originalContentIdStr: handlingUnitContent.id,
-                        articleIdStr: handlingUnitContent.articleId,
-                        articleNameStr: handlingUnitContent.article.name,
-                        stockOwnerIdStr: originHandlingUnit.stockOwnerId,
-                        stockOwnerNameStr: originHandlingUnit.stockOwner.name,
-                        ...movementCodes,
-                        finalLocationIdStr: finalLocation.id,
-                        finalLocationNameStr: finalLocation.name,
-                        finalContentIdStr: handlingUnitContent.id,
-                        finalHandlingUnitIdStr: finalHandlingUnit.id,
-                        finalHandlingUnitNameStr: finalHandlingUnit.name,
+
+        let movementResults: any;
+        if (originHandlingUnit.handlingUnitContents.length > 0) {
+            movementResults = []
+            await Promise.all(
+                originHandlingUnit.handlingUnitContents.map(async (handlingUnitContent: any) => {
+                    const movementVariables = {
+                        input: {
+                            originalLocationIdStr: originLocation.id,
+                            originalLocationNameStr: originLocation.name,
+                            originalHandlingUnitIdStr: originHandlingUnit.id,
+                            originalHandlingUnitNameStr: originHandlingUnit.name,
+                            originalContentIdStr: handlingUnitContent.id,
+                            articleIdStr: handlingUnitContent.articleId,
+                            articleNameStr: handlingUnitContent.article.name,
+                            stockOwnerIdStr: originHandlingUnit.stockOwnerId,
+                            stockOwnerNameStr: originHandlingUnit.stockOwner.name,
+                            ...movementCodes,
+                            finalLocationIdStr: finalLocation.id,
+                            finalLocationNameStr: finalLocation.name,
+                            finalContentIdStr: handlingUnitContent.id,
+                            finalHandlingUnitIdStr: finalHandlingUnit.id,
+                            finalHandlingUnitNameStr: finalHandlingUnit.name,
+                            lastTransactionId
+                        }
+                    };
+
+                    const resultMovementLine = await graphqlRequestClient.request(
+                        createMovement,
+                        movementVariables,
+                        requestHeader
+                    );
+                    movementResults.push(resultMovementLine);
+                })
+            );
+        }
+        else {
+            //movement creation section
+            const createMovement = gql`
+                mutation createMovement($input: CreateMovementInput!) {
+                    createMovement(input: $input) {
+                        id
                         lastTransactionId
                     }
-                };
+                }
+            `;
 
-                const resultMovementLine = await graphqlRequestClient.request(
-                    createMovement,
-                    movementVariables,
-                    requestHeader
-                );
-                movementResults.push(resultMovementLine);
-            })
-        );
+            const movementVariables = {
+                input: {
+                    originalLocationIdStr: originLocation.id,
+                    originalLocationNameStr: originLocation.name,
+                    originalHandlingUnitIdStr: originHandlingUnit.id,
+                    originalHandlingUnitNameStr: originHandlingUnit.name,
+                    stockOwnerIdStr: originHandlingUnit.stockOwnerId,
+                    stockOwnerNameStr: originHandlingUnit.stockOwner.name,
+                    ...movementCodes,
+                    finalLocationIdStr: finalLocation.id,
+                    finalLocationNameStr: finalLocation.name,
+                    finalHandlingUnitIdStr: finalHandlingUnit.id,
+                    finalHandlingUnitNameStr: finalHandlingUnit.name,
+                    lastTransactionId
+                }
+            };
+
+            const movementResults = await graphqlRequestClient.request(
+                createMovement,
+                movementVariables,
+                requestHeader
+            );
+            //end movement creation section
+        }
         //end movement creation section
 
         //merge results

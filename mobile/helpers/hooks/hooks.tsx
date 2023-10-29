@@ -35,7 +35,9 @@ import {
     useGetLocationIdsQuery,
     useGetAllBoxesQuery,
     useGetLoadsQuery,
-    GetLoadsQuery
+    GetLoadsQuery,
+    useGetHandlingUnitContentFeaturesQuery,
+    GetHandlingUnitContentFeaturesQuery
 } from 'generated/graphql';
 
 const useDrawerState = (initialState: { isOpen: boolean; drawerProps: any }) => {
@@ -257,6 +259,42 @@ const useHandlingUnitContents = (
     return hu_contents;
 };
 
+const useHandlingUnitContentFeatures = (
+    search: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any,
+    language: any
+) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const hu_content_features = useGetHandlingUnitContentFeaturesQuery<
+        Partial<GetHandlingUnitContentFeaturesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage,
+        language: language
+    });
+
+    return hu_content_features;
+};
+
 const useLocationIds = (
     search: any,
     page: number,
@@ -327,6 +365,7 @@ export {
     useLocationIds,
     useHandlingUnits,
     useHandlingUnitContents,
+    useHandlingUnitContentFeatures,
     useHandlingUnitInbounds,
     useHandlingUnitOutbounds,
     useLoadIds

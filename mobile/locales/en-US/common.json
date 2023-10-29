@@ -21,6 +21,7 @@
     "carrier": "Carrier",
     "category": "Category",
     "check-position": "Check Position",
+    "child-handling-unit": "Child handling unit",
     "city": "City",
     "code": "Code",
     "comment": "Comment",
@@ -44,6 +45,7 @@
     "handling-unit-origin": "Original HU",
     "handling-unit-final_abbr": "Dest. HU",
     "handling-unit-final": "Destination HU",
+    "handling-unit-parent_abbr": "Parent HU",
     "height": "Height",
     "label": "Label",
     "hu": "Support",
@@ -99,6 +101,10 @@
     "quantity-var": "Quantity ({{number}})",
     "reception": "Reception",
     "reference": "Reference",
+    "round": "Round",
+    "rounds": "Rounds",
+    "round-packing": "Round packing",
+    "round-picking": "Round Picking",
     "search": "Search",
     "search-criteria": "Search criteria",
     "serial-number": "ID",
@@ -126,5 +132,7 @@
     "width": "Width",
     "workspace": "Workspace ID",
     "hu-movement": "HU Movement",
-    "move-hu_abbr": "Move HU"
+    "move-hu_abbr": "Move HU",
+    "other-articles": "Other articles",
+    "close-box": "Close box"
 }

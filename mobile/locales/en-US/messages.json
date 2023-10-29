@@ -26,6 +26,7 @@
     "no-content": "No content found",
     "no-handling-unit": "No handling unit found",
     "no-goodsIn": "No goods-in found",
+    "no-hu": "Handling unit not found",
     "no-hu-location": "Handling unit not found for this location",
     "no-hu-or-empty": "No handling unit found with this barcode or this handling unit is empty",
     "no-hu-or-not-empty": "Not existing or not empty support",
@@ -52,5 +53,13 @@
     "no-location-hu": "Location not found for this handling unit",
     "hu-origin-final-identical": "The origin and final handling unit are identical",
     "unexpected-hu-type": "HU with unexpected type",
-    "unexpected-hu-article": "HU with unexpected article"
+    "unexpected-hu-article": "HU with unexpected article",
+    "round-picking-success": "Round picking has been successfully recorded",
+    "round-packing-success": "Round packing has been successfully recorded",
+    "round-preparation-failed": "Round picking has failed",
+    "round-packing-finalization-failed": "Round picking finalization has failed",
+    "round-packing-failed": "Round paking has failed",
+    "no-box-to-close": "No box to close",
+    "closure-failed": "Closure failed",
+    "incorrect-hu-carrier": "Carrier is not the expected one"
 }

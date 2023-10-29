@@ -45,6 +45,7 @@ import { HandlingUnitOriginChecks } from 'modules/StockManagement/ContentMovemen
 import { HandlingUnitFinalChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitFinalChecks';
 import { CheckFinalLocationQuantityForm } from 'modules/StockManagement/Forms/CheckFinalLocationQuantityForm';
 import { ValidateQuantityMoveForm } from 'modules/StockManagement/Forms/ValidateQuantityMove';
+import { SelectContentForFeatureForm } from 'modules/Common/Contents/Forms/SelectContentForFeatureForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -66,7 +67,7 @@ const ContentMvmt: PageComponent = () => {
     };
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
-    // console.log('contentMvt', storedObject);
+    console.log('contentMvt', storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
@@ -319,19 +320,38 @@ const ContentMvmt: PageComponent = () => {
             )}
             {storedObject[`step${workflow.expectedSteps[4]}`]?.data &&
             !storedObject[`step${workflow.expectedSteps[5]}`]?.data ? (
-                <SelectContentForArticleForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[5]}
-                    buttons={{ backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    articleId={
-                        storedObject[`step${workflow.expectedSteps[4]}`].data.chosenArticleLuBarcode
-                            .articleId
-                    }
-                    locationId={
-                        storedObject[`step${workflow.expectedSteps[1]}`].data.chosenLocation.id
-                    }
-                ></SelectContentForArticleForm>
+                storedObject[`step${workflow.expectedSteps[3]}`].data?.resType != 'serialNumber' ? (
+                    <SelectContentForArticleForm
+                        process={workflow.processName}
+                        stepNumber={workflow.expectedSteps[5]}
+                        buttons={{ backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        articleId={
+                            storedObject[`step${workflow.expectedSteps[4]}`].data
+                                .chosenArticleLuBarcode.articleId
+                        }
+                        locationId={
+                            storedObject[`step${workflow.expectedSteps[1]}`].data.chosenLocation.id
+                        }
+                    ></SelectContentForArticleForm>
+                ) : (
+                    <SelectContentForFeatureForm
+                        process={workflow.processName}
+                        stepNumber={workflow.expectedSteps[5]}
+                        buttons={{ backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        articleId={
+                            storedObject[`step${workflow.expectedSteps[4]}`].data
+                                .chosenArticleLuBarcode.articleId
+                        }
+                        locationId={
+                            storedObject[`step${workflow.expectedSteps[1]}`].data.chosenLocation.id
+                        }
+                        uniqueId={
+                            storedObject[`step${workflow.expectedSteps[3]}`].data.feature.value
+                        }
+                    ></SelectContentForFeatureForm>
+                )
             ) : (
                 <></>
             )}
