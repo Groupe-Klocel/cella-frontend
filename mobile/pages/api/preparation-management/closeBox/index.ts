@@ -131,6 +131,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         id
                         deliveryId
                         carrierShippingModeId
+                        carrierShippingMode {
+                            carrierId
+                        }
                     }
                 }
             }
@@ -173,6 +176,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 requestHeader
             );
 
+            canRollbackTransaction = true;
+
             // 1d- update Round status
             const updateRoundMutation = gql`
                 mutation updateRound($id: String!, $input: UpdateRoundInput!) {
@@ -195,7 +200,30 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             );
         }
 
-        // 2- update HUO status
+        // 2a- theoretical weight calculation
+        let theoreticalWeight = 0;
+        let handlingUnitModelWeight = 0;
+        let handlingUnitModelClosureWeight = 0;
+
+        if (handlingUnitOutbound?.handlingUnitModel?.weight)
+            handlingUnitModelWeight = handlingUnitOutbound?.handlingUnitModel?.weight;
+        if (handlingUnitOutbound?.handlingUnitModel?.closureWeight)
+            handlingUnitModelClosureWeight = handlingUnitOutbound?.handlingUnitModel?.closureWeight;
+
+        theoreticalWeight = handlingUnitModelWeight + handlingUnitModelClosureWeight;
+
+        if (handlingUnitOutbound?.handlingUnitContentOutbounds.length > 0) {
+            for (const huco of handlingUnitOutbound.handlingUnitContentOutbounds) {
+                if (huco?.handlingUnitContent) {
+                    const baseUnitWeight = huco?.handlingUnitContent?.article?.baseUnitWeight;
+                    const quantity = huco?.handlingUnitContent?.quantity;
+
+                    if (quantity && baseUnitWeight) theoreticalWeight += baseUnitWeight * quantity;
+                }
+            }
+        }
+
+        // 2b- update HUO status
         const updateHandlingUnitOutboundMutation = gql`
             mutation updateHandlingUnitOutbound(
                 $id: String!
@@ -214,7 +242,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 status: configs.HANDLING_UNIT_OUTBOUND_STATUS_PREPARED,
                 carrierShippingModeId:
                     declarativeHUOResult.handlingUnitOutbounds.results[0].carrierShippingModeId,
-                theoriticalWeight: 1000, // TODO : TO BE CALCULATED !
+                carrierId:
+                    declarativeHUOResult.handlingUnitOutbounds.results[0].carrierShippingMode
+                        .carrierId,
+                theoriticalWeight: theoreticalWeight,
                 lastTransactionId
             }
         };
@@ -223,6 +254,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             updateHandlingUnitOutboundMutation,
             updateHandlingUnitOutboundvariable
         );
+
+        canRollbackTransaction = true;
 
         // 3- Print HUO label
 
@@ -360,6 +393,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 stockOwner {
                                     name
                                 }
+                                baseUnitWeight
                             }
                             handlingUnitContentFeatures {
                                 id

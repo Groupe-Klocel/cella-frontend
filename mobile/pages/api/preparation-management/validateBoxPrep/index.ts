@@ -153,6 +153,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     handlingUnitModel {
                         id
                         name
+                        weight
+                        closureWeight
                     }
                     round {
                         id

@@ -38,6 +38,7 @@ query GetHandlingUnitContents(
                 description
                 name
                 featureTypeText
+                baseUnitWeight
             }
             quantity
             stockStatusText

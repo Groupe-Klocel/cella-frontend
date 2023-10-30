@@ -368,7 +368,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         quantity
                         articleId
                         article {
+                            id
                             name
+                            baseUnitWeight
                         }
                         handlingUnitContentFeatures {
                             featureCode {
@@ -481,7 +483,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                     quantity
                                     articleId
                                     article {
+                                        id
                                         name
+                                        baseUnitWeight
                                     }
                                     handlingUnitContentFeatures {
                                         featureCode {

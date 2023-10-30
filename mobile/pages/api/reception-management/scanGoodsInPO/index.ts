@@ -91,8 +91,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 id
                                 articleId
                                 article {
+                                    id
                                     name
                                     description
+                                    baseUnitWeight
                                 }
                             }
                         }
@@ -132,8 +134,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             id
                             articleId
                             article {
+                                id
                                 name
                                 description
+                                baseUnitWeight
                             }
                         }
                     }
