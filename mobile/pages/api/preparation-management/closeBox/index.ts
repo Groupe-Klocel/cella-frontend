@@ -132,7 +132,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         deliveryId
                         carrierShippingModeId
                         carrierShippingMode {
+                            id
                             carrierId
+                            shippingMode
                         }
                     }
                 }
