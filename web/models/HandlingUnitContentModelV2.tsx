@@ -293,7 +293,7 @@ export const HandlingUnitContentModelV2: ModelType = {
             param: null,
             optionTable: null
         },
-        'handlingUnit{stockOwnerId}': {
+        stockOwnerId: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: true,
@@ -315,7 +315,7 @@ export const HandlingUnitContentModelV2: ModelType = {
             optionTable: '{"table": "StockOwner", "fieldToDisplay": "name"}',
             isEditDisabled: true
         },
-        'handlingUnit{stockOwner{name}}': {
+        'stockOwner{name}': {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
