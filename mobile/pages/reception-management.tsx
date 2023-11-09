@@ -33,7 +33,7 @@ const menuItemDatas = [
     },
     {
         title: 'menu:return-reception',
-        path: '/return-reception'
+        path: '/reception'
     }
 ];
 

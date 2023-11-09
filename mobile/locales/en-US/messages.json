@@ -61,13 +61,5 @@
     "round-packing-failed": "Round paking has failed",
     "no-box-to-close": "No box to close",
     "closure-failed": "Closure failed",
-    "substitution-success": "Substitution has been successfully recorded",
-    "substitution-failed": "Substitution has failed",
-    "incorrect-hu-carrier": "Carrier is not the expected one",
-    "return-reception-failed": "Return reception has failed",
-    "return-creation-failed": "Return creation has failed",
-    "article-creation-confirm": "Article unknown in stock, do you want to create it?",
-    "article-move-confirm": "Article known in another location, do you want to move it?",
-    "no-po-to-close": "No purchase order to close",
-    "return-reception-success": "Return Reception has been successfully recorded"
+    "incorrect-hu-carrier": "Carrier is not the expected one"
 }

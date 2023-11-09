@@ -65,7 +65,6 @@ const WrapperLogin = styled.div`
 
 const WrapperButtons = styled.div`
     display: flex;
-    flex-wrap: wrap;
     align-items: stretch;
     justify-content: space-around;
     width: 100%;

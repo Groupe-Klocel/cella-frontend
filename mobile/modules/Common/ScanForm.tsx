@@ -39,8 +39,6 @@ export interface IScanProps {
     levelOfBack?: number;
     triggerAlternativeSubmit?: any;
     alternativeSubmitLabel?: any;
-    triggerAlternativeSubmit1?: any;
-    alternativeSubmitLabel1?: any;
     action1Label?: any;
     action1Trigger?: any;
 }
@@ -59,8 +57,6 @@ export const ScanForm = ({
     levelOfBack,
     triggerAlternativeSubmit,
     alternativeSubmitLabel,
-    triggerAlternativeSubmit1,
-    alternativeSubmitLabel1,
     action1Label,
     action1Trigger
 }: IScanProps) => {
@@ -150,8 +146,6 @@ export const ScanForm = ({
                         showEmptyLocations: showEmptyLocations?.showEmptyLocations,
                         triggerAlternativeSubmit:
                             triggerAlternativeSubmit?.triggerAlternativeSubmit,
-                        triggerAlternativeSubmit1:
-                            triggerAlternativeSubmit1?.triggerAlternativeSubmit1,
                         action1Trigger: action1Trigger?.action1Trigger
                     }}
                     output={{
@@ -159,14 +153,11 @@ export const ScanForm = ({
                         setShowSimilarLocations: showSimilarLocations?.setShowSimilarLocations,
                         setTriggerAlternativeSubmit:
                             triggerAlternativeSubmit?.setTriggerAlternativeSubmit,
-                        setTriggerAlternativeSubmit1:
-                            triggerAlternativeSubmit1?.setTriggerAlternativeSubmit1,
                         setAction1Trigger: action1Trigger?.setAction1Trigger,
                         headerContent: headerContent ? headerContent : undefined,
                         onBack
                     }}
                     alternativeSubmitLabel={alternativeSubmitLabel}
-                    alternativeSubmitLabel1={alternativeSubmitLabel1}
                     action1Label={action1Label}
                 ></RadioButtons>
             </StyledForm>

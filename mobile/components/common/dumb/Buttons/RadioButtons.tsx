@@ -26,7 +26,6 @@ export interface IRadioButtonsProps {
     output?: any;
     submitLoading?: boolean;
     alternativeSubmitLabel?: any;
-    alternativeSubmitLabel1?: any;
     action1Label?: any;
 }
 
@@ -35,7 +34,6 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
     output,
     submitLoading,
     alternativeSubmitLabel,
-    alternativeSubmitLabel1,
     action1Label
 }: IRadioButtonsProps) => {
     const { t } = useTranslation();
@@ -45,13 +43,7 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
     const [alternativeSubmitButtonTrigger, setAlternativeSubmitButtonTrigger] = useState<Boolean>(
         input?.alternativeSubmitButton
     );
-    const [alternativeSubmitButtonTrigger1, setAlternativeSubmitButtonTrigger1] = useState<Boolean>(
-        input?.alternativeSubmitButton1
-    );
     const [action1ButtonTrigger, setAction1ButtonTrigger] = useState<Boolean>(input?.action1Button);
-
-    // NB: commented for later enhancement
-    // const [disabled, setDisabled] = useState<boolean | undefined>(false);
 
     const onBack = () => {
         output.onBack();
@@ -65,11 +57,7 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                     block
                     htmlType="submit"
                     hidden={input?.submitButton ? false : true}
-                    // onClick={() => {
-                    //     setDisabled(true);
-                    // }}
                     loading={submitLoading}
-                    // disabled={disabled}
                 >
                     {t('actions:submit')}
                 </StyledButton>
@@ -79,31 +67,13 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                     htmlType="submit"
                     hidden={alternativeSubmitButtonTrigger ? false : true}
                     onClick={() => {
-                        // setDisabled(true);
                         output?.setTriggerAlternativeSubmit(!input?.triggerAlternativeSubmit);
                         setAlternativeSubmitButtonTrigger(!alternativeSubmitButtonTrigger);
                     }}
                     loading={submitLoading}
-                    // disabled={disabled}
                 >
                     {!input?.triggerAlternativeSubmitButton
                         ? alternativeSubmitLabel
-                        : t('actions:back')}
-                </StyledButton>
-                <StyledButton
-                    type="primary"
-                    block
-                    hidden={alternativeSubmitButtonTrigger1 ? false : true}
-                    onClick={() => {
-                        // setDisabled(true);
-                        output?.setTriggerAlternativeSubmit1(!input?.triggerAlternativeSubmit1);
-                        setAlternativeSubmitButtonTrigger1(!alternativeSubmitButtonTrigger1);
-                    }}
-                    loading={submitLoading}
-                    // disabled={disabled}
-                >
-                    {!input?.triggerAlternativeSubmitButton1
-                        ? alternativeSubmitLabel1
                         : t('actions:back')}
                 </StyledButton>
                 {!input.emptyButton ? (
@@ -154,12 +124,10 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                     block
                     hidden={action1ButtonTrigger ? false : true}
                     onClick={() => {
-                        // setDisabled(true);
                         output?.setAction1Trigger(!input?.action1Trigger);
                         setAction1ButtonTrigger(!action1ButtonTrigger);
                     }}
                     loading={submitLoading}
-                    // disabled={disabled}
                 >
                     {action1Label ?? 'Action'}
                 </StyledButton>
