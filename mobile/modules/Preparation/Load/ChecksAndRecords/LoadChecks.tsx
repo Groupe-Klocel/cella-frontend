@@ -47,7 +47,9 @@ export const LoadChecks = ({ dataToCheck }: ILoadChecksProps) => {
             if (
                 // Condition
                 loadInfos.data.loads?.count !== 0 &&
-                loadInfos.data.loads?.results[0].status === configs.LOAD_STATUS_CREATED
+                (loadInfos.data.loads?.results[0].status === configs.LOAD_STATUS_CREATED ||
+                    loadInfos.data.loads?.results[0].status ===
+                        configs.LOAD_STATUS_LOAD_IN_PROGRESS)
             ) {
                 // Save data in Local Storage
                 const data: { [label: string]: any } = {};

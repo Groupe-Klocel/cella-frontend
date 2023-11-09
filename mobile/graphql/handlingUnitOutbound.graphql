@@ -65,6 +65,8 @@ query GetAllBoxes(
             handlingUnitModel {
                 id
                 name
+                weight
+                closureWeight
             }
             roundId
             round {
@@ -115,6 +117,7 @@ query GetAllBoxes(
                         stockOwner {
                             name
                         }
+                        baseUnitWeight
                     }
                 }
             }

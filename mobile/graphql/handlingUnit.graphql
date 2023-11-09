@@ -75,6 +75,7 @@ query GetHandlingUnits(
                     stockOwner {
                         name
                     }
+                    baseUnitWeight
                 }
                 handlingUnitContentFeatures {
                     id
