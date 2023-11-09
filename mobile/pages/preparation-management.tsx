@@ -32,6 +32,10 @@ const menuItemDatas = [
         path: '/round-picking'
     },
     {
+        title: 'menu:substitution',
+        path: '/substitution'
+    },
+    {
         title: 'menu:round-packing',
         path: '/round-packing'
     },

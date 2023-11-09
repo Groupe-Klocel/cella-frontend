@@ -155,7 +155,7 @@ export const ValidateRoundPickingForm = ({
                         round: response.response.updatedRoundLineDetail.updateRoundLineDetail
                             .roundLine.round
                     };
-                    console.log('data1', data);
+                    console.log("data1", data)
                     storedObject['currentStep'] = 20;
                     storedObject[`step10`] = { previousStep: 0, data };
                     storedObject[`step20`] = { previousStep: 10 };

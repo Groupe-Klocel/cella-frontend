@@ -9,7 +9,7 @@
     "close": "Terminer",
     "close-confirm": "Etes-vous sûr(e) de vouloir terminer cet enregistrement ?",
     "confirm": "OK",
-    "start-confirm": "Etes-vous sûr(e) de vouloir lancer la préparation de cette livraison ?",
+    "start-confirm": "Etes-vous sûr(e) de vouloir lancer la préparation de cette commande ?",
     "cubing-confirm": "Etes-vous sûr(e) de vouloir lancer le colisage ?",
     "round-association-confirm": "Etes-vous sûr(e) de vouloir associer cet enregistrement à une ramasse ?",
     "delete-with-subelements-confirm": "Cela effacera {{element}} ainsi que {{subelements}} si ceux-ci sont vides. Etes-vous sûr(e) de vouloir le supprimer ?",

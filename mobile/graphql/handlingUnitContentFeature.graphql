@@ -34,36 +34,58 @@ query GetHandlingUnitContentFeatures(
         totalPages
         results {
             id
+            extraStatus1
+            value
+            featureCodeId
+            featureCode {
+                id
+                name
+            }
             handlingUnitContentId
             handlingUnitContent {
                 id
+                stockStatus
+                stockStatusText
+                quantity
+                handlingUnitId
                 handlingUnit {
+                    id
                     name
+                    category
+                    locationId
                     location {
+                        id
                         name
+                        category
                         categoryText
                     }
+                    stockOwnerId
                     stockOwner {
+                        id
                         name
                     }
+                    parentHandlingUnitId
                     parentHandlingUnit {
+                        id
                         name
                     }
                 }
                 articleId
-                stockStatusText
-                quantity
+                article {
+                    id
+                    name
+                    stockOwnerId
+                }
                 handlingUnitContentFeatures {
+                    id
+                    extraStatus1
+                    value
+                    featureCodeId
                     featureCode {
                         name
                     }
-                    value
                 }
             }
-            featureCode {
-                name
-            }
-            value
         }
     }
 }

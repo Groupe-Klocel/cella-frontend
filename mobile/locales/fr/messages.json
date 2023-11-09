@@ -61,5 +61,13 @@
     "round-packing-failed": "Erreur lors de l'emballage de la ramasse",
     "no-box-to-close": "Aucun colis à fermer",
     "closure-failed": "Erreur lors de la fermeture du colis",
-    "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu"
+    "substitution-success": "Votre substitution a été effectuée avec succès",
+    "substitution-failed": "Erreur lors de la substitution",
+    "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu",
+    "return-reception-failed": "Erreur lors de la réception du retour",
+    "return-creation-failed": "Erreur lors de la création du retour",
+    "article-creation-confirm": "Article inconnu en stock, voulez-vous le créer ?",
+    "article-move-confirm": "Article connu à un autre emplacement, voulez-vous le déplacer ?",
+    "no-po-to-close": "Aucune commande fournisseur à clôturer",
+    "return-reception-success": "Votre Réception Retour a été effectuée avec succès"
 }

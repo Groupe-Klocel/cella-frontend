@@ -182,8 +182,7 @@ export const DeliveryLineModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable:
-                '{"table": "Article", "fieldToDisplay": "name","filtersToApply": {"stockOwnerId":"stockOwnerId"}}',
+            optionTable: '{"table": "Article", "fieldToDisplay": "name"}',
             isEditDisabled: true
         },
         'article{name}': {
@@ -195,7 +194,7 @@ export const DeliveryLineModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
-            link: 'articles/articleId',
+            link: null,
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
