@@ -466,3 +466,26 @@ query GetArticleLuBarcodeById($id: String!, $language: String = "en") {
 mutation bulkUpdateArticles($inputs: UpdateArticleInput!, $articlesId: [String!]!) {
     bulkUpdateArticles(inputs: $inputs, articlesId: $articlesId)
 }
+
+query SimpleGetAllArticlesWithFeatures(
+    $filters: ArticleSearchFilters
+    $orderBy: [ArticleOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    articles(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            handlingUnitContents {
+                id
+                handlingUnitContentFeatures {
+                    id
+                }
+            }
+        }
+    }
+}
