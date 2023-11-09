@@ -78,7 +78,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const updateHandlingUnitInput = {
             id: handlingUnitId,
             input: {
-                stockOwnerId: input.stockOwnerId,
                 comment: input.comment,
                 lastTransactionId
             }
@@ -105,6 +104,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const updateHandlingUnitContentInput = {
             id: id,
             input: {
+                stockOwnerId: input.stockOwnerId,
                 quantity: input.quantity,
                 stockStatus: input.stockStatus,
                 reservation: input.reservation,

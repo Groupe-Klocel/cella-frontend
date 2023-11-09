@@ -99,5 +99,7 @@
     "logistic-unit-models": "Logistic Unit Models",
     "shipping-modes": "Shipping Modes",
     "shipping-mode": "Shipping Mode",
-    "hook-configs": "Hook Configs"
+    "hook-configs": "Hook Configs",
+    "shipping-units": "Shipping Units",
+    "status-history": "Status History"
 }

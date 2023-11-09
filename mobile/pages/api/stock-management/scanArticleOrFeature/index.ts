@@ -80,6 +80,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             stockOwner {
                                 name
                             }
+                            baseUnitWeight
                         }
                         handlingUnitId
                         handlingUnit {
@@ -131,6 +132,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         stockOwner {
                             name
                         }
+                        baseUnitWeight
                     }
                     barcodeId
                     barcode {

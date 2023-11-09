@@ -299,6 +299,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         handlingUnitModel {
                             id
                             name
+                            weight
+                            closureWeight
                         }
                         roundId
                         round {
@@ -344,6 +346,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 article {
                                     name
                                     description
+                                    baseUnitWeight
                                 }
                             }
                         }
@@ -522,8 +525,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         count
                         results {
                             id
-                            articleId
-                            quantity
+                            pickedQuantity
                         }
                     }
                 }
@@ -739,6 +741,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 stockOwner {
                                     name
                                 }
+                                baseUnitWeight
                             }
                             handlingUnitContentFeatures {
                                 id
@@ -794,6 +797,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         handlingUnitModel {
                             id
                             name
+                            weight
+                            closureWeight
                         }
                         roundId
                         round {
@@ -844,6 +849,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                     stockOwner {
                                         name
                                     }
+                                    baseUnitWeight
                                 }
                             }
                         }

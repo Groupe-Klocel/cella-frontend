@@ -31,6 +31,7 @@ import { FC, useState } from 'react';
 import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';
 import configs from '../../../common/configs.json';
+import parameters from '../../../common/parameters.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -51,7 +52,7 @@ const BoxesPage: PageComponent = () => {
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t('messages:action-confirm'),
                 onOk: () => {
                     setId(id);
                 },
@@ -65,6 +66,7 @@ const BoxesPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ListComponent
+                searchCriteria={{ handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_BOX }}
                 headerData={headerData}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}

@@ -92,7 +92,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         stockStatusText
                         articleId
                         article {
+                            id
                             name
+                            baseUnitWeight
                         }
                     }
                 }
@@ -154,7 +156,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             stockStatusText
                             articleId
                             article {
+                                id
                                 name
+                                baseUnitWeight
                             }
                         }
                     }

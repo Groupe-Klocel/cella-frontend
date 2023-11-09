@@ -27,7 +27,12 @@ import { BarcodeRenderModal } from 'modules/Barcodes/Elements/BarcodeRenderModal
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { ListComponent, HeaderData } from 'modules/Crud/ListComponent';
+import {
+    ListComponent as ListComponentV2,
+    HeaderData as HeaderDataV2
+} from 'modules/Crud/ListComponentV2';
 import { LoadsBoxesModel } from 'models/LoadsBoxesModel';
+import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
 import configs from '../../../../common/configs.json';
 export interface IItemDetailsProps {
     loadId?: string | any;
@@ -36,15 +41,43 @@ const { Title } = Typography;
 const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
-    // header RELATED Boxes
+    // header RELATED to Boxes
     const loadBoxesHeaderData: HeaderData = {
         title: `${t('common:associatedLoadsBoxes')}`,
         routes: [],
         actionsComponent: null
     };
 
+    // header RELATED to StatusHistory
+    const statusHistoryHeaderData: HeaderDataV2 = {
+        title: `${t('common:status-history')}`,
+        routes: [],
+        actionsComponent: null
+    };
+
     return (
         <>
+            <Divider />
+            <ListComponentV2
+                searchCriteria={{ objectId: loadId }}
+                dataModel={StatusHistoryModelV2}
+                headerData={statusHistoryHeaderData}
+                actionColumns={[
+                    {
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: { id: string }) => (
+                            <LinkButton
+                                icon={<EyeTwoTone />}
+                                path={pathParams('/status-history/[id]', record.id)}
+                            />
+                        )
+                    }
+                ]}
+                searchable={false}
+                triggerDelete={undefined}
+                triggerSoftDelete={undefined}
+            />
             <Divider />
             <ListComponent
                 searchCriteria={{ loadId: loadId }}

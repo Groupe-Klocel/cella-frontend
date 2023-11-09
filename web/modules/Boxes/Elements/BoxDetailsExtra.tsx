@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
 import { EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
-import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
+import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Button, Divider, Modal, Space } from 'antd';
 import { useState } from 'react';
@@ -28,6 +28,7 @@ import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';
 import configs from '../../../../common/configs.json';
+import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
 
 export interface IItemDetailsProps {
     boxId?: string | any;
@@ -53,6 +54,13 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
         actionsComponent: undefined
     };
 
+    // header RELATED to StatusHistory
+    const statusHistoryHeaderData: HeaderData = {
+        title: `${t('common:status-history')}`,
+        routes: [],
+        actionsComponent: null
+    };
+
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
             Modal.confirm({
@@ -70,6 +78,27 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
         <>
             {huContentOutboundModes.length > 0 && huContentOutboundModes.includes(ModeEnum.Read) ? (
                 <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ objectId: boxId }}
+                        dataModel={StatusHistoryModelV2}
+                        headerData={statusHistoryHeaderData}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string }) => (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams('/status-history/[id]', record.id)}
+                                    />
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                        triggerDelete={undefined}
+                        triggerSoftDelete={undefined}
+                    />
                     <Divider />
                     <ListComponent
                         searchCriteria={{ handlingUnitOutboundId: boxId }}

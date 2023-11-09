@@ -61,7 +61,7 @@ const BoxPage: PageComponent = () => {
     const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t('messages:action-confirm'),
                 onOk: () => {
                     setId(id);
                 },

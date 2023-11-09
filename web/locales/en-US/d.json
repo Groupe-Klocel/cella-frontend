@@ -526,7 +526,7 @@
     "shippingType": "Shipping Type",
     "shippingTypeText": "Shipping Type",
     "deliveryId": "Delivery",
-    "boxName": "Box",
+    "hanldingUnitOutboundName": "Name",
     "boxStatus": "Status",
     "contactCivility": "Civility",
     "contactFirstName": "First Name",
@@ -621,5 +621,11 @@
     "parentHandlingUnit": "Parent handling unit",
     "PickingUser": "Picking User",
     "roundOrderId": "Round order",
-    "handlingUnit_parentHandlingUnit": "Parent handling unit"
+    "handlingUnit_parentHandlingUnit": "Parent handling unit",
+    "handlingUnit_typeText": "Handling unit type",
+    "statusDate": "Date",
+    "objectId": "Object ID",
+    "carrierShippingMode": "Shipping Mode",
+    "shippingUnitLineFeatures": "Shipping Unit line features",
+    "handlingUnit_stockOwner": "Stock Owner"
 }

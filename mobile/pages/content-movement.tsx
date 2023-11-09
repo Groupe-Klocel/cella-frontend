@@ -109,11 +109,11 @@ const ContentMvmt: PageComponent = () => {
             const articleLuBarcode =
                 storedObject[`step${workflow.expectedSteps[4]}`]?.data.chosenArticleLuBarcode;
             const stockOwnerName = articleLuBarcode?.stockOwner?.name ?? undefined;
+            const article = articleLuBarcode.article ? articleLuBarcode.article : articleLuBarcode;
             stockOwnerName
-                ? (object[t('common:article')] =
-                      articleLuBarcode.article.name + ' (' + stockOwnerName + ')')
-                : (object[t('common:article')] = articleLuBarcode.article.name);
-            object[t('common:article-description')] = articleLuBarcode.article.description;
+                ? (object[t('common:article')] = article.name + ' (' + stockOwnerName + ')')
+                : (object[t('common:article')] = article.name);
+            object[t('common:article-description')] = article.description;
             if (storedObject[`step${workflow.expectedSteps[3]}`]?.data?.feature) {
                 const serialNumber =
                     storedObject[`step${workflow.expectedSteps[3]}`]?.data.feature.value;
@@ -154,19 +154,13 @@ const ContentMvmt: PageComponent = () => {
                 storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenArticleLuBarcode;
             const movingQuantity =
                 storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity;
-
             const stockOwnerName = articleLuBarcode?.stockOwner?.name ?? undefined;
+            const article = articleLuBarcode.article ? articleLuBarcode.article : articleLuBarcode;
             stockOwnerName
                 ? (finalObject[t('common:article')] =
-                      movingQuantity +
-                      ' x ' +
-                      articleLuBarcode.article.name +
-                      ' (' +
-                      stockOwnerName +
-                      ')')
-                : (finalObject[t('common:movement_abbr')] =
-                      movingQuantity + ' x ' + articleLuBarcode.article.name);
-            finalObject[t('common:article-description')] = articleLuBarcode.article.description;
+                      movingQuantity + ' x ' + article.name + ' (' + stockOwnerName + ')')
+                : (finalObject[t('common:movement_abbr')] = movingQuantity + ' x ' + article.name);
+            finalObject[t('common:article-description')] = article.description;
         }
         if (
             storedObject[`step${workflow.expectedSteps[7]}`]?.data?.locations &&

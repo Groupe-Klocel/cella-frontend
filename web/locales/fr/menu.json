@@ -100,5 +100,7 @@
     "logistic-unit-models": "Modèles d'Unité Logistique",
     "shipping-mode": "Mode d'expédition",
     "shipping-modes": "Modes d'expédition",
-    "hook-configs": "Hook Configs"
+    "hook-configs": "Hook Configs",
+    "shipping-units": "Unités d'expédition",
+    "status-history": "Historique des états"
 }

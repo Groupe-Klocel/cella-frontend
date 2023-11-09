@@ -38,6 +38,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { RoundLineModelV2 } from 'models/RoundLineModelV2';
+import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
 
 const { Title } = Typography;
 
@@ -88,6 +89,13 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
         actionsComponent: <></>
     };
 
+    // header RELATED to StatusHistory
+    const statusHistoryHeaderData: HeaderData = {
+        title: `${t('common:status-history')}`,
+        routes: [],
+        actionsComponent: null
+    };
+
     // UPDATE Round
     const {
         mutate: userMutate,
@@ -123,6 +131,27 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
         <>
             {RoundLineModes.length > 0 && RoundLineModes.includes(ModeEnum.Read) ? (
                 <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ objectId: roundId }}
+                        dataModel={StatusHistoryModelV2}
+                        headerData={statusHistoryHeaderData}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string }) => (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams('/status-history/[id]', record.id)}
+                                    />
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                        triggerDelete={undefined}
+                        triggerSoftDelete={undefined}
+                    />
                     <Divider />
                     <ListComponent
                         searchCriteria={{ roundId: roundId }}
