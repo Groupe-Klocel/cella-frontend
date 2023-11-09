@@ -134,16 +134,5 @@
     "hu-movement": "Mouvement d'UM",
     "move-hu_abbr": "Dépl. UM",
     "other-articles": "Autres articles",
-    "close-box": "Fermer le colis",
-    "substitution": "Substitution",
-    "article-to-substitute": "Article à substituer",
-    "substitution-article": "Article de substitution",
-    "return-reception": "Réception de retour",
-    "customer": "Client",
-    "return": "Retour",
-    "new-return": "Nouveau retour",
-    "return-date": "Date de retour",
-    "feature-code": "Donnée traçable",
-    "other-box": "Autre carton",
-    "end-return": "Terminer Retour"
+    "close-box": "Fermer le colis"
 }

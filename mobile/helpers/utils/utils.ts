@@ -219,7 +219,7 @@ function extractGivenConfigsParams(
         if (key.startsWith(scope.toUpperCase())) {
             if (
                 (options.include &&
-                    !options.include.some((value) => key.endsWith(value.toUpperCase()))) ||
+                    options.include.some((value) => key.endsWith(value.toUpperCase()))) ||
                 (options.exclude &&
                     options.exclude.some((value) => key.endsWith(value.toUpperCase()))) ||
                 (options.min !== undefined &&

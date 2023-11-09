@@ -88,7 +88,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                 }
             } else {
                 // dummy HU to be created
-                if (scannedInfo[0] != '1' && scannedInfo[0] != 'P') {
+                if (scannedInfo[0] != '0' && scannedInfo[0] != 'P') {
                     showError(t('messages:unexpected-scanned-item'));
                     setResetForm(true);
                     setScannedInfo(undefined);

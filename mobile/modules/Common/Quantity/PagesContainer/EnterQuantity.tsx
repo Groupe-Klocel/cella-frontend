@@ -29,7 +29,7 @@ export interface IEnterQuantityProps {
     defaultValue?: number;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
-    availableQuantity?: number;
+    availableQuantity: number;
     checkComponent: any;
 }
 
@@ -73,14 +73,6 @@ export const EnterQuantity = ({
         trigger: { triggerRender, setTriggerRender }
     };
 
-    let rules: Array<any> = [{ required: true, message: t('messages:error-message-empty-input') }];
-    if (availableQuantity) {
-        rules.push({
-            type: 'Number',
-            max: availableQuantity,
-            message: t('messages:erroneous-quantity')
-        });
-    }
     return (
         <>
             <EnterNumberForm
@@ -90,7 +82,14 @@ export const EnterQuantity = ({
                 trigger={{ triggerRender, setTriggerRender }}
                 buttons={{ ...buttons }}
                 setEnteredInfo={setEnteredInfo}
-                rules={rules}
+                rules={[
+                    { required: true, message: t('messages:error-message-empty-input') },
+                    {
+                        type: 'number',
+                        max: availableQuantity,
+                        message: t('messages:erroneous-quantity')
+                    }
+                ]}
                 min={1}
                 initialValue={1}
                 isSelected={true}
