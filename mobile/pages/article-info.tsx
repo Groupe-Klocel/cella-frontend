@@ -75,14 +75,13 @@ const ArticleInfo: PageComponent = () => {
         if (articleInfo[`step${workflow.expectedSteps[1]}`]?.data?.chosenArticleLuBarcode) {
             const chosenArticleLuBarcode =
                 articleInfo[`step${workflow.expectedSteps[1]}`]?.data?.chosenArticleLuBarcode;
-
+            const article = chosenArticleLuBarcode.article
+                ? chosenArticleLuBarcode.article
+                : chosenArticleLuBarcode;
             object[t('common:article_abbr')] = chosenArticleLuBarcode.stockOwner
-                ? chosenArticleLuBarcode.article.name +
-                  ' (' +
-                  chosenArticleLuBarcode.stockOwner.name +
-                  ')'
-                : chosenArticleLuBarcode.article.name;
-            object[t('common:article-description')] = chosenArticleLuBarcode.article.description;
+                ? article.name + ' (' + chosenArticleLuBarcode.stockOwner.name + ')'
+                : article.name;
+            object[t('common:article-description')] = article.description;
             chosenArticleLuBarcode.barcode
                 ? (object[t('common:barcode')] = chosenArticleLuBarcode.barcode.name)
                 : undefined;
@@ -138,7 +137,7 @@ const ArticleInfo: PageComponent = () => {
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[0]}
                     label={t('common:article')}
-                    buttons={{ submitButton: true, backButton: true }}
+                    buttons={{ submitButton: true, backButton: false }}
                     trigger={{ triggerRender, setTriggerRender }}
                     checkComponent={(data: any) => <ArticleOrFeatureChecks dataToCheck={data} />}
                 ></ScanArticleOrFeature>

@@ -18,45 +18,55 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
-import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
+import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { HandlingUnitContentOutboundModelV2 as model } from 'models/HandlingUnitContentOutboundModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
-import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, useBoxLines } from '@helpers';
-import { useAppState } from 'context/AppContext';
+import MainLayout from '../../../components/layouts/MainLayout';
 import useTranslation from 'next-translate/useTranslation';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
+import { ShippingUnitLineDetailsExtra } from 'modules/ShippingUnits/Elements/ShippingUnitLineDetailsExtra';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
-import { BoxDetailsExtra } from 'modules/Boxes/Elements/BoxDetailsExtra';
+import { useAppState } from 'context/AppContext';
+import configs from '../../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const BoxPage: PageComponent = () => {
+const ShippingUnitLinePage: PageComponent = () => {
     const router = useRouter();
-    const { permissions } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
-    const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
+    const { permissions } = useAppState();
+    const modes = getModesFromPermissions(permissions, model.tableName);
+
     // #region to customize information
-    const breadCrumb = [
+    const shippingUnitDetailBreadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${data?.handlingUnitOutbound_name}`,
+            path: '/shipping-units/' + data?.handlingUnitOutboundId
         }
     ];
 
-    const pageTitle = `${t('common:boxes')} ${data?.name}`;
-    // #endregions
+    const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
-    // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
-    const rootPath = itemRoutes[itemRoutes.length - 1].path;
+    const breadCrumb = [
+        ...shippingUnitDetailBreadCrumb,
+        {
+            breadcrumbName: `${t('common:line')} ${data?.lineNumber}`
+        }
+    ];
+
+    const pageTitle = `${data?.handlingUnitOutbound_name} - ${t('common:line')} ${
+        data?.lineNumber
+    }`;
+    // #endregions
 
     const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
@@ -79,19 +89,16 @@ const BoxPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                data?.status < configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
                     <LinkButton
                         title={t('actions:edit')}
-                        path={`${rootPath}/edit/${id}`}
+                        path={`${rootPath}/line/edit/${id}`}
                         type="primary"
                     />
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Delete) &&
-                model.isSoftDeletable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isSoftDeletable ? (
                     <Button
                         onClick={() => confirmAction(id as string, setIdToDisable)()}
                         type="primary"
@@ -101,10 +108,7 @@ const BoxPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Delete) &&
-                model.isDeletable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
                     </Button>
@@ -114,13 +118,14 @@ const BoxPage: PageComponent = () => {
             </Space>
         )
     };
-    // #endregion
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
-                extraDataComponent={<BoxDetailsExtra boxId={id} />}
+                extraDataComponent={
+                    <ShippingUnitLineDetailsExtra contentId={data?.handlingUnitContentId} />
+                }
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
@@ -132,6 +137,6 @@ const BoxPage: PageComponent = () => {
     );
 };
 
-BoxPage.layout = MainLayout;
+ShippingUnitLinePage.layout = MainLayout;
 
-export default BoxPage;
+export default ShippingUnitLinePage;

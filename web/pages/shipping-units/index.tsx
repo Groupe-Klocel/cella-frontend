@@ -25,7 +25,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { ModeEnum } from 'generated/graphql';
 import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
+import { shippingUnitsRoutes as itemRoutes } from 'modules/ShippingUnits/Static/shippingUnitsRoutes';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import 'moment/min/locales';
@@ -35,7 +35,7 @@ import parameters from '../../../common/parameters.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const BoxesPage: PageComponent = () => {
+const ShippingUnitsPage: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -44,7 +44,7 @@ const BoxesPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     const headerData: HeaderData = {
-        title: t('common:boxes'),
+        title: t('common:shipping-units'),
         routes: itemRoutes,
         actionsComponent: undefined
     };
@@ -66,7 +66,7 @@ const BoxesPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ListComponent
-                searchCriteria={{ handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_BOX }}
+                searchCriteria={{ handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_PALLET }}
                 headerData={headerData}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
@@ -133,6 +133,6 @@ const BoxesPage: PageComponent = () => {
     );
 };
 
-BoxesPage.layout = MainLayout;
+ShippingUnitsPage.layout = MainLayout;
 
-export default BoxesPage;
+export default ShippingUnitsPage;

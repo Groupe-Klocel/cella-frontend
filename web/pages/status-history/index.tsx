@@ -19,23 +19,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import { META_DEFAULTS, getModesFromPermissions, pathParams } from '@helpers';
+import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
+import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
+import { StatusHistoryModelV2 as model } from 'models/StatusHistoryModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
-import 'moment/min/locales';
-import { useAppState } from 'context/AppContext';
-import configs from '../../../common/configs.json';
-import parameters from '../../../common/parameters.json';
-
+import { statusHistoryRoutes as itemRoutes } from 'modules/StatusHistory/Static/statusHistoryRoutes';
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const BoxesPage: PageComponent = () => {
+const StatusHistoryPages: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -44,15 +40,15 @@ const BoxesPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     const headerData: HeaderData = {
-        title: t('common:boxes'),
+        title: t('common:status-history'),
         routes: itemRoutes,
-        actionsComponent: undefined
+        actionsComponent: null
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
             Modal.confirm({
-                title: t('messages:action-confirm'),
+                title: t('messages:delete-confirm'),
                 onOk: () => {
                     setId(id);
                 },
@@ -66,7 +62,6 @@ const BoxesPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ListComponent
-                searchCriteria={{ handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_BOX }}
                 headerData={headerData}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
@@ -75,7 +70,7 @@ const BoxesPage: PageComponent = () => {
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: { id: string; status: number }) => (
+                        render: (record: { id: string }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
@@ -87,8 +82,7 @@ const BoxesPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
-                                model.isEditable &&
-                                record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                                model.isEditable ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -98,8 +92,7 @@ const BoxesPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isSoftDeletable &&
-                                record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                                model.isSoftDeletable ? (
                                     <Button
                                         icon={<StopOutlined />}
                                         onClick={() =>
@@ -111,8 +104,7 @@ const BoxesPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isDeletable &&
-                                record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                                model.isDeletable ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger
@@ -128,11 +120,12 @@ const BoxesPage: PageComponent = () => {
                     }
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
+                sortDefault={[{ field: 'statusDate', descending: true }]}
             />
         </>
     );
 };
 
-BoxesPage.layout = MainLayout;
+StatusHistoryPages.layout = MainLayout;
 
-export default BoxesPage;
+export default StatusHistoryPages;

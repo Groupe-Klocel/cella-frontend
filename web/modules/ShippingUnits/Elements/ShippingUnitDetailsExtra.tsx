@@ -28,14 +28,16 @@ import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';
 import configs from '../../../../common/configs.json';
+import parameters from '../../../../common/parameters.json';
+import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
 import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
 
 export interface IItemDetailsProps {
-    boxId?: string | any;
-    huId?: string | any;
+    shippingUnitId?: string | any;
+    handlingUnitId?: string | any;
 }
 
-const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
+const ShippingUnitDetailsExtra = ({ shippingUnitId, handlingUnitId }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
     const { permissions } = useAppState();
@@ -43,22 +45,29 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
         permissions,
         Table.HandlingUnitContentOutbound
     );
+    const huOutboundModes = getModesFromPermissions(permissions, Table.HandlingUnitOutbound);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     const [, setHandlingUnitContentOutboundsData] = useState<any>();
-
-    const huContentOutboundHeaderData: HeaderData = {
-        title: t('common:associated', { name: t('common:boxLines') }),
-        routes: [],
-        actionsComponent: undefined
-    };
 
     // header RELATED to StatusHistory
     const statusHistoryHeaderData: HeaderData = {
         title: `${t('common:status-history')}`,
         routes: [],
         actionsComponent: null
+    };
+
+    const huContentOutboundHeaderData: HeaderData = {
+        title: t('common:associated', { name: t('common:shippingUnitLines') }),
+        routes: [],
+        actionsComponent: undefined
+    };
+
+    const huOutboundHeaderData: HeaderData = {
+        title: t('common:children-shipping-units'),
+        routes: [],
+        actionsComponent: undefined
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -80,7 +89,7 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                 <>
                     <Divider />
                     <ListComponent
-                        searchCriteria={{ objectId: boxId }}
+                        searchCriteria={{ objectId: shippingUnitId }}
                         dataModel={StatusHistoryModelV2}
                         headerData={statusHistoryHeaderData}
                         actionColumns={[
@@ -101,12 +110,12 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                     />
                     <Divider />
                     <ListComponent
-                        searchCriteria={{ handlingUnitOutboundId: boxId }}
+                        searchCriteria={{ handlingUnitOutboundId: shippingUnitId }}
                         dataModel={HandlingUnitContentOutboundModelV2}
                         headerData={huContentOutboundHeaderData}
                         triggerDelete={{ idToDelete, setIdToDelete }}
                         triggerSoftDelete={{ idToDisable, setIdToDisable }}
-                        routeDetailPage={'/boxes/:id'}
+                        routeDetailPage={'/shipping-units/:id'}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
@@ -121,7 +130,7 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                                                 <LinkButton
                                                     icon={<EyeTwoTone />}
                                                     path={pathParamsFromDictionary(
-                                                        '/boxes/boxLine/[id]',
+                                                        '/shipping-units/line/[id]',
                                                         {
                                                             id: record.id
                                                         }
@@ -137,10 +146,10 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary(
-                                                    '/boxes/boxLine/edit/[id]',
+                                                    '/shipping-units/line/edit/[id]',
                                                     {
                                                         id: record.id,
-                                                        boxId
+                                                        shippingUnitId
                                                     }
                                                 )}
                                             />
@@ -178,8 +187,112 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
             ) : (
                 <></>
             )}
+            {huOutboundModes.length > 0 && huOutboundModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ handlingUnit_ParentHandlingUnitId: handlingUnitId }}
+                        dataModel={HandlingUnitOutboundModelV2}
+                        headerData={huOutboundHeaderData}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        routeDetailPage={'/shipping-units/:id'}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: {
+                                    id: string;
+                                    status: number;
+                                    handlingUnit_type: number;
+                                }) => (
+                                    <Space>
+                                        {huOutboundModes.length == 0 ||
+                                        !huOutboundModes.includes(ModeEnum.Read) ? (
+                                            <></>
+                                        ) : (
+                                            <>
+                                                <LinkButton
+                                                    icon={<EyeTwoTone />}
+                                                    path={
+                                                        record.handlingUnit_type ===
+                                                        parameters.HANDLING_UNIT_TYPE_PALLET
+                                                            ? pathParamsFromDictionary(
+                                                                  '/shipping-units/[id]',
+                                                                  {
+                                                                      id: record.id
+                                                                  }
+                                                              )
+                                                            : pathParamsFromDictionary(
+                                                                  '/boxes/[id]',
+                                                                  {
+                                                                      id: record.id
+                                                                  }
+                                                              )
+                                                    }
+                                                />
+                                            </>
+                                        )}
+                                        {huOutboundModes.length > 0 &&
+                                        huOutboundModes.includes(ModeEnum.Update) &&
+                                        HandlingUnitContentOutboundModelV2.isEditable &&
+                                        record?.status <
+                                            configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
+                                            <LinkButton
+                                                icon={<EditTwoTone />}
+                                                path={
+                                                    record.handlingUnit_type ===
+                                                    parameters.HANDLING_UNIT_TYPE_PALLET
+                                                        ? pathParamsFromDictionary(
+                                                              '/shipping-units/edit/[id]',
+                                                              {
+                                                                  id: record.id
+                                                              }
+                                                          )
+                                                        : pathParamsFromDictionary(
+                                                              '/boxes/edit/[id]',
+                                                              {
+                                                                  id: record.id
+                                                              }
+                                                          )
+                                                }
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {huOutboundModes.length > 0 &&
+                                        huOutboundModes.includes(ModeEnum.Delete) &&
+                                        HandlingUnitContentOutboundModelV2.isSoftDeletable &&
+                                        record?.status <
+                                            configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
+                                            <Button
+                                                icon={<StopOutlined />}
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        record.id,
+                                                        setIdToDisable,
+                                                        'disable'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                        setData={setHandlingUnitContentOutboundsData}
+                        sortDefault={[{ field: 'created', ascending: true }]}
+                    />
+                    <Divider />
+                </>
+            ) : (
+                <></>
+            )}
         </>
     );
 };
 
-export { BoxDetailsExtra };
+export { ShippingUnitDetailsExtra };

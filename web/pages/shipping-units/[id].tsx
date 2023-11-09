@@ -23,18 +23,18 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, useBoxLines } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
-import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
+import { shippingUnitsRoutes as itemRoutes } from 'modules/ShippingUnits/Static/shippingUnitsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
-import { BoxDetailsExtra } from 'modules/Boxes/Elements/BoxDetailsExtra';
+import { ShippingUnitDetailsExtra } from 'modules/ShippingUnits/Elements/ShippingUnitDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const BoxPage: PageComponent = () => {
+const ShippingUnitPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -52,7 +52,7 @@ const BoxPage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:boxes')} ${data?.name}`;
+    const pageTitle = `${t('common:shipping-unit')} ${data?.name}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -120,7 +120,12 @@ const BoxPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
-                extraDataComponent={<BoxDetailsExtra boxId={id} />}
+                extraDataComponent={
+                    <ShippingUnitDetailsExtra
+                        shippingUnitId={id}
+                        handlingUnitId={data?.handlingUnit_id}
+                    />
+                }
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
@@ -132,6 +137,6 @@ const BoxPage: PageComponent = () => {
     );
 };
 
-BoxPage.layout = MainLayout;
+ShippingUnitPage.layout = MainLayout;
 
-export default BoxPage;
+export default ShippingUnitPage;
