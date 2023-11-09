@@ -213,7 +213,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                 filters: {},
                 orderBy: null,
                 page: 1,
-                itemsPerPage: 100
+                itemsPerPage: 1000
             };
             const options = await graphqlRequestClient.request(query, variables);
             const result: { [key: string]: any } = {};
