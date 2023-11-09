@@ -41,7 +41,7 @@ import {
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
-import { FilterFieldType, FormDataType, FormOptionType, ModelType } from 'models/ModelsV2';
+import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
@@ -288,7 +288,13 @@ const ListComponent = (props: IListProps) => {
                 cancelButtonTitle: 'actions:reset',
                 cancelButton: true,
                 submit: true,
-                content: <ListFilters form={formSearch} columns={filterFields} />,
+                content: (
+                    <ListFilters
+                        form={formSearch}
+                        columns={filterFields}
+                        handleSubmit={handleSubmit}
+                    />
+                ),
                 onCancel: () => handleReset(),
                 onComfirm: () => handleSubmit()
             }),

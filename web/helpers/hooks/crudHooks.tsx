@@ -156,6 +156,7 @@ const useDetail = (id: string, queryName: string, fields: Array<string>, languag
             id: id,
             language: language
         };
+
         graphqlRequestClient
             .request(query, variables)
             .then((result: any) => {
@@ -208,6 +209,61 @@ const useRecordHistoryDetail = (
     const reload = () => {
         const variables = {
             id: parseInt(sequenceId),
+            language: language
+        };
+
+        graphqlRequestClient
+            .request(query, variables)
+            .then((result: any) => {
+                // Object.keys(result).forEach((element) => {
+                //     Object.keys(result[element]).forEach((key) => {
+                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                //             result[element][key] = setUTCDateTime(result[element][key]);
+                //         }
+                //     });
+                // });
+                setDetail({ isLoading: false, data: result, error: false });
+            })
+            .catch((error: any) => {
+                if (error.response && error.response.errors[0].extensions) {
+                    showError(t(`errors:${error.response.errors[0].extensions.code}`));
+                } else {
+                    showError(t('messages:error-getting-this-data'));
+                    console.log(error);
+                }
+                setDetail({ isLoading: false, error: true });
+            });
+    };
+    return { detail, reload };
+};
+
+/**
+ * Getting statusHistory detail from CRUD API.
+ * @param id Item id to query.
+ * @param queryName endpoint of list query
+ * @param fields list of fields to fetch
+ * @returns { {isLoading, result, mutate}, reload } where isLoading and result are state variable and mutate is method to call for fetching detail.
+ */
+
+const useStatusHistoryDetail = (
+    id: string,
+    queryName: string,
+    fields: Array<string>,
+    language?: string
+) => {
+    const { t } = useTranslation();
+    const { graphqlRequestClient } = useAuth();
+
+    const query = gql`query ${queryName}($id: Int!, $language: String = "en") {
+        ${queryName}(id: $id, language: $language) {
+            ${fields.join('\n')}
+        }
+    }`;
+
+    const [detail, setDetail] = useState<any>({ isLoading: true, data: [], error: false });
+    const reload = () => {
+        const variables = {
+            id: parseInt(id),
             language: language
         };
 
@@ -509,5 +565,6 @@ export {
     useExport,
     useDelete,
     useSoftDelete,
-    useRecordHistoryDetail
+    useRecordHistoryDetail,
+    useStatusHistoryDetail
 };
