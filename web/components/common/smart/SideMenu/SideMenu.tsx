@@ -348,6 +348,15 @@ const SideMenu: FC = () => {
                 {getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
                     ModeEnum.Read
                 ) ? (
+                    <Menu.Item key="preparation-management-shipping-units">
+                        <Link href="/shipping-units">{t('shipping-units')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
+                    ModeEnum.Read
+                ) ? (
                     <Menu.Item key="preparation-management-boxes">
                         <Link href="/boxes">{t('boxes')}</Link>
                     </Menu.Item>
@@ -393,6 +402,15 @@ const SideMenu: FC = () => {
                 ) ? (
                     <Menu.Item key="monitoring-record-history">
                         <Link href="/record-history">{t('record-history')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.StatusHistory).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="monitoring-status-history">
+                        <Link href="/status-history">{t('status-history')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>

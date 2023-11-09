@@ -42,9 +42,14 @@ import { ContentSpin } from '@components';
 export interface IGeneralSearchProps {
     form: any;
     columns: Array<FilterFieldType>;
+    handleSubmit?: any;
 }
 
-const ListFilters: FC<IGeneralSearchProps> = ({ form, columns }: IGeneralSearchProps) => {
+const ListFilters: FC<IGeneralSearchProps> = ({
+    form,
+    columns,
+    handleSubmit
+}: IGeneralSearchProps) => {
     const { t } = useTranslation();
     const { RangePicker } = DatePicker;
     const router = useRouter();
@@ -302,10 +307,22 @@ const ListFilters: FC<IGeneralSearchProps> = ({ form, columns }: IGeneralSearchP
     }, [configParamOptionsList, optionsList]);
     // #endregion
 
+    //enter key for form validation
+    const handleKeyPress = (event: any) => {
+        if (event.key === 'Enter') {
+            handleSubmit();
+        }
+    };
+
     return (
         <>
             {!isLoading ? (
-                <Form form={form} layout="vertical" name="control-hooks">
+                <Form
+                    form={form}
+                    layout="vertical"
+                    name="control-hooks"
+                    onKeyPress={handleKeyPress}
+                >
                     {columnsInfos?.map((item: FilterFieldType) => {
                         if (item.type === FormDataType.Number)
                             return (

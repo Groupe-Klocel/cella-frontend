@@ -18,23 +18,24 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
-import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
-import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
+import { StatusHistoryModelV2 as model } from 'models/StatusHistoryModelV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, useBoxLines } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
-import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
+import { statusHistoryRoutes as itemRoutes } from 'modules/StatusHistory/Static/statusHistoryRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
-import { BoxDetailsExtra } from 'modules/Boxes/Elements/BoxDetailsExtra';
+import {
+    HeaderData,
+    ItemDetailComponent
+} from 'modules/StatusHistory/Elements/StatusHistoryDetailComponent';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const BoxPage: PageComponent = () => {
+const StatusHistoryPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -48,20 +49,20 @@ const BoxPage: PageComponent = () => {
     const breadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${data?.id}`
         }
     ];
 
-    const pageTitle = `${t('common:boxes')} ${data?.name}`;
+    const pageTitle = `${t('common:status-history')} ${data?.id}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
-    const rootPath = itemRoutes[itemRoutes.length - 1].path;
+    const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
     const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
             Modal.confirm({
-                title: t('messages:action-confirm'),
+                title: t('messages:delete-confirm'),
                 onOk: () => {
                     setId(id);
                 },
@@ -74,12 +75,10 @@ const BoxPage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
+        onBackRoute: rootPath,
         actionsComponent: (
             <Space>
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Update) &&
-                model.isEditable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/edit/${id}`}
@@ -88,10 +87,7 @@ const BoxPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Delete) &&
-                model.isSoftDeletable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isSoftDeletable ? (
                     <Button
                         onClick={() => confirmAction(id as string, setIdToDisable)()}
                         type="primary"
@@ -101,10 +97,7 @@ const BoxPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Delete) &&
-                model.isDeletable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
                     </Button>
@@ -120,7 +113,6 @@ const BoxPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
-                extraDataComponent={<BoxDetailsExtra boxId={id} />}
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
@@ -132,6 +124,6 @@ const BoxPage: PageComponent = () => {
     );
 };
 
-BoxPage.layout = MainLayout;
+StatusHistoryPage.layout = MainLayout;
 
-export default BoxPage;
+export default StatusHistoryPage;

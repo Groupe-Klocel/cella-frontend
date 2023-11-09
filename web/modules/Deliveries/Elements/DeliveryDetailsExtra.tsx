@@ -38,6 +38,7 @@ import { DeliveryLineModelV2 } from 'models/DeliveryLineModelV2';
 import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
 import configs from '../../../../common/configs.json';
 import { useEffect, useState } from 'react';
+import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
 
 const { Title } = Typography;
 
@@ -191,10 +192,38 @@ const DeliveryDetailsExtra = ({
         };
     };
 
+    // header RELATED to StatusHistory
+    const statusHistoryHeaderData: HeaderData = {
+        title: `${t('common:status-history')}`,
+        routes: [],
+        actionsComponent: null
+    };
+
     return (
         <>
             {deliveryAddressModes.length > 0 && deliveryAddressModes.includes(ModeEnum.Read) ? (
                 <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ objectId: deliveryId }}
+                        dataModel={StatusHistoryModelV2}
+                        headerData={statusHistoryHeaderData}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string }) => (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams('/status-history/[id]', record.id)}
+                                    />
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                        triggerDelete={undefined}
+                        triggerSoftDelete={undefined}
+                    />
                     <Divider />
                     <ListComponent
                         searchCriteria={{ deliveryId: deliveryId }}

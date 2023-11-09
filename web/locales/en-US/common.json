@@ -247,5 +247,10 @@
     "logistic-unit-model": "Logistic Unit Model",
     "logistic-unit-models": "Logistic Unit Models",
     "hook-config": "Hook Config",
-    "hook-configs": "Hook Configs"
+    "hook-configs": "Hook Configs",
+    "shipping-unit": "Shipping Unit",
+    "shipping-units": "Shipping Units",
+    "shippingUnitLines": "Shipping Unit Lines",
+    "children-shipping-units": "Children Shipping Units",
+    "status-history": "Status History"
 }

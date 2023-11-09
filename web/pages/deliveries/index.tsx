@@ -39,6 +39,7 @@ import configs from '../../../common/configs.json';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
+import { DeliveryProgressBar } from 'modules/Deliveries/Elements/DeliveryProgressBar';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const DeliveryPages: PageComponent = () => {
@@ -197,6 +198,15 @@ const DeliveryPages: PageComponent = () => {
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 refetch={refetch}
+                extraColumns={[
+                    {
+                        title: 'd:progress',
+                        key: 'progress',
+                        render: (record: { id: string; status: number }) => (
+                            <DeliveryProgressBar id={record.id} status={record.status} />
+                        )
+                    }
+                ]}
                 actionColumns={[
                     {
                         title: 'actions:actions',
