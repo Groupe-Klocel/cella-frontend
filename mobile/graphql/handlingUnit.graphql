@@ -67,6 +67,10 @@ query GetHandlingUnits(
                 reservation
                 stockStatus
                 stockStatusText
+                stockOwnerId
+                stockOwner {
+                    name
+                }
                 articleId
                 article {
                     id
