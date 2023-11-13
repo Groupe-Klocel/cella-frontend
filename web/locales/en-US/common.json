@@ -252,5 +252,9 @@
     "shipping-units": "Shipping Units",
     "shippingUnitLines": "Shipping Unit Lines",
     "children-shipping-units": "Children Shipping Units",
-    "status-history": "Status History"
+    "status-history": "Status History",
+    "document-histories": "Documents Histories",
+    "document-history": "Document History",
+    "notification": "Notification",
+    "notifications": "Notifications"
 }

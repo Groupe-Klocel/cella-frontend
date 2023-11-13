@@ -43,12 +43,14 @@ export interface IGeneralSearchProps {
     form: any;
     columns: Array<FilterFieldType>;
     handleSubmit?: any;
+    resetForm?: boolean;
 }
 
 const ListFilters: FC<IGeneralSearchProps> = ({
     form,
     columns,
-    handleSubmit
+    handleSubmit,
+    resetForm
 }: IGeneralSearchProps) => {
     const { t } = useTranslation();
     const { RangePicker } = DatePicker;
@@ -68,6 +70,12 @@ const ListFilters: FC<IGeneralSearchProps> = ({
     const onOk = (value: RangePickerProps['value']) => {
         console.log('onOk: ', value);
     };
+
+    useEffect(() => {
+        if (resetForm) {
+            form.resetFields();
+        }
+    }, [resetForm]);
 
     // #region handle configs/params options if any
     async function getConfigsAndParametersByScopes(
@@ -334,6 +342,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     key={item.name}
                                     rules={item.rules!}
                                     normalize={(value) => (value ? value : undefined)}
+                                    initialValue={
+                                        item?.initialValue ? item?.initialValue : undefined
+                                    }
                                 >
                                     <InputNumber
                                         style={{ width: '100%' }}
@@ -350,6 +361,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     }
                                     key={item.name}
                                     normalize={(value) => (value ? value : undefined)}
+                                    initialValue={
+                                        item?.initialValue ? item?.initialValue : undefined
+                                    }
                                 >
                                     <Input
                                         maxLength={item.maxLength ? item.maxLength : 100}
@@ -366,6 +380,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     }
                                     key={item.name}
                                     normalize={(value) => (value ? value : undefined)}
+                                    initialValue={
+                                        item?.initialValue ? item?.initialValue : undefined
+                                    }
                                 >
                                     <Input.TextArea
                                         maxLength={item.maxLength ? item.maxLength : 100}
@@ -381,6 +398,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     }
                                     name={item.name}
                                     rules={item.rules!}
+                                    initialValue={
+                                        item?.initialValue ? item?.initialValue : undefined
+                                    }
                                 >
                                     <Select
                                         disabled={item.disabled ? true : false}
@@ -411,6 +431,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     key={item.name}
                                     rules={item.rules!}
                                     normalize={(value) => (value ? value : undefined)}
+                                    initialValue={
+                                        item?.initialValue ? item?.initialValue : undefined
+                                    }
                                 >
                                     <DatePicker
                                         format="YYYY-MM-DD HH:mm:ss"
@@ -419,7 +442,14 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     />
                                 </Form.Item>
                             );
-                        else if (item.type == FormDataType.CalendarRange)
+                        else if (item.type == FormDataType.CalendarRange) {
+                            let startDate = null;
+                            let endDate = null;
+                            if (item.initialValue && item.initialValue[0])
+                                startDate = moment(item.initialValue[0]);
+                            if (item.initialValue && item.initialValue[1])
+                                endDate = moment(item.initialValue[1]);
+
                             return (
                                 <Form.Item
                                     name={item.name}
@@ -439,10 +469,11 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                         onOk={onOk}
                                         placeholder={[t('common:start-date'), t('common:end-date')]}
                                         allowClear
+                                        defaultValue={[startDate, endDate]}
                                     />
                                 </Form.Item>
                             );
-                        else if (item.type == FormDataType.AutoComplete)
+                        } else if (item.type == FormDataType.AutoComplete)
                             return (
                                 <Form.Item
                                     label={
@@ -450,7 +481,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     }
                                     name={item.name}
                                     rules={item.rules!}
-                                    initialValue={item.initialValue}
+                                    initialValue={
+                                        item?.initialValue ? item?.initialValue : undefined
+                                    }
                                     normalize={(value) => (value ? value : undefined)}
                                 >
                                     <AutoComplete
@@ -495,7 +528,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                 <Form.Item
                                     name={item.name}
                                     valuePropName="checked"
-                                    initialValue={false}
+                                    initialValue={item.initialValue ? item.initialValue : false}
                                     key={item.name}
                                 >
                                     <Checkbox>{t(`d:${item.name}`)}</Checkbox>

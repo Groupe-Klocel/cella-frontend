@@ -32,7 +32,7 @@ import {
     HeaderData as HeaderDataV2
 } from 'modules/Crud/ListComponentV2';
 import { LoadsBoxesModel } from 'models/LoadsBoxesModel';
-import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
+import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
 import configs from '../../../../common/configs.json';
 export interface IItemDetailsProps {
     loadId?: string | any;
@@ -60,23 +60,12 @@ const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
             <Divider />
             <ListComponentV2
                 searchCriteria={{ objectId: loadId }}
-                dataModel={StatusHistoryModelV2}
+                dataModel={StatusHistoryDetailExtraModelV2}
                 headerData={statusHistoryHeaderData}
-                actionColumns={[
-                    {
-                        title: 'actions:actions',
-                        key: 'actions',
-                        render: (record: { id: string }) => (
-                            <LinkButton
-                                icon={<EyeTwoTone />}
-                                path={pathParams('/status-history/[id]', record.id)}
-                            />
-                        )
-                    }
-                ]}
                 searchable={false}
                 triggerDelete={undefined}
                 triggerSoftDelete={undefined}
+                columnFilter={false}
             />
             <Divider />
             <ListComponent

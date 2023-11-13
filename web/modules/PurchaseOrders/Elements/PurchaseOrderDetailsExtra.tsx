@@ -29,7 +29,7 @@ import { PurchaseOrderLineModelV2 } from 'models/PurchaseOrderLineModelV2';
 import { MovementModelV2 } from 'models/MovementModelV2';
 import { useState } from 'react';
 import configs from '../../../../common/configs.json';
-import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
+import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
 
 export interface IItemDetailsProps {
     purchaseOrderId?: string | any;
@@ -112,23 +112,12 @@ const PurchaseOrderDetailsExtra = ({
             <Divider />
             <ListComponent
                 searchCriteria={{ objectId: purchaseOrderId }}
-                dataModel={StatusHistoryModelV2}
+                dataModel={StatusHistoryDetailExtraModelV2}
                 headerData={statusHistoryHeaderData}
-                actionColumns={[
-                    {
-                        title: 'actions:actions',
-                        key: 'actions',
-                        render: (record: { id: string }) => (
-                            <LinkButton
-                                icon={<EyeTwoTone />}
-                                path={pathParams('/status-history/[id]', record.id)}
-                            />
-                        )
-                    }
-                ]}
                 searchable={false}
                 triggerDelete={undefined}
                 triggerSoftDelete={undefined}
+                columnFilter={false}
             />
             <Divider />
             <ListComponent

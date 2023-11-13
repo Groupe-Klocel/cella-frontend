@@ -66,7 +66,9 @@ export const ValidateQuantityMoveForm = ({
     let articleLuBarcodeId: string;
     if (storedObject.step35.data.chosenArticleLuBarcode) {
         articleInfo.articleId = storedObject.step35.data.chosenArticleLuBarcode.articleId;
-        articleInfo.articleName = storedObject.step35.data.chosenArticleLuBarcode.article.name;
+        articleInfo.articleName = storedObject.step35.data.chosenArticleLuBarcode.article
+            ? storedObject.step35.data.chosenArticleLuBarcode.article.name
+            : storedObject.step35.data.chosenArticleLuBarcode.name;
         articleInfo.stockOwnerId =
             storedObject.step35.data.chosenArticleLuBarcode.stockOwnerId ?? undefined;
         articleInfo.stockOwnerName =

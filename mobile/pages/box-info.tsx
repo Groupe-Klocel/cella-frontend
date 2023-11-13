@@ -62,7 +62,7 @@ const BoxInfo: PageComponent = () => {
         if (boxInfo[`step${workflow.expectedSteps[0]}`]?.data?.handlingUnitOutbound) {
             const infoBox = boxInfo[`step${workflow.expectedSteps[0]}`]?.data?.handlingUnitOutbound;
 
-            object[t('common:box')] = infoBox.name;
+            object[t('common:shipping-unit-box_abbr')] = infoBox.name;
             object[t('common:order_abbr')] = infoBox.delivery.name;
             object[t('common:status')] = infoBox.statusText;
             object[t('common:stock-owner_abbr')] = infoBox.handlingUnit.stockOwner.name;
@@ -92,7 +92,7 @@ const BoxInfo: PageComponent = () => {
     return (
         <PageContentWrapper>
             <HeaderContent
-                title={t('common:box-info')}
+                title={t('common:shipping-unit-box-info')}
                 actionsRight={
                     <Space>
                         <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
@@ -113,7 +113,7 @@ const BoxInfo: PageComponent = () => {
                 <ScanBoxForm
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[0]}
-                    label={t('common:box')}
+                    label={t('common:shipping-unit-box')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ submitButton: true }}
                 ></ScanBoxForm>
