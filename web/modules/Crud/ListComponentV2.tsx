@@ -265,6 +265,8 @@ const ListComponent = (props: IListProps) => {
     let resetForm = false;
     let showBadge = false;
 
+    searchCriterias = props.searchCriteria;
+
     if (props.searchable) {
         if (cookie.get(`${props.dataModel.resolverName}SavedFilters`)) {
             const savedFilters = JSON.parse(
@@ -285,9 +287,6 @@ const ListComponent = (props: IListProps) => {
                 }
             });
             showBadge = true;
-        } else {
-            searchCriterias = props.searchCriteria;
-            showBadge = false;
         }
     }
 
@@ -346,8 +345,7 @@ const ListComponent = (props: IListProps) => {
                 const searchValues = formSearch.getFieldsValue(true);
 
                 const newSearchValues = {
-                    ...searchValues,
-                    ...search
+                    ...searchValues
                 };
 
                 cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
@@ -382,7 +380,7 @@ const ListComponent = (props: IListProps) => {
                 }
 
                 reloadData();
-                setSearch(newSearchValues);
+                setSearch(savedFilters);
                 closeDrawer();
             })
             .catch((err) => showError(t('errors:DB-000111')));
