@@ -17,17 +17,36 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Welcome } from '@components';
+import { Page, Welcome } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
+import FrPage from 'modules/AboutCella/Translations/Fr';
+import EnPage from 'modules/AboutCella/Translations/En';
+import { useRouter } from 'next/router';
 import { FC } from 'react';
+import styled from 'styled-components';
+
+const CenteredWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    align-items: center;
+    padding-top: 70px;
+`;
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AboutPage: PageComponent = () => {
+    const router = useRouter();
+
+    const language = router.locale;
+
     return (
-        <>
-            <Welcome text="You are on About Page" />
-        </>
+        <Page>
+            <CenteredWrapper>
+                {language == 'fr' && <FrPage />}
+                {language == 'en-US' && <EnPage />}
+            </CenteredWrapper>
+        </Page>
     );
 };
 

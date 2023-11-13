@@ -627,5 +627,13 @@
     "objectId": "Object ID",
     "carrierShippingMode": "Shipping Mode",
     "shippingUnitLineFeatures": "Shipping Unit line features",
-    "handlingUnit_stockOwner": "Stock Owner"
+    "handlingUnit_stockOwner": "Stock Owner",
+    "documentName": "Document name",
+    "executionDate": "Execution date",
+    "printerName": "Printer used",
+    "documentTypeText": "Document type",
+    "documentType": "Document Type",
+    "argument_id": "Involved Object Id",
+    "argument_sequenceId": "Involved Sequence Id",
+    "userId": "User"
 }
