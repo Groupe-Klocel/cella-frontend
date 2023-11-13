@@ -84,7 +84,6 @@
     "stock-statuses": "Stock Statuses",
     "users": "Users",
     "users-rights": "Users rights",
-    "warning": "Warning",
     "user-settings": "My Settings",
     "barcode": "Barcode",
     "add-carrier": "Add a Carrier",
@@ -101,5 +100,7 @@
     "shipping-mode": "Shipping Mode",
     "hook-configs": "Hook Configs",
     "shipping-units": "Shipping Units",
-    "status-history": "Status History"
+    "status-history": "Status History",
+    "document-histories": "Documents Histories",
+    "notifications": "Notifications"
 }

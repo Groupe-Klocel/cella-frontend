@@ -415,11 +415,23 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.DocumentHistory).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="monitoring-document-history">
+                        <Link href="/document-histories">{t('document-histories')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 <Menu.Item key="monitoring-dashboard">
+                    <Link href="/dashboard">{t('dashboard')}</Link>
+                </Menu.Item>
+                <Menu.Item key="monitoring-metabase">
                     <Link href={bi_link}>{t('bi-solution')}</Link>
                 </Menu.Item>
-                <Menu.Item key="monitoring-warnings">
-                    <Link href="/warning">{t('warning')}</Link>
+                <Menu.Item key="monitoring-notifications">
+                    <Link href="/notifications">{t('notifications')}</Link>
                 </Menu.Item>
             </SubMenu>
             <Menu.Item icon={<QuestionCircleOutlined />} key="about">

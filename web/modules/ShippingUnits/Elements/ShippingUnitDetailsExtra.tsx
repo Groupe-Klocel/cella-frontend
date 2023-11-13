@@ -30,7 +30,7 @@ import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOu
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
 import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
-import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
+import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
 
 export interface IItemDetailsProps {
     shippingUnitId?: string | any;
@@ -90,23 +90,12 @@ const ShippingUnitDetailsExtra = ({ shippingUnitId, handlingUnitId }: IItemDetai
                     <Divider />
                     <ListComponent
                         searchCriteria={{ objectId: shippingUnitId }}
-                        dataModel={StatusHistoryModelV2}
+                        dataModel={StatusHistoryDetailExtraModelV2}
                         headerData={statusHistoryHeaderData}
-                        actionColumns={[
-                            {
-                                title: 'actions:actions',
-                                key: 'actions',
-                                render: (record: { id: string }) => (
-                                    <LinkButton
-                                        icon={<EyeTwoTone />}
-                                        path={pathParams('/status-history/[id]', record.id)}
-                                    />
-                                )
-                            }
-                        ]}
                         searchable={false}
                         triggerDelete={undefined}
                         triggerSoftDelete={undefined}
+                        columnFilter={false}
                     />
                     <Divider />
                     <ListComponent

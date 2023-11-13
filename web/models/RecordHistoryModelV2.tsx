@@ -225,7 +225,7 @@ export const RecordHistoryModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: 'Checkbox',
+            searchingFormat: 'Boolean',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,

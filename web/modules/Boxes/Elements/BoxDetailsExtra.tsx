@@ -28,7 +28,7 @@ import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';
 import configs from '../../../../common/configs.json';
-import { StatusHistoryModelV2 } from 'models/StatusHistoryModelV2';
+import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
 
 export interface IItemDetailsProps {
     boxId?: string | any;
@@ -81,23 +81,12 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                     <Divider />
                     <ListComponent
                         searchCriteria={{ objectId: boxId }}
-                        dataModel={StatusHistoryModelV2}
+                        dataModel={StatusHistoryDetailExtraModelV2}
                         headerData={statusHistoryHeaderData}
-                        actionColumns={[
-                            {
-                                title: 'actions:actions',
-                                key: 'actions',
-                                render: (record: { id: string }) => (
-                                    <LinkButton
-                                        icon={<EyeTwoTone />}
-                                        path={pathParams('/status-history/[id]', record.id)}
-                                    />
-                                )
-                            }
-                        ]}
                         searchable={false}
                         triggerDelete={undefined}
                         triggerSoftDelete={undefined}
+                        columnFilter={false}
                     />
                     <Divider />
                     <ListComponent
