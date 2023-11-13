@@ -36,7 +36,7 @@ const menuItemDatas = [
         path: '/article-info'
     },
     {
-        title: 'menu:box-info',
+        title: 'menu:shipping-unit-box-info',
         path: '/box-info'
     },
     {

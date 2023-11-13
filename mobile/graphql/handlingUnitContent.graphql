@@ -34,6 +34,11 @@ query GetHandlingUnitContents(
         totalPages
         results {
             id
+            stockOwnerId
+            stockOwner {
+                id
+                name
+            }
             article {
                 description
                 name
