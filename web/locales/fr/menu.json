@@ -18,8 +18,8 @@
     "carriers": "Transporteurs",
     "dummy-hu-generator": "Générateur d'unités de manutention",
     "location": "Emplacement",
-    "logistic-unit": "Unité Logistique",
-    "logistic-units": "Unités Logistiques",
+    "logistic-unit": "Conditionnement",
+    "logistic-units": "Conditionnements",
     "cartography": "Cartographie",
     "companies": "Sociétés",
     "configuration": "Configuration",
@@ -84,7 +84,6 @@
     "stock-statuses": "Etats de stock",
     "users": "Utilisateurs",
     "users-rights": "Droits utilisateurs",
-    "warning": "Alertes",
     "user-settings": "Mes Paramètres",
     "add-carrier": "Ajouter un transporteur",
     "stock-owner": "Propriétaire du stock",
@@ -97,10 +96,12 @@
     "warehouse-workers": "Utilisateurs",
     "roles": "Rôles",
     "record-history": "Historique",
-    "logistic-unit-models": "Modèles d'Unité Logistique",
+    "logistic-unit-models": "Modèles de conditionnement",
     "shipping-mode": "Mode d'expédition",
     "shipping-modes": "Modes d'expédition",
     "hook-configs": "Hook Configs",
     "shipping-units": "Unités d'expédition",
-    "status-history": "Historique des états"
+    "status-history": "Historique des états",
+    "document-histories": "Historique des documents",
+    "notifications": "Notifications"
 }

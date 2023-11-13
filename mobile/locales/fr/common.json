@@ -134,5 +134,8 @@
     "hu-movement": "Mouvement d'UM",
     "move-hu_abbr": "Dépl. UM",
     "other-articles": "Autres articles",
-    "close-box": "Fermer le colis"
+    "close-box": "Fermer le colis",
+    "shipping-unit-box": "Unité d'expédition/Colis",
+    "shipping-unit-box_abbr": "Unité Expé./Colis",
+    "shipping-unit-box-info": "Info Unité d'expédition/Colis"
 }

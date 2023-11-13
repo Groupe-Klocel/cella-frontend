@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { SearchOutlined } from '@ant-design/icons';
 import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components';
-import { Space, Form, Button, Empty, Alert } from 'antd';
+import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { EyeTwoTone } from '@ant-design/icons';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import useTranslation from 'next-translate/useTranslation';
@@ -37,7 +37,8 @@ import {
     useExport,
     useList,
     flatten,
-    useSoftDelete
+    useSoftDelete,
+    cookie
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
@@ -126,7 +127,7 @@ const RecordHistoryListComponent = (props: IListProps) => {
     const hiddenListFields = Object.keys(props.dataModel.fieldsInfo).filter(
         (key) => props.dataModel.fieldsInfo[key].isDefaultHiddenList
     );
-    const filterFields = Object.keys(props.dataModel.fieldsInfo)
+    let filterFields = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].searchingFormat !== null)
         .map((key) => ({
             displayName: t(`d:${props.dataModel.fieldsInfo[key].displayName ?? key}`),
@@ -138,7 +139,8 @@ const RecordHistoryListComponent = (props: IListProps) => {
             config: props.dataModel.fieldsInfo[key].config ?? undefined,
             param: props.dataModel.fieldsInfo[key].param ?? undefined,
             optionTable: props.dataModel.fieldsInfo[key].optionTable ?? undefined,
-            isMultipleSearch: props.dataModel.fieldsInfo[key].isMultipleSearch ?? undefined
+            isMultipleSearch: props.dataModel.fieldsInfo[key].isMultipleSearch ?? undefined,
+            initialValue: undefined
         }));
     // extract id, name and link from props.dataModel.fieldsInfo where link is not null
     const linkFields = Object.keys(props.dataModel.fieldsInfo)
@@ -231,7 +233,38 @@ const RecordHistoryListComponent = (props: IListProps) => {
 
     // #region SEARCH OPERATIONS
 
-    const [search, setSearch] = useState(props.searchCriteria);
+    // SearchForm in cookies
+    let searchCriterias: any = {};
+    let resetForm = false;
+    let showBadge = false;
+
+    if (props.searchable) {
+        if (cookie.get(`${props.dataModel.resolverName}SavedFilters`)) {
+            const savedFilters = JSON.parse(
+                cookie.get(`${props.dataModel.resolverName}SavedFilters`)!
+            );
+
+            searchCriterias = { ...savedFilters, ...props.searchCriteria };
+            const initialValues = searchCriterias;
+
+            filterFields = filterFields.map((item) => {
+                if (item.name in initialValues) {
+                    return {
+                        ...item,
+                        initialValue: initialValues[item.name]
+                    };
+                } else {
+                    return item;
+                }
+            });
+            showBadge = true;
+        } else {
+            searchCriterias = props.searchCriteria;
+            showBadge = false;
+        }
+    }
+
+    const [search, setSearch] = useState(searchCriterias);
 
     //	Search Drawer
     const [formSearch] = Form.useForm();
@@ -249,7 +282,9 @@ const RecordHistoryListComponent = (props: IListProps) => {
                 cancelButtonTitle: 'actions:reset',
                 cancelButton: true,
                 submit: true,
-                content: <ListFilters form={formSearch} columns={filterFields} />,
+                content: (
+                    <ListFilters form={formSearch} columns={filterFields} resetForm={resetForm} />
+                ),
                 onCancel: () => handleReset(),
                 onComfirm: () => handleSubmit()
             }),
@@ -262,7 +297,13 @@ const RecordHistoryListComponent = (props: IListProps) => {
     );
 
     const handleReset = () => {
-        formSearch.resetFields();
+        cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
+        setSearch({});
+        resetForm = true;
+        for (const obj of filterFields) {
+            obj.initialValue = undefined;
+        }
+        closeDrawer();
     };
 
     const handleSubmit = () => {
@@ -271,19 +312,44 @@ const RecordHistoryListComponent = (props: IListProps) => {
             .then(() => {
                 // Here make api call of something else
                 const searchValues = formSearch.getFieldsValue(true);
+
                 const newSearchValues = {
                     ...searchValues,
                     ...search
                 };
 
-                for (const i in newSearchValues) {
-                    if (newSearchValues.hasOwnProperty(i)) {
-                        if (typeof newSearchValues[i] === 'string') {
-                            newSearchValues[i] += '%';
+                cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
+                showBadge = false;
+                const savedFilters: any = {};
+
+                if (newSearchValues) {
+                    for (const [key, value] of Object.entries(newSearchValues)) {
+                        if (value !== undefined) {
+                            savedFilters[key] = value;
                         }
                     }
+
+                    if (Object.keys(savedFilters).length > 0) {
+                        cookie.set(
+                            `${props.dataModel.resolverName}SavedFilters`,
+                            JSON.stringify(savedFilters)
+                        );
+                        showBadge = true;
+                    }
+
+                    filterFields = filterFields.map((item) => {
+                        if (item.name in searchCriterias) {
+                            return {
+                                ...item,
+                                initialValue: searchCriterias[item.name]
+                            };
+                        } else {
+                            return item;
+                        }
+                    });
                 }
 
+                reloadData();
                 setSearch(newSearchValues);
                 closeDrawer();
             })
@@ -496,10 +562,29 @@ const RecordHistoryListComponent = (props: IListProps) => {
                                 actionsRight={
                                     <Space>
                                         {props.searchable ? (
-                                            <Button
-                                                icon={<SearchOutlined />}
-                                                onClick={() => openSearchDrawer(filterFields || [])}
-                                            />
+                                            <>
+                                                {showBadge ? (
+                                                    <Badge
+                                                        size="default"
+                                                        count={Object.keys(search).length}
+                                                        color="blue"
+                                                    >
+                                                        <Button
+                                                            icon={<SearchOutlined />}
+                                                            onClick={() =>
+                                                                openSearchDrawer(filterFields || [])
+                                                            }
+                                                        />
+                                                    </Badge>
+                                                ) : (
+                                                    <Button
+                                                        icon={<SearchOutlined />}
+                                                        onClick={() =>
+                                                            openSearchDrawer(filterFields || [])
+                                                        }
+                                                    />
+                                                )}
+                                            </>
                                         ) : (
                                             <></>
                                         )}

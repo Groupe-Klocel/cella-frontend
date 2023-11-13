@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { SearchOutlined } from '@ant-design/icons';
 import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components';
-import { Space, Form, Button, Empty, Alert } from 'antd';
+import { Space, Form, Button, Empty, Alert, Badge, Card } from 'antd';
 import { EyeTwoTone } from '@ant-design/icons';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import useTranslation from 'next-translate/useTranslation';
@@ -37,7 +37,8 @@ import {
     useExport,
     useList,
     flatten,
-    useSoftDelete
+    useSoftDelete,
+    cookie
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
@@ -45,7 +46,6 @@ import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
-import { type } from 'os';
 
 export type HeaderData = {
     title: string;
@@ -76,6 +76,7 @@ export interface IListProps {
     rowSelection?: any;
     mode?: string;
     refetch?: boolean;
+    columnFilter?: boolean;
 }
 
 const ListComponent = (props: IListProps) => {
@@ -89,20 +90,8 @@ const ListComponent = (props: IListProps) => {
         searchable: true,
         searchCriteria: {},
         extraColumns: [],
-        actionColumns: [
-            {
-                title: 'actions:actions',
-                key: 'actions',
-                render: (record: { id: string }) => (
-                    <Space>
-                        <LinkButton
-                            icon={<EyeTwoTone />}
-                            path={(props.routeDetailPage || '').replace(':id', record.id)}
-                        />
-                    </Space>
-                )
-            }
-        ]
+        actionColumns: [],
+        columnFilter: true
     };
     props = { ...defaultProps, ...props };
     // #endregion
@@ -150,7 +139,7 @@ const ListComponent = (props: IListProps) => {
             return obj;
         });
 
-    const filterFields = Object.keys(props.dataModel.fieldsInfo)
+    let filterFields = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].searchingFormat !== null)
         .map((key) => {
             // handle uppercase for fields with {}
@@ -174,7 +163,8 @@ const ListComponent = (props: IListProps) => {
                 config: props.dataModel.fieldsInfo[key].config ?? undefined,
                 param: props.dataModel.fieldsInfo[key].param ?? undefined,
                 optionTable: props.dataModel.fieldsInfo[key].optionTable ?? undefined,
-                isMultipleSearch: props.dataModel.fieldsInfo[key].isMultipleSearch ?? undefined
+                isMultipleSearch: props.dataModel.fieldsInfo[key].isMultipleSearch ?? undefined,
+                initialValue: undefined
             };
         });
 
@@ -270,7 +260,38 @@ const ListComponent = (props: IListProps) => {
 
     // #region SEARCH OPERATIONS
 
-    const [search, setSearch] = useState(props.searchCriteria);
+    // SearchForm in cookies
+    let searchCriterias: any = {};
+    let resetForm = false;
+    let showBadge = false;
+
+    if (props.searchable) {
+        if (cookie.get(`${props.dataModel.resolverName}SavedFilters`)) {
+            const savedFilters = JSON.parse(
+                cookie.get(`${props.dataModel.resolverName}SavedFilters`)!
+            );
+
+            searchCriterias = { ...savedFilters, ...props.searchCriteria };
+            const initialValues = searchCriterias;
+
+            filterFields = filterFields.map((item) => {
+                if (item.name in initialValues) {
+                    return {
+                        ...item,
+                        initialValue: initialValues[item.name]
+                    };
+                } else {
+                    return item;
+                }
+            });
+            showBadge = true;
+        } else {
+            searchCriterias = props.searchCriteria;
+            showBadge = false;
+        }
+    }
+
+    const [search, setSearch] = useState(searchCriterias);
 
     //	Search Drawer
     const [formSearch] = Form.useForm();
@@ -293,6 +314,7 @@ const ListComponent = (props: IListProps) => {
                         form={formSearch}
                         columns={filterFields}
                         handleSubmit={handleSubmit}
+                        resetForm={resetForm}
                     />
                 ),
                 onCancel: () => handleReset(),
@@ -307,7 +329,13 @@ const ListComponent = (props: IListProps) => {
     );
 
     const handleReset = () => {
-        formSearch.resetFields();
+        cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
+        setSearch({});
+        resetForm = true;
+        for (const obj of filterFields) {
+            obj.initialValue = undefined;
+        }
+        closeDrawer();
     };
 
     const handleSubmit = () => {
@@ -322,14 +350,38 @@ const ListComponent = (props: IListProps) => {
                     ...search
                 };
 
-                for (const i in newSearchValues) {
-                    if (newSearchValues.hasOwnProperty(i)) {
-                        if (typeof newSearchValues[i] === 'string') {
-                            newSearchValues[i] += '%';
+                cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
+                showBadge = false;
+                const savedFilters: any = {};
+
+                if (newSearchValues) {
+                    for (const [key, value] of Object.entries(newSearchValues)) {
+                        if (value !== undefined) {
+                            savedFilters[key] = value;
                         }
                     }
+
+                    if (Object.keys(savedFilters).length > 0) {
+                        cookie.set(
+                            `${props.dataModel.resolverName}SavedFilters`,
+                            JSON.stringify(savedFilters)
+                        );
+                        showBadge = true;
+                    }
+
+                    filterFields = filterFields.map((item) => {
+                        if (item.name in searchCriterias) {
+                            return {
+                                ...item,
+                                initialValue: searchCriterias[item.name]
+                            };
+                        } else {
+                            return item;
+                        }
+                    });
                 }
 
+                reloadData();
                 setSearch(newSearchValues);
                 closeDrawer();
             })
@@ -530,10 +582,29 @@ const ListComponent = (props: IListProps) => {
                                 actionsRight={
                                     <Space>
                                         {props.searchable ? (
-                                            <Button
-                                                icon={<SearchOutlined />}
-                                                onClick={() => openSearchDrawer(filterFields || [])}
-                                            />
+                                            <>
+                                                {showBadge ? (
+                                                    <Badge
+                                                        size="default"
+                                                        count={Object.keys(search).length}
+                                                        color="blue"
+                                                    >
+                                                        <Button
+                                                            icon={<SearchOutlined />}
+                                                            onClick={() =>
+                                                                openSearchDrawer(filterFields || [])
+                                                            }
+                                                        />
+                                                    </Badge>
+                                                ) : (
+                                                    <Button
+                                                        icon={<SearchOutlined />}
+                                                        onClick={() =>
+                                                            openSearchDrawer(filterFields || [])
+                                                        }
+                                                    />
+                                                )}
+                                            </>
                                         ) : (
                                             <></>
                                         )}
@@ -572,6 +643,7 @@ const ListComponent = (props: IListProps) => {
                                                 hiddenColumns={hiddenListFields}
                                                 rowSelection={props.rowSelection}
                                                 linkFields={linkFields}
+                                                filter={props.columnFilter}
                                             />
                                         </>
                                     ) : (
@@ -589,6 +661,7 @@ const ListComponent = (props: IListProps) => {
                                                 onChange={handleTableChange}
                                                 hiddenColumns={hiddenListFields}
                                                 linkFields={linkFields}
+                                                filter={props.columnFilter}
                                             />
                                         </>
                                     )}

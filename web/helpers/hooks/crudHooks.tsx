@@ -245,7 +245,7 @@ const useRecordHistoryDetail = (
  * @returns { {isLoading, result, mutate}, reload } where isLoading and result are state variable and mutate is method to call for fetching detail.
  */
 
-const useStatusHistoryDetail = (
+const useItemWithNumericIdDetail = (
     id: string,
     queryName: string,
     fields: Array<string>,
@@ -566,5 +566,5 @@ export {
     useDelete,
     useSoftDelete,
     useRecordHistoryDetail,
-    useStatusHistoryDetail
+    useItemWithNumericIdDetail
 };

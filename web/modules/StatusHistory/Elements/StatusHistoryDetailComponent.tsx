@@ -29,8 +29,7 @@ import {
     showInfo,
     showSuccess,
     useDelete,
-    useDetail,
-    useStatusHistoryDetail,
+    useItemWithNumericIdDetail,
     useSoftDelete,
     useUpdate
 } from '@helpers';
@@ -115,7 +114,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
 
     const [detailData, setDetailData] = useState<any>(null);
     // Specific for Status History
-    const { detail, reload: reloadData } = useStatusHistoryDetail(
+    const { detail, reload: reloadData } = useItemWithNumericIdDetail(
         props.id,
         props.dataModel.endpoints.detail,
         detailFields,
