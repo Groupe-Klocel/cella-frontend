@@ -134,5 +134,8 @@
     "hu-movement": "HU Movement",
     "move-hu_abbr": "Move HU",
     "other-articles": "Other articles",
-    "close-box": "Close box"
+    "close-box": "Close box",
+    "shipping-unit-box": "Shipping unit/Box",
+    "shipping-unit-box_abbr": "Shipping unit/Box",
+    "shipping-unit-box-info": "Shipping unit/Box info"
 }

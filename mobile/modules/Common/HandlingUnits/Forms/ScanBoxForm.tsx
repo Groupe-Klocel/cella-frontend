@@ -22,6 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { showError, LsIsSecured, useBoxes } from '@helpers';
 import { Form, Input } from 'antd';
+import CameraScanner from 'modules/Common/CameraScanner';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 
@@ -44,6 +45,19 @@ export const ScanBoxForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
+
+    //camera scanner section
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        form.setFieldsValue({ barcode: camData });
+    }, [camData]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
 
     // TYPED SAFE ALL
     useEffect(() => {
@@ -123,6 +137,7 @@ export const ScanBoxForm = ({
                 >
                     <Input style={{ height: '20px', marginBottom: '5px' }} autoFocus />
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons
                     input={{
                         ...buttons

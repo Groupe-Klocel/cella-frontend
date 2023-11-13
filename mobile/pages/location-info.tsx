@@ -91,7 +91,6 @@ const LocationInfo: PageComponent = () => {
             object[t('common:location_abbr')] = chosenHandlingUnit.location.name;
             object[t('common:category')] = chosenHandlingUnit.location.categoryText;
             object[t('common:handling-unit_abbr')] = chosenHandlingUnit.name;
-            object[t('common:stock-owner_abbr')] = chosenHandlingUnit.stockOwner.name;
         }
         setOriginDisplay(object);
         setFinalDisplay(object);
