@@ -238,6 +238,8 @@ const RecordHistoryListComponent = (props: IListProps) => {
     let resetForm = false;
     let showBadge = false;
 
+    searchCriterias = props.searchCriteria;
+
     if (props.searchable) {
         if (cookie.get(`${props.dataModel.resolverName}SavedFilters`)) {
             const savedFilters = JSON.parse(
@@ -258,9 +260,6 @@ const RecordHistoryListComponent = (props: IListProps) => {
                 }
             });
             showBadge = true;
-        } else {
-            searchCriterias = props.searchCriteria;
-            showBadge = false;
         }
     }
 
@@ -314,8 +313,7 @@ const RecordHistoryListComponent = (props: IListProps) => {
                 const searchValues = formSearch.getFieldsValue(true);
 
                 const newSearchValues = {
-                    ...searchValues,
-                    ...search
+                    ...searchValues
                 };
 
                 cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
@@ -324,7 +322,11 @@ const RecordHistoryListComponent = (props: IListProps) => {
 
                 if (newSearchValues) {
                     for (const [key, value] of Object.entries(newSearchValues)) {
-                        if (value !== undefined) {
+                        if (
+                            value !== undefined &&
+                            value !== null &&
+                            (Array.isArray(value) ? value.length > 0 : true)
+                        ) {
                             savedFilters[key] = value;
                         }
                     }
@@ -349,8 +351,7 @@ const RecordHistoryListComponent = (props: IListProps) => {
                     });
                 }
 
-                reloadData();
-                setSearch(newSearchValues);
+                setSearch(savedFilters);
                 closeDrawer();
             })
             .catch((err) => showError(t('errors:DB-000111')));

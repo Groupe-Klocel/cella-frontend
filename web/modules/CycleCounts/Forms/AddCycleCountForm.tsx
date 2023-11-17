@@ -43,7 +43,8 @@ import {
     SimpleGetAllStockOwnersQuery,
     SimpleGetAllBLocksQuery,
     useSimpleGetAllBLocksQuery,
-    useListConfigsForAScopeQuery
+    useListConfigsForAScopeQuery,
+    useListParametersForAScopeQuery
 } from 'generated/graphql';
 import { debounce } from 'lodash';
 import _ from 'lodash';
@@ -94,6 +95,8 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const [locationDisplayGroup, setLocationDisplayGroup] = useState<boolean>(false);
     const [emptyLocationDisplayGroup, setEmptyLocationDisplayGroup] = useState<boolean>(false);
     const [stockMiniDisplayGroup, setStockMiniDisplayGroup] = useState<boolean>(false);
+    const [reasonsTexts, setReasonsTexts] = useState<any>();
+    const [motivesTexts, setMotivesTexts] = useState<any>();
 
     // Retrieve all necessary information
     const cycleCountModelsList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -344,6 +347,30 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         originLevelToSearch,
         finalLevelToSearch
     ]);
+
+    //list reason
+    const reasonsTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'cycle_count_reason',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (reasonsTextList) {
+            setReasonsTexts(reasonsTextList?.data?.listConfigsForAScope);
+        }
+    }, [reasonsTextList.data]);
+
+    //list motive
+    const motivesTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'movement_code',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (motivesTextList) {
+            setMotivesTexts(motivesTextList?.data?.listParametersForAScope);
+        }
+    }, [motivesTextList.data]);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -938,6 +965,35 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                         )}
                     </>
                 )}
+                <Form.Item label={t('d:reason')} name="reason">
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:reason')
+                        })}`}
+                        allowClear
+                    >
+                        {reasonsTexts?.map((category: any) => (
+                            <Option key={category.id} value={parseInt(category.code)}>
+                                {category.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:motive')} name="motive">
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:motive')
+                        })}`}
+                        allowClear
+                    >
+                        {motivesTexts?.map((category: any) => (
+                            <Option key={category.id} value={parseInt(category.code)}>
+                                {category.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+
                 {/* 29/09/202 - The backend functions for emptyLocation, nbDays and stockMini will be deployed later on.
                 <Form.Item label={t('d:number-of-days')} name="numberOfDays">
                     <InputNumber />
