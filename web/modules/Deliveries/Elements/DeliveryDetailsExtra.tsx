@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { LinkButton } from '@components';
+import { LinkButton, NumberOfPrintsModalV2 } from '@components';
 import {
     BarcodeOutlined,
     DeleteOutlined,
@@ -32,7 +32,7 @@ import moment from 'moment';
 import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { DeliveryAddressModelV2 } from 'models/DeliveryAddressModelV2';
 import { DeliveryLineModelV2 } from 'models/DeliveryLineModelV2';
 import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
@@ -48,6 +48,7 @@ export interface IItemDetailsProps {
     deliveryStatus?: number | any;
     stockOwnerId?: string | any;
     stockOwnerName?: string | any;
+    setShippingAddress?: any;
 }
 
 const DeliveryDetailsExtra = ({
@@ -55,10 +56,12 @@ const DeliveryDetailsExtra = ({
     deliveryName,
     deliveryStatus,
     stockOwnerId,
-    stockOwnerName
+    stockOwnerName,
+    setShippingAddress
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
+    const boxesModes = getModesFromPermissions(permissions, HandlingUnitOutboundModelV2.tableName);
     const [idToDeleteAddress, setIdToDeleteAddress] = useState<string | undefined>();
     const [idToDisableAddress, setIdToDisableAddress] = useState<string | undefined>();
     const [idToDeleteLine, setIdToDeleteLine] = useState<string | undefined>();
@@ -68,9 +71,14 @@ const DeliveryDetailsExtra = ({
     const deliveryAddressModes = getModesFromPermissions(permissions, Table.DeliveryAddress);
     const deliveryLineModes = getModesFromPermissions(permissions, Table.DeliveryLine);
     const huOutboundModes = getModesFromPermissions(permissions, Table.HandlingUnitOutbound);
-    const [, setDeliveryAddressesData] = useState<any>();
+    const [deliveryAddressesData, setDeliveryAddressesData] = useState<any>();
     const [, setDeliveryLinesData] = useState<any>();
     const [, setHandlingUnitOutboundsData] = useState<any>();
+    const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
+    const [boxesIdsToPrint, setBoxesIdsToPrint] = useState<string[]>();
+    const [boxesSelectedRowKeys, setBoxesSelectedRowKeys] = useState<React.Key[]>([]);
+
+    const hasSelected = boxesSelectedRowKeys.length > 0;
 
     const deliveryAddressHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:delivery-addresses') }),
@@ -89,6 +97,12 @@ const DeliveryDetailsExtra = ({
                 />
             ) : null
     };
+
+    useEffect(() => {
+        if (deliveryAddressesData) {
+            setShippingAddress(deliveryAddressesData.find((e: any) => e.category == 10));
+        }
+    }, [deliveryAddressesData]);
 
     const deliveryLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:delivery-lines') }),
@@ -110,73 +124,10 @@ const DeliveryDetailsExtra = ({
             ) : null
     };
 
-    //retrieves values in case of multiple printout
-    const [boxSet, setBoxSet] = useState<Array<any>>();
-    //retrieves value in case of single printout
-    const [boxId, setBoxId] = useState<string>();
-    //set list of Ids to print in any case
-    const [boxesToPrint, setBoxesToPrint] = useState<Array<string>>();
-    useEffect(() => {
-        if (boxSet) {
-            setBoxesToPrint(
-                boxSet
-                    ?.filter(
-                        (e: any) => e.status != configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED
-                    )
-                    .map((e: any) => e.id)
-            );
-        }
-    }, [boxSet]);
-
     const huOutboundHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:boxes') }),
         routes: [],
-        actionsComponent: (
-            <>
-                {boxesToPrint?.length ? (
-                    <Button
-                        type="primary"
-                        ghost
-                        onClick={() => {
-                            printBox(boxesToPrint);
-                        }}
-                    >
-                        {t('actions:print-labels')}
-                    </Button>
-                ) : (
-                    <></>
-                )}
-            </>
-        )
-    };
-
-    const printBox = async (boxes: string | Array<string>) => {
-        const local = moment();
-        local.locale();
-        const dateLocal = local.format('l') + ', ' + local.format('LT');
-
-        typeof boxes === 'string' ? (boxes = [boxes]) : boxes;
-
-        const res = await fetch(`/api/boxes/print/label`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                boxes,
-                dateLocal
-            })
-        });
-
-        if (!res.ok) {
-            showError(t('messages:error-print-data'));
-        }
-        const response = await res.json();
-        if (response.url) {
-            window.open(response.url, '_blank');
-        } else {
-            showError(t('messages:error-print-data'));
-        }
+        actionsComponent: <></>
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -197,6 +148,47 @@ const DeliveryDetailsExtra = ({
         title: `${t('common:status-history')}`,
         routes: [],
         actionsComponent: null
+    };
+
+    const boxesActionButtons: ActionButtons = {
+        actionsComponent:
+            boxesModes.length > 0 && boxesModes.includes(ModeEnum.Update) ? (
+                <>
+                    <>
+                        <span style={{ marginLeft: 16 }}>
+                            {hasSelected
+                                ? `${t('messages:selected-items-number', {
+                                      number: boxesSelectedRowKeys.length
+                                  })}`
+                                : ''}
+                        </span>
+                        <span style={{ marginLeft: 16 }}>
+                            <Button
+                                type="primary"
+                                onClick={() => {
+                                    setShowNumberOfPrintsModal(true);
+                                    setBoxesIdsToPrint(boxesSelectedRowKeys as string[]);
+                                }}
+                                disabled={!hasSelected}
+                            >
+                                {t('actions:print')}
+                            </Button>
+                        </span>
+                    </>
+                </>
+            ) : null
+    };
+
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        setBoxesSelectedRowKeys(newSelectedRowKeys);
+    };
+    const boxRowSelection = {
+        boxesSelectedRowKeys,
+        onChange: onSelectChange,
+        getCheckboxProps: (record: any) => ({
+            disabled:
+                record.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? true : false
+        })
     };
 
     return (
@@ -307,7 +299,6 @@ const DeliveryDetailsExtra = ({
                         setData={setDeliveryAddressesData}
                         sortDefault={[{ field: 'created', ascending: true }]}
                     />
-                    <Divider />
                 </>
             ) : (
                 <></>
@@ -416,7 +407,6 @@ const DeliveryDetailsExtra = ({
                         setData={setDeliveryLinesData}
                         sortDefault={[{ field: 'created', ascending: true }]}
                     />
-                    <Divider />
                 </>
             ) : (
                 <></>
@@ -428,6 +418,9 @@ const DeliveryDetailsExtra = ({
                         searchCriteria={{ deliveryId: deliveryId }}
                         dataModel={HandlingUnitOutboundModelV2}
                         headerData={huOutboundHeaderData}
+                        actionButtons={boxesActionButtons}
+                        rowSelection={boxRowSelection}
+                        checkbox={true}
                         triggerDelete={{
                             idToDelete: idToDeleteBox,
                             setIdToDelete: setIdToDeleteBox
@@ -496,7 +489,14 @@ const DeliveryDetailsExtra = ({
                         setData={setHandlingUnitOutboundsData}
                         sortDefault={[{ field: 'created', ascending: true }]}
                     />
-                    <Divider />
+                    <NumberOfPrintsModalV2
+                        showModal={{
+                            showNumberOfPrintsModal,
+                            setShowNumberOfPrintsModal
+                        }}
+                        dataToPrint={{ boxes: boxesIdsToPrint }}
+                        documentName="K_OutboundHandlingUnitLabel"
+                    />
                 </>
             ) : (
                 <></>

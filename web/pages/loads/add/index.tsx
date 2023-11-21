@@ -23,51 +23,105 @@ import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { LoadModelV2 } from 'models/LoadModelV2';
 import useTranslation from 'next-translate/useTranslation';
-import { META_DEFAULTS, showError } from '@helpers';
+import { META_DEFAULTS, showError, showSuccess } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { addLoadRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import 'moment/min/locales';
-import moment from 'moment';
 import { AddLoadComponent } from 'modules/Loads/PageContainer/AddLoadComponent';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
+import { useListParametersForAScopeQuery } from 'generated/graphql';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddLoadPage: PageComponent = () => {
     const { t } = useTranslation();
+    const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const defaultValues = { status: configs.LOAD_STATUS_CREATED };
     const [print, setPrint] = useState<any>();
     const [loadPrint, setLoadPrint] = useState<string>('');
 
-    const printLoad = async (loadId: string) => {
-        const res = await fetch(`/api/loads/print/label`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                loadId
-            })
-        });
-
-        if (!res.ok) {
-            showError(t('messages:error-print-data'));
-            router.push(`/loads/${print?.id}`);
+    const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'global',
+        code: 'default_print_language'
+    });
+    const [printLanguage, setPrintLanguage] = useState<string>();
+    useEffect(() => {
+        if (defaultPrintLanguage) {
+            setPrintLanguage(defaultPrintLanguage.data?.listParametersForAScope[0].text);
         }
-        const response = await res.json();
-        if (response.url) {
-            window.open(response.url, '_blank');
-            router.push(`/loads/${print?.id}`);
-        } else {
+    }, [defaultPrintLanguage.data]);
+
+    const defaultPrinterParameter = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'global',
+        code: 'default_printer'
+    });
+    const [defaultPrinter, setDefaultPrinter] = useState<string>();
+    useEffect(() => {
+        if (defaultPrinterParameter) {
+            setDefaultPrinter(defaultPrinterParameter.data?.listParametersForAScope[0].text);
+        }
+    }, [defaultPrinterParameter.data]);
+
+    const printLoad = async (inputForPrinting: any, printer: string | undefined) => {
+        const documentMutation = gql`
+            mutation generateDocument(
+                $documentName: String!
+                $language: String!
+                $printer: String
+                $context: JSON!
+            ) {
+                generateDocument(
+                    documentName: $documentName
+                    language: $language
+                    printer: $printer
+                    context: $context
+                ) {
+                    __typename
+                    ... on RenderedDocument {
+                        url
+                    }
+                    ... on TemplateDoesNotExist {
+                        message
+                    }
+                    ... on TemplateError {
+                        message
+                    }
+                    ... on MissingContext {
+                        message
+                    }
+                }
+            }
+        `;
+
+        const documentVariables = {
+            documentName: 'K_LoadLoadingList',
+            language: printLanguage,
+            printer,
+            context: { ...inputForPrinting }
+        };
+
+        const documentResult = await graphqlRequestClient.request(
+            documentMutation,
+            documentVariables
+        );
+
+        console.log('documentResult', documentResult);
+
+        if (documentResult.generateDocument.__typename !== 'RenderedDocument') {
             showError(t('messages:error-print-data'));
-            router.push(`/loads/${print?.id}`);
+        } else {
+            printer
+                ? showSuccess(t('messages:success-print-data'))
+                : window.open(documentResult.generateDocument.url, '_blank');
         }
     };
 
     useEffect(() => {
         if (print) {
             setLoadPrint(print);
-            printLoad(print?.id);
+            printLoad({ id: print?.id }, defaultPrinter);
         }
     }, [print]);
 

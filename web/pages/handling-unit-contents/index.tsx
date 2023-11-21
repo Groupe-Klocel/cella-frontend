@@ -24,7 +24,7 @@ import {
     EyeTwoTone,
     StopOutlined
 } from '@ant-design/icons';
-import { AppHead, LinkButton, NumberOfHuPrintsModalV2 } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
@@ -47,7 +47,7 @@ const HandlingUnitContentsPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
-    const [infoToPrint, setInfoToPrint] = useState<string>();
+    const [infoToPrint, setInfoToPrint] = useState<any>();
 
     const headerData: HeaderData = {
         title: t('common:handlingUnitContents'),
@@ -143,7 +143,11 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                     ghost
                                     onClick={() => {
                                         setShowNumberOfPrintsModal(true);
-                                        setInfoToPrint(record.handlingUnit_barcode as string);
+                                        setInfoToPrint({
+                                            handlingUnits: [
+                                                { barcode: record.handlingUnit_barcode as string }
+                                            ]
+                                        });
                                     }}
                                     icon={<BarcodeOutlined />}
                                 />
@@ -153,12 +157,12 @@ const HandlingUnitContentsPage: PageComponent = () => {
                 ]}
                 routeDetailPage={'/handling-unit-contents/:id'}
             />
-            <NumberOfHuPrintsModalV2
+            <NumberOfPrintsModalV2
                 showModal={{
                     showNumberOfPrintsModal,
                     setShowNumberOfPrintsModal
                 }}
-                handlingUnits={[{ barcode: infoToPrint }]}
+                dataToPrint={infoToPrint}
                 documentName="K_HandlingUnitLabel"
             />
         </>

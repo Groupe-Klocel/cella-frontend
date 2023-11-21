@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, SinglePrintModal } from '@components';
 import { DeliveryModelV2 as model } from 'models/DeliveryModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
@@ -53,11 +53,15 @@ const DeliveryPage: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
+    const [shippingAddress, setShippingAddress] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const { graphqlRequestClient } = useAuth();
+    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
+
     // #region to customize information
     const breadCrumb = [
         ...itemRoutes,
@@ -86,33 +90,6 @@ const DeliveryPage: PageComponent = () => {
     };
 
     const deliveryLines = useDeliveryLineIds({ deliveryId: `${data?.id}%` }, 1, 100, null);
-
-    // PRINT
-    const printDelivery = async (deliveryId: string) => {
-        const local = moment();
-        local.locale();
-        const dateLocal = local.format('l') + ', ' + local.format('LT');
-
-        const res = await fetch(`/api/deliveries/print`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                deliveryId,
-                dateLocal
-            })
-        });
-        if (!res.ok) {
-            showError(t('messages:error-print-data'));
-        }
-        const response = await res.json();
-        if (response.url) {
-            window.open(response.url, '_blank');
-        } else {
-            showError(t('messages:error-print-data'));
-        }
-    };
 
     // CANCEL DELIVERY
     const { mutate: cancelDeliveryMutate, isLoading: cancelLoading } =
@@ -321,7 +298,17 @@ const DeliveryPage: PageComponent = () => {
                             {modes.length > 0 &&
                             modes.includes(ModeEnum.Read) &&
                             data?.status <= configs.DELIVERY_STATUS_CANCELED ? (
-                                <Button type="primary" onClick={() => printDelivery(data?.id)}>
+                                <Button
+                                    type="primary"
+                                    onClick={() => {
+                                        if (shippingAddress) {
+                                            setShowSinglePrintModal(true);
+                                            setIdToPrint(shippingAddress.id);
+                                        } else {
+                                            showError(t('messages:no-delivery-address'));
+                                        }
+                                    }}
+                                >
                                     {t('actions:print')}
                                 </Button>
                             ) : (
@@ -356,6 +343,14 @@ const DeliveryPage: PageComponent = () => {
                             ) : (
                                 <></>
                             )}
+                            <SinglePrintModal
+                                showModal={{
+                                    showSinglePrintModal,
+                                    setShowSinglePrintModal
+                                }}
+                                dataToPrint={{ id: idToPrint }}
+                                documentName="K_Delivery"
+                            />
                         </Space>
                     ) : (
                         <></>
@@ -379,6 +374,7 @@ const DeliveryPage: PageComponent = () => {
                         deliveryStatus={data?.status}
                         stockOwnerName={data?.stockOwner_name}
                         stockOwnerId={data?.stockOwnerId}
+                        setShippingAddress={setShippingAddress}
                     />
                 }
                 id={id!}
