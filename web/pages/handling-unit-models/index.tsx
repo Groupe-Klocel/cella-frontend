@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { BarcodeOutlined, EyeTwoTone, EditTwoTone, StopOutlined } from '@ant-design/icons';
-import { AppHead, LinkButton, NumberOfPrintsModal } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModal, NumberOfPrintsModalV2 } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Space, Modal } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
@@ -130,13 +130,14 @@ const HandlingUnitModelsPage: PageComponent = () => {
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
             />
-            <NumberOfPrintsModal
+            {/* RESTART HERE: test it works with backend adjustments*/}
+            <NumberOfPrintsModalV2
                 showModal={{
                     showNumberOfPrintsModal,
                     setShowNumberOfPrintsModal
                 }}
-                id={idToPrint}
-                path="/api/handling-unit-models/print/label"
+                dataToPrint={{ id: idToPrint }}
+                documentName="K_HandlingUnitModelLabel"
             />
         </>
     );

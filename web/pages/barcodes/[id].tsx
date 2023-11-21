@@ -17,14 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import {
-    DeleteOutlined,
-    EditTwoTone,
-    EyeTwoTone,
-    StopOutlined,
-    BarcodeOutlined
-} from '@ant-design/icons';
-import { AppHead, LinkButton, NumberOfPrintsModal } from '@components';
+import { BarcodeOutlined } from '@ant-design/icons';
+import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { META_DEFAULTS, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import { BarcodeModelV2 as model } from 'models/BarcodeModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
@@ -36,9 +30,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
-import { BarcodeDetails } from 'modules/Barcodes/Elements/BarcodeDetails';
-import Id from 'pages/api/article/update-quantity/[id]';
+
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const BarcodePage: PageComponent = () => {
@@ -124,13 +116,13 @@ const BarcodePage: PageComponent = () => {
                     }}
                     icon={<BarcodeOutlined />}
                 />
-                <NumberOfPrintsModal
+                <NumberOfPrintsModalV2
                     showModal={{
                         showNumberOfPrintsModal,
                         setShowNumberOfPrintsModal
                     }}
-                    id={idToPrint}
-                    path="/api/barcodes/print/label"
+                    dataToPrint={{ id: idToPrint }}
+                    documentName="K_BarcodeLabel"
                 />
             </Space>
         )

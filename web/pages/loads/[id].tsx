@@ -17,11 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, SinglePrintModal } from '@components';
 import { META_DEFAULTS, getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { LoadDetailsExtra } from 'modules/Loads/Elements/LoadDetailsExtra';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
@@ -33,12 +33,14 @@ import {
     ModeEnum,
     UpdateLoadMutation,
     UpdateLoadMutationVariables,
+    useListParametersForAScopeQuery,
     useUpdateLoadMutation
 } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { useAuth } from 'context/AuthContext';
 import 'moment/min/locales';
 import moment from 'moment';
+import { gql } from 'graphql-request';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -52,6 +54,9 @@ const LoadsPage: PageComponent = () => {
     const { id } = router.query;
     const { graphqlRequestClient } = useAuth();
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
+    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [dataToPrint, setDataToPrint] = useState<any>();
+    const [documentToPrint, setDocumentToPrint] = useState<string>();
 
     // #region to customize information
     const breadCrumb = [
@@ -67,85 +72,89 @@ const LoadsPage: PageComponent = () => {
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
-    const chooseAction = async (loadId: string | undefined, action: 'print' | 'label') => {
-        const local = moment();
-        local.locale();
-        const dateLocal = local.format('l') + ', ' + local.format('LT');
-
-        if (action == 'print') {
-            const res = await fetch(`/api/loads/print`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    loadId,
-                    dateLocal,
-                    status: data?.status
-                })
-            });
-
-            if (!res.ok) {
-                showError(t('messages:error-print-data'));
-            }
-            const response = await res.json();
-            if (response.url) {
-                window.open(response.url, '_blank');
-            } else {
-                showError(t('messages:error-print-data'));
-            }
-        } else {
-            const res = await fetch(`/api/loads/print/label`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    loadId
-                })
-            });
-
-            if (!res.ok) {
-                showError(t('messages:error-print-data'));
-            }
-            const response = await res.json();
-            if (response.url) {
-                window.open(response.url, '_blank');
-            } else {
-                showError(t('messages:error-print-data'));
-            }
+    const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'global',
+        code: 'default_print_language'
+    });
+    const [printLanguage, setPrintLanguage] = useState<string>();
+    useEffect(() => {
+        if (defaultPrintLanguage) {
+            setPrintLanguage(defaultPrintLanguage.data?.listParametersForAScope[0].text);
         }
-    };
+    }, [defaultPrintLanguage.data]);
 
-    const printLoad = async (loadId: string | Array<string>) => {
-        const local = moment();
-        local.locale();
-        const dateLocal = local.format('l') + ', ' + local.format('LT');
-
-        const res = await fetch(`/api/loads/print`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                loadId,
-                dateLocal,
-                status: data?.status
-            })
-        });
-
-        if (!res.ok) {
-            showError(t('messages:error-print-data'));
+    const defaultPrinterParameter = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'global',
+        code: 'default_printer'
+    });
+    const [defaultPrinter, setDefaultPrinter] = useState<string>();
+    useEffect(() => {
+        if (defaultPrinterParameter) {
+            setDefaultPrinter(defaultPrinterParameter.data?.listParametersForAScope[0].text);
         }
-        const response = await res.json();
-        if (response.url) {
-            window.open(response.url, '_blank');
-        } else {
+    }, [defaultPrinterParameter.data]);
+
+    //retrieve client's date for printing
+    const local = moment();
+    local.locale();
+    const dateLocal = local.format('l') + ', ' + local.format('LT');
+
+    const printLoad = async (inputForPrinting: any, printer: string | undefined) => {
+        const documentMutation = gql`
+            mutation generateDocument(
+                $documentName: String!
+                $language: String!
+                $printer: String
+                $context: JSON!
+            ) {
+                generateDocument(
+                    documentName: $documentName
+                    language: $language
+                    printer: $printer
+                    context: $context
+                ) {
+                    __typename
+                    ... on RenderedDocument {
+                        url
+                    }
+                    ... on TemplateDoesNotExist {
+                        message
+                    }
+                    ... on TemplateError {
+                        message
+                    }
+                    ... on MissingContext {
+                        message
+                    }
+                }
+            }
+        `;
+
+        const documentVariables = {
+            documentName: 'K_LoadLoadingList',
+            language: printLanguage,
+            printer,
+            context: { ...inputForPrinting, date: dateLocal }
+        };
+
+        const documentResult = await graphqlRequestClient.request(
+            documentMutation,
+            documentVariables
+        );
+
+        console.log('documentResult', documentResult);
+
+        if (documentResult.generateDocument.__typename !== 'RenderedDocument') {
             showError(t('messages:error-print-data'));
+        } else {
+            printer
+                ? showSuccess(t('messages:success-print-data'))
+                : window.open(documentResult.generateDocument.url, '_blank');
         }
     };
 
     // DISPATCH LOAD
+    const statusDispatched = configs.DELIVERY_STATUS_DISPATCHED;
     const { mutate: updateLoadMutate, isLoading: dispatch } = useUpdateLoadMutation<Error>(
         graphqlRequestClient,
         {
@@ -157,7 +166,13 @@ const LoadsPage: PageComponent = () => {
                 if (!dispatch) {
                     showSuccess(t('messages:success-dispatched'));
                     if (data?.updateLoad?.id) {
-                        printLoad(data.updateLoad.id);
+                        printLoad(
+                            {
+                                id: data.updateLoad.id,
+                                statusDispatched
+                            },
+                            defaultPrinter
+                        );
                     }
                     setTriggerRefresh(!triggerRefresh);
                 }
@@ -220,7 +235,18 @@ const LoadsPage: PageComponent = () => {
                 )}
                 {/* Print List of boxes and code bar of load */}
                 {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
-                    <Button onClick={() => chooseAction(data.id, 'print')}>
+                    <Button
+                        // onClick={() => chooseAction(data.id, 'print')}
+                        onClick={() => {
+                            setShowSinglePrintModal(true);
+                            setDataToPrint({
+                                id: data.id,
+                                date: dateLocal,
+                                statusDispatched
+                            });
+                            setDocumentToPrint('K_LoadLoadingList');
+                        }}
+                    >
                         {t('actions:print')}
                     </Button>
                 ) : (
@@ -228,12 +254,29 @@ const LoadsPage: PageComponent = () => {
                 )}
                 {/* Print just code bar of load */}
                 {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
-                    <Button onClick={() => chooseAction(data.id, 'label')}>
+                    <Button
+                        // onClick={() => chooseAction(data.id, 'label')}
+                        onClick={() => {
+                            setShowSinglePrintModal(true);
+                            setDataToPrint({
+                                id: data.id
+                            });
+                            setDocumentToPrint('K_LoadLabel');
+                        }}
+                    >
                         {t('actions:load-label')}
                     </Button>
                 ) : (
                     <></>
                 )}
+                <SinglePrintModal
+                    showModal={{
+                        showSinglePrintModal,
+                        setShowSinglePrintModal
+                    }}
+                    dataToPrint={dataToPrint}
+                    documentName={documentToPrint!}
+                />
             </Space>
         )
     };

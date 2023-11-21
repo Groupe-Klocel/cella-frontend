@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { LinkButton, NumberOfPrintsModal } from '@components';
+import { LinkButton, NumberOfPrintsModal, NumberOfPrintsModalV2 } from '@components';
 import {
     BarcodeOutlined,
     DeleteOutlined,
@@ -323,13 +323,13 @@ const ArticleDetailsExtra = ({
                         ]}
                         searchable={false}
                     />
-                    <NumberOfPrintsModal
+                    <NumberOfPrintsModalV2
                         showModal={{
                             showNumberOfPrintsModal,
                             setShowNumberOfPrintsModal
                         }}
-                        id={idToPrint}
-                        path="/api/barcodes/print/label"
+                        dataToPrint={{ id: idToPrint }}
+                        documentName="K_BarcodeLabel"
                     />
                 </>
             ) : (
