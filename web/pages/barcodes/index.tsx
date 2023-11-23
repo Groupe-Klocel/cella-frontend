@@ -24,7 +24,7 @@ import {
     StopOutlined,
     BarcodeOutlined
 } from '@ant-design/icons';
-import { AppHead, LinkButton, NumberOfPrintsModal } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModalV2, NumberOfPrintsModal } from '@components';
 import {
     getModesFromPermissions,
     META_DEFAULTS,
@@ -144,13 +144,13 @@ const BarcodePage: PageComponent = () => {
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
             />
-            <NumberOfPrintsModal
+            <NumberOfPrintsModalV2
                 showModal={{
                     showNumberOfPrintsModal,
                     setShowNumberOfPrintsModal
                 }}
-                id={idToPrint}
-                path="/api/barcodes/print/label"
+                dataToPrint={{ id: idToPrint }}
+                documentName="K_BarcodeLabel"
             />
         </>
     );

@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton, NumberOfPrintsModal } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { ArticleLuBarcodeModelV2 as model } from 'models/ArticleLuBarcodeModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
@@ -119,13 +119,13 @@ const ArticleLuBarcodePage: PageComponent = () => {
                     }}
                     icon={<BarcodeOutlined />}
                 />
-                <NumberOfPrintsModal
+                <NumberOfPrintsModalV2
                     showModal={{
                         showNumberOfPrintsModal,
                         setShowNumberOfPrintsModal
                     }}
-                    id={idToPrint}
-                    path="/api/barcodes/print/label"
+                    dataToPrint={{ id: idToPrint }}
+                    documentName="K_BarcodeLabel"
                 />
             </Space>
         )

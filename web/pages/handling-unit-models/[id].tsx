@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { HandlingUnitModelDetailsExtra } from 'modules/HandlingUnitModels/Elements/HandlingUnitModelDetailsExtra';
 import { HandlingUnitModelModelV2 as model } from 'models/HandlingUnitModelModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
@@ -31,6 +31,7 @@ import useTranslation from 'next-translate/useTranslation';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import configs from '../../../common/configs.json';
+import { BarcodeOutlined } from '@ant-design/icons';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -43,6 +44,8 @@ const HandlingUnitModelPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, model.tableName);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
 
     // #region to customize information
     const breadCrumb = [
@@ -54,6 +57,8 @@ const HandlingUnitModelPage: PageComponent = () => {
 
     const pageTitle = `${t('common:handling-unit-model')} ${data?.name}`;
     // #endregions
+
+    console.log('DLAdata', data);
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
@@ -102,6 +107,23 @@ const HandlingUnitModelPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                <Button
+                    type="primary"
+                    ghost
+                    onClick={() => {
+                        setShowNumberOfPrintsModal(true);
+                        setIdToPrint(data?.id as string);
+                    }}
+                    icon={<BarcodeOutlined />}
+                />
+                <NumberOfPrintsModalV2
+                    showModal={{
+                        showNumberOfPrintsModal,
+                        setShowNumberOfPrintsModal
+                    }}
+                    dataToPrint={{ id: idToPrint }}
+                    documentName="K_HandlingUnitModelLabel"
+                />
             </Space>
         )
     };
