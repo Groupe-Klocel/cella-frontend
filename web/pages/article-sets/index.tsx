@@ -24,7 +24,7 @@ import {
     PrinterOutlined,
     StopOutlined
 } from '@ant-design/icons';
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, SinglePrintModal } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams, showError } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
@@ -44,6 +44,8 @@ const ArticleSetPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
 
     const headerData: HeaderData = {
         title: t('common:sets'),
@@ -108,10 +110,6 @@ const ArticleSetPages: PageComponent = () => {
                         key: 'actions',
                         render: (record: { id: string }) => (
                             <Space>
-                                <Button
-                                    onClick={() => printArticleSet(record.id)}
-                                    icon={<PrinterOutlined />}
-                                />
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
                                         icon={<EyeTwoTone />}
@@ -157,11 +155,28 @@ const ArticleSetPages: PageComponent = () => {
                                 ) : (
                                     <></>
                                 )}
+                                <Button
+                                    onClick={() => {
+                                        setShowSinglePrintModal(true);
+                                        setIdToPrint(record.id);
+                                    }}
+                                    icon={<PrinterOutlined />}
+                                />
                             </Space>
                         )
                     }
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
+            />
+            <SinglePrintModal
+                showModal={{
+                    showSinglePrintModal,
+                    setShowSinglePrintModal
+                }}
+                dataToPrint={{
+                    id: idToPrint
+                }}
+                documentName="K_ArticleSet"
             />
         </>
     );

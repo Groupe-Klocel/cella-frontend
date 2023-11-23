@@ -25,7 +25,7 @@ import {
     EyeTwoTone,
     StopOutlined
 } from '@ant-design/icons';
-import { AppHead, LinkButton, NumberOfPrintsModal } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModal, NumberOfPrintsModalV2 } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
@@ -169,13 +169,13 @@ const LocationPages: PageComponent = () => {
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
             />
-            <NumberOfPrintsModal
+            <NumberOfPrintsModalV2
                 showModal={{
                     showNumberOfPrintsModal,
                     setShowNumberOfPrintsModal
                 }}
-                id={idToPrint}
-                path="/api/locations/print/label"
+                dataToPrint={{ id: idToPrint }}
+                documentName="K_LocationLabel"
             />
             {showRangeLocationsModal ? (
                 <PrintLocationsModalForm

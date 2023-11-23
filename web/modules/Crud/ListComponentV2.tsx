@@ -354,7 +354,11 @@ const ListComponent = (props: IListProps) => {
 
                 if (newSearchValues) {
                     for (const [key, value] of Object.entries(newSearchValues)) {
-                        if (value !== undefined) {
+                        if (
+                            value !== undefined &&
+                            value !== null &&
+                            (Array.isArray(value) ? value.length > 0 : true)
+                        ) {
                             savedFilters[key] = value;
                         }
                     }
@@ -379,7 +383,6 @@ const ListComponent = (props: IListProps) => {
                     });
                 }
 
-                reloadData();
                 setSearch(savedFilters);
                 closeDrawer();
             })

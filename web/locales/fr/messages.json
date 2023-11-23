@@ -111,5 +111,7 @@
     "confirm-leaving-page": "Voulez-vous vraiment quitter cette page ?",
     "select-number-min": "Ce champ ne peut pas être inférieur à {{min}}",
     "select-number-max": "Ce champ ne peut pas être supérieur à {{max}}",
-    "hu-barcode-used": "Ce support est déjà utilisé"
+    "hu-barcode-used": "Ce support est déjà utilisé",
+    "no-delivery-address": "Aucune adresse de livraison définie",
+    "no-printer-behaviour": "Si aucune imprimante n'est sélectionnée, le document sera téléchargé"
 }

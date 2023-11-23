@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, SinglePrintModal } from '@components';
 import { PurchaseOrderModelV2 as model } from 'models/PurchaseOrderModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
@@ -44,6 +44,8 @@ const PurchaseOrderPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
 
     // #region to customize information
     const breadCrumb = [
@@ -72,31 +74,9 @@ const PurchaseOrderPage: PageComponent = () => {
         };
     };
     // PRINT
-    const printPurchaseOrder = async (purchaseOrderId: string) => {
-        const local = moment();
-        local.locale();
-        const dateLocal = local.format('l') + ', ' + local.format('LT');
-
-        const res = await fetch(`/api/purchase-orders/print`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                purchaseOrderId,
-                dateLocal
-            })
-        });
-        if (!res.ok) {
-            showError(t('messages:error-print-data'));
-        }
-        const response = await res.json();
-        if (response.url) {
-            window.open(response.url, '_blank');
-        } else {
-            showError(t('messages:error-print-data'));
-        }
-    };
+    const local = moment();
+    local.locale();
+    const dateLocal = local.format('l') + ', ' + local.format('LT');
 
     const headerData: HeaderData = {
         title: pageTitle,
@@ -117,7 +97,13 @@ const PurchaseOrderPage: PageComponent = () => {
 
                     {modes.includes(ModeEnum.Read) &&
                     data?.status != configs.PURCHASE_ORDER_STATUS_CLOSED ? (
-                        <Button type="primary" onClick={() => printPurchaseOrder(data?.id)}>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setShowSinglePrintModal(true);
+                                setIdToPrint(data.id);
+                            }}
+                        >
                             {t('actions:print')}
                         </Button>
                     ) : (
@@ -150,6 +136,14 @@ const PurchaseOrderPage: PageComponent = () => {
                     ) : (
                         <></>
                     )}
+                    <SinglePrintModal
+                        showModal={{
+                            showSinglePrintModal,
+                            setShowSinglePrintModal
+                        }}
+                        dataToPrint={{ id: idToPrint, date: dateLocal }}
+                        documentName="K_PurchaseOrder"
+                    />
                 </Space>
             ) : (
                 <></>

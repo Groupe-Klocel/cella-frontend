@@ -21,9 +21,23 @@ import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
 import { Card, Col, Divider, Form, InputNumber, Modal, Row, Select } from 'antd';
 import { useEffect, useState } from 'react';
-import { DataQueryType, removeDuplicatesAndSort, showError, useLocationIds } from '@helpers';
-import { SimpleGetAllBLocksQuery, useSimpleGetAllBLocksQuery } from 'generated/graphql';
+import {
+    DataQueryType,
+    removeDuplicatesAndSort,
+    showError,
+    showSuccess,
+    useLocationIds
+} from '@helpers';
+import {
+    SimpleGetAllBLocksQuery,
+    useListParametersForAScopeQuery,
+    useSimpleGetAllBLocksQuery
+} from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+import Text from 'antd/lib/typography/Text';
+import { FormOptionType } from 'models/ModelsV2';
+import { useRouter } from 'next/router';
+import { gql } from 'graphql-request';
 
 const { Option } = Select;
 
@@ -40,6 +54,21 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const [blocks, setBlocks] = useState<any>();
     const [locations, setLocations] = useState<DataQueryType>();
+    const router = useRouter();
+    const [printers, setPrinters] = useState<Array<FormOptionType>>();
+    const [printLanguage, setPrintLanguage] = useState<string>();
+
+    // Get default printing language
+    const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'global',
+        code: 'default_print_language'
+    });
+
+    useEffect(() => {
+        if (defaultPrintLanguage) {
+            setPrintLanguage(defaultPrintLanguage.data?.listParametersForAScope[0].text);
+        }
+    }, [defaultPrintLanguage.data]);
 
     //List available blocks
     //To render simple blocks list for attached block selection (id and name without any filter)
@@ -202,28 +231,76 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
         finalLevelToSearch
     ]);
 
-    const printData = async (originLocationInput: any, finalLocationInput: any, copies: number) => {
-        const res = await fetch(`/api/locations/print/label`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                originLocationInput,
-                finalLocationInput,
-                copies
-            })
-        });
-        if (!res.ok) {
-            showError(t('messages:error-print-data'));
+    // Get all printers
+    const printerList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'printer'
+    });
+    useEffect(() => {
+        if (printerList) {
+            const newPrinters: Array<FormOptionType> = [];
+
+            const cData = printerList?.data?.listParametersForAScope;
+            if (cData) {
+                cData.forEach((item) => {
+                    newPrinters.push({ key: item.code, text: item.text });
+                });
+                setPrinters(newPrinters);
+            }
         }
-        const response = await res.json();
-        if (response.url) {
-            window.open(response.url, '_blank');
-            showModal.setShowRangeLocationsModal(false);
-        } else {
+    }, [printerList.data]);
+
+    const printData = async (inputForPrinting: any, copies: number, printer: string) => {
+        const documentMutation = gql`
+            mutation generateDocument(
+                $documentName: String!
+                $language: String!
+                $printer: String
+                $context: JSON!
+            ) {
+                generateDocument(
+                    documentName: $documentName
+                    language: $language
+                    printer: $printer
+                    context: $context
+                ) {
+                    __typename
+                    ... on RenderedDocument {
+                        url
+                    }
+                    ... on TemplateDoesNotExist {
+                        message
+                    }
+                    ... on TemplateError {
+                        message
+                    }
+                    ... on MissingContext {
+                        message
+                    }
+                }
+            }
+        `;
+
+        const documentVariables = {
+            documentName: 'K_LocationLabel',
+            language: printLanguage,
+            printer,
+            context: { ...inputForPrinting, copies }
+        };
+
+        const documentResult = await graphqlRequestClient.request(
+            documentMutation,
+            documentVariables
+        );
+
+        console.log('documentResult', documentResult);
+
+        if (documentResult.generateDocument.__typename !== 'RenderedDocument') {
             showError(t('messages:error-print-data'));
-            showModal.setShowRangeLocationsModal(false);
+        } else {
+            printer
+                ? showSuccess(t('messages:success-print-data'))
+                : window.open(documentResult.generateDocument.url, '_blank');
         }
     };
 
@@ -261,7 +338,11 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
                     level: finalLevel,
                     position: finalPosition
                 };
-                printData(originLocationInput, finalLocationInput, formData.copies);
+                printData(
+                    { originLocationInput, finalLocationInput },
+                    formData.copies,
+                    formData.printer
+                );
             })
             .catch((err) => {
                 showError(errorMessageUpdateData);
@@ -590,6 +671,25 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
                         initialValue={1}
                     >
                         <InputNumber min={1} precision={0} />
+                    </Form.Item>
+                </Row>
+                <Row>
+                    <Form.Item label={t('d:printer')} name="printer">
+                        <Select
+                            placeholder={`${t('messages:please-select-a', {
+                                name: t('d:printer')
+                            })}`}
+                            allowClear
+                        >
+                            {printers?.map((printer: any) => (
+                                <Option key={printer.key} value={printer.key}>
+                                    {printer.text}
+                                </Option>
+                            ))}
+                        </Select>
+                        <Text disabled italic style={{ fontSize: '10px' }}>
+                            {t('messages:no-printer-behaviour')}
+                        </Text>
                     </Form.Item>
                 </Row>
             </Form>
