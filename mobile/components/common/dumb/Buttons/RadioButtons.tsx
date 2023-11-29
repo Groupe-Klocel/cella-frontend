@@ -68,7 +68,7 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                     hidden={alternativeSubmitButtonTrigger ? false : true}
                     onClick={() => {
                         output?.setTriggerAlternativeSubmit(!input?.triggerAlternativeSubmit);
-                        setAlternativeSubmitButtonTrigger(!alternativeSubmitButtonTrigger);
+                        // setAlternativeSubmitButtonTrigger(!alternativeSubmitButtonTrigger);
                     }}
                     loading={submitLoading}
                 >

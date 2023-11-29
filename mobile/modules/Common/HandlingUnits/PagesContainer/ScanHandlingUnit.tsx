@@ -21,7 +21,7 @@ import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
 import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
-import graphqlRequestClient from 'graphql/graphqlRequestClient';
+import { useAuth } from 'context/AuthContext';
 
 export interface IScanHandlingUnitProps {
     process: string;
@@ -46,6 +46,7 @@ export const ScanHandlingUnit = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
+    const { graphqlRequestClient } = useAuth();
 
     //Pre-requisite: initialize current step
     useEffect(() => {

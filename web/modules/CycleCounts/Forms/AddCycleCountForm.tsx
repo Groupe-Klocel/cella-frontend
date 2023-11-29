@@ -182,7 +182,10 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
 
     // Block list
     const blocksList = useSimpleGetAllBLocksQuery<Partial<SimpleGetAllBLocksQuery>, Error>(
-        graphqlRequestClient
+        graphqlRequestClient,
+        {
+            itemsPerPage: 1000
+        }
     );
 
     useEffect(() => {
@@ -641,6 +644,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                 })}`}
                                 onChange={onBlockChange}
                                 allowClear
+                                showSearch
+                                filterOption={(inputValue, option) =>
+                                    option!.props.children
+                                        .toUpperCase()
+                                        .indexOf(inputValue.toUpperCase()) !== -1
+                                }
                             >
                                 {blocks?.map((block: any) => (
                                     <Option key={block.id} value={block.id}>

@@ -20,10 +20,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured } from '@helpers';
-import { Select } from 'antd';
+import { LsIsSecured, showError } from '@helpers';
+import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { GetAllStockOwnersQuery, useGetAllStockOwnersQuery } from 'generated/graphql';
+import CameraScanner from 'modules/Common/CameraScanner';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 
@@ -50,6 +51,26 @@ export const SelectStockOwnerForm = ({
     const [stockOwners, setStockOwners] = useState<Array<any>>();
 
     // TYPED SAFE ALL
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (stockOwners?.some((option) => option.text === camData)) {
+                const soToFind = stockOwners?.find((option) => option.text === camData);
+                form.setFieldsValue({ stockOwners: soToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, stockOwners]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
     //Pre-requisite: initialize current step
     useEffect(() => {
         //automatically set returnDate when defaultValue is provided
@@ -128,7 +149,16 @@ export const SelectStockOwnerForm = ({
                     name="stockOwner"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                 >
-                    <Select style={{ height: '20px', marginBottom: '5px' }}>
+                    <Select
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    >
                         {stockOwners?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
                                 {option.text}
@@ -136,6 +166,7 @@ export const SelectStockOwnerForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons
                     input={{ ...buttons }}
                     output={{ onBack }}

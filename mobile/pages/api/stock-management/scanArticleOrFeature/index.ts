@@ -72,6 +72,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         id
                         articleId
                         quantity
+                        stockStatus
+                        stockStatusText
+                        stockOwnerId
+                        stockOwner {
+                            id
+                            name
+                        }
                         article {
                             id
                             name
@@ -130,6 +137,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         description
                         stockOwnerId
                         stockOwner {
+                            id
                             name
                         }
                         baseUnitWeight
@@ -140,6 +148,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     }
                     stockOwnerId
                     stockOwner {
+                        id
                         name
                     }
                     articleLuId
