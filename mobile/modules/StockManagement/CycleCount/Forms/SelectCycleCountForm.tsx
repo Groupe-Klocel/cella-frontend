@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
-import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
+import { WrapperForm, StyledForm, StyledFormItem, RadioButtons, ContentSpin } from '@components';
 import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
@@ -114,13 +114,16 @@ export const SelectCycleCountForm = ({
                     const displayedText = `${item.name} - ${item.statusText}`;
                     newTypeTexts.push({ key: item.id, text: displayedText });
                 });
+                newTypeTexts?.sort((a, b) => b.text.localeCompare(a.text));
                 setCycleCounts(newTypeTexts);
             }
         }
     }, [cycleCountsList.data]);
 
     //SelectCycleCount-2a: retrieve chosen level from select and set information
+    const [CCIsLoading, setCCIsLoading] = useState(false);
     const onFinish = async (values: any) => {
+        setCCIsLoading(true);
         const data: { [label: string]: any } = {};
 
         const query = gql`
@@ -340,6 +343,7 @@ export const SelectCycleCountForm = ({
                 // End Update CCL status
 
                 // Begin Create CCM
+                let cCLinewithCCMs = updateCycleCountLineResponse.updateCycleCountLine;
                 if (
                     updateCycleCountLineResponse.updateCycleCountLine?.cycleCountMovements
                         ?.length <= 0
@@ -379,27 +383,96 @@ export const SelectCycleCountForm = ({
                             console.log('Backend_message', cc_result.executeFunction.output.output);
                         } else {
                             showSuccess(t('messages:success-cycle-count-movements-creation'));
+                            // Query currentCCL with its created CCM
+                            const queryCurrentCCL = gql`
+                                query CCLine($id: String!) {
+                                    cycleCountLine(id: $id) {
+                                        id
+                                        status
+                                        statusText
+                                        order
+                                        articleId
+                                        articleNameStr
+                                        stockOwnerId
+                                        stockOwnerNameStr
+                                        locationId
+                                        locationNameStr
+                                        handlingUnitId
+                                        handlingUnitNameStr
+                                        parentHandlingUnitNameStr
+                                        handlingUnitContentId
+                                        cycleCountId
+                                        cycleCountMovements {
+                                            id
+                                            status
+                                            statusText
+                                            cycleCountId
+                                            cycleCountLineId
+                                            originalQuantityPass1
+                                            quantityPass1
+                                            gapPass1
+                                            operatorPass1
+                                            originalQuantityPass2
+                                            quantityPass2
+                                            gapPass2
+                                            operatorPass2
+                                            originalQuantityPass3
+                                            quantityPass3
+                                            gapPass3
+                                            operatorPass3
+                                            articleId
+                                            articleNameStr
+                                            stockOwnerId
+                                            stockOwnerNameStr
+                                            locationId
+                                            locationNameStr
+                                            handlingUnitId
+                                            handlingUnitNameStr
+                                            parentHandlingUnitNameStr
+                                            handlingUnitContentId
+                                            contentStatus
+                                            handlingUnitContentFeatureId
+                                            features
+                                        }
+                                    }
+                                }
+                            `;
+                            const variables = {
+                                id: updateCycleCountLineResponse.updateCycleCountLine.id
+                            };
+                            const cycleCountLineWithCCMsResponse =
+                                await graphqlRequestClient.request(queryCurrentCCL, variables);
+                            if (
+                                cycleCountLineWithCCMsResponse.cycleCountLine.cycleCountMovements
+                                    .length > 0
+                            ) {
+                                cCLinewithCCMs = cycleCountLineWithCCMsResponse.cycleCountLine;
+                            }
+                            //End currentCCL query
                         }
                     } catch (error) {
                         showError(t('messages:error-executing-function'));
                         console.log('executeFunctionError', error);
+                        setCCIsLoading(false);
                     }
                 }
                 // End Create CCM
 
                 // Store data in LS
                 data['cycleCount'] = updateCycleCountResponse.updateCycleCount;
-                data['currentCycleCountLine'] = updateCycleCountLineResponse.updateCycleCountLine;
+                data['currentCycleCountLine'] = cCLinewithCCMs;
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
                     data
                 };
                 storage.set(process, JSON.stringify(storedObject));
                 setTriggerRender(!triggerRender);
+                setCCIsLoading(false);
             } catch (error) {
                 console.log(error);
                 await graphqlRequestClient.request(rollbackTransaction, rollbackVariable);
                 showError(t('messages:cycle-count-update-failed'));
+                setCCIsLoading(false);
             }
         }
     };
@@ -448,6 +521,7 @@ export const SelectCycleCountForm = ({
                 <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
+            {CCIsLoading ? <ContentSpin /> : <></>}
         </WrapperForm>
     );
 };

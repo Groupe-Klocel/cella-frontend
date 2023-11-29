@@ -69,5 +69,7 @@
     "quantity-overwritting-confirm": "Article already exists in HU, do you want to overwrite previous count?",
     "cycle-count-update-failed": "Cycle count update failed",
     "counting-finished-confirmation": "Are you sure you finished counting?",
-    "cc-closed-successfully": "Cycle count closed successfully"
+    "cc-closed-successfully": "Cycle count closed successfully",
+    "success-cycle-count-movements-creation": "Cycle count movements created successfully",
+    "error-executing-function": "Error executing function"
 }

@@ -236,7 +236,6 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     : currentCCMovements.find(
                           (item: any) => item.articleId === workingObject.article.id
                       );
-
             if (expectedArticleId) {
                 if (expectedArticleId !== workingObject.article.id) {
                     createCycleCountError(
@@ -250,68 +249,68 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     setScannedInfo(undefined);
                     setIsLoading(false);
                 }
+            }
+            if (
+                contents?.length === 0 ||
+                contents[0].handlingUnitContentFeatures.length === 0 ||
+                (contents[0]?.handlingUnitContentFeatures.length !== 0 &&
+                    !contents[0]?.handlingUnitContentFeatures?.some(
+                        (item: any) => item.value === scannedInfo
+                    ))
+            ) {
+                createCycleCountError(
+                    currentCycleCountId,
+                    `Step ${stepNumber} - ${t('messages:article-not-available-for-hu', {
+                        huName: choosenHu.name
+                    })} - ${scannedInfo}`
+                );
+                showError(
+                    t('messages:article-not-available-for-hu', {
+                        huName: choosenHu.name
+                    })
+                );
+                setResetForm(true);
+                setScannedInfo(undefined);
+                setIsLoading(false);
             } else {
-                if (
-                    contents?.length === 0 ||
-                    (contents[0]?.handlingUnitContentFeatures.length !== 0 &&
-                        !contents[0]?.handlingUnitContentFeatures?.some(
-                            (item: any) => item.value === scannedInfo
-                        ))
-                ) {
-                    createCycleCountError(
-                        currentCycleCountId,
-                        `Step ${stepNumber} - ${t('messages:article-not-available-for-hu', {
-                            huName: choosenHu.name
-                        })} - ${scannedInfo}`
-                    );
-                    showError(
-                        t('messages:article-not-available-for-hu', {
-                            huName: choosenHu.name
-                        })
-                    );
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    setIsLoading(false);
-                } else {
-                    if (currentCCMovement) {
-                        if (
-                            (currentCCMovement.status === 90 && currentCCMovement.quantityPass1) ||
-                            (currentCCMovement.status === 190 && currentCCMovement.quantityPass2) ||
-                            (currentCCMovement.status === 290 && currentCCMovement.quantityPass3)
-                        ) {
-                            Modal.confirm({
-                                title: (
-                                    <span style={{ fontSize: '14px' }}>
-                                        {t('messages:quantity-overwritting-confirm')}
-                                    </span>
-                                ),
-                                onOk: () => {
-                                    console.log('ConfirmQuantityOverwritting');
-                                },
-                                onCancel: () => {
-                                    console.log('CancelQuantityOverwritting');
-                                    setResetForm(true);
-                                    setIsLoading(false);
-                                    setScannedInfo(undefined);
-                                },
-                                okText: t('messages:confirm'),
-                                cancelText: t('messages:cancel'),
-                                bodyStyle: { fontSize: '2px' }
-                            });
-                        }
-                    }
-                    const data = { ...workingObject, currentCCMovement };
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
+                if (currentCCMovement) {
                     if (
-                        storedObject[`step${stepNumber}`] &&
-                        Object.keys(storedObject[`step${stepNumber}`]).length != 0
+                        (currentCCMovement.status === 90 && currentCCMovement.quantityPass1) ||
+                        (currentCCMovement.status === 190 && currentCCMovement.quantityPass2) ||
+                        (currentCCMovement.status === 290 && currentCCMovement.quantityPass3)
                     ) {
-                        storage.set(process, JSON.stringify(storedObject));
+                        Modal.confirm({
+                            title: (
+                                <span style={{ fontSize: '14px' }}>
+                                    {t('messages:quantity-overwritting-confirm')}
+                                </span>
+                            ),
+                            onOk: () => {
+                                console.log('ConfirmQuantityOverwritting');
+                            },
+                            onCancel: () => {
+                                console.log('CancelQuantityOverwritting');
+                                setResetForm(true);
+                                setIsLoading(false);
+                                setScannedInfo(undefined);
+                            },
+                            okText: t('messages:confirm'),
+                            cancelText: t('messages:cancel'),
+                            bodyStyle: { fontSize: '2px' }
+                        });
                     }
+                }
+                const data = { ...workingObject, currentCCMovement };
+                setTriggerRender(!triggerRender);
+                storedObject[`step${stepNumber}`] = {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                };
+                if (
+                    storedObject[`step${stepNumber}`] &&
+                    Object.keys(storedObject[`step${stepNumber}`]).length != 0
+                ) {
+                    storage.set(process, JSON.stringify(storedObject));
                 }
             }
         }
