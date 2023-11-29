@@ -69,5 +69,7 @@
     "quantity-overwritting-confirm": "Article déjà inventorié pour cet UM, voulez-vous écraser le précédent comptage ?",
     "cycle-count-update-failed": "Erreur lors de la mise à jour de l'inventaire",
     "counting-finished-confirmation": "Etes-vous sûr(e) d'avoir terminé le comptage ?",
-    "cc-closed-successfully": "L'inventaire a été terminé avec succès"
+    "cc-closed-successfully": "L'inventaire a été terminé avec succès",
+    "success-cycle-count-movements-creation": "Les mouvements d'inventaire ont été créés avec succès",
+    "error-executing-function": "Erreur lors de l'exécution de la fonction"
 }
