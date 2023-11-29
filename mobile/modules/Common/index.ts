@@ -41,3 +41,4 @@ export * from './Locations/PagesContainer/ScanLocation';
 export * from './Quantity/Forms/EnterQuantityForm';
 export * from './Quantity/PagesContainer/EnterQuantity';
 export * from './StockStatus/Forms/SelectStockStatusForm';
+export * from './StockOwner/Forms/SelectStockOwnerForm';

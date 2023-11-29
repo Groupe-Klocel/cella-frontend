@@ -168,8 +168,8 @@ mutation ExportArticles(
     $format: ExportFormat
     $compression: ExportCompression
     $separator: String
-    $orderBy: [ArticleOrderByCriterionExport!]
-    $filters: ArticleExportFilters
+    $orderBy: [ArticleOrderByCriterion!]
+    $filters: ArticleSearchFilters
 ) {
     exportArticles(
         format: $format

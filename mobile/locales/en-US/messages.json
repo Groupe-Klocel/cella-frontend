@@ -61,5 +61,13 @@
     "round-packing-failed": "Round paking has failed",
     "no-box-to-close": "No box to close",
     "closure-failed": "Closure failed",
-    "incorrect-hu-carrier": "Carrier is not the expected one"
+    "incorrect-hu-carrier": "Carrier is not the expected one",
+    "article-creation-confirm": "Article unknown in stock, do you want to create it?",
+    "hu-exists-other-location": "Hangling unit exists in location {{locationName}}",
+    "hu-creation-confirm": "Handling unit unknown, do you want to create it?",
+    "article-not-available-for-hu": "Article not available for HU: {{huName}}",
+    "quantity-overwritting-confirm": "Article already exists in HU, do you want to overwrite previous count?",
+    "cycle-count-update-failed": "Cycle count update failed",
+    "counting-finished-confirmation": "Are you sure you finished counting?",
+    "cc-closed-successfully": "Cycle count closed successfully"
 }

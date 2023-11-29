@@ -38,7 +38,7 @@ const menuItemDatas = [
     {
         title: 'menu:hu-movement',
         path: '/hu-movement'
-    }
+    },
     // {
     //     title: 'menu:pallet-movement',
     //     path: '/pallet-movement'
@@ -51,10 +51,10 @@ const menuItemDatas = [
     //     title: 'menu:stock-init',
     //     path: '/'
     // },
-    // {
-    //     title: 'menu:cycle-counts',
-    //     path: '/'
-    // },
+    {
+        title: 'menu:cycle-counts',
+        path: '/cycle-counts'
+    }
     // {
     //     title: 'menu:set-unbuilding',
     //     path: '/'
