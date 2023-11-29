@@ -75,7 +75,8 @@ export const CycleCountModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: null,
+            defaultSort: 'descending'
         },
         stockOwnerId: {
             isListRequested: true,
@@ -96,8 +97,7 @@ export const CycleCountModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: '{"table": "StockOwner", "fieldToDisplay": "name"}',
-            defaultSort: 'descending'
+            optionTable: '{"table": "StockOwner", "fieldToDisplay": "name"}'
         },
         'stockOwner{name}': {
             isListRequested: true,
