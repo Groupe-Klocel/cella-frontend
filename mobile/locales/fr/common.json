@@ -137,5 +137,14 @@
     "close-box": "Fermer le colis",
     "shipping-unit-box": "Unité d'expédition/Colis",
     "shipping-unit-box_abbr": "Unité Expé./Colis",
-    "shipping-unit-box-info": "Info Unité d'expédition/Colis"
+    "shipping-unit-box-info": "Info Unité d'expédition/Colis",
+    "cycle-count": "Inventaire",
+    "cycle-count-with-status": "Inventaire/Etat",
+    "observed-quantity": "Quantité observée",
+    "currentCCMovement-status": "Statut du mouvement d'inventaire en cours",
+    "parent-handling-unit": "Unité de manutention parente",
+    "hu-count-finished": "Comptage UM terminé",
+    "location-count-finished": "Comptage emplacement terminé",
+    "cycle-count-finished": "Inventaire terminé",
+    "empty-location-declare": "Déclarer emplacement vide"
 }
