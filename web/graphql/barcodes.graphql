@@ -141,8 +141,8 @@ mutation ExportBarcodes(
     $format: ExportFormat
     $compression: ExportCompression
     $separator: String
-    $orderBy: [BarcodeOrderByCriterionExport!]
-    $filters: BarcodeExportFilters
+    $orderBy: [BarcodeOrderByCriterion!]
+    $filters: BarcodeSearchFilters
 ) {
     exportBarcodes(
         format: $format
