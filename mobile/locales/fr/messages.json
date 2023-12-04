@@ -61,5 +61,15 @@
     "round-packing-failed": "Erreur lors de l'emballage de la ramasse",
     "no-box-to-close": "Aucun colis à fermer",
     "closure-failed": "Erreur lors de la fermeture du colis",
-    "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu"
+    "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu",
+    "article-creation-confirm": "Article inconnu en stock, voulez-vous le créer ?",
+    "hu-exists-other-location": "L'UM existe à l'emplacement {{locationName}}",
+    "hu-creation-confirm": "L'UM n'existe pas, voulez-vous la créer ?",
+    "article-not-available-for-hu": "Cet article n'existe pas pour l'UM : {{huName}}",
+    "quantity-overwritting-confirm": "Article déjà inventorié pour cet UM, voulez-vous écraser le précédent comptage ?",
+    "cycle-count-update-failed": "Erreur lors de la mise à jour de l'inventaire",
+    "counting-finished-confirmation": "Etes-vous sûr(e) d'avoir terminé le comptage ?",
+    "cc-closed-successfully": "L'inventaire a été terminé avec succès",
+    "success-cycle-count-movements-creation": "Les mouvements d'inventaire ont été créés avec succès",
+    "error-executing-function": "Erreur lors de l'exécution de la fonction"
 }

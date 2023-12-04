@@ -73,7 +73,10 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
     //List available blocks
     //To render simple blocks list for attached block selection (id and name without any filter)
     const blocksList = useSimpleGetAllBLocksQuery<Partial<SimpleGetAllBLocksQuery>, Error>(
-        graphqlRequestClient
+        graphqlRequestClient,
+        {
+            itemsPerPage: 1000
+        }
     );
 
     useEffect(() => {

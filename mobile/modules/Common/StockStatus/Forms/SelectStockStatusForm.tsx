@@ -20,25 +20,28 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured } from '@helpers';
-import { Select } from 'antd';
+import { LsIsSecured, showError } from '@helpers';
+import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectStockStatusProps {
     process: string;
     stepNumber: number;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
+    defaultValue?: any;
 }
 
 export const SelectStockStatusForm = ({
     process,
     stepNumber,
+    defaultValue,
     trigger: { triggerRender, setTriggerRender },
     buttons
 }: ISelectStockStatusProps) => {
@@ -52,9 +55,36 @@ export const SelectStockStatusForm = ({
     // TYPED SAFE ALL
     const [stockStatuses, setStockStatuses] = useState<Array<any>>();
 
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (stockStatuses?.some((option) => option.text === camData)) {
+                const stockStatusToFind = stockStatuses?.find((option) => option.text === camData);
+                form.setFieldsValue({ stockStatus: stockStatusToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, stockStatuses]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
+
     //Pre-requisite: initialize current step
     useEffect(() => {
-        if (storedObject.currentStep < stepNumber) {
+        if (defaultValue) {
+            // N.B.: in this case previous step is kept at its previous value
+            const data: { [label: string]: any } = {};
+            data['stockStatus'] = defaultValue;
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            setTriggerRender(!triggerRender);
+        } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
             storedObject.currentStep = stepNumber;
@@ -116,7 +146,16 @@ export const SelectStockStatusForm = ({
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                     initialValue={parameters.STOCK_STATUSES_SALE}
                 >
-                    <Select style={{ height: '20px', marginBottom: '5px' }}>
+                    <Select
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    >
                         {stockStatuses?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
                                 {option.text}
@@ -124,6 +163,7 @@ export const SelectStockStatusForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>

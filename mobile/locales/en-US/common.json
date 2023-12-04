@@ -137,5 +137,14 @@
     "close-box": "Close box",
     "shipping-unit-box": "Shipping unit/Box",
     "shipping-unit-box_abbr": "Shipping unit/Box",
-    "shipping-unit-box-info": "Shipping unit/Box info"
+    "shipping-unit-box-info": "Shipping unit/Box info",
+    "cycle-count": "Cycle Count",
+    "cycle-count-with-status": "Cycle Count / status",
+    "observed-quantity": "Observed quantity",
+    "currentCCMovement-status": "Current CC Movement status",
+    "parent-handling-unit": "Parent handling unit",
+    "hu-count-finished": "Finish HU count",
+    "location-count-finished": "Finish location count",
+    "cycle-count-finished": "Finish cycle count",
+    "empty-location-declare": "Declare empty location"
 }

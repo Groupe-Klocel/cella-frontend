@@ -182,7 +182,10 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
 
     // Block list
     const blocksList = useSimpleGetAllBLocksQuery<Partial<SimpleGetAllBLocksQuery>, Error>(
-        graphqlRequestClient
+        graphqlRequestClient,
+        {
+            itemsPerPage: 1000
+        }
     );
 
     useEffect(() => {
@@ -641,6 +644,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                 })}`}
                                 onChange={onBlockChange}
                                 allowClear
+                                showSearch
+                                filterOption={(inputValue, option) =>
+                                    option!.props.children
+                                        .toUpperCase()
+                                        .indexOf(inputValue.toUpperCase()) !== -1
+                                }
                             >
                                 {blocks?.map((block: any) => (
                                     <Option key={block.id} value={block.id}>
@@ -965,6 +974,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                         )}
                     </>
                 )}
+                {/* 2023/11/29 This part of code has been commented on FCT demand
                 <Form.Item label={t('d:reason')} name="reason">
                     <Select
                         placeholder={`${t('messages:please-select-a', {
@@ -992,7 +1002,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                             </Option>
                         ))}
                     </Select>
-                </Form.Item>
+                </Form.Item>*/}
 
                 {/* 29/09/202 - The backend functions for emptyLocation, nbDays and stockMini will be deployed later on.
                 <Form.Item label={t('d:number-of-days')} name="numberOfDays">
