@@ -115,6 +115,33 @@ const CycleCounts: PageComponent = () => {
                 storedObject[`step${workflow.expectedSteps[4]}`]?.data?.currentCCMovement;
             object[t('common:currentCCMovement-status')] = currentCCMovement.statusText;
         }
+        if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.stockOwner) {
+            const stockOwner = storedObject[`step${workflow.expectedSteps[5]}`]?.data?.stockOwner;
+            object[t('common:stock-owner')] = stockOwner.name;
+        }
+        if (storedObject[`step${workflow.expectedSteps[6]}`]?.data?.article) {
+            const article = storedObject[`step${workflow.expectedSteps[6]}`]?.data?.article;
+            object[t('common:article')] = article.name;
+        }
+        if (storedObject[`step${workflow.expectedSteps[6]}`]?.data?.article) {
+            const article = storedObject[`step${workflow.expectedSteps[6]}`]?.data?.article;
+            const serialNumber =
+                storedObject[`step${workflow.expectedSteps[4]}`]?.data?.feature?.value ?? undefined;
+            object[t('common:article')] = serialNumber
+                ? '1 x ' + article.name + ' / ' + serialNumber
+                : article.name;
+        }
+        if (storedObject[`step${workflow.expectedSteps[7]}`]?.data?.stockStatus) {
+            const stockStatus = storedObject[`step${workflow.expectedSteps[7]}`]?.data?.stockStatus;
+            object[t('common:stock-status')] = stockStatus?.text;
+        }
+        if (
+            storedObject[`step${workflow.expectedSteps[8]}`]?.data?.featureCode &&
+            storedObject[`step${workflow.expectedSteps[8]}`]?.data?.featureCode !== 'N/A'
+        ) {
+            const featureCode = storedObject[`step${workflow.expectedSteps[8]}`]?.data?.featureCode;
+            object[t('common:feature-code')] = featureCode?.name;
+        }
         if (storedObject[`step${workflow.expectedSteps[9]}`]?.data?.movingQuantity) {
             const article = storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article;
             const resType = storedObject[`step${workflow.expectedSteps[4]}`]?.data?.resType;
@@ -124,6 +151,7 @@ const CycleCounts: PageComponent = () => {
                 object[t('common:article')] = movingQuantity + ' x ' + article.name;
             }
         }
+
         setOriginDisplay(object);
     }, [triggerRender]);
 
@@ -307,14 +335,17 @@ const CycleCounts: PageComponent = () => {
                         submitButton: true,
                         backButton: true
                     }}
-                    defaultValue={{
-                        key:
-                            storedObject[`step${workflow.expectedSteps[4]}`]?.data
-                                .handlingUnitContent?.stockStatus ?? undefined,
-                        text:
-                            storedObject[`step${workflow.expectedSteps[4]}`]?.data
-                                .handlingUnitContent?.stockStatusText ?? undefined
-                    }}
+                    defaultValue={
+                        storedObject[`step${workflow.expectedSteps[4]}`]?.data?.handlingUnitContent
+                            ?.stockStatus
+                            ? {
+                                  key: storedObject[`step${workflow.expectedSteps[4]}`]?.data
+                                      .handlingUnitContent?.stockStatus,
+                                  text: storedObject[`step${workflow.expectedSteps[4]}`]?.data
+                                      .handlingUnitContent?.stockStatusText
+                              }
+                            : undefined
+                    }
                 ></SelectStockStatusForm>
             ) : (
                 <></>

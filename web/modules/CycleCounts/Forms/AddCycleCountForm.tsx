@@ -974,6 +974,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                         )}
                     </>
                 )}
+                {/* 2023/11/29 This part of code has been commented on FCT demand
                 <Form.Item label={t('d:reason')} name="reason">
                     <Select
                         placeholder={`${t('messages:please-select-a', {
@@ -1001,7 +1002,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                             </Option>
                         ))}
                     </Select>
-                </Form.Item>
+                </Form.Item>*/}
 
                 {/* 29/09/202 - The backend functions for emptyLocation, nbDays and stockMini will be deployed later on.
                 <Form.Item label={t('d:number-of-days')} name="numberOfDays">

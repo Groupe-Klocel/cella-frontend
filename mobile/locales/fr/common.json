@@ -145,5 +145,6 @@
     "parent-handling-unit": "Unité de manutention parente",
     "hu-count-finished": "Comptage UM terminé",
     "location-count-finished": "Comptage emplacement terminé",
-    "cycle-count-finished": "Inventaire terminé"
+    "cycle-count-finished": "Inventaire terminé",
+    "feature-code": "Donnée traçable"
 }

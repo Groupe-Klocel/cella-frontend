@@ -71,5 +71,6 @@
     "counting-finished-confirmation": "Etes-vous sûr(e) d'avoir terminé le comptage ?",
     "cc-closed-successfully": "L'inventaire a été terminé avec succès",
     "success-cycle-count-movements-creation": "Les mouvements d'inventaire ont été créés avec succès",
-    "error-executing-function": "Erreur lors de l'exécution de la fonction"
+    "error-executing-function": "Erreur lors de l'exécution de la fonction",
+    "cycleCountMovement-validation-failed": "Erreur lors de la validation du mouvement d'inventaire"
 }

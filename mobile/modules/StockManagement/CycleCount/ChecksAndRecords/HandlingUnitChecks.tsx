@@ -61,7 +61,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
     const expectedLocationId: string = storedObject.step10?.data?.currentCycleCountLine?.locationId;
     const currentCCMovements: any[] =
         storedObject.step10?.data?.currentCycleCountLine?.cycleCountMovements;
-    //ScanPallet-3: manage information for persistence storage and front-end errors
+    // manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && handlingUnitInfos.data) {
             if (expectedHu) {
@@ -79,10 +79,19 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
             }
             //HU does not exist and if exists is not in the location
             if (
-                handlingUnitInfos.data.handlingUnits?.count === 0 &&
-                (handlingUnitInfos?.data?.handlingUnits?.results[0]?.locationId ?? null) !==
+                handlingUnitInfos.data.handlingUnits?.count !== 0 &&
+                (handlingUnitInfos?.data?.handlingUnits?.results[0]?.locationId ?? null) ===
                     expectedLocationId
             ) {
+                const data: { [label: string]: any } = {};
+                data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
+                setTriggerRender(!triggerRender);
+                storedObject[`step${stepNumber}`] = {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                };
+                storage.set(process, JSON.stringify(storedObject));
+            } else {
                 const matchingCCM = currentCCMovements?.find((e: any) => {
                     return e.handlingUnitNameStr === scannedInfo;
                 });
@@ -153,15 +162,6 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                         bodyStyle: { fontSize: '2px' }
                     });
                 }
-            } else {
-                const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
-                storage.set(process, JSON.stringify(storedObject));
             }
         }
     }, [handlingUnitInfos]);
@@ -218,6 +218,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 showError(t('messages:no-location-to-close'));
                 triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
             } else {
+                triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
                 closeHU([currentCycleCountLineId]);
             }
         }
