@@ -21,7 +21,6 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
-import { rest } from 'lodash';
 import { decodeJWT } from '@helpers';
 import moment from 'moment';
 
@@ -58,6 +57,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         cycleCountMovement,
         location,
         handlingUnit,
+        huToCreate,
         handlingUnitContent,
         article,
         stockOwner,
@@ -93,88 +93,119 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     let canRollbackTransaction = false;
 
     try {
+        let handlingUnitToSend = handlingUnit;
+        let handlingUnitContentToSend = handlingUnitContent;
+        let featureToSend = feature;
         let finalCycleCountMovement = null;
+        let createdByCycleCount = false;
 
         // // 1- Check if HU has to be created
-        // if (huToCreate) {
-        //     // 1a- HU creation
-        //     const createHandlingUnitMutation = gql`
-        //         mutation createHandlingUnit($input: CreateHandlingUnitInput!) {
-        //             createHandlingUnit(input: $input) {
-        //                 id
-        //                 name
-        //                 parentHandlingUnitId
-        //                 parentHandlingUnit {
-        //                     name
-        //                 }
-        //                 lastTransactionId
-        //             }
-        //         }
-        //     `;
+        if (Object.keys(huToCreate).length !== 0) {
+            // 1a- HU creation
+            const createHandlingUnitMutation = gql`
+                mutation createHandlingUnit($input: CreateHandlingUnitInput!) {
+                    createHandlingUnit(input: $input) {
+                        id
+                        name
+                        parentHandlingUnitId
+                        parentHandlingUnit {
+                            name
+                        }
+                        lastTransactionId
+                    }
+                }
+            `;
 
-        //     const createHandlingUnitVariables = {
-        //         input: {
-        //             name: huToCreate?.name,
-        //             barcode: huToCreate?.barcode,
-        //             code: huToCreate?.code,
-        //             type: huToCreate?.type,
-        //             status: huToCreate?.status,
-        //             category: huToCreate?.category,
-        //             locationId: huToCreate?.locationId,
-        //             lastTransactionId
-        //         }
-        //     };
+            const createHandlingUnitVariables = {
+                input: {
+                    ...huToCreate,
+                    lastTransactionId
+                }
+            };
 
-        //     const createHandlingUnitResult = await graphqlRequestClient.request(
-        //         createHandlingUnitMutation,
-        //         createHandlingUnitVariables,
-        //         requestHeader
-        //     );
+            const createHandlingUnitResult = await graphqlRequestClient.request(
+                createHandlingUnitMutation,
+                createHandlingUnitVariables,
+                requestHeader
+            );
 
-        //     handlingUnit = createHandlingUnitResult.createHandlingUnit;
-        //     createdByCycleCount = true;
-        //     canRollbackTransaction = true;
-        // } else {
-        //     handlingUnit = handlingUnit;
-        // }
+            handlingUnitToSend = createHandlingUnitResult.createHandlingUnit;
+            createdByCycleCount = true;
+            canRollbackTransaction = true;
+        } else {
+            handlingUnitToSend = handlingUnit;
+        }
+        // 2a- HUC creation
+        if (handlingUnitToSend && Object.keys(handlingUnitContent).length === 0) {
+            const createHandlingUnitContentMutation = gql`
+                mutation createHandlingUnitContent($input: CreateHandlingUnitContentInput!) {
+                    createHandlingUnitContent(input: $input) {
+                        id
+                        lastTransactionId
+                    }
+                }
+            `;
 
-        // // 2- Check if HUC has to be created
-        // if (hucToCreate) {
-        //     // 2a- HUC creation
-        //     const createHandlingUnitContentMutation = gql`
-        //         mutation createHandlingUnitContent($input: CreateHandlingUnitContentInput!) {
-        //             createHandlingUnitContent(input: $input) {
-        //                 id
-        //                 lastTransactionId
-        //             }
-        //         }
-        //     `;
+            const createHandlingUnitContentVariables = {
+                input: {
+                    stockStatus: parameters.STOCK_STATUSES_SALE,
+                    handlingUnitId: handlingUnitToSend.id,
+                    articleId: article.id,
+                    quantity: quantity,
+                    lastTransactionId
+                }
+            };
 
-        //     const createHandlingUnitContentVariables = {
-        //         input: {
-        //             stockStatus: parameters.STOCK_STATUSES_SALE,
-        //             handlingUnitId: handlingUnit.id,
-        //             articleId: article.id,
-        //             quantity: quantity,
-        //             lastTransactionId
-        //         }
-        //     };
+            const createHandlingUnitContentResult = await graphqlRequestClient.request(
+                createHandlingUnitContentMutation,
+                createHandlingUnitContentVariables,
+                requestHeader
+            );
 
-        //     const createHandlingUnitContentResult = await graphqlRequestClient.request(
-        //         createHandlingUnitContentMutation,
-        //         createHandlingUnitContentVariables,
-        //         requestHeader
-        //     );
+            handlingUnitContentToSend = createHandlingUnitContentResult.createHandlingUnitContent;
+            createdByCycleCount = true;
+            canRollbackTransaction = true;
+        } else {
+            handlingUnitContentToSend = handlingUnitContent;
+        }
 
-        //     handlingUnitContent = createHandlingUnitContentResult.createHandlingUnitContent;
-        //     createdByCycleCount = true;
-        //     canRollbackTransaction = true;
-        // } else {
-        //     handlingUnitContent = handlingUnitContent;
-        // }
+        if (!feature.id && resType == 'serialNumber') {
+            const createHandlingUnitContentFeatureMutation = gql`
+                mutation createHandlingUnitContentFeature(
+                    $input: CreateHandlingUnitContentFeatureInput!
+                ) {
+                    createHandlingUnitContentFeature(input: $input) {
+                        id
+                        value
+                        featureCodeId
+                        featureCode {
+                            name
+                            unique
+                        }
+                        handlingUnitContentId
+                    }
+                }
+            `;
+
+            const createHandlingUnitContentFeatureVariables = {
+                input: {
+                    handlingUnitContentId: handlingUnitContentToSend.id,
+                    featureCodeId: featureCode.id,
+                    value: feature.value,
+                    lastTransactionId
+                }
+            };
+            const createHandlingUnitContentFeatureResult = await graphqlRequestClient.request(
+                createHandlingUnitContentFeatureMutation,
+                createHandlingUnitContentFeatureVariables,
+                requestHeader
+            );
+
+            featureToSend = createHandlingUnitContentFeatureResult.createHandlingUnitContentFeature;
+        }
 
         // 3- Check if cycleCountMovement exists
-        if (!cycleCountMovement) {
+        if (Object.keys(cycleCountMovement).length === 0) {
             // 3a- cycleCountMovement creation
             const createCycleCountMovementMutation = gql`
                 mutation createCycleCountMovement($input: CreateCycleCountMovementInput!) {
@@ -231,12 +262,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 datePass1: moment(),
                 operatorPass1: username
             };
-
             let CCMfeatures: any = null;
             if (resType == 'serialNumber') {
                 CCMfeatures[featureCode?.name] = {
-                    id: feature?.id,
-                    value: feature?.value,
+                    id: featureToSend?.id,
+                    value: featureToSend?.value,
                     featureCodeId: featureCode?.id
                 };
             }
@@ -246,17 +276,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     cycleCountId: cycleCount?.id,
                     locationId: location?.id,
                     locationNameStr: location?.name,
-                    handlingUnitId: handlingUnit?.id, // HU may not be existing
-                    handlingUnitNameStr: handlingUnit?.name,
-                    parentHandlingUnitId: handlingUnit?.parentHandlingUnitId, // HU may not be existing
-                    parentHandlingUnitNameStr: handlingUnit?.parentHandlingUnit?.name,
+                    handlingUnitId: handlingUnitToSend?.id, // HU may not be existing
+                    handlingUnitNameStr: handlingUnitToSend?.name,
+                    parentHandlingUnitId: handlingUnitToSend?.parentHandlingUnitId, // HU may not be existing
+                    parentHandlingUnitNameStr: handlingUnitToSend?.parentHandlingUnit?.name,
                     contentStatus: stockStatus,
                     stockOwnerIdStr: stockOwner?.id,
                     stockOwnerNameStr: stockOwner?.name,
                     articleId: article?.id,
                     articleNameStr: article?.name,
                     handlingUnitContentFeatureId:
-                        resType == 'serialNumber' ? feature?.id : undefined,
+                        resType == 'serialNumber' ? featureToSend?.id : undefined,
                     features: CCMfeatures,
                     ...pass1Data,
                     createdByCycleCount,
@@ -279,9 +309,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     configs.CYCLE_COUNT_STATUS_PASS_1_IN_PROGRESS:
                     passXData = {
                         status: currentCycleCountLine?.status,
-                        originalQuantityPass1: handlingUnitContent?.quantity,
+                        originalQuantityPass1: handlingUnitContentToSend?.quantity,
                         quantityPass1: quantity,
-                        gapPass1: handlingUnitContent?.quantity - quantity,
+                        gapPass1: handlingUnitContentToSend?.quantity - quantity,
                         datePass1: moment(),
                         operatorPass1: username
                     };
@@ -290,7 +320,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     configs.CYCLE_COUNT_STATUS_PASS_2_IN_PROGRESS:
                     passXData = {
                         status: currentCycleCountLine?.status,
-                        originalQuantityPass2: handlingUnitContent?.quantity,
+                        originalQuantityPass2: handlingUnitContentToSend?.quantity,
                         quantityPass2: quantity,
                         gapPass2: cycleCountMovement?.quantityPass1 - quantity,
                         datePass2: moment(),
@@ -301,7 +331,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     configs.CYCLE_COUNT_STATUS_PASS_3_IN_PROGRESS:
                     passXData = {
                         status: currentCycleCountLine?.status,
-                        originalQuantityPass3: handlingUnitContent?.quantity,
+                        originalQuantityPass3: handlingUnitContentToSend?.quantity,
                         quantityPass3: quantity,
                         gapPass3: cycleCountMovement?.quantityPass2 - quantity,
                         datePass3: moment(),

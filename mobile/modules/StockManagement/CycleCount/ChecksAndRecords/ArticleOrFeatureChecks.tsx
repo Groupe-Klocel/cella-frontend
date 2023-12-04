@@ -57,7 +57,10 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         storedObject.step10?.data?.currentCycleCountLine?.cycleCountMovements;
     const choosenHu = storedObject.step30?.data?.handlingUnit;
     // retrieve features from CCM
-    const currentCcmsWithFeatures = currentCCMovements.map((item: any) => item.features);
+    const currentCcmsWithFeatures = currentCCMovements.filter(
+        (item) => item.features && Object.keys(item.features).length > 0
+    );
+
     //call and process frontAPIResponse
     const [fetchResult, setFetchResult] = useState<any>();
     useEffect(() => {
@@ -150,6 +153,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                     baseUnitWeight
                                 }
                                 quantity
+                                stockStatus
                                 stockStatusText
                                 handlingUnitId
                                 handlingUnit {
@@ -216,7 +220,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
             let workingObject: { [label: string]: any } = {};
             fetchResult.resType === 'serialNumber'
                 ? (workingObject = {
-                      restype: fetchResult.resType,
+                      resType: fetchResult.resType,
                       article: { ...fetchResult.article, id: fetchResult.article.articleId },
                       feature: fetchResult.handlingUnitContentFeature,
                       handlingUnitContent:
@@ -236,6 +240,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     : currentCCMovements.find(
                           (item: any) => item.articleId === workingObject.article.id
                       );
+
             if (expectedArticleId) {
                 if (expectedArticleId !== workingObject.article.id) {
                     createCycleCountError(
@@ -250,13 +255,15 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     setIsLoading(false);
                 }
             }
+
             if (
                 contents?.length === 0 ||
-                contents[0].handlingUnitContentFeatures.length === 0 ||
-                (contents[0]?.handlingUnitContentFeatures.length !== 0 &&
-                    !contents[0]?.handlingUnitContentFeatures?.some(
-                        (item: any) => item.value === scannedInfo
-                    ))
+                (fetchResult.resType === 'serialNumber' &&
+                    (contents[0].handlingUnitContentFeatures.length === 0 ||
+                        (contents[0]?.handlingUnitContentFeatures.length !== 0 &&
+                            !contents[0]?.handlingUnitContentFeatures?.some(
+                                (item: any) => item.value === scannedInfo
+                            ))))
             ) {
                 createCycleCountError(
                     currentCycleCountId,
@@ -287,6 +294,12 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                             ),
                             onOk: () => {
                                 console.log('ConfirmQuantityOverwritting');
+                                const data = { ...workingObject, currentCCMovement };
+                                setTriggerRender(!triggerRender);
+                                storedObject[`step${stepNumber}`] = {
+                                    ...storedObject[`step${stepNumber}`],
+                                    data
+                                };
                             },
                             onCancel: () => {
                                 console.log('CancelQuantityOverwritting');
@@ -299,13 +312,14 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                             bodyStyle: { fontSize: '2px' }
                         });
                     }
+                } else {
+                    const data = { ...workingObject, currentCCMovement };
+                    setTriggerRender(!triggerRender);
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
                 }
-                const data = { ...workingObject, currentCCMovement };
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
                 if (
                     storedObject[`step${stepNumber}`] &&
                     Object.keys(storedObject[`step${stepNumber}`]).length != 0
@@ -370,6 +384,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 showError(t('messages:no-hu-to-close'));
                 triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
             } else {
+                triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
                 closeHU([currentCycleCountLineId]);
             }
         }

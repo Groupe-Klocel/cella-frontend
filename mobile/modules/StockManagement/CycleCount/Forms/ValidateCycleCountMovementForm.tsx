@@ -77,6 +77,10 @@ export const ValidateCycleCountMovementForm = ({
     if (storedObject.step30.data.handlingUnit) {
         handlingUnit = storedObject.step30.data.handlingUnit;
     }
+    let huToCreate: { [k: string]: any } = {};
+    if (storedObject.step30.data.huToCreate) {
+        huToCreate = storedObject.step30.data.handlingUnit;
+    }
     if (storedObject.step30.data.huToCreate) {
         handlingUnit = storedObject.step30.data.huToCreate;
     }
@@ -131,6 +135,7 @@ export const ValidateCycleCountMovementForm = ({
                 cycleCountMovement,
                 location,
                 handlingUnit,
+                huToCreate,
                 handlingUnitContent,
                 article,
                 stockOwner,
