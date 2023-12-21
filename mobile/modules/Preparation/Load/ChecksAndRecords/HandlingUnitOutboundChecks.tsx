@@ -44,17 +44,17 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
     const storedObject = JSON.parse(storage.get(process) || '{}');
 
     useEffect(() => {
-        if (scannedInfo && handlingUnitOutboundInfos.data) {
+        if (scannedInfo && handlingUnitOutboundInfos) {
             if (
                 // If Support/Box exist
-                handlingUnitOutboundInfos.data.handlingUnitOutbounds?.count !== 0
+                handlingUnitOutboundInfos.handlingUnitOutbounds?.count !== 0
             ) {
                 if (
                     // If Support/Box is consistent with Load
-                    handlingUnitOutboundInfos.data.handlingUnitOutbounds?.results[0].handlingUnit
-                        .type != parameters.HANDLING_UNIT_TYPE_PALLET &&
-                    handlingUnitOutboundInfos.data.handlingUnitOutbounds?.results[0]
-                        ?.carrierShippingMode?.toBePalletized == true
+                    handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0].handlingUnit.type !=
+                        parameters.HANDLING_UNIT_TYPE_PALLET &&
+                    handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0]?.carrierShippingMode
+                        ?.toBePalletized == true
                 ) {
                     showError(t('messages:wait-support'));
                     setResetForm(true);
@@ -62,8 +62,8 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                 } else {
                     if (
                         // If Support/Box is a children
-                        handlingUnitOutboundInfos.data.handlingUnitOutbounds?.results[0]
-                            .handlingUnit?.parentHandlingUnitId != null
+                        handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0].handlingUnit
+                            ?.parentHandlingUnitId != null
                     ) {
                         showError(t('messages:support-box-children'));
                         setResetForm(true);
@@ -71,81 +71,76 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                     } else {
                         if (
                             // if Support/Box loaded
-                            handlingUnitOutboundInfos.data.handlingUnitOutbounds?.results[0]
-                                .status == 1500
+                            handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0].status ==
+                                1500 &&
+                            handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0].loadId ==
+                                storedObject.step10.data.load.id
                         ) {
-                            storedObject.step10.countLoop = storedObject.step10.countLoop + 1;
-                            if (storedObject.step10.countLoop == 1) {
-                                // Unload Support/Box
-                                const box =
-                                    handlingUnitOutboundInfos.data.handlingUnitOutbounds
-                                        ?.results[0];
-                                const load = storedObject.step10.data.load;
-                                const onFinish = async () => {
-                                    const res = await fetch(
-                                        `/api/preparation-management/validateUnload/`,
-                                        {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            },
-                                            body: JSON.stringify({
-                                                box,
-                                                load
-                                            })
-                                        }
-                                    );
-                                    if (res.ok) {
-                                        showSuccess(t('messages:unload-success'));
-                                        delete storedObject.step10.countLoop;
-                                        storedObject.step10.data.load.numberHuLoaded =
-                                            storedObject.step10.data.load.numberHuLoaded - 1;
-                                        storedObject.step10.data.load.weight =
-                                            storedObject.step10.data.load.weight -
-                                            box.theoriticalWeight;
-                                        storage.set(process, JSON.stringify(storedObject));
-                                        setResetForm(true);
-                                        setScannedInfo(null);
-                                        setTriggerRender(!triggerRender);
-                                    } else {
-                                        showError(t('messages:load-failed'));
+                            // Unload Support/Box
+                            const box = handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0];
+                            const load = storedObject.step10.data.load;
+                            const onFinish = async () => {
+                                const res = await fetch(
+                                    `/api/preparation-management/validateUnload/`,
+                                    {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            box,
+                                            load
+                                        })
                                     }
-                                };
-                                const onBack = () => {
-                                    delete storedObject.step10.countLoop;
+                                );
+                                if (res.ok) {
+                                    showSuccess(t('messages:unload-success'));
+                                    storedObject.step10.data.load.numberHuLoaded =
+                                        storedObject.step10.data.load.numberHuLoaded - 1;
+                                    storedObject.step10.data.load.weight =
+                                        storedObject.step10.data.load.weight -
+                                        box.theoriticalWeight;
                                     storage.set(process, JSON.stringify(storedObject));
                                     setResetForm(true);
                                     setScannedInfo(null);
                                     setTriggerRender(!triggerRender);
-                                };
-                                Modal.confirm({
-                                    title: (
-                                        <span style={{ fontSize: '14px' }}>
-                                            {t('messages:message-unload', {
-                                                name: box.name
-                                            })}
-                                        </span>
-                                    ),
-                                    onOk: () => {
-                                        onFinish();
-                                    },
-                                    onCancel: () => {
-                                        onBack();
-                                    },
-                                    okText: t('messages:confirm'),
-                                    cancelText: t('messages:cancel'),
-                                    bodyStyle: { fontSize: '2px' }
-                                });
-                            }
+                                } else {
+                                    showError(t('messages:load-failed'));
+                                }
+                            };
+                            const onBack = () => {
+                                storage.set(process, JSON.stringify(storedObject));
+                                setResetForm(true);
+                                setScannedInfo(null);
+                                setTriggerRender(!triggerRender);
+                            };
+                            Modal.confirm({
+                                title: (
+                                    <span style={{ fontSize: '14px' }}>
+                                        {t('messages:message-unload', {
+                                            name: box.name
+                                        })}
+                                    </span>
+                                ),
+                                onOk: () => {
+                                    onFinish();
+                                },
+                                onCancel: () => {
+                                    onBack();
+                                },
+                                okText: t('messages:confirm'),
+                                cancelText: t('messages:cancel'),
+                                bodyStyle: { fontSize: '2px' }
+                            });
                         } else {
                             if (
                                 // If Support/Box is to be loaded
-                                handlingUnitOutboundInfos.data.handlingUnitOutbounds?.results[0]
+                                handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0]
                                     .status == 1400
                             ) {
                                 // Check HU carrier vs load carrier
                                 if (
-                                    handlingUnitOutboundInfos.data.handlingUnitOutbounds.results[0]
+                                    handlingUnitOutboundInfos.handlingUnitOutbounds.results[0]
                                         .delivery.carrierShippingMode.carrier.id !==
                                     storedObject.step10.data.load.carrierId
                                 ) {
@@ -156,7 +151,7 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                                     // Save in local storage
                                     const data: { [label: string]: any } = {};
                                     data['handlingUnitOutbound'] =
-                                        handlingUnitOutboundInfos.data?.handlingUnitOutbounds?.results[0];
+                                        handlingUnitOutboundInfos?.handlingUnitOutbounds?.results[0];
                                     const nextStep = 30;
                                     setTriggerRender(!triggerRender);
                                     storedObject[`step${stepNumber}`] = {
@@ -168,7 +163,7 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                             } else {
                                 if (
                                     // Support/Box status is < 1400 (to be loaded)
-                                    handlingUnitOutboundInfos.data.handlingUnitOutbounds?.results[0]
+                                    handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0]
                                         .status < 1400
                                 ) {
                                     showError(t('messages:box-not-ready'));

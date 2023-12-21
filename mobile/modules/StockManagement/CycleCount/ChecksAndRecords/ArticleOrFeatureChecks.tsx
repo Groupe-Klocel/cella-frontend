@@ -24,7 +24,7 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { createCycleCountError, searchByIdInCCMs } from 'helpers/utils/crudFunctions/cycleCount';
 import useTranslation from 'next-translate/useTranslation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface IArticleOrFeatureChecksProps {
     dataToCheck: any;
@@ -41,8 +41,8 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
-        triggerAlternativeSubmit,
-        alternativeSubmitInput,
+        triggerAlternativeSubmit1,
+        alternativeSubmitInput1,
         setResetForm
     } = dataToCheck;
 
@@ -238,7 +238,9 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 workingObject.resType == 'serialNumber'
                     ? searchByIdInCCMs(currentCcmsWithFeatures, scannedInfo)
                     : currentCCMovements.find(
-                          (item: any) => item.articleId === workingObject.article.id
+                          (item: any) =>
+                              item.articleId === workingObject.article.id &&
+                              item.handlingUnitId === choosenHu.id
                       );
 
             if (expectedArticleId) {
@@ -253,10 +255,9 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     setResetForm(true);
                     setScannedInfo(undefined);
                     setIsLoading(false);
+                    setContents(undefined);
                 }
-            }
-
-            if (
+            } else if (
                 contents?.length === 0 ||
                 (fetchResult.resType === 'serialNumber' &&
                     (contents[0].handlingUnitContentFeatures.length === 0 ||
@@ -279,6 +280,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 setResetForm(true);
                 setScannedInfo(undefined);
                 setIsLoading(false);
+                setContents(undefined);
             } else {
                 if (currentCCMovement) {
                     if (
@@ -300,6 +302,12 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                     ...storedObject[`step${stepNumber}`],
                                     data
                                 };
+                                if (
+                                    storedObject[`step${stepNumber}`] &&
+                                    Object.keys(storedObject[`step${stepNumber}`]).length != 0
+                                ) {
+                                    storage.set(process, JSON.stringify(storedObject));
+                                }
                             },
                             onCancel: () => {
                                 console.log('CancelQuantityOverwritting');
@@ -311,6 +319,19 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                             cancelText: t('messages:cancel'),
                             bodyStyle: { fontSize: '2px' }
                         });
+                    } else {
+                        const data = { ...workingObject, currentCCMovement };
+                        setTriggerRender(!triggerRender);
+                        storedObject[`step${stepNumber}`] = {
+                            ...storedObject[`step${stepNumber}`],
+                            data
+                        };
+                        if (
+                            storedObject[`step${stepNumber}`] &&
+                            Object.keys(storedObject[`step${stepNumber}`]).length != 0
+                        ) {
+                            storage.set(process, JSON.stringify(storedObject));
+                        }
                     }
                 } else {
                     const data = { ...workingObject, currentCCMovement };
@@ -319,12 +340,12 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                         ...storedObject[`step${stepNumber}`],
                         data
                     };
-                }
-                if (
-                    storedObject[`step${stepNumber}`] &&
-                    Object.keys(storedObject[`step${stepNumber}`]).length != 0
-                ) {
-                    storage.set(process, JSON.stringify(storedObject));
+                    if (
+                        storedObject[`step${stepNumber}`] &&
+                        Object.keys(storedObject[`step${stepNumber}`]).length != 0
+                    ) {
+                        storage.set(process, JSON.stringify(storedObject));
+                    }
                 }
             }
         }
@@ -364,6 +385,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 const storedObject = JSON.parse(storage.get(process) || '{}');
                 storage.remove(process);
                 const newStoredObject = JSON.parse(storage.get(process) || '{}');
+                newStoredObject['currentStep'] = 30;
                 newStoredObject[`step10`] = storedObject[`step10`];
                 newStoredObject[`step20`] = storedObject[`step20`];
                 newStoredObject[`step25`] = storedObject[`step25`];
@@ -379,16 +401,29 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     }
 
     useEffect(() => {
-        if (triggerAlternativeSubmit.triggerAlternativeSubmit) {
-            if (!alternativeSubmitInput) {
+        if (triggerAlternativeSubmit1.triggerAlternativeSubmit1) {
+            if (!alternativeSubmitInput1) {
                 showError(t('messages:no-hu-to-close'));
-                triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
+                triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
             } else {
-                triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
-                closeHU([currentCycleCountLineId]);
+                if (storedObject.step10?.data?.currentCycleCountLine?.handlingUnitStr) {
+                    triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
+                    closeHU([currentCycleCountLineId]);
+                } else {
+                    for (
+                        let i = storedObject[`step${stepNumber}`].previousStep;
+                        i <= stepNumber;
+                        i++
+                    ) {
+                        delete storedObject[`step${i}`]?.data;
+                    }
+                    storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+                    storage.set(process, JSON.stringify(storedObject));
+                    setTriggerRender(!triggerRender);
+                }
             }
         }
-    }, [triggerAlternativeSubmit]);
+    }, [triggerAlternativeSubmit1.triggerAlternativeSubmit1]);
 
     return <WrapperForm>{isLoading || isHuClosureLoading ? <ContentSpin /> : <></>}</WrapperForm>;
 };

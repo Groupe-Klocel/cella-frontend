@@ -36,6 +36,7 @@ import { LocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndReco
 import { HandlingUnitOriginChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HandlingUnitOriginChecks';
 import { HandlingUnitFinalChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HandlingUnitFinalChecks';
 import { ScanHandlingUnit } from 'modules/Common/HandlingUnits/PagesContainer/ScanHandlingUnit';
+import { ScanFinalHandlingUnit } from 'modules/StockManagement/HuMovement/PagesContainer/ScanFinalHandlingUnit';
 import { ScanHuOrLocation } from 'modules/StockManagement/Forms/ScanHuOrLocationForm';
 import { HuOrLocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HuOrLocationChecks';
 import { ValidateHuMoveForm } from 'modules/StockManagement/Forms/ValidateHuMoveForm';
@@ -53,7 +54,7 @@ const HuMovement: PageComponent = () => {
     const [displayed, setDisplayed] = useState<any>({});
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
-    const [triggerAlternativeSubmit, setTriggerAlternativeSubmit] = useState<boolean>(false);
+    const [action1Trigger, setAction1Trigger] = useState<boolean>(false);
     const workflow = {
         processName: 'huMvt',
         expectedSteps: [10, 15, 20, 30, 35, 40, 50]
@@ -263,10 +264,6 @@ const HuMovement: PageComponent = () => {
                     trigger={{ triggerRender, setTriggerRender }}
                     showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
                     showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
-                    triggerAlternativeSubmit={{
-                        triggerAlternativeSubmit,
-                        setTriggerAlternativeSubmit
-                    }}
                     headerContent={{ headerContent, setHeaderContent }}
                     checkComponent={(data: any) => <HuOrLocationChecks dataToCheck={data} />}
                 ></ScanHuOrLocation>
@@ -287,18 +284,26 @@ const HuMovement: PageComponent = () => {
             )}
             {storedObject[`step${workflow.expectedSteps[4]}`]?.data &&
             !storedObject[`step${workflow.expectedSteps[5]}`]?.data ? (
-                <ScanHandlingUnit
+                <ScanFinalHandlingUnit
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[5]}
                     label={t('common:handling-unit-final')}
                     trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true }}
+                    buttons={{
+                        submitButton: true,
+                        backButton: true,
+                        action1Button:
+                            storedObject[`step${workflow.expectedSteps[3]}`].data.resType ==
+                            'location'
+                                ? true
+                                : false
+                    }}
                     checkComponent={(data: any) => <HandlingUnitFinalChecks dataToCheck={data} />}
-                    defaultValue={
-                        storedObject[`step${workflow.expectedSteps[3]}`].data.finalHandlingUnit ??
-                        undefined
-                    }
-                ></ScanHandlingUnit>
+                    action1Trigger={{
+                        action1Trigger,
+                        setAction1Trigger
+                    }}
+                ></ScanFinalHandlingUnit>
             ) : (
                 <></>
             )}

@@ -84,16 +84,13 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 storedObject['step10'].data.proposedRoundAdvisedAddress.handlingUnitContent;
             if (fetchResult.resType === 'serialNumber') {
                 // HUCF scanned
-                // const handlingUnitContentFeatures = handlingUnitContent.handlingUnitContentFeatures;
-                // for (let i = 0; i < handlingUnitContentFeatures.length; i++) {
-                //     if (handlingUnitContentFeatures[i].value === scannedInfo) {
-                //         found = true;
-                //         break;
-                //     }
-                // }
                 if (
                     storedObject['step10'].data.proposedRoundAdvisedAddress.locationId ==
-                    fetchResult.handlingUnit.locationId
+                        fetchResult.handlingUnit.locationId &&
+                    handlingUnitContent?.articleId ===
+                        fetchResult.handlingUnitContentFeature?.handlingUnitContent?.article?.id &&
+                    handlingUnitContent?.stockOwnerId ===
+                        fetchResult.handlingUnitContentFeature?.handlingUnitContent?.stockOwnerId
                 ) {
                     found = true;
                     const data: { [label: string]: any } = {};

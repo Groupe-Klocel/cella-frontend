@@ -21,6 +21,8 @@ import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { useHandlingUnitOutbounds } from '@helpers';
 import { LsIsSecured } from '@helpers';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 export interface IScanPalletBoxProps {
     process: string;
@@ -39,9 +41,11 @@ export const ScanPalletBox = ({
     buttons,
     checkComponent
 }: IScanPalletBoxProps) => {
+    const { graphqlRequestClient } = useAuth();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
+    const [handlingUnitOutboundInfos, setHandlingUnitOutboundInfos] = useState<any>();
     const [resetForm, setResetForm] = useState<boolean>(false);
 
     //Pre-requisite: initialize current step
@@ -57,12 +61,136 @@ export const ScanPalletBox = ({
     }, []);
 
     // ScanPalletBox-2: launch query
-    const handlingUnitOutboundInfos = useHandlingUnitOutbounds(
-        { name: `${scannedInfo}` },
-        1,
-        100,
-        null
-    );
+    const getHUO = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
+        if (scannedInfo) {
+            const query = gql`
+                query handlingUnitOutbounds(
+                    $advancedFilters: [HandlingUnitOutboundAdvancedSearchFilters!]
+                ) {
+                    handlingUnitOutbounds(advancedFilters: $advancedFilters) {
+                        count
+                        itemsPerPage
+                        totalPages
+                        results {
+                            id
+                            name
+                            status
+                            statusText
+                            preparationMode
+                            preparationModeText
+                            theoriticalWeight
+                            carrier {
+                                id
+                                name
+                            }
+                            carrierShippingModeId
+                            carrierShippingMode {
+                                id
+                                toBePalletized
+                            }
+                            deliveryId
+                            delivery {
+                                id
+                                name
+                                carrierShippingMode {
+                                    carrierId
+                                    carrier {
+                                        id
+                                        name
+                                    }
+                                }
+                            }
+                            handlingUnitModelId
+                            handlingUnitModel {
+                                id
+                                name
+                                weight
+                                closureWeight
+                            }
+                            roundId
+                            round {
+                                id
+                                name
+                            }
+                            loadId
+                            load {
+                                id
+                                name
+                            }
+                            handlingUnitId
+                            handlingUnit {
+                                id
+                                name
+                                type
+                                typeText
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                                status
+                                statusText
+                                warehouseCode
+                                parentHandlingUnitId
+                            }
+                            handlingUnitContentOutbounds {
+                                id
+                                lineNumber
+                                status
+                                statusText
+                                pickedQuantity
+                                quantityToBePicked
+                                pickingLocationId
+                                pickingLocation {
+                                    id
+                                    name
+                                }
+                                handlingUnitContentId
+                                handlingUnitContent {
+                                    id
+                                    articleId
+                                    article {
+                                        id
+                                        name
+                                        description
+                                        stockOwnerId
+                                        stockOwner {
+                                            name
+                                        }
+                                        baseUnitWeight
+                                    }
+                                }
+                            }
+                            createdBy
+                            created
+                            modifiedBy
+                            modified
+                            extras
+                        }
+                    }
+                }
+            `;
+
+            const variables = {
+                advancedFilters: {
+                    filter: [
+                        { searchType: 'EQUAL', field: { name: scannedInfo } },
+                        { searchType: 'EQUAL', field: { carrierBox: scannedInfo } }
+                    ]
+                }
+            };
+            const handlingUnitOutboundInfos = await graphqlRequestClient.request(query, variables);
+            return handlingUnitOutboundInfos;
+        }
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const dataHUO = await getHUO(scannedInfo);
+            const result = await dataHUO;
+            if (result) setHandlingUnitOutboundInfos(result);
+        }
+        fetchData();
+    }, [scannedInfo]);
 
     const dataToCheck = {
         process,

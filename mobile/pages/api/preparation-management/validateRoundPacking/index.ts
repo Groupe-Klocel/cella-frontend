@@ -55,7 +55,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         roundHU,
         round,
         existingFinalHUO,
-        handlingUnitModel
+        handlingUnitModel,
+        roundContentInfos
     } = req.body;
 
     console.log('input', req.body);
@@ -388,184 +389,520 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             console.log('finalHandlingUnit', finalHandlingUnit);
             console.log('finalHandlingUnitOutbound', finalHandlingUnitOutbound);
         }
-
-        // 2- Check Final HUC
-        const handlingUnitContentQuery = gql`
-            query handlingUnitContents($filters: HandlingUnitContentSearchFilters) {
-                handlingUnitContents(filters: $filters) {
+        // retrieve roundLinedetails for round and article
+        const roundLineDetailsQuery = gql`
+            query roundLineDetails(
+                $filters: RoundLineDetailSearchFilters
+                $orderBy: [RoundLineDetailOrderByCriterion!]
+            ) {
+                roundLineDetails(filters: $filters, orderBy: $orderBy) {
                     count
                     results {
                         id
-                        articleId
-                        quantity
+                        status
+                        statusText
+                        quantityToBeProcessed
+                        processedQuantity
+                        roundLineId
+                        extraNumber2
+                        roundLine {
+                            id
+                            lineNumber
+                            articleId
+                            status
+                            statusText
+                        }
+                        handlingUnitContentOutbounds {
+                            id
+                            lineNumber
+                            handlingUnitContentId
+                            handlingUnitOutboundId
+                            handlingUnitContent {
+                                id
+                                quantity
+                            }
+                        }
+                        deliveryLineId
+                        deliveryLine {
+                            id
+                            stockOwnerId
+                            deliveryId
+                        }
                     }
                 }
             }
         `;
 
-        const handlingUnitContentVariables = {
-            filters: { handlingUnitId: finalHandlingUnit.id, articleId: articleInfos.id }
+        const roundLineDetailsVariables = {
+            filters: { roundLine_RoundId: round.id, roundLine_ArticleId: articleInfos.id },
+            orderBy: [{ field: 'order', ascending: true }]
         };
 
-        const handlingUnitContentResult = await graphqlRequestClient.request(
-            handlingUnitContentQuery,
-            handlingUnitContentVariables,
+        const roundLineDetailsResult = await graphqlRequestClient.request(
+            roundLineDetailsQuery,
+            roundLineDetailsVariables,
             requestHeader
         );
 
-        if (handlingUnitContentResult?.handlingUnitContents?.count <= 0) {
-            // 2a- Create HUC with articleId = scanned article (if it does not exist)
-            const createHUCMutation = gql`
-                mutation createHandlingUnitContent($input: CreateHandlingUnitContentInput!) {
-                    createHandlingUnitContent(input: $input) {
-                        id
-                        articleId
-                        handlingUnitId
-                    }
-                }
-            `;
+        console.log('roundLineDetailsResult', roundLineDetailsResult);
 
-            const createHUCvariables = {
-                input: {
-                    handlingUnitId: finalHandlingUnit.id,
-                    articleId: articleInfos.id,
-                    quantity: movingQuantity,
-                    stockStatus: parameters.STOCK_STATUSES_SALE, // 14000
-                    lastTransactionId
-                }
-            };
+        // catch first not null having preparation to do roundLineDetail
+        let quantityToPack = movingQuantity;
+        while (quantityToPack > 0) {
+            console.log('quantityToPack', quantityToPack);
+            if (roundLineDetailsResult?.roundLineDetails?.results) {
+                const roundLineDetails = roundLineDetailsResult.roundLineDetails.results;
+                for (const roundLineDetail of roundLineDetails) {
+                    console.log('qtyToPackInside', quantityToPack);
+                    if (quantityToPack > 0) {
+                        console.log('procQty', roundLineDetail.processedQuantity);
+                        console.log('extraNumber2', roundLineDetail.extraNumber2);
+                        if (
+                            roundLineDetail.processedQuantity -
+                                (roundLineDetail.extraNumber2 ?? 0) >
+                            0
+                        ) {
+                            const minQuantity = Math.min(
+                                movingQuantity,
+                                roundLineDetail.processedQuantity -
+                                    (roundLineDetail.extraNumber2 ?? 0)
+                            );
 
-            const createdHuc = await graphqlRequestClient.request(
-                createHUCMutation,
-                createHUCvariables
-            );
+                            //HUCO where HU = finalHU and DeliveryLine = roundLineDetails.deliveryLine
+                            const handlingUnitContentOutboundQuery = gql`
+                                query handlingUnitContentOutbounds(
+                                    $filters: HandlingUnitContentOutboundSearchFilters
+                                ) {
+                                    handlingUnitContentOutbounds(filters: $filters) {
+                                        count
+                                        results {
+                                            id
+                                            pickedQuantity
+                                            handlingUnitContent {
+                                                id
+                                                quantity
+                                            }
+                                        }
+                                    }
+                                }
+                            `;
+                            console.log('fHuId', finalHandlingUnit.id);
+                            console.log('rldId', roundLineDetail.deliveryLineId);
 
-            console.log('createdHuc', createdHuc);
+                            const handlingUnitContentOutboundVariables = {
+                                filters: {
+                                    handlingUnitContent_HandlingUnitId: finalHandlingUnit.id,
+                                    deliveryLineId: roundLineDetail.deliveryLineId
+                                }
+                            };
 
-            finalHandlingUnitContent = createdHuc.createHandlingUnitContent;
-            canRollbackTransaction = true;
+                            const handlingUnitContentOutboundResult =
+                                await graphqlRequestClient.request(
+                                    handlingUnitContentOutboundQuery,
+                                    handlingUnitContentOutboundVariables,
+                                    requestHeader
+                                );
 
-            // 2b- Create HUCO
+                            console.log(
+                                'queriedHucOLoop',
+                                handlingUnitContentOutboundResult.handlingUnitContentOutbounds
+                                    .results
+                            );
 
-            // retrieve roundAdvisedAddress containting article in course
-            const roundAdvisedAddress = round.roundAdvisedAddresses.filter(
-                (e: any) => e.handlingUnitContent.articleId == articleInfos.id
-            )[0];
+                            if (
+                                handlingUnitContentOutboundResult.handlingUnitContentOutbounds
+                                    .results.length <= 0
+                            ) {
+                                const createHUCMutation = gql`
+                                    mutation createHandlingUnitContent(
+                                        $input: CreateHandlingUnitContentInput!
+                                    ) {
+                                        createHandlingUnitContent(input: $input) {
+                                            id
+                                            articleId
+                                            article {
+                                                id
+                                                name
+                                                stockOwnerId
+                                                stockOwner {
+                                                    name
+                                                }
+                                                baseUnitWeight
+                                            }
+                                            quantity
+                                            reservation
+                                            stockStatus
+                                            stockStatusText
+                                            stockOwnerId
+                                            handlingUnit {
+                                                id
+                                                name
+                                                locationId
+                                                location {
+                                                    id
+                                                    name
+                                                }
+                                            }
+                                            stockOwner {
+                                                id
+                                                name
+                                            }
+                                        }
+                                    }
+                                `;
 
-            const createHUCOMutation = gql`
-                mutation createHandlingUnitContentOutbound(
-                    $input: CreateHandlingUnitContentOutboundInput!
-                ) {
-                    createHandlingUnitContentOutbound(input: $input) {
-                        id
-                    }
-                }
-            `;
+                                const createHUCvariables = {
+                                    input: {
+                                        handlingUnitId: finalHandlingUnit.id,
+                                        articleId: articleInfos.id,
+                                        quantity: minQuantity,
+                                        stockOwnerId: roundContentInfos.stockOwnerId,
+                                        stockStatus: parameters.STOCK_STATUSES_SALE, // 14000
+                                        lastTransactionId
+                                    }
+                                };
 
-            const createHUCOvariables = {
-                input: {
-                    lineNumber: finalHandlingUnitOutbound.handlingUnitContentOutbounds.length + 1,
-                    handlingUnitContentId: finalHandlingUnitContent.id,
-                    handlingUnitOutboundId: finalHandlingUnitOutbound.id,
-                    status: configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_PACKING_IN_PROGRESS,
-                    deliveryId: roundAdvisedAddress.roundLineDetail.deliveryLine.deliveryId,
-                    deliveryLineId: roundAdvisedAddress.roundLineDetail.deliveryLineId,
-                    pickedQuantity: movingQuantity,
-                    lastTransactionId
-                }
-            };
+                                const createdHuc = await graphqlRequestClient.request(
+                                    createHUCMutation,
+                                    createHUCvariables
+                                );
+                                console.log('createdHuc', createdHuc.createHandlingUnitContent);
 
-            const createdHuco = await graphqlRequestClient.request(
-                createHUCOMutation,
-                createHUCOvariables
-            );
+                                finalHandlingUnitContent = createdHuc.createHandlingUnitContent;
 
-            console.log('createdHuco', createdHuco);
-        } else {
-            finalHandlingUnitContent = handlingUnitContentResult?.handlingUnitContents?.results[0];
-            console.log('finalHandlingUnitContentId', finalHandlingUnitContent);
+                                const createHUCOMutation = gql`
+                                    mutation createHandlingUnitContentOutbound(
+                                        $input: CreateHandlingUnitContentOutboundInput!
+                                    ) {
+                                        createHandlingUnitContentOutbound(input: $input) {
+                                            id
+                                        }
+                                    }
+                                `;
 
-            // 2c- final HUC exists, we update its quantity
-            const updateFinalHUCMutation = gql`
-                mutation updateHandlingUnitContent(
-                    $id: String!
-                    $input: UpdateHandlingUnitContentInput!
-                ) {
-                    updateHandlingUnitContent(id: $id, input: $input) {
-                        id
-                        lastTransactionId
-                    }
-                }
-            `;
+                                const createHUCOvariables = {
+                                    input: {
+                                        lineNumber:
+                                            handlingUnitContentOutboundResult
+                                                .handlingUnitContentOutbounds.results.length + 1,
+                                        handlingUnitContentId: finalHandlingUnitContent.id,
+                                        handlingUnitOutboundId: finalHandlingUnitOutbound.id,
+                                        status: configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_PACKING_IN_PROGRESS,
+                                        deliveryId: roundLineDetail.deliveryLine.deliveryId,
+                                        deliveryLineId: roundLineDetail.deliveryLineId,
+                                        pickedQuantity: minQuantity,
+                                        pickingLocationId:
+                                            roundContentInfos?.handlingUnit?.locationId,
+                                        pickingHandlingUnitId: roundHU.id,
+                                        stockOwnerId: roundContentInfos.stockOwnerId,
+                                        lastTransactionId
+                                    }
+                                };
 
-            const newHUCQuantity =
-                handlingUnitContentResult?.handlingUnitContents?.results[0].quantity +
-                movingQuantity;
+                                const createdHuco = await graphqlRequestClient.request(
+                                    createHUCOMutation,
+                                    createHUCOvariables
+                                );
 
-            const updateFinalHUCvariable = {
-                id: finalHandlingUnitContent.id,
-                input: {
-                    quantity: newHUCQuantity,
-                    lastTransactionId
-                }
-            };
-            const updatedFinalHUC = await graphqlRequestClient.request(
-                updateFinalHUCMutation,
-                updateFinalHUCvariable
-            );
+                                console.log(
+                                    'createdHucO',
+                                    createdHuco.createHandlingUnitContentOutbound
+                                );
 
-            canRollbackTransaction = true;
+                                quantityToPack -= minQuantity;
+                            } else {
+                                //  update final HUCO quantity
+                                const hucOToUpdate =
+                                    handlingUnitContentOutboundResult?.handlingUnitContentOutbounds
+                                        ?.results[0];
 
-            // 2d- Check Final HUCO
-            const handlingUnitContentOutboundQuery = gql`
-                query handlingUnitContentOutbounds(
-                    $filters: HandlingUnitContentOutboundSearchFilters
-                ) {
-                    handlingUnitContentOutbounds(filters: $filters) {
-                        count
-                        results {
-                            id
-                            pickedQuantity
+                                const newHUCQuantity =
+                                    hucOToUpdate.handlingUnitContent.quantity + minQuantity;
+
+                                const updateFinalHUCOMutation = gql`
+                                    mutation updateHandlingUnitContentOutbound(
+                                        $id: String!
+                                        $input: UpdateHandlingUnitContentOutboundInput!
+                                    ) {
+                                        updateHandlingUnitContentOutbound(id: $id, input: $input) {
+                                            id
+                                            lastTransactionId
+                                        }
+                                    }
+                                `;
+
+                                const updateFinalHUCOvariable = {
+                                    id: hucOToUpdate.id,
+                                    input: {
+                                        pickedQuantity: newHUCQuantity,
+                                        lastTransactionId
+                                    }
+                                };
+                                const updatedFinalHUCO = await graphqlRequestClient.request(
+                                    updateFinalHUCOMutation,
+                                    updateFinalHUCOvariable
+                                );
+                                console.log(
+                                    'updatedFinalHUCO',
+                                    updatedFinalHUCO.updateHandlingUnitContentOutbound
+                                );
+
+                                // 2c- final HUC exists, we update its quantity
+                                const updateFinalHUCMutation = gql`
+                                    mutation updateHandlingUnitContent(
+                                        $id: String!
+                                        $input: UpdateHandlingUnitContentInput!
+                                    ) {
+                                        updateHandlingUnitContent(id: $id, input: $input) {
+                                            id
+                                            lastTransactionId
+                                        }
+                                    }
+                                `;
+
+                                const updateFinalHUCvariable = {
+                                    id: hucOToUpdate.handlingUnitContent.id,
+                                    input: {
+                                        quantity: newHUCQuantity,
+                                        lastTransactionId
+                                    }
+                                };
+                                const updatedFinalHUC = await graphqlRequestClient.request(
+                                    updateFinalHUCMutation,
+                                    updateFinalHUCvariable
+                                );
+
+                                console.log(
+                                    'updatedFinalHUC',
+                                    updatedFinalHUC.updateHandlingUnitContent
+                                );
+
+                                finalHandlingUnitContent =
+                                    updatedFinalHUC.updateHandlingUnitContent;
+                                quantityToPack -= minQuantity;
+
+                                // RESTART HERE : check consistency
+                                canRollbackTransaction = true;
+                            }
+                            //updateROundLineDetail
+                            const updateRoundLineDetailMutation = gql`
+                                mutation updateRoundLineDetail(
+                                    $id: String!
+                                    $input: UpdateRoundLineDetailInput!
+                                ) {
+                                    updateRoundLineDetail(id: $id, input: $input) {
+                                        id
+                                        processedQuantity
+                                        extraStatus2
+                                        lastTransactionId
+                                    }
+                                }
+                            `;
+                            const updatedQty = roundLineDetail.extraNumber2 + minQuantity;
+                            const updateRoundLineDetailVariables = {
+                                id: roundLineDetail.id,
+                                input: {
+                                    extraNumber2: updatedQty,
+                                    lastTransactionId
+                                }
+                            };
+                            const updateRoundLineDetailResponse =
+                                await graphqlRequestClient.request(
+                                    updateRoundLineDetailMutation,
+                                    updateRoundLineDetailVariables
+                                );
+                            console.log(
+                                'updatRLDResp',
+                                updateRoundLineDetailResponse.updateRoundLineDetail
+                            );
                         }
+                    } else {
+                        break;
                     }
                 }
-            `;
-
-            const handlingUnitContentOutboundVariables = {
-                filters: { handlingUnitContentId: finalHandlingUnitContent.id }
-            };
-
-            const handlingUnitContentOutboundResult = await graphqlRequestClient.request(
-                handlingUnitContentOutboundQuery,
-                handlingUnitContentOutboundVariables,
-                requestHeader
-            );
-
-            // 2e-  we update final HUCO quantity
-            const updateFinalHUCOMutation = gql`
-                mutation updateHandlingUnitContentOutbound(
-                    $id: String!
-                    $input: UpdateHandlingUnitContentOutboundInput!
-                ) {
-                    updateHandlingUnitContentOutbound(id: $id, input: $input) {
-                        id
-                        lastTransactionId
-                    }
-                }
-            `;
-
-            const updateFinalHUCOvariable = {
-                id: handlingUnitContentOutboundResult?.handlingUnitContentOutbounds?.results[0].id,
-                input: {
-                    pickedQuantity: newHUCQuantity,
-                    lastTransactionId
-                }
-            };
-            const updatedFinalHUCO = await graphqlRequestClient.request(
-                updateFinalHUCOMutation,
-                updateFinalHUCOvariable
-            );
+            }
         }
+        // // 2- Check Final HUC
+        // const handlingUnitContentQuery = gql`
+        //     query handlingUnitContents($filters: HandlingUnitContentSearchFilters) {
+        //         handlingUnitContents(filters: $filters) {
+        //             count
+        //             results {
+        //                 id
+        //                 articleId
+        //                 quantity
+        //             }
+        //         }
+        //     }
+        // `;
+
+        // const handlingUnitContentVariables = {
+        //     filters: { handlingUnitId: finalHandlingUnit.id, articleId: articleInfos.id }
+        // };
+
+        // const handlingUnitContentResult = await graphqlRequestClient.request(
+        //     handlingUnitContentQuery,
+        //     handlingUnitContentVariables,
+        //     requestHeader
+        // );
+
+        // if (handlingUnitContentResult?.handlingUnitContents?.count <= 0) {
+        //     // 2a- Create HUC with articleId = scanned article (if it does not exist)
+        //     const createHUCMutation = gql`
+        //         mutation createHandlingUnitContent($input: CreateHandlingUnitContentInput!) {
+        //             createHandlingUnitContent(input: $input) {
+        //                 id
+        //                 articleId
+        //                 handlingUnitId
+        //             }
+        //         }
+        //     `;
+
+        //     const createHUCvariables = {
+        //         input: {
+        //             handlingUnitId: finalHandlingUnit.id,
+        //             articleId: articleInfos.id,
+        //             quantity: movingQuantity,
+        //             stockOwnerId: roundContentInfos.stockOwnerId,
+        //             stockStatus: parameters.STOCK_STATUSES_SALE, // 14000
+        //             lastTransactionId
+        //         }
+        //     };
+
+        //     const createdHuc = await graphqlRequestClient.request(
+        //         createHUCMutation,
+        //         createHUCvariables
+        //     );
+
+        //     console.log('createdHuc', createdHuc);
+
+        //     finalHandlingUnitContent = createdHuc.createHandlingUnitContent;
+        //     canRollbackTransaction = true;
+
+        //     // 2b- Create HUCO
+
+        //     // retrieve roundAdvisedAddress containting article in course
+        //     const roundAdvisedAddress = round.roundAdvisedAddresses.filter(
+        //         (e: any) => e.handlingUnitContent.articleId == articleInfos.id
+        //     )[0];
+
+        //     const createHUCOMutation = gql`
+        //         mutation createHandlingUnitContentOutbound(
+        //             $input: CreateHandlingUnitContentOutboundInput!
+        //         ) {
+        //             createHandlingUnitContentOutbound(input: $input) {
+        //                 id
+        //             }
+        //         }
+        //     `;
+
+        //     const createHUCOvariables = {
+        //         input: {
+        //             lineNumber: finalHandlingUnitOutbound.handlingUnitContentOutbounds.length + 1,
+        //             handlingUnitContentId: finalHandlingUnitContent.id,
+        //             handlingUnitOutboundId: finalHandlingUnitOutbound.id,
+        //             status: configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_PACKING_IN_PROGRESS,
+        //             deliveryId: roundAdvisedAddress.roundLineDetail.deliveryLine.deliveryId,
+        //             deliveryLineId: roundAdvisedAddress.roundLineDetail.deliveryLineId,
+        //             pickedQuantity: movingQuantity,
+        //             pickingLocationId: roundContentInfos.handlingUnit.locationId,
+        //             pickingHandlingUnitId: roundHU.id,
+        //             stockOwnerId: roundContentInfos.stockOwnerId,
+        //             lastTransactionId
+        //         }
+        //     };
+
+        //     const createdHuco = await graphqlRequestClient.request(
+        //         createHUCOMutation,
+        //         createHUCOvariables
+        //     );
+
+        //     console.log('createdHuco', createdHuco);
+        // } else {
+        //     finalHandlingUnitContent = handlingUnitContentResult?.handlingUnitContents?.results[0];
+        //     console.log('finalHandlingUnitContentId', finalHandlingUnitContent);
+
+        //     // 2c- final HUC exists, we update its quantity
+        //     const updateFinalHUCMutation = gql`
+        //         mutation updateHandlingUnitContent(
+        //             $id: String!
+        //             $input: UpdateHandlingUnitContentInput!
+        //         ) {
+        //             updateHandlingUnitContent(id: $id, input: $input) {
+        //                 id
+        //                 lastTransactionId
+        //             }
+        //         }
+        //     `;
+
+        //     const newHUCQuantity =
+        //         handlingUnitContentResult?.handlingUnitContents?.results[0].quantity +
+        //         movingQuantity;
+
+        //     const updateFinalHUCvariable = {
+        //         id: finalHandlingUnitContent.id,
+        //         input: {
+        //             quantity: newHUCQuantity,
+        //             lastTransactionId
+        //         }
+        //     };
+        //     const updatedFinalHUC = await graphqlRequestClient.request(
+        //         updateFinalHUCMutation,
+        //         updateFinalHUCvariable
+        //     );
+
+        //     canRollbackTransaction = true;
+
+        //     // 2d- Check Final HUCO
+        //     const handlingUnitContentOutboundQuery = gql`
+        //         query handlingUnitContentOutbounds(
+        //             $filters: HandlingUnitContentOutboundSearchFilters
+        //         ) {
+        //             handlingUnitContentOutbounds(filters: $filters) {
+        //                 count
+        //                 results {
+        //                     id
+        //                     pickedQuantity
+        //                 }
+        //             }
+        //         }
+        //     `;
+
+        //     const handlingUnitContentOutboundVariables = {
+        //         filters: { handlingUnitContentId: finalHandlingUnitContent.id }
+        //     };
+
+        //     const handlingUnitContentOutboundResult = await graphqlRequestClient.request(
+        //         handlingUnitContentOutboundQuery,
+        //         handlingUnitContentOutboundVariables,
+        //         requestHeader
+        //     );
+
+        //     // 2e-  we update final HUCO quantity
+        //     const updateFinalHUCOMutation = gql`
+        //         mutation updateHandlingUnitContentOutbound(
+        //             $id: String!
+        //             $input: UpdateHandlingUnitContentOutboundInput!
+        //         ) {
+        //             updateHandlingUnitContentOutbound(id: $id, input: $input) {
+        //                 id
+        //                 lastTransactionId
+        //             }
+        //         }
+        //     `;
+
+        //     const updateFinalHUCOvariable = {
+        //         id: handlingUnitContentOutboundResult?.handlingUnitContentOutbounds?.results[0].id,
+        //         input: {
+        //             pickedQuantity: newHUCQuantity,
+        //             lastTransactionId
+        //         }
+        //     };
+        //     const updatedFinalHUCO = await graphqlRequestClient.request(
+        //         updateFinalHUCOMutation,
+        //         updateFinalHUCOvariable
+        //     );
+        // }
 
         console.log('resType', resType);
 
@@ -600,6 +937,19 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
 
         // 4a- get origin huc
+        const handlingUnitContentQuery = gql`
+            query handlingUnitContents($filters: HandlingUnitContentSearchFilters) {
+                handlingUnitContents(filters: $filters) {
+                    count
+                    results {
+                        id
+                        articleId
+                        quantity
+                    }
+                }
+            }
+        `;
+
         const originalHandlingUnitContentVariables = {
             filters: { handlingUnitId: roundHU.id, articleId: articleInfos.id }
         };
@@ -734,6 +1084,19 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             stockStatus
                             stockStatusText
                             articleId
+                            stockOwnerId
+                            stockOwner {
+                                name
+                            }
+                            handlingUnit {
+                                id
+                                name
+                                locationId
+                                location {
+                                    id
+                                    name
+                                }
+                            }
                             article {
                                 id
                                 name
@@ -841,6 +1204,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             handlingUnitContent {
                                 id
                                 articleId
+                                quantity
                                 article {
                                     id
                                     name

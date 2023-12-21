@@ -14,7 +14,7 @@
     "load-dispatched": "Ce chargement a déjà été expédié",
     "load-success": "Votre chargement a été enregistrée avec succès",
     "login-success": "Vous êtes maintenant connecté",
-    "message-unload": "Support / colis n°{{name}} a déjà été scanné, vous voulez le décharger ?",
+    "message-unload": "Support / colis n°{{name}} a déjà été scanné, voulez-vous le décharger ?",
     "movement-failed": "Votre mouvement n'a pas pu être effectué",
     "movement-success": "Votre mouvement a été effectué avec succès",
     "no-article-location": "Article non-trouvé pour cet emplacement",
@@ -27,7 +27,7 @@
     "no-handling-unit": "No handling unit found",
     "no-goodsIn": "Aucun arrivage trouvé",
     "no-hu": "Unité de manutention non trouvée",
-    "no-hu-location": "Unité de manutention non-trouvée pour cet emplacement",
+    "no-hu-location": "Unité de manutention non trouvée pour cet emplacement",
     "no-hu-or-empty": "Aucune unité de manutention trouvée avec ce code à barres ou cette unité de manutention est vide",
     "no-hu-or-not-empty": "Support inexistant ou non vide",
     "no-pallet-or-empty": "Aucune palette trouvée avec ce code à barres ou cette palette est vide",
@@ -72,5 +72,9 @@
     "cc-closed-successfully": "L'inventaire a été terminé avec succès",
     "success-cycle-count-movements-creation": "Les mouvements d'inventaire ont été créés avec succès",
     "error-executing-function": "Erreur lors de l'exécution de la fonction",
-    "cycleCountMovement-validation-failed": "Erreur lors de la validation du mouvement d'inventaire"
+    "cycleCountMovement-validation-failed": "Erreur lors de la validation du mouvement d'inventaire",
+    "no-serial-number": "Cette ramasse ne contient aucun ID",
+    "cycle-count-finished": "Inventaire terminé",
+    "error-print-data": "Erreur lors de l'impression",
+    "success-print-data": "Impression effectuée avec succès"
 }

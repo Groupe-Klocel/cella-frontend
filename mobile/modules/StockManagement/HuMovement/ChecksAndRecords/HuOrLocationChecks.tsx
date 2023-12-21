@@ -22,6 +22,7 @@ import { showError, LsIsSecured } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
+import parameters from '../../../../../common/parameters.json';
 
 export interface IHuOrLocationChecksProps {
     dataToCheck: any;
@@ -78,6 +79,8 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
         }
     }, [scannedInfo]);
 
+    console.log('ftch', fetchResult);
+
     // ScanBox-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && fetchResult) {
@@ -119,14 +122,17 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                     setScannedInfo(undefined);
                 }
                 // final HU with different article = error
-                else if (
-                    storedObject['step20'].data.handlingUnit.handlingUnitContents &&
-                    fetchResult.handlingUnit.handlingUnitContents[0].article_id !=
-                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].article_id
-                ) {
-                    showError(t('messages:unexpected-hu-article'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
+                else if (fetchResult.handlingUnit.type != parameters.HANDLING_UNIT_TYPE_PALLET) {
+                    if (
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents &&
+                        fetchResult.handlingUnit.handlingUnitContents[0].article_id !=
+                            storedObject['step20'].data.handlingUnit.handlingUnitContents[0]
+                                .article_id
+                    ) {
+                        showError(t('messages:unexpected-hu-article'));
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                    }
                 } else {
                     // HU and Location = next step
                     const data: { [label: string]: any } = {};

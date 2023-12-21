@@ -43,7 +43,6 @@ import { ArticleOrFeatureChecks } from 'modules/StockManagement/ContentMovement/
 import { QuantityChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/QuantityChecks';
 import { HandlingUnitOriginChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitOriginChecks';
 import { HandlingUnitFinalChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitFinalChecks';
-import { CheckFinalLocationQuantityForm } from 'modules/StockManagement/Forms/CheckFinalLocationQuantityForm';
 import { ValidateQuantityMoveForm } from 'modules/StockManagement/Forms/ValidateQuantityMove';
 import { SelectContentForFeatureForm } from 'modules/Common/Contents/Forms/SelectContentForFeatureForm';
 
@@ -63,7 +62,7 @@ const ContentMvmt: PageComponent = () => {
     //define workflow parameters
     const workflow = {
         processName: 'contentMvt',
-        expectedSteps: [10, 15, 20, 30, 35, 40, 50, 60, 65, 70, 80, 90]
+        expectedSteps: [10, 15, 20, 30, 35, 40, 50, 60, 65, 80, 90]
     };
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
@@ -124,6 +123,7 @@ const ContentMvmt: PageComponent = () => {
             const chosenContent =
                 storedObject[`step${workflow.expectedSteps[5]}`]?.data.chosenContent;
             object[t('common:status')] = chosenContent.stockStatusText;
+            object[t('common:stock-owner')] = chosenContent.stockOwner.name;
         }
         if (storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity) {
             const movingQuantity =
@@ -237,6 +237,10 @@ const ContentMvmt: PageComponent = () => {
                     chosenContentId={
                         storedObject[`step${workflow.expectedSteps[5]}`].data.chosenContent.id
                     }
+                    stockOwnerId={
+                        storedObject[`step${workflow.expectedSteps[5]}`].data.chosenContent
+                            .stockOwnerId
+                    }
                 />
             ) : (
                 <></>
@@ -327,6 +331,9 @@ const ContentMvmt: PageComponent = () => {
                         locationId={
                             storedObject[`step${workflow.expectedSteps[1]}`].data.chosenLocation.id
                         }
+                        handlingUnitId={
+                            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit.id
+                        }
                     ></SelectContentForArticleForm>
                 ) : (
                     <SelectContentForFeatureForm
@@ -401,30 +408,9 @@ const ContentMvmt: PageComponent = () => {
             )}
             {storedObject[`step${workflow.expectedSteps[8]}`]?.data &&
             !storedObject[`step${workflow.expectedSteps[9]}`]?.data ? (
-                <CheckFinalLocationQuantityForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[9]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    articleId={
-                        storedObject[`step${workflow.expectedSteps[4]}`].data.chosenArticleLuBarcode
-                            .articleId
-                    }
-                    originLocationId={
-                        storedObject[`step${workflow.expectedSteps[1]}`].data.chosenLocation.id
-                    }
-                    destinationLocation={
-                        storedObject[`step${workflow.expectedSteps[8]}`].data.chosenLocation
-                    }
-                    headerContent={{ setHeaderContent }}
-                ></CheckFinalLocationQuantityForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[9]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[10]}`]?.data ? (
                 <ScanFinalHandlingUnit
                     process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[10]}
+                    stepNumber={workflow.expectedSteps[9]}
                     label={t('common:handling-unit')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ submitButton: true, backButton: true }}
@@ -434,10 +420,10 @@ const ContentMvmt: PageComponent = () => {
                 <></>
             )}
 
-            {storedObject[`step${workflow.expectedSteps[10]}`]?.data ? (
+            {storedObject[`step${workflow.expectedSteps[9]}`]?.data ? (
                 <ValidateQuantityMoveForm
                     process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[11]}
+                    stepNumber={workflow.expectedSteps[10]}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}
