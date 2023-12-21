@@ -634,5 +634,7 @@
     "documentType": "Type de document",
     "argument_id": "Id de l'objet concerné",
     "argument_sequenceId": "Id de la séquence concernée",
-    "userId": "Utilisateur"
+    "userId": "Utilisateur",
+    "extraStatus1": "Type de contrôle",
+    "extraStatus1Text": "Type de contrôle"
 }

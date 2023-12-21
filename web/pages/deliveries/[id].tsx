@@ -231,7 +231,7 @@ const DeliveryPage: PageComponent = () => {
         routes: breadCrumb,
         onBackRoute: rootPath,
         actionsComponent:
-            data?.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
+            data?.status !== configs.DELIVERY_STATUS_CANCELED ? (
                 <Space>
                     {modes.length > 0 &&
                     modes.includes(ModeEnum.Update) &&
@@ -343,18 +343,41 @@ const DeliveryPage: PageComponent = () => {
                             ) : (
                                 <></>
                             )}
-                            <SinglePrintModal
-                                showModal={{
-                                    showSinglePrintModal,
-                                    setShowSinglePrintModal
-                                }}
-                                dataToPrint={{ id: idToPrint }}
-                                documentName="K_Delivery"
-                            />
                         </Space>
                     ) : (
-                        <></>
+                        <>
+                            {modes.length > 0 &&
+                            modes.includes(ModeEnum.Read) &&
+                            data?.status >= configs.DELIVERY_STATUS_STARTED &&
+                            data?.status <= configs.DELIVERY_STATUS_DISPATCHED ? (
+                                <>
+                                    <Button
+                                        type="primary"
+                                        onClick={() => {
+                                            if (shippingAddress) {
+                                                setShowSinglePrintModal(true);
+                                                setIdToPrint(shippingAddress.id);
+                                            } else {
+                                                showError(t('messages:no-delivery-address'));
+                                            }
+                                        }}
+                                    >
+                                        {t('actions:print')}
+                                    </Button>
+                                </>
+                            ) : (
+                                <></>
+                            )}
+                        </>
                     )}
+                    <SinglePrintModal
+                        showModal={{
+                            showSinglePrintModal,
+                            setShowSinglePrintModal
+                        }}
+                        dataToPrint={{ id: idToPrint }}
+                        documentName="K_Delivery"
+                    />
                 </Space>
             ) : (
                 <></>

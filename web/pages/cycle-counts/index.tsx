@@ -140,11 +140,7 @@ const CycleCountPages: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isSoftDeletable &&
-                                // For this version, we can only cancel a CC if it is not started
-                                // record.status > configs.CYCLE_COUNT_STATUS_CALCULATED &&
-                                // record.status < configs.CYCLE_COUNT_STATUS_VALIDATED
-                                record.status < configs.CYCLE_COUNT_STATUS_PASS_1_IN_PROGRESS ? (
+                                model.isSoftDeletable ? (
                                     <Button
                                         icon={<StopOutlined />}
                                         onClick={() =>

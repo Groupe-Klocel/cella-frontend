@@ -96,7 +96,7 @@ const AddLoadPage: PageComponent = () => {
         `;
 
         const documentVariables = {
-            documentName: 'K_LoadLoadingList',
+            documentName: 'K_LoadLabel',
             language: printLanguage,
             printer,
             context: { ...inputForPrinting }
