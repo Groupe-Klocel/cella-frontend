@@ -28,7 +28,7 @@ export interface IScanArticleOrFeatureProps {
     stepNumber: number;
     label: string;
     trigger: { [label: string]: any };
-    triggerAlternativeSubmit?: any;
+    triggerAlternativeSubmit1?: any;
     buttons: { [label: string]: any };
     checkComponent: any;
 }
@@ -38,7 +38,7 @@ export const ScanArticleOrFeature = ({
     stepNumber,
     label,
     trigger: { triggerRender, setTriggerRender },
-    triggerAlternativeSubmit: { triggerAlternativeSubmit, setTriggerAlternativeSubmit },
+    triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
     buttons,
     checkComponent
 }: IScanArticleOrFeatureProps) => {
@@ -65,8 +65,8 @@ export const ScanArticleOrFeature = ({
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
-        triggerAlternativeSubmit: { triggerAlternativeSubmit, setTriggerAlternativeSubmit },
-        alternativeSubmitInput: storedObject?.step30?.data?.handlingUnit ?? undefined,
+        triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
+        alternativeSubmitInput1: storedObject?.step30?.data?.handlingUnit ?? undefined,
         setResetForm
     };
 
@@ -77,12 +77,15 @@ export const ScanArticleOrFeature = ({
                 stepNumber={stepNumber}
                 label={label}
                 trigger={{ triggerRender, setTriggerRender }}
-                triggerAlternativeSubmit={{ triggerAlternativeSubmit, setTriggerAlternativeSubmit }}
+                triggerAlternativeSubmit1={{
+                    triggerAlternativeSubmit1,
+                    setTriggerAlternativeSubmit1
+                }}
                 buttons={{ ...buttons }}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
                 action1Label={t('common:other-articles')}
-                alternativeSubmitLabel={t('common:hu-count-finished')}
+                alternativeSubmitLabel1={t('common:hu-count-finished')}
             ></ScanForm>
             {checkComponent(dataToCheck)}
         </>

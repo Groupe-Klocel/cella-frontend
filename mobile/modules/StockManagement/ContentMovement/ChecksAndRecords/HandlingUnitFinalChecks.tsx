@@ -43,31 +43,18 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
         setResetForm
     } = dataToCheck;
 
+    console.log('huI', handlingUnitInfos);
+
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
-        if (scannedInfo) {
+        if (scannedInfo && handlingUnitInfos.data) {
             if (handlingUnitInfos && handlingUnitInfos?.data?.handlingUnits) {
                 const handlingUnit = handlingUnitInfos.data.handlingUnits.results[0];
                 // HU origin/final identical = error
                 if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {
                     showError(t('messages:hu-origin-final-identical'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                }
-                // HU with different Location = error
-                else if (handlingUnit.locationId == storedObject['step70'].data.chosenLocation.id) {
-                    showError(t('messages:no-hu-location'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                }
-                // final HU with different article = error
-                else if (
-                    handlingUnit.handlingUnitContents[0].article_id !=
-                    storedObject['step20'].data.handlingUnit.handlingUnitContents[0].article_id
-                ) {
-                    showError(t('messages:unexpected-hu-article'));
                     setResetForm(true);
                     setScannedInfo(undefined);
                 } else {
@@ -93,7 +80,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                     type,
                     status: configs.HANDLING_UNIT_STATUS_VALIDATED,
                     category: parameters.HANDLING_UNIT_CATEGORY_STOCK,
-                    locationId: storedObject['step70'].data.chosenLocation.id,
+                    locationId: storedObject['step65'].data.chosenLocation.id,
                     stockOwnerId: storedObject['step20'].data.handlingUnit.stockOwnerId
                 };
 

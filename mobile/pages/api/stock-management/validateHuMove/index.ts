@@ -205,7 +205,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
         let movementResults: any;
         if (originHandlingUnit.handlingUnitContents.length > 0) {
-            movementResults = []
+            movementResults = [];
             await Promise.all(
                 originHandlingUnit.handlingUnitContents.map(async (handlingUnitContent: any) => {
                     const movementVariables = {
@@ -217,8 +217,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             originalContentIdStr: handlingUnitContent.id,
                             articleIdStr: handlingUnitContent.articleId,
                             articleNameStr: handlingUnitContent.article.name,
-                            stockOwnerIdStr: originHandlingUnit.stockOwnerId,
-                            stockOwnerNameStr: originHandlingUnit.stockOwner.name,
+                            stockOwnerIdStr: handlingUnitContent.stockOwnerId,
+                            stockOwnerNameStr: handlingUnitContent?.stockOwner?.name,
                             ...movementCodes,
                             finalLocationIdStr: finalLocation.id,
                             finalLocationNameStr: finalLocation.name,
@@ -237,18 +237,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     movementResults.push(resultMovementLine);
                 })
             );
-        }
-        else {
+        } else {
             //movement creation section
-            const createMovement = gql`
-                mutation createMovement($input: CreateMovementInput!) {
-                    createMovement(input: $input) {
-                        id
-                        lastTransactionId
-                    }
-                }
-            `;
-
             const movementVariables = {
                 input: {
                     originalLocationIdStr: originLocation.id,
@@ -274,6 +264,136 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             //end movement creation section
         }
         //end movement creation section
+
+        // children hu update section
+        if (originHandlingUnit.childrenHandlingUnits.length > 0) {
+            const childrenHUIds = originHandlingUnit.childrenHandlingUnits.map((hu: any) => hu.id);
+
+            const updateChildrenHUMutation = gql`
+                mutation updateHandlingUnits($ids: [String!]!, $input: UpdateHandlingUnitInput!) {
+                    updateHandlingUnits(ids: $ids, input: $input)
+                }
+            `;
+            const updateChildrenHUVariables = {
+                ids: childrenHUIds,
+                input: {
+                    locationId: finalLocation.id,
+                    category: category,
+                    lastTransactionId
+                }
+            };
+
+            const updateChildrenHUResult = await graphqlRequestClient.request(
+                updateChildrenHUMutation,
+                updateChildrenHUVariables,
+                requestHeader
+            );
+
+            // children huc update section
+            const childrenHUCIds: any = originHandlingUnit.childrenHandlingUnits.reduce(
+                (acc: any, childHU: any) => {
+                    if (Array.isArray(childHU.handlingUnitContents)) {
+                        acc.push(...childHU.handlingUnitContents.map((item: any) => item.id));
+                    } else if (childHU.handlingUnitContents && childHU.handlingUnitContents.id) {
+                        acc.push(childHU.handlingUnitContents.id);
+                    }
+                    return acc;
+                },
+                []
+            );
+
+            if (childrenHUCIds.length > 0 && finalLocation.stockStatus) {
+                const updateChildrenHUCMutation = gql`
+                    mutation updateHandlingUnitContents(
+                        $ids: [String!]!
+                        $input: UpdateHandlingUnitContentInput!
+                    ) {
+                        updateHandlingUnitContents(ids: $ids, input: $input)
+                    }
+                `;
+
+                const updateChildrenHUCVariables = {
+                    ids: childrenHUCIds,
+                    input: {
+                        stockStatus: finalLocation.stockStatus,
+                        lastTransactionId
+                    }
+                };
+
+                const updateChildrenHUCResult = await graphqlRequestClient.request(
+                    updateChildrenHUCMutation,
+                    updateChildrenHUCVariables,
+                    requestHeader
+                );
+            }
+            // end children huc update section
+
+            // children huc movement creation section
+            originHandlingUnit.childrenHandlingUnits.forEach(async (item: any) => {
+                let childrenMovementResults: any;
+                if (item.handlingUnitContents && item.handlingUnitContents.length > 0) {
+                    childrenMovementResults = [];
+                    await Promise.all(
+                        originHandlingUnit.handlingUnitContents.map(
+                            async (handlingUnitContent: any) => {
+                                const childrenMovementVariables = {
+                                    input: {
+                                        originalLocationIdStr: originLocation.id,
+                                        originalLocationNameStr: originLocation.name,
+                                        originalHandlingUnitIdStr: item.id,
+                                        originalHandlingUnitNameStr: item.name,
+                                        originalContentIdStr: handlingUnitContent.id,
+                                        articleIdStr: handlingUnitContent.articleId,
+                                        articleNameStr: handlingUnitContent.article.name,
+                                        stockOwnerIdStr: handlingUnitContent.stockOwnerId,
+                                        stockOwnerNameStr: handlingUnitContent.stockOwner?.name,
+                                        ...movementCodes,
+                                        finalLocationIdStr: finalLocation.id,
+                                        finalLocationNameStr: finalLocation.name,
+                                        finalContentIdStr: handlingUnitContent.id,
+                                        finalHandlingUnitIdStr: item.id,
+                                        finalHandlingUnitNameStr: item.name,
+                                        lastTransactionId
+                                    }
+                                };
+
+                                const childrenResultMovementLine =
+                                    await graphqlRequestClient.request(
+                                        createMovement,
+                                        childrenMovementVariables,
+                                        requestHeader
+                                    );
+                                childrenMovementResults.push(childrenResultMovementLine);
+                            }
+                        )
+                    );
+                } else {
+                    const childrenMovementVariables = {
+                        input: {
+                            originalLocationIdStr: originLocation.id,
+                            originalLocationNameStr: originLocation.name,
+                            originalHandlingUnitIdStr: item.id,
+                            originalHandlingUnitNameStr: item.name,
+                            ...movementCodes,
+                            finalLocationIdStr: finalLocation.id,
+                            finalLocationNameStr: finalLocation.name,
+                            finalHandlingUnitIdStr: item.id,
+                            finalHandlingUnitNameStr: finalHandlingUnit.name,
+                            lastTransactionId
+                        }
+                    };
+
+                    const childrenMovementResults = await graphqlRequestClient.request(
+                        createMovement,
+                        childrenMovementVariables,
+                        requestHeader
+                    );
+                }
+            });
+
+            // end children huc movement creation section
+        }
+        // end children hu update section
 
         //merge results
         res.status(200).json({

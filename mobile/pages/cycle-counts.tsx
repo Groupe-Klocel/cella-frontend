@@ -44,6 +44,7 @@ import { SelectFeatureCodeForm } from 'modules/StockManagement/CycleCount/Forms/
 import { ValidateCycleCountMovementForm } from 'modules/StockManagement/CycleCount/Forms/ValidateCycleCountMovementForm';
 import { ScanLocation } from 'modules/StockManagement/CycleCount/PagesContainer/ScanLocation';
 import { ScanCCHandlingUnit } from 'modules/StockManagement/CycleCount/PagesContainer/ScanHandlingUnit';
+import configs from '../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -56,7 +57,6 @@ const CycleCounts: PageComponent = () => {
     const [finalDisplay, setFinalDisplay] = useState<any>({});
     const [headerContent, setHeaderContent] = useState<boolean>(false);
     const [displayed, setDisplayed] = useState<any>({});
-    const [triggerCCClose, setTriggerCCClose] = useState<boolean>(false);
     const [triggerLocationClose, setTriggerLocationClose] = useState<boolean>(false);
     const [triggerHUClose, setTriggerHuClose] = useState<boolean>(false);
     //define workflow parameters
@@ -93,13 +93,24 @@ const CycleCounts: PageComponent = () => {
             const cycleCount = storedObject[`step${workflow.expectedSteps[0]}`]?.data?.cycleCount;
             object[t('common:cycle-count')] = cycleCount.name;
         }
-        if (storedObject[`step${workflow.expectedSteps[1]}`]?.data?.location) {
-            const location = storedObject[`step${workflow.expectedSteps[1]}`]?.data?.location;
-            object[t('common:location')] = location.name;
+        if (storedObject[`step${workflow.expectedSteps[0]}`]?.data?.currentCycleCountLine) {
+            const currentCycleCountLine =
+                storedObject[`step${workflow.expectedSteps[0]}`]?.data?.currentCycleCountLine;
+            object[t('common:location')] = currentCycleCountLine.locationNameStr;
+            currentCycleCountLine.handlingUnitNameStr
+                ? (object[t('common:handling-unit')] = currentCycleCountLine.handlingUnitNameSt)
+                : undefined;
+            currentCycleCountLine.articleNameStr
+                ? (object[t('common:article')] = currentCycleCountLine.articleNameStr)
+                : undefined;
         }
-        if (storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit) {
+        if (
+            storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit ||
+            storedObject[`step${workflow.expectedSteps[3]}`]?.data?.huToCreate
+        ) {
             const handlingUnit =
-                storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit;
+                storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit ??
+                storedObject[`step${workflow.expectedSteps[3]}`]?.data?.huToCreate;
             object[t('common:handling-unit')] = handlingUnit.name;
         }
         if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article) {
@@ -214,15 +225,7 @@ const CycleCounts: PageComponent = () => {
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{
                         submitButton: true,
-                        backButton: true,
-                        alternativeSubmitButton: storedObject[`step${workflow.expectedSteps[0]}`]
-                            ?.data?.cycleCount
-                            ? true
-                            : false
-                    }}
-                    triggerAlternativeSubmit={{
-                        triggerAlternativeSubmit: triggerCCClose,
-                        setTriggerAlternativeSubmit: setTriggerCCClose
+                        backButton: true
                     }}
                     checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
                 ></ScanLocation>
@@ -258,14 +261,14 @@ const CycleCounts: PageComponent = () => {
                     buttons={{
                         submitButton: true,
                         backButton: true,
-                        alternativeSubmitButton: storedObject[`step${workflow.expectedSteps[1]}`]
+                        alternativeSubmitButton1: storedObject[`step${workflow.expectedSteps[1]}`]
                             ?.data?.location
                             ? true
                             : false
                     }}
-                    triggerAlternativeSubmit={{
-                        triggerAlternativeSubmit: triggerLocationClose,
-                        setTriggerAlternativeSubmit: setTriggerLocationClose
+                    triggerAlternativeSubmit1={{
+                        triggerAlternativeSubmit1: triggerLocationClose,
+                        setTriggerAlternativeSubmit1: setTriggerLocationClose
                     }}
                     checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
                 ></ScanCCHandlingUnit>
@@ -281,15 +284,15 @@ const CycleCounts: PageComponent = () => {
                     buttons={{
                         submitButton: true,
                         backButton: true,
-                        alternativeSubmitButton: storedObject[`step${workflow.expectedSteps[3]}`]
+                        alternativeSubmitButton1: storedObject[`step${workflow.expectedSteps[3]}`]
                             ?.data?.handlingUnit
                             ? true
                             : false
                     }}
                     trigger={{ triggerRender, setTriggerRender }}
-                    triggerAlternativeSubmit={{
-                        triggerAlternativeSubmit: triggerHUClose,
-                        setTriggerAlternativeSubmit: setTriggerHuClose
+                    triggerAlternativeSubmit1={{
+                        triggerAlternativeSubmit1: triggerHUClose,
+                        setTriggerAlternativeSubmit1: setTriggerHuClose
                     }}
                     checkComponent={(data: any) => <ArticleOrFeatureChecks dataToCheck={data} />}
                 ></ScanArticleOrFeature>
@@ -379,7 +382,6 @@ const CycleCounts: PageComponent = () => {
                         submitButton: true,
                         backButton: true
                     }}
-                    availableQuantity={99999}
                     checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                     defaultValue={
                         storedObject[`step${workflow.expectedSteps[4]}`]?.data?.defaultQuantity ??

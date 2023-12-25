@@ -191,6 +191,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     status: configs.HANDLING_UNIT_STATUS_VALIDATED,
                     category: parameters.HANDLING_UNIT_CATEGORY_OUTBOUND,
                     locationId: defaultRoundLocationResult.locations.results[0].id,
+                    //SO to be removed here once all tranfered to HUC
                     stockOwnerId:
                         proposedRoundAdvisedAddress.roundLineDetail.deliveryLine.stockOwnerId,
                     lastTransactionId
@@ -253,6 +254,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     articleId: articleInfos.articleId,
                     quantity: movingQuantity,
                     stockStatus: parameters.STOCK_STATUSES_SALE, // 14000
+                    stockOwnerId:
+                        proposedRoundAdvisedAddress.roundLineDetail.deliveryLine.stockOwnerId,
                     lastTransactionId
                 }
             };

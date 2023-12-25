@@ -153,7 +153,9 @@ const LoadsPage: PageComponent = () => {
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[3]}
                     trigger={{ triggerRender, setTriggerRender }}
-                    box={storedObject[`step${workflow.expectedSteps[1]}`].data.handlingUnitOutbound}
+                    box={
+                        storedObject[`step${workflow.expectedSteps[1]}`].data?.handlingUnitOutbound
+                    }
                     load={storedObject[`step${workflow.expectedSteps[0]}`].data.load}
                     headerContent={{ setHeaderContent }}
                 ></CheckFinalStepLoadForm>

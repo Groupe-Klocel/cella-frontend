@@ -47,7 +47,6 @@ export const ScanHuOrLocation = ({
     checkComponent,
     headerContent
 }: IScanHuOrLocationProps) => {
-    const { t } = useTranslation();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
@@ -88,7 +87,6 @@ export const ScanHuOrLocation = ({
                 headerContent={headerContent}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
-                alternativeSubmitLabel={t('common:move-hu_abbr')}
             ></ScanForm>
             {checkComponent(dataToCheck)}
         </>

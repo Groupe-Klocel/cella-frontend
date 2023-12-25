@@ -145,7 +145,5 @@
     "parent-handling-unit": "Parent handling unit",
     "hu-count-finished": "Finish HU count",
     "location-count-finished": "Finish location count",
-    "cycle-count-finished": "Finish cycle count",
-    "empty-location-declare": "Declare empty location",
-    "feature-code": "Feature code"
+    "empty-location-declare": "Declare empty location"
 }

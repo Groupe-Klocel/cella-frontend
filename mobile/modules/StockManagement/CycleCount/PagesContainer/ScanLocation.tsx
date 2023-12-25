@@ -34,7 +34,6 @@ export interface IScanLocationProps {
     showSimilarLocations?: any;
     checkComponent: any;
     headerContent?: any;
-    triggerAlternativeSubmit?: any;
 }
 
 export const ScanLocation = ({
@@ -46,8 +45,7 @@ export const ScanLocation = ({
     showEmptyLocations,
     showSimilarLocations,
     checkComponent,
-    headerContent,
-    triggerAlternativeSubmit: { triggerAlternativeSubmit, setTriggerAlternativeSubmit }
+    headerContent
 }: IScanLocationProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -93,8 +91,6 @@ export const ScanLocation = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
         trigger: { triggerRender, setTriggerRender },
-        triggerAlternativeSubmit: { triggerAlternativeSubmit, setTriggerAlternativeSubmit },
-        alternativeSubmitInput: storedObject?.step10?.data?.cycleCount ?? undefined,
         setResetForm
     };
 
@@ -110,13 +106,8 @@ export const ScanLocation = ({
                     setScannedInfo={setScannedInfo}
                     showEmptyLocations={showEmptyLocations}
                     showSimilarLocations={showSimilarLocations}
-                    triggerAlternativeSubmit={{
-                        triggerAlternativeSubmit,
-                        setTriggerAlternativeSubmit
-                    }}
                     resetForm={{ resetForm, setResetForm }}
                     headerContent={headerContent}
-                    alternativeSubmitLabel={t('common:cycle-count-finished')}
                 ></ScanForm>
                 {checkComponent(dataToCheck)}
             </>

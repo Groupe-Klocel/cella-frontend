@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError, LsIsSecured, showSuccess } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useRef, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -43,7 +43,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         trigger: { triggerRender, setTriggerRender },
-        triggerAlternativeSubmit,
+        triggerAlternativeSubmit1,
         alternativeSubmitInput,
         setResetForm
     } = dataToCheck;
@@ -54,7 +54,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
 
     // TYPED SAFE ALL
     //retrieve necessary values for CC specifc checks
-    const currentCycleCountId: string = storedObject.step10?.data?.currentCycleCountLine?.id;
+    const currentCycleCountId: string = storedObject.step10?.data?.cycleCount?.id;
     const currentCycleCountLineId: string = storedObject.step10?.data?.currentCycleCountLine?.id;
     const expectedHu: string =
         storedObject.step10?.data?.currentCycleCountLine?.handlingUnitNameStr;
@@ -132,13 +132,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                                     : parameters.HANDLING_UNIT_TYPE_BOX;
 
                             const huToCreate = {
-                                name: scannedInfo,
-                                barcode: scannedInfo,
-                                code: scannedInfo,
-                                type,
-                                status: configs.HANDLING_UNIT_STATUS_VALIDATED,
-                                category: parameters.HANDLING_UNIT_CATEGORY_STOCK,
-                                locationId: expectedLocationId
+                                name: scannedInfo
                             };
 
                             const data: { [label: string]: any } = {};
@@ -168,7 +162,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
 
     // Location closure function
     const [isLocationClosureLoading, setIsLocationClosureLoading] = useState(false);
-    async function closeHU(CclInputs: any) {
+    async function closeLocation(CclInputs: any) {
         setIsLocationClosureLoading(true);
         const query = gql`
             mutation executeFunction($functionName: String!, $event: JSON!) {
@@ -197,9 +191,50 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 showError(t(`errors:${cc_result.executeFunction.output.output.code}`));
                 console.log('Backend_message', cc_result.executeFunction.output.output);
             } else {
+                const query = gql`
+                    query CC($id: String!) {
+                        cycleCount(id: $id) {
+                            id
+                            name
+                            status
+                            statusText
+                            cycleCountLines {
+                                id
+                                order
+                                status
+                                statusText
+                            }
+                        }
+                    }
+                `;
+
+                const variables = {
+                    id: currentCycleCountId
+                };
+                const updatedCycleCount = await graphqlRequestClient.request(query, variables);
+                if (updatedCycleCount.cycleCount) {
+                    let areAllCCLinesValidated = false;
+                    const ccLines = updatedCycleCount.cycleCount?.cycleCountLines;
+                    const ccStatus = updatedCycleCount.cycleCount?.status;
+                    areAllCCLinesValidated = ccLines.every(
+                        (item: any) =>
+                            item.status >= ccStatus &&
+                            [
+                                configs.CYCLE_COUNT_STATUS_PASS_1_VALIDATED,
+                                configs.CYCLE_COUNT_STATUS_PASS_2_VALIDATED,
+                                configs.CYCLE_COUNT_STATUS_VALIDATED
+                            ].includes(item.status)
+                    );
+                    if (areAllCCLinesValidated) {
+                        storage.remove(process);
+                        showSuccess(t('messages:cycle-count-finished'));
+                        setTriggerRender(!triggerRender);
+                    }
+                }
                 const storedObject = JSON.parse(storage.get(process) || '{}');
                 storage.remove(process);
                 const newStoredObject = JSON.parse(storage.get(process) || '{}');
+                newStoredObject['currentStep'] = 10;
                 newStoredObject[`step10`] = storedObject[`step10`];
                 storage.set(process, JSON.stringify(newStoredObject));
                 setTriggerRender(!triggerRender);
@@ -213,16 +248,16 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
     }
 
     useEffect(() => {
-        if (triggerAlternativeSubmit.triggerAlternativeSubmit) {
+        if (triggerAlternativeSubmit1.triggerAlternativeSubmit1) {
             if (!alternativeSubmitInput) {
                 showError(t('messages:no-location-to-close'));
-                triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
+                triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
             } else {
-                triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
-                closeHU([currentCycleCountLineId]);
+                triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
+                closeLocation([currentCycleCountLineId]);
             }
         }
-    }, [triggerAlternativeSubmit]);
+    }, [triggerAlternativeSubmit1]);
 
     return (
         <WrapperForm>

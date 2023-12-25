@@ -65,9 +65,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         feature,
         resType,
         quantity,
-        featureCode,
-        createdByCycleCount
+        featureCode
     } = req.body;
+
+    console.log('API-input', req.body);
 
     //Transaction management
     const generateTransactionId = gql`
@@ -93,120 +94,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     let canRollbackTransaction = false;
 
     try {
-        let handlingUnitToSend = handlingUnit;
-        let handlingUnitContentToSend = handlingUnitContent;
-        let featureToSend = feature;
         let finalCycleCountMovement = null;
-        let createdByCycleCount = false;
 
-        // // 1- Check if HU has to be created
-        if (Object.keys(huToCreate).length !== 0) {
-            // 1a- HU creation
-            const createHandlingUnitMutation = gql`
-                mutation createHandlingUnit($input: CreateHandlingUnitInput!) {
-                    createHandlingUnit(input: $input) {
-                        id
-                        name
-                        parentHandlingUnitId
-                        parentHandlingUnit {
-                            name
-                        }
-                        lastTransactionId
-                    }
-                }
-            `;
-
-            const createHandlingUnitVariables = {
-                input: {
-                    ...huToCreate,
-                    lastTransactionId
-                }
-            };
-
-            const createHandlingUnitResult = await graphqlRequestClient.request(
-                createHandlingUnitMutation,
-                createHandlingUnitVariables,
-                requestHeader
-            );
-
-            handlingUnitToSend = createHandlingUnitResult.createHandlingUnit;
-            createdByCycleCount = true;
-            canRollbackTransaction = true;
-        } else {
-            handlingUnitToSend = handlingUnit;
-        }
-        // 2a- HUC creation
-        if (handlingUnitToSend && Object.keys(handlingUnitContent).length === 0) {
-            const createHandlingUnitContentMutation = gql`
-                mutation createHandlingUnitContent($input: CreateHandlingUnitContentInput!) {
-                    createHandlingUnitContent(input: $input) {
-                        id
-                        lastTransactionId
-                    }
-                }
-            `;
-
-            const createHandlingUnitContentVariables = {
-                input: {
-                    stockStatus: parameters.STOCK_STATUSES_SALE,
-                    handlingUnitId: handlingUnitToSend.id,
-                    articleId: article.id,
-                    quantity: quantity,
-                    lastTransactionId
-                }
-            };
-
-            const createHandlingUnitContentResult = await graphqlRequestClient.request(
-                createHandlingUnitContentMutation,
-                createHandlingUnitContentVariables,
-                requestHeader
-            );
-
-            handlingUnitContentToSend = createHandlingUnitContentResult.createHandlingUnitContent;
-            createdByCycleCount = true;
-            canRollbackTransaction = true;
-        } else {
-            handlingUnitContentToSend = handlingUnitContent;
-        }
-
-        if (!feature.id && resType == 'serialNumber') {
-            const createHandlingUnitContentFeatureMutation = gql`
-                mutation createHandlingUnitContentFeature(
-                    $input: CreateHandlingUnitContentFeatureInput!
-                ) {
-                    createHandlingUnitContentFeature(input: $input) {
-                        id
-                        value
-                        featureCodeId
-                        featureCode {
-                            name
-                            unique
-                        }
-                        handlingUnitContentId
-                    }
-                }
-            `;
-
-            const createHandlingUnitContentFeatureVariables = {
-                input: {
-                    handlingUnitContentId: handlingUnitContentToSend.id,
-                    featureCodeId: featureCode.id,
-                    value: feature.value,
-                    lastTransactionId
-                }
-            };
-            const createHandlingUnitContentFeatureResult = await graphqlRequestClient.request(
-                createHandlingUnitContentFeatureMutation,
-                createHandlingUnitContentFeatureVariables,
-                requestHeader
-            );
-
-            featureToSend = createHandlingUnitContentFeatureResult.createHandlingUnitContentFeature;
-        }
-
-        // 3- Check if cycleCountMovement exists
+        // Check if cycleCountMovement exists
         if (Object.keys(cycleCountMovement).length === 0) {
-            // 3a- cycleCountMovement creation
+            // cycleCountMovement creation
             const createCycleCountMovementMutation = gql`
                 mutation createCycleCountMovement($input: CreateCycleCountMovementInput!) {
                     createCycleCountMovement(input: $input) {
@@ -256,18 +148,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
             const pass1Data = {
                 status: currentCycleCountLine?.status,
-                originalQuantityPass1: quantity,
+                originalQuantityPass1: 0,
                 quantityPass1: quantity,
-                gapPass1: 0,
+                gapPass1: quantity,
                 datePass1: moment(),
                 operatorPass1: username
             };
-            let CCMfeatures: any = null;
+            let CCMfeatures: any = {};
             if (resType == 'serialNumber') {
-                CCMfeatures[featureCode?.name] = {
-                    id: featureToSend?.id,
-                    value: featureToSend?.value,
-                    featureCodeId: featureCode?.id
+                CCMfeatures[featureCode.name] = {
+                    value: feature.value
                 };
             }
 
@@ -276,20 +166,19 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     cycleCountId: cycleCount?.id,
                     locationId: location?.id,
                     locationNameStr: location?.name,
-                    handlingUnitId: handlingUnitToSend?.id, // HU may not be existing
-                    handlingUnitNameStr: handlingUnitToSend?.name,
-                    parentHandlingUnitId: handlingUnitToSend?.parentHandlingUnitId, // HU may not be existing
-                    parentHandlingUnitNameStr: handlingUnitToSend?.parentHandlingUnit?.name,
-                    contentStatus: stockStatus,
-                    stockOwnerIdStr: stockOwner?.id,
+                    handlingUnitId: handlingUnit?.id ?? undefined,
+                    handlingUnitNameStr: handlingUnit?.name ?? undefined,
+                    parentHandlingUnitNameStr: handlingUnit?.parentHandlingUnit.name ?? undefined,
+                    contentStatus: stockStatus?.key,
+                    stockOwnerId: stockOwner?.id,
                     stockOwnerNameStr: stockOwner?.name,
                     articleId: article?.id,
                     articleNameStr: article?.name,
-                    handlingUnitContentFeatureId:
-                        resType == 'serialNumber' ? featureToSend?.id : undefined,
+                    handlingUnitContentFeatureId: feature?.id ?? undefined,
                     features: CCMfeatures,
+                    type: cycleCount?.type,
                     ...pass1Data,
-                    createdByCycleCount,
+                    createdByCycleCount: true,
                     lastTransactionId
                 }
             };
@@ -302,38 +191,39 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
             finalCycleCountMovement = createCycleCountMovementResult.createCycleCountMovement;
         } else {
-            // 3b- cycleCountMovement update
+            // cycleCountMovement update
             let passXData: any = null;
+            const quantityToUpdate = resType == 'serialNumber' ? 1 : handlingUnitContent?.quantity;
             switch (cycleCountMovement.status) {
-                case configs.CYCLE_COUNT_STATUS_CREATED ||
-                    configs.CYCLE_COUNT_STATUS_PASS_1_IN_PROGRESS:
+                case configs.CYCLE_COUNT_STATUS_CREATED:
+                case configs.CYCLE_COUNT_STATUS_PASS_1_IN_PROGRESS:
                     passXData = {
                         status: currentCycleCountLine?.status,
-                        originalQuantityPass1: handlingUnitContentToSend?.quantity,
+                        originalQuantityPass1: quantityToUpdate ?? 0,
                         quantityPass1: quantity,
-                        gapPass1: handlingUnitContentToSend?.quantity - quantity,
+                        gapPass1: quantity - quantityToUpdate,
                         datePass1: moment(),
                         operatorPass1: username
                     };
                     break;
-                case configs.CYCLE_COUNT_STATUS_PASS_1_VALIDATED ||
-                    configs.CYCLE_COUNT_STATUS_PASS_2_IN_PROGRESS:
+                case configs.CYCLE_COUNT_STATUS_PASS_1_VALIDATED:
+                case configs.CYCLE_COUNT_STATUS_PASS_2_IN_PROGRESS:
                     passXData = {
                         status: currentCycleCountLine?.status,
-                        originalQuantityPass2: handlingUnitContentToSend?.quantity,
+                        originalQuantityPass2: quantityToUpdate,
                         quantityPass2: quantity,
-                        gapPass2: cycleCountMovement?.quantityPass1 - quantity,
+                        gapPass2: quantity - cycleCountMovement?.quantityToUpdate,
                         datePass2: moment(),
                         operatorPass2: username
                     };
                     break;
-                case configs.CYCLE_COUNT_STATUS_PASS_2_VALIDATED ||
-                    configs.CYCLE_COUNT_STATUS_PASS_3_IN_PROGRESS:
+                case configs.CYCLE_COUNT_STATUS_PASS_2_VALIDATED:
+                case configs.CYCLE_COUNT_STATUS_PASS_3_IN_PROGRESS:
                     passXData = {
                         status: currentCycleCountLine?.status,
-                        originalQuantityPass3: handlingUnitContentToSend?.quantity,
+                        originalQuantityPass3: quantityToUpdate,
                         quantityPass3: quantity,
-                        gapPass3: cycleCountMovement?.quantityPass2 - quantity,
+                        gapPass3: quantity - cycleCountMovement?.quantityToUpdate,
                         datePass3: moment(),
                         operatorPass3: username
                     };
@@ -422,6 +312,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             );
 
             finalCycleCountMovement = updatedCycleCountMovementResponse.updateCycleCountMovement;
+            console.log('API-UpdateOutput', finalCycleCountMovement);
         }
 
         canRollbackTransaction = true;

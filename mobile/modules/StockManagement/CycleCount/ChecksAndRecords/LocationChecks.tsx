@@ -19,9 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
-import { Modal } from 'antd';
-import { useAuth } from 'context/AuthContext';
-import { gql } from 'graphql-request';
 import { createCycleCountError } from 'helpers/utils/crudFunctions/cycleCount';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
@@ -33,7 +30,6 @@ export interface ILocationChecksProps {
 export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
-    const { graphqlRequestClient } = useAuth();
 
     const {
         process,
@@ -41,8 +37,6 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
         trigger: { triggerRender, setTriggerRender },
-        triggerAlternativeSubmit,
-        alternativeSubmitInput,
         setResetForm
     } = dataToCheck;
 
@@ -100,95 +94,5 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
         }
     }, [locationInfos]);
 
-    // Location closure function
-    const [isCcClosureLoading, setIsCcClosureLoading] = useState(false);
-    async function closeHU(CclInputs: any) {
-        setIsCcClosureLoading(true);
-        const query = gql`
-            mutation executeFunction($functionName: String!, $event: JSON!) {
-                executeFunction(functionName: $functionName, event: $event) {
-                    status
-                    output
-                }
-            }
-        `;
-
-        const variables = {
-            functionName: 'K_updateCycleCountLines',
-            event: {
-                input: CclInputs
-            }
-        };
-
-        try {
-            const cc_result = await graphqlRequestClient.request(query, variables);
-            if (cc_result.executeFunction.status === 'ERROR') {
-                showError(cc_result.executeFunction.output);
-            } else if (
-                cc_result.executeFunction.status === 'OK' &&
-                cc_result.executeFunction.output.status === 'KO'
-            ) {
-                showError(t(`errors:${cc_result.executeFunction.output.output.code}`));
-                console.log('Backend_message', cc_result.executeFunction.output.output);
-            } else {
-                const storedObject = JSON.parse(storage.get(process) || '{}');
-                storage.remove(process);
-                const newStoredObject = JSON.parse(storage.get(process) || '{}');
-                newStoredObject[`step10`] = storedObject[`step10`];
-                storage.set(process, JSON.stringify(newStoredObject));
-                setTriggerRender(!triggerRender);
-            }
-            setIsCcClosureLoading(false);
-        } catch (error) {
-            showError(t('messages:error-executing-function'));
-            console.log('executeFunctionError', error);
-            setIsCcClosureLoading(false);
-        }
-    }
-
-    useEffect(() => {
-        if (triggerAlternativeSubmit.triggerAlternativeSubmit) {
-            if (!alternativeSubmitInput) {
-                showError(t('messages:no-cc-to-close'));
-                triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
-            }
-            const CCLineslowerStatusIds: any[] = [];
-            currentCycleCount.cycleCountLines.forEach((ccLine: any) => {
-                if (ccLine.status < currentCycleCount.status) {
-                    CCLineslowerStatusIds.push(ccLine.id);
-                }
-            });
-            if (CCLineslowerStatusIds.length > 0) {
-                Modal.confirm({
-                    title: (
-                        <span style={{ fontSize: '14px' }}>
-                            {t('messages:counting-finished-confirmation')}
-                        </span>
-                    ),
-                    onOk: () => {
-                        console.log('ConfirmCcFinished');
-                        closeHU(CCLineslowerStatusIds);
-                        triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
-                        storage.remove(process);
-                    },
-                    onCancel: () => {
-                        console.log('CancelCcFinished');
-                        setResetForm(true);
-                        setIsCcClosureLoading(false);
-                        setScannedInfo(undefined);
-                        triggerAlternativeSubmit.setTriggerAlternativeSubmit(false);
-                    },
-                    okText: t('messages:confirm'),
-                    cancelText: t('messages:cancel'),
-                    bodyStyle: { fontSize: '2px' }
-                });
-            }
-        }
-    }, [triggerAlternativeSubmit.triggerAlternativeSubmit]);
-
-    return (
-        <WrapperForm>
-            {(scannedInfo && !locationInfos) || isCcClosureLoading ? <ContentSpin /> : <></>}
-        </WrapperForm>
-    );
+    return <WrapperForm>{scannedInfo && !locationInfos ? <ContentSpin /> : <></>}</WrapperForm>;
 };
