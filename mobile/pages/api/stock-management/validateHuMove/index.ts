@@ -210,21 +210,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 originHandlingUnit.handlingUnitContents.map(async (handlingUnitContent: any) => {
                     const movementVariables = {
                         input: {
-                            originalLocationIdStr: originLocation.id,
-                            originalLocationNameStr: originLocation.name,
-                            originalHandlingUnitIdStr: originHandlingUnit.id,
-                            originalHandlingUnitNameStr: originHandlingUnit.name,
-                            originalContentIdStr: handlingUnitContent.id,
-                            articleIdStr: handlingUnitContent.articleId,
-                            articleNameStr: handlingUnitContent.article.name,
-                            stockOwnerIdStr: handlingUnitContent.stockOwnerId,
+                            originalLocationIdStr: originLocation?.id,
+                            originalLocationNameStr: originLocation?.name,
+                            originalHandlingUnitIdStr: originHandlingUnit?.id,
+                            originalHandlingUnitNameStr: originHandlingUnit?.name,
+                            originalContentIdStr: handlingUnitContent?.id,
+                            articleIdStr: handlingUnitContent?.articleId,
+                            articleNameStr: handlingUnitContent?.article?.name,
+                            stockOwnerIdStr: handlingUnitContent?.stockOwnerId,
                             stockOwnerNameStr: handlingUnitContent?.stockOwner?.name,
                             ...movementCodes,
-                            finalLocationIdStr: finalLocation.id,
-                            finalLocationNameStr: finalLocation.name,
-                            finalContentIdStr: handlingUnitContent.id,
-                            finalHandlingUnitIdStr: finalHandlingUnit.id,
-                            finalHandlingUnitNameStr: finalHandlingUnit.name,
+                            finalLocationIdStr: finalLocation?.id,
+                            finalLocationNameStr: finalLocation?.name,
+                            finalContentIdStr: handlingUnitContent?.id,
+                            finalHandlingUnitIdStr: finalHandlingUnit?.id,
+                            finalHandlingUnitNameStr: finalHandlingUnit?.name,
                             lastTransactionId
                         }
                     };
@@ -241,17 +241,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             //movement creation section
             const movementVariables = {
                 input: {
-                    originalLocationIdStr: originLocation.id,
-                    originalLocationNameStr: originLocation.name,
-                    originalHandlingUnitIdStr: originHandlingUnit.id,
-                    originalHandlingUnitNameStr: originHandlingUnit.name,
-                    stockOwnerIdStr: originHandlingUnit.stockOwnerId,
-                    stockOwnerNameStr: originHandlingUnit.stockOwner.name,
+                    originalLocationIdStr: originLocation?.id,
+                    originalLocationNameStr: originLocation?.name,
+                    originalHandlingUnitIdStr: originHandlingUnit?.id,
+                    originalHandlingUnitNameStr: originHandlingUnit?.name,
                     ...movementCodes,
-                    finalLocationIdStr: finalLocation.id,
-                    finalLocationNameStr: finalLocation.name,
-                    finalHandlingUnitIdStr: finalHandlingUnit.id,
-                    finalHandlingUnitNameStr: finalHandlingUnit.name,
+                    finalLocationIdStr: finalLocation?.id,
+                    finalLocationNameStr: finalLocation?.name,
+                    finalHandlingUnitIdStr: finalHandlingUnit?.id,
+                    finalHandlingUnitNameStr: finalHandlingUnit?.name,
                     lastTransactionId
                 }
             };

@@ -113,8 +113,48 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         let destinationHUC: { [k: string]: any } | undefined;
         // final content HU creation when needed
         let destinationHu = !isHuToCreate ? finalHandlingUnit : undefined;
+        let nbDestinationHu = 0;
+        // We always try to retrieve the final HU
         try {
-            if (isHuToCreate) {
+            const newHUVariables = {
+                filters: { name: finalHandlingUnit.name }
+            };
+            const queryHUM = gql`
+                query handlingUnits($filters: HandlingUnitSearchFilters) {
+                    handlingUnits(filters: $filters) {
+                        count
+                        results {
+                            id
+                            name
+                            lastTransactionId
+                            handlingUnitContents {
+                                id
+                                articleId
+                                stockStatus
+                                stockOwnerId
+                                quantity
+                            }
+                        }
+                    }
+                }
+            `;
+            const destinationHuResult = await graphqlRequestClient.request(
+                queryHUM,
+                newHUVariables,
+                requestHeader
+            );
+            console.log('destinationHuResult', destinationHuResult);
+
+            destinationHu = destinationHuResult.handlingUnits.results[0];
+            nbDestinationHu = destinationHuResult.handlingUnits.count;
+
+            canRollbackTransaction = true;
+        } catch (error) {
+            res.status(500).json({ message: 'Internal server error' });
+        }
+        console.log('destinationHu', destinationHu);
+        try {
+            if (nbDestinationHu == 0) {
                 const newHUVariables = {
                     input: { ...finalHandlingUnit, lastTransactionId }
                 };
@@ -124,6 +164,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             id
                             name
                             lastTransactionId
+                            handlingUnitContents {
+                                id
+                                articleId
+                                stockStatus
+                                stockOwnerId
+                                quantity
+                            }
                         }
                     }
                 `;
@@ -136,6 +183,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 destinationHu = destinationHuResult.createHandlingUnit;
 
                 canRollbackTransaction = true;
+                console.log('HU created:', destinationHuResult);
             }
         } catch (error) {
             res.status(500).json({ message: 'Internal server error' });
@@ -157,7 +205,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     articleId: articleInfo.articleId,
                     articleLuBarcodeId,
                     quantity: movingQuantity,
-                    stockOwnerid: originalLocation.originalContent.stockOwnerId,
+                    stockOwnerId: originalLocation.originalContent.stockOwnerId,
                     lastTransactionId
                 }
             };
@@ -198,9 +246,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 destinationHUCVariables,
                 requestHeader
             );
+
             destinationHUC = destinationHucResult.updateHandlingUnitContent;
         }
-
         canRollbackTransaction = true;
         //end final content creation or update section
 
@@ -272,8 +320,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 originalContentIdStr: originalLocation.originalContent.id,
                 articleIdStr: articleInfo.articleId,
                 articleNameStr: articleInfo.articleName,
-                stockOwnerIdStr: articleInfo.stockOwnerId,
-                stockOwnerNameStr: articleInfo.stockOwnerName,
+                stockOwnerIdStr: originalLocation.originalContent.stockOwnerId,
+                stockOwnerNameStr: originalLocation.originalContent.stockOwnerName,
                 quantity: movingQuantity,
                 ...movementCodes,
                 finalLocationIdStr: finalLocation.id,
