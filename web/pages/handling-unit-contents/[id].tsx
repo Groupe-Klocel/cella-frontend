@@ -23,7 +23,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
@@ -68,7 +68,46 @@ const HandlingUnitContentPage: PageComponent = () => {
             Modal.confirm({
                 title: t('messages:delete-confirm'),
                 onOk: () => {
-                    setId(id);
+                    const fetchData = async () => {
+                        const res = await fetch(`/api/create-movement/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                trigger: 'deleteContent',
+                                originData: {
+                                    articleId: data.articleId,
+                                    articleName: data.article_name,
+                                    stockStatus: data.stockStatus,
+                                    quantity: data.quantity,
+                                    locationId: data.handlingUnit_locationId,
+                                    locationName: data.handlingUnit_location_name,
+                                    handlingUnitId: data.handlingUnitId,
+                                    handlingUnitName: data.handlingUnit_name,
+                                    stockOwnerId: data.stockOwnerId,
+                                    stockOwnerName: data.stockOwner_name,
+                                    handlingUnitContentId: data.id
+                                }
+                            })
+                        });
+                        if (res.ok) {
+                            setId(id);
+                        }
+                        if (!res.ok) {
+                            const errorResponse = await res.json();
+                            if (errorResponse.error.response.errors[0].extensions) {
+                                showError(
+                                    t(
+                                        `errors:${errorResponse.error.response.errors[0].extensions.code}`
+                                    )
+                                );
+                            } else {
+                                showError(t('messages:error-update-data'));
+                            }
+                        }
+                    };
+                    fetchData();
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')

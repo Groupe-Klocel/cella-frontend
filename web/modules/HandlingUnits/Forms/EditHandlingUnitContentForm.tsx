@@ -174,13 +174,11 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
         if (articleData.data) {
             const newIdOpts: Array<IOption> = [];
             articleData.data.articles?.results.forEach(({ id, name, stockOwnerId }) => {
-                if (form.getFieldsValue(true).stockOwnerId === stockOwnerId) {
-                    if (form.getFieldsValue(true).articleId === id) {
-                        setArticleName(name!);
-                        setAId(id!);
-                    }
-                    newIdOpts.push({ value: name!, id: id! });
+                if (form.getFieldsValue(true).articleId === id) {
+                    setArticleName(name!);
+                    setAId(id!);
                 }
+                newIdOpts.push({ value: name!, id: id! });
             });
             setAIdOptions(newIdOpts);
         }
@@ -242,8 +240,67 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                         })
                     });
                     if (res.ok) {
-                        router.push(`/handling-unit-contents/${details.id}`);
-                        showSuccess(t('messages:success-updated'));
+                        const updatedInfo = await res.json();
+                        // call API for movement
+                        const updatedHUC = updatedInfo.response.updatedHandlingUnitContent;
+                        const updatedHU = updatedInfo.response.updatedHandlingUnit;
+                        const fetchMovementData = async () => {
+                            const resMovement = await fetch(`/api/create-movement/`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    trigger: 'updateContent',
+                                    originData: {
+                                        stockStatus: details.stockStatus,
+                                        reservation: details.reservation,
+                                        stockOwnerId: details.stockOwner?.id,
+                                        stockOwnerName: details.stockOwner?.name,
+                                        quantity: details.quantity,
+                                        articleId: details.articleId,
+                                        articleName: details.article?.name,
+                                        handlingUnitId: details.handlingUnitId,
+                                        handlingUnitName: details.handlingUnit?.name,
+                                        locationId: details.handlingUnit.locationId,
+                                        locationName: details.handlingUnit.location?.name,
+                                        handlingUnitContentId: details.id
+                                    },
+                                    destinationData: {
+                                        stockStatus: updatedHUC.stockStatus,
+                                        reservation: updatedHUC.reservation,
+                                        stockOwnerId: updatedHUC.stockOwner?.id,
+                                        stockOwnerName: updatedHUC.stockOwner?.name,
+                                        quantity: updatedHUC.quantity,
+                                        articleId: updatedHUC.article?.id,
+                                        articleName: updatedHUC.article?.name,
+                                        handlingUnitId: updatedHU.id,
+                                        handlingUnitName: updatedHU.name,
+                                        locationId: updatedHU.location?.id,
+                                        locationName: updatedHU.location?.name,
+                                        handlingUnitContentId: updatedHUC.id
+                                    }
+                                })
+                            });
+
+                            if (resMovement.ok) {
+                                router.push(`/handling-unit-contents/${details.id}`);
+                                showSuccess(t('messages:success-updated'));
+                            }
+                            if (!resMovement.ok) {
+                                const errorResponse = await resMovement.json();
+                                if (errorResponse.error.response.errors[0].extensions) {
+                                    showError(
+                                        t(
+                                            `errors:${errorResponse.error.response.errors[0].extensions.code}`
+                                        )
+                                    );
+                                } else {
+                                    showError(t('messages:error-update-data'));
+                                }
+                            }
+                        };
+                        fetchMovementData();
                     }
                     if (!res.ok) {
                         const errorResponse = await res.json();
@@ -284,7 +341,8 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
         const tmp_details = {
             code: details?.handlingUnit?.name,
             locationName: details?.handlingUnit?.location?.name,
-            stockOwnerId: details?.handlingUnit?.stockOwnerId,
+            stockOwnerId: details?.stockOwner?.id,
+            articleId: details?.articleId,
             articleName: details?.article?.name,
             quantity: details?.quantity,
             stockStatus: details?.stockStatus,
@@ -336,7 +394,13 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
-                        <Form.Item label={t('d:stockOwner')} name="stockOwnerId">
+                        <Form.Item
+                            label={t('d:stockOwner')}
+                            name="stockOwnerId"
+                            rules={[
+                                { required: true, message: t('messages:error-message-empty-input') }
+                            ]}
+                        >
                             <Select
                                 allowClear
                                 placeholder={`${t('messages:please-select-a', {
@@ -352,9 +416,14 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
-                        <Form.Item label={t('d:article')} name="articleName">
+                        <Form.Item
+                            label={t('d:article')}
+                            name="articleName"
+                            rules={[
+                                { required: true, message: t('messages:error-message-empty-input') }
+                            ]}
+                        >
                             <AutoComplete
-                                disabled
                                 placeholder={`${t('messages:please-fill-letter-your', {
                                     name: t('d:article')
                                 })}`}

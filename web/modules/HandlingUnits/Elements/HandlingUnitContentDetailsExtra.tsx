@@ -23,7 +23,8 @@ import {
     pathParams,
     META_DEFAULTS,
     getModesFromPermissions,
-    pathParamsFromDictionary
+    pathParamsFromDictionary,
+    showError
 } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Button, Divider, Modal, Space } from 'antd';
@@ -75,12 +76,46 @@ const HandlingUnitContentDetailsExtra = ({
             ) : null
     };
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+    const confirmAction = (
+        id: string | undefined,
+        setId: any,
+        action: 'delete' | 'disable',
+        infoForMove: any
+    ) => {
         return () => {
             Modal.confirm({
                 title: t('messages:delete-confirm'),
                 onOk: () => {
-                    setId(id);
+                    const fetchData = async () => {
+                        const res = await fetch(`/api/create-movement/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                trigger: 'deleteContentFeature',
+                                originData: {
+                                    ...infoForMove
+                                }
+                            })
+                        });
+                        if (res.ok) {
+                            setId(id);
+                        }
+                        if (!res.ok) {
+                            const errorResponse = await res.json();
+                            if (errorResponse.error.response.errors[0].extensions) {
+                                showError(
+                                    t(
+                                        `errors:${errorResponse.error.response.errors[0].extensions.code}`
+                                    )
+                                );
+                            } else {
+                                showError(t('messages:error-update-data'));
+                            }
+                        }
+                    };
+                    fetchData();
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -102,7 +137,22 @@ const HandlingUnitContentDetailsExtra = ({
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: { id: string }) => (
+                        render: (record: {
+                            id: string;
+                            handlingUnitContentId: string;
+                            handlingUnitContent_handlingUnitId: string;
+                            handlingUnitContent_handlingUnit_name: string;
+                            handlingUnitContent_articleId: string;
+                            handlingUnitContent_article_name: string;
+                            handlingUnitContent_stockStatus: number;
+                            handlingUnitContent_quantity: number;
+                            handlingUnitContent_handlingUnit_locationId: string;
+                            handlingUnitContent_handlingUnit_location_name: string;
+                            handlingUnitContent_stockOwnerId: string;
+                            handlingUnitContent_stockOwner_name: string;
+                            featureCode_name: string;
+                            value: any;
+                        }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
@@ -128,7 +178,12 @@ const HandlingUnitContentDetailsExtra = ({
                                     <Button
                                         icon={<StopOutlined />}
                                         onClick={() =>
-                                            confirmAction(record.id, setIdToDisable, 'disable')()
+                                            confirmAction(
+                                                record.id,
+                                                setIdToDisable,
+                                                'disable',
+                                                undefined
+                                            )()
                                         }
                                     ></Button>
                                 ) : (
@@ -141,7 +196,30 @@ const HandlingUnitContentDetailsExtra = ({
                                         icon={<DeleteOutlined />}
                                         danger
                                         onClick={() =>
-                                            confirmAction(record.id, setIdToDelete, 'delete')()
+                                            confirmAction(record.id, setIdToDelete, 'delete', {
+                                                articleId: record.handlingUnitContent_articleId,
+                                                articleName:
+                                                    record.handlingUnitContent_article_name,
+                                                stockStatus: record.handlingUnitContent_stockStatus,
+                                                quantity: record.handlingUnitContent_quantity,
+                                                locationId:
+                                                    record.handlingUnitContent_handlingUnit_locationId,
+                                                locationName:
+                                                    record.handlingUnitContent_handlingUnit_location_name,
+                                                handlingUnitId:
+                                                    record.handlingUnitContent_handlingUnitId,
+                                                handlingUnitName:
+                                                    record.handlingUnitContent_handlingUnit_name,
+                                                stockOwnerId:
+                                                    record.handlingUnitContent_stockOwnerId,
+                                                stockOwnerName:
+                                                    record.handlingUnitContent_stockOwner_name,
+                                                handlingUnitContentId: record.handlingUnitContentId,
+                                                feature: {
+                                                    code: record.featureCode_name,
+                                                    value: record.value
+                                                }
+                                            })()
                                         }
                                     ></Button>
                                 ) : (

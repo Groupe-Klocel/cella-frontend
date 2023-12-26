@@ -25,7 +25,7 @@ import {
     StopOutlined
 } from '@ant-design/icons';
 import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
-import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import { getModesFromPermissions, META_DEFAULTS, pathParams, showError } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -64,12 +64,46 @@ const HandlingUnitContentsPage: PageComponent = () => {
             ) : null
     };
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+    const confirmAction = (
+        id: string | undefined,
+        setId: any,
+        action: 'delete' | 'disable',
+        infoForMove: any
+    ) => {
         return () => {
             Modal.confirm({
                 title: t('messages:delete-confirm'),
                 onOk: () => {
-                    setId(id);
+                    const fetchData = async () => {
+                        const res = await fetch(`/api/create-movement/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                trigger: 'deleteContent',
+                                originData: {
+                                    ...infoForMove
+                                }
+                            })
+                        });
+                        if (res.ok) {
+                            setId(id);
+                        }
+                        if (!res.ok) {
+                            const errorResponse = await res.json();
+                            if (errorResponse.error.response.errors[0].extensions) {
+                                showError(
+                                    t(
+                                        `errors:${errorResponse.error.response.errors[0].extensions.code}`
+                                    )
+                                );
+                            } else {
+                                showError(t('messages:error-update-data'));
+                            }
+                        }
+                    };
+                    fetchData();
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -92,6 +126,15 @@ const HandlingUnitContentsPage: PageComponent = () => {
                         render: (record: {
                             id: string;
                             handlingUnitId: string;
+                            handlingUnit_name: string;
+                            articleId: string;
+                            article_name: string;
+                            stockStatus: number;
+                            quantity: number;
+                            handlingUnit_locationId: string;
+                            handlingUnit_location_name: string;
+                            stockOwnerId: string;
+                            stockOwner_name: string;
                             handlingUnit_barcode: string;
                         }) => (
                             <Space>
@@ -119,7 +162,12 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                     <Button
                                         icon={<StopOutlined />}
                                         onClick={() =>
-                                            confirmAction(record.id, setIdToDisable, 'disable')()
+                                            confirmAction(
+                                                record.id,
+                                                setIdToDisable,
+                                                'disable',
+                                                undefined
+                                            )()
                                         }
                                     ></Button>
                                 ) : (
@@ -132,7 +180,19 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                         icon={<DeleteOutlined />}
                                         danger
                                         onClick={() =>
-                                            confirmAction(record.id, setIdToDelete, 'delete')()
+                                            confirmAction(record.id, setIdToDelete, 'delete', {
+                                                articleId: record.articleId,
+                                                articleName: record.article_name,
+                                                stockStatus: record.stockStatus,
+                                                quantity: record.quantity,
+                                                locationId: record.handlingUnit_locationId,
+                                                locationName: record.handlingUnit_location_name,
+                                                handlingUnitId: record.handlingUnitId,
+                                                handlingUnitName: record.handlingUnit_name,
+                                                stockOwnerId: record.stockOwnerId,
+                                                stockOwnerName: record.stockOwner_name,
+                                                handlingUnitContentId: record.id
+                                            })()
                                         }
                                     ></Button>
                                 ) : (

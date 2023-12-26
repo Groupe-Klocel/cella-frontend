@@ -23,7 +23,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
@@ -68,7 +68,51 @@ const HandlingUnitContentPage: PageComponent = () => {
             Modal.confirm({
                 title: t('messages:delete-confirm'),
                 onOk: () => {
-                    setId(id);
+                    const fetchData = async () => {
+                        const res = await fetch(`/api/create-movement/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                trigger: 'deleteContentFeature',
+                                originData: {
+                                    articleId: data.handlingUnitContent_articleId,
+                                    articleName: data.handlingUnitContent_article_name,
+                                    stockStatus: data.handlingUnitContent_stockStatus,
+                                    quantity: data.handlingUnitContent_quantity,
+                                    locationId: data.handlingUnitContent_handlingUnit_locationId,
+                                    locationName:
+                                        data.handlingUnitContent_handlingUnit_location_name,
+                                    handlingUnitId: data.handlingUnitContent_handlingUnitId,
+                                    handlingUnitName: data.handlingUnitContent_handlingUnit_name,
+                                    stockOwnerId: data.handlingUnitContent_stockOwnerId,
+                                    stockOwnerName: data.handlingUnitContent_stockOwner_name,
+                                    handlingUnitContentId: data.handlingUnitContentId,
+                                    feature: {
+                                        code: data.featureCode_name,
+                                        value: data.value
+                                    }
+                                }
+                            })
+                        });
+                        if (res.ok) {
+                            setId(id);
+                        }
+                        if (!res.ok) {
+                            const errorResponse = await res.json();
+                            if (errorResponse.error.response.errors[0].extensions) {
+                                showError(
+                                    t(
+                                        `errors:${errorResponse.error.response.errors[0].extensions.code}`
+                                    )
+                                );
+                            } else {
+                                showError(t('messages:error-update-data'));
+                            }
+                        }
+                    };
+                    fetchData();
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')

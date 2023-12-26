@@ -267,7 +267,8 @@ const DeliveryPage: PageComponent = () => {
                             }
                             {
                                 // Start button
-                                data?.status == configs.DELIVERY_STATUS_ESTIMATED ? (
+                                data?.status ==
+                                /*configs.DELIVERY_STATUS_ESTIMATED - de-activation for Findit*/ -99999 ? (
                                     <Button onClick={() => startDelivery(data?.id, data?.status)}>
                                         {t('actions:start')}
                                     </Button>
@@ -377,6 +378,7 @@ const DeliveryPage: PageComponent = () => {
                         }}
                         dataToPrint={{ id: idToPrint }}
                         documentName="K_Delivery"
+                        documentReference={data?.name}
                     />
                 </Space>
             ) : (

@@ -176,8 +176,10 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     useEffect(() => {
         const tmp_details = {
             deliveryName: props.deliveryName,
+            deliveryId: props.deliveryId,
             stockOwnerId: props.stockOwnerId,
             stockOwnerName: props.stockOwnerName,
+            status: configs.DELIVERY_STATUS_CREATED,
             toBeCubed: true
         };
         form.setFieldsValue(tmp_details);
