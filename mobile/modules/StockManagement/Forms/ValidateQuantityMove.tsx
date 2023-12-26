@@ -81,12 +81,23 @@ export const ValidateQuantityMoveForm = ({
     }
     if (storedObject.step40.data.chosenContent) {
         let originalContent: { [label: string]: any } | null;
-        originalContent = {
-            id: storedObject.step40.data.chosenContent.id,
-            quantity: storedObject.step40.data.chosenContent.quantity,
-            stockStatus: storedObject.step40.data.chosenContent.stockStatus,
-            stockOwnerId: storedObject.step40.data.chosenContent.stockOwnerId
-        };
+        if (storedObject.step30.data.resType == 'serialNumber') {
+            originalContent = {
+                id: storedObject.step40.data.chosenContent.id,
+                quantity: storedObject.step40.data.chosenContent.quantity,
+                stockStatus: storedObject.step40.data.chosenContent.stockStatus,
+                stockOwnerId: storedObject.step30.data.feature.handlingUnitContent.stockOwnerId,
+                stockOwnerName: storedObject.step30.data.feature.handlingUnitContent.stockOwner.name
+            };
+        } else {
+            originalContent = {
+                id: storedObject.step40.data.chosenContent.id,
+                quantity: storedObject.step40.data.chosenContent.quantity,
+                stockStatus: storedObject.step40.data.chosenContent.stockStatus,
+                stockOwnerId: storedObject.step40.data.chosenContent.stockOwnerId,
+                stockOwnerName: storedObject.step40.data.chosenContent.stockOwner.name
+            };
+        }
         if (storedObject.step40.data.chosenContent.handlingUnit) {
             let originalHu: { [label: string]: any } | null;
             originalHu = {

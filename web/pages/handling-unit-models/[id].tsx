@@ -58,8 +58,6 @@ const HandlingUnitModelPage: PageComponent = () => {
     const pageTitle = `${t('common:handling-unit-model')} ${data?.name}`;
     // #endregions
 
-    console.log('DLAdata', data);
-
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 

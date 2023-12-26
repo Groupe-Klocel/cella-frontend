@@ -220,6 +220,8 @@ export const AddHandlingUnitContentForm = () => {
         }
     };
 
+    console.log('formData', form.getFieldsValue(true));
+
     // CREATE MUTATION
     const { mutate, isLoading: createLoading } = useCreateHandlingUnitWithContentMutation<Error>(
         graphqlRequestClient,
@@ -229,8 +231,51 @@ export const AddHandlingUnitContentForm = () => {
                 _variables: CreateHandlingUnitWithContentMutationVariables,
                 _context: any
             ) => {
-                router.push(`/handling-unit-contents/${data.createHandlingUnitWithContent.id}`);
-                showSuccess(t('messages:success-created'));
+                // call API for movement
+                const createdHUC = data.createHandlingUnitWithContent;
+                const fetchData = async () => {
+                    const res = await fetch(`/api/create-movement/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            trigger: 'addContent',
+                            destinationData: {
+                                articleId: createdHUC.articleId,
+                                articleName: createdHUC.article.name,
+                                stockStatus: createdHUC.stockStatus,
+                                quantity: createdHUC.quantity,
+                                locationId: createdHUC.handlingUnit.locationId,
+                                locationName: createdHUC.handlingUnit.location?.name,
+                                handlingUnitId: createdHUC.handlingUnitId,
+                                handlingUnitName: createdHUC.handlingUnit.name,
+                                stockOwnerId: createdHUC.stockOwner?.id,
+                                stockOwnerName: createdHUC.stockOwner?.name,
+                                handlingUnitContentId: createdHUC.id
+                            }
+                        })
+                    });
+                    if (res.ok) {
+                        router.push(
+                            `/handling-unit-contents/${data.createHandlingUnitWithContent.id}`
+                        );
+                        showSuccess(t('messages:success-created'));
+                    }
+                    if (!res.ok) {
+                        const errorResponse = await res.json();
+                        if (errorResponse.error.response.errors[0].extensions) {
+                            showError(
+                                t(
+                                    `errors:${errorResponse.error.response.errors[0].extensions.code}`
+                                )
+                            );
+                        } else {
+                            showError(t('messages:error-update-data'));
+                        }
+                    }
+                };
+                fetchData();
             },
             onError: (error: any) => {
                 if (error.response && error.response.errors[0].extensions) {
@@ -403,7 +448,7 @@ export const AddHandlingUnitContentForm = () => {
                                 { required: true, message: t('messages:error-message-empty-input') }
                             ]}
                         >
-                            <InputNumber />
+                            <InputNumber min={0} />
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>

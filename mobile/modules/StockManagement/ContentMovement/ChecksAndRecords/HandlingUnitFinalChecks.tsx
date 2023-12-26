@@ -50,7 +50,11 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && handlingUnitInfos.data) {
-            if (handlingUnitInfos && handlingUnitInfos?.data?.handlingUnits) {
+            if (
+                handlingUnitInfos &&
+                handlingUnitInfos?.data?.handlingUnits &&
+                handlingUnitInfos?.data?.handlingUnits?.count != 0
+            ) {
                 const handlingUnit = handlingUnitInfos.data.handlingUnits.results[0];
                 // HU origin/final identical = error
                 if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {

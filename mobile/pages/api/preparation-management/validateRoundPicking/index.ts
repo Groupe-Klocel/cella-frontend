@@ -270,8 +270,35 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             finalHandlingUnitContentId = createdHuc.createHandlingUnitContent.id;
             canRollbackTransaction = true;
         } else {
-            finalHandlingUnitContentId =
-                handlingUnitContentResult?.handlingUnitContents?.results[0].id;
+            //update quantity quantity HUC + qty moving
+            const hucToUpdate = handlingUnitContentResult?.handlingUnitContents?.results[0];
+            const updateHUCMutation = gql`
+                mutation updateHandlingUnitContent(
+                    $id: String!
+                    $input: UpdateHandlingUnitContentInput!
+                ) {
+                    updateHandlingUnitContent(id: $id, input: $input) {
+                        id
+                        quantity
+                        lastTransactionId
+                    }
+                }
+            `;
+
+            const updateHUCvariable = {
+                id: hucToUpdate.id,
+                input: {
+                    quantity: hucToUpdate.quantity + movingQuantity,
+                    lastTransactionId
+                }
+            };
+
+            const updatedHUC = await graphqlRequestClient.request(
+                updateHUCMutation,
+                updateHUCvariable
+            );
+
+            finalHandlingUnitContentId = updatedHUC.updateHandlingUnitContent.id;
             console.log('finalHandlingUnitContentId', finalHandlingUnitContentId);
         }
 
@@ -394,6 +421,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             category
                             categoryText
                         }
+                        stockOwnerId
+                        stockOwner {
+                            id
+                            name
+                        }
                     }
                     roundLineDetailId
                     roundLineDetail {
@@ -489,6 +521,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                         id
                                         name
                                         baseUnitWeight
+                                    }
+                                    stockOwnerId
+                                    stockOwner {
+                                        id
+                                        name
                                     }
                                     handlingUnitContentFeatures {
                                         featureCode {

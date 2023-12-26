@@ -88,6 +88,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             mutation UpdateHandlingUnit($id: String!, $input: UpdateHandlingUnitInput!) {
                 updateHandlingUnit(id: $id, input: $input) {
                     id
+                    name
+                    location {
+                        id
+                        name
+                    }
                 }
             }
         `;
@@ -104,6 +109,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const updateHandlingUnitContentInput = {
             id: id,
             input: {
+                articleId: input.articleId,
                 stockOwnerId: input.stockOwnerId,
                 quantity: input.quantity,
                 stockStatus: input.stockStatus,
@@ -120,6 +126,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             ) {
                 updateHandlingUnitContent(id: $id, input: $input) {
                     id
+                    article {
+                        id
+                        name
+                    }
+                    stockOwner {
+                        id
+                        name
+                    }
+                    quantity
+                    stockStatus
+                    reservation
                 }
             }
         `;

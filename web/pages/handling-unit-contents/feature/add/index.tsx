@@ -22,10 +22,10 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { HandlingUnitContentFeatureModelV2 as model } from 'models/HandlingUnitContentFeatureModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { META_DEFAULTS } from '@helpers';
+import { AddFeatureComponent } from 'modules/HandlingUnits/PagesContainer/AddFeatureComponent';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -56,7 +56,7 @@ const AddConversionPage: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddItemComponent
+            <AddFeatureComponent
                 dataModel={model}
                 headerComponent={
                     <HeaderContent
