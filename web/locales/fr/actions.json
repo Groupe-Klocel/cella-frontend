@@ -106,5 +106,6 @@
     "edit-shipping-mode": "Modifier Mode d'expédition",
     "add-pattern-path": "Ajouter un chemin de profil",
     "add-hook-config": "Ajouter un hook config",
-    "set-printer": "Définir l'imprimante"
+    "set-printer": "Définir l'imprimante",
+    "add-load": "Ajouter Chargement"
 }

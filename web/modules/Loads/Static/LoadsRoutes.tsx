@@ -30,7 +30,6 @@ export const loadsRoutes = [
 export const addLoadRoutes = [
     ...loadsRoutes,
     {
-        path: '/add-loads',
         breadcrumbName: 'actions:add-load'
     }
 ];
