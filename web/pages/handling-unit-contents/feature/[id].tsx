@@ -80,7 +80,7 @@ const HandlingUnitContentPage: PageComponent = () => {
                                     articleId: data.handlingUnitContent_articleId,
                                     articleName: data.handlingUnitContent_article_name,
                                     stockStatus: data.handlingUnitContent_stockStatus,
-                                    quantity: data.handlingUnitContent_quantity,
+                                    quantity: 1,
                                     locationId: data.handlingUnitContent_handlingUnit_locationId,
                                     locationName:
                                         data.handlingUnitContent_handlingUnit_location_name,
@@ -93,6 +93,20 @@ const HandlingUnitContentPage: PageComponent = () => {
                                         code: data.featureCode_name,
                                         value: data.value
                                     }
+                                },
+                                destinationData: {
+                                    articleId: data.handlingUnitContent_articleId,
+                                    articleName: data.handlingUnitContent_article_name,
+                                    stockStatus: data.handlingUnitContent_stockStatus,
+                                    quantity: Number(data.handlingUnitContent_quantity) - 1,
+                                    locationId: data.handlingUnitContent_handlingUnit_locationId,
+                                    locationName:
+                                        data.handlingUnitContent_handlingUnit_location_name,
+                                    handlingUnitId: data.handlingUnitContent_handlingUnitId,
+                                    handlingUnitName: data.handlingUnitContent_handlingUnit_name,
+                                    stockOwnerId: data.handlingUnitContent_stockOwnerId,
+                                    stockOwnerName: data.handlingUnitContent_stockOwner_name,
+                                    handlingUnitContentId: data.handlingUnitContentId
                                 }
                             })
                         });

@@ -461,8 +461,8 @@
     "update": "Modification",
     "warehouseOnly": "Cet entrepôt uniquement",
     "allWarehouses": "Tous les entrepôts",
-    "stockStatusText": "Statut de stock",
-    "stockStatus": "Statut de stock",
+    "stockStatusText": "Etat de stock",
+    "stockStatus": "Etat de stock",
     "location": "Emplacement",
     "locations": "Emplacements",
     "featureValue": "Traçabilité",
@@ -636,5 +636,7 @@
     "argument_sequenceId": "Id de la séquence concernée",
     "userId": "Utilisateur",
     "extraStatus1": "Type de contrôle",
-    "extraStatus1Text": "Type de contrôle"
+    "extraStatus1Text": "Type de contrôle",
+    "initialStockStatus": "Etat de stock initial",
+    "finalStockStatus": "Etat de stock final"
 }

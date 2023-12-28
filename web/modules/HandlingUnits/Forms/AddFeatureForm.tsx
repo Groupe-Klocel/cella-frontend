@@ -121,11 +121,24 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                     },
                     body: JSON.stringify({
                         trigger: 'addContentFeature',
+                        originData: {
+                            articleId: relatedHUC?.articleId,
+                            articleName: relatedHUC?.article.name,
+                            stockStatus: relatedHUC?.stockStatus,
+                            quantity: 1,
+                            locationId: relatedHUC?.handlingUnit.locationId,
+                            locationName: relatedHUC?.handlingUnit.location?.name,
+                            handlingUnitId: relatedHUC?.handlingUnitId,
+                            handlingUnitName: relatedHUC?.handlingUnit.name,
+                            stockOwnerId: relatedHUC?.stockOwner?.id,
+                            stockOwnerName: relatedHUC?.stockOwner?.name,
+                            handlingUnitContentId: relatedHUC?.id
+                        },
                         destinationData: {
                             articleId: relatedHUC?.articleId,
                             articleName: relatedHUC?.article.name,
                             stockStatus: relatedHUC?.stockStatus,
-                            quantity: relatedHUC?.quantity,
+                            quantity: Number(relatedHUC?.quantity) + 1,
                             locationId: relatedHUC?.handlingUnit.locationId,
                             locationName: relatedHUC?.handlingUnit.location?.name,
                             handlingUnitId: relatedHUC?.handlingUnitId,

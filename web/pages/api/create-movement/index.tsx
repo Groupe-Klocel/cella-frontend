@@ -87,7 +87,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         originalLocationNameStr: originData?.locationName,
         originalContentIdStr: originData?.handlingUnitContentId,
         originalHandlingUnitIdStr: originData?.handlingUnitId,
-        originalHandlingUnitNameStr: originData?.handlingUnitName
+        originalHandlingUnitNameStr: originData?.handlingUnitName,
+        initialStatus: originData?.stockStatus
     };
 
     const destinationCommonInfos = {
@@ -96,35 +97,33 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         finalContentIdStr: destinationData?.handlingUnitContentId,
         finalHandlingUnitIdStr: destinationData?.handlingUnitId,
         finalHandlingUnitNameStr: destinationData?.handlingUnitName,
-        finalQuantity: destinationData?.quantity
+        finalStatus: destinationData?.stockStatus
     };
 
     let canRollbackTransaction = false;
     let movementInputs = [];
-    if (trigger == 'addContent') {
-        movementInputs.push({
-            articleIdStr: destinationData?.articleId,
-            articleNameStr: destinationData?.articleName,
-            stockOwnerIdStr: destinationData?.stockOwnerId,
-            stockOwnerNameStr: destinationData?.stockOwnerName,
-            quantity: destinationData?.quantity,
-            finalStatus: destinationData?.stockStatus,
-            ...commonMovementInfos,
-            code: parameters.MOVEMENT_CODE_POSITIVE_STOCK_ADJUSTEMENT,
-            ...destinationCommonInfos,
-            lastTransactionId
-        });
-    } else if (trigger == 'deleteContent') {
+    if (trigger == 'deleteContent') {
         movementInputs.push({
             articleIdStr: originData?.articleId,
             articleNameStr: originData?.articleName,
             stockOwnerIdStr: originData?.stockOwnerId,
             stockOwnerNameStr: originData?.stockOwnerName,
             quantity: -originData?.quantity,
-            initialStatus: originData?.stockStatus,
             ...commonMovementInfos,
             code: parameters.MOVEMENT_CODE_NEGATIVE_STOCK_ADJUSTEMENT,
             ...originCommonInfos,
+            lastTransactionId
+        });
+    } else if (trigger == 'addContent') {
+        movementInputs.push({
+            articleIdStr: destinationData?.articleId,
+            articleNameStr: destinationData?.articleName,
+            stockOwnerIdStr: destinationData?.stockOwnerId,
+            stockOwnerNameStr: destinationData?.stockOwnerName,
+            quantity: destinationData?.quantity,
+            ...commonMovementInfos,
+            code: parameters.MOVEMENT_CODE_POSITIVE_STOCK_ADJUSTEMENT,
+            ...destinationCommonInfos,
             lastTransactionId
         });
     } else if (trigger == 'updateContent') {
@@ -140,6 +139,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 stockOwnerIdStr: originData.stockOwnerId,
                 stockOwnerNameStr: originData.stockOwnerName,
                 quantity: -originData.quantity,
+                finalQuantity: 0,
                 ...originCommonInfos,
                 ...destinationCommonInfos,
                 ...commonMovementInfos,
@@ -151,13 +151,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 stockOwnerIdStr: destinationData.stockOwnerId,
                 stockOwnerNameStr: destinationData.stockOwnerName,
                 quantity: destinationData.quantity,
+                finalQuantity: destinationData.quantity,
                 ...originCommonInfos,
                 ...destinationCommonInfos,
                 ...commonMovementInfos,
                 code: parameters.MOVEMENT_CODE_POSITIVE_STOCK_ADJUSTEMENT
             };
-            movementInputs.push({ ...originObject }, { ...destinationObject });
-        } else if (originData.Quantity !== destinationData.Quantity) {
+            movementInputs.push({ ...destinationObject }, { ...originObject });
+        } else if (originData.quantity !== destinationData.quantity) {
             const movingQuantity = destinationData.quantity - originData.quantity;
             const quantityChangeObject = {
                 articleIdStr: originData?.articleId,
@@ -165,6 +166,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 stockOwnerIdStr: originData?.stockOwnerId,
                 stockOwnerNameStr: originData?.stockOwnerName,
                 quantity: movingQuantity,
+                finalQuantity: destinationData?.quantity,
                 ...originCommonInfos,
                 ...destinationCommonInfos,
                 ...commonMovementInfos,
@@ -185,10 +187,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 articleNameStr: originData.articleName,
                 stockOwnerIdStr: originData.stockOwnerId,
                 stockOwnerNameStr: originData.stockOwnerName,
-                initialStatus: originData?.stockStatus,
-                finalStatus: destinationData?.stockStatus,
                 initialReservation: originData?.reservation,
                 finalReservation: destinationData?.reservation,
+                quantity: originData?.quantity,
+                finalQuantity: destinationData?.quantity,
                 ...originCommonInfos,
                 ...destinationCommonInfos,
                 ...commonMovementInfos,
@@ -206,10 +208,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             articleNameStr: destinationData?.articleName,
             stockOwnerIdStr: destinationData?.stockOwnerId,
             stockOwnerNameStr: destinationData?.stockOwnerName,
-            quantity: destinationData?.quantity,
-            finalStatus: destinationData?.stockStatus,
+            quantity: originData?.quantity,
+            finalQuantity: destinationData?.quantity,
             ...commonMovementInfos,
             code: parameters.MOVEMENT_CODE_POSITIVE_STOCK_ADJUSTEMENT,
+            ...originCommonInfos,
             ...destinationCommonInfos,
             finalFeatures,
             lastTransactionId
@@ -224,12 +227,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             articleNameStr: originData?.articleName,
             stockOwnerIdStr: originData?.stockOwnerId,
             stockOwnerNameStr: originData?.stockOwnerName,
-            quantity: originData?.quantity,
-            initialStatus: originData?.stockStatus,
-            finalStatus: originData?.stockStatus,
+            quantity: -originData?.quantity,
+            finalQuantity: destinationData?.quantity,
             ...commonMovementInfos,
             code: parameters.MOVEMENT_CODE_NEGATIVE_STOCK_ADJUSTEMENT,
             ...originCommonInfos,
+            ...destinationCommonInfos,
             originalFeatures,
             lastTransactionId
         });
@@ -248,8 +251,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             stockOwnerIdStr: destinationData?.stockOwnerId,
             stockOwnerNameStr: destinationData?.stockOwnerName,
             quantity: destinationData?.quantity,
-            initialStatus: destinationData?.stockStatus,
-            finalStatus: destinationData?.stockStatus,
+            finalQuantity: destinationData?.quantity,
             ...commonMovementInfos,
             code: parameters['MOVEMENT_CODE_STATUS/RESERVATION_CHANGE'],
             ...originCommonInfos,

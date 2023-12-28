@@ -80,7 +80,8 @@ const HandlingUnitContentDetailsExtra = ({
         id: string | undefined,
         setId: any,
         action: 'delete' | 'disable',
-        infoForMove: any
+        originData: any,
+        destinationData: any
     ) => {
         return () => {
             Modal.confirm({
@@ -94,9 +95,8 @@ const HandlingUnitContentDetailsExtra = ({
                             },
                             body: JSON.stringify({
                                 trigger: 'deleteContentFeature',
-                                originData: {
-                                    ...infoForMove
-                                }
+                                originData,
+                                destinationData
                             })
                         });
                         if (res.ok) {
@@ -182,6 +182,7 @@ const HandlingUnitContentDetailsExtra = ({
                                                 record.id,
                                                 setIdToDisable,
                                                 'disable',
+                                                undefined,
                                                 undefined
                                             )()
                                         }
@@ -196,30 +197,62 @@ const HandlingUnitContentDetailsExtra = ({
                                         icon={<DeleteOutlined />}
                                         danger
                                         onClick={() =>
-                                            confirmAction(record.id, setIdToDelete, 'delete', {
-                                                articleId: record.handlingUnitContent_articleId,
-                                                articleName:
-                                                    record.handlingUnitContent_article_name,
-                                                stockStatus: record.handlingUnitContent_stockStatus,
-                                                quantity: record.handlingUnitContent_quantity,
-                                                locationId:
-                                                    record.handlingUnitContent_handlingUnit_locationId,
-                                                locationName:
-                                                    record.handlingUnitContent_handlingUnit_location_name,
-                                                handlingUnitId:
-                                                    record.handlingUnitContent_handlingUnitId,
-                                                handlingUnitName:
-                                                    record.handlingUnitContent_handlingUnit_name,
-                                                stockOwnerId:
-                                                    record.handlingUnitContent_stockOwnerId,
-                                                stockOwnerName:
-                                                    record.handlingUnitContent_stockOwner_name,
-                                                handlingUnitContentId: record.handlingUnitContentId,
-                                                feature: {
-                                                    code: record.featureCode_name,
-                                                    value: record.value
+                                            confirmAction(
+                                                record.id,
+                                                setIdToDelete,
+                                                'delete',
+                                                {
+                                                    articleId: record.handlingUnitContent_articleId,
+                                                    articleName:
+                                                        record.handlingUnitContent_article_name,
+                                                    stockStatus:
+                                                        record.handlingUnitContent_stockStatus,
+                                                    quantity: 1,
+                                                    locationId:
+                                                        record.handlingUnitContent_handlingUnit_locationId,
+                                                    locationName:
+                                                        record.handlingUnitContent_handlingUnit_location_name,
+                                                    handlingUnitId:
+                                                        record.handlingUnitContent_handlingUnitId,
+                                                    handlingUnitName:
+                                                        record.handlingUnitContent_handlingUnit_name,
+                                                    stockOwnerId:
+                                                        record.handlingUnitContent_stockOwnerId,
+                                                    stockOwnerName:
+                                                        record.handlingUnitContent_stockOwner_name,
+                                                    handlingUnitContentId:
+                                                        record.handlingUnitContentId,
+                                                    feature: {
+                                                        code: record.featureCode_name,
+                                                        value: record.value
+                                                    }
+                                                },
+                                                {
+                                                    articleId: record.handlingUnitContent_articleId,
+                                                    articleName:
+                                                        record.handlingUnitContent_article_name,
+                                                    stockStatus:
+                                                        record.handlingUnitContent_stockStatus,
+                                                    quantity:
+                                                        Number(
+                                                            record.handlingUnitContent_quantity
+                                                        ) - 1,
+                                                    locationId:
+                                                        record.handlingUnitContent_handlingUnit_locationId,
+                                                    locationName:
+                                                        record.handlingUnitContent_handlingUnit_location_name,
+                                                    handlingUnitId:
+                                                        record.handlingUnitContent_handlingUnitId,
+                                                    handlingUnitName:
+                                                        record.handlingUnitContent_handlingUnit_name,
+                                                    stockOwnerId:
+                                                        record.handlingUnitContent_stockOwnerId,
+                                                    stockOwnerName:
+                                                        record.handlingUnitContent_stockOwner_name,
+                                                    handlingUnitContentId:
+                                                        record.handlingUnitContentId
                                                 }
-                                            })()
+                                            )()
                                         }
                                     ></Button>
                                 ) : (
