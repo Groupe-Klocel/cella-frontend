@@ -77,6 +77,10 @@ export const ValidateRoundPackingForm = ({
     if (storedObject.step30.data.article) {
         articleInfos = storedObject.step30.data.article;
     }
+    let roundContentInfos: { [k: string]: any } = {};
+    if (storedObject.step30.data.handlingUnitContent) {
+        roundContentInfos = storedObject.step30.data.handlingUnitContent;
+    }
     let feature: { [k: string]: any } = {};
     if (storedObject.step30.data.feature) {
         feature = storedObject.step30.data.feature;
@@ -106,7 +110,8 @@ export const ValidateRoundPackingForm = ({
                 handlingUnitModel,
                 feature,
                 movingQuantity,
-                resType
+                resType,
+                roundContentInfos
             })
         });
         if (res.ok) {
@@ -114,13 +119,13 @@ export const ValidateRoundPackingForm = ({
 
             storage.remove(process);
             const storedObject = JSON.parse(storage.get(process) || '{}');
-            console.log('storedObjectAfterRemove', storedObject);
 
             if (response.response.updatedRoundHU) {
-                console.log('response.response', response.response);
+                console.log('Validate.response', response.response);
                 const roundHU = response.response.updatedRoundHU;
 
                 // Filter handlingUnitContents with quantity > 0
+
                 const filteredContents = roundHU.handlingUnitContents.filter(
                     (huc: any) => huc.quantity > 0
                 );
@@ -130,8 +135,6 @@ export const ValidateRoundPackingForm = ({
                     ...roundHU,
                     handlingUnitContents: filteredContents
                 };
-
-                console.log(roundHUWithFilteredContents);
 
                 if (roundHUWithFilteredContents.handlingUnitContents.length <= 0) {
                     const res = await fetch(`/api/preparation-management/closeBox/`, {
@@ -147,7 +150,7 @@ export const ValidateRoundPackingForm = ({
                     });
                     if (res.ok) {
                         const response = await res.json();
-                        console.log('response', response);
+                        console.log('CloseBox.response', response);
                         if (response.response.printResult == 'RenderedDocument') {
                             showSuccess(t('messages:success-print-data'));
                         } else {
@@ -167,8 +170,6 @@ export const ValidateRoundPackingForm = ({
                     const step20data = {
                         handlingUnitModel: handlingUnitModel
                     };
-                    console.log('step10data', step10data);
-                    console.log('step20data', step20data);
                     storedObject['currentStep'] = 30;
                     storedObject[`step10`] = { previousStep: 0, data: step10data };
                     storedObject[`step20`] = { previousStep: 10, data: step20data };

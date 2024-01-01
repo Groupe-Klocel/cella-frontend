@@ -46,6 +46,7 @@ query GetHandlingUnitContents(
                 baseUnitWeight
             }
             quantity
+            stockStatus
             stockStatusText
             handlingUnitId
             handlingUnit {

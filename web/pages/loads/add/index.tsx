@@ -94,21 +94,17 @@ const AddLoadPage: PageComponent = () => {
                 }
             }
         `;
-
         const documentVariables = {
-            documentName: 'K_LoadLoadingList',
+            documentName: 'K_LoadLabel',
             language: printLanguage,
             printer,
             context: { ...inputForPrinting }
         };
-
         const documentResult = await graphqlRequestClient.request(
             documentMutation,
             documentVariables
         );
-
         console.log('documentResult', documentResult);
-
         if (documentResult.generateDocument.__typename !== 'RenderedDocument') {
             showError(t('messages:error-print-data'));
         } else {
@@ -137,7 +133,6 @@ const AddLoadPage: PageComponent = () => {
                         onBack={() => router.push(`/loads`)}
                     />
                 }
-                routeOnCancel={`/loads`}
                 setPrint={setPrint}
                 print={loadPrint}
                 extraData={
@@ -145,6 +140,7 @@ const AddLoadPage: PageComponent = () => {
                         ? defaultValues
                         : undefined
                 }
+                routeOnCancel={`/loads`}
             />
         </>
     );

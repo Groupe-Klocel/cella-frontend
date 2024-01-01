@@ -24,7 +24,7 @@ export const LoadModelV2: ModelType = {
     tableName: Table.Load,
     resolverName: 'Load',
     isEditable: true,
-    isDeletable: false,
+    isDeletable: true,
     isSoftDeletable: true,
 
     endpoints: {

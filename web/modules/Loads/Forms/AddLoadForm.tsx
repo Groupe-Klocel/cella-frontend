@@ -98,6 +98,7 @@ export const AddLoadForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) => 
             setUnsavedChanges(false);
             if (props.setData)
                 props.setData(flatten(createResult.data[props.dataModel.endpoints.create]));
+            router.push(`/loads`);
             showSuccess(t('messages:success-created'));
         } else {
             showError(t('messages:error-creating-data'));

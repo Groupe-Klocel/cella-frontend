@@ -64,20 +64,18 @@ async function createCycleCountError(
 }
 
 function searchByIdInCCMs(ccmArray: any[], idToSearch: string) {
+    console.log('searchByIdInCCMs', ccmArray, idToSearch);
+
     for (let j = 0; j < ccmArray.length; j++) {
         const ccmObject = ccmArray[j];
-        const featuresArray = ccmObject.features;
+        const jsonObject = ccmObject.features;
 
-        for (let i = 0; i < featuresArray.length; i++) {
-            const jsonString = featuresArray[i];
-            try {
-                const jsonObject = JSON.parse(jsonString);
-                if (jsonObject.ID && jsonObject.ID.id === idToSearch) {
-                    return { ccmObject, featureObject: jsonObject };
-                }
-            } catch (error: any) {
-                console.error(`Error parsing JSON at index ${i}: ${error.message}`);
+        try {
+            if (jsonObject.ID && jsonObject.ID.value === idToSearch) {
+                return ccmObject;
             }
+        } catch (error: any) {
+            console.error(`Error parsing JSON at index ${j}: ${error.message}`);
         }
     }
 

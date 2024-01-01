@@ -28,20 +28,28 @@ import parameters from '../../../../../common/parameters.json';
 export interface ISimilarLocationsProps {
     articleId: string;
     chosenContentId: string;
+    stockOwnerId?: string;
 }
 
-export const SimilarLocations = ({ articleId, chosenContentId }: ISimilarLocationsProps) => {
+export const SimilarLocations = ({
+    articleId,
+    chosenContentId,
+    stockOwnerId
+}: ISimilarLocationsProps) => {
     const { t } = useTranslation();
     const router = useRouter();
 
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
     //ENHANCEMENT: nbMaxLocations will be used to change according to a parameter
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
+    const defaultFilter = { articleId: `${articleId}` };
+    const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
+    const filters = { ...defaultFilter, ...stockOwnerFilter };
     const {
         isLoading: huContentLoading,
         data: huContentData,
         error: huContentError
-    } = useHandlingUnitContents({ articleId: `${articleId}` }, 1, 100, null, router.locale);
+    } = useHandlingUnitContents(filters, 1, 100, null, router.locale);
 
     useEffect(() => {
         function compare(a: any, b: any) {

@@ -171,10 +171,7 @@ export const DisplayContentByArticleSerialForm = ({
                                 </Col>
                                 <Col span={16}>
                                     <Typography style={{ fontSize: '10px' }}>
-                                        {
-                                            contentFeature.handlingUnitContent.handlingUnit
-                                                ?.stockOwner?.name
-                                        }
+                                        {contentFeature.handlingUnitContent.stockOwner?.name}
                                     </Typography>
                                 </Col>
                             </Row>
