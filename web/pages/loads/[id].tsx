@@ -239,7 +239,9 @@ const LoadsPage: PageComponent = () => {
                 )}
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
-                data?.status !== configs.LOAD_STATUS_DISPATCHED &&
+                data?.status > configs.LOAD_LINE_STATUS_CREATED &&
+                data?.status < configs.LOAD_STATUS_DISPATCHED &&
+                data?.numberHuLoaded > 0 &&
                 model.isEditable ? (
                     <Button
                         loading={dispatch}
