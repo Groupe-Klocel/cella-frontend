@@ -144,7 +144,7 @@ export const SelectCycleCountForm = ({
 
         if (
             selectedCycleCount.cycleCount.status < configs.CYCLE_COUNT_STATUS_CREATED &&
-            selectedCycleCount.cycleCount.status > configs.CYCLE_COUNT_STATUS_PASS_1_VALIDATED
+            selectedCycleCount.cycleCount.status > configs.CYCLE_COUNT_STATUS_VALIDATED
         ) {
             await createCycleCountError(
                 selectedCycleCount.cycleCount.id,

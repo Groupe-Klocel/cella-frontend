@@ -75,12 +75,29 @@ export const ValidateQuantityMoveForm = ({
             storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ?? undefined;
         articleLuBarcodeId = storedObject.step35.data.chosenArticleLuBarcode.id ?? undefined;
     }
+    let feature: { [k: string]: any } = {};
+    if (storedObject.step30?.data?.feature) {
+        feature = storedObject.step30.data.feature;
+    }
     if (storedObject.step40.data.chosenContent) {
         let originalContent: { [label: string]: any } | null;
-        originalContent = {
-            id: storedObject.step40.data.chosenContent.id,
-            quantity: storedObject.step40.data.chosenContent.quantity
-        };
+        if (storedObject.step30.data.resType == 'serialNumber') {
+            originalContent = {
+                id: storedObject.step40.data.chosenContent.id,
+                quantity: storedObject.step40.data.chosenContent.quantity,
+                stockStatus: storedObject.step40.data.chosenContent.stockStatus,
+                stockOwnerId: storedObject.step30.data.feature.handlingUnitContent.stockOwnerId,
+                stockOwnerName: storedObject.step30.data.feature.handlingUnitContent.stockOwner.name
+            };
+        } else {
+            originalContent = {
+                id: storedObject.step40.data.chosenContent.id,
+                quantity: storedObject.step40.data.chosenContent.quantity,
+                stockStatus: storedObject.step40.data.chosenContent.stockStatus,
+                stockOwnerId: storedObject.step40.data.chosenContent.stockOwnerId,
+                stockOwnerName: storedObject.step40.data.chosenContent.stockOwner.name
+            };
+        }
         if (storedObject.step40.data.chosenContent.handlingUnit) {
             let originalHu: { [label: string]: any } | null;
             originalHu = {
@@ -99,8 +116,8 @@ export const ValidateQuantityMoveForm = ({
         movingQuantity = storedObject.step50.data.movingQuantity;
     }
     let finalLocation: { [k: string]: any } = {};
-    if (storedObject.step70.data.chosenLocation) {
-        finalLocation = storedObject.step70.data.chosenLocation;
+    if (storedObject.step65.data.chosenLocation) {
+        finalLocation = storedObject.step65.data.chosenLocation;
     }
     let finalHandlingUnit: { [k: string]: any } = {};
     if (storedObject.step80.data.finalHandlingUnit) {
@@ -109,6 +126,10 @@ export const ValidateQuantityMoveForm = ({
     let isHuToCreate = false;
     if (storedObject.step80.data.isHuToCreate) {
         isHuToCreate = storedObject.step80.data.isHuToCreate;
+    }
+    let resType: string;
+    if (storedObject.step30.data.resType) {
+        resType = storedObject.step30.data.resType;
     }
 
     //ValidateQuantityMove-1a: retrieve chosen level from select and set information
@@ -126,7 +147,9 @@ export const ValidateQuantityMoveForm = ({
                 movingQuantity,
                 finalLocation,
                 finalHandlingUnit,
-                isHuToCreate
+                isHuToCreate,
+                resType,
+                feature
             })
         });
         if (res.ok) {

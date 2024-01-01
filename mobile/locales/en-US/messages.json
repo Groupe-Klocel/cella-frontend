@@ -71,5 +71,10 @@
     "counting-finished-confirmation": "Are you sure you finished counting?",
     "cc-closed-successfully": "Cycle count closed successfully",
     "success-cycle-count-movements-creation": "Cycle count movements created successfully",
-    "error-executing-function": "Error executing function"
+    "error-executing-function": "Error executing function",
+    "cycleCountMovement-validation-failed": "Cycle count movement validation failed",
+    "no-serial-number": "No ID found in this round",
+    "cycle-count-finished": "Finish cycle count",
+    "error-print-data": "Error during printing",
+    "success-print-data": "Printed successfully. Please check selected printer"
 }

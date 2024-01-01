@@ -39,6 +39,7 @@ export interface ISelectContentForArticleProps {
     locationId?: string;
     hideSelect?: boolean;
     uniqueId?: string;
+    handlingUnitId?: string;
 }
 
 const StyledTitle = styled(Title)`
@@ -80,6 +81,7 @@ export const SelectContentForArticleForm = ({
     articleId,
     locationId,
     hideSelect,
+    handlingUnitId,
     uniqueId
 }: ISelectContentForArticleProps) => {
     const { t } = useTranslation('common');
@@ -100,11 +102,10 @@ export const SelectContentForArticleForm = ({
 
     //SelectContentForArticle-1: query contents choices related to chosen article
     const defaultFilter = { articleId: `${articleId}` };
-    const locationFilter = { handlingUnit_LocationId: `${locationId}` };
-    let filter = defaultFilter;
-    if (locationId) {
-        filter = { ...defaultFilter, ...locationFilter };
-    }
+    const locationFilter = locationId ? { handlingUnit_LocationId: `${locationId}` } : undefined;
+    const handlingUnitFilter = handlingUnitId ? { handlingUnitId: `${handlingUnitId}` } : undefined;
+    let filter = { ...defaultFilter, ...locationFilter, ...handlingUnitFilter };
+
     const { isLoading, data, error } = useHandlingUnitContents(
         filter,
         1,
@@ -209,7 +210,7 @@ export const SelectContentForArticleForm = ({
                                     </Col>
                                     <Col span={16}>
                                         <Typography style={{ fontSize: '10px' }}>
-                                            {content.handlingUnit?.stockOwner?.name}
+                                            {content.stockOwner?.name}
                                         </Typography>
                                     </Col>
                                 </Row>
