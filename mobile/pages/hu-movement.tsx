@@ -303,6 +303,13 @@ const HuMovement: PageComponent = () => {
                         action1Trigger,
                         setAction1Trigger
                     }}
+                    defaultValue={
+                        storedObject[`step${workflow.expectedSteps[3]}`].data.resType ==
+                        'handlingUnit'
+                            ? storedObject[`step${workflow.expectedSteps[3]}`].data
+                                  .finalHandlingUnit
+                            : null
+                    }
                 ></ScanFinalHandlingUnit>
             ) : (
                 <></>
