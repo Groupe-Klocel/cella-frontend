@@ -114,5 +114,6 @@
     "hu-barcode-used": "This handling unit is already used",
     "no-delivery-address": "No delivery address defined",
     "no-printer-behaviour": "If no printer is chosen, document will be downloaded",
-    "success-cycle-count-creation": "Cycle count successfully created"
+    "success-cycle-count-creation": "Cycle count successfully created",
+    "cycle-count-finished": "Cycle count is finished"
 }

@@ -32,7 +32,6 @@ import {
     showError,
     showSuccess,
     showInfo,
-    useArticleIds,
     useDeliveryLineIds,
     useStockOwners,
     useArticles
@@ -178,6 +177,8 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
         const tmp_details = {
             deliveryName: props.deliveryName,
             deliveryId: props.deliveryId,
+            stockOwnerId: props.stockOwnerId,
+            stockOwnerName: props.stockOwnerName,
             status: configs.DELIVERY_STATUS_CREATED,
             toBeCubed: true
         };
@@ -190,23 +191,8 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
-                <Form.Item
-                    name="stockOwnerId"
-                    label={stockOwner}
-                    rules={[{ required: true, message: errorMessageEmptyInput }]}
-                >
-                    <Select
-                        allowClear
-                        placeholder={`${t('messages:please-select-a', {
-                            name: t('d:stockOwner')
-                        })}`}
-                    >
-                        {stockOwners?.map((so: any) => (
-                            <Option key={so.key} value={so.key}>
-                                {so.text}
-                            </Option>
-                        ))}
-                    </Select>
+                <Form.Item label={stockOwner} name="stockOwnerName">
+                    <Input disabled />
                 </Form.Item>
                 <Form.Item label={delivery} name="deliveryName">
                     <Input disabled />

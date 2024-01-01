@@ -196,7 +196,18 @@ const LoadsPage: PageComponent = () => {
             cancelText: t('messages:cancel')
         });
     };
-
+    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:delete-confirm'),
+                onOk: () => {
+                    setId(id);
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
+            });
+        };
+    };
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -216,8 +227,21 @@ const LoadsPage: PageComponent = () => {
                     <></>
                 )}
                 {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                data?.status == configs.LOAD_STATUS_CREATED &&
+                data?.numberHuLoaded <= 0 &&
+                model.isDeletable ? (
+                    <Button onClick={() => confirmAction(data.id, setIdToDelete, 'delete')()}>
+                        {t('actions:delete')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
-                data?.status !== configs.LOAD_STATUS_DISPATCHED &&
+                data?.status > configs.LOAD_LINE_STATUS_CREATED &&
+                data?.status < configs.LOAD_STATUS_DISPATCHED &&
+                data?.numberHuLoaded > 0 &&
                 model.isEditable ? (
                     <Button
                         loading={dispatch}

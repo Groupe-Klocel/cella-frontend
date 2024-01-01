@@ -17,7 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { EditTwoTone, EyeTwoTone, InboxOutlined, PrinterOutlined } from '@ant-design/icons';
+import {
+    EditTwoTone,
+    EyeTwoTone,
+    InboxOutlined,
+    PrinterOutlined,
+    DeleteOutlined
+} from '@ant-design/icons';
 import { AppHead, LinkButton, SinglePrintModal } from '@components';
 import {
     getModesFromPermissions,
@@ -200,7 +206,18 @@ const LoadsPage: PageComponent = () => {
             cancelText: t('messages:cancel')
         });
     };
-
+    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:delete-confirm'),
+                onOk: () => {
+                    setId(id);
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
+            });
+        };
+    };
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
@@ -241,9 +258,10 @@ const LoadsPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
-                                model.isEditable &&
-                                record?.status !== configs.LOAD_STATUS_DISPATCHED &&
-                                record?.numberHuLoaded > 0 ? (
+                                record.status > configs.LOAD_LINE_STATUS_CREATED &&
+                                record.status < configs.LOAD_STATUS_DISPATCHED &&
+                                record?.numberHuLoaded > 0 &&
+                                model.isEditable ? (
                                     <Button
                                         loading={dispatch}
                                         icon={<InboxOutlined />}
@@ -254,6 +272,21 @@ const LoadsPage: PageComponent = () => {
                                             })
                                         }
                                     ></Button>
+                                ) : (
+                                    <></>
+                                )}
+                                {modes.length > 0 &&
+                                modes.includes(ModeEnum.Delete) &&
+                                model.isDeletable &&
+                                record.status == configs.LOAD_STATUS_CREATED &&
+                                record.numberHuLoaded <= 0 ? (
+                                    <Button
+                                        icon={<DeleteOutlined />}
+                                        danger
+                                        onClick={() =>
+                                            confirmAction(record.id, setIdToDelete, 'delete')()
+                                        }
+                                    />
                                 ) : (
                                     <></>
                                 )}

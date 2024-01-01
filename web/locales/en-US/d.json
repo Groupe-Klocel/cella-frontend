@@ -635,5 +635,9 @@
     "documentType": "Document Type",
     "argument_id": "Involved Object Id",
     "argument_sequenceId": "Involved Sequence Id",
-    "userId": "User"
+    "userId": "User",
+    "extraStatus1": "Control type",
+    "extraStatus1Text": "Control type",
+    "initialStockStatus": "Initial Stock Status",
+    "FinalStockStatus": "Final Stock Status"
 }
