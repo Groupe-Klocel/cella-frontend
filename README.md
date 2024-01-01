@@ -33,3 +33,6 @@ yarn dev
 This CELLA frontend template is released under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version (GPL-3+).
 
 See the [LICENSE.md](LICENSE.md) file for a full copy of the license.
+
+## Contact
+Do not hesitate to contact us at solutions@klocel.com for any question related to this project.
