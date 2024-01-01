@@ -77,8 +77,12 @@ const RoundPicking: PageComponent = () => {
                 storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddress;
             object[t('common:round')] = round.name;
             object[t('common:location_abbr')] = proposedRoundAdvisedAddress.location.name;
+            if (proposedRoundAdvisedAddress?.handlingUnitContent?.stockOwner) {
+                const handlingUnitContent = proposedRoundAdvisedAddress?.handlingUnitContent;
+                object[t('common:stock-owner_abbr')] = handlingUnitContent.stockOwner?.name;
+            }
             object[t('common:article_abbr')] =
-                proposedRoundAdvisedAddress.handlingUnitContent.article.name;
+                proposedRoundAdvisedAddress.handlingUnitContent.article?.name;
             object[t('common:quantity_abbr')] = proposedRoundAdvisedAddress.quantity;
         }
         if (
@@ -88,7 +92,6 @@ const RoundPicking: PageComponent = () => {
             const handlingUnit =
                 storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
             object[t('common:handling-unit_abbr')] = handlingUnit.name;
-            object[t('common:stock-owner_abbr')] = handlingUnit.stockOwner.name;
         }
         setOriginDisplay(object);
         setFinalDisplay(object);

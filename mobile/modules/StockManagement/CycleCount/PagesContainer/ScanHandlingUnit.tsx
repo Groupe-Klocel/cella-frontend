@@ -31,7 +31,7 @@ export interface IScanHandlingUnitProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     checkComponent: any;
-    triggerAlternativeSubmit?: any;
+    triggerAlternativeSubmit1?: any;
     defaultValue?: any;
 }
 
@@ -42,7 +42,7 @@ export const ScanCCHandlingUnit = ({
     trigger: { triggerRender, setTriggerRender },
     buttons,
     checkComponent,
-    triggerAlternativeSubmit: { triggerAlternativeSubmit, setTriggerAlternativeSubmit },
+    triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
     defaultValue
 }: IScanHandlingUnitProps) => {
     const { t } = useTranslation();
@@ -87,7 +87,7 @@ export const ScanCCHandlingUnit = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         trigger: { triggerRender, setTriggerRender },
-        triggerAlternativeSubmit: { triggerAlternativeSubmit, setTriggerAlternativeSubmit },
+        triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
         alternativeSubmitInput: storedObject?.step20?.data?.location ?? undefined,
         setResetForm
     };
@@ -100,14 +100,14 @@ export const ScanCCHandlingUnit = ({
                     stepNumber={stepNumber}
                     label={label}
                     trigger={{ triggerRender, setTriggerRender }}
-                    triggerAlternativeSubmit={{
-                        triggerAlternativeSubmit,
-                        setTriggerAlternativeSubmit
+                    triggerAlternativeSubmit1={{
+                        triggerAlternativeSubmit1,
+                        setTriggerAlternativeSubmit1
                     }}
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
-                    alternativeSubmitLabel={t('common:location-count-finished')}
+                    alternativeSubmitLabel1={t('common:location-count-finished')}
                 ></ScanForm>
                 {checkComponent(dataToCheck)}
             </>

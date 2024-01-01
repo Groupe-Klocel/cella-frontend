@@ -191,6 +191,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     status: configs.HANDLING_UNIT_STATUS_VALIDATED,
                     category: parameters.HANDLING_UNIT_CATEGORY_OUTBOUND,
                     locationId: defaultRoundLocationResult.locations.results[0].id,
+                    //SO to be removed here once all tranfered to HUC
                     stockOwnerId:
                         proposedRoundAdvisedAddress.roundLineDetail.deliveryLine.stockOwnerId,
                     lastTransactionId
@@ -253,6 +254,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     articleId: articleInfos.articleId,
                     quantity: movingQuantity,
                     stockStatus: parameters.STOCK_STATUSES_SALE, // 14000
+                    stockOwnerId:
+                        proposedRoundAdvisedAddress.roundLineDetail.deliveryLine.stockOwnerId,
                     lastTransactionId
                 }
             };
@@ -267,8 +270,35 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             finalHandlingUnitContentId = createdHuc.createHandlingUnitContent.id;
             canRollbackTransaction = true;
         } else {
-            finalHandlingUnitContentId =
-                handlingUnitContentResult?.handlingUnitContents?.results[0].id;
+            //update quantity quantity HUC + qty moving
+            const hucToUpdate = handlingUnitContentResult?.handlingUnitContents?.results[0];
+            const updateHUCMutation = gql`
+                mutation updateHandlingUnitContent(
+                    $id: String!
+                    $input: UpdateHandlingUnitContentInput!
+                ) {
+                    updateHandlingUnitContent(id: $id, input: $input) {
+                        id
+                        quantity
+                        lastTransactionId
+                    }
+                }
+            `;
+
+            const updateHUCvariable = {
+                id: hucToUpdate.id,
+                input: {
+                    quantity: hucToUpdate.quantity + movingQuantity,
+                    lastTransactionId
+                }
+            };
+
+            const updatedHUC = await graphqlRequestClient.request(
+                updateHUCMutation,
+                updateHUCvariable
+            );
+
+            finalHandlingUnitContentId = updatedHUC.updateHandlingUnitContent.id;
             console.log('finalHandlingUnitContentId', finalHandlingUnitContentId);
         }
 
@@ -391,6 +421,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             category
                             categoryText
                         }
+                        stockOwnerId
+                        stockOwner {
+                            id
+                            name
+                        }
                     }
                     roundLineDetailId
                     roundLineDetail {
@@ -486,6 +521,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                         id
                                         name
                                         baseUnitWeight
+                                    }
+                                    stockOwnerId
+                                    stockOwner {
+                                        id
+                                        name
                                     }
                                     handlingUnitContentFeatures {
                                         featureCode {

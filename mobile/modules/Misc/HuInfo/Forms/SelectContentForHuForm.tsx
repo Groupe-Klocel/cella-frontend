@@ -178,7 +178,7 @@ export const SelectContentForHuForm = ({
                                     </Col>
                                     <Col span={16}>
                                         <Typography style={{ fontSize: '10px' }}>
-                                            {content.handlingUnit?.stockOwner?.name}
+                                            {content.stockOwner?.name}
                                         </Typography>
                                     </Col>
                                 </Row>

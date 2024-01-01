@@ -70,10 +70,6 @@ const HuInfo: PageComponent = () => {
                 handlingUnitInfo[
                     `step${workflow.expectedSteps[0]}`
                 ].data.handlingUnit.parentHandlingUnit?.name;
-            object[t('common:stock-owner')] =
-                handlingUnitInfo[
-                    `step${workflow.expectedSteps[0]}`
-                ].data.handlingUnit.stockOwner.name;
             object[t('common:type')] =
                 handlingUnitInfo[`step${workflow.expectedSteps[0]}`].data.handlingUnit.typeText;
             object[t('common:category')] =
