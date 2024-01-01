@@ -108,5 +108,6 @@
     "edit-shipping-mode": "Edit Shipping Mode",
     "add-pattern-path": "Add Pattern Path",
     "add-hook-config": "Add Hook Config",
-    "set-printer": "Set Printer"
+    "set-printer": "Set Printer",
+    "add-load": "Add Load"
 }

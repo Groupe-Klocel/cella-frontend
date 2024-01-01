@@ -219,7 +219,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 if (huco?.handlingUnitContent) {
                     const baseUnitWeight = huco?.handlingUnitContent?.article?.baseUnitWeight;
                     const quantity = huco?.handlingUnitContent?.quantity;
-
                     if (quantity && baseUnitWeight) theoreticalWeight += baseUnitWeight * quantity;
                 }
             }

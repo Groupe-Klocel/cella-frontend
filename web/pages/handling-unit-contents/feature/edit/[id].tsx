@@ -21,11 +21,11 @@ import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
 import { HandlingUnitContentFeatureModelV2 as model } from 'models/HandlingUnitContentFeatureModelV2';
 import useTranslation from 'next-translate/useTranslation';
 import { META_DEFAULTS } from '@helpers';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
+import { EditFeatureComponent } from 'modules/HandlingUnits/PagesContainer/EditFeatureComponent';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -54,7 +54,7 @@ const EditStockOwnerPage: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <EditItemComponent
+            <EditFeatureComponent
                 id={id!}
                 setData={setData}
                 dataModel={model}

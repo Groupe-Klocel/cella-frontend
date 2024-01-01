@@ -114,5 +114,6 @@
     "hu-barcode-used": "Ce support est déjà utilisé",
     "no-delivery-address": "Aucune adresse de livraison définie",
     "no-printer-behaviour": "Si aucune imprimante n'est sélectionnée, le document sera téléchargé",
-    "success-cycle-count-creation": "L'inventaire a été créé avec succès"
+    "success-cycle-count-creation": "L'inventaire a été créé avec succès",
+    "cycle-count-finished": "L'inventaire est terminé"
 }

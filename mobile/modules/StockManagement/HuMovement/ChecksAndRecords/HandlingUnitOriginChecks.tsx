@@ -43,16 +43,12 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
     // TYPED SAFE ALL
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
-        if (scannedInfo && handlingUnitInfos.data) {
+        if (scannedInfo && handlingUnitInfos) {
             const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
-            if (
-                handlingUnitInfos.data.handlingUnits?.count !== 0
-            ) {
-                if (
-                    handlingUnitInfos.data.handlingUnits.results[0].locationId === chosenLocationId
-                ) {
+            if (handlingUnitInfos.handlingUnits?.count !== 0) {
+                if (handlingUnitInfos.handlingUnits.results[0].locationId === chosenLocationId) {
                     const data: { [label: string]: any } = {};
-                    data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
+                    data['handlingUnit'] = handlingUnitInfos?.handlingUnits?.results[0];
                     setTriggerRender(!triggerRender);
                     storedObject[`step${stepNumber}`] = {
                         ...storedObject[`step${stepNumber}`],

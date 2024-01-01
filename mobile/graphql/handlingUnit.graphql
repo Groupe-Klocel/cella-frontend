@@ -46,8 +46,49 @@ query GetHandlingUnits(
                 name
                 type
                 typeText
+                barcode
                 category
                 categoryText
+                code
+                handlingUnitContents {
+                    id
+                    quantity
+                    reservation
+                    stockStatus
+                    stockStatusText
+                    stockOwnerId
+                    handlingUnit {
+                        id
+                        name
+                        locationId
+                        location {
+                            id
+                            name
+                        }
+                    }
+                    stockOwner {
+                        id
+                        name
+                    }
+                    articleId
+                    article {
+                        id
+                        name
+                        stockOwnerId
+                        stockOwner {
+                            name
+                        }
+                        baseUnitWeight
+                    }
+                    handlingUnitContentFeatures {
+                        id
+                        featureCode {
+                            name
+                            unique
+                        }
+                        value
+                    }
+                }
             }
             reservation
             status
@@ -68,6 +109,15 @@ query GetHandlingUnits(
                 stockStatus
                 stockStatusText
                 stockOwnerId
+                handlingUnit {
+                    id
+                    name
+                    locationId
+                    location {
+                        id
+                        name
+                    }
+                }
                 stockOwner {
                     id
                     name

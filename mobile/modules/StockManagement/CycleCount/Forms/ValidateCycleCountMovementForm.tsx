@@ -168,6 +168,9 @@ export const ValidateCycleCountMovementForm = ({
                 newStoredObject[`step20`] = storedObject[`step20`];
                 newStoredObject[`step25`] = storedObject[`step25`];
                 newStoredObject[`step30`] = storedObject[`step30`];
+                newStoredObject[`step40`] = {
+                    previousStep: storedObject[`step40`].previousStep
+                };
                 storage.set(process, JSON.stringify(newStoredObject));
             }
             setTriggerRender(!triggerRender);

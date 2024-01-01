@@ -69,6 +69,10 @@ query GetRounds(
                         }
                         baseUnitWeight
                     }
+                    stockOwnerId
+                    stockOwner {
+                        name
+                    }
                     handlingUnitContentFeatures {
                         featureCode {
                             name

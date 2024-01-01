@@ -54,12 +54,10 @@ export const LoadChecks = ({ dataToCheck }: ILoadChecksProps) => {
                 // Save data in Local Storage
                 const data: { [label: string]: any } = {};
                 data['load'] = loadInfos.data?.loads?.results[0];
-                const countLoop = 0;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
-                    data,
-                    countLoop
+                    data
                 };
             } else {
                 if (loadInfos.data.loads?.count === 0) {
