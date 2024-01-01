@@ -258,9 +258,10 @@ const LoadsPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
-                                model.isEditable &&
-                                record?.status !== configs.LOAD_STATUS_DISPATCHED &&
-                                record?.numberHuLoaded > 0 ? (
+                                record.status > configs.LOAD_LINE_STATUS_CREATED &&
+                                record.status < configs.LOAD_STATUS_DISPATCHED &&
+                                record?.numberHuLoaded > 0 &&
+                                model.isEditable ? (
                                     <Button
                                         loading={dispatch}
                                         icon={<InboxOutlined />}
