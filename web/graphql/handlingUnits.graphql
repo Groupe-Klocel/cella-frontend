@@ -98,6 +98,10 @@ query GetHandlingUnitContentById($id: String!) {
         quantity
         stockStatus
         reservation
+        stockOwner {
+            id
+            name
+        }
         created
         createdBy
         modified
@@ -128,6 +132,10 @@ mutation CreateHandlingUnitWithContent($input: CreateHandlingUnitWithContentInpu
         quantity
         stockStatus
         reservation
+        stockOwner {
+            id
+            name
+        }
         created
         createdBy
         modified
@@ -158,6 +166,10 @@ mutation UpdateHandlingUnitContent($id: String!, $input: UpdateHandlingUnitConte
         quantity
         stockStatus
         reservation
+        stockOwner {
+            id
+            name
+        }
         created
         createdBy
         modified

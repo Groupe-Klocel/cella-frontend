@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-import { Form, InputNumber, Modal, Select } from 'antd';
+import { Form, Input, InputNumber, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess } from '@helpers';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
@@ -35,9 +35,15 @@ export interface ISinglePrintModalProps {
     dataToPrint: any;
     showModal: any;
     documentName: string;
+    documentReference?: string | any;
 }
 
-const SinglePrintModal = ({ showModal, dataToPrint, documentName }: ISinglePrintModalProps) => {
+const SinglePrintModal = ({
+    showModal,
+    dataToPrint,
+    documentName,
+    documentReference
+}: ISinglePrintModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
@@ -78,19 +84,28 @@ const SinglePrintModal = ({ showModal, dataToPrint, documentName }: ISinglePrint
     }, [printerList.data]);
 
     const [isPrintingLoading, setIsPrintingLoading] = useState(false);
-    const printData = async (inputForPrinting: any, printer: string) => {
+    const printData = async (
+        inputForPrinting: any,
+        printer: string,
+        recipients: string,
+        reference: string
+    ) => {
         const documentMutation = gql`
             mutation generateDocument(
                 $documentName: String!
                 $language: String!
                 $printer: String
                 $context: JSON!
+                $recipients: String
+                $reference: String
             ) {
                 generateDocument(
                     documentName: $documentName
                     language: $language
                     printer: $printer
                     context: $context
+                    mailRecipients: $recipients
+                    reference: $reference
                 ) {
                     __typename
                     ... on RenderedDocument {
@@ -113,6 +128,8 @@ const SinglePrintModal = ({ showModal, dataToPrint, documentName }: ISinglePrint
             documentName,
             language: printLanguage,
             printer,
+            recipients,
+            reference,
             context: { ...inputForPrinting }
         };
 
@@ -120,8 +137,6 @@ const SinglePrintModal = ({ showModal, dataToPrint, documentName }: ISinglePrint
             documentMutation,
             documentVariables
         );
-
-        console.log('DLARes', documentResult);
 
         if (documentResult.generateDocument.__typename !== 'RenderedDocument') {
             showError(t('messages:error-print-data'));
@@ -141,7 +156,7 @@ const SinglePrintModal = ({ showModal, dataToPrint, documentName }: ISinglePrint
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);
-                printData(dataToPrint, formData.printer);
+                printData(dataToPrint, formData.printer, formData.recipients, documentReference);
             })
             .catch((err) => {
                 showError(t('messages:error-print-data'));
@@ -174,9 +189,12 @@ const SinglePrintModal = ({ showModal, dataToPrint, documentName }: ISinglePrint
                                 </Option>
                             ))}
                         </Select>
-                        <Text disabled italic style={{ fontSize: '10px' }}>
-                            {t('messages:no-printer-behaviour')}
-                        </Text>
+                    </Form.Item>
+                    <Text disabled italic style={{ fontSize: '10px' }}>
+                        {t('messages:no-printer-behaviour')}
+                    </Text>
+                    <Form.Item label={t('d:recipients-mail-adresses')} name="recipients">
+                        <Input />
                     </Form.Item>
                 </Form>
             </WrapperForm>
