@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured, extractGivenConfigsParams, showError } from '@helpers';
-import { Select } from 'antd';
+import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
@@ -38,6 +38,7 @@ import {
     useParametersQuery
 } from 'generated/graphql';
 import { gql } from 'graphql-request';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectRoundProps {
     process: string;
@@ -59,6 +60,27 @@ export const SelectRoundForm = ({
 
     // TYPED SAFE ALL
     const [rounds, setRounds] = useState<Array<any>>();
+
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (rounds?.some((option) => option.text === camData)) {
+                const roundToFind = rounds?.find((option) => option.text === camData);
+                form.setFieldsValue({ rounds: roundToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, rounds]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -231,6 +253,7 @@ export const SelectRoundForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:rounds')}
@@ -246,6 +269,13 @@ export const SelectRoundForm = ({
                             }
                         }}
                         style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
                     >
                         {rounds?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
@@ -254,6 +284,7 @@ export const SelectRoundForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>
