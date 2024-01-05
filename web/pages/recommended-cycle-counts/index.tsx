@@ -21,7 +21,7 @@ import {
     DeleteOutlined,
     EditTwoTone,
     EyeTwoTone,
-    StopOutlined,
+    LockTwoTone,
     CaretRightOutlined
 } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
@@ -124,7 +124,7 @@ const CycleCountPages: PageComponent = () => {
                                 model.isSoftDeletable &&
                                 record.status > configs.CYCLE_COUNT_STATUS_CREATED ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDisable, 'disable')()
                                         }

@@ -23,7 +23,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { conversionsRoutes as itemRoutes } from 'modules/Conversions/Static/conversionsRoutes';
@@ -42,6 +42,7 @@ const ConversionPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [reopenInfo, setReopenInfo] = useState<any | undefined>();
 
     // #region to customize information
     const breadCrumb = [
@@ -57,12 +58,22 @@ const ConversionPage: PageComponent = () => {
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
-    const confirmAction = (id: string | undefined, setId: any) => {
+    const confirmAction = (
+        info: any | undefined,
+        setInfo: any,
+        action: 'delete' | 'disable' | 'enable'
+    ) => {
         return () => {
+            const titre =
+                action == 'enable'
+                    ? 'messages:enable-confirm'
+                    : action == 'delete'
+                    ? 'messages:delete-confirm'
+                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t(titre),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -75,7 +86,7 @@ const ConversionPage: PageComponent = () => {
         routes: breadCrumb,
         onBackRoute: rootPath,
         actionsComponent:
-            data?.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
+            data?.status !== configs.CONVERSION_STATUS_CLOSED ? (
                 <Space>
                     {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                         <LinkButton
@@ -90,7 +101,7 @@ const ConversionPage: PageComponent = () => {
                     modes.includes(ModeEnum.Delete) &&
                     model.isSoftDeletable ? (
                         <Button
-                            onClick={() => confirmAction(id as string, setIdToDisable)()}
+                            onClick={() => confirmAction(id as string, setIdToDisable, 'disable')()}
                             type="primary"
                         >
                             {t('actions:disable')}
@@ -99,7 +110,9 @@ const ConversionPage: PageComponent = () => {
                         <></>
                     )}
                     {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
+                        <Button
+                            onClick={() => confirmAction(id as string, setIdToDelete, 'delete')()}
+                        >
                             {t('actions:delete')}
                         </Button>
                     ) : (
@@ -107,7 +120,18 @@ const ConversionPage: PageComponent = () => {
                     )}
                 </Space>
             ) : (
-                <></>
+                <Button
+                    onClick={() =>
+                        confirmAction(
+                            { id, status: configs.CONVERSION_STATUS_IN_PROGRESS },
+                            setReopenInfo,
+                            'enable'
+                        )()
+                    }
+                    type="primary"
+                >
+                    {t('actions:enable')}
+                </Button>
             )
     };
     // #endregion
@@ -122,6 +146,7 @@ const ConversionPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerReopen={{ reopenInfo, setReopenInfo }}
             />
         </>
     );

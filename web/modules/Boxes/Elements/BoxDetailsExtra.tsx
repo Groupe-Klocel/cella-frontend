@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
-import { EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import { EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Button, Divider, Modal, Space } from 'antd';
@@ -142,7 +142,7 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                                         record?.status <
                                             configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,

@@ -22,7 +22,7 @@ import {
     DeleteOutlined,
     EditTwoTone,
     EyeTwoTone,
-    StopOutlined
+    LockTwoTone
 } from '@ant-design/icons';
 import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams, showError } from '@helpers';
@@ -160,7 +160,7 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(
                                                 record.id,

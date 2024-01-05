@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
@@ -29,6 +29,7 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import { stockOwnerRoutes as itemRoutes } from 'modules/StockOwners/Static/stockOwnersRoutes';
+
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const StockOwnerPages: PageComponent = () => {
@@ -52,10 +53,20 @@ const StockOwnerPages: PageComponent = () => {
             ) : null
     };
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+    const confirmAction = (
+        id: string | undefined,
+        setId: any,
+        action: 'delete' | 'disable' | 'enable'
+    ) => {
         return () => {
+            const titre =
+                action == 'enable'
+                    ? 'messages:enable-confirm'
+                    : action == 'delete'
+                    ? 'messages:delete-confirm'
+                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t(titre),
                 onOk: () => {
                     setId(id);
                 },
@@ -77,7 +88,7 @@ const StockOwnerPages: PageComponent = () => {
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: { id: string }) => (
+                        render: (record: { id: string; status: Number }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
@@ -101,7 +112,7 @@ const StockOwnerPages: PageComponent = () => {
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDisable, 'disable')()
                                         }

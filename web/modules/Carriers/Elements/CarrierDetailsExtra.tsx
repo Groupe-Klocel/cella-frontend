@@ -27,7 +27,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { useState } from 'react';
 import configs from '../../../../common/configs.json';
 import { LinkButton } from '@components';
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 
 const { Title } = Typography;
 
@@ -133,7 +133,7 @@ const CarrierDetailsExtra = ({ carrierId, carrierName, carrierStatus }: IItemDet
                                         modes.includes(ModeEnum.Delete) &&
                                         model.isSoftDeletable ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
