@@ -29,7 +29,7 @@ import { useAppState } from 'context/AppContext';
 import { handlingUnitModelsRoutes as itemRoutes } from 'modules/HandlingUnitModels/Static/handlingUnitModelsRoutes';
 import useTranslation from 'next-translate/useTranslation';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSuccess } from '@helpers';
 import configs from '../../../common/configs.json';
 import { BarcodeOutlined } from '@ant-design/icons';
 
@@ -44,6 +44,7 @@ const HandlingUnitModelPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, model.tableName);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [reopenInfo, setReopenInfo] = useState<any | undefined>();
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
 
@@ -61,12 +62,22 @@ const HandlingUnitModelPage: PageComponent = () => {
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
-    const confirmAction = (id: string | undefined, setId: any) => {
+    const confirmAction = (
+        info: any | undefined,
+        setInfo: any,
+        action: 'delete' | 'disable' | 'enable'
+    ) => {
         return () => {
+            const titre =
+                action == 'enable'
+                    ? 'messages:enable-confirm'
+                    : action == 'delete'
+                    ? 'messages:delete-confirm'
+                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t(titre),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -97,10 +108,26 @@ const HandlingUnitModelPage: PageComponent = () => {
                 model.isSoftDeletable &&
                 data?.status !== configs.HANDLING_UNIT_MODEL_STATUS_CLOSED ? (
                     <Button
-                        onClick={() => confirmAction(id as string, setIdToDisable)()}
+                        onClick={() => confirmAction(id as string, setIdToDisable, 'disable')()}
                         type="primary"
                     >
                         {t('actions:disable')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {data?.status == configs.HANDLING_UNIT_MODEL_STATUS_CLOSED ? (
+                    <Button
+                        onClick={() =>
+                            confirmAction(
+                                { id, status: configs.HANDLING_UNIT_MODEL_STATUS_IN_PROGRESS },
+                                setReopenInfo,
+                                'enable'
+                            )()
+                        }
+                        type="primary"
+                    >
+                        {t('actions:enable')}
                     </Button>
                 ) : (
                     <></>
@@ -138,6 +165,7 @@ const HandlingUnitModelPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerReopen={{ reopenInfo, setReopenInfo }}
             />
         </>
     );

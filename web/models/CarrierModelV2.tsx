@@ -69,7 +69,7 @@ export const CarrierModelV2: ModelType = {
             link: null,
             addEditFormat: 'String',
             addEditStep: null,
-            maxLength: 50,
+            maxLength: 9,
             displayName: null,
             isMandatory: true,
             minRule: null,

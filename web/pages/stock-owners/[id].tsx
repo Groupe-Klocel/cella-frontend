@@ -57,10 +57,20 @@ const StockOwnerPage: PageComponent = () => {
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
-    const confirmAction = (id: string | undefined, setId: any) => {
+    const confirmAction = (
+        id: string | undefined,
+        setId: any,
+        action: 'delete' | 'disable' | 'enable'
+    ) => {
         return () => {
+            const titre =
+                action == 'enable'
+                    ? 'messages:enable-confirm'
+                    : action == 'delete'
+                    ? 'messages:delete-confirm'
+                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t(titre),
                 onOk: () => {
                     setId(id);
                 },
@@ -90,7 +100,7 @@ const StockOwnerPage: PageComponent = () => {
                     modes.includes(ModeEnum.Delete) &&
                     model.isSoftDeletable ? (
                         <Button
-                            onClick={() => confirmAction(id as string, setIdToDisable)()}
+                            onClick={() => confirmAction(id as string, setIdToDisable, 'disable')()}
                             type="primary"
                         >
                             {t('actions:disable')}
@@ -99,7 +109,9 @@ const StockOwnerPage: PageComponent = () => {
                         <></>
                     )}
                     {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
+                        <Button
+                            onClick={() => confirmAction(id as string, setIdToDelete, 'delete')()}
+                        >
                             {t('actions:delete')}
                         </Button>
                     ) : (
