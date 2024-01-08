@@ -69,6 +69,7 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     const reservation = t('d:reservation');
     const comment = t('d:comment');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
+    const errorMessageNegativeNumberInput = t('messages:select-number-min', { min: 0 });
     const submit = t('actions:submit');
     // END TEXTS TRANSLATION
 
@@ -231,17 +232,32 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
                 <Form.Item
                     label={quantityToBePicked}
                     name="quantityToBePicked"
-                    rules={[{ required: true, message: errorMessageEmptyInput }]}
+                    rules={[
+                        { required: true, message: errorMessageEmptyInput },
+                        { type: 'number', min: 0, message: errorMessageNegativeNumberInput }
+                    ]}
                 >
                     <InputNumber />
                 </Form.Item>
-                <Form.Item label={masterLine} name="masterLine">
+                <Form.Item
+                    label={masterLine}
+                    name="masterLine"
+                    rules={[{ type: 'number', min: 0, message: errorMessageNegativeNumberInput }]}
+                >
                     <InputNumber />
                 </Form.Item>
-                <Form.Item label={childLine} name="childLine">
+                <Form.Item
+                    label={childLine}
+                    name="childLine"
+                    rules={[{ type: 'number', min: 0, message: errorMessageNegativeNumberInput }]}
+                >
                     <InputNumber />
                 </Form.Item>
-                <Form.Item label={masterLineNb} name="masterLineNumber">
+                <Form.Item
+                    label={masterLineNb}
+                    name="masterLineNumber"
+                    rules={[{ type: 'number', min: 0, message: errorMessageNegativeNumberInput }]}
+                >
                     <InputNumber />
                 </Form.Item>
                 <Form.Item label={reservation} name="reservation">
