@@ -305,6 +305,8 @@ const ListComponent = (props: IListProps) => {
 
     searchCriterias = props.searchCriteria;
 
+    console.log('searchCrit', searchCriterias);
+
     if (props.searchable) {
         if (cookie.get(`${props.dataModel.resolverName}SavedFilters`)) {
             const savedFilters = JSON.parse(
@@ -385,6 +387,14 @@ const ListComponent = (props: IListProps) => {
                 const newSearchValues = {
                     ...searchValues
                 };
+
+                for (const i in newSearchValues) {
+                    if (newSearchValues.hasOwnProperty(i)) {
+                        if (typeof newSearchValues[i] === 'string') {
+                            newSearchValues[i] += '%';
+                        }
+                    }
+                }
 
                 cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
                 showBadge = false;
