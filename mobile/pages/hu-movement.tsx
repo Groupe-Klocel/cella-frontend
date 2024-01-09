@@ -30,12 +30,12 @@ import {
     EmptyLocations,
     SelectLocationByLevelForm,
     ScanLocation,
-    SimilarLocations
+    SimilarLocations,
+    ScanHandlingUnit
 } from '@CommonRadio';
 import { LocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/LocationChecks';
 import { HandlingUnitOriginChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HandlingUnitOriginChecks';
 import { HandlingUnitFinalChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HandlingUnitFinalChecks';
-import { ScanHandlingUnit } from 'modules/Common/HandlingUnits/PagesContainer/ScanHandlingUnit';
 import { ScanFinalHandlingUnit } from 'modules/StockManagement/HuMovement/PagesContainer/ScanFinalHandlingUnit';
 import { ScanHuOrLocation } from 'modules/StockManagement/Forms/ScanHuOrLocationForm';
 import { HuOrLocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HuOrLocationChecks';
@@ -258,8 +258,7 @@ const HuMovement: PageComponent = () => {
                             storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
                                 .handlingUnitContents.length <= 0
                                 ? true
-                                : false,
-                        alternativeSubmitButton: true
+                                : false
                     }}
                     trigger={{ triggerRender, setTriggerRender }}
                     showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}

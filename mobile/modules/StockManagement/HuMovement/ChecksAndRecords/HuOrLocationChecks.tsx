@@ -79,8 +79,6 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
         }
     }, [scannedInfo]);
 
-    console.log('ftch', fetchResult);
-
     // ScanBox-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && fetchResult) {
@@ -92,13 +90,6 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
             }
 
             if (fetchResult.resType === 'handlingUnit') {
-                // wrong button = error
-                if (triggerAlternativeSubmit?.triggerAlternativeSubmit) {
-                    showError(t('messages:unexpected-scanned-item'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                }
-
                 // HU without Location = error
                 if (!fetchResult.location) {
                     showError(t('messages:no-location-hu'));
@@ -121,18 +112,24 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                     setResetForm(true);
                     setScannedInfo(undefined);
                 }
+                //final HU category != stock = error
+                else if (
+                    fetchResult.handlingUnit.category !== parameters.HANDLING_UNIT_CATEGORY_STOCK
+                ) {
+                    showError(t('messages:only-stock-hu-move'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                }
                 // final HU with different article = error
-                else if (fetchResult.handlingUnit.type != parameters.HANDLING_UNIT_TYPE_PALLET) {
-                    if (
-                        storedObject['step20'].data.handlingUnit.handlingUnitContents &&
-                        fetchResult.handlingUnit.handlingUnitContents[0].article_id !=
-                            storedObject['step20'].data.handlingUnit.handlingUnitContents[0]
-                                .article_id
-                    ) {
-                        showError(t('messages:unexpected-hu-article'));
-                        setResetForm(true);
-                        setScannedInfo(undefined);
-                    }
+                else if (
+                    fetchResult.handlingUnit.type != parameters.HANDLING_UNIT_TYPE_PALLET &&
+                    storedObject['step20'].data.handlingUnit.handlingUnitContents &&
+                    fetchResult.handlingUnit.handlingUnitContents[0].articleId !=
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
+                ) {
+                    showError(t('messages:unexpected-hu-article'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
                 } else {
                     // HU and Location = next step
                     const data: { [label: string]: any } = {};

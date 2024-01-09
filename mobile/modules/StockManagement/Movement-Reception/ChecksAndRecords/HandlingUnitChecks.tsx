@@ -44,14 +44,16 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
     //ScanPallet-3: manage information for persistence storage and front-end errors
+    console.log('huI', handlingUnitInfos);
+
     useEffect(() => {
-        if (scannedInfo && handlingUnitInfos.data) {
+        if (scannedInfo && handlingUnitInfos) {
             if (
-                handlingUnitInfos.data.handlingUnits?.count !== 0 &&
-                handlingUnitInfos.data.handlingUnits?.results[0].type ===
+                handlingUnitInfos.handlingUnits?.count !== 0 &&
+                handlingUnitInfos.handlingUnits?.results[0].type ===
                     parameters.HANDLING_UNIT_TYPE_PALLET &&
-                handlingUnitInfos.data.handlingUnits.results[0].handlingUnitContents.length !== 0 &&
-                handlingUnitInfos.data?.handlingUnits?.results[0].location?.category ===
+                handlingUnitInfos.handlingUnits.results[0].handlingUnitContents.length !== 0 &&
+                handlingUnitInfos.handlingUnits?.results[0].location?.category ===
                     configs.LOCATION_CATEGORY_RECEPTION
             ) {
                 const data: { [label: string]: any } = {};
