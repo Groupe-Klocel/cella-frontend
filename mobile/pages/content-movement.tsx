@@ -283,7 +283,7 @@ const ContentMvmt: PageComponent = () => {
                     stepNumber={workflow.expectedSteps[2]}
                     label={t('common:handling-unit')}
                     trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: false }}
+                    buttons={{ submitButton: true, backButton: true }}
                     checkComponent={(data: any) => <HandlingUnitOriginChecks dataToCheck={data} />}
                 ></ScanHandlingUnit>
             ) : (

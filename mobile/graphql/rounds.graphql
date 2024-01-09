@@ -15,6 +15,30 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
+query SimpleGetRounds(
+    $filters: RoundSearchFilters
+    $orderBy: [RoundOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+    $language: String = "en"
+) {
+    rounds(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+        language: $language
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+        }
+    }
+}
+
 query GetRounds(
     $filters: RoundSearchFilters
     $orderBy: [RoundOrderByCriterion!]

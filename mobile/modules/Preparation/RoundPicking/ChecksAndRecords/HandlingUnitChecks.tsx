@@ -45,16 +45,16 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
     // TYPED SAFE ALL
 
     useEffect(() => {
-        if (scannedInfo && handlingUnitInfos.data) {
+        if (scannedInfo && handlingUnitInfos) {
             if (
-                handlingUnitInfos.data.handlingUnits?.count !== 0 &&
-                handlingUnitInfos.data.handlingUnits?.results[0].category ===
+                handlingUnitInfos.handlingUnits?.count !== 0 &&
+                handlingUnitInfos.handlingUnits?.results[0].category ===
                     parameters.HANDLING_UNIT_CATEGORY_STOCK &&
-                handlingUnitInfos.data.handlingUnits?.results[0].locationId ==
+                handlingUnitInfos.handlingUnits?.results[0].locationId ==
                     storedObject['step10'].data.proposedRoundAdvisedAddress.locationId
             ) {
                 const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
+                data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
