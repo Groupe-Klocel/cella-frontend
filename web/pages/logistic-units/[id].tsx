@@ -23,7 +23,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { logisticUnitsRoutes as itemRoutes } from 'modules/LogisticUnits/Static/logisticUnitsRoutes';
@@ -42,6 +42,7 @@ const LogisticUnitPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [reopenInfo, setReopenInfo] = useState<any | undefined>();
 
     // #region to customize information
     const breadCrumb = [
@@ -57,12 +58,22 @@ const LogisticUnitPage: PageComponent = () => {
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
-    const confirmAction = (id: string | undefined, setId: any) => {
+    const confirmAction = (
+        info: any | undefined,
+        setInfo: any,
+        action: 'delete' | 'disable' | 'enable'
+    ) => {
         return () => {
+            const titre =
+                action == 'enable'
+                    ? 'messages:enable-confirm'
+                    : action == 'delete'
+                    ? 'messages:delete-confirm'
+                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t(titre),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -93,7 +104,7 @@ const LogisticUnitPage: PageComponent = () => {
                 data?.status !== configs.LOGISTIC_UNIT_STATUS_CLOSED &&
                 !data?.childrenLogisticUnits_id ? (
                     <Button
-                        onClick={() => confirmAction(id as string, setIdToDisable)()}
+                        onClick={() => confirmAction(id as string, setIdToDisable, 'disable')()}
                         type="primary"
                     >
                         {t('actions:disable')}
@@ -105,8 +116,24 @@ const LogisticUnitPage: PageComponent = () => {
                 modes.includes(ModeEnum.Delete) &&
                 model.isDeletable &&
                 !data?.childrenLogisticUnits_id ? (
-                    <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
+                    <Button onClick={() => confirmAction(id as string, setIdToDelete, 'delete')()}>
                         {t('actions:delete')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {data?.status == configs.LOGISTIC_UNIT_STATUS_CLOSED ? (
+                    <Button
+                        onClick={() =>
+                            confirmAction(
+                                { id, status: configs.LOGISTIC_UNIT_STATUS_IN_PROGRESS },
+                                setReopenInfo,
+                                'enable'
+                            )()
+                        }
+                        type="primary"
+                    >
+                        {t('actions:enable')}
                     </Button>
                 ) : (
                     <></>
@@ -126,6 +153,7 @@ const LogisticUnitPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerReopen={{ reopenInfo, setReopenInfo }}
             />
         </>
     );

@@ -28,7 +28,7 @@
     "DELIVERY-000777": "Vous ne pouvez pas effectuer cette action sur une livraison avec ce statut",
     "DELIVERYLINE-000100": "Une ligne de livraison avec ces informations existe déjà",
     "EQUIPMENTDETAIL-000130": "Suppression impossible : au moins un détail d'équipement est associé à cet élément",
-    "HANDLINGUNITOUTBOUND-000130": "Suppression impossible : au moins une unité d'emballage sortant est associé à cet élément",
+    "HANDLINGUNITOUTBOUND-000130": "Suppression impossible : au moins un colis sortant est associé à cet élément",
     "LOAD-000140": "Ce chargement n'a aucune ligne",
     "LOCATION-000130": "Suppression impossible : au moins un emplacement est associé à cet élément",
     "LOCATION-000140": "Suppression impossible : cet emplacement n'est pas vide",
@@ -46,5 +46,6 @@
     "ROUND-000130": "Désactivation impossible : au moins une ramasse est associée à cet élément",
     "DELIVERYLINE-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné",
     "PURCHASEORDERLINE-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné",
-    "HANDLINGUNIT-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné"
+    "HANDLINGUNIT-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné",
+    "CARRIERSHIPPINGMODE-000130": "Suppression impossible : au moins un transporteur est associé à cet élément"
 }

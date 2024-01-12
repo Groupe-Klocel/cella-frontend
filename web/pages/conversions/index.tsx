@@ -17,7 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import {
+    DeleteOutlined,
+    EditTwoTone,
+    EyeTwoTone,
+    LockTwoTone,
+    UnlockTwoTone
+} from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
@@ -30,6 +36,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import { conversionsRoutes as itemRoutes } from 'modules/Conversions/Static/conversionsRoutes';
 import configs from '../../../common/configs.json';
+
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const ConversionPages: PageComponent = () => {
@@ -39,6 +46,7 @@ const ConversionPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [reopenInfo, setReopenInfo] = useState<string | undefined>();
 
     const headerData: HeaderData = {
         title: t('common:conversions'),
@@ -53,12 +61,22 @@ const ConversionPages: PageComponent = () => {
             ) : null
     };
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+    const confirmAction = (
+        info: any | undefined,
+        setInfo: any,
+        action: 'delete' | 'disable' | 'enable'
+    ) => {
         return () => {
+            const titre =
+                action == 'enable'
+                    ? 'messages:enable-confirm'
+                    : action == 'delete'
+                    ? 'messages:delete-confirm'
+                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t(titre),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -74,6 +92,7 @@ const ConversionPages: PageComponent = () => {
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerReopen={{ reopenInfo, setReopenInfo }}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -104,7 +123,7 @@ const ConversionPages: PageComponent = () => {
                                 model.isSoftDeletable &&
                                 record.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDisable, 'disable')()
                                         }
@@ -120,6 +139,23 @@ const ConversionPages: PageComponent = () => {
                                         danger
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDelete, 'delete')()
+                                        }
+                                    ></Button>
+                                ) : (
+                                    <></>
+                                )}
+                                {record.status == configs.CONVERSION_STATUS_CLOSED ? (
+                                    <Button
+                                        icon={<UnlockTwoTone twoToneColor="#b3cad6" />}
+                                        onClick={() =>
+                                            confirmAction(
+                                                {
+                                                    id: record.id,
+                                                    status: configs.CONVERSION_STATUS_IN_PROGRESS
+                                                },
+                                                setReopenInfo,
+                                                'enable'
+                                            )()
                                         }
                                     ></Button>
                                 ) : (

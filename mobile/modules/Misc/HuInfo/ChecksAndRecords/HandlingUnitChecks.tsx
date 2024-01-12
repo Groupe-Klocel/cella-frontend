@@ -46,10 +46,10 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
     // TYPED SAFE ALL
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
-        if (scannedInfo && handlingUnitInfos.data) {
-            if (handlingUnitInfos.data.handlingUnits?.count !== 0) {
+        if (scannedInfo && handlingUnitInfos) {
+            if (handlingUnitInfos.handlingUnits?.count !== 0) {
                 const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
+                data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],

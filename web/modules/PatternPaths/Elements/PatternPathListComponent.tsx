@@ -273,17 +273,17 @@ const PatternPathListComponent = (props: IListProps) => {
         router.locale
     );
 
-    console.log(
-        'useList inputs',
-        props.dataModel.resolverName,
-        props.dataModel.endpoints.list,
-        listFields,
-        search,
-        pagination.current,
-        pagination.itemsPerPage,
-        sort,
-        router.locale
-    );
+    // console.log(
+    //     'useList inputs',
+    //     props.dataModel.resolverName,
+    //     props.dataModel.endpoints.list,
+    //     listFields,
+    //     search,
+    //     pagination.current,
+    //     pagination.itemsPerPage,
+    //     sort,
+    //     router.locale
+    // );
 
     useEffect(() => {
         reloadData();

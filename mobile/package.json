@@ -26,6 +26,7 @@
         "@types/lodash": "^4.14.182",
         "@typescript-eslint/eslint-plugin": "^5.10.1",
         "@typescript-eslint/parser": "^5.10.1",
+        "@zxing/library": "^0.20.0",
         "antd": "4.17.2",
         "array-move": "^4.0.0",
         "babel-plugin-module-resolver": "^4.1.0",
@@ -43,9 +44,9 @@
         "react": "17.0.2",
         "react-css-theme-switcher": "^0.3.0",
         "react-dom": "17.0.2",
-        "react-qr-barcode-scanner": "^1.0.6",
         "react-query": "3.33.6",
         "react-sortable-hoc": "^2.0.0",
+        "react-webcam": "^7.2.0",
         "sass": "1.43.5",
         "secure-ls": "^1.2.6",
         "styled-components": "5.3.3"

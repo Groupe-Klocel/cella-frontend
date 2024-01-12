@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Button, Divider, Modal, Space, Typography } from 'antd';
@@ -139,7 +139,7 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
                                         FeatureTypeDetailModes.includes(ModeEnum.Delete) &&
                                         FeatureTypeDetailModelV2.isSoftDeletable ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
@@ -233,7 +233,7 @@ const FeatureTypeDetailsExtra = ({ parameterId, featureType }: IItemDetailsProps
                                         ArticleModes.includes(ModeEnum.Delete) &&
                                         ArticleModelV2.isSoftDeletable ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
