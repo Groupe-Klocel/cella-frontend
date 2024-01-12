@@ -38,7 +38,8 @@ import {
     useList,
     flatten,
     useSoftDelete,
-    cookie
+    cookie,
+    useUpdate
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
@@ -60,6 +61,7 @@ export interface IListProps {
     dataModel: ModelType;
     triggerDelete: any;
     triggerSoftDelete: any;
+    triggerReopen?: any;
     extraColumns?: any;
     actionColumns?: any;
     headerData?: HeaderData;
@@ -258,6 +260,42 @@ const ListComponent = (props: IListProps) => {
     }, [softDeleteResult]);
     // #endregion
 
+    // #region Enable (Re-Open)
+
+    const {
+        isLoading: enableLoading,
+        result: enableResult,
+        mutate: callReopen
+    } = useUpdate(props.dataModel.resolverName, props.dataModel.endpoints.update, listFields);
+
+    useEffect(() => {
+        if (props.triggerReopen && props.triggerReopen.reopenInfo) {
+            callReopen({
+                id: props.triggerReopen.reopenInfo.id,
+                input: { status: props.triggerReopen.reopenInfo.status }
+            });
+            props.triggerReopen.setReopenInfo(undefined);
+        }
+    }, [props.triggerReopen]);
+
+    useEffect(() => {
+        if (enableLoading) {
+            showInfo(t('messages:info-enabling-wip'));
+        }
+    }, [enableLoading]);
+
+    useEffect(() => {
+        if (!(enableResult && enableResult.data)) return;
+
+        if (enableResult.success) {
+            showSuccess(t('messages:success-enabled'));
+            reloadData();
+        } else {
+            showError(t('messages:error-enabling-element'));
+        }
+    }, [enableResult]);
+    // #end region
+
     // #region SEARCH OPERATIONS
 
     // SearchForm in cookies
@@ -266,6 +304,8 @@ const ListComponent = (props: IListProps) => {
     let showBadge = false;
 
     searchCriterias = props.searchCriteria;
+
+    console.log('searchCrit', searchCriterias);
 
     if (props.searchable) {
         if (cookie.get(`${props.dataModel.resolverName}SavedFilters`)) {
@@ -347,6 +387,14 @@ const ListComponent = (props: IListProps) => {
                 const newSearchValues = {
                     ...searchValues
                 };
+
+                for (const i in newSearchValues) {
+                    if (newSearchValues.hasOwnProperty(i)) {
+                        if (typeof newSearchValues[i] === 'string') {
+                            newSearchValues[i] += '%';
+                        }
+                    }
+                }
 
                 cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
                 showBadge = false;

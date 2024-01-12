@@ -46,5 +46,6 @@
     "ROUND-000130": "Delete impossible: at least one round associated with this item",
     "DELIVERYLINE-000250": "The selected Stock Owner is not the same as the Article Stock Owner",
     "PURCHASEORDERLINE-000250": "The selected Stock Owner is not the same as the Article Stock Owner",
-    "HANDLINGUNIT-000250": "The selected Stock Owner is not the same as the Article Stock Owner"
+    "HANDLINGUNIT-000250": "The selected Stock Owner is not the same as the Article Stock Owner",
+    "CARRIERSHIPPINGMODE-000130": "Delete impossible: at least one carrier associated with this item"
 }

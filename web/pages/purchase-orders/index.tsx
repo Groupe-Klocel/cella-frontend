@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
@@ -120,7 +120,7 @@ const PurchaseOrderPages: PageComponent = () => {
                                 record.status < configs.PURCHASE_ORDER_STATUS_CLOSED &&
                                 !record.purchaseOrderLines ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDisable, 'disable')()
                                         }

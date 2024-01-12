@@ -17,7 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import {
+    DeleteOutlined,
+    EditTwoTone,
+    EyeTwoTone,
+    LockTwoTone,
+    UnlockTwoTone
+} from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Space, Button, Modal } from 'antd';
@@ -30,6 +36,7 @@ import { patternsSubRoutes as itemRoutes } from 'modules/Patterns/Static/pattern
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import configs from '../../../common/configs.json';
+
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const PatternsPage: PageComponent = () => {
@@ -39,6 +46,7 @@ const PatternsPage: PageComponent = () => {
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [reopenInfo, setReopenInfo] = useState<string | undefined>();
 
     const headerData: HeaderData = {
         title: t('common:patterns'),
@@ -53,12 +61,22 @@ const PatternsPage: PageComponent = () => {
             ) : null
     };
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+    const confirmAction = (
+        info: any | undefined,
+        setInfo: any,
+        action: 'delete' | 'disable' | 'enable'
+    ) => {
         return () => {
+            const titre =
+                action == 'enable'
+                    ? 'messages:enable-confirm'
+                    : action == 'delete'
+                    ? 'messages:delete-confirm'
+                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t(titre),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -74,6 +92,7 @@ const PatternsPage: PageComponent = () => {
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerReopen={{ reopenInfo, setReopenInfo }}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -109,7 +128,7 @@ const PatternsPage: PageComponent = () => {
                                 !record.patternPaths_id &&
                                 record.status !== configs.PATTERN_STATUS_CLOSED ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDisable, 'disable')()
                                         }
@@ -126,6 +145,23 @@ const PatternsPage: PageComponent = () => {
                                         danger
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDelete, 'delete')()
+                                        }
+                                    ></Button>
+                                ) : (
+                                    <></>
+                                )}
+                                {record.status == configs.PATTERN_STATUS_CLOSED ? (
+                                    <Button
+                                        icon={<UnlockTwoTone twoToneColor="#b3cad6" />}
+                                        onClick={() =>
+                                            confirmAction(
+                                                {
+                                                    id: record.id,
+                                                    status: configs.PATTERN_STATUS_IN_PROGRESS
+                                                },
+                                                setReopenInfo,
+                                                'enable'
+                                            )()
                                         }
                                     ></Button>
                                 ) : (
