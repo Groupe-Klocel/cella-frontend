@@ -76,5 +76,6 @@
     "no-serial-number": "No ID found in this round",
     "cycle-count-finished": "Finish cycle count",
     "error-print-data": "Error during printing",
-    "success-print-data": "Printed successfully. Please check selected printer"
+    "success-print-data": "Printed successfully. Please check selected printer",
+    "only-stock-hu-move": "Only handling units and their contents in stock can be moved or receive a move"
 }

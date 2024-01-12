@@ -47,8 +47,8 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
     // TYPED SAFE ALL
     useEffect(() => {
         if (scannedInfo) {
-            if (handlingUnitInfos.data && handlingUnitInfos.data.handlingUnits) {
-                const handlingUnit = handlingUnitInfos.data.handlingUnits.results[0];
+            if (handlingUnitInfos && handlingUnitInfos.handlingUnits) {
+                const handlingUnit = handlingUnitInfos.handlingUnits.results[0];
                 // HU origin/final identical = error
                 if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {
                     showError(t('messages:hu-origin-final-identical'));
@@ -67,10 +67,16 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                     setResetForm(true);
                     setScannedInfo(undefined);
                 }
+                //final HU category != stock = error
+                else if (handlingUnit.category !== parameters.HANDLING_UNIT_CATEGORY_STOCK) {
+                    showError(t('messages:only-stock-hu-move'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                }
                 // final HU with different article = error
                 else if (
-                    handlingUnit.handlingUnitContents[0].article_id !=
-                    storedObject['step20'].data.handlingUnit.handlingUnitContents[0].article_id
+                    handlingUnit.handlingUnitContents[0].articleId !=
+                    storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
                 ) {
                     showError(t('messages:unexpected-hu-article'));
                     setResetForm(true);
@@ -92,6 +98,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                     showError(t('messages:unexpected-scanned-item'));
                     setResetForm(true);
                     setScannedInfo(undefined);
+                    return;
                 }
 
                 const handlingUnitToCreate = {
@@ -121,7 +128,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
         ) {
             storage.set(process, JSON.stringify(storedObject));
         }
-    }, [handlingUnitInfos.data]);
+    }, [handlingUnitInfos]);
 
     return <WrapperForm>{scannedInfo && !handlingUnitInfos ? <ContentSpin /> : <></>}</WrapperForm>;
 };

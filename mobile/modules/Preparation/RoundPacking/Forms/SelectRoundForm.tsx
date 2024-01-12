@@ -17,27 +17,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-//DESCRIPTION: select manually or automatically one location in a list of locations according to their level
-
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured, extractGivenConfigsParams, showError } from '@helpers';
-import { Select } from 'antd';
+import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import useTranslation from 'next-translate/useTranslation';
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import {
     GetAllBoxesQuery,
     GetHandlingUnitsQuery,
-    GetRoundsQuery,
     ParametersQuery,
+    SimpleGetRoundsQuery,
     useGetAllBoxesQuery,
     useGetHandlingUnitsQuery,
-    useGetRoundsQuery,
-    useParametersQuery
+    useParametersQuery,
+    useSimpleGetRoundsQuery
 } from 'generated/graphql';
 import { gql } from 'graphql-request';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectRoundProps {
     process: string;
@@ -60,6 +58,27 @@ export const SelectRoundForm = ({
     // TYPED SAFE ALL
     const [rounds, setRounds] = useState<Array<any>>();
 
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (rounds?.some((option) => option.text === camData)) {
+                const roundToFind = rounds?.find((option) => option.text === camData);
+                form.setFieldsValue({ rounds: roundToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, rounds]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
+
     //Pre-requisite: initialize current step
     useEffect(() => {
         if (storedObject.currentStep < stepNumber) {
@@ -76,12 +95,15 @@ export const SelectRoundForm = ({
         max: configs.ROUND_STATUS_TO_BE_CHECKED
     });
 
-    const roundsList = useGetRoundsQuery<Partial<GetRoundsQuery>, Error>(graphqlRequestClient, {
-        filters: { status: configsToFilterOn },
-        orderBy: null,
-        page: 1,
-        itemsPerPage: 100
-    });
+    const roundsList = useSimpleGetRoundsQuery<Partial<SimpleGetRoundsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: { status: configsToFilterOn },
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 100
+        }
+    );
 
     useEffect(() => {
         if (roundsList) {
@@ -177,16 +199,118 @@ export const SelectRoundForm = ({
     //SelectRound-4a: retrieve chosen level from select and set information
     const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
-        const selectedRound = roundsList?.data?.rounds?.results.find((e: any) => {
-            return e.id == values.rounds;
-        });
-        data['round'] = selectedRound;
+        const query = gql`
+            query return($id: String!) {
+                round(id: $id) {
+                    id
+                    name
+                    status
+                    statusText
+                    priority
+                    priorityText
+                    nbPickArticle
+                    nbBox
+                    nbRoundLine
+                    pickingTime
+                    productivity
+                    expectedDeliveryDate
+                    handlingUnitOutbounds {
+                        id
+                        name
+                        status
+                        statusText
+                        roundId
+                        handlingUnitModelId
+                    }
+                    roundAdvisedAddresses {
+                        id
+                        roundOrderId
+                        quantity
+                        status
+                        statusText
+                        locationId
+                        location {
+                            name
+                        }
+                        handlingUnitContentId
+                        handlingUnitContent {
+                            quantity
+                            articleId
+                            article {
+                                id
+                                name
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                                baseUnitWeight
+                            }
+                            stockOwnerId
+                            stockOwner {
+                                name
+                            }
+                            handlingUnitContentFeatures {
+                                featureCode {
+                                    name
+                                    unique
+                                }
+                                value
+                            }
+                            handlingUnitId
+                            handlingUnit {
+                                id
+                                name
+                                barcode
+                                status
+                                statusText
+                                type
+                                typeText
+                                category
+                                categoryText
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                            }
+                        }
+                        roundLineDetailId
+                        roundLineDetail {
+                            status
+                            statusText
+                            quantityToBeProcessed
+                            processedQuantity
+                            roundLineId
+                            roundLine {
+                                lineNumber
+                                articleId
+                                status
+                                statusText
+                            }
+                            deliveryLineId
+                            deliveryLine {
+                                id
+                                stockOwnerId
+                                deliveryId
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            id: values.rounds
+        };
+
+        const selectedRound = await graphqlRequestClient.request(query, variables);
+
+        data['round'] = selectedRound.round;
         data['roundHU'] = proposedHU;
         data['existingFinalHUO'] = existingHUO;
         storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
         storage.set(process, JSON.stringify(storedObject));
         setTriggerRender(!triggerRender);
-        if (selectedRound?.status !== configs.ROUND_STATUS_PACKING_IN_PROGRESS) {
+        if (selectedRound?.round?.status !== configs.ROUND_STATUS_PACKING_IN_PROGRESS) {
             try {
                 const updateRoundMutation = gql`
                     mutation updateRound($id: String!, $input: UpdateRoundInput!) {
@@ -198,7 +322,7 @@ export const SelectRoundForm = ({
                     }
                 `;
                 const updateRoundVariables = {
-                    id: selectedRound?.id,
+                    id: selectedRound?.round?.id,
                     input: {
                         status: configs.ROUND_STATUS_PACKING_IN_PROGRESS
                     }
@@ -231,6 +355,7 @@ export const SelectRoundForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:rounds')}
@@ -246,6 +371,13 @@ export const SelectRoundForm = ({
                             }
                         }}
                         style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
                     >
                         {rounds?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
@@ -254,6 +386,7 @@ export const SelectRoundForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>
