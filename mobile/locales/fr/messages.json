@@ -61,8 +61,6 @@
     "round-packing-failed": "Erreur lors de l'emballage de la ramasse",
     "no-box-to-close": "Aucun colis à fermer",
     "closure-failed": "Erreur lors de la fermeture du colis",
-    "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu",
-    "article-creation-confirm": "Article inconnu en stock, voulez-vous le créer ?",
     "hu-exists-other-location": "L'UM existe à l'emplacement {{locationName}}",
     "hu-creation-confirm": "L'UM n'existe pas, voulez-vous la créer ?",
     "article-not-available-for-hu": "Cet article n'existe pas pour l'UM : {{huName}}",
@@ -77,5 +75,8 @@
     "cycle-count-finished": "Inventaire terminé",
     "error-print-data": "Erreur lors de l'impression",
     "success-print-data": "Impression effectuée avec succès",
-    "only-stock-hu-move": "Seules les unités de manutention et leurs contenus en stock peuvent être déplacés ou recevoir un déplacement"
+    "only-stock-hu-move": "Seules les unités de manutention et leurs contenus en stock peuvent être déplacés ou recevoir un déplacement",
+    "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu",
+    "article-creation-confirm": "Article inconnu en stock, voulez-vous le créer ?",
+    "already-scanned": "Element déjà scanné"
 }

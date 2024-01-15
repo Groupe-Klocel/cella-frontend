@@ -70,6 +70,13 @@ query GetRounds(
                 roundId
                 handlingUnitModelId
             }
+            roundLines {
+                id
+                lineNumber
+                articleId
+                status
+                statusText
+            }
             roundAdvisedAddresses {
                 id
                 roundOrderId
@@ -78,10 +85,12 @@ query GetRounds(
                 statusText
                 locationId
                 location {
+                    id
                     name
                 }
                 handlingUnitContentId
                 handlingUnitContent {
+                    id
                     quantity
                     articleId
                     article {
@@ -98,7 +107,9 @@ query GetRounds(
                         name
                     }
                     handlingUnitContentFeatures {
+                        id
                         featureCode {
+                            id
                             name
                             unique
                         }
@@ -123,12 +134,14 @@ query GetRounds(
                 }
                 roundLineDetailId
                 roundLineDetail {
+                    id
                     status
                     statusText
                     quantityToBeProcessed
                     processedQuantity
                     roundLineId
                     roundLine {
+                        id
                         lineNumber
                         articleId
                         status

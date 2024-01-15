@@ -63,6 +63,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 results {
                     id
                     featureCode {
+                        id
                         name
                         unique
                     }
@@ -85,6 +86,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             description
                             stockOwnerId
                             stockOwner {
+                                id
                                 name
                             }
                             baseUnitWeight
@@ -102,10 +104,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             categoryText
                             locationId
                             location {
+                                id
                                 name
                             }
                             stockOwnerId
                             stockOwner {
+                                id
                                 name
                             }
                         }
@@ -144,6 +148,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     }
                     barcodeId
                     barcode {
+                        id
                         name
                     }
                     stockOwnerId

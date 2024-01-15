@@ -40,10 +40,12 @@ const StyledButton = styled(Button)`
     color: #000000 !important;
     font-size: 10px !important;
     max-width: 25%;
+    margin: 2px;
     height: auto !important;
     white-space: normal !important;
     min-height: 35px;
     width: 100% auto !important;
+    flex-basis: calc(30% - 5px);
 `;
 
 const NavButton = styled(Button)`

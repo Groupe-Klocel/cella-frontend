@@ -161,11 +161,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         `;
 
-        const finalHandlingUnitVariables = {
-            filters: { id: existingFinalHUO.handlingUnitId }
-        };
         let finalHandlingUnitResult = undefined;
         if (Object.keys(existingFinalHUO).length > 0) {
+            const finalHandlingUnitVariables = {
+                filters: { id: existingFinalHUO.handlingUnitId }
+            };
             finalHandlingUnitResult = await graphqlRequestClient.request(
                 finalHandlingUnitQuery,
                 finalHandlingUnitVariables,
