@@ -83,6 +83,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     useEffect(() => {
         if (scannedInfo && fetchResult) {
             let found = false;
+            const data: { [label: string]: any } = {};
             if (fetchResult.resType === 'serialNumber') {
                 // HUCF scanned
                 const handlingUnitContents =
@@ -93,7 +94,6 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 }
 
                 if (found) {
-                    const data: { [label: string]: any } = {};
                     data['resType'] = fetchResult.resType;
                     data['article'] = { ...fetchResult.article, id: fetchResult.article.articleId };
                     data['feature'] = fetchResult.handlingUnitContentFeature;
@@ -116,7 +116,6 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     )
                 ) {
                     found = true;
-                    const data: { [label: string]: any } = {};
                     data['resType'] = fetchResult.resType;
                     data['article'] = fetchResult.articleLuBarcodes[0].article;
                     data['handlingUnitContent'] = handlingUnitContents.filter(

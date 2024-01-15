@@ -49,6 +49,7 @@ const LocationPages: PageComponent = () => {
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [showRangeLocationsModal, setShowRangeLocationsModal] = useState(false);
+    const [referenceToPrint, setReferenceToPrint] = useState<string>();
 
     const headerData: HeaderData = {
         title: t('common:locations'),
@@ -107,7 +108,7 @@ const LocationPages: PageComponent = () => {
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: { id: string }) => (
+                        render: (record: { id: string; name: string }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <>
@@ -135,6 +136,7 @@ const LocationPages: PageComponent = () => {
                                     onClick={() => {
                                         setShowNumberOfPrintsModal(true);
                                         setIdToPrint(record.id);
+                                        setReferenceToPrint(record.name);
                                     }}
                                     icon={<BarcodeOutlined />}
                                 />
@@ -176,6 +178,7 @@ const LocationPages: PageComponent = () => {
                 }}
                 dataToPrint={{ id: idToPrint }}
                 documentName="K_LocationLabel"
+                documentReference={referenceToPrint}
             />
             {showRangeLocationsModal ? (
                 <PrintLocationsModalForm

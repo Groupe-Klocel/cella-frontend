@@ -84,7 +84,11 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 storedObject['step20'].data.handlingUnit.handlingUnitContents;
             if (fetchResult.resType === 'serialNumber') {
                 for (let i = 0; i < handlingUnitContents.length; i++) {
-                    if (handlingUnitContents[i].articleId === fetchResult.article.articleId) {
+                    if (
+                        handlingUnitContents[i].articleId === fetchResult.article.articleId &&
+                        handlingUnitContents[i].id ===
+                            fetchResult.handlingUnitContentFeature.handlingUnitContentId
+                    ) {
                         found = true;
                         break;
                     }
