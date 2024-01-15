@@ -65,7 +65,6 @@ export const Barcodes = () => {
                 // Here make api call of something else
                 const searchValues = formSearch.getFieldsValue(true);
 
-                console.log('Mes infos de bases : ', searchValues);
                 const newSearchValues = {
                     ...searchValues,
                     blacklisted: searchValues['blacklisted'] == 'true'

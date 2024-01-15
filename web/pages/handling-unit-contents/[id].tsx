@@ -30,6 +30,7 @@ import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUni
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
+import parameters from '../../../common/parameters.json';
 import { HandlingUnitContentDetailsExtra } from 'modules/HandlingUnits/Elements/HandlingUnitContentDetailsExtra';
 import { BarcodeOutlined } from '@ant-design/icons';
 
@@ -121,7 +122,11 @@ const HandlingUnitContentPage: PageComponent = () => {
         onBackRoute: rootPath,
         actionsComponent: (
             <Space>
-                {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                model.isEditable &&
+                /*data?.handlingUnit_status == configs.HANDLING_UNIT_STATUS_VALIDATED &&*/
+                data?.handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/edit/${id}`}
@@ -130,7 +135,11 @@ const HandlingUnitContentPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isSoftDeletable ? (
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isSoftDeletable &&
+                /*data?.handlingUnit_status == configs.HANDLING_UNIT_STATUS_VALIDATED &&*/
+                data?.handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                     <Button
                         onClick={() => confirmAction(id as string, setIdToDisable)()}
                         type="primary"
@@ -140,7 +149,11 @@ const HandlingUnitContentPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isDeletable &&
+                /*data?.handlingUnit_status == configs.HANDLING_UNIT_STATUS_VALIDATED &&*/
+                data?.handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
                     </Button>
@@ -181,6 +194,7 @@ const HandlingUnitContentPage: PageComponent = () => {
                         handlingUnitName={data?.handlingUnit_name}
                         articleName={data?.article_name}
                         quantity={data?.quantity}
+                        handlingUnit_category={data?.handlingUnit_category}
                     />
                 }
                 id={id!}

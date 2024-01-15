@@ -143,7 +143,8 @@ const BoxesPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable &&
-                                record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                                record.status <
+                                    configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -154,7 +155,8 @@ const BoxesPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable &&
-                                record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                                record.status <
+                                    configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
@@ -167,7 +169,7 @@ const BoxesPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isDeletable &&
-                                record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                                record.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CREATED ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger

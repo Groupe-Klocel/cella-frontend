@@ -89,7 +89,7 @@ const BoxLinePage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                data?.status < configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
+                data?.status < configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_ESTIMATED ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/boxLine/edit/${id}`}
@@ -98,7 +98,10 @@ const BoxLinePage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isSoftDeletable ? (
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isSoftDeletable &&
+                data?.status < configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_ESTIMATED ? (
                     <Button
                         onClick={() => confirmAction(id as string, setIdToDisable)()}
                         type="primary"
@@ -108,7 +111,10 @@ const BoxLinePage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isDeletable &&
+                data?.status < configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_ESTIMATED ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
                     </Button>

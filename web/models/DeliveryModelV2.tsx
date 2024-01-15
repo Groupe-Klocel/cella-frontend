@@ -137,7 +137,8 @@ export const DeliveryModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: 'delivery_status',
-            param: null
+            param: null,
+            defaultSort: 'ascending'
         },
         statusText: {
             isListRequested: true,
@@ -1105,8 +1106,7 @@ export const DeliveryModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null,
-            defaultSort: 'descending'
+            param: null
         },
         modifiedBy: {
             isListRequested: true,

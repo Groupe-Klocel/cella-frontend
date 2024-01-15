@@ -36,6 +36,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { HandlingUnitContentModelV2 as model } from 'models/HandlingUnitContentModelV2';
 import parameters from '../../../common/parameters.json';
+import configs from '../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -136,6 +137,8 @@ const HandlingUnitContentsPage: PageComponent = () => {
                             stockOwnerId: string;
                             stockOwner_name: string;
                             handlingUnit_barcode: string;
+                            handlingUnit_category: number;
+                            handlingUnit_status: number;
                         }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
@@ -148,7 +151,11 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
-                                model.isEditable ? (
+                                model.isEditable /*&&
+                                record.handlingUnit_status ==
+                                    configs.HANDLING_UNIT_STATUS_VALIDATED*/ &&
+                                record.handlingUnit_category ==
+                                    parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -158,7 +165,11 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isSoftDeletable ? (
+                                model.isSoftDeletable /*&&
+                                record.handlingUnit_status ==
+                                    configs.HANDLING_UNIT_STATUS_VALIDATED*/ &&
+                                record.handlingUnit_category ==
+                                    parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
@@ -175,7 +186,11 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isDeletable ? (
+                                model.isDeletable /*&&
+                                record.handlingUnit_status ==
+                                    configs.HANDLING_UNIT_STATUS_VALIDATED*/ &&
+                                record.handlingUnit_category ==
+                                    parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger

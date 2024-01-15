@@ -68,6 +68,7 @@ const LoadsPage: PageComponent = () => {
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
+    const [referenceToPrint, setReferenceToPrint] = useState<string>();
 
     const headerData: HeaderData = {
         title: t('common:loads'),
@@ -235,6 +236,7 @@ const LoadsPage: PageComponent = () => {
                             id: string;
                             status: number;
                             numberHuLoaded: number;
+                            name: string;
                         }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
@@ -260,7 +262,7 @@ const LoadsPage: PageComponent = () => {
                                 modes.includes(ModeEnum.Update) &&
                                 record.status > configs.LOAD_LINE_STATUS_CREATED &&
                                 record.status < configs.LOAD_STATUS_DISPATCHED &&
-                                record?.numberHuLoaded > 0 &&
+                                record.numberHuLoaded > 0 &&
                                 model.isEditable ? (
                                     <Button
                                         loading={dispatch}
@@ -296,6 +298,7 @@ const LoadsPage: PageComponent = () => {
                                         onClick={() => {
                                             setShowSinglePrintModal(true);
                                             setIdToPrint(record.id);
+                                            setReferenceToPrint(record.name);
                                         }}
                                     />
                                 ) : (
@@ -318,6 +321,7 @@ const LoadsPage: PageComponent = () => {
                     statusDispatched
                 }}
                 documentName="K_LoadLoadingList"
+                documentReference={referenceToPrint}
             />
         </>
     );
