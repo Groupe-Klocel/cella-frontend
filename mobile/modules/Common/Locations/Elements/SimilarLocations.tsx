@@ -83,7 +83,8 @@ export const SimilarLocations = ({
                 .filter(
                     (e: any) =>
                         e.id !== chosenContentId &&
-                        e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_PICKING
+                        e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_PICKING &&
+                        e.handlingUnit.category === parameters.HANDLING_UNIT_CATEGORY_STOCK
                 )
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {
