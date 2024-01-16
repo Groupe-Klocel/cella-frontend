@@ -186,7 +186,6 @@ const LocationPages: PageComponent = () => {
                         showRangeLocationsModal,
                         setShowRangeLocationsModal
                     }}
-                    id={'a'}
                 />
             ) : (
                 <></>

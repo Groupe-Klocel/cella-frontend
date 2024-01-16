@@ -640,5 +640,6 @@
     "recipients-mail-adresses": "E-mail",
     "reference": "Référence",
     "initialStockStatus": "Etat de stock initial",
-    "finalStockStatus": "Etat de stock final"
+    "finalStockStatus": "Etat de stock final",
+    "print_block": "Imprimer le block entier"
 }
