@@ -94,16 +94,18 @@ const LoadsPage: PageComponent = () => {
         }
     }, [defaultPrintLanguage.data]);
 
-    const defaultPrinterParameter = useListParametersForAScopeQuery(graphqlRequestClient, {
+    const defaultPrinterLaserParameter = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'global',
-        code: 'default_printer'
+        code: 'default_printer_laser'
     });
-    const [defaultPrinter, setDefaultPrinter] = useState<string>();
+    const [defaultPrinterLaser, setDefaultPrinterLaser] = useState<string>();
     useEffect(() => {
-        if (defaultPrinterParameter) {
-            setDefaultPrinter(defaultPrinterParameter.data?.listParametersForAScope[0].text);
+        if (defaultPrinterLaserParameter) {
+            setDefaultPrinterLaser(
+                defaultPrinterLaserParameter.data?.listParametersForAScope[0].text
+            );
         }
-    }, [defaultPrinterParameter.data]);
+    }, [defaultPrinterLaserParameter.data]);
 
     //retrieve client's date for printing
     const local = moment();
@@ -182,7 +184,7 @@ const LoadsPage: PageComponent = () => {
                                 id: data.updateLoad.id,
                                 statusDispatched
                             },
-                            defaultPrinter
+                            defaultPrinterLaser
                         );
                     }
                     setTriggerRefresh(!triggerRefresh);
