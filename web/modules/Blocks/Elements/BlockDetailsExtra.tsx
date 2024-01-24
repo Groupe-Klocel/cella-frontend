@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { LinkButton } from '@components';
 import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
 import { Button, Divider, Modal, Space } from 'antd';
@@ -121,7 +121,7 @@ const BlockDetailsExtra = ({ blockId, blockName, buildingName }: IItemDetailsPro
                                         modes.includes(ModeEnum.Delete) &&
                                         LocationModelV2.isSoftDeletable ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,

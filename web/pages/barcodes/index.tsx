@@ -21,7 +21,7 @@ import {
     DeleteOutlined,
     EditTwoTone,
     EyeTwoTone,
-    StopOutlined,
+    LockTwoTone,
     BarcodeOutlined
 } from '@ant-design/icons';
 import { AppHead, LinkButton, NumberOfPrintsModalV2, NumberOfPrintsModal } from '@components';

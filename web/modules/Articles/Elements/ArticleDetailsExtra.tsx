@@ -24,7 +24,7 @@ import {
     EditTwoTone,
     EyeTwoTone,
     PrinterOutlined,
-    StopOutlined
+    LockTwoTone
 } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
@@ -179,7 +179,7 @@ const ArticleDetailsExtra = ({
                                         articleLuModes.includes(ModeEnum.Delete) &&
                                         ArticleLuModelV2.isSoftDeletable ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
@@ -279,7 +279,7 @@ const ArticleDetailsExtra = ({
                                         articleLuBarcodeModes.includes(ModeEnum.Delete) &&
                                         ArticleLuBarcodeModelV2.isSoftDeletable ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,

@@ -23,7 +23,7 @@ import {
     DeleteOutlined,
     EditTwoTone,
     EyeTwoTone,
-    StopOutlined
+    LockTwoTone
 } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, pathParamsFromDictionary, showError } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
@@ -262,7 +262,7 @@ const DeliveryDetailsExtra = ({
                                         deliveryAddressModes.includes(ModeEnum.Delete) &&
                                         DeliveryAddressModelV2.isSoftDeletable ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
@@ -369,7 +369,7 @@ const DeliveryDetailsExtra = ({
                                         DeliveryLineModelV2.isSoftDeletable &&
                                         record.status < configs.DELIVERY_STATUS_PREPARED ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,
@@ -469,7 +469,7 @@ const DeliveryDetailsExtra = ({
                                         HandlingUnitOutboundModelV2.isSoftDeletable &&
                                         record?.status < configs.DELIVERY_STATUS_PREPARED ? (
                                             <Button
-                                                icon={<StopOutlined />}
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
                                                     confirmAction(
                                                         record.id,

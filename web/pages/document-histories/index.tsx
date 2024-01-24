@@ -22,7 +22,7 @@ import {
     EditTwoTone,
     EyeTwoTone,
     PrinterOutlined,
-    StopOutlined
+    LockTwoTone
 } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
@@ -175,7 +175,7 @@ const DocumentHistoryPages: PageComponent = () => {
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDisable, 'disable')()
                                         }
