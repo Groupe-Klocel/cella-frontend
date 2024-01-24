@@ -76,5 +76,6 @@
     "no-serial-number": "Cette ramasse ne contient aucun ID",
     "cycle-count-finished": "Inventaire terminé",
     "error-print-data": "Erreur lors de l'impression",
-    "success-print-data": "Impression effectuée avec succès"
+    "success-print-data": "Impression effectuée avec succès",
+    "only-stock-hu-move": "Seules les unités de manutention et leurs contenus en stock peuvent être déplacés ou recevoir un déplacement"
 }

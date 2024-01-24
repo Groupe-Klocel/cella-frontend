@@ -21,6 +21,7 @@ import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect } from 'react';
+import parameters from '../../../../../common/parameters.json';
 
 export interface IHandlingUnitOriginChecksProps {
     dataToCheck: any;
@@ -43,27 +44,34 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
     // TYPED SAFE ALL
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
-        if (scannedInfo && handlingUnitInfos.data) {
+        if (scannedInfo && handlingUnitInfos) {
             const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
             if (
-                handlingUnitInfos.data.handlingUnits?.count !== 0 &&
-                handlingUnitInfos.data.handlingUnits.results[0].handlingUnitContents.length !== 0
+                handlingUnitInfos.handlingUnits?.count !== 0 &&
+                handlingUnitInfos.handlingUnits.results[0].handlingUnitContents.length !== 0
             ) {
-                if (
-                    handlingUnitInfos.data.handlingUnits.results[0].locationId === chosenLocationId
-                ) {
-                    const data: { [label: string]: any } = {};
-                    data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
-                } else {
+                if (handlingUnitInfos.handlingUnits.results[0].locationId !== chosenLocationId) {
                     showError(t('messages:no-hu-location'));
                     setResetForm(true);
                     setScannedInfo(undefined);
+                    return;
                 }
+                if (
+                    handlingUnitInfos.handlingUnits.results[0].category !==
+                    parameters.HANDLING_UNIT_CATEGORY_STOCK
+                ) {
+                    showError(t('messages:only-stock-hu-move'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    return;
+                }
+                const data: { [label: string]: any } = {};
+                data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
+                setTriggerRender(!triggerRender);
+                storedObject[`step${stepNumber}`] = {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                };
             } else {
                 showError(t('messages:no-hu-or-empty'));
                 setResetForm(true);

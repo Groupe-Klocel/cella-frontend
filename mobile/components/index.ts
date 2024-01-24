@@ -40,6 +40,7 @@ export * from './common/dumb/Wrappers/Wrappers';
 export * from './common/dumb/MenuCard/MenuCard';
 export * from './common/smart/AppHead/AppHead';
 export * from './common/smart/AppTable/AppTable';
+export * from './common/smart/BarcodeScanner/BarcodeScanner';
 export * from './common/smart/Drawers/DrawerItems';
 export * from './common/smart/Header/Header';
 export * from './common/smart/LanguageSelector/LanguageSelector';

@@ -1374,7 +1374,7 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.5.tgz#5f19d2b85a98e9558036f6a3cacc8819420f05cf"
   integrity sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==
 
-"@types/react@*", "@types/react@17.0.38", "@types/react@^16.9.35", "@types/react@^17.0.38":
+"@types/react@*", "@types/react@17.0.38", "@types/react@^17.0.38":
   version "17.0.38"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.38.tgz#f24249fefd89357d5fa71f739a686b8d7c7202bd"
   integrity sha512-SI92X1IA+FMnP3qM5m4QReluXzhcmovhZnLNm3pyeQlooi02qI7sLiepEYqT678uNiyc25XfCqxREFpy3W7YhQ==
@@ -1676,12 +1676,12 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zxing/library@^0.17.0":
-  version "0.17.1"
-  resolved "https://registry.yarnpkg.com/@zxing/library/-/library-0.17.1.tgz#4c82bf401391c2b79bfbab0a6b1143da6d8feb1a"
-  integrity sha512-RuiBZuteGaFXCle/b0X+g3peN8UpDc3pGe/J7hZBzKWaMZLbjensR7ja3vy47xWhXU4e8MICGqegPMxc2V2sow==
+"@zxing/library@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@zxing/library/-/library-0.20.0.tgz#11bc411b87693015389555c589da61532879be7b"
+  integrity sha512-6Ev6rcqVjMakZFIDvbUf0dtpPGeZMTfyxYg4HkVWioWeN7cRcnUWT3bU6sdohc82O1nPXcjq6WiGfXX2Pnit6A==
   dependencies:
-    ts-custom-error "^3.0.0"
+    ts-custom-error "^3.2.1"
   optionalDependencies:
     "@zxing/text-encoding" "~0.9.0"
 
@@ -6792,15 +6792,6 @@ react-is@^17.0.2:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
-react-qr-barcode-scanner@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/react-qr-barcode-scanner/-/react-qr-barcode-scanner-1.0.6.tgz#1df7ac3f3cb839ad673e8b619e0e93b4bdddc4e3"
-  integrity sha512-DdalO4oqHyxWPa4cIjiHeMS19HbIvKq+oo/PAglAsxmfhAUGC8sM1mJnzo0zPQM1yw9ZNpjrtqHz+rs86Mu7Ww==
-  dependencies:
-    "@types/react" "^16.9.35"
-    "@zxing/library" "^0.17.0"
-    react-webcam "^5.0.1"
-
 react-query@3.33.6:
   version "3.33.6"
   resolved "https://registry.yarnpkg.com/react-query/-/react-query-3.33.6.tgz#12be9c59efe3b63dd1ed74204ae37ad4a19c7d77"
@@ -6819,10 +6810,10 @@ react-sortable-hoc@^2.0.0:
     invariant "^2.2.4"
     prop-types "^15.5.7"
 
-react-webcam@^5.0.1:
-  version "5.2.4"
-  resolved "https://registry.yarnpkg.com/react-webcam/-/react-webcam-5.2.4.tgz#714b4460ea43ac7ed081824299cd2a580f764478"
-  integrity sha512-Qqj14t68Ke1eoEYjFde+N48HtuIJg0ePIQRpFww9eZt5oBcDpe/l60h+m3VRFJAR5/E3dOhSU5R8EJEcdCq/Eg==
+react-webcam@^7.2.0:
+  version "7.2.0"
+  resolved "https://registry.yarnpkg.com/react-webcam/-/react-webcam-7.2.0.tgz#64141c4c7bdd3e956620500187fa3fcc77e1fd49"
+  integrity sha512-xkrzYPqa1ag2DP+2Q/kLKBmCIfEx49bVdgCCCcZf88oF+0NPEbkwYk3/s/C7Zy0mhM8k+hpdNkBLzxg8H0aWcg==
 
 react@17.0.2:
   version "17.0.2"
@@ -7945,7 +7936,7 @@ trim-newlines@^3.0.0:
   resolved "https://registry.yarnpkg.com/trim-newlines/-/trim-newlines-3.0.1.tgz#260a5d962d8b752425b32f3a7db0dcacd176c144"
   integrity sha512-c1PTsA3tYrIsLGkJkzHF+w9F2EyxfXGo4UyJc4pFL++FMjnq0HJS69T3M7d//gKrFKwy429bouPescbjecU+Zw==
 
-ts-custom-error@^3.0.0:
+ts-custom-error@^3.2.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/ts-custom-error/-/ts-custom-error-3.3.1.tgz#8bd3c8fc6b8dc8e1cb329267c45200f1e17a65d1"
   integrity sha512-5OX1tzOjxWEgsr/YEUWSuPrQ00deKLh6D7OTWcvNHm12/7QPyRh8SYpyWvA4IZv8H/+GQWQEh/kwo95Q9OVW1A==

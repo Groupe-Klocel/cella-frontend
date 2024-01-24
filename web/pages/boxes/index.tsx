@@ -22,7 +22,7 @@ import {
     DeleteOutlined,
     EditTwoTone,
     EyeTwoTone,
-    StopOutlined
+    LockTwoTone
 } from '@ant-design/icons';
 import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { META_DEFAULTS, getModesFromPermissions, pathParams } from '@helpers';
@@ -156,7 +156,7 @@ const BoxesPage: PageComponent = () => {
                                 model.isSoftDeletable &&
                                 record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDisable, 'disable')()
                                         }

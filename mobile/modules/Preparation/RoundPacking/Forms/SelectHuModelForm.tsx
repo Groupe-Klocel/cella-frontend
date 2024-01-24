@@ -20,8 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, extractGivenConfigsParams } from '@helpers';
-import { Select } from 'antd';
+import { LsIsSecured, extractGivenConfigsParams, showError } from '@helpers';
+import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
@@ -35,6 +35,7 @@ import {
     useGetRoundsQuery,
     useParametersQuery
 } from 'generated/graphql';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectHuModelProps {
     process: string;
@@ -60,6 +61,27 @@ export const SelectHuModelForm = ({
 
     // TYPED SAFE ALL
     const [huModels, setHuModels] = useState<Array<any>>();
+
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (huModels?.some((option) => option.text.startsWith(camData))) {
+                const humToFind = huModels?.find((option) => option.text.startsWith(camData));
+                form.setFieldsValue({ huModel: humToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, huModels]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -113,7 +135,7 @@ export const SelectHuModelForm = ({
             );
             if (cData) {
                 cData.forEach((item) => {
-                    newTypeTexts.push({ key: item.id, text: item.name });
+                    newTypeTexts.push({ key: item.id, text: `${item.name} - ${item.description}` });
                 });
                 setHuModels(newTypeTexts);
             }
@@ -149,13 +171,23 @@ export const SelectHuModelForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:handling-unit-model')}
                     name="huModel"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                 >
-                    <Select style={{ height: '20px', marginBottom: '5px' }}>
+                    <Select
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    >
                         {huModels?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
                                 {option.text}
@@ -163,6 +195,7 @@ export const SelectHuModelForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>

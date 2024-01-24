@@ -75,7 +75,8 @@ export const LocationModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: null,
+            optionTable: '{"table": "Building", "fieldToDisplay": "name"}'
         },
         'block{building{name}}': {
             isListRequested: true,

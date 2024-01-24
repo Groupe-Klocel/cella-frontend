@@ -43,34 +43,41 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
         setResetForm
     } = dataToCheck;
 
-    console.log('huI', handlingUnitInfos);
-
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
-        if (scannedInfo && handlingUnitInfos.data) {
+        if (scannedInfo && handlingUnitInfos) {
             if (
                 handlingUnitInfos &&
-                handlingUnitInfos?.data?.handlingUnits &&
-                handlingUnitInfos?.data?.handlingUnits?.count != 0
+                handlingUnitInfos?.handlingUnits &&
+                handlingUnitInfos?.handlingUnits?.count != 0
             ) {
-                const handlingUnit = handlingUnitInfos.data.handlingUnits.results[0];
+                const handlingUnit = handlingUnitInfos.handlingUnits.results[0];
                 // HU origin/final identical = error
                 if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {
                     showError(t('messages:hu-origin-final-identical'));
                     setResetForm(true);
                     setScannedInfo(undefined);
-                } else {
-                    // HU ok = next step
-                    const data: { [label: string]: any } = {};
-                    data['finalHandlingUnit'] = handlingUnit;
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
+                    return;
                 }
+                if (
+                    handlingUnitInfos.handlingUnits.results[0].category !==
+                    parameters.HANDLING_UNIT_CATEGORY_STOCK
+                ) {
+                    showError(t('messages:only-stock-hu-move'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    return;
+                }
+                // HU ok = next step
+                const data: { [label: string]: any } = {};
+                data['finalHandlingUnit'] = handlingUnit;
+                setTriggerRender(!triggerRender);
+                storedObject[`step${stepNumber}`] = {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                };
             } else {
                 const type =
                     scannedInfo[0] == '0' || scannedInfo[0] == 'P'

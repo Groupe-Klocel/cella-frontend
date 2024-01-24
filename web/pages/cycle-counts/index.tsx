@@ -21,7 +21,7 @@ import {
     DeleteOutlined,
     EditTwoTone,
     EyeTwoTone,
-    StopOutlined,
+    LockTwoTone,
     CaretRightOutlined
 } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
@@ -61,18 +61,29 @@ const CycleCountPages: PageComponent = () => {
             ) : null
     };
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+    const confirmAction = (
+        info: any | undefined,
+        setInfo: any,
+        action: 'delete' | 'disable' | 'enable'
+    ) => {
         return () => {
+            const titre =
+                action == 'enable'
+                    ? 'messages:enable-confirm'
+                    : action == 'delete'
+                    ? 'messages:delete-confirm'
+                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t(titre),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
         };
     };
+
     const confirmStart = (id: string | undefined, setId: any, action: 'start') => {
         return () => {
             Modal.confirm({
@@ -140,9 +151,10 @@ const CycleCountPages: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isSoftDeletable ? (
+                                model.isSoftDeletable &&
+                                record.status < configs.CYCLE_COUNT_STATUS_CLOSED ? (
                                     <Button
-                                        icon={<StopOutlined />}
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDisable, 'disable')()
                                         }
