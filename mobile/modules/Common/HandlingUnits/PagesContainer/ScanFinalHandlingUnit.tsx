@@ -22,6 +22,7 @@ import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
 import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 export interface IScanFinalHandlingUnitProps {
     process: string;
@@ -44,6 +45,7 @@ export const ScanFinalHandlingUnit = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
+    const [handlingUnitInfos, setHandlingUnitInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
 
     //Pre-requisite: initialize current step
@@ -59,16 +61,150 @@ export const ScanFinalHandlingUnit = ({
     }, []);
 
     // ScanFinalHandlingUnit-2: launch query
-    // const handlingUnitInfos = useHandlingUnits({ barcode: `${scannedInfo}` }, 1, 100, null);
-    const handlingUnitInfos = useGetHandlingUnitsQuery<Partial<GetHandlingUnitsQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: { barcode: [`${scannedInfo}`] },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
+    const getHU = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
+        if (scannedInfo) {
+            const query = gql`
+                query handlingUnits($filters: HandlingUnitSearchFilters) {
+                    handlingUnits(filters: $filters) {
+                        count
+                        itemsPerPage
+                        totalPages
+                        results {
+                            id
+                            name
+                            type
+                            typeText
+                            barcode
+                            category
+                            categoryText
+                            code
+                            parentHandlingUnitId
+                            parentHandlingUnit {
+                                id
+                                name
+                                type
+                                typeText
+                            }
+                            childrenHandlingUnits {
+                                id
+                                name
+                                type
+                                typeText
+                                barcode
+                                category
+                                categoryText
+                                code
+                                handlingUnitContents {
+                                    id
+                                    quantity
+                                    reservation
+                                    stockStatus
+                                    stockStatusText
+                                    stockOwnerId
+                                    handlingUnit {
+                                        id
+                                        name
+                                        locationId
+                                        location {
+                                            id
+                                            name
+                                        }
+                                    }
+                                    stockOwner {
+                                        id
+                                        name
+                                    }
+                                    articleId
+                                    article {
+                                        id
+                                        name
+                                        stockOwnerId
+                                        stockOwner {
+                                            name
+                                        }
+                                        baseUnitWeight
+                                    }
+                                    handlingUnitContentFeatures {
+                                        id
+                                        featureCode {
+                                            name
+                                            unique
+                                        }
+                                        value
+                                    }
+                                }
+                            }
+                            reservation
+                            status
+                            stockOwnerId
+                            stockOwner {
+                                name
+                            }
+                            locationId
+                            location {
+                                name
+                                category
+                                categoryText
+                            }
+                            handlingUnitContents {
+                                id
+                                quantity
+                                reservation
+                                stockStatus
+                                stockStatusText
+                                stockOwnerId
+                                handlingUnit {
+                                    id
+                                    name
+                                    locationId
+                                    location {
+                                        id
+                                        name
+                                    }
+                                }
+                                stockOwner {
+                                    id
+                                    name
+                                }
+                                articleId
+                                article {
+                                    id
+                                    name
+                                    stockOwnerId
+                                    stockOwner {
+                                        name
+                                    }
+                                    baseUnitWeight
+                                }
+                                handlingUnitContentFeatures {
+                                    id
+                                    featureCode {
+                                        name
+                                        unique
+                                    }
+                                    value
+                                }
+                            }
+                        }
+                    }
+                }
+            `;
+
+            const variables = {
+                filters: { barcode: [`${scannedInfo}`] }
+            };
+            const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
+            return handlingUnitInfos;
         }
-    );
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const result = await getHU(scannedInfo);
+            if (result) setHandlingUnitInfos(result);
+        }
+        fetchData();
+    }, [scannedInfo]);
 
     const dataToCheck = {
         process,

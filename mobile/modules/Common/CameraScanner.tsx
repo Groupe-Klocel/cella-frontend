@@ -18,12 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { NavButton } from '@components';
+import { NavButton, BarcodeScanner } from '@components';
 import { CameraOutlined, CloseOutlined, SyncOutlined, UndoOutlined } from '@ant-design/icons';
 import { Col, Row, Space } from 'antd';
-
-const BarcodeScannerComponent = dynamic(() => import('react-qr-barcode-scanner'), { ssr: false });
 
 export interface ICameraScannerProps {
     camData: { [label: string]: any };
@@ -63,7 +60,7 @@ function CameraScanner({ camData: { setCamData }, handleCleanData }: ICameraScan
                         <></>
                     ) : (
                         <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                            <BarcodeScannerComponent
+                            <BarcodeScanner
                                 width={400}
                                 height={200}
                                 onUpdate={(err, result) => {
