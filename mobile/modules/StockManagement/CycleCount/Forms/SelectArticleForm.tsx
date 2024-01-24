@@ -20,13 +20,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured } from '@helpers';
-import { Select } from 'antd';
+import { LsIsSecured, showError } from '@helpers';
+import { Select, Form } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { GetAllArticlesQuery, useGetAllArticlesQuery } from 'generated/graphql';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectArticleProps {
     process: string;
@@ -49,6 +50,27 @@ export const SelectArticleForm = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
 
     const [articles, setArticles] = useState<Array<any>>();
+
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (articles?.some((option) => option.text === camData)) {
+                const articleToFind = articles?.find((option) => option.text === camData);
+                form.setFieldsValue({ article: articleToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, articles]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -123,13 +145,23 @@ export const SelectArticleForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:articles')}
                     name="article"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                 >
-                    <Select style={{ height: '20px', marginBottom: '5px' }}>
+                    <Select
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    >
                         {articles?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
                                 {option.text}
@@ -137,6 +169,7 @@ export const SelectArticleForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons
                     input={{ ...buttons }}
                     output={{ onBack }}

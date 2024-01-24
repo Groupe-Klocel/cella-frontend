@@ -1083,6 +1083,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             reservation
                             stockStatus
                             stockStatusText
+                            reservation
                             articleId
                             stockOwnerId
                             stockOwner {
