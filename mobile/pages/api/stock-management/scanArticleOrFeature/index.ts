@@ -75,6 +75,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         quantity
                         stockStatus
                         stockStatusText
+                        reservation
                         stockOwnerId
                         stockOwner {
                             id

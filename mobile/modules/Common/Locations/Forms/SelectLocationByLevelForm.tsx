@@ -20,10 +20,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured } from '@helpers';
-import { Select } from 'antd';
+import { LsIsSecured, showError } from '@helpers';
+import { Select, Form } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectLocationByLevelProps {
     process: string;
@@ -45,7 +46,28 @@ export const SelectLocationByLevelForm = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
 
     // TYPED SAFE ALL
-    const [levelsChoices, setLevelsChoices] = useState<any>([]);
+    const [levelsChoices, setLevelsChoices] = useState<Array<any>>();
+
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (levelsChoices?.some((option) => option.text === camData)) {
+                const levelToFind = levelsChoices?.find((option) => option.text === camData);
+                form.setFieldsValue({ level: levelToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, levelsChoices]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -115,13 +137,23 @@ export const SelectLocationByLevelForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:level')}
                     name="level"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                 >
-                    <Select style={{ height: '20px', marginBottom: '5px' }}>
+                    <Select
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    >
                         {levelsChoices?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
                                 {option.text}
@@ -129,6 +161,7 @@ export const SelectLocationByLevelForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>

@@ -78,5 +78,6 @@
     "only-stock-hu-move": "Seules les unités de manutention et leurs contenus en stock peuvent être déplacés ou recevoir un déplacement",
     "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu",
     "article-creation-confirm": "Article inconnu en stock, voulez-vous le créer ?",
-    "already-scanned": "Element déjà scanné"
+    "already-scanned": "Element déjà scanné",
+    "wrong-stock-status-or-reservation": "L'élément scanné n'a pas le statut de stock ou la réservation attendue"
 }

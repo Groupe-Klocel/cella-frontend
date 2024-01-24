@@ -139,6 +139,7 @@ export const SelectStockStatusForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:stock-status')}

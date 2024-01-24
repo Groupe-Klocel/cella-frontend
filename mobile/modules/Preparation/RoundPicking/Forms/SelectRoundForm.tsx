@@ -21,13 +21,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '@helpers';
-import { Select } from 'antd';
+import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useGetRoundsQuery, GetRoundsQuery } from 'generated/graphql';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectRoundProps {
     process: string;
@@ -49,6 +50,27 @@ export const SelectRoundForm = ({
 
     // TYPED SAFE ALL
     const [rounds, setRounds] = useState<Array<any>>();
+
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (rounds?.some((option) => option.text === camData)) {
+                const roundToFind = rounds?.find((option) => option.text === camData);
+                form.setFieldsValue({ rounds: roundToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, rounds]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -168,13 +190,23 @@ export const SelectRoundForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:rounds')}
                     name="rounds"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                 >
-                    <Select style={{ height: '20px', marginBottom: '5px' }}>
+                    <Select
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    >
                         {rounds?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
                                 {option.text}
@@ -182,6 +214,7 @@ export const SelectRoundForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>
