@@ -111,8 +111,7 @@ const HandlingUnitModelsPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
-                                model.isEditable &&
-                                record.status !== configs.HANDLING_UNIT_MODEL_STATUS_CLOSED ? (
+                                model.isEditable ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
