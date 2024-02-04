@@ -91,10 +91,7 @@ const HandlingUnitModelPage: PageComponent = () => {
         onBackRoute: '/handling-unit-models',
         actionsComponent: (
             <Space>
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Update) &&
-                model.isEditable &&
-                data?.status !== configs.HANDLING_UNIT_MODEL_STATUS_CLOSED ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/edit/${id}`}
