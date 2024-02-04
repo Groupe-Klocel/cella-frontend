@@ -63,6 +63,9 @@ query GetHandlingUnitContentFeatures(
                         name
                         category
                         categoryText
+                        block {
+                            name
+                        }
                     }
                     stockOwnerId
                     stockOwner {

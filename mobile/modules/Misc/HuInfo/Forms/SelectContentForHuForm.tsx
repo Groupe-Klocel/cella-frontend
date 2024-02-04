@@ -141,6 +141,8 @@ export const SelectContentForHuForm = ({
         storage.set(process, JSON.stringify(storedObject));
     };
 
+    console.log('Ctts', contents);
+
     return (
         <WrapperForm>
             {data && !isLoading ? (
@@ -190,7 +192,7 @@ export const SelectContentForHuForm = ({
                                     </Col>
                                     <Col span={16}>
                                         <Typography style={{ fontSize: '10px' }}>
-                                            {content.quantity ? content.quantity : 1}
+                                            {content.quantity ? content.quantity : 0}
                                         </Typography>
                                     </Col>
                                 </Row>

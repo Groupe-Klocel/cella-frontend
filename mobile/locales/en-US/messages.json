@@ -61,8 +61,6 @@
     "round-packing-failed": "Round paking has failed",
     "no-box-to-close": "No box to close",
     "closure-failed": "Closure failed",
-    "incorrect-hu-carrier": "Carrier is not the expected one",
-    "article-creation-confirm": "Article unknown in stock, do you want to create it?",
     "hu-exists-other-location": "Hangling unit exists in location {{locationName}}",
     "hu-creation-confirm": "Handling unit unknown, do you want to create it?",
     "article-not-available-for-hu": "Article not available for HU: {{huName}}",
@@ -77,5 +75,9 @@
     "cycle-count-finished": "Finish cycle count",
     "error-print-data": "Error during printing",
     "success-print-data": "Printed successfully. Please check selected printer",
-    "only-stock-hu-move": "Only handling units and their contents in stock can be moved or receive a move"
+    "only-stock-hu-move": "Only handling units and their contents in stock can be moved or receive a move",
+    "incorrect-hu-carrier": "Carrier is not the expected one",
+    "article-creation-confirm": "Article unknown in stock, do you want to create it?",
+    "already-scanned": "Already scanned",
+    "wrong-stock-status-or-reservation": "Scanned item does not have expected stock status or reservation"
 }
