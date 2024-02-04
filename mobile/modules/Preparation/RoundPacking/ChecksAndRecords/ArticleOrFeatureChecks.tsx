@@ -79,54 +79,97 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         }
     }, [scannedInfo]);
 
+    function getCurrentDeliveryLine(articleId: string) {
+        const currentDeliveryLine = storedObject['step10'].data.round.roundAdvisedAddresses
+            .filter((raa: any) => {
+                // Check if handlingUnitContent.articleId is equal to the given value
+                return raa.handlingUnitContent.articleId === articleId;
+            })
+            .find((raa: any) => {
+                if (!raa.roundLineDetail.extraNumber2) raa.roundLineDetail.extraNumber2 = 0;
+                return (
+                    raa.roundLineDetail.quantityToBeProcessed - raa.roundLineDetail.extraNumber2 > 0
+                );
+            }).roundLineDetail.deliveryLine;
+        return currentDeliveryLine;
+    }
+
     // ScanBox-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && fetchResult) {
             let found = false;
+            const data: { [label: string]: any } = {};
+            const handlingUnitContents = storedObject['step10'].data.roundHU.handlingUnitContents;
+            const deliveryLine = getCurrentDeliveryLine(
+                fetchResult.resType === 'serialNumber'
+                    ? fetchResult.article.articleId
+                    : fetchResult.articleLuBarcodes[0].articleId
+            );
             if (fetchResult.resType === 'serialNumber') {
                 // HUCF scanned
-                const handlingUnitContents =
-                    storedObject['step10'].data.roundHU.handlingUnitContents;
                 const huCToCheck = fetchResult?.handlingUnitContentFeature.handlingUnitContentId;
                 if (handlingUnitContents.some((item: any) => item.id === huCToCheck)) {
                     found = true;
                 }
-
                 if (found) {
-                    const data: { [label: string]: any } = {};
-                    data['resType'] = fetchResult.resType;
-                    data['article'] = { ...fetchResult.article, id: fetchResult.article.articleId };
-                    data['feature'] = fetchResult.handlingUnitContentFeature;
-                    data['handlingUnitContent'] =
-                        fetchResult.handlingUnitContentFeature.handlingUnitContent;
-                    data['defaultQuantity'] = 1;
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
+                    //check stockStatus and reservation
+                    if (
+                        fetchResult.handlingUnitContentFeature?.handlingUnitContent.stockStatus ===
+                            deliveryLine.stockStatus &&
+                        fetchResult.handlingUnitContentFeature?.handlingUnitContent.reservation ===
+                            deliveryLine.reservation
+                    ) {
+                        data['resType'] = fetchResult.resType;
+                        data['article'] = {
+                            ...fetchResult.article,
+                            id: fetchResult.article.articleId
+                        };
+                        data['feature'] = fetchResult.handlingUnitContentFeature;
+                        data['handlingUnitContent'] =
+                            fetchResult.handlingUnitContentFeature?.handlingUnitContent;
+                        data['defaultQuantity'] = 1;
+                        setTriggerRender(!triggerRender);
+                        storedObject[`step${stepNumber}`] = {
+                            ...storedObject[`step${stepNumber}`],
+                            data
+                        };
+                    } else {
+                        showError(t('messages:wrong-stock-status-or-reservation'));
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                        setIsLoading(false);
+                    }
                 }
             } else {
                 // EAN scanned
-                const handlingUnitContents =
-                    storedObject['step10'].data.roundHU.handlingUnitContents;
                 if (
                     handlingUnitContents.some(
                         (item: any) => item.articleId === fetchResult.articleLuBarcodes[0].articleId
                     )
                 ) {
                     found = true;
-                    const data: { [label: string]: any } = {};
-                    data['resType'] = fetchResult.resType;
-                    data['article'] = fetchResult.articleLuBarcodes[0].article;
-                    data['handlingUnitContent'] = handlingUnitContents.filter(
-                        (item: any) => item.articleId === fetchResult.articleLuBarcodes[0].articleId
+                    const articleId = fetchResult.articleLuBarcodes[0].articleId;
+                    const handlingUnitContent = handlingUnitContents.filter(
+                        (item: any) => item.articleId === articleId
                     )[0];
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
+                    if (
+                        handlingUnitContent.stockStatus === deliveryLine.stockStatus &&
+                        handlingUnitContent.reservation === deliveryLine.reservation
+                    ) {
+                        data['resType'] = fetchResult.resType;
+                        data['article'] = fetchResult.articleLuBarcodes[0].article;
+                        data['handlingUnitContent'] = handlingUnitContent;
+                        setTriggerRender(!triggerRender);
+                        storedObject[`step${stepNumber}`] = {
+                            ...storedObject[`step${stepNumber}`],
+                            data
+                        };
+                    } else {
+                        showError(t('messages:wrong-stock-status-or-reservation'));
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                        setIsLoading(false);
+                    }
                 }
                 //create HU or HUO
             }

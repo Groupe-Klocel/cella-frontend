@@ -20,10 +20,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select an article among a list of stock owners corresponding to a given article
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured } from '@helpers';
-import { Select } from 'antd';
+import { LsIsSecured, showError } from '@helpers';
+import { Select, Form } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectArticleByStockOwnerProps {
     process: string;
@@ -45,7 +46,30 @@ export const SelectArticleByStockOwnerForm = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
 
     // TYPED SAFE ALL
-    const [stockOwnerChoice, setStockOwnerChoice] = useState<any>([]);
+    const [stockOwnerChoice, setStockOwnerChoice] = useState<Array<any>>();
+
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (stockOwnerChoice?.some((option) => option.text === camData)) {
+                const stockOwnerToFind = stockOwnerChoice?.find(
+                    (option) => option.text === camData
+                );
+                form.setFieldsValue({ stockOwnerId: stockOwnerToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, stockOwnerChoice]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -70,7 +94,7 @@ export const SelectArticleByStockOwnerForm = ({
     useEffect(() => {
         const newIdOpts: Array<any> = [];
         articleLuBarcodes?.forEach((e: any) => {
-            if (e.stockowner) {
+            if (e.stockOwner) {
                 newIdOpts.push({ text: e.stockOwner.name!, key: e.stockOwnerId! });
             }
         });
@@ -117,13 +141,23 @@ export const SelectArticleByStockOwnerForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:stock-owner')}
                     name="stockOwnerId"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                 >
-                    <Select style={{ height: '20px', marginBottom: '5px' }}>
+                    <Select
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    >
                         {stockOwnerChoice?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
                                 {option.text}
@@ -131,6 +165,7 @@ export const SelectArticleByStockOwnerForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>
