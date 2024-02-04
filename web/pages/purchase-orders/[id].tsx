@@ -143,6 +143,7 @@ const PurchaseOrderPage: PageComponent = () => {
                         }}
                         dataToPrint={{ id: idToPrint, date: dateLocal }}
                         documentName="K_PurchaseOrder"
+                        documentReference={data?.name}
                     />
                 </Space>
             ) : (

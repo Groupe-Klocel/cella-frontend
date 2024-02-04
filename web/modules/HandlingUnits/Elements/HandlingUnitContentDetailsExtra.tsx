@@ -34,19 +34,22 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { useAppState } from 'context/AppContext';
 import { HandlingUnitContentFeatureModelV2 as model } from 'models/HandlingUnitContentFeatureModelV2';
+import parameters from '../../../../common/parameters.json';
 
 export interface IItemDetailsProps {
     handlingUnitContentId?: string | any;
     handlingUnitName?: string | any;
     articleName?: string | any;
     quantity?: Number | any;
+    handlingUnit_category?: Number | any;
 }
 
 const HandlingUnitContentDetailsExtra = ({
     handlingUnitContentId,
     handlingUnitName,
     articleName,
-    quantity
+    quantity,
+    handlingUnit_category
 }: IItemDetailsProps) => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -164,7 +167,8 @@ const HandlingUnitContentDetailsExtra = ({
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
-                                model.isEditable ? (
+                                model.isEditable &&
+                                handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -174,7 +178,8 @@ const HandlingUnitContentDetailsExtra = ({
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isSoftDeletable ? (
+                                model.isSoftDeletable &&
+                                handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
@@ -192,7 +197,8 @@ const HandlingUnitContentDetailsExtra = ({
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isDeletable ? (
+                                model.isDeletable &&
+                                handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger

@@ -62,6 +62,9 @@ query GetHandlingUnitContents(
                     replenish
                     category
                     categoryText
+                    block {
+                        name
+                    }
                 }
                 parentHandlingUnit {
                     name

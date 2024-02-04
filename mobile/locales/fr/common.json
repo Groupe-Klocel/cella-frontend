@@ -144,5 +144,6 @@
     "currentCCMovement-status": "Statut du mouvement d'inventaire en cours",
     "parent-handling-unit": "Unité de manutention parente",
     "hu-count-finished": "Comptage UM terminé",
-    "location-count-finished": "Comptage emplacement terminé"
+    "location-count-finished": "Comptage emplacement terminé",
+    "feature-code": "Donnée traçable"
 }

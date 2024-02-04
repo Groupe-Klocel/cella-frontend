@@ -638,6 +638,9 @@
     "userId": "User",
     "extraStatus1": "Control type",
     "extraStatus1Text": "Control type",
+    "recipients-mail-adresses": "E-mail",
+    "reference": "Reference",
     "initialStockStatus": "Initial Stock Status",
-    "FinalStockStatus": "Final Stock Status"
+    "FinalStockStatus": "Final Stock Status",
+    "print_block": "Print full block"
 }

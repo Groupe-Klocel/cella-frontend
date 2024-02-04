@@ -122,7 +122,7 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                                         huContentOutboundModes.includes(ModeEnum.Update) &&
                                         HandlingUnitContentOutboundModelV2.isEditable &&
                                         record?.status <
-                                            configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
+                                            configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_ESTIMATED ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary(
@@ -140,7 +140,7 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                                         huContentOutboundModes.includes(ModeEnum.Delete) &&
                                         HandlingUnitContentOutboundModelV2.isSoftDeletable &&
                                         record?.status <
-                                            configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_CANCELLED ? (
+                                            configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_ESTIMATED ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>

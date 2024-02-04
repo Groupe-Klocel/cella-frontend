@@ -194,7 +194,13 @@ const useHandlingUnitInbounds = (search: any, page: number, itemsPerPage: number
     return hu_inbounds;
 };
 
-const useHandlingUnitOutbounds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+const useHandlingUnitOutbounds = (
+    search: any,
+    advancedSearch: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any
+) => {
     const { graphqlRequestClient } = useAuth();
 
     const sortByDate = {

@@ -185,7 +185,7 @@ const RoundPages: PageComponent = () => {
         selectedRowKeys,
         onChange: onSelectChange,
         getCheckboxProps: (record: any) => ({
-            disabled: record.status < configs.ROUND_STATUS_ESTIMATED ? true : false
+            disabled: record.status != configs.ROUND_STATUS_ESTIMATED ? true : false
         })
     };
 

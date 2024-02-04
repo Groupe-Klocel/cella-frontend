@@ -55,7 +55,8 @@ export const DocumentHistoryModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: null
+            optionTable: null,
+            defaultSort: 'descending'
         },
         documentName: {
             isListRequested: true,
@@ -252,6 +253,27 @@ export const DocumentHistoryModelV2: ModelType = {
             isExcludedFromList: false,
             isSortable: true,
             searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: null
+        },
+        reference: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,

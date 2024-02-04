@@ -200,7 +200,7 @@ export const SelectRoundForm = ({
     const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
         const query = gql`
-            query return($id: String!) {
+            query round($id: String!) {
                 round(id: $id) {
                     id
                     name
@@ -291,6 +291,9 @@ export const SelectRoundForm = ({
                                 id
                                 stockOwnerId
                                 deliveryId
+                                stockStatus
+                                stockStatusText
+                                reservation
                             }
                         }
                     }
