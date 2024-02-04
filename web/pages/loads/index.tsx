@@ -68,6 +68,7 @@ const LoadsPage: PageComponent = () => {
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
+    const [referenceToPrint, setReferenceToPrint] = useState<string>();
 
     const headerData: HeaderData = {
         title: t('common:loads'),
@@ -93,16 +94,18 @@ const LoadsPage: PageComponent = () => {
         }
     }, [defaultPrintLanguage.data]);
 
-    const defaultPrinterParameter = useListParametersForAScopeQuery(graphqlRequestClient, {
+    const defaultPrinterLaserParameter = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'global',
-        code: 'default_printer'
+        code: 'default_printer_laser'
     });
-    const [defaultPrinter, setDefaultPrinter] = useState<string>();
+    const [defaultPrinterLaser, setDefaultPrinterLaser] = useState<string>();
     useEffect(() => {
-        if (defaultPrinterParameter) {
-            setDefaultPrinter(defaultPrinterParameter.data?.listParametersForAScope[0].text);
+        if (defaultPrinterLaserParameter) {
+            setDefaultPrinterLaser(
+                defaultPrinterLaserParameter.data?.listParametersForAScope[0].text
+            );
         }
-    }, [defaultPrinterParameter.data]);
+    }, [defaultPrinterLaserParameter.data]);
 
     //retrieve client's date for printing
     const local = moment();
@@ -181,7 +184,7 @@ const LoadsPage: PageComponent = () => {
                                 id: data.updateLoad.id,
                                 statusDispatched
                             },
-                            defaultPrinter
+                            defaultPrinterLaser
                         );
                     }
                     setTriggerRefresh(!triggerRefresh);
@@ -235,6 +238,7 @@ const LoadsPage: PageComponent = () => {
                             id: string;
                             status: number;
                             numberHuLoaded: number;
+                            name: string;
                         }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
@@ -260,7 +264,7 @@ const LoadsPage: PageComponent = () => {
                                 modes.includes(ModeEnum.Update) &&
                                 record.status > configs.LOAD_LINE_STATUS_CREATED &&
                                 record.status < configs.LOAD_STATUS_DISPATCHED &&
-                                record?.numberHuLoaded > 0 &&
+                                record.numberHuLoaded > 0 &&
                                 model.isEditable ? (
                                     <Button
                                         loading={dispatch}
@@ -296,6 +300,7 @@ const LoadsPage: PageComponent = () => {
                                         onClick={() => {
                                             setShowSinglePrintModal(true);
                                             setIdToPrint(record.id);
+                                            setReferenceToPrint(record.name);
                                         }}
                                     />
                                 ) : (
@@ -318,6 +323,7 @@ const LoadsPage: PageComponent = () => {
                     statusDispatched
                 }}
                 documentName="K_LoadLoadingList"
+                documentReference={referenceToPrint}
             />
         </>
     );

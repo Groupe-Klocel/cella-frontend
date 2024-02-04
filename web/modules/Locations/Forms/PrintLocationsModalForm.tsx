@@ -19,7 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-import { Card, Col, Divider, Form, InputNumber, Modal, Row, Select } from 'antd';
+import { Card, Col, Divider, Form, InputNumber, Modal, Row, Select, Switch } from 'antd';
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import {
     DataQueryType,
@@ -42,11 +43,10 @@ import { gql } from 'graphql-request';
 const { Option } = Select;
 
 export interface IPrintLocationsModalFormProps {
-    id: string | undefined;
     showModal: any;
 }
 
-const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProps) => {
+const PrintLocationsModalForm = ({ showModal }: IPrintLocationsModalFormProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const { graphqlRequestClient } = useAuth();
@@ -57,7 +57,7 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
     const router = useRouter();
     const [printers, setPrinters] = useState<Array<FormOptionType>>();
     const [printLanguage, setPrintLanguage] = useState<string>();
-
+    const [printBlock, setPrintBlock] = useState(false);
     // Get default printing language
     const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'global',
@@ -304,6 +304,7 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
             printer
                 ? showSuccess(t('messages:success-print-data'))
                 : window.open(documentResult.generateDocument.url, '_blank');
+            showModal.setShowRangeLocationsModal(false);
         }
     };
 
@@ -324,7 +325,8 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
                     finalAisle,
                     finalColumn,
                     finalLevel,
-                    finalPosition
+                    finalPosition,
+                    printblock
                 } = formData;
                 const originLocationInput = {
                     blockName: blockName,
@@ -341,6 +343,20 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
                     level: finalLevel,
                     position: finalPosition
                 };
+
+                if (printblock) {
+                    //from
+                    originLocationInput.aisle = '';
+                    originLocationInput.column = '';
+                    originLocationInput.level = '';
+                    originLocationInput.position = '';
+                    //to
+                    finalLocationInput.aisle = '';
+                    finalLocationInput.column = '';
+                    finalLocationInput.level = '';
+                    finalLocationInput.position = '';
+                }
+
                 printData(
                     { originLocationInput, finalLocationInput },
                     formData.copies,
@@ -351,7 +367,12 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
                 showError(errorMessageUpdateData);
             });
     };
-
+    const onPrintBlockChecked = (checked: boolean) => {
+        setPrintBlock(checked);
+    };
+    const spanStyle = {
+        marginRight: '10px'
+    };
     return (
         <Modal
             title={t('actions:chose-locations-range')}
@@ -391,278 +412,313 @@ const PrintLocationsModalForm = ({ showModal, id }: IPrintLocationsModalFormProp
                                 ))}
                             </Select>
                         </Form.Item>
+                        <Row>
+                            <span style={spanStyle}> {t('d:print_block')} : </span>
+                            <Form.Item name="printblock">
+                                <Switch
+                                    checkedChildren={<CheckOutlined />}
+                                    unCheckedChildren={<CloseOutlined />}
+                                    checked={printBlock}
+                                    onChange={onPrintBlockChecked}
+                                />
+                            </Form.Item>
+                        </Row>
                     </Col>
                 </Row>
                 <Row>
                     <Col span={12} style={{ paddingRight: '8px' }}>
-                        <Card type="inner" title="From:">
-                            <Form.Item
-                                label={t('d:originAisle')}
-                                name="originAisle"
-                                style={{ marginBottom: 5 }}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: `${t('messages:error-message-select-an', {
+                        {printBlock ? (
+                            <></>
+                        ) : (
+                            <Card type="inner" title="From:">
+                                <Form.Item
+                                    label={t('d:originAisle')}
+                                    hidden={printBlock}
+                                    name="originAisle"
+                                    style={{ marginBottom: 5 }}
+                                    rules={[
+                                        {
+                                            required: !printBlock,
+                                            message: `${t('messages:error-message-select-an', {
+                                                name: t('d:aisle')
+                                            })}`
+                                        }
+                                    ]}
+                                >
+                                    <Select
+                                        placeholder={`${t('messages:please-select-an', {
                                             name: t('d:aisle')
-                                        })}`
-                                    }
-                                ]}
-                            >
-                                <Select
-                                    placeholder={`${t('messages:please-select-an', {
-                                        name: t('d:aisle')
-                                    })}`}
-                                    onChange={(value: string) => {
-                                        onInputChange(value, 'origin', setOriginAisleToSearch);
-                                    }}
-                                    allowClear
-                                    disabled={blockToSearch ? false : true}
-                                >
-                                    {aisleValueOptions?.map((aisle: any) => (
-                                        <Option key={aisle} value={aisle}>
-                                            {aisle}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                                        })}`}
+                                        onChange={(value: string) => {
+                                            onInputChange(value, 'origin', setOriginAisleToSearch);
+                                        }}
+                                        allowClear
+                                        disabled={blockToSearch ? false : true}
+                                    >
+                                        {aisleValueOptions?.map((aisle: any) => (
+                                            <Option key={aisle} value={aisle}>
+                                                {aisle}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
 
-                            <Form.Item
-                                label={t('d:originColumn')}
-                                name="originColumn"
-                                style={{ marginBottom: 5 }}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: `${t('messages:error-message-select-a', {
+                                <Form.Item
+                                    label={t('d:originColumn')}
+                                    hidden={printBlock}
+                                    name="originColumn"
+                                    style={{ marginBottom: 5 }}
+                                    rules={[
+                                        {
+                                            required: !printBlock,
+                                            message: `${t('messages:error-message-select-a', {
+                                                name: t('d:column')
+                                            })}`
+                                        }
+                                    ]}
+                                >
+                                    <Select
+                                        placeholder={`${t('messages:please-select-a', {
                                             name: t('d:column')
-                                        })}`
-                                    }
-                                ]}
-                            >
-                                <Select
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:column')
-                                    })}`}
-                                    onChange={(value: string) => {
-                                        onInputChange(value, 'origin', setOriginColumnToSearch);
-                                    }}
-                                    allowClear
-                                    disabled={blockToSearch && originAisleToSearch ? false : true}
-                                >
-                                    {originColumnValueOptions?.map((column: any) => (
-                                        <Option key={column} value={column}>
-                                            {column}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                                        })}`}
+                                        onChange={(value: string) => {
+                                            onInputChange(value, 'origin', setOriginColumnToSearch);
+                                        }}
+                                        allowClear
+                                        disabled={
+                                            blockToSearch && originAisleToSearch ? false : true
+                                        }
+                                    >
+                                        {originColumnValueOptions?.map((column: any) => (
+                                            <Option key={column} value={column}>
+                                                {column}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
 
-                            <Form.Item
-                                label={t('d:originLevel')}
-                                name="originLevel"
-                                style={{ marginBottom: 5 }}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: `${t('messages:error-message-select-a', {
+                                <Form.Item
+                                    label={t('d:originLevel')}
+                                    hidden={printBlock}
+                                    name="originLevel"
+                                    style={{ marginBottom: 5 }}
+                                    rules={[
+                                        {
+                                            required: !printBlock,
+                                            message: `${t('messages:error-message-select-a', {
+                                                name: t('d:level')
+                                            })}`
+                                        }
+                                    ]}
+                                >
+                                    <Select
+                                        placeholder={`${t('messages:please-select-a', {
                                             name: t('d:level')
-                                        })}`
-                                    }
-                                ]}
-                            >
-                                <Select
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:level')
-                                    })}`}
-                                    onChange={(value: string) => {
-                                        onInputChange(value, 'origin', setOriginLevelToSearch);
-                                    }}
-                                    allowClear
-                                    disabled={
-                                        blockToSearch && originAisleToSearch && originColumnToSearch
-                                            ? false
-                                            : true
-                                    }
-                                >
-                                    {originLevelValueOptions?.map((level: any) => (
-                                        <Option key={level} value={level}>
-                                            {level}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                                        })}`}
+                                        onChange={(value: string) => {
+                                            onInputChange(value, 'origin', setOriginLevelToSearch);
+                                        }}
+                                        allowClear
+                                        disabled={
+                                            blockToSearch &&
+                                            originAisleToSearch &&
+                                            originColumnToSearch
+                                                ? false
+                                                : true
+                                        }
+                                    >
+                                        {originLevelValueOptions?.map((level: any) => (
+                                            <Option key={level} value={level}>
+                                                {level}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
 
-                            <Form.Item
-                                label={t('d:originPosition')}
-                                name="originPosition"
-                                style={{ marginBottom: 5 }}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: `${t('messages:error-message-select-a', {
-                                            name: t('d:position')
-                                        })}`
-                                    }
-                                ]}
-                            >
-                                <Select
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:position')
-                                    })}`}
-                                    allowClear
-                                    disabled={
-                                        blockToSearch &&
-                                        originAisleToSearch &&
-                                        originColumnToSearch &&
-                                        originLevelToSearch
-                                            ? false
-                                            : true
-                                    }
+                                <Form.Item
+                                    label={t('d:originPosition')}
+                                    hidden={printBlock}
+                                    name="originPosition"
+                                    style={{ marginBottom: 5 }}
+                                    rules={[
+                                        {
+                                            required: !printBlock,
+                                            message: `${t('messages:error-message-select-a', {
+                                                name: t('d:position')
+                                            })}`
+                                        }
+                                    ]}
                                 >
-                                    {originPositionValueOptions?.map((position: any) => (
-                                        <Option key={position} value={position}>
-                                            {position}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                        </Card>
+                                    <Select
+                                        placeholder={`${t('messages:please-select-a', {
+                                            name: t('d:position')
+                                        })}`}
+                                        allowClear
+                                        disabled={
+                                            blockToSearch &&
+                                            originAisleToSearch &&
+                                            originColumnToSearch &&
+                                            originLevelToSearch
+                                                ? false
+                                                : true
+                                        }
+                                    >
+                                        {originPositionValueOptions?.map((position: any) => (
+                                            <Option key={position} value={position}>
+                                                {position}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                            </Card>
+                        )}
                     </Col>
                     <Col span={12} style={{ paddingLeft: '8px' }}>
-                        <Card type="inner" title="To:">
-                            <Form.Item
-                                label={t('d:finalAisle')}
-                                name="finalAisle"
-                                style={{ marginBottom: 5 }}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: `${t('messages:error-message-select-an', {
+                        {printBlock ? (
+                            <></>
+                        ) : (
+                            <Card type="inner" title="To:">
+                                <Form.Item
+                                    label={t('d:finalAisle')}
+                                    hidden={printBlock}
+                                    name="finalAisle"
+                                    style={{ marginBottom: 5 }}
+                                    rules={[
+                                        {
+                                            required: !printBlock,
+                                            message: `${t('messages:error-message-select-an', {
+                                                name: t('d:aisle')
+                                            })}`
+                                        }
+                                    ]}
+                                >
+                                    <Select
+                                        placeholder={`${t('messages:please-select-an', {
                                             name: t('d:aisle')
-                                        })}`
-                                    }
-                                ]}
-                            >
-                                <Select
-                                    placeholder={`${t('messages:please-select-an', {
-                                        name: t('d:aisle')
-                                    })}`}
-                                    onChange={(value: string) => {
-                                        onInputChange(value, 'final', setFinalAisleToSearch);
-                                    }}
-                                    allowClear
-                                    disabled={blockToSearch ? false : true}
-                                >
-                                    {aisleValueOptions?.map((aisle: any) => (
-                                        <Option key={aisle} value={aisle}>
-                                            {aisle}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                                        })}`}
+                                        onChange={(value: string) => {
+                                            onInputChange(value, 'final', setFinalAisleToSearch);
+                                        }}
+                                        allowClear
+                                        disabled={blockToSearch ? false : true}
+                                    >
+                                        {aisleValueOptions?.map((aisle: any) => (
+                                            <Option key={aisle} value={aisle}>
+                                                {aisle}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
 
-                            <Form.Item
-                                label={t('d:finalColumn')}
-                                name="finalColumn"
-                                style={{ marginBottom: 5 }}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: `${t('messages:error-message-select-a', {
+                                <Form.Item
+                                    label={t('d:finalColumn')}
+                                    hidden={printBlock}
+                                    name="finalColumn"
+                                    style={{ marginBottom: 5 }}
+                                    rules={[
+                                        {
+                                            required: !printBlock,
+                                            message: `${t('messages:error-message-select-a', {
+                                                name: t('d:column')
+                                            })}`
+                                        }
+                                    ]}
+                                >
+                                    <Select
+                                        placeholder={`${t('messages:please-select-a', {
                                             name: t('d:column')
-                                        })}`
-                                    }
-                                ]}
-                            >
-                                <Select
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:column')
-                                    })}`}
-                                    onChange={(value: string) => {
-                                        onInputChange(value, 'final', setFinalColumnToSearch);
-                                    }}
-                                    allowClear
-                                    disabled={blockToSearch && finalAisleToSearch ? false : true}
-                                >
-                                    {finalColumnValueOptions?.map((column: any) => (
-                                        <Option key={column} value={column}>
-                                            {column}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                                        })}`}
+                                        onChange={(value: string) => {
+                                            onInputChange(value, 'final', setFinalColumnToSearch);
+                                        }}
+                                        allowClear
+                                        disabled={
+                                            blockToSearch && finalAisleToSearch ? false : true
+                                        }
+                                    >
+                                        {finalColumnValueOptions?.map((column: any) => (
+                                            <Option key={column} value={column}>
+                                                {column}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
 
-                            <Form.Item
-                                label={t('d:finalLevel')}
-                                name="finalLevel"
-                                style={{ marginBottom: 5 }}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: `${t('messages:error-message-select-a', {
+                                <Form.Item
+                                    label={t('d:finalLevel')}
+                                    hidden={printBlock}
+                                    name="finalLevel"
+                                    style={{ marginBottom: 5 }}
+                                    rules={[
+                                        {
+                                            required: !printBlock,
+                                            message: `${t('messages:error-message-select-a', {
+                                                name: t('d:level')
+                                            })}`
+                                        }
+                                    ]}
+                                >
+                                    <Select
+                                        placeholder={`${t('messages:please-select-a', {
                                             name: t('d:level')
-                                        })}`
-                                    }
-                                ]}
-                            >
-                                <Select
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:level')
-                                    })}`}
-                                    onChange={(value: string) => {
-                                        onInputChange(value, 'final', setFinalLevelToSearch);
-                                    }}
-                                    allowClear
-                                    disabled={
-                                        blockToSearch && finalAisleToSearch && finalColumnToSearch
-                                            ? false
-                                            : true
-                                    }
-                                >
-                                    {finalLevelValueOptions?.map((level: any) => (
-                                        <Option key={level} value={level}>
-                                            {level}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                                        })}`}
+                                        onChange={(value: string) => {
+                                            onInputChange(value, 'final', setFinalLevelToSearch);
+                                        }}
+                                        allowClear
+                                        disabled={
+                                            blockToSearch &&
+                                            finalAisleToSearch &&
+                                            finalColumnToSearch
+                                                ? false
+                                                : true
+                                        }
+                                    >
+                                        {finalLevelValueOptions?.map((level: any) => (
+                                            <Option key={level} value={level}>
+                                                {level}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
 
-                            <Form.Item
-                                label={t('d:finalPosition')}
-                                name="finalPosition"
-                                style={{ marginBottom: 5 }}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: `${t('messages:error-message-select-a', {
-                                            name: t('d:position')
-                                        })}`
-                                    }
-                                ]}
-                            >
-                                <Select
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:position')
-                                    })}`}
-                                    allowClear
-                                    disabled={
-                                        blockToSearch &&
-                                        finalAisleToSearch &&
-                                        finalColumnToSearch &&
-                                        finalLevelToSearch
-                                            ? false
-                                            : true
-                                    }
+                                <Form.Item
+                                    label={t('d:finalPosition')}
+                                    hidden={printBlock}
+                                    name="finalPosition"
+                                    style={{ marginBottom: 5 }}
+                                    rules={[
+                                        {
+                                            required: !printBlock,
+                                            message: `${t('messages:error-message-select-a', {
+                                                name: t('d:position')
+                                            })}`
+                                        }
+                                    ]}
                                 >
-                                    {finalPositionValueOptions?.map((position: any) => (
-                                        <Option key={position} value={position}>
-                                            {position}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                        </Card>
+                                    <Select
+                                        placeholder={`${t('messages:please-select-a', {
+                                            name: t('d:position')
+                                        })}`}
+                                        allowClear
+                                        disabled={
+                                            blockToSearch &&
+                                            finalAisleToSearch &&
+                                            finalColumnToSearch &&
+                                            finalLevelToSearch
+                                                ? false
+                                                : true
+                                        }
+                                    >
+                                        {finalPositionValueOptions?.map((position: any) => (
+                                            <Option key={position} value={position}>
+                                                {position}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                            </Card>
+                        )}
                     </Col>
                 </Row>
                 <Divider style={{ margin: '12px 0px' }} />

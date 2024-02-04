@@ -48,6 +48,8 @@ const HuInfo: PageComponent = () => {
     };
     const handlingUnitInfo = JSON.parse(storage.get(workflow.processName) || '{}');
 
+    // console.log('HUI', handlingUnitInfo);
+
     //initialize workflow on step 0
     if (Object.keys(handlingUnitInfo).length === 0) {
         handlingUnitInfo[`step${workflow.expectedSteps[0]}`] = { previousStep: 0 };

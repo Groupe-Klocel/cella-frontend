@@ -14,28 +14,17 @@
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-query SimpleGetCycleCounts(
-    $filters: CycleCountSearchFilters
-    $orderBy: [CycleCountOrderByCriterion!]
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query SimpleGetAllBuildings(
+    $filters: BuildingSearchFilters
+    $orderBy: [BuildingOrderByCriterion!]
     $page: Int!
     $itemsPerPage: Int!
-    $language: String = "en"
 ) {
-    cycleCounts(
-        filters: $filters
-        orderBy: $orderBy
-        page: $page
-        itemsPerPage: $itemsPerPage
-        language: $language
-    ) {
-        count
-        itemsPerPage
-        totalPages
+    buildings(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
         results {
             id
             name
-            status
-            statusText
         }
     }
 }

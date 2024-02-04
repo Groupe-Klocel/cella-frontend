@@ -82,7 +82,7 @@ const BoxPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/edit/${id}`}
@@ -94,7 +94,7 @@ const BoxPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Delete) &&
                 model.isSoftDeletable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
                     <Button
                         onClick={() => confirmAction(id as string, setIdToDisable)()}
                         type="primary"
@@ -107,7 +107,7 @@ const BoxPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Delete) &&
                 model.isDeletable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                data?.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CREATED ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
                     </Button>
@@ -130,6 +130,7 @@ const BoxPage: PageComponent = () => {
                     }}
                     dataToPrint={{ boxes: [idToPrint] }}
                     documentName="K_OutboundHandlingUnitLabel"
+                    documentReference={data?.name}
                 />
             </Space>
         )

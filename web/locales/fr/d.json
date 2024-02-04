@@ -637,6 +637,9 @@
     "userId": "Utilisateur",
     "extraStatus1": "Type de contrôle",
     "extraStatus1Text": "Type de contrôle",
+    "recipients-mail-adresses": "E-mail",
+    "reference": "Référence",
     "initialStockStatus": "Etat de stock initial",
-    "finalStockStatus": "Etat de stock final"
+    "finalStockStatus": "Etat de stock final",
+    "print_block": "Imprimer le bloc entier"
 }

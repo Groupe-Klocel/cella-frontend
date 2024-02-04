@@ -24,7 +24,7 @@ import useTranslation from 'next-translate/useTranslation';
 
 import { useRouter } from 'next/router';
 
-import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
+import { showError, showSuccess, showInfo, useUpdate, setUTCDateTime } from '@helpers';
 import { FormGroup } from 'modules/Crud/submodules/FormGroup';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import moment from 'moment';
@@ -148,7 +148,12 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
                 // DatePicker's value only accept moment, Conversion string -> moment required
                 Object.keys(tmp_details).forEach((key) => {
                     if (key == item.name && item.type == FormDataType.Calendar) {
-                        tmp_details[key] = moment(tmp_details[key]);
+                        const momentDate = moment(tmp_details[key]);
+                        if (tmp_details[key] && momentDate.isValid()) {
+                            tmp_details[key] = moment(setUTCDateTime(tmp_details[key]));
+                        } else {
+                            tmp_details[key] = undefined;
+                        }
                     }
                     if (key === 'logo') {
                         setImageData(tmp_details[key]);
@@ -164,7 +169,12 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
                         // DatePicker's value only accept moment, Conversion string -> moment required
                         Object.keys(tmp_details).forEach((key) => {
                             if (key == item.name && item.type == FormDataType.Calendar) {
-                                tmp_details[key] = moment(tmp_details[key]);
+                                const momentDate = moment(tmp_details[key]);
+                                if (tmp_details[key] && momentDate.isValid()) {
+                                    tmp_details[key] = moment(setUTCDateTime(tmp_details[key]));
+                                } else {
+                                    tmp_details[key] = undefined;
+                                }
                             }
                         });
 

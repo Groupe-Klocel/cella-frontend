@@ -59,7 +59,7 @@ export const SelectStockOwnerForm = ({
         if (camData) {
             if (stockOwners?.some((option) => option.text === camData)) {
                 const soToFind = stockOwners?.find((option) => option.text === camData);
-                form.setFieldsValue({ stockOwners: soToFind.key });
+                form.setFieldsValue({ stockOwner: soToFind.key });
             } else {
                 showError(t('messages:unexpected-scanned-item'));
             }
@@ -143,6 +143,7 @@ export const SelectStockOwnerForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:stock-owner')}

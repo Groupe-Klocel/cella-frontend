@@ -21,13 +21,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '@helpers';
-import { Select } from 'antd';
+import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import { useGetRoundsQuery, GetRoundsQuery } from 'generated/graphql';
+import { useSimpleGetRoundsQuery, SimpleGetRoundsQuery } from 'generated/graphql';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';
+import CameraScanner from 'modules/Common/CameraScanner';
 
 export interface ISelectRoundProps {
     process: string;
@@ -50,6 +51,27 @@ export const SelectRoundForm = ({
     // TYPED SAFE ALL
     const [rounds, setRounds] = useState<Array<any>>();
 
+    //camera scanner section
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
+
+    useEffect(() => {
+        if (camData) {
+            if (rounds?.some((option) => option.text === camData)) {
+                const roundToFind = rounds?.find((option) => option.text === camData);
+                form.setFieldsValue({ rounds: roundToFind.key });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData, rounds]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // end camera scanner section
+
     //Pre-requisite: initialize current step
     useEffect(() => {
         if (storedObject.currentStep < stepNumber) {
@@ -66,12 +88,15 @@ export const SelectRoundForm = ({
         max: configs.ROUND_STATUS_TO_BE_VERIFIED
     });
 
-    const roundsList = useGetRoundsQuery<Partial<GetRoundsQuery>, Error>(graphqlRequestClient, {
-        filters: { status: configsToFilterOn },
-        orderBy: null,
-        page: 1,
-        itemsPerPage: 100
-    });
+    const roundsList = useSimpleGetRoundsQuery<Partial<SimpleGetRoundsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: { status: configsToFilterOn },
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 100
+        }
+    );
 
     useEffect(() => {
         if (roundsList) {
@@ -89,11 +114,120 @@ export const SelectRoundForm = ({
     //SelectRound-2a: retrieve chosen level from select and set information
     const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
-        const selectedRound = roundsList?.data?.rounds?.results.find((e: any) => {
-            return e.id == values.rounds;
-        });
-        data['round'] = selectedRound;
-        const roundAdvisedAddresses = selectedRound?.roundAdvisedAddresses
+        const query = gql`
+            query round($id: String!) {
+                round(id: $id) {
+                    id
+                    name
+                    status
+                    statusText
+                    priority
+                    priorityText
+                    nbPickArticle
+                    nbBox
+                    nbRoundLine
+                    pickingTime
+                    productivity
+                    expectedDeliveryDate
+                    handlingUnitOutbounds {
+                        id
+                        name
+                        status
+                        statusText
+                        roundId
+                        handlingUnitModelId
+                    }
+                    roundAdvisedAddresses {
+                        id
+                        roundOrderId
+                        quantity
+                        status
+                        statusText
+                        locationId
+                        location {
+                            name
+                        }
+                        handlingUnitContentId
+                        handlingUnitContent {
+                            id
+                            quantity
+                            stockStatus
+                            stockStatusText
+                            reservation
+                            articleId
+                            article {
+                                id
+                                name
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                                baseUnitWeight
+                            }
+                            stockOwnerId
+                            stockOwner {
+                                name
+                            }
+                            handlingUnitContentFeatures {
+                                featureCode {
+                                    name
+                                    unique
+                                }
+                                value
+                            }
+                            handlingUnitId
+                            handlingUnit {
+                                id
+                                name
+                                barcode
+                                status
+                                statusText
+                                type
+                                typeText
+                                category
+                                categoryText
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                            }
+                        }
+                        roundLineDetailId
+                        roundLineDetail {
+                            status
+                            statusText
+                            quantityToBeProcessed
+                            processedQuantity
+                            roundLineId
+                            roundLine {
+                                lineNumber
+                                articleId
+                                status
+                                statusText
+                            }
+                            deliveryLineId
+                            deliveryLine {
+                                id
+                                stockOwnerId
+                                deliveryId
+                                stockStatus
+                                stockStatusText
+                                reservation
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            id: values.rounds
+        };
+
+        const selectedRound = await graphqlRequestClient.request(query, variables);
+
+        data['round'] = selectedRound.round;
+        const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
             ?.filter((raa: any) => raa.quantity != 0)
             .sort((a: any, b: any) => {
                 return a.roundOrderId - b.roundOrderId;
@@ -168,13 +302,23 @@ export const SelectRoundForm = ({
                 autoComplete="off"
                 scrollToFirstError
                 size="small"
+                form={form}
             >
                 <StyledFormItem
                     label={t('common:rounds')}
                     name="rounds"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                 >
-                    <Select style={{ height: '20px', marginBottom: '5px' }}>
+                    <Select
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        allowClear
+                    >
                         {rounds?.map((option: any) => (
                             <Select.Option key={option.key} value={option.key}>
                                 {option.text}
@@ -182,6 +326,7 @@ export const SelectRoundForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>

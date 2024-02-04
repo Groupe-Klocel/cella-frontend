@@ -86,7 +86,7 @@ const DeliveryDetailsExtra = ({
         actionsComponent:
             deliveryAddressModes.length > 0 &&
             deliveryAddressModes.includes(ModeEnum.Create) &&
-            deliveryStatus <= configs.DELIVERY_STATUS_CREATED ? (
+            deliveryStatus < configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:delivery-address') })}
                     path={pathParamsFromDictionary('/deliveries/address/add', {
@@ -243,7 +243,9 @@ const DeliveryDetailsExtra = ({
                                         )}
                                         {deliveryAddressModes.length > 0 &&
                                         deliveryAddressModes.includes(ModeEnum.Update) &&
-                                        DeliveryLineModelV2.isEditable ? (
+                                        DeliveryLineModelV2.isEditable &&
+                                        deliveryStatus <
+                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary(
@@ -260,7 +262,9 @@ const DeliveryDetailsExtra = ({
                                         )}
                                         {deliveryAddressModes.length > 0 &&
                                         deliveryAddressModes.includes(ModeEnum.Delete) &&
-                                        DeliveryAddressModelV2.isSoftDeletable ? (
+                                        DeliveryAddressModelV2.isSoftDeletable &&
+                                        deliveryStatus <
+                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
@@ -276,7 +280,9 @@ const DeliveryDetailsExtra = ({
                                         )}
                                         {deliveryAddressModes.length > 0 &&
                                         deliveryAddressModes.includes(ModeEnum.Delete) &&
-                                        DeliveryLineModelV2.isDeletable ? (
+                                        DeliveryLineModelV2.isDeletable &&
+                                        deliveryStatus <
+                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
                                             <Button
                                                 icon={<DeleteOutlined />}
                                                 danger
@@ -349,7 +355,7 @@ const DeliveryDetailsExtra = ({
                                         {deliveryLineModes.length > 0 &&
                                         deliveryLineModes.includes(ModeEnum.Update) &&
                                         DeliveryLineModelV2.isEditable &&
-                                        record.status < configs.DELIVERY_STATUS_CANCELED ? (
+                                        record.status < configs.DELIVERY_STATUS_IN_PREPARATION ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary(
@@ -367,7 +373,7 @@ const DeliveryDetailsExtra = ({
                                         {deliveryLineModes.length > 0 &&
                                         deliveryLineModes.includes(ModeEnum.Delete) &&
                                         DeliveryLineModelV2.isSoftDeletable &&
-                                        record.status < configs.DELIVERY_STATUS_PREPARED ? (
+                                        record.status < configs.DELIVERY_STATUS_IN_PREPARATION ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
@@ -452,7 +458,8 @@ const DeliveryDetailsExtra = ({
                                         {huOutboundModes.length > 0 &&
                                         huOutboundModes.includes(ModeEnum.Update) &&
                                         HandlingUnitOutboundModelV2.isEditable &&
-                                        record?.status < configs.DELIVERY_STATUS_CANCELED ? (
+                                        record?.status <
+                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary('/boxes/edit/[id]', {
@@ -467,7 +474,8 @@ const DeliveryDetailsExtra = ({
                                         {huOutboundModes.length > 0 &&
                                         huOutboundModes.includes(ModeEnum.Delete) &&
                                         HandlingUnitOutboundModelV2.isSoftDeletable &&
-                                        record?.status < configs.DELIVERY_STATUS_PREPARED ? (
+                                        record?.status <
+                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
