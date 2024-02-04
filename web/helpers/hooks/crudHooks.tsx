@@ -546,7 +546,7 @@ const useSoftDelete = (queryName: string) => {
                         showError(t(`errors:${errorCode}`));
                     }
                 } else {
-                    showError(t('messages:error-deleting-data'));
+                    showError(t('messages:error-disabling-element'));
                     console.log(error);
                 }
                 setResult({ data: null, success: false });
