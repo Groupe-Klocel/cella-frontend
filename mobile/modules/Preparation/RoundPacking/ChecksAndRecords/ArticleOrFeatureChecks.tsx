@@ -79,18 +79,19 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         }
     }, [scannedInfo]);
 
-    function checkStockStatusAndReservation(handlingUnitContent: any, articleId: string) {
-        const deliveryLine = storedObject['step10'].data.round.roundAdvisedAddresses
+    function getCurrentDeliveryLine(articleId: string) {
+        const currentDeliveryLine = storedObject['step10'].data.round.roundAdvisedAddresses
             .filter((raa: any) => {
                 // Check if handlingUnitContent.articleId is equal to the given value
                 return raa.handlingUnitContent.articleId === articleId;
             })
-            .map((raa: any) => raa.roundLineDetail.deliveryLine)[0];
-        if (
-            handlingUnitContent.stockStatus === deliveryLine.stockStatus &&
-            handlingUnitContent.reservation === deliveryLine.reservation
-        )
-            return true;
+            .find((raa: any) => {
+                if (!raa.roundLineDetail.extraNumber2) raa.roundLineDetail.extraNumber2 = 0;
+                return (
+                    raa.roundLineDetail.quantityToBeProcessed - raa.roundLineDetail.extraNumber2 > 0
+                );
+            }).roundLineDetail.deliveryLine;
+        return currentDeliveryLine;
     }
 
     // ScanBox-3: manage information for persistence storage and front-end errors
@@ -99,7 +100,11 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
             let found = false;
             const data: { [label: string]: any } = {};
             const handlingUnitContents = storedObject['step10'].data.roundHU.handlingUnitContents;
-
+            const deliveryLine = getCurrentDeliveryLine(
+                fetchResult.resType === 'serialNumber'
+                    ? fetchResult.article.articleId
+                    : fetchResult.articleLuBarcodes[0].articleId
+            );
             if (fetchResult.resType === 'serialNumber') {
                 // HUCF scanned
                 const huCToCheck = fetchResult?.handlingUnitContentFeature.handlingUnitContentId;
@@ -109,10 +114,10 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 if (found) {
                     //check stockStatus and reservation
                     if (
-                        checkStockStatusAndReservation(
-                            fetchResult.handlingUnitContentFeature?.handlingUnitContent,
-                            fetchResult.article.articleId
-                        )
+                        fetchResult.handlingUnitContentFeature?.handlingUnitContent.stockStatus ===
+                            deliveryLine.stockStatus &&
+                        fetchResult.handlingUnitContentFeature?.handlingUnitContent.reservation ===
+                            deliveryLine.reservation
                     ) {
                         data['resType'] = fetchResult.resType;
                         data['article'] = {
@@ -147,7 +152,10 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     const handlingUnitContent = handlingUnitContents.filter(
                         (item: any) => item.articleId === articleId
                     )[0];
-                    if (checkStockStatusAndReservation(handlingUnitContent, articleId)) {
+                    if (
+                        handlingUnitContent.stockStatus === deliveryLine.stockStatus &&
+                        handlingUnitContent.reservation === deliveryLine.reservation
+                    ) {
                         data['resType'] = fetchResult.resType;
                         data['article'] = fetchResult.articleLuBarcodes[0].article;
                         data['handlingUnitContent'] = handlingUnitContent;

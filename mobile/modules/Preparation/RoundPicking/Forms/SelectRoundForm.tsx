@@ -23,7 +23,7 @@ import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@componen
 import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import { useGetRoundsQuery, GetRoundsQuery } from 'generated/graphql';
+import { useSimpleGetRoundsQuery, SimpleGetRoundsQuery } from 'generated/graphql';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -88,12 +88,15 @@ export const SelectRoundForm = ({
         max: configs.ROUND_STATUS_TO_BE_VERIFIED
     });
 
-    const roundsList = useGetRoundsQuery<Partial<GetRoundsQuery>, Error>(graphqlRequestClient, {
-        filters: { status: configsToFilterOn },
-        orderBy: null,
-        page: 1,
-        itemsPerPage: 100
-    });
+    const roundsList = useSimpleGetRoundsQuery<Partial<SimpleGetRoundsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: { status: configsToFilterOn },
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 100
+        }
+    );
 
     useEffect(() => {
         if (roundsList) {
@@ -111,11 +114,120 @@ export const SelectRoundForm = ({
     //SelectRound-2a: retrieve chosen level from select and set information
     const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
-        const selectedRound = roundsList?.data?.rounds?.results.find((e: any) => {
-            return e.id == values.rounds;
-        });
-        data['round'] = selectedRound;
-        const roundAdvisedAddresses = selectedRound?.roundAdvisedAddresses
+        const query = gql`
+            query round($id: String!) {
+                round(id: $id) {
+                    id
+                    name
+                    status
+                    statusText
+                    priority
+                    priorityText
+                    nbPickArticle
+                    nbBox
+                    nbRoundLine
+                    pickingTime
+                    productivity
+                    expectedDeliveryDate
+                    handlingUnitOutbounds {
+                        id
+                        name
+                        status
+                        statusText
+                        roundId
+                        handlingUnitModelId
+                    }
+                    roundAdvisedAddresses {
+                        id
+                        roundOrderId
+                        quantity
+                        status
+                        statusText
+                        locationId
+                        location {
+                            name
+                        }
+                        handlingUnitContentId
+                        handlingUnitContent {
+                            id
+                            quantity
+                            stockStatus
+                            stockStatusText
+                            reservation
+                            articleId
+                            article {
+                                id
+                                name
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                                baseUnitWeight
+                            }
+                            stockOwnerId
+                            stockOwner {
+                                name
+                            }
+                            handlingUnitContentFeatures {
+                                featureCode {
+                                    name
+                                    unique
+                                }
+                                value
+                            }
+                            handlingUnitId
+                            handlingUnit {
+                                id
+                                name
+                                barcode
+                                status
+                                statusText
+                                type
+                                typeText
+                                category
+                                categoryText
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                            }
+                        }
+                        roundLineDetailId
+                        roundLineDetail {
+                            status
+                            statusText
+                            quantityToBeProcessed
+                            processedQuantity
+                            roundLineId
+                            roundLine {
+                                lineNumber
+                                articleId
+                                status
+                                statusText
+                            }
+                            deliveryLineId
+                            deliveryLine {
+                                id
+                                stockOwnerId
+                                deliveryId
+                                stockStatus
+                                stockStatusText
+                                reservation
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            id: values.rounds
+        };
+
+        const selectedRound = await graphqlRequestClient.request(query, variables);
+
+        data['round'] = selectedRound.round;
+        const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
             ?.filter((raa: any) => raa.quantity != 0)
             .sort((a: any, b: any) => {
                 return a.roundOrderId - b.roundOrderId;
