@@ -445,6 +445,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             id
                             stockOwnerId
                             deliveryId
+                            stockStatus
+                            stockStatusText
+                            reservation
                         }
                     }
                     lastTransactionId
@@ -565,6 +568,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                         id
                                         stockOwnerId
                                         deliveryId
+                                        stockStatus
+                                        stockStatusText
+                                        reservation
                                     }
                                 }
                             }
