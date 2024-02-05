@@ -70,7 +70,7 @@ export type FilterFieldType = {
 // Used for defining endpoints inside ModelType
 export type EndpointsType = {
     list: string;
-    export?: string;
+    export?: boolean;
     detail: string;
     create: string;
     update: string;

@@ -32,7 +32,8 @@ export const ArticleSetModelV2: ModelType = {
         list: 'articleSets',
         create: 'createArticleSet',
         update: 'updateArticleSet',
-        delete: 'deleteArticleSet'
+        delete: 'deleteArticleSet',
+        export: true
     },
 
     fieldsInfo: {

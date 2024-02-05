@@ -32,7 +32,8 @@ export const FeatureCodeModelV2: ModelType = {
         list: 'featureCodes',
         create: 'createFeatureCode',
         update: 'updateFeatureCode',
-        delete: 'deleteFeatureCode'
+        delete: 'deleteFeatureCode',
+        export: true
     },
 
     fieldsInfo: {

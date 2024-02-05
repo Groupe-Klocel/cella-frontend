@@ -32,7 +32,8 @@ export const RoundModelV2: ModelType = {
         list: 'rounds',
         create: 'createRound',
         update: 'updateRound',
-        delete: 'deleteRound'
+        delete: 'deleteRound',
+        export: true
     },
 
     fieldsInfo: {

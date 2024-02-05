@@ -456,6 +456,67 @@ function extractComparisonValues(string: string) {
     return matches;
 }
 
+function queryString(
+    queryName: string,
+    fields: Array<string>,
+    search: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any,
+    language?: string,
+    defaultModelSort?: any
+): string {
+    let newSort: any;
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    const defaultSort = defaultModelSort ? defaultModelSort : sortByDate;
+
+    if (sort === null) {
+        newSort = defaultSort;
+    } else if (sort != null) {
+        newSort = sort;
+    }
+
+    // Sort fields to put relationships at the end
+    const sortedFields = fields.sort((a, b) => {
+        const matchA = a.match(/(.+){(.+)}/);
+        const matchB = b.match(/(.+){(.+)}/);
+
+        if (matchA && matchB) {
+            return 0;
+        } else if (matchA) {
+            return 1;
+        } else if (matchB) {
+            return -1;
+        } else {
+            return 0;
+        }
+    });
+
+    const queryString = `query{
+        ${queryName}(
+            filters: ${JSON.stringify(search).replace(/"(\w+)":/g, '$1:')}
+            orderBy: ${JSON.stringify(newSort).replace(/"/g, '')}
+            page: ${page}
+            itemsPerPage: ${itemsPerPage}
+            language: ${JSON.stringify(language)}
+        ) {
+            count
+            itemsPerPage
+            totalPages
+            results {
+                ${sortedFields.join('\n')}
+            }
+        }
+    }`;
+
+    return queryString;
+}
+
 export {
     isNumeric,
     formatDigitsForData,
@@ -497,5 +558,6 @@ export {
     pluralize,
     getRulesWithNoSpacesValidator,
     checkValueInKey,
-    extractComparisonValues
+    extractComparisonValues,
+    queryString
 };
