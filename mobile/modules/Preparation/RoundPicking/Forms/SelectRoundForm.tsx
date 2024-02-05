@@ -208,6 +208,7 @@ export const SelectRoundForm = ({
                             deliveryLineId
                             deliveryLine {
                                 id
+                                articleId
                                 stockOwnerId
                                 deliveryId
                                 stockStatus
