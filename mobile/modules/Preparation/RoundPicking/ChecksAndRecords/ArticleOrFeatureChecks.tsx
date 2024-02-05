@@ -124,24 +124,14 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 // EAN scanned
                 if (handlingUnitContent.articleId === fetchResult.articleLuBarcodes[0].articleId) {
                     found = true;
-                    if (
-                        handlingUnitContent.stockStatus === deliveryLine.stockStatus &&
-                        handlingUnitContent.reservation === deliveryLine.reservation
-                    ) {
-                        const data: { [label: string]: any } = {};
-                        data['resType'] = fetchResult.resType;
-                        data['articleLuBarcodes'] = fetchResult.articleLuBarcodes;
-                        setTriggerRender(!triggerRender);
-                        storedObject[`step${stepNumber}`] = {
-                            ...storedObject[`step${stepNumber}`],
-                            data
-                        };
-                    } else {
-                        showError(t('messages:wrong-stock-status-or-reservation'));
-                        setResetForm(true);
-                        setScannedInfo(undefined);
-                        setIsLoading(false);
-                    }
+                    const data: { [label: string]: any } = {};
+                    data['resType'] = fetchResult.resType;
+                    data['articleLuBarcodes'] = fetchResult.articleLuBarcodes;
+                    setTriggerRender(!triggerRender);
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
                 }
             }
             if (!found) {
