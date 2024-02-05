@@ -32,7 +32,8 @@ export const ConfigModelV2: ModelType = {
         list: 'configs',
         create: 'createConfig',
         update: 'updateConfig',
-        delete: 'deleteConfig'
+        delete: 'deleteConfig',
+        export: true
     },
 
     fieldsInfo: {

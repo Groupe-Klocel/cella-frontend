@@ -32,7 +32,8 @@ export const WarehouseWorkerModelV2: ModelType = {
         list: 'warehouseWorkers',
         create: 'createWarehouseWorker',
         update: 'updateWarehouseWorker',
-        delete: 'deleteWarehouseWorker'
+        delete: 'deleteWarehouseWorker',
+        export: true
     },
 
     fieldsInfo: {

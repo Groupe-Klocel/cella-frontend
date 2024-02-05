@@ -32,7 +32,8 @@ export const NotificationModelV2: ModelType = {
         list: 'notifications',
         create: 'createNotification',
         update: 'updateNotification',
-        delete: 'deleteNotification'
+        delete: 'deleteNotification',
+        export: true
     },
 
     fieldsInfo: {

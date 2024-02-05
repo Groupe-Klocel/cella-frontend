@@ -33,7 +33,8 @@ export const CycleCountLineModelV2: ModelType = {
         create: 'createCycleCountLine',
         update: 'updateCycleCountLine',
         delete: 'deleteCycleCountLine',
-        softDelete: 'softDeleteCycleCountLine'
+        softDelete: 'softDeleteCycleCountLine',
+        export: true
     },
 
     fieldsInfo: {

@@ -33,7 +33,8 @@ export const DeliveryModelV2: ModelType = {
         create: 'createDelivery',
         update: 'updateDelivery',
         delete: 'deleteDelivery',
-        softDelete: 'softDeleteDelivery'
+        softDelete: 'softDeleteDelivery',
+        export: true
     },
 
     fieldsInfo: {

@@ -32,7 +32,8 @@ export const BarcodeModelV2: ModelType = {
         list: 'barcodes',
         create: 'createBarcode',
         update: 'updateBarcode',
-        delete: 'deleteBarcode'
+        delete: 'deleteBarcode',
+        export: true
     },
 
     fieldsInfo: {

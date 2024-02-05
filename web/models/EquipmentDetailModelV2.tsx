@@ -32,7 +32,8 @@ export const EquipmentDetailModelV2: ModelType = {
         list: 'equipmentDetails',
         create: 'createEquipmentDetail',
         update: 'updateEquipmentDetail',
-        delete: 'deleteEquipmentDetail'
+        delete: 'deleteEquipmentDetail',
+        export: true
     },
 
     fieldsInfo: {

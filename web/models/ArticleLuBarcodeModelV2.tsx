@@ -32,7 +32,8 @@ export const ArticleLuBarcodeModelV2: ModelType = {
         list: 'articleLuBarcodes',
         create: 'createArticleLuBarcode',
         update: 'updateArticleLuBarcode',
-        delete: 'deleteArticleLuBarcode'
+        delete: 'deleteArticleLuBarcode',
+        export: true
     },
 
     fieldsInfo: {

@@ -36,7 +36,8 @@ import {
     useDelete,
     useExport,
     useList,
-    flatten
+    flatten,
+    queryString
 } from '@helpers';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFilters';
@@ -215,19 +216,43 @@ const ListComponent = (props: IListProps) => {
     // #endregion
 
     // #region EXPORT DATA
-    const {
-        isLoading: exportLoading,
-        result: exportResult,
-        mutate
-    } = useExport(props.dataModel.resolverName, props.dataModel.endpoints.export ?? '');
+    const exportQueryString = queryString(
+        props.dataModel.endpoints.list,
+        props.dataModel.listFields,
+        search,
+        pagination.current,
+        pagination.itemsPerPage,
+        sort,
+        router.locale
+    );
+    const columnNames: any = {};
+
+    props.dataModel.listFields.forEach((field: any) => {
+        const matchText = field.match(/(.+)Text$/);
+        if (matchText) {
+            const originalField = matchText[1];
+            columnNames[field] = originalField;
+        }
+
+        const matchRelationship = field.match(/(.+){(.+)}/);
+        if (matchRelationship) {
+            const baseWord = matchRelationship[1];
+            const additionalWord = matchRelationship[2];
+            const newColumnName = `${baseWord}_${additionalWord}`;
+            columnNames[newColumnName] = field.replace(`{${additionalWord}}`, ` ${additionalWord}`);
+        }
+    });
+
+    const { isLoading: exportLoading, result: exportResult, mutate } = useExport();
 
     const exportData = () => {
+        const base64QueryString = Buffer.from(exportQueryString, 'binary').toString('base64');
         mutate({
-            format: ExportFormat.Csv,
-            compression: null,
-            separator: ',',
-            orderBy: sort,
-            filters: search
+            graphqlRequest: base64QueryString,
+            format: ExportFormat.Xlsx,
+            separator: ';',
+            columnNames
+            // compression
         });
     };
 
@@ -239,9 +264,9 @@ const ListComponent = (props: IListProps) => {
 
     useEffect(() => {
         if (!(exportResult && exportResult.data)) return;
-
-        if (exportResult.success) {
+        if (exportResult.success && exportResult?.data.exportData?.url) {
             showSuccess(t('messages:success-exported'));
+            const newWindow = window.open(exportResult?.data.exportData?.url, '_blank');
         } else {
             showError(t('messages:error-exporting-data'));
         }

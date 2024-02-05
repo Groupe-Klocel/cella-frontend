@@ -32,7 +32,8 @@ export const RoundLineDetailModelV2: ModelType = {
         list: 'roundLineDetails',
         create: 'createRoundLineDetail',
         update: 'updateRoundLineDetail',
-        delete: 'deleteRoundLineDetail'
+        delete: 'deleteRoundLineDetail',
+        export: true
     },
 
     fieldsInfo: {

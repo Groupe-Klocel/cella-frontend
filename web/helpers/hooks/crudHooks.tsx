@@ -87,7 +87,7 @@ const useList = (
 
     const reload = () => {
         setIsLoading(true);
-        let newSort;
+        let newSort: any;
 
         if (sort === null) {
             newSort = defaultSort;
@@ -406,20 +406,40 @@ const useUpdate = (resolverName: string, queryName: string, fields: Array<string
  * @param queryName endpoint of export query
  * @returns { isLoading, result, mutate } where isLoading and result are state variable and mutate is method to call for exporting.
  */
-const useExport = (resolverName: string, queryName: string) => {
+const useExport = () => {
     const { graphqlRequestClient } = useAuth();
 
-    const query = gql`mutation ${queryName}($format: ExportFormat, $compression: ExportCompression, $separator: String, $orderBy: [${resolverName}OrderByCriterion!], $filters: ${resolverName}ExportFilters) {
-        ${queryName}(
-          format: $format
-          compression: $compression
-          separator: $separator
-          orderBy: $orderBy
-          filters: $filters
+    // const query = gql`mutation ${queryName}($format: ExportFormat, $compression: ExportCompression, $separator: String, $orderBy: [${resolverName}OrderByCriterion!], $filters: ${resolverName}ExportFilters) {
+    //     ${queryName}(
+    //       format: $format
+    //       compression: $compression
+    //       separator: $separator
+    //       orderBy: $orderBy
+    //       filters: $filters
+    //     ) {
+    //       url
+    //     }
+    //   }`;
+    const query = gql`
+        mutation exportData(
+            $graphqlRequest: String!
+            $format: ExportFormat
+            $separator: String
+            $columnNames: JSON
+            $compression: ExportCompression
         ) {
-          url
+            exportData(
+                graphqlRequest: $graphqlRequest
+                format: $format
+                separator: $separator
+                columnNames: $columnNames
+                compression: $compression
+            ) {
+                url
+                compression
+            }
         }
-      }`;
+    `;
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [result, setResult] = useState<any>({ data: null, success: false });

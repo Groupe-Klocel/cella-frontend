@@ -32,7 +32,8 @@ export const HandlingUnitContentOutboundModelV2: ModelType = {
         list: 'handlingUnitContentOutbounds',
         create: 'createHandlingUnitContentOutbound',
         update: 'updateHandlingUnitContentOutbound',
-        delete: 'deleteHandlingUnitContentOutbound'
+        delete: 'deleteHandlingUnitContentOutbound',
+        export: true
     },
 
     fieldsInfo: {

@@ -32,7 +32,8 @@ export const CycleCountMovementModelV2: ModelType = {
         list: 'cycleCountMovements',
         create: 'createCycleCountMovement',
         update: 'updateCycleCountMovement',
-        delete: 'deleteCycleCountMovement'
+        delete: 'deleteCycleCountMovement',
+        export: true
     },
 
     fieldsInfo: {

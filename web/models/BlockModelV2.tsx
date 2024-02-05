@@ -32,7 +32,8 @@ export const BlockModelV2: ModelType = {
         list: 'blocks',
         create: 'createBlock',
         update: 'updateBlock',
-        delete: 'deleteBlock'
+        delete: 'deleteBlock',
+        export: true
     },
 
     fieldsInfo: {

@@ -33,7 +33,8 @@ export const EquipmentModelV2: ModelType = {
         create: 'createEquipment',
         update: 'updateEquipment',
         delete: 'deleteEquipment',
-        softDelete: 'softDeleteEquipment'
+        softDelete: 'softDeleteEquipment',
+        export: true
     },
 
     fieldsInfo: {

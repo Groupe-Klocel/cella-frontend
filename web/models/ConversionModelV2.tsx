@@ -33,7 +33,8 @@ export const ConversionModelV2: ModelType = {
         create: 'createConversion',
         update: 'updateConversion',
         delete: 'deleteConversion',
-        softDelete: 'softDeleteConversion'
+        softDelete: 'softDeleteConversion',
+        export: true
     },
 
     fieldsInfo: {
