@@ -254,11 +254,11 @@ const HuMovement: PageComponent = () => {
                                 .handlingUnitContents.length > 0
                                 ? true
                                 : false,
-                        emptyButton:
-                            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                                .handlingUnitContents.length <= 0
-                                ? true
-                                : false
+                        emptyButton: true
+                        // storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                        //     .handlingUnitContents.length <= 0
+                        //     ? true
+                        //     : false
                     }}
                     trigger={{ triggerRender, setTriggerRender }}
                     showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
