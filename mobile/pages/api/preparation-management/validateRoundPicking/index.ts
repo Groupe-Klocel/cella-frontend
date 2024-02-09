@@ -21,7 +21,6 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
-import { rest } from 'lodash';
 
 const parseCookie = (str: string) =>
     str
@@ -443,8 +442,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         deliveryLineId
                         deliveryLine {
                             id
+                            articleId
                             stockOwnerId
                             deliveryId
+                            stockStatus
+                            stockStatusText
+                            reservation
                         }
                     }
                     lastTransactionId
@@ -563,8 +566,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                     deliveryLineId
                                     deliveryLine {
                                         id
+                                        articleId
                                         stockOwnerId
                                         deliveryId
+                                        stockStatus
+                                        stockStatusText
+                                        reservation
                                     }
                                 }
                             }
