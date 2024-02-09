@@ -40,8 +40,8 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
 }: IRadioButtonsProps) => {
     const { t } = useTranslation();
     const [backTrigger, setBackTrigger] = useState<Boolean>(input?.backButton);
-    const [locButtonTrigger, setLocButtonTrigger] = useState<Boolean>(input?.locationButton);
-    const [emptyButton, setEmptyButton] = useState<Boolean>(input?.emptyButton);
+    const [locButtonTrigger, setLocButtonTrigger] = useState<Boolean>(false);
+    const [emptyButton, setEmptyButton] = useState<Boolean>(false);
     const [alternativeSubmitButtonTrigger, setAlternativeSubmitButtonTrigger] = useState<Boolean>(
         input?.alternativeSubmitButton
     );
@@ -106,30 +106,71 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                         ? alternativeSubmitLabel1
                         : t('actions:back')}
                 </StyledButton>
-                {!input.emptyButton ? (
+
+                {/* Case where both buttons are used */}
+                {input.emptyButton && input.locationButton ? (
+                    emptyButton ? (
+                        <StyledButton
+                            type="primary"
+                            hidden={emptyButton ? false : true}
+                            onClick={() => {
+                                output?.setShowSimilarLocations(!input?.showSimilarLocations);
+                                output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                                setBackTrigger(!backTrigger);
+                                setEmptyButton(!emptyButton);
+                                setLocButtonTrigger(!locButtonTrigger);
+                            }}
+                        >
+                            {!input?.showEmptyLocations
+                                ? t('common:locations-empty_abbr')
+                                : t('actions:back')}
+                        </StyledButton>
+                    ) : (
+                        <StyledButton
+                            type="primary"
+                            hidden={locButtonTrigger ? false : true}
+                            onClick={() => {
+                                output?.setShowSimilarLocations(!input?.showSimilarLocations);
+                                output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                                setBackTrigger(!backTrigger);
+                                setEmptyButton(!emptyButton);
+                                setLocButtonTrigger(!locButtonTrigger);
+                            }}
+                        >
+                            {!input?.showEmptyLocations
+                                ? t('common:locations_abbr')
+                                : t('actions:back')}
+                        </StyledButton>
+                    )
+                ) : // button similar location only
+                input.locationButton ? (
                     <StyledButton
                         type="primary"
-                        hidden={emptyButton ? false : true}
+                        hidden={!input.locationButton ? true : false}
                         onClick={() => {
-                            output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                            output?.headerContent.setHeaderContent(!input?.headerContent);
                             output?.setShowSimilarLocations(!input?.showSimilarLocations);
-                            output?.setShowSimilarLocations(!input?.showSimilarLocations);
-                            setLocButtonTrigger(!locButtonTrigger);
-                            setBackTrigger(false);
+                            !input.emptyButton
+                                ? output?.setShowEmptyLocations(false)
+                                : output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                            setBackTrigger(!backTrigger);
                         }}
                     >
-                        {input?.showSimilarLocations
-                            ? t('common:locations-empty_abbr')
+                        {!input?.showSimilarLocations
+                            ? t('common:locations_abbr')
                             : t('actions:back')}
                     </StyledButton>
                 ) : (
+                    // button empty location only
                     <StyledButton
                         type="primary"
-                        hidden={emptyButton ? false : true}
+                        hidden={!input.emptyButton ? true : false}
                         onClick={() => {
                             output?.setShowEmptyLocations(!input?.showEmptyLocations);
-                            setLocButtonTrigger(false);
-                            setBackTrigger(true);
+                            !input.locationButton
+                                ? output?.setShowSimilarLocations(false)
+                                : output?.setShowSimilarLocations(!input?.showSimilarLocations);
+                            setBackTrigger(!backTrigger);
                         }}
                     >
                         {!input?.showEmptyLocations
@@ -137,18 +178,27 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                             : t('actions:back')}
                     </StyledButton>
                 )}
+
+                {/* button similar location shown when empty button and location button are used at the same time */}
                 <StyledButton
                     type="primary"
-                    hidden={locButtonTrigger ? false : true}
+                    hidden={
+                        !locButtonTrigger && input.emptyButton && input.locationButton
+                            ? false
+                            : true
+                    }
                     onClick={() => {
                         output?.headerContent.setHeaderContent(!input?.headerContent);
                         output?.setShowSimilarLocations(!input?.showSimilarLocations);
                         setEmptyButton(!emptyButton);
                         setBackTrigger(!backTrigger);
+                        setLocButtonTrigger(false);
                     }}
                 >
                     {!input?.showSimilarLocations ? t('common:locations_abbr') : t('actions:back')}
                 </StyledButton>
+
+                {/* ?? */}
                 <StyledButton
                     type="primary"
                     block
@@ -163,9 +213,15 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                 >
                     {action1Label ?? 'Action'}
                 </StyledButton>
+
+                {/* btn back */}
                 <StyledButton
                     type="primary"
-                    hidden={backTrigger && !input.showEmptyLocations ? false : true}
+                    hidden={
+                        backTrigger && !input.showEmptyLocations && !input.showSimilarLocations
+                            ? false
+                            : true
+                    }
                     onClick={onBack}
                 >
                     {t('actions:back')}
