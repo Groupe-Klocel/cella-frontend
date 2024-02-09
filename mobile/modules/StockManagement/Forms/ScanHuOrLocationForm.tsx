@@ -70,7 +70,9 @@ export const ScanHuOrLocation = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit,
-        setResetForm
+        setResetForm,
+        showEmptyLocations: { showEmptyLocations },
+        showSimilarLocations: { showSimilarLocations }
     };
 
     return (

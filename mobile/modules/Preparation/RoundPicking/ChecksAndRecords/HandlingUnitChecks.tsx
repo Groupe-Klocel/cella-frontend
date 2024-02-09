@@ -53,13 +53,30 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 handlingUnitInfos.handlingUnits?.results[0].locationId ==
                     storedObject['step10'].data.proposedRoundAdvisedAddress.locationId
             ) {
-                const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
+                const deliveryLine =
+                    storedObject['step10'].data.proposedRoundAdvisedAddress.roundLineDetail
+                        .deliveryLine;
+                if (
+                    handlingUnitInfos.handlingUnits?.results[0].handlingUnitContents.some(
+                        (content: any) =>
+                            content.articleId === deliveryLine.articleId &&
+                            content.stockOwnerId === deliveryLine.stockOwnerId &&
+                            content.stockStatus === deliveryLine.stockStatus &&
+                            content.reservation === deliveryLine.reservation
+                    )
+                ) {
+                    const data: { [label: string]: any } = {};
+                    data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
+                    setTriggerRender(!triggerRender);
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
+                } else {
+                    showError(t('messages:wrong-stock-status-or-reservation'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                }
             } else {
                 showError(t('messages:unexpected-scanned-item'));
                 setResetForm(true);

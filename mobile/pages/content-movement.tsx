@@ -385,7 +385,12 @@ const ContentMvmt: PageComponent = () => {
                     stepNumber={workflow.expectedSteps[7]}
                     label={t('common:location-final')}
                     trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true, locationButton: true }}
+                    buttons={{
+                        submitButton: true,
+                        backButton: true,
+                        locationButton: true,
+                        emptyButton: true
+                    }}
                     showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
                     showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                     headerContent={{ headerContent, setHeaderContent }}
