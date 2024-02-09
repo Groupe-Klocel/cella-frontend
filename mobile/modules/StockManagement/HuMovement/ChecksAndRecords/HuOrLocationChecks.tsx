@@ -39,7 +39,9 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit,
-        setResetForm
+        setResetForm,
+        showEmptyLocations,
+        showSimilarLocations
     } = dataToCheck;
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -74,6 +76,8 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                     setScannedInfo(undefined);
                 }
                 setIsLoading(false);
+                // showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
+                // showEmptyLocations?.showEmptyLocations.setShowEmptyLocations(false);
             };
             fetchData();
         }
@@ -141,6 +145,8 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                         ...storedObject[`step${stepNumber}`],
                         data
                     };
+                    showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
+                    showEmptyLocations?.showEmptyLocations.setShowEmptyLocations(false);
                 }
             }
 
@@ -159,6 +165,8 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                     ...storedObject[`step${stepNumber}`],
                     data
                 };
+                showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
+                showEmptyLocations?.showEmptyLocations.setShowEmptyLocations(false);
             }
 
             if (
