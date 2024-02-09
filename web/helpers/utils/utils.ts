@@ -499,11 +499,11 @@ function queryString(
 
     const queryString = `query{
         ${queryName}(
-            filters: ${JSON.stringify(search).replace(/"(\w+)":/g, '$1:')}
-            orderBy: ${JSON.stringify(newSort).replace(/"/g, '')}
+            filters: ${search ? JSON.stringify(search).replace(/"(\w+)":/g, '$1:') : undefined}
+            orderBy: ${newSort ? JSON.stringify(newSort).replace(/"/g, '') : undefined}
             page: ${page}
             itemsPerPage: ${itemsPerPage}
-            language: ${JSON.stringify(language)}
+            language: ${language ? JSON.stringify(language) : undefined}
         ) {
             count
             itemsPerPage
