@@ -21,6 +21,7 @@ import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { useBoxes } from '@helpers';
 import { LsIsSecured } from '@helpers';
+import { useRouter } from 'next/router';
 
 export interface IScanEANorIDProps {
     process: string;
@@ -43,6 +44,7 @@ export const ScanEANorID = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
+    const router = useRouter();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -57,7 +59,7 @@ export const ScanEANorID = ({
     }, []);
 
     //RESTART HERE: launch the useEffect for frontAPI launching here + how can I handle the dataToCheck???
-    const boxesInfos = useBoxes({ name: `${scannedInfo}` }, 1, 100, null);
+    const boxesInfos = useBoxes({ name: `${scannedInfo}` }, 1, 100, null, router.locale);
 
     const dataToCheck = {
         process,
