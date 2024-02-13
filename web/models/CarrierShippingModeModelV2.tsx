@@ -32,7 +32,8 @@ export const CarrierShippingModeModelV2: ModelType = {
         list: 'carrierShippingModes',
         create: 'createCarrierShippingMode',
         update: 'updateCarrierShippingMode',
-        delete: 'deleteCarrierShippingMode'
+        delete: 'deleteCarrierShippingMode',
+        export: true
     },
 
     fieldsInfo: {

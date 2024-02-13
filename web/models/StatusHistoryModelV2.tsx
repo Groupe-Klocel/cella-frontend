@@ -32,7 +32,8 @@ export const StatusHistoryModelV2: ModelType = {
         list: 'statusHistories',
         create: 'createStatusHistory',
         update: 'updateStatusHistory',
-        delete: 'deleteStatusHistory'
+        delete: 'deleteStatusHistory',
+        export: true
     },
 
     fieldsInfo: {

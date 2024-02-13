@@ -32,7 +32,8 @@ export const RoundAdvisedAddressModelV2: ModelType = {
         list: 'roundAdvisedAddresses',
         create: 'createRoundAdvisedAddress',
         update: 'updateRoundAdvisedAddress',
-        delete: 'deleteRoundAdvisedAddress'
+        delete: 'deleteRoundAdvisedAddress',
+        export: true
     },
 
     fieldsInfo: {

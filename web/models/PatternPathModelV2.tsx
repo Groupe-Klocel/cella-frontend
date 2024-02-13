@@ -33,7 +33,8 @@ export const PatternPathModelV2: ModelType = {
         create: 'createPatternPath',
         update: 'updatePatternPath',
         delete: 'deletePatternPath',
-        softDelete: 'softDeletePatternPath'
+        softDelete: 'softDeletePatternPath',
+        export: true
     },
 
     fieldsInfo: {

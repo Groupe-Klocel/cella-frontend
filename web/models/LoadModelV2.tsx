@@ -33,7 +33,8 @@ export const LoadModelV2: ModelType = {
         create: 'createLoad',
         update: 'updateLoad',
         delete: 'deleteLoad',
-        softDelete: 'softDeleteLoad'
+        softDelete: 'softDeleteLoad',
+        export: true
     },
 
     fieldsInfo: {
