@@ -53,6 +53,13 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                 handlingUnitInfos?.handlingUnits &&
                 handlingUnitInfos?.handlingUnits?.count != 0
             ) {
+                const chosenLocationId = storedObject['step65'].data.chosenLocation.id;
+                if (handlingUnitInfos.handlingUnits.results[0].locationId !== chosenLocationId) {
+                    showError(t('messages:no-hu-location'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    return;
+                }
                 const handlingUnit = handlingUnitInfos.handlingUnits.results[0];
                 // HU origin/final identical = error
                 if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {
