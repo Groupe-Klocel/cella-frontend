@@ -32,7 +32,8 @@ export const PatternPathLocationModelV2: ModelType = {
         list: 'patternPathLocations',
         create: 'createPatternPathLocation',
         update: 'updatePatternPathLocation',
-        delete: 'deletePatternPathLocation'
+        delete: 'deletePatternPathLocation',
+        export: true
     },
 
     fieldsInfo: {

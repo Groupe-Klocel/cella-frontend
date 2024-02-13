@@ -33,7 +33,8 @@ export const PurchaseOrderLineModelV2: ModelType = {
         create: 'createPurchaseOrderLine',
         update: 'updatePurchaseOrderLine',
         delete: 'deletePurchaseOrderLine',
-        softDelete: 'softDeletePurchaseOrderLine'
+        softDelete: 'softDeletePurchaseOrderLine',
+        export: true
     },
 
     fieldsInfo: {

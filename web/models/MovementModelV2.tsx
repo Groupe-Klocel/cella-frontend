@@ -32,7 +32,8 @@ export const MovementModelV2: ModelType = {
         list: 'movements',
         create: 'createMovement',
         update: 'updateMovement',
-        delete: 'deleteMovement'
+        delete: 'deleteMovement',
+        export: true
     },
 
     fieldsInfo: {

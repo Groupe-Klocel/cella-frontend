@@ -32,7 +32,8 @@ export const StockOwnerModelV2: ModelType = {
         list: 'stockOwners',
         create: 'createStockOwner',
         update: 'updateStockOwner',
-        delete: 'deleteStockOwner'
+        delete: 'deleteStockOwner',
+        export: true
     },
 
     fieldsInfo: {

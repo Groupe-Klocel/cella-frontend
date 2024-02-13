@@ -32,7 +32,8 @@ export const DeliveryAddressModelV2: ModelType = {
         list: 'deliveryAddresses',
         create: 'createDeliveryAddress',
         update: 'updateDeliveryAddress',
-        delete: 'deleteDeliveryAddress'
+        delete: 'deleteDeliveryAddress',
+        export: true
     },
 
     fieldsInfo: {

@@ -32,7 +32,8 @@ export const ArticleLuModelV2: ModelType = {
         list: 'articleLus',
         create: 'createArticleLu',
         update: 'updateArticleLu',
-        delete: 'deleteArticleLu'
+        delete: 'deleteArticleLu',
+        export: true
     },
 
     fieldsInfo: {

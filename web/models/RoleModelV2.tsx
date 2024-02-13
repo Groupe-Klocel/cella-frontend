@@ -32,7 +32,8 @@ export const RoleModelV2: ModelType = {
         list: 'roles',
         create: 'createRole',
         update: 'updateRole',
-        delete: 'deleteRole'
+        delete: 'deleteRole',
+        export: true
     },
 
     fieldsInfo: {
