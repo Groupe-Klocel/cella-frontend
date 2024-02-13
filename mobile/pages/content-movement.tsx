@@ -122,7 +122,7 @@ const ContentMvmt: PageComponent = () => {
         if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.chosenContent) {
             const chosenContent =
                 storedObject[`step${workflow.expectedSteps[5]}`]?.data.chosenContent;
-            object[t('common:status')] = chosenContent.stockStatusText;
+            object[t('common:stock-status')] = chosenContent.stockStatusText;
             object[t('common:stock-owner')] = chosenContent.stockOwner.name;
         }
         if (storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity) {
