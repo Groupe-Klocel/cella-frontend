@@ -256,5 +256,12 @@
     "document-histories": "Documents Histories",
     "document-history": "Document History",
     "notification": "Notification",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "third-party": "Third Party",
+    "third-parties": "Thirds Parties",
+    "third-party-address": "Address",
+    "third-party-addresses": "Addresses",
+    "third-party-address-contacts": "Contacts",
+    "third-party-address-contact": "Contact",
+    "financial-info": "Financial Information"
 }

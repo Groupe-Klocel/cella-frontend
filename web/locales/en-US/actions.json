@@ -109,5 +109,7 @@
     "add-pattern-path": "Add Pattern Path",
     "add-hook-config": "Add Hook Config",
     "set-printer": "Set Printer",
-    "add-load": "Add Load"
+    "add-load": "Add Load",
+    "add-third-party": "Add Third Party",
+    "open-prepopulate-section": "Deploy this section to prepopulate fields according to an existing third party"
 }
