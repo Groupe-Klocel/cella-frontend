@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, Select } from 'antd';
+import { Button, Input, Form, Select, Collapse } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -28,15 +28,23 @@ import { FormOptionType } from 'models/Models';
 import {
     CreateDeliveryAddressMutation,
     CreateDeliveryAddressMutationVariables,
+    GetThirdPartiesQuery,
+    GetThirdPartyAddressContactsQuery,
+    GetThirdPartyAddressesQuery,
     useCreateDeliveryAddressMutation,
+    useGetThirdPartiesQuery,
+    useGetThirdPartyAddressContactsQuery,
+    useGetThirdPartyAddressesQuery,
     useListConfigsForAScopeQuery
 } from 'generated/graphql';
+import configs from '../../../../common/configs.json';
 
 interface IOption {
     value: string;
     id: string;
 }
 const { Option } = Select;
+const { Panel } = Collapse;
 
 export interface ISingleItemProps {
     deliveryId: string | any;
@@ -48,6 +56,44 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const [category, setCategory] = useState<Array<FormOptionType>>();
+    const [thirdParties, setThirdParties] = useState<Array<FormOptionType>>();
+    const [thirdPartyAddresses, setThirdPartyAddresses] = useState<Array<FormOptionType>>();
+    const [thirdPartyAddressContacts, setThirdPartyAddressContacts] =
+        useState<Array<FormOptionType>>();
+
+    //ThirdParties
+    const customerThirdPartiesList = useGetThirdPartiesQuery<Partial<GetThirdPartiesQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: {
+                category: [configs.THIRD_PARTY_CATEGORY_CUSTOMER],
+                status: [configs.THIRD_PARTY_STATUS_ENABLED]
+            },
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 100
+        }
+    );
+
+    useEffect(() => {
+        if (customerThirdPartiesList) {
+            const newTypeTexts: Array<any> = [];
+            const cData = customerThirdPartiesList?.data?.thirdParties?.results;
+            if (cData) {
+                cData.forEach((item) => {
+                    newTypeTexts.push({ key: item.id, text: item.name });
+                });
+                newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
+                setThirdParties(newTypeTexts);
+            }
+        }
+    }, [customerThirdPartiesList.data]);
+
+    const [chosenThirdParty, setChosenThirdParty] = useState<string | undefined>();
+    // handle call back on thirdparty change
+    const handleThirdPartyChange = (value: any) => {
+        setChosenThirdParty(value);
+    };
 
     // PARAMETER : category
     const categoryList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -67,6 +113,169 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
             }
         }
     }, [categoryList.data]);
+
+    const [chosenCategory, setChosenCategory] = useState<number | undefined>();
+    // handle call back on category change
+    const handleCategoryChange = (value: number) => {
+        setChosenCategory(value);
+    };
+
+    //handle dynamic filters update for third party addresses
+    const defaultAddressFilters: any = { status: configs.THIRD_PARTY_ADDRESS_STATUS_ENABLED };
+    const addressFilters = {
+        ...defaultAddressFilters,
+        ...(chosenThirdParty ? { thirdPartyId: `${chosenThirdParty}` } : {}),
+        ...(chosenCategory ? { category: chosenCategory } : {})
+    };
+
+    //ThirdPartyAddresses
+    const addressesList = useGetThirdPartyAddressesQuery<
+        Partial<GetThirdPartyAddressesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: addressFilters,
+        orderBy: null,
+        page: 1,
+        itemsPerPage: 100
+    });
+
+    useEffect(() => {
+        if (addressesList) {
+            const newTypeTexts: Array<any> = [];
+            const cData = addressesList?.data?.thirdPartyAddresses?.results;
+            if (cData) {
+                cData.forEach((item) => {
+                    newTypeTexts.push({ key: item.id, text: item.entityName });
+                });
+                newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
+                setThirdPartyAddresses(newTypeTexts);
+            }
+        }
+    }, [addressesList.data]);
+
+    //manage call back on address change
+    const [chosenAddress, setChosenAddress] = useState<string | undefined>();
+    const handleAddressChange = (key: any, value: any) => {
+        // if we clear the select, we clear the form
+        if (value === null || value === undefined) {
+            setChosenAddress(undefined);
+            form.setFieldsValue({
+                entityName: null,
+                entityStreetNumber: null,
+                entityAddress1: null,
+                entityAddress2: null,
+                entityAddress3: null,
+                entityPostCode: null,
+                entityCity: null,
+                entityState: null,
+                entityDistrict: null,
+                entityCountry: null,
+                entityCountryCode: null,
+                entityVatCode: null,
+                entityEoriCode: null,
+                entityAccountingCode: null,
+                entityIdentificationNumber: null,
+                entityLanguage: null,
+                entityDeliveryPointNumber: null
+            });
+        }
+
+        // if we select a new value, we fill the form
+        if (addressesList.data) {
+            addressesList.data.thirdPartyAddresses?.results.forEach((address: any) => {
+                if (address.id == key) {
+                    setChosenAddress(value?.key);
+                    form.setFieldsValue({
+                        entityName: address.entityName,
+                        entityStreetNumber: address.entityStreetNumber,
+                        entityAddress1: address.entityAddress1,
+                        entityAddress2: address.entityAddress2,
+                        entityAddress3: address.entityAddress3,
+                        entityPostCode: address.entityPostCode,
+                        entityCity: address.entityCity,
+                        entityState: address.entityState,
+                        entityDistrict: address.entityDistrict,
+                        entityCountry: address.entityCountry,
+                        entityCountryCode: address.entityCountryCode,
+                        entityVatCode: address.entityVatCode,
+                        entityEoriCode: address.entityEoriCode,
+                        entityAccountingCode: address.entityAccountingCode,
+                        entityIdentificationNumber: address.entityIdentificationNumber,
+                        entityLanguage: address.entityLanguage,
+                        entityDeliveryPointNumber: address.entityDeliveryPointNumber
+                    });
+                }
+            });
+        }
+    };
+
+    //handle dynamic filters update for third party address contacts
+    const defaultContactFilters: any = {
+        status: configs.THIRD_PARTY_ADDRESS_CONTACT_STATUS_ENABLED
+    };
+    const contactFilters = {
+        ...defaultContactFilters,
+        ...(chosenAddress ? { thirdPartyAddressId: `${chosenAddress}` } : {})
+    };
+
+    //ThirdPartyAddressContacts
+    const contactsList = useGetThirdPartyAddressContactsQuery<
+        Partial<GetThirdPartyAddressContactsQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: contactFilters,
+        orderBy: null,
+        page: 1,
+        itemsPerPage: 100
+    });
+
+    useEffect(() => {
+        if (contactsList) {
+            const newTypeTexts: Array<any> = [];
+            const cData = contactsList?.data?.thirdPartyAddressContacts?.results;
+            if (cData) {
+                cData.forEach((item) => {
+                    newTypeTexts.push({ key: item.id, text: item.contactName });
+                });
+                newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
+                setThirdPartyAddressContacts(newTypeTexts);
+            }
+        }
+    }, [contactsList.data]);
+
+    const handleContactChange = (key: any, value: any) => {
+        // if we clear the select, we clear the form
+        if (value === null || value === undefined) {
+            form.setFieldsValue({
+                contactName: null,
+                contactCivility: null,
+                contactFirstName: null,
+                contactLastName: null,
+                contactPhone: null,
+                contactMobile: null,
+                contactEmail: null,
+                contactLanguage: null
+            });
+        }
+
+        // if we select a new value, we fill the form
+        if (contactsList.data) {
+            contactsList.data.thirdPartyAddressContacts?.results.forEach((contact: any) => {
+                if (contact.id == key) {
+                    form.setFieldsValue({
+                        contactName: contact.contactName,
+                        contactCivility: contact.contactCivility,
+                        contactFirstName: contact.contactFirstName,
+                        contactLastName: contact.contactLastName,
+                        contactPhone: contact.contactPhone,
+                        contactMobile: contact.contactMobile,
+                        contactEmail: contact.contactEmail,
+                        contactLanguage: contact.contactLanguage
+                    });
+                }
+            });
+        }
+    };
 
     const submit = t('actions:submit');
 
@@ -128,45 +337,82 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                 <Form.Item
                     label={t('d:category')}
                     name="category"
-                    rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
+                    rules={[
+                        {
+                            required: true,
+                            message: t('messages:error-message-empty-input')
+                        }
+                    ]}
                 >
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:category')
                         })}`}
+                        onChange={handleCategoryChange}
                     >
-                        {category?.map((ss: any) => (
-                            <Option key={ss.key} value={ss.key}>
-                                {ss.text}
+                        {category?.map((item: any) => (
+                            <Option key={item.key} value={item.key}>
+                                {item.text}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={t('d:contactName')} name="contactName">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:contactCivility')} name="contactCivility">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:contactLastName')} name="contactLastName">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:contactPhone')} name="contactPhone">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:contactMobile')} name="contactMobile">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:contactEmail')} name="contactEmail">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:contactLanguage')} name="contactLanguage">
-                    <Input />
-                </Form.Item>
+                <Collapse style={{ marginBottom: 10 }}>
+                    <Panel header={t('actions:open-prepopulate-section')} key="1">
+                        <Form.Item label={t('d:customer')} name="thirdPartyId">
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:customer')
+                                })}`}
+                                onChange={handleThirdPartyChange}
+                            >
+                                {thirdParties?.map((item: any) => (
+                                    <Option key={item.key} value={item.key}>
+                                        {item.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            label={t('d:third-party-address-model')}
+                            name="thirdPartyAddressId"
+                        >
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:third-party-address-model')
+                                })}`}
+                                onChange={handleAddressChange}
+                            >
+                                {thirdPartyAddresses?.map((item: any) => (
+                                    <Option key={item.key} value={item.key}>
+                                        {item.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            label={t('d:third-party-address-contact-model')}
+                            name="thirdPartyAddressContactId"
+                        >
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:third-party-address-contact-model')
+                                })}`}
+                                onChange={handleContactChange}
+                            >
+                                {thirdPartyAddressContacts?.map((item: any) => (
+                                    <Option key={item.key} value={item.key}>
+                                        {item.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Panel>
+                </Collapse>
                 <Form.Item label={t('d:entityName')} name="entityName">
                     <Input />
                 </Form.Item>
@@ -222,6 +468,30 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                     label={t('d:entityDeliveryPointNumber')}
                     name="entityDeliveryPointNumber"
                 >
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactName')} name="contactName">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactCivility')} name="contactCivility">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactLastName')} name="contactLastName">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactPhone')} name="contactPhone">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactMobile')} name="contactMobile">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactEmail')} name="contactEmail">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactLanguage')} name="contactLanguage">
                     <Input />
                 </Form.Item>
                 <Form.Item label={t('d:reference1')} name="reference1">
