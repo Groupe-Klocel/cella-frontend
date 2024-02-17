@@ -33,7 +33,8 @@ export const LocationModelV2: ModelType = {
         create: 'createLocation',
         update: 'updateLocation',
         delete: 'deleteLocation',
-        softDelete: 'softDeleteLocation'
+        softDelete: 'softDeleteLocation',
+        export: true
     },
 
     fieldsInfo: {

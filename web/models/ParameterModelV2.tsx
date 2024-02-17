@@ -32,7 +32,8 @@ export const ParameterModelV2: ModelType = {
         list: 'parameters',
         create: 'createParameter',
         update: 'updateParameter',
-        delete: 'deleteParameter'
+        delete: 'deleteParameter',
+        export: true
     },
 
     fieldsInfo: {

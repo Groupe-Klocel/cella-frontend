@@ -32,7 +32,8 @@ export const HookConfigModelV2: ModelType = {
         list: 'hookConfigs',
         create: 'createHookConfig',
         update: 'updateHookConfig',
-        delete: 'deleteHookConfig'
+        delete: 'deleteHookConfig',
+        export: true
     },
 
     fieldsInfo: {

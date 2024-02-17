@@ -32,7 +32,8 @@ export const DocumentHistoryModelV2: ModelType = {
         list: 'documentHistories',
         create: 'createDocumentHistory',
         update: 'updateDocumentHistory',
-        delete: 'deleteDocumentHistory'
+        delete: 'deleteDocumentHistory',
+        export: true
     },
 
     fieldsInfo: {

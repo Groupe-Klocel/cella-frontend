@@ -35,7 +35,8 @@ import {
     useDelete,
     useExport,
     useList,
-    flatten
+    flatten,
+    queryString
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
@@ -51,6 +52,7 @@ import {
 } from 'generated/graphql';
 import { ListFilters } from 'modules/Crud/submodules/ListFilters';
 import { useAuth } from 'context/AuthContext';
+import { useRouter } from 'next/router';
 
 export type HeaderData = {
     title: string;
@@ -76,6 +78,7 @@ const EquipmentListComponent = (props: IListProps) => {
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
 
     const [priorityUpId, setPriorityUpId] = useState<string>();
     const [priorityDownId, setPriorityDownId] = useState<string>();
@@ -312,7 +315,8 @@ const EquipmentListComponent = (props: IListProps) => {
         search,
         pagination.current,
         pagination.itemsPerPage,
-        sort
+        sort,
+        router.locale
     );
 
     useEffect(() => {
@@ -320,21 +324,50 @@ const EquipmentListComponent = (props: IListProps) => {
     }, [search, pagination.current, pagination.itemsPerPage, sort]);
 
     // #endregion
+    const exportFields = Object.keys(props.dataModel.fieldsInfo).filter((key) => {
+        const fieldInfo = props.dataModel.fieldsInfo[key];
+        return fieldInfo.isListRequested && !fieldInfo.isExcludedFromList;
+    });
+    const exportQueryString = queryString(
+        props.dataModel.endpoints.list,
+        exportFields,
+        search,
+        pagination.current,
+        pagination.itemsPerPage,
+        sort,
+        router.locale
+    );
 
-    // #region EXPORT DATA
-    const {
-        isLoading: exportLoading,
-        result: exportResult,
-        mutate
-    } = useExport(props.dataModel.resolverName, props.dataModel.endpoints.export ?? '');
+    const columnNames: any = {};
+
+    listFields.forEach((field: any) => {
+        const matchText = field.match(/(.+)Text$/);
+        if (matchText) {
+            const originalField = matchText[1];
+            columnNames[field] = originalField;
+        }
+    });
+
+    exportFields.forEach((field: any) => {
+        const matchRelationship = field.match(/(.+){(.+)}/);
+        if (matchRelationship) {
+            const baseWord = matchRelationship[1];
+            const additionalWord = matchRelationship[2];
+            const newColumnName = `${baseWord}_${additionalWord}`;
+            columnNames[newColumnName] = field.replace(`{${additionalWord}}`, ` ${additionalWord}`);
+        }
+    });
+
+    const { isLoading: exportLoading, result: exportResult, mutate } = useExport();
 
     const exportData = () => {
+        const base64QueryString = Buffer.from(exportQueryString, 'binary').toString('base64');
         mutate({
-            format: ExportFormat.Csv,
-            compression: null,
-            separator: ',',
-            orderBy: sort,
-            filters: search
+            graphqlRequest: base64QueryString,
+            format: ExportFormat.Xlsx,
+            separator: ';',
+            columnNames
+            // compression
         });
     };
 
@@ -346,9 +379,9 @@ const EquipmentListComponent = (props: IListProps) => {
 
     useEffect(() => {
         if (!(exportResult && exportResult.data)) return;
-
-        if (exportResult.success) {
+        if (exportResult.success && exportResult?.data.exportData?.url) {
             showSuccess(t('messages:success-exported'));
+            const newWindow = window.open(exportResult?.data.exportData?.url, '_blank');
         } else {
             showError(t('messages:error-exporting-data'));
         }

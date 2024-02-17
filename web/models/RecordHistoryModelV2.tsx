@@ -32,7 +32,8 @@ export const RecordHistoryModelV2: ModelType = {
         list: 'recordHistories',
         create: 'createRecordHistory',
         update: 'updateRecordHistory',
-        delete: 'deleteRecordHistory'
+        delete: 'deleteRecordHistory',
+        export: true
     },
 
     fieldsInfo: {
