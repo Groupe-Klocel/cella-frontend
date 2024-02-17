@@ -32,7 +32,8 @@ export const BuildingModelV2: ModelType = {
         list: 'buildings',
         create: 'createBuilding',
         update: 'updateBuilding',
-        delete: 'deleteBuilding'
+        delete: 'deleteBuilding',
+        export: true
     },
 
     fieldsInfo: {

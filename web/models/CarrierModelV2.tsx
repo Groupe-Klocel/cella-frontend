@@ -33,7 +33,8 @@ export const CarrierModelV2: ModelType = {
         create: 'createCarrier',
         update: 'updateCarrier',
         delete: 'deleteCarrier',
-        softDelete: 'softDeleteCarrier'
+        softDelete: 'softDeleteCarrier',
+        export: true
     },
 
     fieldsInfo: {

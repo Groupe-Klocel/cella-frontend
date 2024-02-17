@@ -33,7 +33,8 @@ export const HandlingUnitModelModelV2: ModelType = {
         create: 'createHandlingUnitModel',
         update: 'updateHandlingUnitModel',
         delete: 'deleteHandlingUnitModel',
-        softDelete: 'softDeleteHandlingUnitModel'
+        softDelete: 'softDeleteHandlingUnitModel',
+        export: true
     },
 
     fieldsInfo: {

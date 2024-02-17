@@ -33,7 +33,8 @@ export const ArticleModelV2: ModelType = {
         create: 'createArticle',
         update: 'updateArticle',
         delete: 'deleteArticle',
-        softDelete: 'softDeleteArticle'
+        softDelete: 'softDeleteArticle',
+        export: true
     },
 
     fieldsInfo: {

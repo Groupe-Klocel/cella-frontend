@@ -33,7 +33,8 @@ export const LogisticUnitModelV2: ModelType = {
         create: 'createLogisticUnit',
         update: 'updateLogisticUnit',
         delete: 'deleteLogisticUnit',
-        softDelete: 'softDeleteLogisticUnit'
+        softDelete: 'softDeleteLogisticUnit',
+        export: true
     },
 
     fieldsInfo: {
