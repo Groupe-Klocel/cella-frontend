@@ -219,7 +219,7 @@ export const SelectContentForFeatureForm = ({
                                 <Row>
                                     <Col span={8}>
                                         <Typography style={{ color: 'grey', fontSize: '10px' }}>
-                                            {t('common:status')}:
+                                            {t('common:stock-status')}:
                                         </Typography>
                                     </Col>
                                     <Col span={16}>
