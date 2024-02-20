@@ -114,7 +114,14 @@ export const SelectLoadForm = ({
                     id
                     name
                     status
-                    statusText
+                    weight
+                    stockOwnerId
+                    carrierId
+                    carrier {
+                        name
+                    }
+                    weight
+                    numberHuLoaded
                 }
             }
         `;
