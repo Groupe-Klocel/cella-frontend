@@ -26,8 +26,7 @@ import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import { ScanLoad } from 'modules/Common/Loads/PagesContainer/ScanLoad';
-import { LoadChecks } from 'modules/Preparation/Load/ChecksAndRecords/LoadChecks';
+import { SelectLoadForm } from 'modules/Common/Loads/PagesContainer/SelectLoadForm';
 import { HandlingUnitOutboundChecks } from 'modules/Preparation/Load/ChecksAndRecords/HandlingUnitOutboundChecks';
 import { ScanPalletBox } from 'modules/Common/Loads/PagesContainer/ScanPalletBox';
 import { ValidateLoadForm } from 'modules/Preparation/Load/Forms/ValidateLoad';
@@ -120,14 +119,12 @@ const LoadsPage: PageComponent = () => {
             )}
             {!storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
                 // Step 1 : Scan and Check Load
-                <ScanLoad
+                <SelectLoadForm
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[0]}
-                    label={t('common:load-number')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ submitButton: true, backButton: false }}
-                    checkComponent={(data: any) => <LoadChecks dataToCheck={data} />}
-                ></ScanLoad>
+                ></SelectLoadForm>
             ) : (
                 <></>
             )}
