@@ -293,6 +293,17 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.HandlingUnitContentFeature).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="stock-management-features">
+                        <Link href="/handling-unit-content-features">
+                            {t('features-attributes')}
+                        </Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 {getModesFromPermissions(permissions, Table.PurchaseOrder).includes(
                     ModeEnum.Read
                 ) ? (
