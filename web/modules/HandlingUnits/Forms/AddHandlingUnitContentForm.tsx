@@ -69,6 +69,7 @@ export const AddHandlingUnitContentForm = () => {
     const [lIdOptions, setLIdOptions] = useState<Array<IOption>>([]);
     const [lId, setLId] = useState<string>();
     const [locationName, setLocationName] = useState<string>('');
+    const [proposedHuName, setProposedHuName] = useState<string | undefined>(undefined);
     const locationData = useLocationIds({ name: `${locationName}%` }, 1, 100, null);
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
     const [handlingUnitModels, setHandlingUnitModels] = useState<any>();
@@ -198,18 +199,25 @@ export const AddHandlingUnitContentForm = () => {
     }, [lId]);
 
     useEffect(() => {
+        setProposedHuName(undefined);
         if (locationData.data) {
             const newIdOpts: Array<IOption> = [];
-            locationData.data.locations?.results.forEach(({ id, name }) => {
+            locationData.data.locations?.results.forEach(({ id, name, huManagement }) => {
                 if (form.getFieldsValue(true).locationId === id) {
                     setLocationName(name!);
                     setLId(id!);
+                    if (!huManagement) setProposedHuName(name);
                 }
                 newIdOpts.push({ value: name!, id: id! });
             });
             setLIdOptions(newIdOpts);
         }
     }, [locationName, locationData.data]);
+
+    useEffect(() => {
+        const formValue = form.getFieldsValue(true);
+        form.setFieldsValue({ ...formValue, name: proposedHuName });
+    }, [proposedHuName]);
 
     const onChangeLocation = (data: string) => {
         if (!data?.length) {
@@ -347,6 +355,40 @@ export const AddHandlingUnitContentForm = () => {
                 <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
                     <Col xs={8} xl={12}>
                         <Form.Item
+                            label={t('d:location')}
+                            name="locationName"
+                            rules={[
+                                { required: true, message: t('messages:error-message-empty-input') }
+                            ]}
+                        >
+                            <AutoComplete
+                                placeholder={`${t('messages:please-fill-letter-your', {
+                                    name: t('d:location')
+                                })}`}
+                                style={{ width: '100%' }}
+                                options={lIdOptions}
+                                value={locationName}
+                                filterOption={(inputValue, option) =>
+                                    option!.value
+                                        .toUpperCase()
+                                        .indexOf(inputValue.toUpperCase()) !== -1
+                                }
+                                onKeyUp={(e: any) => {
+                                    debounce(() => {
+                                        setLocationName(e.target.value);
+                                    }, 3000);
+                                }}
+                                onSelect={(value, option) => {
+                                    setLId(option.id);
+                                    setLocationName(value);
+                                }}
+                                allowClear
+                                onChange={onChangeLocation}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item
                             label={t('d:handlingUnit')}
                             name="name"
                             rules={getRulesWithNoSpacesValidator(
@@ -359,7 +401,7 @@ export const AddHandlingUnitContentForm = () => {
                                 t('messages:error-space')
                             )}
                         >
-                            <Input />
+                            <Input disabled={proposedHuName ? true : false} />
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
@@ -373,7 +415,7 @@ export const AddHandlingUnitContentForm = () => {
                             <Select
                                 allowClear
                                 placeholder={`${t('messages:please-select-a', {
-                                    name: t('d:handlingUnitModels')
+                                    name: t('d:handlingUnitModel')
                                 })}`}
                             >
                                 {handlingUnitModels?.map((so: any) => (
@@ -493,40 +535,6 @@ export const AddHandlingUnitContentForm = () => {
                                     </Option>
                                 ))}
                             </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col xs={8} xl={12}>
-                        <Form.Item
-                            label={t('d:location')}
-                            name="locationName"
-                            rules={[
-                                { required: true, message: t('messages:error-message-empty-input') }
-                            ]}
-                        >
-                            <AutoComplete
-                                placeholder={`${t('messages:please-fill-letter-your', {
-                                    name: t('d:location')
-                                })}`}
-                                style={{ width: '100%' }}
-                                options={lIdOptions}
-                                value={locationName}
-                                filterOption={(inputValue, option) =>
-                                    option!.value
-                                        .toUpperCase()
-                                        .indexOf(inputValue.toUpperCase()) !== -1
-                                }
-                                onKeyUp={(e: any) => {
-                                    debounce(() => {
-                                        setLocationName(e.target.value);
-                                    }, 3000);
-                                }}
-                                onSelect={(value, option) => {
-                                    setLId(option.id);
-                                    setLocationName(value);
-                                }}
-                                allowClear
-                                onChange={onChangeLocation}
-                            />
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
