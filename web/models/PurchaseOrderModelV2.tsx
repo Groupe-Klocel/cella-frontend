@@ -97,8 +97,7 @@ export const PurchaseOrderModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null,
-            defaultSort: 'ascending'
+            param: null
         },
         name: {
             isListRequested: true,
@@ -118,7 +117,8 @@ export const PurchaseOrderModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: null,
+            defaultSort: 'descending'
         },
         status: {
             isListRequested: true,
