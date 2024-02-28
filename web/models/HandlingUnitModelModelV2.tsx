@@ -56,8 +56,7 @@ export const HandlingUnitModelModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null,
-            defaultSort: 'ascending'
+            param: null
         },
         name: {
             isListRequested: true,
@@ -78,6 +77,7 @@ export const HandlingUnitModelModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
+            defaultSort: 'ascending',
             isEditDisabled: true
         },
         description: {

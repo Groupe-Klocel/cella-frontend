@@ -77,6 +77,7 @@ export const ParameterModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
+            defaultSort: 'ascending',
             optionTable: null,
             isEditDisabled: true
         },
@@ -245,7 +246,6 @@ export const ParameterModelV2: ModelType = {
             isMandatory: false,
             minRule: null,
             maxRule: null,
-            defaultSort: 'descending',
             config: null,
             param: null,
             optionTable: null
