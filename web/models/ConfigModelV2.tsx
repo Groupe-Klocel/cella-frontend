@@ -78,7 +78,8 @@ export const ConfigModelV2: ModelType = {
             config: null,
             param: null,
             optionTable: null,
-            isEditDisabled: true
+            isEditDisabled: true,
+            defaultSort: 'ascending'
         },
         code: {
             isListRequested: true,
@@ -244,7 +245,6 @@ export const ConfigModelV2: ModelType = {
             displayName: null,
             isMandatory: false,
             minRule: null,
-            defaultSort: 'descending',
             maxRule: null,
             config: null,
             param: null,

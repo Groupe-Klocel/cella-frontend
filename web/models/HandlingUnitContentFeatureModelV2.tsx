@@ -119,7 +119,8 @@ export const HandlingUnitContentFeatureModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: null
+            optionTable: null,
+            defaultSort: 'descending'
         },
         'handlingUnitContent{handlingUnit{locationId}}': {
             isListRequested: true,
@@ -413,8 +414,7 @@ export const HandlingUnitContentFeatureModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: null,
-            defaultSort: 'descending'
+            optionTable: null
         },
         modifiedBy: {
             isListRequested: true,

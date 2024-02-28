@@ -77,7 +77,8 @@ export const PatternPathModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            isEditDisabled: true
+            isEditDisabled: true,
+            defaultSort: 'ascending'
         },
         status: {
             isListRequested: true,
@@ -303,8 +304,7 @@ export const PatternPathModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null,
-            defaultSort: 'descending'
+            param: null
         }
     }
 };
