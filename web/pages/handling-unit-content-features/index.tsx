@@ -47,7 +47,7 @@ const HandlingUnitContentFeaturesPage: PageComponent = () => {
             },
             {
                 path: '/handling-unit-content-features',
-                breadcrumbName: 'menu:features-attributes'
+                breadcrumbName: 'menu:features-in-stock'
             }
         ],
         actionsComponent: null

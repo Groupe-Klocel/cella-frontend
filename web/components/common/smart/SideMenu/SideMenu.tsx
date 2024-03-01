@@ -297,9 +297,7 @@ const SideMenu: FC = () => {
                     ModeEnum.Read
                 ) ? (
                     <Menu.Item key="stock-management-features">
-                        <Link href="/handling-unit-content-features">
-                            {t('features-attributes')}
-                        </Link>
+                        <Link href="/handling-unit-content-features">{t('features-in-stock')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
