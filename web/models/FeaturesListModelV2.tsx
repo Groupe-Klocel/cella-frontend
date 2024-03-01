@@ -109,7 +109,7 @@ export const FeaturesListModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
-            link: null,
+            link: 'handling-unit-contents/feature/id',
             addEditFormat: 'String',
             addEditStep: null,
             maxLength: null,
@@ -167,7 +167,7 @@ export const FeaturesListModelV2: ModelType = {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: false,
+            isSortable: true,
             searchingFormat: 'String',
             isDetailRequested: true,
             isExcludedFromDetail: true,
@@ -415,7 +415,7 @@ export const FeaturesListModelV2: ModelType = {
             param: null,
             optionTable: null
         },
-        'handlingUnitContent{quantity}': {
+        quantity: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
@@ -581,8 +581,7 @@ export const FeaturesListModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: null,
-            defaultSort: 'descending'
+            optionTable: null
         },
         modifiedBy: {
             isListRequested: true,
