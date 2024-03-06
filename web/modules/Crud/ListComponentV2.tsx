@@ -391,14 +391,6 @@ const ListComponent = (props: IListProps) => {
                     ...searchValues
                 };
 
-                for (const i in newSearchValues) {
-                    if (newSearchValues.hasOwnProperty(i)) {
-                        if (typeof newSearchValues[i] === 'string') {
-                            newSearchValues[i] += '%';
-                        }
-                    }
-                }
-
                 cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
                 showBadge = false;
                 const savedFilters: any = {};
