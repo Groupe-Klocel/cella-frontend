@@ -80,7 +80,8 @@ export const LoadModelV2: ModelType = {
             config: null,
             param: null,
             optionTable: null,
-            isEditDisabled: false
+            isEditDisabled: false,
+            defaultSort: 'descending'
         },
         carrierId: {
             isListRequested: false,
@@ -103,7 +104,6 @@ export const LoadModelV2: ModelType = {
             param: null,
             optionTable:
                 '{"table": "Carrier", "fieldToDisplay": "name","filtersToApply": {"toBeLoaded":true}}',
-            defaultSort: 'ascending',
             isEditDisabled: true
         },
         'carrier{name}': {
@@ -237,7 +237,6 @@ export const LoadModelV2: ModelType = {
             param: null,
             optionTable:
                 '{"table": "CarrierShippingMode", "fieldToDisplay": "name","filtersToApply": {"carrierId":"carrierId"}}',
-            defaultSort: 'ascending',
             isEditDisabled: false
         },
         'carrierShippingMode{name}': {

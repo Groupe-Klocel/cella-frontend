@@ -170,6 +170,10 @@ const ListComponent = (props: IListProps) => {
                 initialValue: undefined
             };
         });
+    //retrieve saved sorters from cookies if any
+    const savedSorters = cookie.get(`${props.dataModel.resolverName}SavedSorters`)
+        ? JSON.parse(cookie.get(`${props.dataModel.resolverName}SavedSorters`)!)
+        : undefined;
 
     // extract id, name and link from props.dataModel.fieldsInfo where link is not null
     const linkFields = Object.keys(props.dataModel.fieldsInfo)
@@ -441,8 +445,8 @@ const ListComponent = (props: IListProps) => {
     // #region DATATABLE
     const [rows, setRows] = useState<DataQueryType>();
     const [columns, setColumns] = useState<Array<any>>([]);
-    // for sort default value, decided order is : 1-value from Model, 2-value from index.tsx
 
+    // for sort default value, decided order is : 1-value from cookies, 2-value from Model, 3-value from index.tsx
     let defaultModelSort = null;
     for (const key in props.dataModel.fieldsInfo) {
         if (props.dataModel.fieldsInfo[key].hasOwnProperty('defaultSort')) {
@@ -453,7 +457,8 @@ const ListComponent = (props: IListProps) => {
         }
     }
 
-    const [sort, setSort] = useState<any>(sortParameter ? sortParameter : props.sortDefault);
+    const [sort, setSort] = useState<any>(savedSorters || sortParameter || props.sortDefault);
+
     const [pagination, setPagination] = useState<PaginationType>({
         total: undefined,
         current: DEFAULT_PAGE_NUMBER,
@@ -611,6 +616,17 @@ const ListComponent = (props: IListProps) => {
                             sort_index++;
                         }
 
+                        //If default sort memorized or passed add defaultSortOrder
+                        if (sort) {
+                            sort.forEach((sorter: any) => {
+                                if (sorter.field === column_name) {
+                                    row_data['defaultSortOrder'] = sorter.ascending
+                                        ? 'ascend'
+                                        : 'descend';
+                                }
+                            });
+                        }
+
                         // Hide fields if there is any hidden selected.
                         if (!excludedListFields || !excludedListFields.includes(row_data.key)) {
                             result_list.push(row_data);
@@ -630,7 +646,7 @@ const ListComponent = (props: IListProps) => {
                 });
             }
         }
-    }, [data, router]);
+    }, [data, router, sort]);
 
     //TODO: Usage to be checked
     // useEffect(() => {
@@ -638,7 +654,41 @@ const ListComponent = (props: IListProps) => {
     // }, [props.refresh]);
 
     const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
-        await setSort(orderByFormater(sorter));
+        const newSorter = orderByFormater(sorter);
+
+        let tmp_array: any[] = [];
+        //retrieve values from existing memorized sorters
+        if (savedSorters) {
+            tmp_array.push(...savedSorters);
+        }
+        if (newSorter) {
+            //update dynamically sorters when clicked
+            newSorter.forEach((sorterItem) => {
+                const existingIndex = tmp_array.findIndex(
+                    (item) => item.field === sorterItem.field
+                );
+                if (existingIndex !== -1) {
+                    tmp_array[existingIndex] = sorterItem;
+                } else {
+                    tmp_array.push(sorterItem);
+                }
+            });
+
+            tmp_array = tmp_array.filter((tmpItem) =>
+                newSorter.some((sorterItem) => sorterItem.field === tmpItem.field)
+            );
+        } else {
+            // empty table when no more sorters are applied
+            tmp_array.length = 0;
+        }
+
+        await setSort(tmp_array);
+        if (tmp_array.length > 0) {
+            cookie.set(`${props.dataModel.resolverName}SavedSorters`, JSON.stringify(tmp_array));
+        }
+        if (orderByFormater(sorter) === null) {
+            cookie.remove(`${props.dataModel.resolverName}SavedSorters`);
+        }
     };
 
     // #endregion

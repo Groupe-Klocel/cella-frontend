@@ -370,6 +370,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                         sorter={c.sorter}
                         showSorterTooltip={c.showSorterTooltip}
                         render={c.render}
+                        defaultSortOrder={c.defaultSortOrder}
                     />
                 ))}
             </Table>

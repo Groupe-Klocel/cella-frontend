@@ -99,7 +99,8 @@ export const HandlingUnitContentModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: null
+            optionTable: null,
+            defaultSort: 'descending'
         },
         'handlingUnit{barcode}': {
             isListRequested: true,
@@ -588,8 +589,7 @@ export const HandlingUnitContentModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: null,
-            defaultSort: 'descending'
+            optionTable: null
         },
         modifiedBy: {
             isListRequested: true,
