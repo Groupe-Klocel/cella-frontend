@@ -199,14 +199,13 @@ export const AddHandlingUnitContentForm = () => {
     }, [lId]);
 
     useEffect(() => {
-        setProposedHuName(undefined);
+        fillHuName(form.getFieldsValue(true).locationName);
         if (locationData.data) {
             const newIdOpts: Array<IOption> = [];
-            locationData.data.locations?.results.forEach(({ id, name, huManagement }) => {
+            locationData.data.locations?.results.forEach(({ id, name }) => {
                 if (form.getFieldsValue(true).locationId === id) {
                     setLocationName(name!);
                     setLId(id!);
-                    if (!huManagement) setProposedHuName(name);
                 }
                 newIdOpts.push({ value: name!, id: id! });
             });
@@ -218,6 +217,22 @@ export const AddHandlingUnitContentForm = () => {
         const formValue = form.getFieldsValue(true);
         form.setFieldsValue({ ...formValue, name: proposedHuName });
     }, [proposedHuName]);
+
+    //copy and paste location name and fill HU input. desable input if HuManagement is false
+    const fillHuName = (loc: string) => {
+        setProposedHuName(undefined);
+        if (locationData.data) {
+            locationData.data.locations?.results.forEach(({ id, name, huManagement }) => {
+                if (loc === name) {
+                    setLId(id!);
+                    form.setFieldsValue({ locationId: id });
+                    if (!huManagement) {
+                        setProposedHuName(name);
+                    }
+                }
+            });
+        }
+    };
 
     const onChangeLocation = (data: string) => {
         if (!data?.length) {
