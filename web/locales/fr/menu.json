@@ -105,5 +105,9 @@
     "document-histories": "Historique des documents",
     "notifications": "Notifications",
     "features-in-stock": "Traçabilités en stock",
-    "third-parties": "Tiers"
+    "third-parties": "Tiers",
+    "rules": "Règles",
+    "rule-version": "Version",
+    "rule-version-config": "Configuration",
+    "order": "Ordre"
 }

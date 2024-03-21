@@ -104,5 +104,9 @@
     "document-histories": "Documents Histories",
     "notifications": "Notifications",
     "features-in-stock": "Features in stock",
-    "third-parties": "Third Parties"
+    "third-parties": "Third Parties",
+    "rules": "Rules",
+    "rule-version": "Version",
+    "rule-version-config": "Configuration",
+    "order": "Order"
 }
