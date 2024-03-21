@@ -668,5 +668,12 @@
     "defaultPaymentAccountText": "Compte de paiement par défaut",
     "vatEligible": "Eligible à la TVA",
     "entityCode": "Code Entité",
-    "entityComment": "Commentaire"
+    "entityComment": "Commentaire",
+    "activeVersion": "Version active",
+    "version": "Version",
+    "rule_name": "Libellé",
+    "parameterName": "Code",
+    "validationRule": "Règle de validation",
+    "input": "Configuration en entrée",
+    "output": "Configuration en sortie"
 }

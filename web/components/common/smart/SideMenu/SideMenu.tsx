@@ -218,6 +218,13 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.Rule).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-rules">
+                        <Link href="/rules">{t('rules')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
             </SubMenu>
             <SubMenu icon={<AppstoreAddOutlined />} key="articles" title={t('articles')}>
                 {getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) ? (

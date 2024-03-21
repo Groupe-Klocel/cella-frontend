@@ -109,7 +109,11 @@ import {
     useGetAllConfigsQuery,
     GetAllConfigsQuery,
     useGetAllStockOwnersQuery,
-    GetAllStockOwnersQuery
+    GetAllStockOwnersQuery,
+    useGetRuleVersionIdsQuery,
+    GetRuleVersionIdsQuery,
+    useGetRuleVersionConfigIdsQuery,
+    GetRuleVersionConfigIdsQuery
 } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import parameters from '../../../common/parameters.json';
@@ -1511,6 +1515,64 @@ const useGetPermissions = (search: any, page: number, itemsPerPage: number, sort
     return permissions;
 };
 
+const useRuleVersionIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const ruleVersionIds = useGetRuleVersionIdsQuery<Partial<GetRuleVersionIdsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: search,
+            orderBy: newSort,
+            page: page,
+            itemsPerPage: itemsPerPage
+        }
+    );
+
+    return ruleVersionIds;
+};
+
+const useRuleVersionConfigIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const ruleVersionConfigIds = useGetRuleVersionConfigIdsQuery<
+        Partial<GetRuleVersionConfigIdsQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage
+    });
+
+    return ruleVersionConfigIds;
+};
+
 export {
     useArticles,
     useArticleLus,
@@ -1558,5 +1620,7 @@ export {
     useGetWarehouseWorkers,
     useGetRoles,
     useGetPermissions,
-    useHandlingUnitModels
+    useHandlingUnitModels,
+    useRuleVersionIds,
+    useRuleVersionConfigIds
 };

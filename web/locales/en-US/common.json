@@ -265,5 +265,17 @@
     "third-party-address-contacts": "Contacts",
     "third-party-address-contact": "Contact",
     "financial-info": "Financial Information",
-    "supplier-info": "Supplier Information"
+    "supplier-info": "Supplier Information",
+    "rules": "Rules",
+    "rule": "Rule",
+    "rule-version": "Version",
+    "rule-versions": "Versions",
+    "version": "Version",
+    "rule-configs-in": "Input parameters",
+    "rule-config-in": "Input parameter",
+    "rule-configs-out": "Output parameters",
+    "rule-config-out": "output parameter",
+    "rule-version-config": "configuration",
+    "order": "order",
+    "config-order": "Order"
 }
