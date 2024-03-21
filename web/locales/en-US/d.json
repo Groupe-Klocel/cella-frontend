@@ -669,5 +669,12 @@
     "defaultPaymentAccountText": "Default Payment Account",
     "vatEligible": "VAT Eligible",
     "entityCode": "Entity Code",
-    "entityComment": "Comment"
+    "entityComment": "Comment",
+    "activeVersion": "Active version",
+    "version": "Version",
+    "rule_name": "Name",
+    "parameterName": "Code",
+    "validationRule": "Validation rule",
+    "input": "Input configuration",
+    "output": "Output configuration"
 }

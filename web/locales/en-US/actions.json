@@ -111,5 +111,6 @@
     "set-printer": "Set Printer",
     "add-load": "Add Load",
     "add-third-party": "Add Third Party",
-    "open-prepopulate-section": "Deploy this section to prepopulate fields according to an existing third party"
+    "open-prepopulate-section": "Deploy this section to prepopulate fields according to an existing third party",
+    "add-rule": "Add rule"
 }
