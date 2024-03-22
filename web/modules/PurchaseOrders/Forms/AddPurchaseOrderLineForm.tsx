@@ -53,6 +53,8 @@ const { Option } = Select;
 export interface ISingleItemProps {
     purchaseOrderId: string | any;
     purchaseOrderName: string | any;
+    stockOwnerId: string | any;
+    stockOwnerName: string | any;
 }
 
 export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
@@ -216,7 +218,8 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
         const tmp_details = {
             purchaseOrderName: props.purchaseOrderName,
             purchaseOrderId: props.purchaseOrderId,
-            status: configs.PURCHASE_ORDER_LINE_STATUS_CREATED
+            status: configs.PURCHASE_ORDER_LINE_STATUS_CREATED,
+            stockOwnerId: props.stockOwnerId
         };
         form.setFieldsValue(tmp_details);
         if (createLoading) {
@@ -246,6 +249,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
                 >
                     <Select
                         allowClear
+                        disabled
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:stockOwner')
                         })}`}

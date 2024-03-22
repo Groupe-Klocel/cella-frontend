@@ -49,7 +49,7 @@ const PurchaseOrderLinePage: PageComponent = () => {
         ...itemRoutes,
         {
             breadcrumbName: `${data?.purchaseOrder_name}`,
-            path: `${itemRoutes[itemRoutes.length - 1].path}/${poId}`
+            path: `${itemRoutes[itemRoutes.length - 1].path}/${data?.purchaseOrderId}`
         }
     ];
 
@@ -64,6 +64,8 @@ const PurchaseOrderLinePage: PageComponent = () => {
         data?.lineNumber
     }`;
     // #endregions
+
+    console.log('DLA-data', data);
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
@@ -84,7 +86,7 @@ const PurchaseOrderLinePage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
-        onBackRoute: rootPath + '/' + poId,
+        onBackRoute: rootPath + '/' + data?.purchaseOrderId,
         actionsComponent:
             data?.status !== configs.PURCHASE_ORDER_LINE_STATUS_CLOSED ? (
                 <Space>
@@ -129,7 +131,10 @@ const PurchaseOrderLinePage: PageComponent = () => {
                         <></>
                     )}
                 </Space>
-            ) : modes.length > 0 && modes.includes(ModeEnum.Update) && model.isSoftDeletable ? (
+            ) : modes.length > 0 &&
+              modes.includes(ModeEnum.Update) &&
+              model.isSoftDeletable &&
+              data.purchaseOrder_status !== configs.PURCHASE_ORDER_STATUS_CLOSED ? (
                 <Button
                     onClick={() =>
                         confirmAction(

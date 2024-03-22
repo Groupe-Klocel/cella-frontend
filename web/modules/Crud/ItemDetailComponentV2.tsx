@@ -63,6 +63,7 @@ export interface ISingleItemProps {
     setData?: any;
     headerData?: HeaderData;
     refetch?: boolean;
+    refetchSubList?: any;
 }
 
 const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
@@ -292,6 +293,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
         if (props.triggerSoftDelete && props.triggerSoftDelete.idToDisable) {
             callSoftDelete(props.triggerSoftDelete.idToDisable);
             props.triggerSoftDelete.setIdToDisable(undefined);
+            props?.refetchSubList?.setRefetchSubList(true);
         }
     }, [props.triggerSoftDelete]);
 
