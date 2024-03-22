@@ -277,5 +277,6 @@
     "rule-config-out": "output parameter",
     "rule-version-config": "configuration",
     "order": "order",
-    "config-order": "Order"
+    "config-order": "Order",
+    "supplier-details": "Supplier detail"
 }
