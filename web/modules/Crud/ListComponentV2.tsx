@@ -96,6 +96,16 @@ const ListComponent = (props: IListProps) => {
         columnFilter: true
     };
     props = { ...defaultProps, ...props };
+    // SearchForm in cookies
+    let searchCriterias: any = {};
+    let resetForm = false;
+    let showBadge = false;
+
+    searchCriterias = props.searchCriteria;
+
+    const specificSearch = searchCriterias?.scope;
+    let scope = '';
+    specificSearch ? (scope = `_${specificSearch}`) : (scope = '');
     // #endregion
 
     // #region extract data from modelV2
@@ -169,9 +179,10 @@ const ListComponent = (props: IListProps) => {
                 initialValue: undefined
             };
         });
+
     //retrieve saved sorters from cookies if any
-    const savedSorters = cookie.get(`${props.dataModel.resolverName}SavedSorters`)
-        ? JSON.parse(cookie.get(`${props.dataModel.resolverName}SavedSorters`)!)
+    const savedSorters = cookie.get(`${props.dataModel.resolverName}SavedSorters${scope}`)
+        ? JSON.parse(cookie.get(`${props.dataModel.resolverName}SavedSorters${scope}`)!)
         : undefined;
 
     // extract id, name and link from props.dataModel.fieldsInfo where link is not null
@@ -302,17 +313,10 @@ const ListComponent = (props: IListProps) => {
 
     // #region SEARCH OPERATIONS
 
-    // SearchForm in cookies
-    let searchCriterias: any = {};
-    let resetForm = false;
-    let showBadge = false;
-
-    searchCriterias = props.searchCriteria;
-
     if (props.searchable) {
-        if (cookie.get(`${props.dataModel.resolverName}SavedFilters`)) {
+        if (cookie.get(`${props.dataModel.resolverName}SavedFilters${scope}`)) {
             const savedFilters = JSON.parse(
-                cookie.get(`${props.dataModel.resolverName}SavedFilters`)!
+                cookie.get(`${props.dataModel.resolverName}SavedFilters${scope}`)!
             );
 
             searchCriterias = { ...savedFilters, ...props.searchCriteria };
@@ -370,8 +374,8 @@ const ListComponent = (props: IListProps) => {
     );
 
     const handleReset = () => {
-        cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
-        setSearch({});
+        cookie.remove(`${props.dataModel.resolverName}SavedFilters${scope}`);
+        !props.searchCriteria ? setSearch({}) : setSearch({ ...props.searchCriteria });
         resetForm = true;
         for (const obj of filterFields) {
             obj.initialValue = undefined;
@@ -387,10 +391,11 @@ const ListComponent = (props: IListProps) => {
                 const searchValues = formSearch.getFieldsValue(true);
 
                 const newSearchValues = {
-                    ...searchValues
+                    ...searchValues,
+                    ...props.searchCriteria
                 };
 
-                cookie.remove(`${props.dataModel.resolverName}SavedFilters`);
+                cookie.remove(`${props.dataModel.resolverName}SavedFilters${scope}`);
                 showBadge = false;
                 const savedFilters: any = {};
 
@@ -407,7 +412,7 @@ const ListComponent = (props: IListProps) => {
 
                     if (Object.keys(savedFilters).length > 0) {
                         cookie.set(
-                            `${props.dataModel.resolverName}SavedFilters`,
+                            `${props.dataModel.resolverName}SavedFilters${scope}`,
                             JSON.stringify(savedFilters)
                         );
                         showBadge = true;
@@ -681,10 +686,13 @@ const ListComponent = (props: IListProps) => {
 
         await setSort(tmp_array);
         if (tmp_array.length > 0) {
-            cookie.set(`${props.dataModel.resolverName}SavedSorters`, JSON.stringify(tmp_array));
+            cookie.set(
+                `${props.dataModel.resolverName}SavedSorters${scope}`,
+                JSON.stringify(tmp_array)
+            );
         }
         if (orderByFormater(sorter) === null) {
-            cookie.remove(`${props.dataModel.resolverName}SavedSorters`);
+            cookie.remove(`${props.dataModel.resolverName}SavedSorters${scope}`);
         }
     };
 
@@ -714,7 +722,11 @@ const ListComponent = (props: IListProps) => {
                                                 {showBadge ? (
                                                     <Badge
                                                         size="default"
-                                                        count={Object.keys(search).length}
+                                                        count={
+                                                            !specificSearch
+                                                                ? Object.keys(search).length
+                                                                : Object.keys(search).length - 1
+                                                        }
                                                         color="blue"
                                                     >
                                                         <Button

@@ -108,6 +108,10 @@
     "add-hook-config": "Ajouter un hook config",
     "set-printer": "Définir l'imprimante",
     "add-load": "Ajouter Chargement",
+    "add-articles-family": "Ajouter Famille Articles",
+    "edit-articles-family": "Modifier Famille Articles",
+    "add-articles-subfamily": "Ajouter Sous-famille Articles",
+    "edit-articles-subfamily": "Modifier Sous-famille Articles",
     "add-third-party": "Ajouter Tiers",
     "open-prepopulate-section": "Déployez cette section pour préremplir les champs selon un tiers existant",
     "add-rule": "Ajouter règle"
