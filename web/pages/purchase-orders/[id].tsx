@@ -23,7 +23,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { purchaseOrdersRoutes as itemRoutes } from 'modules/PurchaseOrders/Static/purchaseOrdersRoutes';
@@ -46,6 +46,7 @@ const PurchaseOrderPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
+    const [refetchSubList, setRefetchSubList] = useState(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -67,12 +68,15 @@ const PurchaseOrderPage: PageComponent = () => {
                 title: t('messages:action-confirm'),
                 onOk: () => {
                     setId(id);
+                    //to replace
+                    // router.reload();
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
         };
     };
+
     // PRINT
     const local = moment();
     local.locale();
@@ -168,10 +172,12 @@ const PurchaseOrderPage: PageComponent = () => {
                         stockOwnerName={data?.stockOwner_name}
                         stockOwnerId={data?.stockOwnerId}
                         status={data?.status}
+                        refetchSubList={refetchSubList}
                     />
                 }
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                refetchSubList={{ refetchSubList, setRefetchSubList }}
             />
         </>
     );
