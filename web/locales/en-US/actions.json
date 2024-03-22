@@ -110,6 +110,10 @@
     "add-hook-config": "Add Hook Config",
     "set-printer": "Set Printer",
     "add-load": "Add Load",
+    "add-articles-family": "Add Articles Family",
+    "edit-articles-family": "Edit Articles Family",
+    "add-articles-subfamily": "Add Articles Sub-Family",
+    "edit-articles-subfamily": "Edit Articles Sub-Family",
     "add-third-party": "Add Third Party",
     "open-prepopulate-section": "Deploy this section to prepopulate fields according to an existing third party",
     "add-rule": "Add rule"

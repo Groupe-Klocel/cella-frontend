@@ -285,6 +285,20 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-articles-families">
+                        <Link href="/articles-families">{t('articles-families')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-articles-subfamilies">
+                        <Link href="/articles-subfamilies">{t('articles-subfamilies')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
             </SubMenu>
             <SubMenu
                 icon={<ApartmentOutlined />}
