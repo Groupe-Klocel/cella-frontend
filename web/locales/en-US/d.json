@@ -676,5 +676,6 @@
     "parameterName": "Code",
     "validationRule": "Validation rule",
     "input": "Input configuration",
-    "output": "Output configuration"
+    "output": "Output configuration",
+    "paymentMethod": "Payment Method"
 }

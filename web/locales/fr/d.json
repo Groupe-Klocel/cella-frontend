@@ -675,5 +675,6 @@
     "parameterName": "Code",
     "validationRule": "Règle de validation",
     "input": "Configuration en entrée",
-    "output": "Configuration en sortie"
+    "output": "Configuration en sortie",
+    "paymentMethod": "Mode de règlement"
 }

@@ -273,5 +273,6 @@
     "rule-config-out": "Paramètre en sortie",
     "rule-version-config": "configuration",
     "order": "ordre",
-    "config-order": "Ordre"
+    "config-order": "Ordre",
+    "supplier-details": "Détail Fournisseur"
 }
