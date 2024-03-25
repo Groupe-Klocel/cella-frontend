@@ -278,5 +278,8 @@
     "rule-version-config": "configuration",
     "order": "ordre",
     "config-order": "Ordre",
-    "supplier-details": "Détail Fournisseur"
+    "supplier-details": "Détail Fournisseur",
+    "business-management": "Gestion commerciale",
+    "price-type": "Type de prix",
+    "price-types": "Types de prix"
 }

@@ -116,5 +116,7 @@
     "edit-articles-subfamily": "Edit Articles Sub-Family",
     "add-third-party": "Add Third Party",
     "open-prepopulate-section": "Deploy this section to prepopulate fields according to an existing third party",
-    "add-rule": "Add rule"
+    "add-rule": "Add rule",
+    "add-price-type": "Add Price Type",
+    "edit-price-type": "Edit Price Type"
 }
