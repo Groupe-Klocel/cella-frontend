@@ -262,7 +262,6 @@ const useHandlingUnitContents = (
         itemsPerPage: itemsPerPage,
         language: language
     });
-
     return hu_contents;
 };
 
