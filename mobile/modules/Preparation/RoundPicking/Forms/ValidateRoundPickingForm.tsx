@@ -126,12 +126,11 @@ export const ValidateRoundPickingForm = ({
                     currentRoundAdvisedAddress.status ==
                     configs.ROUND_ADVISED_ADDRESS_STATUS_TO_BE_VERIFIED
                 ) {
-                    const roundAdvisedAddresses =
-                        response.response.updatedRoundLineDetail.updateRoundLineDetail.roundLine.round.roundAdvisedAddresses
-                            .filter((raa: any) => raa.quantity != 0)
-                            .sort((a: any, b: any) => {
-                                return a.roundOrderId - b.roundOrderId;
-                            });
+                    const roundAdvisedAddresses = response.response.allRoundAdvisedAddresses
+                        .filter((raa: any) => raa.quantity != 0)
+                        .sort((a: any, b: any) => {
+                            return a.roundOrderId - b.roundOrderId;
+                        });
 
                     console.log('roundAdvisedAddresses', roundAdvisedAddresses);
 
