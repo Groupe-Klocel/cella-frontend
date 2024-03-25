@@ -116,5 +116,15 @@
     "open-prepopulate-section": "Déployez cette section pour préremplir les champs selon un tiers existant",
     "add-rule": "Ajouter règle",
     "add-price-type": "Ajouter type de prix",
-    "edit-price-type": "Modifier type de prix"
+    "edit-price-type": "Modifier type de prix",
+    "add-currency": "Ajouter une devise",
+    "edit-currency": "Modifier la devise",
+    "add-payment-term": "Ajouter une modalité de paiement",
+    "edit-payment-term": "Modifier la modalité de paiement",
+    "add-vat-rate": "Ajouter un taux de TVA",
+    "edit-vat-rate": "Modifier le taux de TVA",
+    "add-bank-account": "Ajouter un compte bancaire",
+    "edit-bank-account": "Modifier le compte bancaire",
+    "add-payment-method": "Ajouter un mode de paiement",
+    "edit-payment-method": "Modifier le mode de paiement"
 }
