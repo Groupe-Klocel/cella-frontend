@@ -29,12 +29,14 @@ export interface ISimilarLocationsProps {
     articleId: string;
     chosenContentId: string;
     stockOwnerId?: string;
+    stockStatus?: number;
 }
 
 export const SimilarLocations = ({
     articleId,
     chosenContentId,
-    stockOwnerId
+    stockOwnerId,
+    stockStatus
 }: ISimilarLocationsProps) => {
     const { t } = useTranslation();
     const router = useRouter();
@@ -44,7 +46,8 @@ export const SimilarLocations = ({
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
     const defaultFilter = { articleId: `${articleId}` };
     const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
-    const filters = { ...defaultFilter, ...stockOwnerFilter };
+    const stockStatusFilter = stockStatus ? { stockStatus: stockStatus } : undefined;
+    const filters = { ...defaultFilter, ...stockOwnerFilter, ...stockStatusFilter };
     const {
         isLoading: huContentLoading,
         data: huContentData,

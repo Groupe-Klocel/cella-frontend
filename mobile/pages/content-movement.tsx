@@ -241,6 +241,10 @@ const ContentMvmt: PageComponent = () => {
                         storedObject[`step${workflow.expectedSteps[5]}`].data.chosenContent
                             .stockOwnerId
                     }
+                    stockStatus={
+                        storedObject[`step${workflow.expectedSteps[5]}`].data.chosenContent
+                            .stockStatus
+                    }
                 />
             ) : (
                 <></>
