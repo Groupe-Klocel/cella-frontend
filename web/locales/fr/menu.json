@@ -113,5 +113,8 @@
     "rules": "Règles",
     "rule-version": "Version",
     "rule-version-config": "Configuration",
-    "order": "Ordre"
+    "order": "Ordre",
+    "business-management": "Gestion Commerciale",
+    "price-type": "Type de prix",
+    "price-types": "Types de prix"
 }

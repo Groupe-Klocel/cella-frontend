@@ -225,6 +225,18 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <SubMenu
+                        key="configuration-business-management"
+                        title={t('business-management')}
+                    >
+                        <Menu.Item key="configuration-price-types">
+                            <Link href="/price-types">{t('price-types')}</Link>
+                        </Menu.Item>
+                    </SubMenu>
+                ) : (
+                    <></>
+                )}
             </SubMenu>
             <SubMenu icon={<AppstoreAddOutlined />} key="articles" title={t('articles')}>
                 {getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) ? (

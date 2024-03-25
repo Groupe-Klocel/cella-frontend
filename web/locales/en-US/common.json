@@ -282,5 +282,8 @@
     "rule-version-config": "configuration",
     "order": "order",
     "config-order": "Order",
-    "supplier-details": "Supplier detail"
+    "supplier-details": "Supplier detail",
+    "business-management": "Business management",
+    "price-type": "Price Type",
+    "price-types": "Price Types"
 }
