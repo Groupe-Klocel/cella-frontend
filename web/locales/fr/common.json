@@ -281,5 +281,14 @@
     "supplier-details": "Détail Fournisseur",
     "business-management": "Gestion commerciale",
     "price-type": "Type de prix",
-    "price-types": "Types de prix"
+    "price-types": "Types de prix",
+    "currency": "Devise",
+    "currencies": "Devises",
+    "payment-term": "Modalité de paiement",
+    "payment-terms": "Modalités de paiement",
+    "payment-method": "Mode de paiement",
+    "payment-methods": "Modes de paiement",
+    "bank-account": "Compte bancaire",
+    "bank-accounts": "Comptes bancaires",
+    "vat-rates": "Taux de TVA"
 }
