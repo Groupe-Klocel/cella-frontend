@@ -33,6 +33,7 @@ export interface IScanLocationProps {
     showSimilarLocations?: any;
     checkComponent: any;
     headerContent?: any;
+    initValue?: string;
 }
 
 export const ScanLocation = ({
@@ -44,7 +45,8 @@ export const ScanLocation = ({
     showEmptyLocations,
     showSimilarLocations,
     checkComponent,
-    headerContent
+    headerContent,
+    initValue
 }: IScanLocationProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -106,6 +108,8 @@ export const ScanLocation = ({
                     showSimilarLocations={showSimilarLocations}
                     resetForm={{ resetForm, setResetForm }}
                     headerContent={headerContent}
+                    initValue={initValue}
+                    isSelected={true}
                 ></ScanForm>
                 {checkComponent(dataToCheck)}
             </>

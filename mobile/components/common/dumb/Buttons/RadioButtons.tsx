@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperButtons, StyledButton } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 export interface IRadioButtonsProps {
     input?: any;
@@ -49,6 +49,7 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
         input?.alternativeSubmitButton1
     );
     const [action1ButtonTrigger, setAction1ButtonTrigger] = useState<Boolean>(input?.action1Button);
+    const [action1ButtonVisible, setAction1ButtonVisible] = useState<Boolean>(false);
 
     // NB: commented for later enhancement
     // const [disabled, setDisabled] = useState<boolean | undefined>(false);
@@ -56,6 +57,14 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
     const onBack = () => {
         output.onBack();
     };
+
+    // console.log('RADIOBTN_action1ButtonTrigger', action1ButtonTrigger);
+    // console.log('RADIOBTN_action1Trigger', input.action1Trigger);
+
+    //This allows action1 button display to be dynamically re-rendered
+    useEffect(() => {
+        setAction1ButtonVisible(input?.action1Button);
+    }, [input?.action1Button]);
 
     return (
         <>
@@ -202,7 +211,7 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                 <StyledButton
                     type="primary"
                     block
-                    hidden={action1ButtonTrigger ? false : true}
+                    hidden={action1ButtonVisible ? false : true}
                     onClick={() => {
                         // setDisabled(true);
                         output?.setAction1Trigger(!input?.action1Trigger);

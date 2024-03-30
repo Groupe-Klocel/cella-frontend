@@ -20,9 +20,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
-import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
+import parameters from '../../../../../common/parameters.json';
 
 export interface IScanHandlingUnitProps {
     process: string;
@@ -49,6 +49,8 @@ export const ScanHandlingUnit = ({
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [handlingUnitInfos, setHandlingUnitInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
+
+    //TO BE ADDED : button to finish reception (reset LS)
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -191,6 +193,27 @@ export const ScanHandlingUnit = ({
                                     }
                                     value
                                 }
+                                handlingUnitContentInbounds {
+                                    id
+                                    handlingUnitContentId
+                                    handlingUnitInboundId
+                                    receivedQuantity
+                                    status
+                                    purchaseOrderId
+                                    purchaseOrderLineId
+                                    lineNumber
+                                    roundLineDetailId
+                                    lastTransactionId
+                                }
+                            }
+                            handlingUnitInbounds {
+                                id
+                                name
+                                status
+                                handlingUnitId
+                                purchaseOrderId
+                                roundId
+                                roundLineDetailId
                             }
                         }
                     }
@@ -198,7 +221,9 @@ export const ScanHandlingUnit = ({
             `;
 
             const variables = {
-                filters: { barcode: [`${scannedInfo}`] }
+                filters: {
+                    barcode: [`${scannedInfo}`]
+                }
             };
             const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitInfos;

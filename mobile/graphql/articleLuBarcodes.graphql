@@ -34,8 +34,11 @@ query GetArticleLuBarcodeIds(
             id
             articleId
             article {
+                id
                 name
                 description
+                newProduct
+                featureType
             }
             barcodeId
             barcode {
