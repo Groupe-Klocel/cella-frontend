@@ -36,12 +36,14 @@ export interface ISelectStockStatusProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     defaultValue?: any;
+    initialValue?: any;
 }
 
 export const SelectStockStatusForm = ({
     process,
     stepNumber,
     defaultValue,
+    initialValue,
     trigger: { triggerRender, setTriggerRender },
     buttons
 }: ISelectStockStatusProps) => {
@@ -125,7 +127,9 @@ export const SelectStockStatusForm = ({
     //SelectStockStatus-2b: handle back to previous step settings
     const onBack = () => {
         setTriggerRender(!triggerRender);
-        delete storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].data;
+        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
+            delete storedObject[`step${i}`]?.data;
+        }
         storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
         storage.set(process, JSON.stringify(storedObject));
     };
@@ -145,7 +149,7 @@ export const SelectStockStatusForm = ({
                     label={t('common:stock-status')}
                     name="stockStatus"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
-                    initialValue={parameters.STOCK_STATUSES_SALE}
+                    initialValue={initialValue ?? parameters.STOCK_STATUSES_SALE}
                 >
                     <Select
                         style={{ height: '20px', marginBottom: '5px' }}

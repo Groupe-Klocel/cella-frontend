@@ -37,7 +37,7 @@
     "feedback": "Remontée",
     "forgot-password": "Mot de passe oublié?",
     "goods-in": "Arrivage",
-    "goodsIn-po": "N° arrivage ou commande",
+    "goodsIn-po": "N° arrivage ou réception",
     "group": "Groupe",
     "handling-unit": "Unité de manutention",
     "handling-unit_abbr": "UM",
@@ -94,7 +94,7 @@
     "print": "Imprimer",
     "priority": "Priorité",
     "product": "Produit",
-    "purchase-order_abbr": "Cde. Fourn.",
+    "purchase-order_abbr": "Récep.",
     "quantity": "Quantité",
     "quantity_abbr": "Qté",
     "quantity-HU-scanned": "Quantité de support / colis scanné",
@@ -145,5 +145,10 @@
     "parent-handling-unit": "Unité de manutention parente",
     "hu-count-finished": "Comptage UM terminé",
     "location-count-finished": "Comptage emplacement terminé",
-    "feature-code": "Donnée traçable"
+    "feature-code": "Donnée traçable",
+    "possible-articles": "Articles possibles",
+    "feature-codes-entry": "Saisie des données traçables",
+    "finish-features-entry": "Terminer saisie traçabilités",
+    "new-goods-in": "Nouvel arrivage",
+    "validate-and-finish-hu": "Valider et terminer l'UM"
 }
