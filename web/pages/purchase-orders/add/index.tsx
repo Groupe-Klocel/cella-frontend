@@ -22,12 +22,12 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { PurchaseOrderModelV2 } from 'models/PurchaseOrderModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { addPurchaseOrderRoutes } from 'modules/PurchaseOrders/Static/purchaseOrdersRoutes';
 import { META_DEFAULTS } from '@helpers';
 import moment from 'moment';
 import configs from '../../../../common/configs.json';
+import { AddPurchaseOrder } from 'modules/PurchaseOrders/PagesContainer/AddPurchaseOrder';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -45,7 +45,7 @@ const AddPurchaseOrderPage: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddItemComponent
+            <AddPurchaseOrder
                 dataModel={PurchaseOrderModelV2}
                 headerComponent={
                     <HeaderContent

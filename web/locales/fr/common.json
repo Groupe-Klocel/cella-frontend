@@ -44,7 +44,7 @@
     "dangerous-goods": "Marchandises dangereuses",
     "forgot": "Vous avez oublié votre mot de passe ?",
     "company": "Entreprise",
-    "contact-details": "Coordonnées du destinataire",
+    "contact-details": "Coordonnées du contact",
     "cartography": "Cartography",
     "date": "Dates",
     "country": "Pays",
@@ -252,5 +252,13 @@
     "document-histories": "Historique des documents",
     "document-history": "Historique du document",
     "notification": "Notification",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "third-party": "Tiers",
+    "third-parties": "Tiers",
+    "third-party-address": "Adresse",
+    "third-party-addresses": "Adresses",
+    "third-party-address-contacts": "Contacts",
+    "third-party-address-contact": "Contact",
+    "financial-info": "Informations financières",
+    "supplier-info": "Informations fournisseur"
 }
