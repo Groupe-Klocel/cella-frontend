@@ -107,5 +107,7 @@
     "add-pattern-path": "Ajouter un chemin de profil",
     "add-hook-config": "Ajouter un hook config",
     "set-printer": "Définir l'imprimante",
-    "add-load": "Ajouter Chargement"
+    "add-load": "Ajouter Chargement",
+    "add-third-party": "Ajouter Tiers",
+    "open-prepopulate-section": "Déployez cette section pour préremplir les champs selon un tiers existant"
 }

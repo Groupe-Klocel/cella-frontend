@@ -155,6 +155,13 @@ const SideMenu: FC = () => {
                         <></>
                     )}
                 </SubMenu>
+                {getModesFromPermissions(permissions, Table.ThirdParty).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-third-parties">
+                        <Link href="/third-parties">{t('third-parties')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 {getModesFromPermissions(permissions, Table.Carrier).includes(ModeEnum.Read) ? (
                     <Menu.Item key="configuration-carriers">
                         <Link href="/carriers">{t('carriers')}</Link>
