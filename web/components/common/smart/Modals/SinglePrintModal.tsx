@@ -36,13 +36,15 @@ export interface ISinglePrintModalProps {
     showModal: any;
     documentName: string;
     documentReference?: string | any;
+    customLanguage?: string;
 }
 
 const SinglePrintModal = ({
     showModal,
     dataToPrint,
     documentName,
-    documentReference
+    documentReference,
+    customLanguage
 }: ISinglePrintModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
@@ -59,10 +61,12 @@ const SinglePrintModal = ({
     });
 
     useEffect(() => {
-        if (defaultPrintLanguage) {
+        if (customLanguage) {
+            setPrintLanguage(customLanguage);
+        } else if (defaultPrintLanguage) {
             setPrintLanguage(defaultPrintLanguage.data?.listParametersForAScope[0].text);
         }
-    }, [defaultPrintLanguage.data]);
+    }, [defaultPrintLanguage.data, customLanguage]);
 
     // Get all printers
     const printerList = useListParametersForAScopeQuery(graphqlRequestClient, {

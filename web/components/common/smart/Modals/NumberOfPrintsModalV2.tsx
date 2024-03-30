@@ -36,13 +36,15 @@ export interface INumberOfPrintsModalV2Props {
     showModal: any;
     documentName: string;
     documentReference?: string | any;
+    customLanguage?: string;
 }
 
 const NumberOfPrintsModalV2 = ({
     showModal,
     dataToPrint,
     documentName,
-    documentReference
+    documentReference,
+    customLanguage
 }: INumberOfPrintsModalV2Props) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
@@ -59,10 +61,12 @@ const NumberOfPrintsModalV2 = ({
     });
 
     useEffect(() => {
-        if (defaultPrintLanguage) {
+        if (customLanguage) {
+            setPrintLanguage(customLanguage);
+        } else if (defaultPrintLanguage) {
             setPrintLanguage(defaultPrintLanguage.data?.listParametersForAScope[0].text);
         }
-    }, [defaultPrintLanguage.data]);
+    }, [defaultPrintLanguage.data, customLanguage]);
 
     // Get all printers
     const printerList = useListParametersForAScopeQuery(graphqlRequestClient, {
