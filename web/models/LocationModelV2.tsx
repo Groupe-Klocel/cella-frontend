@@ -159,7 +159,8 @@ export const LocationModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: null,
+            defaultSort: 'ascending'
         },
         barcode: {
             isListRequested: true,
@@ -419,8 +420,7 @@ export const LocationModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: 'rotation',
-            param: null,
-            defaultSort: 'ascending'
+            param: null
         },
         allowCycleCountStockMin: {
             isListRequested: true,
