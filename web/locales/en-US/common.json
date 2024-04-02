@@ -257,6 +257,10 @@
     "document-history": "Document History",
     "notification": "Notification",
     "notifications": "Notifications",
+    "articles-families": "Articles Families",
+    "articles-family": "Articles Family",
+    "articles-subfamilies": "Articles Sub-Families",
+    "articles-subfamily": "Articles Sub-Family",
     "handlingUnitContentFeatures": "Features in stock",
     "third-party": "Third Party",
     "third-parties": "Thirds Parties",
@@ -281,5 +285,14 @@
     "supplier-details": "Supplier detail",
     "business-management": "Business management",
     "price-type": "Price Type",
-    "price-types": "Price Types"
+    "price-types": "Price Types",
+    "currency": "Currency",
+    "currencies": "Currencies",
+    "payment-term": "Payment Term",
+    "payment-terms": "Payment Terms",
+    "payment-method": "Payment Method",
+    "payment-methods": "Payment Methods",
+    "bank-account": "Bank Account",
+    "bank-accounts": "Bank Accounts",
+    "vat-rates": "Vat Rate"
 }
