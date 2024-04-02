@@ -643,6 +643,8 @@
     "initialStockStatus": "Etat de stock initial",
     "finalStockStatus": "Etat de stock final",
     "print_block": "Imprimer le bloc entier",
+    "handlingUnitContent_handlingUnit_category": "Catégorie",
+    "handlingUnitContent_stockStatus": "Etat de stock",
     "thirdParty_name": "Tiers",
     "thirdParty": "Tiers",
     "thirdPartyId": "Tiers",

@@ -644,6 +644,8 @@
     "initialStockStatus": "Initial Stock Status",
     "FinalStockStatus": "Final Stock Status",
     "print_block": "Print full block",
+    "handlingUnitContent_handlingUnit_category": "Category",
+    "handlingUnitContent_stockStatus": "Stock status",
     "thirdParty_name": "Third Party",
     "thirdParty": "Third Party",
     "thirdPartyId": "Third Party",
