@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Table } from 'generated/graphql';
 import { ModelType } from './ModelsV2';
 
-export const ParameterModelV2: ModelType = {
+export const SingleParameterModelV2: ModelType = {
     tableName: Table.Parameter,
     resolverName: 'Parameter',
     isEditable: true,
@@ -63,7 +63,7 @@ export const ParameterModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: 'Dropdown',
+            searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
@@ -77,8 +77,8 @@ export const ParameterModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            defaultSort: 'ascending',
             optionTable: null,
+            defaultSort: 'ascending',
             isEditDisabled: true
         },
         code: {
@@ -151,27 +151,6 @@ export const ParameterModelV2: ModelType = {
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
-            detailGroup: null,
-            link: null,
-            addEditFormat: 'String',
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: false,
-            minRule: null,
-            maxRule: null,
-            config: null,
-            param: null,
-            optionTable: null
-        },
-        extras: {
-            isListRequested: true,
-            isDefaultHiddenList: true,
-            isExcludedFromList: false,
-            isSortable: true,
-            searchingFormat: 'String',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,

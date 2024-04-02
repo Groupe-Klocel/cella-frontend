@@ -218,6 +218,25 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.Rule).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-rules">
+                        <Link href="/rules">{t('rules')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <SubMenu
+                        key="configuration-business-management"
+                        title={t('business-management')}
+                    >
+                        <Menu.Item key="configuration-price-types">
+                            <Link href="/price-types">{t('price-types')}</Link>
+                        </Menu.Item>
+                    </SubMenu>
+                ) : (
+                    <></>
+                )}
             </SubMenu>
             <SubMenu icon={<AppstoreAddOutlined />} key="articles" title={t('articles')}>
                 {getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) ? (
@@ -289,6 +308,15 @@ const SideMenu: FC = () => {
                 ) ? (
                     <Menu.Item key="stock-management-contents">
                         <Link href="/handling-unit-contents">{t('contents')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.HandlingUnitContentFeature).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="stock-management-features">
+                        <Link href="/handling-unit-content-features">{t('features-in-stock')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>

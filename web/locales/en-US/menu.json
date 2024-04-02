@@ -103,5 +103,13 @@
     "status-history": "Status History",
     "document-histories": "Documents Histories",
     "notifications": "Notifications",
-    "third-parties": "Third Parties"
+    "features-in-stock": "Features in stock",
+    "third-parties": "Third Parties",
+    "rules": "Rules",
+    "rule-version": "Version",
+    "rule-version-config": "Configuration",
+    "order": "Order",
+    "business-management": "Business Management",
+    "price-type": "Price Type",
+    "price-types": "Price Types"
 }

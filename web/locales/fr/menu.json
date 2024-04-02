@@ -104,5 +104,13 @@
     "status-history": "Historique des états",
     "document-histories": "Historique des documents",
     "notifications": "Notifications",
-    "third-parties": "Tiers"
+    "features-in-stock": "Traçabilités en stock",
+    "third-parties": "Tiers",
+    "rules": "Règles",
+    "rule-version": "Version",
+    "rule-version-config": "Configuration",
+    "order": "Ordre",
+    "business-management": "Gestion Commerciale",
+    "price-type": "Type de prix",
+    "price-types": "Types de prix"
 }

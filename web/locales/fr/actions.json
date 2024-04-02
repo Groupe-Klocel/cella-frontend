@@ -109,5 +109,8 @@
     "set-printer": "Définir l'imprimante",
     "add-load": "Ajouter Chargement",
     "add-third-party": "Ajouter Tiers",
-    "open-prepopulate-section": "Déployez cette section pour préremplir les champs selon un tiers existant"
+    "open-prepopulate-section": "Déployez cette section pour préremplir les champs selon un tiers existant",
+    "add-rule": "Ajouter règle",
+    "add-price-type": "Ajouter type de prix",
+    "edit-price-type": "Modifier type de prix"
 }
