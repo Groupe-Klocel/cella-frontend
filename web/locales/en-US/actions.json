@@ -118,5 +118,15 @@
     "open-prepopulate-section": "Deploy this section to prepopulate fields according to an existing third party",
     "add-rule": "Add rule",
     "add-price-type": "Add Price Type",
-    "edit-price-type": "Edit Price Type"
+    "edit-price-type": "Edit Price Type",
+    "add-currency": "Add Currency",
+    "edit-currency": "Edit Currency",
+    "add-payment-term": "Add Payment Term",
+    "edit-payment-term": "Edit Payment Term",
+    "add-vat-rate": "Add Vat Rate",
+    "edit-vat-rate": "Edit Vat Rate",
+    "add-bank-account": "Add Bank Account",
+    "edit-bank-account": "Edit Bank Account",
+    "add-payment-method": "Add Payment Method",
+    "edit-payment-method": "Edit Payment Method"
 }

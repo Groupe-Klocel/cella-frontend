@@ -253,6 +253,10 @@
     "document-history": "Historique du document",
     "notification": "Notification",
     "notifications": "Notifications",
+    "articles-families": "Familles Articles",
+    "articles-family": "Famille Articles",
+    "articles-subfamilies": "Sous-Familles Articles",
+    "articles-subfamily": "Sous-Famille Articles",
     "handlingUnitContentFeatures": "Traçabilités en stock",
     "third-party": "Tiers",
     "third-parties": "Tiers",
@@ -277,5 +281,14 @@
     "supplier-details": "Détail Fournisseur",
     "business-management": "Gestion commerciale",
     "price-type": "Type de prix",
-    "price-types": "Types de prix"
+    "price-types": "Types de prix",
+    "currency": "Devise",
+    "currencies": "Devises",
+    "payment-term": "Modalité de paiement",
+    "payment-terms": "Modalités de paiement",
+    "payment-method": "Mode de paiement",
+    "payment-methods": "Modes de paiement",
+    "bank-account": "Compte bancaire",
+    "bank-accounts": "Comptes bancaires",
+    "vat-rates": "Taux de TVA"
 }

@@ -233,6 +233,21 @@ const SideMenu: FC = () => {
                         <Menu.Item key="configuration-price-types">
                             <Link href="/price-types">{t('price-types')}</Link>
                         </Menu.Item>
+                        <Menu.Item key="configuration-currencies">
+                            <Link href="/currencies">{t('currencies')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-payment-terms">
+                            <Link href="/payment-terms">{t('payment-terms')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-payment-methods">
+                            <Link href="/payment-methods">{t('payment-methods')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-bank-accounts">
+                            <Link href="/bank-accounts">{t('bank-accounts')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-vat-rates">
+                            <Link href="/vat-rates">{t('vat-rates')}</Link>
+                        </Menu.Item>
                     </SubMenu>
                 ) : (
                     <></>
