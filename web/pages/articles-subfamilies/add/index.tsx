@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ParameterModelV2 } from 'models/ParameterModelV2';
+import { SingleParameterModelV2 } from 'models/SingleParameterModelV2';
 import useTranslation from 'next-translate/useTranslation';
 import { articlesSubFamiliesRoutes } from 'modules/ArticlesSubFamilies/Static/articlesSubFamiliesRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -41,7 +41,7 @@ const AddArticleSubFamilyPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <AddConfigParamComponent
-                dataModel={ParameterModelV2}
+                dataModel={SingleParameterModelV2}
                 headerComponent={
                     <HeaderContent
                         title={t('actions:add-articles-subfamily')}
