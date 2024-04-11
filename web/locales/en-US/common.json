@@ -294,5 +294,9 @@
     "payment-methods": "Payment Methods",
     "bank-account": "Bank Account",
     "bank-accounts": "Bank Accounts",
-    "vat-rates": "Vat Rate"
+    "vat-rates": "Vat Rate",
+    "goods-in-line-detail": "Goods-in Line Detail",
+    "goods-in-line-details": "Goods-in Line Details",
+    "inbound-box": "Inbound Box",
+    "inbound-boxes": "Inbound Boxes"
 }

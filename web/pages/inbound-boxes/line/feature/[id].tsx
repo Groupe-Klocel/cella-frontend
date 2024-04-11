@@ -18,43 +18,49 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { ItemDetailComponent } from 'modules/Crud/ItemDetailComponent';
+import { META_DEFAULTS } from '@helpers';
+import { HandlingUnitContentFeatureModelV2 as model } from 'models/HandlingUnitContentFeatureModelV2';
+import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
-import { META_DEFAULTS } from '@helpers';
-import MainLayout from 'components/layouts/MainLayout';
-import { GoodsInLineDetailsExtra } from 'modules/GoodsIns/Elements/GoodsInLineDetailsExtra';
-import { GoodsInLineDetailsHeader } from 'modules/GoodsIns/Elements/GoodsInLineDetailsHeader';
-import { GoodsInLineModel } from 'models/GoodsInLineModel';
+import MainLayout from '../../../../components/layouts/MainLayout';
+import useTranslation from 'next-translate/useTranslation';
+import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
+// import { BoxLineFeatureDetailsExtra } from 'modules/Boxes/Elements/BoxLineFeatureDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const GoodsInLinePage: PageComponent = () => {
+const BoxLineFeaturePage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const { id } = router.query;
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+
+    const pageTitle = `${data?.featureCode_name}`;
+
+    const headerData: HeaderData = {
+        title: pageTitle,
+        routes: itemRoutes,
+        actionsComponent: undefined
+    };
+
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
-                extraDataComponent={<GoodsInLineDetailsExtra goodsInLineId={id!} />}
-                headerComponent={
-                    <GoodsInLineDetailsHeader
-                        goodsInId={data?.handlingUnitInboundId}
-                        goodsInName={data?.handlingUnitInbound_name}
-                        name={data?.handlingUnitContentInbound_name}
-                        id={id!}
-                        dataModel={GoodsInLineModel}
-                    />
-                }
                 id={id!}
-                dataModel={GoodsInLineModel}
+                headerData={headerData}
+                dataModel={model}
                 setData={setData}
+                triggerDelete={{ idToDelete, setIdToDelete }}
+                triggerSoftDelete={{ idToDisable, setIdToDisable }}
             />
         </>
     );
 };
 
-GoodsInLinePage.layout = MainLayout;
+BoxLineFeaturePage.layout = MainLayout;
 
-export default GoodsInLinePage;
+export default BoxLineFeaturePage;
