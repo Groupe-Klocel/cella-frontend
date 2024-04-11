@@ -150,5 +150,8 @@
     "feature-codes-entry": "Saisie des données traçables",
     "finish-features-entry": "Terminer saisie traçabilités",
     "new-goods-in": "Nouvel arrivage",
-    "validate-and-finish-hu": "Valider et terminer l'UM"
+    "validate-and-finish-hu": "Valider et terminer l'UM",
+    "palletization": "Palettisation",
+    "number-of-boxes": "Nombre de colis",
+    "close-pallet": "Fermer la palette"
 }

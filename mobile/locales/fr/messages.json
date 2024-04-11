@@ -83,5 +83,9 @@
     "hu-already-used": "Cette UM est déjà utilisée",
     "no-articleLuBarcode": "Aucun article trouvé avec ce code à barres",
     "not-inbound-hu": "Cette UM n'est pas disponible pour réception",
-    "new-article-warning": "Attention, c'est un nouvel article"
+    "new-article-warning": "Attention, c'est un nouvel article",
+    "no-pallet-to-close": "Aucune palette à fermer",
+    "scanned-hu-cannot-be-palletized": "L'élément scanné ne peut pas être palettisé",
+    "scanned-hu-cannot-be-palletized-on-this-pallet": "L'élément scanné ne peut pas être palettisé sur cette palette",
+    "scan-not-validated": "Vous n'avez pas validé votre saisie"
 }
