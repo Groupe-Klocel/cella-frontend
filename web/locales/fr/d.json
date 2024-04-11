@@ -676,5 +676,7 @@
     "validationRule": "Règle de validation",
     "input": "Configuration en entrée",
     "output": "Configuration en sortie",
-    "paymentMethod": "Mode de règlement"
+    "paymentMethod": "Mode de règlement",
+    "receptionName": "Réception",
+    "receptionLineNumber": "Ligne de réception"
 }

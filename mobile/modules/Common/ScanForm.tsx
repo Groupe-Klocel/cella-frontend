@@ -165,6 +165,7 @@ export const ScanForm = ({
                         onChange={onChange}
                         autoFocus
                         allowClear
+                        onFocus={isSelected ? (e) => e.target.select() : undefined}
                     />
                 </StyledFormItem>
                 {configs.SCAN_CAMERA_ACTIVATED === 1 ? (

@@ -677,5 +677,7 @@
     "validationRule": "Validation rule",
     "input": "Input configuration",
     "output": "Output configuration",
-    "paymentMethod": "Payment Method"
+    "paymentMethod": "Payment Method",
+    "receptionName": "Reception",
+    "receptionLineNumber": "Reception Line"
 }
