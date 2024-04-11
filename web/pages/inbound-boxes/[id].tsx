@@ -17,24 +17,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
-import { GoodsInModelV2 as model } from 'models/GoodsInModelV2';
+import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
+import { HandlingUnitInboundModelV2 as model } from 'models/HandlingUnitInboundModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions, useBoxLines } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { goodsInsRoutes as itemRoutes } from 'modules/GoodsIns/Static/goodsInsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
-import { GoodsInDetailsExtra } from 'modules/GoodsIns/Elements/GoodsInDetailsExtra';
+import { InboundBoxDetailsExtra } from 'modules/InboundBoxes/Elements/InboundBoxDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const GoodsInPage: PageComponent = () => {
+const InboundBoxPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -45,23 +45,31 @@ const GoodsInPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     // #region to customize information
-    const breadCrumb = [
+    const roundDetailBreadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${data?.round_name}`,
+            path: '/goods-ins/' + data?.roundId
         }
     ];
 
-    const pageTitle = `${t('common:goods-in')} ${data?.name}`;
+    const breadCrumb = [
+        ...roundDetailBreadCrumb,
+        {
+            breadcrumbName: `${t('common:inbound-box')} ${data?.name}`
+        }
+    ];
+
+    const pageTitle = `${t('common:inbound-box')} ${data?.name}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
-    const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
+    const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
     const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
             Modal.confirm({
-                title: t('messages:close-confirm'),
+                title: t('messages:action-confirm'),
                 onOk: () => {
                     setId(id);
                 },
@@ -74,43 +82,45 @@ const GoodsInPage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
-        onBackRoute: rootPath,
-        actionsComponent:
-            data?.status !== configs.ROUND_STATUS_CLOSED ? (
-                <Space>
-                    {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
-                        <LinkButton
-                            title={t('actions:edit')}
-                            path={`${rootPath}/edit/${id}`}
-                            type="primary"
-                        />
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 &&
-                    modes.includes(ModeEnum.Delete) &&
-                    model.isSoftDeletable ? (
-                        <Button
-                            onClick={() => confirmAction(id as string, setIdToDisable)()}
-                            type="primary"
-                            danger
-                        >
-                            {t('actions:close')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
-                            {t('actions:delete')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                </Space>
-            ) : (
-                <></>
-            )
+        actionsComponent: (
+            <Space>
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                model.isEditable &&
+                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
+                    <LinkButton
+                        title={t('actions:edit')}
+                        path={`${rootPath}/edit/${id}`}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isSoftDeletable &&
+                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
+                    <Button
+                        onClick={() => confirmAction(id as string, setIdToDisable)()}
+                        type="primary"
+                    >
+                        {t('actions:disable')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isDeletable &&
+                data?.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CREATED ? (
+                    <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
+                        {t('actions:delete')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+            </Space>
+        )
     };
     // #endregion
 
@@ -118,8 +128,8 @@ const GoodsInPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
+                extraDataComponent={<InboundBoxDetailsExtra boxId={id} />}
                 id={id!}
-                extraDataComponent={<GoodsInDetailsExtra roundId={id} />}
                 headerData={headerData}
                 dataModel={model}
                 setData={setData}
@@ -130,8 +140,6 @@ const GoodsInPage: PageComponent = () => {
     );
 };
 
-GoodsInPage.layout = MainLayout;
+InboundBoxPage.layout = MainLayout;
 
-export default GoodsInPage;
-
-//
+export default InboundBoxPage;

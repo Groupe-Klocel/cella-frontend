@@ -290,5 +290,9 @@
     "payment-methods": "Modes de paiement",
     "bank-account": "Compte bancaire",
     "bank-accounts": "Comptes bancaires",
-    "vat-rates": "Taux de TVA"
+    "vat-rates": "Taux de TVA",
+    "goods-in-line-detail": "Détail de ligne d'arrivage",
+    "goods-in-line-details": "Détails de ligne d'arrivage",
+    "inbound-box": "Colis entrant",
+    "inbound-boxes": "Colis entrants"
 }

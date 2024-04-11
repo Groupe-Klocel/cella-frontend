@@ -25,62 +25,75 @@ import { Divider, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { HandlingUnitContentFeatureModelV2 } from 'models/HandlingUnitContentFeatureModelV2';
 import { useState } from 'react';
-import { GoodsInLineDetailModelV2 } from 'models/GoodsInLineDetailModelV2';
 
 export interface IItemDetailsProps {
-    roundLineId?: string | any;
+    boxLineId?: string | any;
+    contentId?: string | any;
+    boxLineName?: string | any;
 }
 
-const GoodsInLineDetailsExtra = ({ roundLineId }: IItemDetailsProps) => {
+const BoxLineDetailsExtra = ({ contentId, boxLineName }: IItemDetailsProps) => {
     const { t } = useTranslation();
+
     const { permissions } = useAppState();
+    const HandlingUnitContentFeatureModes = getModesFromPermissions(
+        permissions,
+        Table.HandlingUnitContentFeature
+    );
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
-    const RoundLineModes = getModesFromPermissions(permissions, Table.RoundLine);
 
-    const roundLineDetailData: HeaderData = {
-        title: t('common:associated', { name: t('common:goods-in-line-details') }),
+    const [, setHandlingUnitContentFeaturesData] = useState<any>();
+
+    const boxLineFeatureHeaderData: HeaderData = {
+        title: t('common:associated', { name: t('d:boxLineFeatures') }),
         routes: [],
-        actionsComponent: <></>
+        actionsComponent: null
     };
 
     return (
         <>
-            {RoundLineModes.length > 0 && RoundLineModes.includes(ModeEnum.Read) ? (
+            {HandlingUnitContentFeatureModes.length > 0 &&
+            HandlingUnitContentFeatureModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
                     <ListComponent
-                        searchCriteria={{ roundLineId: roundLineId }}
-                        dataModel={GoodsInLineDetailModelV2}
-                        headerData={roundLineDetailData}
+                        // search on contentId in spite of boxId (due to M2M relationship)
+                        searchCriteria={{
+                            handlingUnitContentId: contentId
+                        }}
+                        dataModel={HandlingUnitContentFeatureModelV2}
+                        headerData={boxLineFeatureHeaderData}
                         triggerDelete={{ idToDelete, setIdToDelete }}
                         triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        routeDetailPage={'/boxes/boxLine/feature/:id'}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: { id: string }) => (
+                                render: (record: {
+                                    id: string;
+                                    name: string;
+                                    boxLineId: string;
+                                    boxLineName: string;
+                                }) => (
                                     <Space>
-                                        {RoundLineModes.length == 0 ||
-                                        !RoundLineModes.includes(ModeEnum.Read) ? (
-                                            <></>
-                                        ) : (
-                                            <>
-                                                <LinkButton
-                                                    icon={<EyeTwoTone />}
-                                                    path={pathParamsFromDictionary('detail/[id]', {
-                                                        id: record.id,
-                                                        roundLineId
-                                                    })}
-                                                />
-                                            </>
-                                        )}
+                                        <LinkButton
+                                            icon={<EyeTwoTone />}
+                                            path={pathParamsFromDictionary('feature/[id]', {
+                                                id: record.id,
+                                                name: boxLineName
+                                            })}
+                                        />
                                     </Space>
                                 )
                             }
                         ]}
                         searchable={false}
+                        setData={setHandlingUnitContentFeaturesData}
+                        sortDefault={[{ field: 'created', ascending: true }]}
                     />
                 </>
             ) : (
@@ -90,4 +103,4 @@ const GoodsInLineDetailsExtra = ({ roundLineId }: IItemDetailsProps) => {
     );
 };
 
-export { GoodsInLineDetailsExtra };
+export { BoxLineDetailsExtra };
