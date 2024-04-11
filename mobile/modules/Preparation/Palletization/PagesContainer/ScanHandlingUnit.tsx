@@ -257,6 +257,8 @@ export const ScanHandlingUnit = ({
                         setTriggerAlternativeSubmit1
                     }}
                     alternativeSubmitLabel1={t('common:close-pallet')}
+                    getFormData={true}
+                    setFormData={setFormData}
                 ></ScanForm>
                 {checkComponent(dataToCheck)}
             </>

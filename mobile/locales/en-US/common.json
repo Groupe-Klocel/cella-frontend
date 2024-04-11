@@ -151,5 +151,8 @@
     "feature-codes-entry": "Feature codes entry",
     "finish-features-entry": "Finish features entry",
     "new-goods-in": "New goods-in",
-    "validate-and-finish-hu": "Validate and finish HU"
+    "validate-and-finish-hu": "Validate and finish HU",
+    "palletization": "Palletization",
+    "number-of-boxes": "Number of boxes",
+    "close-pallet": "Close pallet"
 }

@@ -83,5 +83,9 @@
     "hu-already-used": "This HU is already used",
     "no-articleLuBarcode": "No article found with this barcode",
     "not-inbound-hu": "This HU is not available for reception",
-    "new-article-warning": "Warning: this is a new article"
+    "new-article-warning": "Warning: this is a new article",
+    "no-pallet-to-close": "No pallet to close",
+    "scanned-hu-cannot-be-palletized": "Scanned element cannot be palletized",
+    "scanned-hu-cannot-be-palletized-on-this-pallet": "Scanned element cannot be palletized on this pallet",
+    "scan-not-validated": "You have not validated your entry"
 }
