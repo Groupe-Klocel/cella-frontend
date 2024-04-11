@@ -45,26 +45,55 @@ export const PalletChecks = ({ dataToCheck }: IPalletChecksProps) => {
     // TYPED SAFE ALL
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
-        if (scannedInfo && handlingUnitInfos.data) {
-            if (
-                handlingUnitInfos.data.handlingUnits?.count !== 0 &&
-                handlingUnitInfos.data.handlingUnits?.results[0].type ===
-                    parameters.HANDLING_UNIT_TYPE_PALLET &&
-                handlingUnitInfos.data.handlingUnits.results[0].handlingUnitContents.length !== 0
-            ) {
+        if (scannedInfo) {
+            if (handlingUnitInfos.handlingUnits?.count !== 0) {
+                if (
+                    handlingUnitInfos.handlingUnits?.count !== 0 &&
+                    handlingUnitInfos.handlingUnits?.results[0].type ===
+                        parameters.HANDLING_UNIT_TYPE_PALLET &&
+                    handlingUnitInfos.handlingUnits.results[0].category ===
+                        parameters.HANDLING_UNIT_CATEGORY_OUTBOUND &&
+                    handlingUnitInfos.handlingUnits.results[0].handlingUnitOutbounds[0].status <=
+                        configs.HANDLING_UNIT_OUTBOUND_STATUS_LOADED
+                ) {
+                    const data: { [label: string]: any } = {};
+                    data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
+                    setTriggerRender(!triggerRender);
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
+                } else {
+                    showError(t('messages:unexpected-scanned-item'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                }
+            } else {
+                if (scannedInfo[0] != '1' && scannedInfo[0] != 'P') {
+                    showError(t('messages:unexpected-scanned-item'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    return;
+                }
+                const handlingUnitToCreate = {
+                    name: scannedInfo,
+                    code: scannedInfo,
+                    type: parameters.HANDLING_UNIT_TYPE_PALLET,
+                    status: configs.HANDLING_UNIT_STATUS_VALIDATED,
+                    category: parameters.HANDLING_UNIT_CATEGORY_OUTBOUND
+                };
+
                 const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
+                data['isHuToCreate'] = true;
+                data['handlingUnit'] = handlingUnitToCreate;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
                     data
                 };
-            } else {
-                showError(t('messages:no-pallet-or-empty'));
-                setResetForm(true);
-                setScannedInfo(undefined);
             }
         }
+
         if (
             storedObject[`step${stepNumber}`] &&
             Object.keys(storedObject[`step${stepNumber}`]).length != 0
