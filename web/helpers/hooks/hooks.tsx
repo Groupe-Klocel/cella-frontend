@@ -113,7 +113,9 @@ import {
     useGetRuleVersionIdsQuery,
     GetRuleVersionIdsQuery,
     useGetRuleVersionConfigIdsQuery,
-    GetRuleVersionConfigIdsQuery
+    GetRuleVersionConfigIdsQuery,
+    useGetOrderLineIdsQuery,
+    GetOrderLineIdsQuery
 } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import parameters from '../../../common/parameters.json';
@@ -1573,6 +1575,35 @@ const useRuleVersionConfigIds = (search: any, page: number, itemsPerPage: number
     return ruleVersionConfigIds;
 };
 
+const useOrderLineIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const orderLineIds = useGetOrderLineIdsQuery<Partial<GetOrderLineIdsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: search,
+            orderBy: newSort,
+            page: page,
+            itemsPerPage: itemsPerPage
+        }
+    );
+
+    return orderLineIds;
+};
+
 export {
     useArticles,
     useArticleLus,
@@ -1622,5 +1653,6 @@ export {
     useGetPermissions,
     useHandlingUnitModels,
     useRuleVersionIds,
-    useRuleVersionConfigIds
+    useRuleVersionConfigIds,
+    useOrderLineIds
 };
