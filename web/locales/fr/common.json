@@ -294,5 +294,20 @@
     "goods-in-line-detail": "Détail de ligne d'arrivage",
     "goods-in-line-details": "Détails de ligne d'arrivage",
     "inbound-box": "Colis entrant",
-    "inbound-boxes": "Colis entrants"
+    "inbound-boxes": "Colis entrants",
+    "articleLuBarcodeId": "Code-barres",
+    "articleLuBarcode": "Code-barres",
+    "articleLuBarcode_barcode_name": "Code-barres",
+    "thirdPartyAddress": "Raison Sociale",
+    "thirdPartyAddressContact": "Nom Contact",
+    "thirdPartyAddressContact_contactName": "Nom Contact",
+    "thirdPartyAddressContactId": "Nom Contact",
+    "price": "Prix",
+    "priceType": "Type de prix",
+    "priceTypeText": "Type de prix",
+    "currencyText": "Devise",
+    "sellerAccountingCode": "Code comptable vendeur",
+    "buyerAccountingCode": "Code comptable acheteur",
+    "vatAccountingCode": "Code Comptable TVA",
+    "vatRateCodeText": "Taux de TVA"
 }

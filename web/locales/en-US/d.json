@@ -679,5 +679,21 @@
     "output": "Output configuration",
     "paymentMethod": "Payment Method",
     "receptionName": "Reception",
-    "receptionLineNumber": "Reception Line"
+    "receptionLineNumber": "Reception Line",
+    "articleLuBarcodeId": "Barcode",
+    "articleLuBarcode": "Barcode",
+    "articleLuBarcode_barcode_name": "Barcode",
+    "thirdPartyAddress": "Third Party",
+    "thirdPartyAddressContactId": "Contact Name",
+    "thirdPartyAddressContact": "Contact Name",
+    "thirdPartyAddressContact_contactName": "Contact Name",
+    "priceType": "Price Type",
+    "priceTypeText": "Price Type",
+    "currency": "Currency",
+    "currencyText": "Currency",
+    "price": "Price",
+    "sellerAccountingCode": "Seller Accounting Code",
+    "buyerAccountingCode": "Buyer Accounting Code",
+    "vatAccountingCode": "VAT Accounting Code",
+    "vatRateCodeText": "VAT rate"
 }
