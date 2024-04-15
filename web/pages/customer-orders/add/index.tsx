@@ -19,51 +19,51 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ThirdPartyModelV2 } from 'models/ThirdPartyModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
+import { CustomerOrderModelV2 as model } from 'models/CustomerOrderModelV2';
 import useTranslation from 'next-translate/useTranslation';
-import { thirdPartiesRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
 import { META_DEFAULTS } from '@helpers';
+import configs from '../../../../common/configs.json';
+import { addCustomerOrderRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
+import { AddCustomerOrderComponent } from 'modules/CustomerOrders/PageContainer/AddCustomerOrder';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditThirdPartyPage: PageComponent = () => {
+const AddCustomerOrderPage: PageComponent = () => {
     const { t } = useTranslation();
 
     const router = useRouter();
-    const [data, setData] = useState<any>();
-    const { id } = router.query;
 
-    const breadsCrumb = [
-        ...thirdPartiesRoutes,
-        {
-            breadcrumbName: `${data?.name}`
-        }
-    ];
+    const defaultValues = {
+        status: configs.ORDER_STATUS_CREATED,
+        type: configs.ORDER_TYPE_CUSTOMER_ORDER
+    };
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <EditItemComponent
-                id={id!}
-                setData={setData}
-                dataModel={ThirdPartyModelV2}
+            <AddCustomerOrderComponent
+                dataModel={model}
                 headerComponent={
                     <HeaderContent
-                        title={`${t('common:third-party')} ${data?.name}`}
-                        routes={breadsCrumb}
-                        onBack={() => router.push(`/third-parties/${id}`)}
+                        title={t('actions:add2', { name: t('common:customer-order') })}
+                        routes={addCustomerOrderRoutes}
+                        onBack={() => router.push(`/customer-orders`)}
                     />
                 }
-                routeAfterSuccess={`/third-parties/:id`}
-                stringCodeScopes={['currency', 'payment_terms', 'payment_method', 'bank_account']}
+                extraData={
+                    defaultValues || Object.keys(defaultValues).length !== 0
+                        ? defaultValues
+                        : undefined
+                }
+                routeOnCancel={`/customer-orders`}
+                routeAfterSuccess={''}
             />
         </>
     );
 };
 
-EditThirdPartyPage.layout = MainLayout;
+AddCustomerOrderPage.layout = MainLayout;
 
-export default EditThirdPartyPage;
+export default AddCustomerOrderPage;

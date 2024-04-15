@@ -21,6 +21,7 @@ import {
     ApartmentOutlined,
     AppstoreAddOutlined,
     AuditOutlined,
+    DeploymentUnitOutlined,
     ExportOutlined,
     HourglassOutlined,
     QuestionCircleOutlined,
@@ -404,6 +405,26 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+            </SubMenu>
+            <SubMenu
+                icon={<DeploymentUnitOutlined />}
+                key="business-management"
+                title={t('business-management')}
+            >
+                {getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="business-management-orders">
+                        <Link href="/customer-orders">{t('customer-orders')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {/* {getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="business-management-orders">
+                        <Link href="/credits">{t('credits')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )} */}
             </SubMenu>
             <SubMenu
                 icon={<HourglassOutlined />}
