@@ -348,13 +348,23 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
             const result: { [key: string]: any } = {};
 
             options[queryName].results.forEach((item: any) => {
+                let valueToDisplay: any = item[`${fieldToDisplay}`];
+
+                Object.values(item).forEach((subItem: any) => {
+                    subItem == null
+                        ? item.id
+                        : (valueToDisplay = subItem[`${fieldToDisplay}`]
+                              ? subItem[`${fieldToDisplay}`]
+                              : valueToDisplay);
+                });
+
                 if (!result[tableName]) {
                     result[tableName] = [];
                 }
                 if (!statusToRemove || item.status !== statusToRemove) {
                     result[tableName].push({
                         key: item.id,
-                        text: item.name
+                        text: valueToDisplay
                     });
                 }
             });
