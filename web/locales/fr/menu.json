@@ -128,5 +128,8 @@
     "vat-rates": "Taux de TVA",
     "article-prices": "Prix articles",
     "article-price": "Prix article",
-    "add-article-price": "Ajouter prix article"
+    "add-article-price": "Ajouter prix article",
+    "customer-orders": "Commandes client",
+    "customer-order-address": "Adresse",
+    "customer-order": "Commande client"
 }

@@ -128,5 +128,13 @@
     "add-payment-method": "Ajouter un mode de paiement",
     "edit-payment-method": "Modifier le mode de paiement",
     "add-article-price": "Ajouter prix article",
-    "edit-article-price": "Modifier prix article"
+    "edit-article-price": "Modifier prix article",
+    "add-customer-order": "Ajouter commande client",
+    "mangento-get-orders": "Import Magento",
+    "bulk-order-change": "Transformer en masse",
+    "confirm-quote": "Confirmer devis",
+    "confirm-order": "Confirmer commande",
+    "confirm-payment": "Confirmer paiement",
+    "confirm-delivery": "Confirmer livraison",
+    "enter-payment-information": "Saisir les informations de paiement"
 }

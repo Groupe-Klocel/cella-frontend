@@ -107,6 +107,8 @@ const ListComponent = (props: IListProps) => {
         ? `_${searchCriterias.scope}`
         : searchCriterias?.category
         ? `_${searchCriterias.category}`
+        : searchCriterias?.orderType
+        ? `_${searchCriterias.orderType}`
         : '';
     // #endregion
 
