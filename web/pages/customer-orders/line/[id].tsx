@@ -86,7 +86,7 @@ const CustomerOrderLinePage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                data?.status < 30 ? (
+                data?.status < configs.ORDER_STATUS_TO_INVOICE ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/line/edit/${id}`}
@@ -99,7 +99,7 @@ const CustomerOrderLinePage: PageComponent = () => {
                 modes.includes(ModeEnum.Delete) &&
                 model.isSoftDeletable &&
                 data?.status > configs.ORDER_STATUS_CREATED &&
-                data?.status < 30 ? (
+                data?.status < configs.ORDER_STATUS_TO_INVOICE ? (
                     <Button
                         onClick={() => confirmAction(id as string, setIdToDisable)()}
                         type="primary"
