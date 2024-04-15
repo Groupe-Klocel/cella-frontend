@@ -130,5 +130,13 @@
     "add-payment-method": "Add Payment Method",
     "edit-payment-method": "Edit Payment Method",
     "add-article-price": "Add Article Price",
-    "edit-article-price": "Edit Article Price"
+    "edit-article-price": "Edit Article Price",
+    "add-customer-order": "Add customer order",
+    "mangento-get-orders": "Magento import",
+    "bulk-order-change": "Bulk Transform",
+    "confirm-quote": "Confirm Quote",
+    "confirm-order": "Confirm Order",
+    "confirm-payment": "Confirm Payment",
+    "confirm-delivery": "Confirm Delivery",
+    "enter-payment-information": "Enter Payment Information"
 }

@@ -309,5 +309,14 @@
     "sellerAccountingCode": "Code comptable vendeur",
     "buyerAccountingCode": "Code comptable acheteur",
     "vatAccountingCode": "Code Comptable TVA",
-    "vatRateCodeText": "Taux de TVA"
+    "vatRateCodeText": "Taux de TVA",
+    "customer-orders": "Commande client",
+    "customer-order": "Commande client",
+    "customer-order-addresses": "Adresses",
+    "customer-order-address": "Adresse",
+    "customer-order-lines": "Lignes commande client",
+    "customer-order-line": "Ligne commande client",
+    "Address": "Addresse",
+    "payment-line": "Ligne de paiement",
+    "payment-lines": "Lignes de paiement"
 }

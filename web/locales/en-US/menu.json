@@ -127,5 +127,8 @@
     "vat-rates": "Vat Rate",
     "article-prices": "Article Prices",
     "article-price": "Article Price",
-    "add-article-price": "Add Article Price"
+    "add-article-price": "Add Article Price",
+    "customer-orders": "Customer orders",
+    "customer-order-address": "Address",
+    "customer-order": "Customer order"
 }
