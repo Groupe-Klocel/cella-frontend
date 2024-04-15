@@ -679,7 +679,7 @@ export const ThirdPartyAddressModelV2: ModelType = {
             config: null,
             param: null
         },
-        vatRate: {
+        vatRateCode: {
             isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,

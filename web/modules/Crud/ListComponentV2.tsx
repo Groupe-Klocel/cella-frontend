@@ -481,6 +481,8 @@ const ListComponent = (props: IListProps) => {
         defaultModelSort
     );
 
+    console.log('DLA-data', data);
+
     useEffect(() => {
         //Time delay is to avoid reload before backend has finished (100ms does not work, 200ms seems to be fine)
         const delay = 200;

@@ -115,5 +115,12 @@
     "no-delivery-address": "Aucune adresse de livraison définie",
     "no-printer-behaviour": "Si aucune imprimante n'est sélectionnée, le document sera téléchargé",
     "success-cycle-count-creation": "L'inventaire a été créé avec succès",
-    "cycle-count-finished": "L'inventaire est terminé"
+    "cycle-count-finished": "L'inventaire est terminé",
+    "success-sending-magento-request": "L'import Magento a été effectuée avec succès",
+    "error-sending-magento-request": "L'Erreur lors de l'import Magento",
+    "mangento-get-orders-confirm": "Etes-vous sûr(e) de vouloir importer les données depuis Magento ?",
+    "confirm-quote": "Etes-vous sûr(e) de vouloir valider en tant que devis ?",
+    "confirm-order": "Etes-vous sûr(e) de vouloir valider en tant que commande ?",
+    "confirm-payment": "Etes-vous sûr(e) de vouloir valider en tant que règlement ?",
+    "confirm-delivery": "Etes-vous sûr(e) de vouloir valider en tant que livraison ?"
 }
