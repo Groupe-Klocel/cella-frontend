@@ -124,5 +124,8 @@
     "payment-methods": "Payment Methods",
     "bank-account": "Bank Account",
     "bank-accounts": "Bank Accounts",
-    "vat-rates": "Vat Rate"
+    "vat-rates": "Vat Rate",
+    "article-prices": "Article Prices",
+    "article-price": "Article Price",
+    "add-article-price": "Add Article Price"
 }

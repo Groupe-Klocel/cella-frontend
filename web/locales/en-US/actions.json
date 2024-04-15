@@ -128,5 +128,7 @@
     "add-bank-account": "Add Bank Account",
     "edit-bank-account": "Edit Bank Account",
     "add-payment-method": "Add Payment Method",
-    "edit-payment-method": "Edit Payment Method"
+    "edit-payment-method": "Edit Payment Method",
+    "add-article-price": "Add Article Price",
+    "edit-article-price": "Edit Article Price"
 }

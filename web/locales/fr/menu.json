@@ -125,5 +125,8 @@
     "payment-methods": "Modes de paiement",
     "bank-account": "Compte bancaire",
     "bank-accounts": "Comptes bancaires",
-    "vat-rates": "Taux de TVA"
+    "vat-rates": "Taux de TVA",
+    "article-prices": "Prix articles",
+    "article-price": "Prix article",
+    "add-article-price": "Ajouter prix article"
 }

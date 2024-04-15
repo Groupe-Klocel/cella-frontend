@@ -126,5 +126,7 @@
     "add-bank-account": "Ajouter un compte bancaire",
     "edit-bank-account": "Modifier le compte bancaire",
     "add-payment-method": "Ajouter un mode de paiement",
-    "edit-payment-method": "Modifier le mode de paiement"
+    "edit-payment-method": "Modifier le mode de paiement",
+    "add-article-price": "Ajouter prix article",
+    "edit-article-price": "Modifier prix article"
 }
