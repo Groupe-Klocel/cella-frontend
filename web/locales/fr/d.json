@@ -678,5 +678,7 @@
     "output": "Configuration en sortie",
     "paymentMethod": "Mode de règlement",
     "receptionName": "Réception",
-    "receptionLineNumber": "Ligne de réception"
+    "receptionLineNumber": "Ligne de réception",
+    "article-prices": "Prix articles",
+    "article-price": "Prix article"
 }
