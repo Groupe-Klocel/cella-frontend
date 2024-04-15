@@ -1,0 +1,157 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+mutation CreateOrderAddress($input: CreateOrderAddressInput!) {
+    createOrderAddress(input: $input) {
+        id
+        orderId
+        category
+        categoryText
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactEmail
+        contactLanguage
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        category
+        thirdPartyId
+        thirdPartyAddressId
+        thirdPartyAddressContactId
+        reference1
+        reference2
+        reference3
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+query GetOrderAddressById($id: String!) {
+    orderAddress(id: $id) {
+        id
+        orderId
+        order {
+            name
+        }
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactEmail
+        contactLanguage
+        contactComment
+        entityCode
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        entityComment
+        category
+        categoryText
+        reference1
+        reference2
+        reference3
+        thirdPartyId
+        thirdParty {
+            name
+        }
+        thirdPartyAddressId
+        thirdPartyAddressContactId
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation UpdateOrderAddress($id: String!, $input: UpdateOrderAddressInput!) {
+    updateOrderAddress(id: $id, input: $input) {
+        id
+        orderId
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactEmail
+        contactLanguage
+        contactComment
+        entityCode
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        entityComment
+        category
+        reference1
+        reference2
+        reference3
+        thirdPartyId
+        thirdParty {
+            name
+        }
+        thirdPartyAddressId
+        thirdPartyAddressContactId
+    }
+}
