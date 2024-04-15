@@ -115,21 +115,24 @@ const CustomerOrderPages: PageComponent = () => {
         selectedRowKeys,
         onChange: onSelectChange,
         getCheckboxProps: (record: any) => ({
-            disabled: record.status == 1005 || record.status == 30 ? true : false
+            disabled:
+                record.status == 1005 || record.status == configs.ORDER_STATUS_TO_INVOICE
+                    ? true
+                    : false
         })
     };
 
     //#region : Specific functions for this page
     function getNextStatus(status: number) {
         switch (status) {
-            case 10:
-                return 20;
-            case 20:
-                return 30;
-            case 40:
-                return 50;
+            case configs.ORDER_STATUS_CREATED:
+                return configs.ORDER_STATUS_QUOTE_TRANSMITTED;
+            case configs.ORDER_STATUS_QUOTE_TRANSMITTED:
+                return configs.ORDER_STATUS_TO_INVOICE;
+            case configs.ORDER_STATUS_TO_BE_DELIVERED:
+                return configs.ORDER_STATUS_DELIVERY_IN_PROGRESS;
             default:
-                return 1005;
+                return configs.ORDER_STATUS_CREATED;
         }
     }
 
@@ -161,13 +164,13 @@ const CustomerOrderPages: PageComponent = () => {
     const confirmSwitchStatus = (ids: [string], status: any) => {
         const switchStatusMessage = (() => {
             switch (status) {
-                case 10:
+                case configs.ORDER_STATUS_CREATED:
                     return 'confirm-quote';
-                case 20:
+                case configs.ORDER_STATUS_QUOTE_TRANSMITTED:
                     return 'confirm-order';
-                case 30:
+                case configs.ORDER_STATUS_TO_INVOICE:
                     return 'confirm-payment';
-                case 40:
+                case configs.ORDER_STATUS_TO_BE_DELIVERED:
                     return 'confirm-delivery';
                 default:
                     return 'to-be-defined';
@@ -255,7 +258,7 @@ const CustomerOrderPages: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable &&
-                                record.status < 30 ? (
+                                record.status < configs.ORDER_STATUS_TO_INVOICE ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -266,7 +269,8 @@ const CustomerOrderPages: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable &&
-                                (record.status < 30 || record.status > 40) ? (
+                                (record.status < configs.ORDER_STATUS_TO_INVOICE ||
+                                    record.status > configs.ORDER_STATUS_TO_INVOICE) ? (
                                     <Button
                                         icon={<FileDoneOutlined />}
                                         style={{ color: 'green' }}
@@ -277,7 +281,7 @@ const CustomerOrderPages: PageComponent = () => {
                                 ) : modes.length > 0 &&
                                   modes.includes(ModeEnum.Update) &&
                                   model.isEditable &&
-                                  record.status == 30 ? (
+                                  record.status == configs.ORDER_STATUS_TO_INVOICE ? (
                                     <Button
                                         icon={<CalculatorTwoTone twoToneColor="orange" />}
                                         onClick={() => {
@@ -292,7 +296,7 @@ const CustomerOrderPages: PageComponent = () => {
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable &&
                                 record.status > configs.ORDER_STATUS_CREATED &&
-                                record.status < 30 ? (
+                                record.status < configs.ORDER_STATUS_TO_INVOICE ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>

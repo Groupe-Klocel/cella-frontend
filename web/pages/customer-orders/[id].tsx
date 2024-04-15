@@ -33,6 +33,7 @@ import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Stati
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../common/configs.json';
+import { config } from 'process';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -61,14 +62,14 @@ const CustomerOrderPage: PageComponent = () => {
     //#region : Specific functions for this page
     function getNextStatus(status: number) {
         switch (status) {
-            case 10:
-                return 20;
-            case 20:
-                return 30;
-            case 40:
-                return 50;
+            case configs.ORDER_STATUS_CREATED:
+                return configs.ORDER_STATUS_QUOTE_TRANSMITTED;
+            case configs.ORDER_STATUS_QUOTE_TRANSMITTED:
+                return configs.ORDER_STATUS_TO_INVOICE;
+            case configs.ORDER_STATUS_TO_BE_DELIVERED:
+                return configs.ORDER_STATUS_DELIVERY_IN_PROGRESS;
             default:
-                return 10;
+                return configs.ORDER_STATUS_CREATED;
         }
     }
 
@@ -100,13 +101,13 @@ const CustomerOrderPage: PageComponent = () => {
 
     const buttonName = (() => {
         switch (data?.status) {
-            case 10:
+            case configs.ORDER_STATUS_CREATED:
                 return 'confirm-quote';
-            case 20:
+            case configs.ORDER_STATUS_QUOTE_TRANSMITTED:
                 return 'confirm-order';
-            case 30:
+            case configs.ORDER_STATUS_TO_INVOICE:
                 return 'confirm-payment';
-            case 40:
+            case configs.ORDER_STATUS_TO_BE_DELIVERED:
                 return 'confirm-delivery';
             default:
                 return 'to-be-defined';
@@ -147,7 +148,8 @@ const CustomerOrderPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                (data?.status < 30 || data?.status > 40) ? (
+                (data?.status < configs.ORDER_STATUS_TO_INVOICE ||
+                    data?.status > configs.ORDER_STATUS_TO_BE_DELIVERED) ? (
                     <Button
                         onClick={() => switchNextStatus(data.id, data.status)}
                         style={{ color: 'green' }}
