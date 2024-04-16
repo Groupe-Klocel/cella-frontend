@@ -136,5 +136,7 @@
     "confirm-order": "Confirmer commande",
     "confirm-payment": "Confirmer paiement",
     "confirm-delivery": "Confirmer livraison",
-    "enter-payment-information": "Saisir les informations de paiement"
+    "enter-payment-information": "Saisir les informations de paiement",
+    "enter-payment": "Saisir paiement",
+    "generate-credit": "Générer Avoir"
 }

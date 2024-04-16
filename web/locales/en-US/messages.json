@@ -26,7 +26,7 @@
     "error-message-select-an": "You must select an {{name}}",
     "error-space": "Input should not contain only spaces",
     "please-enter-a": "Please enter a {{name}}",
-    "please-fill-letter-your": "Please fill first letters of your {{name}}",
+    "please-fill-letter-your": "Please fill letters of your {{name}}",
     "please-fill-your": "Please fill your {{name}}",
     "please-input": "Please input {{name}}",
     "please-select": "Please select {{name}}",

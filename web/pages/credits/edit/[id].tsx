@@ -17,27 +17,28 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, HeaderContent } from '@components';
+import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ThirdPartyModelV2 } from 'models/ThirdPartyModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
+
+import { CreditModelV2 } from 'models/CreditModelV2';
 import useTranslation from 'next-translate/useTranslation';
-import { thirdPartiesRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
 import { META_DEFAULTS } from '@helpers';
+import { creditsRoutes } from 'modules/Credits/Static/creditsRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditThirdPartyPage: PageComponent = () => {
+const EditCreditPage: PageComponent = () => {
     const { t } = useTranslation();
 
     const router = useRouter();
-    const [data, setData] = useState<any>();
     const { id } = router.query;
+    const [data, setData] = useState<any>();
 
     const breadsCrumb = [
-        ...thirdPartiesRoutes,
+        ...creditsRoutes,
         {
             breadcrumbName: `${data?.name}`
         }
@@ -49,28 +50,26 @@ const EditThirdPartyPage: PageComponent = () => {
             <EditItemComponent
                 id={id!}
                 setData={setData}
-                dataModel={ThirdPartyModelV2}
+                dataModel={CreditModelV2}
                 headerComponent={
-                    <HeaderContent
-                        title={`${t('common:third-party')} ${data?.name}`}
-                        routes={breadsCrumb}
-                        onBack={() => router.push(`/third-parties/${id}`)}
-                    />
+                    data ? (
+                        <HeaderContent
+                            title={`${t('common:credit')} ${data?.name}`}
+                            routes={breadsCrumb}
+                            onBack={() => router.push(`/credits/${id}`)}
+                        />
+                    ) : (
+                        <ContentSpin />
+                    )
                 }
-                routeAfterSuccess={`/third-parties/:id`}
-                stringCodeScopes={[
-                    'currency',
-                    'payment_terms',
-                    'payment_method',
-                    'bank_account',
-                    'third_party_extra_status1',
-                    'third_party_extra_status2'
-                ]}
+                routeAfterSuccess={`/credits/${id}`}
+                routeOnCancel={`/credits/${id}`}
+                stringCodeScopes={['currency', 'payment_terms', 'payment_method', 'bank_account']}
             />
         </>
     );
 };
 
-EditThirdPartyPage.layout = MainLayout;
+EditCreditPage.layout = MainLayout;
 
-export default EditThirdPartyPage;
+export default EditCreditPage;

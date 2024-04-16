@@ -508,7 +508,7 @@ export const DeliveryLineModelV2: ModelType = {
             config: null,
             param: null
         },
-        vatRateCode: {
+        vatRate: {
             isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,

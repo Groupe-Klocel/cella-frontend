@@ -138,5 +138,7 @@
     "confirm-order": "Confirm Order",
     "confirm-payment": "Confirm Payment",
     "confirm-delivery": "Confirm Delivery",
-    "enter-payment-information": "Enter Payment Information"
+    "enter-payment-information": "Enter Payment Information",
+    "enter-payment": "Enter Payment",
+    "generate-credit": "Generate Credit Note"
 }
