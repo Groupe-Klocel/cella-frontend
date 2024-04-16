@@ -56,6 +56,7 @@ const AddArticlePage: PageComponent = () => {
                         : undefined
                 }
                 routeAfterSuccess={`/articles/:id`}
+                stringCodeScopes={['article_family', 'article_subfamily']}
             />
         </>
     );
