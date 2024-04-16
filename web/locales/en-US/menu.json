@@ -130,5 +130,6 @@
     "add-article-price": "Add Article Price",
     "customer-orders": "Customer orders",
     "customer-order-address": "Address",
-    "customer-order": "Customer order"
+    "customer-order": "Customer order",
+    "article-price-histories": "Article Price histories"
 }

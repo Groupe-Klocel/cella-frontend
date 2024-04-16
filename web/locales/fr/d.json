@@ -723,5 +723,12 @@
     "vatRateCodeText": "Taux de TVA",
     "customer-family": "Famille de clients",
     "way-hear-company": "Mode de connaissance de l'Entreprise",
-    "notes": "Notes"
+    "notes": "Notes",
+    "price": "Prix",
+    "thirdPartyAddressContactId": "Nom contact",
+    "thirdPartyAddressContact_contactName": "Nom contact",
+    "articleLuBarcodeId": "Code-barres",
+    "articleLuBarcode": "Code-barres",
+    "historyDate": "Date historique",
+    "articleLuBarcode_barcode_name": "Code-barre"
 }
