@@ -696,5 +696,7 @@
     "buyerAccountingCode": "Buyer Accounting Code",
     "vatAccountingCode": "VAT Accounting Code",
     "vatRateCodeText": "VAT rate",
-    "historyDate": "History Date"
+    "historyDate": "History Date",
+    "deliveryPoType": "Delivery type",
+    "creditName": "Credit nr"
 }

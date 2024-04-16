@@ -730,5 +730,7 @@
     "articleLuBarcodeId": "Code-barres",
     "articleLuBarcode": "Code-barres",
     "historyDate": "Date historique",
-    "articleLuBarcode_barcode_name": "Code-barre"
+    "articleLuBarcode_barcode_name": "Code-barre",
+    "deliveryPoType": "Type de commande",
+    "creditName": "N° d'avoir"
 }

@@ -132,5 +132,8 @@
     "customer-orders": "Commandes client",
     "customer-order-address": "Adresse",
     "customer-order": "Commande client",
-    "article-price-histories": "Historiques prix article"
+    "article-price-histories": "Historiques prix article",
+    "credits": "Avoirs",
+    "credit-address": "Adresse",
+    "payments": "Règlements"
 }
