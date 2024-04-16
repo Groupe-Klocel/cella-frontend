@@ -229,7 +229,7 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
             } else {
                 tmp_results[item.scope].push({
                     key:
-                        isNumeric(item.code) &&
+                        !isNumeric(item.code) &&
                         props.stringCodeScopes &&
                         props.stringCodeScopes.includes(item.scope)
                             ? item.code
