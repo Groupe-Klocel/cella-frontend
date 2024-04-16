@@ -318,5 +318,9 @@
     "customer-order-line": "Ligne commande client",
     "Address": "Addresse",
     "payment-line": "Ligne de paiement",
-    "payment-lines": "Lignes de paiement"
+    "payment-lines": "Lignes de paiement",
+    "article-prices": "Prix articles",
+    "article-price": "Prix article",
+    "article-price-histories": "Historiques prix article",
+    "article-price-history": "Historique prix article"
 }
