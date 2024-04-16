@@ -19,14 +19,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ArticlePriceModelV2 } from 'models/ArticlePriceModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { articlePricesRoutes } from 'modules/ArticlePrices/Static/articlePricesRoutes';
-import { META_DEFAULTS, useArticleIds } from '@helpers';
-import { FormDataType, FormOptionType } from 'models/Models';
+import { META_DEFAULTS } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -53,7 +52,7 @@ const EditArticlePricePage: PageComponent = () => {
                 dataModel={ArticlePriceModelV2}
                 headerComponent={
                     <HeaderContent
-                        title={`${t('common:article-prices')} ${data?.price}`}
+                        title={`${t('common:article-price')} ${data?.price}`}
                         routes={breadsCrumb}
                         onBack={() => router.back()}
                     />
