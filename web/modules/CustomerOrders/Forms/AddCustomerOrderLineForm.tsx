@@ -29,10 +29,8 @@ import configs from '../../../../common/configs.json';
 import {
     CreateOrderLineMutation,
     CreateOrderLineMutationVariables,
-    GetParameterByIdQuery,
     GetThirdPartiesQuery,
     useCreateOrderLineMutation,
-    useGetParameterByIdQuery,
     useGetThirdPartiesQuery,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
@@ -84,7 +82,6 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const [thirdPartyData, setThirdPartyData] = useState<any>();
     const [enteredQuantity, setEnteredQuantity] = useState<number | null>();
     const [articleVatRate, setArticleVatRate] = useState<number | undefined>();
-    const [vatRateId, setVateRateId] = useState<string | undefined>();
 
     const customerOrderLines = useOrderLineIds({ orderId: `${props.orderId}%` }, 1, 100, null);
 

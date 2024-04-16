@@ -30,7 +30,7 @@
     "file-size-error": "La taille du fichier doit être inférieure à {{size}}Mb",
     "no-special-characters": "Caractères spéciaux non autorisés",
     "please-enter-a": "Veuillez remplir un {{name}}",
-    "please-fill-letter-your": "Veuillez remplir les premières lettres de votre {{name}}",
+    "please-fill-letter-your": "Veuillez remplir des lettres de votre {{name}}",
     "please-fill-your": "Veuillez remplir votre {{name}}",
     "please-input": "Veuillez saisir {{name}}",
     "please-select": "Veuillez sélectionner {{name}}",

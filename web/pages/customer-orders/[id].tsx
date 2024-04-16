@@ -34,6 +34,7 @@ import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../common/configs.json';
 import { config } from 'process';
+import { PaymentModal } from 'modules/CustomerOrders/Modals/PaymentModal';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -47,6 +48,7 @@ const CustomerOrderPage: PageComponent = () => {
     const { id } = router.query;
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -73,8 +75,8 @@ const CustomerOrderPage: PageComponent = () => {
         }
     }
 
-    const switchNextStatus = async (id: string, currentStatus: number) => {
-        const newStatus = getNextStatus(currentStatus);
+    const switchNextStatus = async (id: string, currentStatus: number, nextStatus?: number) => {
+        const newStatus = nextStatus ?? getNextStatus(currentStatus);
         const updateVariables = {
             id: id,
             input: {
@@ -156,6 +158,39 @@ const CustomerOrderPage: PageComponent = () => {
                     >
                         {t(`actions:${buttonName}`)}
                     </Button>
+                ) : modes.length > 0 &&
+                  modes.includes(ModeEnum.Update) &&
+                  model.isEditable &&
+                  data?.status == configs.ORDER_STATUS_TO_INVOICE ? (
+                    <Button
+                        onClick={() => {
+                            setShowPaymentModal(true);
+                            // setOrderId(data?.id);
+                        }}
+                        style={{ color: 'orange' }}
+                    >
+                        {t(`actions:enter-payment`)}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                model.isEditable &&
+                data?.status > configs.ORDER_STATUS_TO_INVOICE &&
+                data?.status < configs.ORDER_STATUS_DELIVERY_IN_PROGRESS ? (
+                    <Button
+                        onClick={() =>
+                            switchNextStatus(
+                                data.id,
+                                data.status,
+                                configs.ORDER_STATUS_CREDIT_TO_BE_ISSUED
+                            )
+                        }
+                        style={{ background: 'orange', fontStyle: 'italic' }}
+                    >
+                        {t(`actions:generate-credit`)}
+                    </Button>
                 ) : (
                     <></>
                 )}
@@ -191,6 +226,14 @@ const CustomerOrderPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 refetch={triggerRefresh}
+            />
+            <PaymentModal
+                showModal={{
+                    showPaymentModal,
+                    setShowPaymentModal
+                }}
+                orderId={id as string}
+                documentName="K_OutboundHandlingUnitLabel"
             />
         </>
     );

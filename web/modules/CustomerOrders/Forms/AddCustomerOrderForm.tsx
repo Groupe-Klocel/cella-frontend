@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, InputNumber, Select, Modal } from 'antd';
+import { Button, Input, Form, InputNumber, Select, Modal, AutoComplete } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -37,6 +37,12 @@ import {
     useListParametersForAScopeQuery
 } from 'generated/graphql';
 import moment from 'moment';
+import { debounce } from 'lodash';
+
+interface IOption {
+    value: string;
+    id: string;
+}
 
 export interface IAddItemFormProps {
     dataModel: ModelType;
@@ -53,7 +59,9 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
-    const [thirdParties, setThirdParties] = useState<Array<FormOptionType>>();
+    const [thirdParties, setThirdParties] = useState<Array<IOption>>([]);
+    const [thirdPartyId, setThirdPartyId] = useState<string>();
+    const [thirdPartyName, setThirdPartyName] = useState<string>('');
 
     const errorMessageMinInputNumber = t('messages:select-number-min', { min: 0 });
     const errorMessageMaxInputNumber = t('messages:select-number-max', { max: 100 });
@@ -137,7 +145,8 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     status: configs.ORDER_STATUS_CREATED,
                     orderType: configs.ORDER_TYPE_CUSTOMER_ORDER,
                     orderDate: nowDate,
-                    priceType: parameters.PRICE_TYPE_SELLING
+                    priceType: parameters.PRICE_TYPE_SELLING,
+                    thirdPartyId
                 });
 
                 const formData = form.getFieldsValue(true);
@@ -160,7 +169,8 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
         {
             filters: {
                 category: [configs.THIRD_PARTY_CATEGORY_CUSTOMER],
-                status: [configs.THIRD_PARTY_STATUS_ENABLED]
+                status: [configs.THIRD_PARTY_STATUS_ENABLED],
+                name: `${thirdPartyName}%`
             },
             orderBy: null,
             page: 1,
@@ -169,18 +179,34 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     );
 
     useEffect(() => {
-        if (customerThirdPartiesList) {
-            const newTypeTexts: Array<any> = [];
-            const cData = customerThirdPartiesList?.data?.thirdParties?.results;
-            if (cData) {
-                cData.forEach((item) => {
-                    newTypeTexts.push({ key: item.id, text: item.name + ' - ' + item.description });
-                });
-                newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
-                setThirdParties(newTypeTexts);
-            }
+        if (customerThirdPartiesList.data) {
+            const newIdOpts: Array<IOption> = [];
+            customerThirdPartiesList.data.thirdParties?.results.forEach(
+                ({ id, name, description }) => {
+                    if (form.getFieldsValue(true).thirdPartyId === id) {
+                        setThirdPartyName(name!);
+                        setThirdPartyId(id!);
+                    }
+                    newIdOpts.push({ value: name! + ' - ' + description!, id: id! });
+                }
+            );
+            setThirdParties(newIdOpts);
         }
-    }, [customerThirdPartiesList.data]);
+    }, [thirdPartyName, customerThirdPartiesList.data]);
+
+    // useEffect(() => {
+    //     if (customerThirdPartiesList) {
+    //         const newTypeTexts: Array<any> = [];
+    //         const cData = customerThirdPartiesList?.data?.thirdParties?.results;
+    //         if (cData) {
+    //             cData.forEach((item) => {
+    //                 newTypeTexts.push({ key: item.id, text: item.name + ' - ' + item.description });
+    //             });
+    //             newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
+    //             setThirdParties(newTypeTexts);
+    //         }
+    //     }
+    // }, [customerThirdPartiesList.data]);
 
     //To render Simple stockOwners list
     const [stockOwners, setStockOwners] = useState<any>();
@@ -341,7 +367,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                             paymentAccount: customerThirdParty.defaultPaymentAccount,
                             currencyText: customerThirdParty.defaultCurrencyText,
                             currency: customerThirdParty.defaultCurrency,
-                            discount: customerThirdParty.defaultDiscount
+                            invoiceDiscount: customerThirdParty.defaultDiscount
                         });
                     }
                 }
@@ -403,9 +429,6 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     setUnsavedChanges(true);
                 }}
             >
-                <Form.Item label={name} name="name">
-                    <Input disabled />
-                </Form.Item>
                 <Form.Item
                     label={stockOwnerNameLabel}
                     name="stockOwnerId"
@@ -420,11 +443,43 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     </Select>
                 </Form.Item>
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
-                    <Select
+                    <AutoComplete
+                        placeholder={`${t('messages:please-fill-letter-your', {
+                            name: t('d:thirdParty')
+                        })}`}
+                        style={{ width: '100%' }}
+                        options={thirdParties}
+                        value={thirdPartyName}
+                        filterOption={(inputValue, option) =>
+                            option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                        }
+                        onKeyUp={(e: any) => {
+                            debounce(() => {
+                                setThirdPartyName(e.target.value);
+                            }, 3000);
+                        }}
+                        onSelect={(value, option) => {
+                            setThirdPartyId(option.id);
+                            setThirdPartyName(value.split(' - ')[0]);
+                        }}
+                        allowClear
+                        onChange={handleThirdPartySelection}
+                        onClear={() => {
+                            setThirdPartyId(undefined);
+                            setThirdPartyName('');
+                        }}
+                    />
+                    {/* <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:thirdParty')
                         })}`}
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
                         onChange={handleThirdPartySelection}
                     >
                         {thirdParties?.map((thirdParty: any) => (
@@ -432,7 +487,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                                 {thirdParty.text}
                             </Option>
                         ))}
-                    </Select>
+                    </Select> */}
                 </Form.Item>
                 <Form.Item label={paymentTermLabel} name="paymentTermsText">
                     <Select
@@ -496,7 +551,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                 </Form.Item>
                 <Form.Item
                     label={discountLabel}
-                    name="discount"
+                    name="invoiceDiscount"
                     rules={[
                         { type: 'number', min: 0, message: errorMessageMinInputNumber },
                         { type: 'number', max: 100, message: errorMessageMaxInputNumber }
