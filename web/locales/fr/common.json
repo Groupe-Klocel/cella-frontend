@@ -322,5 +322,11 @@
     "article-prices": "Prix articles",
     "article-price": "Prix article",
     "article-price-histories": "Historiques prix article",
-    "article-price-history": "Historique prix article"
+    "article-price-history": "Historique prix article",
+    "credit": "Avoir",
+    "credits": "Avoirs",
+    "credit-lines": "Lignes d'avoir",
+    "credit-line": "Ligne d'avoir",
+    "credit-address": "Adresse",
+    "credit-addresses": "Adresses"
 }
