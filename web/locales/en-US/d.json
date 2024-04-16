@@ -695,5 +695,6 @@
     "sellerAccountingCode": "Seller Accounting Code",
     "buyerAccountingCode": "Buyer Accounting Code",
     "vatAccountingCode": "VAT Accounting Code",
-    "vatRateCodeText": "VAT rate"
+    "vatRateCodeText": "VAT rate",
+    "historyDate": "History Date"
 }

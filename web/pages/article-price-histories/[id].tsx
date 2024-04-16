@@ -17,32 +17,30 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
-import { ArticlePriceModelV2 as model } from 'models/ArticlePriceModelV2';
+import { AppHead } from '@components';
+import { ArticlePriceHistoryModelV2 as model } from 'models/ArticlePriceHistoryModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import { useAppState } from 'context/AppContext';
+import { META_DEFAULTS } from '@helpers';
+//import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
-import { articlePricesRoutes as itemRoutes } from 'modules/ArticlePrices/Static/articlePricesRoutes';
-import { Button, Modal, Space } from 'antd';
-import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
+import { articlePriceHistoriesRoutes as itemRoutes } from 'modules/ArticlePriceHistories/Static/articlePriceHistoriesRoutes';
+import { Modal } from 'antd';
+//import { ModeEnum } from 'generated/graphql';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const ArticlePricePage: PageComponent = () => {
+const ArticlePriceHistoryPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions } = useAppState();
+    //const { permissions } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
-    const modes = getModesFromPermissions(permissions, model.tableName);
+    //const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
-    const [reopenInfo, setReopenInfo] = useState<any | undefined>();
 
     // #region to customize information
     const breadCrumb = [
@@ -52,28 +50,18 @@ const ArticlePricePage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:article-price')} ${data?.price}`;
+    const pageTitle = `${t('common:article-price-history')} ${data?.price}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
-    const confirmAction = (
-        info: any | undefined,
-        setInfo: any,
-        action: 'delete' | 'disable' | 'enable'
-    ) => {
+    const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
-            const titre =
-                action == 'enable'
-                    ? 'messages:enable-confirm'
-                    : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
             Modal.confirm({
-                title: t(titre),
+                title: t('messages:action-confirm'),
                 onOk: () => {
-                    setInfo(info);
+                    setId(id);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -84,34 +72,10 @@ const ArticlePricePage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
-        onBackRoute: rootPath,
-        actionsComponent:
-            data?.status !== configs.ARTICLE_PRICE_STATUS_CLOSED ? (
-                <Space>
-                    {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
-                        <LinkButton
-                            title={t('actions:edit')}
-                            path={`${rootPath}/edit/${id}`}
-                            type="primary"
-                        />
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button
-                            onClick={() => confirmAction(id as string, setIdToDelete, 'delete')()}
-                        >
-                            {t('actions:delete')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                </Space>
-            ) : (
-                <></>
-            )
+        actionsComponent: null
     };
     // #endregion
+
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
@@ -122,12 +86,11 @@ const ArticlePricePage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
-                triggerReopen={{ reopenInfo, setReopenInfo }}
             />
         </>
     );
 };
 
-ArticlePricePage.layout = MainLayout;
+ArticlePriceHistoryPage.layout = MainLayout;
 
-export default ArticlePricePage;
+export default ArticlePriceHistoryPage;

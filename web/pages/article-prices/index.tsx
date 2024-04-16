@@ -17,13 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import {
-    DeleteOutlined,
-    EditTwoTone,
-    EyeTwoTone,
-    LockTwoTone,
-    UnlockTwoTone
-} from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
@@ -31,7 +25,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { ArticlePriceModelV2 as model } from 'models/ArticlePriceModelV2';
-import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import { articlePricesRoutes as itemRoutes } from 'modules/ArticlePrices/Static/articlePricesRoutes';
@@ -47,9 +41,6 @@ const ArticlePricePages: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [reopenInfo, setReopenInfo] = useState<string | undefined>();
-    // const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    // const [loading, setLoading] = useState(false);
-    // const [showModal, setShowModal] = useState(false);
 
     const headerData: HeaderData = {
         title: t('common:article-prices'),
@@ -122,19 +113,6 @@ const ArticlePricePages: PageComponent = () => {
                                 ) : (
                                     <></>
                                 )}
-                                {/* {modes.length > 0 &&
-                                modes.includes(ModeEnum.Delete) &&
-                                model.isSoftDeletable &&
-                                record.status != configs.ARTICLE_PRICE_STATUS_CLOSED ? (
-                                    <Button
-                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
-                                        onClick={() =>
-                                            confirmAction(record.id, setIdToDisable, 'disable')()
-                                        }
-                                    ></Button>
-                                ) : (
-                                    <></>
-                                )} */}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isDeletable &&

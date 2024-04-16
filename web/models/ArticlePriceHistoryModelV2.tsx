@@ -20,20 +20,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Table } from 'generated/graphql';
 import { ModelType } from './ModelsV2';
 
-export const ArticlePriceModelV2: ModelType = {
-    tableName: Table.ArticlePrice,
-    resolverName: 'ArticlePrice',
-    isEditable: true,
-    isDeletable: true,
-    isSoftDeletable: true,
+export const ArticlePriceHistoryModelV2: ModelType = {
+    tableName: Table.ArticlePriceHistory,
+    resolverName: 'ArticlePriceHistory',
+    isEditable: false,
+    isDeletable: false,
+    isSoftDeletable: false,
 
     endpoints: {
-        detail: 'articlePrice',
-        list: 'articlePrices',
-        create: 'createArticlePrice',
-        update: 'updateArticlePrice',
-        delete: 'deleteArticlePrice',
-        softDelete: 'softDeleteArticlePrice',
+        detail: 'articlePriceHistory',
+        list: 'articlePriceHistories',
+        create: 'createArticlePriceHistory',
+        update: 'updateArticlePriceHistory',
+        delete: 'deleteArticlePriceHistory',
         export: true
     },
 
@@ -237,7 +236,7 @@ export const ArticlePriceModelV2: ModelType = {
             addEditFormat: 'Dropdown',
             addEditStep: null,
             maxLength: null,
-            displayName: 'barcode',
+            displayName: null,
             isMandatory: false,
             minRule: null,
             maxRule: null,
@@ -450,32 +449,12 @@ export const ArticlePriceModelV2: ModelType = {
             config: null,
             param: null
         },
-        status: {
-            isListRequested: true,
-            isDefaultHiddenList: false,
-            isExcludedFromList: true,
-            isSortable: true,
-            searchingFormat: 'Dropdown',
-            isDetailRequested: true,
-            isExcludedFromDetail: true,
-            detailGroup: null,
-            link: null,
-            addEditFormat: null,
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: false,
-            minRule: null,
-            maxRule: null,
-            config: 'article_price_status',
-            param: null
-        },
-        statusText: {
+        historyDate: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: null,
+            searchingFormat: 'CalendarRange',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
@@ -488,27 +467,9 @@ export const ArticlePriceModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
-        },
-        quantity: {
-            isListRequested: true,
-            isDefaultHiddenList: false,
-            isExcludedFromList: false,
-            isSortable: true,
-            searchingFormat: 'Number',
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
-            detailGroup: null,
-            link: null,
-            addEditFormat: 'Number',
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: false,
-            minRule: 0,
-            maxRule: null,
-            config: null,
-            param: null
+            param: null,
+            optionTable: null,
+            defaultSort: 'descending'
         },
         created: {
             isListRequested: true,

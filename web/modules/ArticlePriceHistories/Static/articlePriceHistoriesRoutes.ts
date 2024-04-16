@@ -18,19 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 // Breadcrumb Name should be the same as in the translation file
-export const articlePricesRoutes = [
+export const articlePriceHistoriesRoutes = [
     {
         breadcrumbName: 'menu:articles'
     },
     {
-        breadcrumbName: 'menu:article-prices',
-        path: '/article-prices'
-    }
-];
-export const addArticlePriceRoutes = [
-    ...articlePricesRoutes,
-    {
-        path: '/add-article-price',
-        breadcrumbName: 'menu:add-article-price'
+        breadcrumbName: 'menu:article-price-histories',
+        path: '/article-price-histories'
     }
 ];
