@@ -685,7 +685,7 @@
     "articleLuBarcodeId": "Barcode",
     "articleLuBarcode": "Barcode",
     "articleLuBarcode_barcode_name": "Barcode",
-    "thirdPartyAddress": "Third Party",
+    "thirdPartyAddress": "Entity name",
     "thirdPartyAddressContactId": "Contact Name",
     "thirdPartyAddressContact": "Contact Name",
     "thirdPartyAddressContact_contactName": "Contact Name",
