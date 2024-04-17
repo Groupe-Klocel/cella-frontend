@@ -649,6 +649,8 @@
     "handlingUnitContent_stockStatus": "Etat de stock",
     "thirdParty_name": "Tiers",
     "thirdParty": "Tiers",
+    "thirdPartyAddress": "Raison Sociale",
+    "thirdPartyAddressContact": "Nom contact",
     "thirdPartyId": "Tiers",
     "thirdPartyAddress_entityName": "Raison Sociale",
     "thirdPartyAddressId": "Raison Sociale",
