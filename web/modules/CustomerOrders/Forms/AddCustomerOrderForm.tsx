@@ -18,11 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, InputNumber, Select, Modal, AutoComplete } from 'antd';
+import { Button, Input, Form, InputNumber, Select, Modal, AutoComplete, DatePicker } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, useStockOwners } from '@helpers';
+import { showError, showSuccess, useCarrierShippingModeIds, useStockOwners } from '@helpers';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
 import { FC, useEffect, useState } from 'react';
@@ -73,9 +73,12 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     const paymentTermLabel = t('d:paymentTerms');
     const paymentMethodLabel = t('d:paymentMethod');
     const paymentAccountLabel = t('d:paymentAccount');
+    const priceTypeLabel = t('d:priceType');
     const currencyLabel = t('d:currency');
     const discountLabel = t('d:discount_percent');
+    const expectedDeliveryDateLabel = t('d:expectedDeliveryDate');
     const deliveryTypeLabel = t('d:deliveryType');
+    const carrierShippingModeNameLabel = t('d:carrierShippingMode_name');
     const priorityLabel = t('d:priority');
     const printLanguageLabel = t('d:printLanguage');
     const commentLabel = t('d:comment');
@@ -145,7 +148,6 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     status: configs.ORDER_STATUS_CREATED,
                     orderType: configs.ORDER_TYPE_CUSTOMER_ORDER,
                     orderDate: nowDate,
-                    priceType: parameters.PRICE_TYPE_SELLING,
                     thirdPartyId
                 });
 
@@ -154,6 +156,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                 delete formData['paymentAccountText'];
                 delete formData['paymentMethodText'];
                 delete formData['paymentTermsText'];
+                delete formData['priceTypeText'];
                 delete formData['currencyText'];
 
                 createOrder({ input: formData });
@@ -223,6 +226,20 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
             setStockOwners(newIdOpts);
         }
     }, [stockOwnerData.data]);
+
+    //To render Simple carrierShippingModes list
+    const [carrierShippingModes, setCarrierShippingModes] = useState<any>();
+    const carrierShippingModeData = useCarrierShippingModeIds({}, 1, 100, null);
+
+    useEffect(() => {
+        if (carrierShippingModeData) {
+            const newIdOpts: { text: string; key: string }[] = [];
+            carrierShippingModeData.data?.carrierShippingModes?.results.forEach(({ id, name }) => {
+                newIdOpts.push({ text: name!, key: id! });
+            });
+            setCarrierShippingModes(newIdOpts);
+        }
+    }, [carrierShippingModeData.data]);
 
     // Retrieve Payment terms list
     const [paymentTerms, setPaymentTerms] = useState<any>();
@@ -307,6 +324,27 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
             }
         }
     }, [currenciesList.data]);
+
+    // Retrieve price types list
+    const [priceTypes, setPriceTypes] = useState<any>();
+    const priceTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'price_type'
+    });
+
+    useEffect(() => {
+        if (priceTypesList) {
+            const newPriceType: Array<FormOptionType> = [];
+
+            const cData = priceTypesList?.data?.listParametersForAScope;
+            if (cData) {
+                cData.forEach((item) => {
+                    newPriceType.push({ key: parseInt(item.code), text: item.text });
+                });
+                setPriceTypes(newPriceType);
+            }
+        }
+    }, [priceTypesList.data]);
 
     // Retrieve delivery types list
     const [deliveryTypes, setDeliveryTypes] = useState<any>();
@@ -399,6 +437,14 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
         }
     };
 
+    const handlePriceTypeSelection = (key: any, value: any) => {
+        if (key === undefined) {
+            form.setFieldsValue({ priceType: null });
+        } else {
+            form.setFieldsValue({ priceType: key });
+        }
+    };
+
     const handleCurrencySelection = (key: any, value: any) => {
         if (key === undefined) {
             form.setFieldsValue({ currency: null });
@@ -434,7 +480,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     name="stockOwnerId"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
-                    <Select>
+                    <Select allowClear>
                         {stockOwners?.map((stockOwner: any) => (
                             <Option key={stockOwner.key} value={stockOwner.key}>
                                 {stockOwner.text}
@@ -534,6 +580,21 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                         ))}
                     </Select>
                 </Form.Item>
+                <Form.Item label={priceTypeLabel} name="priceTypeText">
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:priceType')
+                        })}`}
+                        onChange={handlePriceTypeSelection}
+                    >
+                        {priceTypes?.map((priceType: any) => (
+                            <Option key={priceType.key} value={priceType.key}>
+                                {priceType.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
                 <Form.Item label={currencyLabel} name="currencyText">
                     <Select
                         allowClear
@@ -559,11 +620,27 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                 >
                     <InputNumber />
                 </Form.Item>
+                <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
+                    <DatePicker
+                        allowClear
+                        format="YYYY-MM-DD"
+                        showTime={{ defaultValue: moment('YYYY-MM-DD') }}
+                    />
+                </Form.Item>
                 <Form.Item label={deliveryTypeLabel} name="deliveryType">
-                    <Select>
+                    <Select allowClear>
                         {deliveryTypes?.map((deliveryType: any) => (
                             <Option key={deliveryType.key} value={deliveryType.key}>
                                 {deliveryType.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={carrierShippingModeNameLabel} name="carrierShippingModeId">
+                    <Select allowClear>
+                        {carrierShippingModes?.map((csm: any) => (
+                            <Option key={csm.key} value={csm.key}>
+                                {csm.text}
                             </Option>
                         ))}
                     </Select>
@@ -573,7 +650,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     name="priority"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
-                    <Select>
+                    <Select allowClear>
                         {priorities?.map((priority: any) => (
                             <Option key={priority.key} value={priority.key}>
                                 {priority.text}

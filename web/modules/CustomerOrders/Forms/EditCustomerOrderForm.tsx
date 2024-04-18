@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, InputNumber, Form, Select, Space, Modal } from 'antd';
+import { Button, Input, InputNumber, Form, Select, Space, Modal, DatePicker } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -37,6 +37,7 @@ import {
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
 import { FormOptionType } from 'models/ModelsV2';
+import moment from 'moment';
 
 export type EditCustomerOrderFormProps = {
     orderId: string;
@@ -75,6 +76,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     const reference2Label = t('d:reference2');
     const reference3Label = t('d:reference3');
     const thirdPartyLabel = t('d:thirdParty');
+    const expectedDeliveryDateLabel = t('d:expectedDeliveryDate');
     const submit = t('actions:submit');
 
     // TYPED SAFE ALL
@@ -449,6 +451,14 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         ))}
                     </Select>
                 </Form.Item>
+                <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
+                    <DatePicker
+                        allowClear
+                        format="YYYY-MM-DD"
+                        showTime={{ defaultValue: moment('YYYY-MM-DD') }}
+                    />
+                </Form.Item>
+
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
                     <Select
                         allowClear
