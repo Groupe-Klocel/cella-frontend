@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { AppHead, LinkButton, SinglePrintModal } from '@components';
+import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
@@ -49,6 +49,10 @@ const CustomerOrderPage: PageComponent = () => {
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
+    const [documentToPrint, setDocumentToPrint] = useState<string>();
+    const [invoiceAddress, setInvoiceAddress] = useState<any>();
 
     // #region to customize information
     const breadCrumb = [
@@ -177,6 +181,48 @@ const CustomerOrderPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
+                    <>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                if (invoiceAddress) {
+                                    setShowSinglePrintModal(true);
+                                    setIdToPrint(invoiceAddress.id);
+                                    setDocumentToPrint('K_Quote');
+                                } else {
+                                    showError(t('messages:no-invoice-address'));
+                                }
+                            }}
+                        >
+                            {t('actions:print-quote')}
+                        </Button>
+                    </>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Read) &&
+                data?.status >= configs.ORDER_STATUS_TO_INVOICE ? (
+                    <>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                if (invoiceAddress) {
+                                    setShowSinglePrintModal(true);
+                                    setIdToPrint(invoiceAddress.id);
+                                    setDocumentToPrint('K_Invoice');
+                                } else {
+                                    showError(t('messages:no-invoice-address'));
+                                }
+                            }}
+                        >
+                            {t('actions:print-invoice')}
+                        </Button>
+                    </>
+                ) : (
+                    <></>
+                )}
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
@@ -217,6 +263,16 @@ const CustomerOrderPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                <SinglePrintModal
+                    showModal={{
+                        showSinglePrintModal,
+                        setShowSinglePrintModal
+                    }}
+                    dataToPrint={{ id: idToPrint }}
+                    documentName={documentToPrint!}
+                    documentReference={data?.name}
+                    customLanguage={data?.printLanguage ?? undefined}
+                />
             </Space>
         )
     };
@@ -234,6 +290,7 @@ const CustomerOrderPage: PageComponent = () => {
                         thirdPartyId={data?.thirdPartyId}
                         priceType={data?.priceType}
                         status={data?.status}
+                        setInvoiceAddress={setInvoiceAddress}
                     />
                 }
                 headerData={headerData}
@@ -249,7 +306,6 @@ const CustomerOrderPage: PageComponent = () => {
                     setShowPaymentModal
                 }}
                 orderId={id as string}
-                documentName="K_OutboundHandlingUnitLabel"
             />
         </>
     );

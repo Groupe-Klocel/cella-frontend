@@ -140,5 +140,7 @@
     "confirm-delivery": "Confirm Delivery",
     "enter-payment-information": "Enter Payment Information",
     "enter-payment": "Enter Payment",
-    "generate-credit": "Generate Credit Note"
+    "generate-credit": "Generate Credit Note",
+    "print-invoice": "Print Invoice",
+    "print-quote": "Print Quote"
 }

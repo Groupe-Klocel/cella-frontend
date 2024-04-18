@@ -122,5 +122,6 @@
     "confirm-quote": "Are you sure you want to confirm this as a quote ?",
     "confirm-order": "Are you sure you want to confirm this as an order ?",
     "confirm-payment": "Are you sure you want to confirm this as a payment ?",
-    "confirm-delivery": "Are you sure you want to confirm this as a delivery ?"
+    "confirm-delivery": "Are you sure you want to confirm this as a delivery ?",
+    "no-invoice-address": "No invoice address allocated"
 }

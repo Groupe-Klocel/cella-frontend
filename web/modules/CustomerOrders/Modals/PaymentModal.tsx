@@ -22,11 +22,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { Button, DatePicker, Form, Input, InputNumber, Modal, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess } from '@helpers';
-import {
-    GetThirdPartiesQuery,
-    useGetThirdPartiesQuery,
-    useListParametersForAScopeQuery
-} from 'generated/graphql';
+import { useListParametersForAScopeQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
@@ -40,16 +36,9 @@ const { Text } = Typography;
 export interface IPaymentModalProps {
     orderId: string;
     showModal: any;
-    documentName: string;
-    documentReference?: string | any;
 }
 
-const PaymentModal = ({
-    showModal,
-    orderId,
-    documentName,
-    documentReference
-}: IPaymentModalProps) => {
+const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
