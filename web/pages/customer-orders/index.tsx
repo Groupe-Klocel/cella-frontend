@@ -334,7 +334,6 @@ const CustomerOrderPages: PageComponent = () => {
                     setShowPaymentModal
                 }}
                 orderId={orderId}
-                documentName="K_OutboundHandlingUnitLabel"
             />
         </>
     );

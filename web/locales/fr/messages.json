@@ -122,5 +122,6 @@
     "confirm-quote": "Etes-vous sûr(e) de vouloir valider en tant que devis ?",
     "confirm-order": "Etes-vous sûr(e) de vouloir valider en tant que commande ?",
     "confirm-payment": "Etes-vous sûr(e) de vouloir valider en tant que règlement ?",
-    "confirm-delivery": "Etes-vous sûr(e) de vouloir valider en tant que livraison ?"
+    "confirm-delivery": "Etes-vous sûr(e) de vouloir valider en tant que livraison ?",
+    "no-invoice-address": "Aucune adresse de facturation allouée"
 }

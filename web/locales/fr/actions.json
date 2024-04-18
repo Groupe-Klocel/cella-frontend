@@ -138,5 +138,7 @@
     "confirm-delivery": "Confirmer livraison",
     "enter-payment-information": "Saisir les informations de paiement",
     "enter-payment": "Saisir paiement",
-    "generate-credit": "Générer Avoir"
+    "generate-credit": "Générer Avoir",
+    "print-invoice": "Imprimer facture",
+    "print-quote": "Imprimer devis"
 }

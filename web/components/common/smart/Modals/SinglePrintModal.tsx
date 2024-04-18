@@ -164,6 +164,7 @@ const SinglePrintModal = ({
             })
             .catch((err) => {
                 showError(t('messages:error-print-data'));
+                console.log('printError', err);
             });
         setIsPrintingLoading(false);
         showModal.setShowSinglePrintModal(false);

@@ -25,7 +25,7 @@ import { Button, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
 import { CustomerOrderLineModelV2 } from 'models/CustomerOrderLineModelV2';
 import { CustomerOrderAddressModelV2 } from 'models/CustomerOrderAddressModelV2';
@@ -40,6 +40,7 @@ export interface IItemDetailsProps {
     thirdPartyId?: string | any;
     priceType?: number | any;
     status?: string | any;
+    setInvoiceAddress?: any;
 }
 
 const CustomerOrderDetailsExtra = ({
@@ -49,7 +50,8 @@ const CustomerOrderDetailsExtra = ({
     stockOwnerName,
     thirdPartyId,
     priceType,
-    status
+    status,
+    setInvoiceAddress
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
@@ -59,6 +61,7 @@ const CustomerOrderDetailsExtra = ({
     const [idToDisableLine, setIdToDisableLine] = useState<string | undefined>();
     const customerOrderAddressModes = getModesFromPermissions(permissions, Table.OrderAddress);
     const customerOrderLineModes = getModesFromPermissions(permissions, Table.OrderLine);
+    const [customerOrderAddressesData, setCustomerOrderAddressesData] = useState<any>();
 
     const customerOrderAddressHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:customer-order-addresses') }),
@@ -76,6 +79,16 @@ const CustomerOrderDetailsExtra = ({
                 />
             ) : null
     };
+
+    useEffect(() => {
+        if (customerOrderAddressesData) {
+            setInvoiceAddress(
+                customerOrderAddressesData.find(
+                    (e: any) => e.category == configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE
+                )
+            );
+        }
+    }, [customerOrderAddressesData]);
 
     const curtomerOrderLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:customer-order-lines') }),
@@ -228,6 +241,7 @@ const CustomerOrderDetailsExtra = ({
                                 )
                             }
                         ]}
+                        setData={setCustomerOrderAddressesData}
                         searchable={false}
                         sortDefault={[{ field: 'created', ascending: true }]}
                     />
