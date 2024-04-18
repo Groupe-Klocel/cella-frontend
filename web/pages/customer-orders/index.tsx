@@ -269,8 +269,8 @@ const CustomerOrderPages: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable &&
-                                (record.status < configs.ORDER_STATUS_TO_INVOICE ||
-                                    record.status > configs.ORDER_STATUS_TO_INVOICE) ? (
+                                record.status != configs.ORDER_STATUS_TO_INVOICE &&
+                                record.status < configs.ORDER_STATUS_DELIVERY_IN_PROGRESS ? (
                                     <Button
                                         icon={<FileDoneOutlined />}
                                         style={{ color: 'green' }}
