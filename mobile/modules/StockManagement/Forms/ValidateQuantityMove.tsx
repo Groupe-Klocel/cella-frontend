@@ -95,7 +95,9 @@ export const ValidateQuantityMoveForm = ({
                 quantity: storedObject.step40.data.chosenContent.quantity,
                 stockStatus: storedObject.step40.data.chosenContent.stockStatus,
                 stockOwnerId: storedObject.step40.data.chosenContent.stockOwnerId,
-                stockOwnerName: storedObject.step40.data.chosenContent.stockOwner.name
+                stockOwnerName: storedObject.step40.data.chosenContent.stockOwner.name,
+                handlingUnitContentFeatures:
+                    storedObject.step40.data.chosenContent.handlingUnitContentFeatures
             };
         }
         if (storedObject.step40.data.chosenContent.handlingUnit) {

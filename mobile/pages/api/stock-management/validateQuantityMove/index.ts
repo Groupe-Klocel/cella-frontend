@@ -21,6 +21,7 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
+import { isNonUniqueAndMatches } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -103,6 +104,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             updateHandlingUnitContent(id: $id, input: $input) {
                 id
                 quantity
+                handlingUnitContentFeatures {
+                    id
+                    featureCodeId
+                    value
+                }
                 lastTransactionId
             }
         }
@@ -188,16 +194,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         } catch (error) {
             res.status(500).json({ message: 'Internal server error' });
         }
+
+        let isHUCCreated = false;
         // Check if there is a final content with same article and stock status exist in the current Hu, if not create it
         if (
             destinationHu.handlingUnitContents.length < 0 ||
-            !destinationHu.handlingUnitContents.some(
+            !destinationHu.handlingUnitContents?.some(
                 (huc: any) =>
                     huc.articleId === articleInfo.articleId &&
                     huc.stockStatus === finalStockStatus &&
-                    huc.stockOwnerId === originalLocation.originalContent.stockOwnerId
+                    huc.stockOwnerId === originalLocation.originalContent.stockOwnerId &&
+                    (huc.handlingUnitContentFeatures?.some((feature: any) =>
+                        isNonUniqueAndMatches(feature, huc.handlingUnitContentFeatures)
+                    ) ||
+                        huc.handlingUnitContentFeatures?.every(
+                            (feature: any) => feature.featureCode.unique === true
+                        ))
             )
         ) {
+            isHUCCreated = true;
             const newHUCVariables = {
                 input: {
                     stockStatus: finalStockStatus,
@@ -214,6 +229,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     createHandlingUnitContent(input: $input) {
                         id
                         quantity
+                        handlingUnitContentFeatures {
+                            id
+                            featureCodeId
+                            value
+                        }
                         lastTransactionId
                     }
                 }
@@ -281,6 +301,58 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             );
 
             console.log('updatedHUCF', updatedHUCF);
+        } else {
+            // HUCF creation
+            if (
+                originalLocation.originalContent?.handlingUnitContentFeatures.length > 0 &&
+                isHUCCreated
+            ) {
+                // Create HUCFs in new HUC
+                const hucfInputs = [];
+                for (const feature of originalLocation.originalContent
+                    .handlingUnitContentFeatures) {
+                    const inputsFeature = {
+                        featureCodeId: feature.featureCode.id,
+                        value: feature.value,
+                        handlingUnitContentId: destinationHUC?.id,
+                        lastTransactionId
+                    };
+                    hucfInputs.push(inputsFeature);
+                }
+
+                const createHUCFsMutation = gql`
+                    mutation createHandlingUnitContentFeatures(
+                        $inputs: [CreateHandlingUnitContentFeatureInput!]!
+                    ) {
+                        createHandlingUnitContentFeatures(inputs: $inputs)
+                    }
+                `;
+                const createHUCFsVariables = {
+                    inputs: hucfInputs
+                };
+                const createdHUCFs = await graphqlRequestClient.request(
+                    createHUCFsMutation,
+                    createHUCFsVariables,
+                    requestHeader
+                );
+
+                //destination content Qty update
+                const destinationHUCVariables = {
+                    id: destinationHUC?.id,
+                    input: {
+                        quantity: movingQuantity,
+                        lastTransactionId
+                    }
+                };
+
+                const destinationHucResult = await graphqlRequestClient.request(
+                    updateHUCMutation,
+                    destinationHUCVariables,
+                    requestHeader
+                );
+
+                destinationHUC = destinationHucResult.updateHandlingUnitContent;
+            }
         }
 
         //origin content update section
@@ -329,6 +401,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 finalContentIdStr: destinationHUC?.id,
                 finalHandlingUnitIdStr: destinationHu.id,
                 finalHandlingUnitNameStr: destinationHu.name,
+                originalFeatures: JSON.stringify(
+                    originalLocation.originalContent?.handlingUnitContentFeatures
+                ),
+                finalFeatures: JSON.stringify(destinationHUC?.handlingUnitContentFeatures),
                 lastTransactionId
             }
         };
