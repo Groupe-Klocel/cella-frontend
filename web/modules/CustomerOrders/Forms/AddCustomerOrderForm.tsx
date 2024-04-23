@@ -391,26 +391,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     }, [prioritiesList.data]);
 
     const handleThirdPartySelection = (key: any, value: any) => {
-        // if we select a new value, we fill the form
-        if (customerThirdPartiesList.data) {
-            customerThirdPartiesList.data.thirdParties?.results.forEach(
-                (customerThirdParty: any) => {
-                    if (customerThirdParty.id === key) {
-                        form.setFieldsValue({
-                            paymentTermsText: customerThirdParty.defaultPaymentTermsText,
-                            paymentTerms: customerThirdParty.defaultPaymentTerms,
-                            paymentMethodText: customerThirdParty.defaultPaymentMethodText,
-                            paymentMethod: customerThirdParty.defaultPaymentMethod,
-                            paymentAccountText: customerThirdParty.defaultPaymentAccountText,
-                            paymentAccount: customerThirdParty.defaultPaymentAccount,
-                            currencyText: customerThirdParty.defaultCurrencyText,
-                            currency: customerThirdParty.defaultCurrency,
-                            invoiceDiscount: customerThirdParty.defaultDiscount
-                        });
-                    }
-                }
-            );
-        }
+        setThirdPartyName(key);
     };
 
     const handlePaymentTermsSelection = (key: any, value: any) => {
@@ -507,6 +488,32 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                         onSelect={(value, option) => {
                             setThirdPartyId(option.id);
                             setThirdPartyName(value.split(' - ')[0]);
+                            if (customerThirdPartiesList.data) {
+                                customerThirdPartiesList.data.thirdParties?.results.forEach(
+                                    (customerThirdParty: any) => {
+                                        if (customerThirdParty.id === option.id) {
+                                            form.setFieldsValue({
+                                                paymentTermsText:
+                                                    customerThirdParty.defaultPaymentTermsText,
+                                                paymentTerms:
+                                                    customerThirdParty.defaultPaymentTerms,
+                                                paymentMethodText:
+                                                    customerThirdParty.defaultPaymentMethodText,
+                                                paymentMethod:
+                                                    customerThirdParty.defaultPaymentMethod,
+                                                paymentAccountText:
+                                                    customerThirdParty.defaultPaymentAccountText,
+                                                paymentAccount:
+                                                    customerThirdParty.defaultPaymentAccount,
+                                                currencyText:
+                                                    customerThirdParty.defaultCurrencyText,
+                                                currency: customerThirdParty.defaultCurrency,
+                                                invoiceDiscount: customerThirdParty.defaultDiscount
+                                            });
+                                        }
+                                    }
+                                );
+                            }
                         }}
                         allowClear
                         onChange={handleThirdPartySelection}
@@ -515,25 +522,6 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                             setThirdPartyName('');
                         }}
                     />
-                    {/* <Select
-                        allowClear
-                        placeholder={`${t('messages:please-select-a', {
-                            name: t('d:thirdParty')
-                        })}`}
-                        showSearch
-                        filterOption={(inputValue, option) =>
-                            option!.props.children
-                                .toUpperCase()
-                                .indexOf(inputValue.toUpperCase()) !== -1
-                        }
-                        onChange={handleThirdPartySelection}
-                    >
-                        {thirdParties?.map((thirdParty: any) => (
-                            <Option key={thirdParty.key} value={thirdParty.key}>
-                                {thirdParty.text}
-                            </Option>
-                        ))}
-                    </Select> */}
                 </Form.Item>
                 <Form.Item label={paymentTermLabel} name="paymentTermsText">
                     <Select
