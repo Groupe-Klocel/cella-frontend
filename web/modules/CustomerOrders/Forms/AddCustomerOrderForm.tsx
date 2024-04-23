@@ -627,7 +627,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                         showTime={{ defaultValue: moment('YYYY-MM-DD') }}
                     />
                 </Form.Item>
-                <Form.Item label={deliveryTypeLabel} name="deliveryType">
+                <Form.Item label={deliveryTypeLabel} name="deliveryPoType">
                     <Select allowClear>
                         {deliveryTypes?.map((deliveryType: any) => (
                             <Option key={deliveryType.key} value={deliveryType.key}>
