@@ -7,5 +7,6 @@
     "FAPI_000002": "Cet élément n'a pas l'état attendu",
     "STOCKMOVEMENT-000100": "L'emplacement sélectionné ne peut pas recevoir cet article",
     "STOCKMOVEMENT-000101": "L'emplacement sélectionné ne peut pas recevoir cette palette",
-    "STOCKMOVEMENT-000200": "La destination ne peut pas être identique à l'origine"
+    "STOCKMOVEMENT-000200": "La destination ne peut pas être identique à l'origine",
+    "PALLETCLOSURE-000200": "Tous les colis doivent être préparés avant de fermer la palette"
 }
