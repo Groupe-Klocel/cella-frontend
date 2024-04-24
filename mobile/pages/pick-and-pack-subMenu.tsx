@@ -28,36 +28,12 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const menuItemDatas = [
     {
-        title: 'menu:round-picking',
-        path: '/round-picking'
-    },
-    {
-        title: 'menu:round-packing',
-        path: '/round-packing'
-    },
-    {
-        title: 'menu:pick-and-pack',
-        path: '/pick-and-pack-subMenu'
-    },
-    // {
-    //     title: 'menu:round',
-    //     path: '/'
-    // },
-    {
-        title: 'menu:box-preparation',
-        path: '/box-preparation'
-    },
-    {
-        title: 'menu:palletization',
-        path: '/palletization'
-    },
-    {
-        title: 'menu:load',
-        path: '/loads'
+        title: 'menu:full-box',
+        path: '/full-box'
     }
 ];
 
-const PreparationManagementPage: PageComponent = () => {
+const PickAndPackManagementPage: PageComponent = () => {
     const { t } = useTranslation();
     const router = useRouter();
     return (
@@ -78,6 +54,6 @@ const PreparationManagementPage: PageComponent = () => {
     );
 };
 
-PreparationManagementPage.layout = MainLayout;
+PickAndPackManagementPage.layout = MainLayout;
 
-export default PreparationManagementPage;
+export default PickAndPackManagementPage;
