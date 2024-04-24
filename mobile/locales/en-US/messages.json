@@ -79,7 +79,7 @@
     "incorrect-hu-carrier": "Carrier is not the expected one",
     "article-creation-confirm": "Article unknown in stock, do you want to create it?",
     "already-scanned": "Already scanned",
-    "wrong-stock-status-or-reservation": "Scanned item does not have expected stock status or reservation",
+    "wrong-article-stockOwner-stockStatus-or-reservation": "Scanned item does not have expected article, stock owner, stock status or reservation",
     "hu-already-used": "This HU is already used",
     "no-articleLuBarcode": "No article found with this barcode",
     "not-inbound-hu": "This HU is not available for reception",
@@ -87,5 +87,10 @@
     "no-pallet-to-close": "No pallet to close",
     "scanned-hu-cannot-be-palletized": "Scanned element cannot be palletized",
     "scanned-hu-cannot-be-palletized-on-this-pallet": "Scanned element cannot be palletized on this pallet",
-    "scan-not-validated": "You have not validated your entry"
+    "scan-not-validated": "You have not validated your entry",
+    "no-hu-to-close": "No handling unit to close",
+    "error-updating-data": "Error updating data",
+    "hu-ready-to-be-loaded": "Handling unit is ready for loading",
+    "picked-and-packed-successfully": "Picked and packed successfully",
+    "pick-and-pack-round-finished": "Pick and pack round finished"
 }

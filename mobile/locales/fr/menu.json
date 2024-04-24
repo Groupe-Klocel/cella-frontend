@@ -90,5 +90,7 @@
     "set-unbuilding": "Casser une nomenclature",
     "set-building": "Créer une nomenclature",
     "shipping-unit-box-info": "Info Unité d'expédition/Colis",
-    "palletization": "Palettisation"
+    "palletization": "Palettisation",
+    "pick-and-pack": "Pick & pack",
+    "full-box": "Colis complet"
 }
