@@ -79,7 +79,7 @@
     "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu",
     "article-creation-confirm": "Article inconnu en stock, voulez-vous le créer ?",
     "already-scanned": "Element déjà scanné",
-    "wrong-stock-status-or-reservation": "L'élément scanné n'a pas le statut de stock ou la réservation attendue",
+    "wrong-article-stockOwner-stockStatus-or-reservation": "L'élément scanné n'a pas l'article, le propriétaire de stock, l'état de stock ou la réservation attendue",
     "hu-already-used": "Cette UM est déjà utilisée",
     "no-articleLuBarcode": "Aucun article trouvé avec ce code à barres",
     "not-inbound-hu": "Cette UM n'est pas disponible pour réception",
@@ -87,5 +87,10 @@
     "no-pallet-to-close": "Aucune palette à fermer",
     "scanned-hu-cannot-be-palletized": "L'élément scanné ne peut pas être palettisé",
     "scanned-hu-cannot-be-palletized-on-this-pallet": "L'élément scanné ne peut pas être palettisé sur cette palette",
-    "scan-not-validated": "Vous n'avez pas validé votre saisie"
+    "scan-not-validated": "Vous n'avez pas validé votre saisie",
+    "no-hu-to-close": "Aucune Unité de manutention à fermer",
+    "error-updating-data": "Erreur lors de la mise à jour des données",
+    "hu-ready-to-be-loaded": "L'unité de manutention est prête pour chargement",
+    "picked-and-packed-successfully": "Pick & pack effectué avec succès",
+    "pick-and-pack-round-finished": "Pick & pack de la ramasse terminés"
 }

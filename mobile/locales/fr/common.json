@@ -153,5 +153,10 @@
     "validate-and-finish-hu": "Valider et terminer l'UM",
     "palletization": "Palettisation",
     "number-of-boxes": "Nombre de colis",
-    "close-pallet": "Fermer la palette"
+    "close-pallet": "Fermer la palette",
+    "pickAndPack-fullBox": "Pick & pack - Colis complet",
+    "expected-location_abbr": "Empl. attendu",
+    "expected-stock-owner_abbr": "Prop. stock attendu",
+    "expected-article_abbr": "Art. attendu",
+    "expected-quantity_abbr": "Qté attendue"
 }
