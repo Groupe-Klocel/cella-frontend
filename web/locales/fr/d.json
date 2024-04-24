@@ -513,6 +513,7 @@
     "handlingUnitInboundIdStr": "Arrivage",
     "handlingUnitOutboundIdStr": "Colis",
     "huManagement": "Gestion des UM",
+    "locationGroupId": "Groupe d'emplacements",
     "locationGroupIdText": "Groupe d'emplacements",
     "returnCode": "Code retour",
     "actionCode": "Code action",

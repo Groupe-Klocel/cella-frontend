@@ -446,6 +446,7 @@
     "handlingUnitModel_description": "Description",
     "handlingUnitModel_statut": "Status",
     "huManagement": "HU management",
+    "locationGroupId": "Locations group",
     "locationGroupIdText": "Locations group",
     "number": "Number",
     "scope": "Scope",
