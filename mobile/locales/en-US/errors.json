@@ -7,5 +7,6 @@
     "FAPI_000002": "This element does not have the expected status",
     "STOCKMOVEMENT-000100": "Selected location cannot receive this article",
     "STOCKMOVEMENT-000101": "Selected location cannot receive this pallet",
-    "STOCKMOVEMENT-000200": "Destination cannot be identical to origin"
+    "STOCKMOVEMENT-000200": "Destination cannot be identical to origin",
+    "PALLETCLOSURE-000200": "All boxes have to be prepared before closing this pallet"
 }
