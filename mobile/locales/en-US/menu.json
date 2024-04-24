@@ -48,7 +48,7 @@
     "handling-unit-models": "Packagings",
     "preparation": "Preparation",
     "preparation-management": "Preparation",
-    "purchase-orders": "Purchase Orders",
+    "purchase-orders": "Receptions",
     "recommended": "Recommended",
     "return-codes": "Return Codes",
     "rights": "Rights",
@@ -88,5 +88,8 @@
     "equipment-check": "Equipment Check",
     "set-unbuilding": "Set Unbuilding",
     "set-building": "Set Building",
-    "shipping-unit-box-info": "Shipping unit/Box info"
+    "shipping-unit-box-info": "Shipping unit/Box info",
+    "palletization": "Palletization",
+    "pick-and-pack": "Pick & Pack",
+    "full-box": "Full Box"
 }

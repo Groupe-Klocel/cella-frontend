@@ -30,7 +30,7 @@
     "file-size-error": "La taille du fichier doit être inférieure à {{size}}Mb",
     "no-special-characters": "Caractères spéciaux non autorisés",
     "please-enter-a": "Veuillez remplir un {{name}}",
-    "please-fill-letter-your": "Veuillez remplir les premières lettres de votre {{name}}",
+    "please-fill-letter-your": "Veuillez remplir des lettres de votre {{name}}",
     "please-fill-your": "Veuillez remplir votre {{name}}",
     "please-input": "Veuillez saisir {{name}}",
     "please-select": "Veuillez sélectionner {{name}}",
@@ -115,5 +115,13 @@
     "no-delivery-address": "Aucune adresse de livraison définie",
     "no-printer-behaviour": "Si aucune imprimante n'est sélectionnée, le document sera téléchargé",
     "success-cycle-count-creation": "L'inventaire a été créé avec succès",
-    "cycle-count-finished": "L'inventaire est terminé"
+    "cycle-count-finished": "L'inventaire est terminé",
+    "success-sending-magento-request": "L'import Magento a été effectuée avec succès",
+    "error-sending-magento-request": "L'Erreur lors de l'import Magento",
+    "mangento-get-orders-confirm": "Etes-vous sûr(e) de vouloir importer les données depuis Magento ?",
+    "confirm-quote": "Etes-vous sûr(e) de vouloir valider en tant que devis ?",
+    "confirm-order": "Etes-vous sûr(e) de vouloir valider en tant que commande ?",
+    "confirm-payment": "Etes-vous sûr(e) de vouloir valider en tant que règlement ?",
+    "confirm-delivery": "Etes-vous sûr(e) de vouloir valider en tant que livraison ?",
+    "no-invoice-address": "Aucune adresse de facturation allouée"
 }
