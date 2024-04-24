@@ -131,5 +131,10 @@
     "customer-orders": "Customer orders",
     "customer-order-address": "Address",
     "customer-order": "Customer order",
-    "article-price-histories": "Article Price histories"
+    "article-price-histories": "Article Price histories",
+    "credits": "Credits",
+    "article-set-details": "Article Set Details",
+    "credit-address": "Address",
+    "building": "Building",
+    "payments": "Payments"
 }

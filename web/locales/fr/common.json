@@ -328,5 +328,7 @@
     "credit-lines": "Lignes d'avoir",
     "credit-line": "Ligne d'avoir",
     "credit-address": "Adresse",
-    "credit-addresses": "Adresses"
+    "credit-addresses": "Adresses",
+    "purchase-order-line-feature": "Donnée traçabilité ligne réception",
+    "purchase-order-line-features": "Données traçabilité ligne réception"
 }

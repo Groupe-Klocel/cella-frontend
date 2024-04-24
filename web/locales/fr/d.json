@@ -737,5 +737,9 @@
     "historyDate": "Date historique",
     "articleLuBarcode_barcode_name": "Code-barre",
     "deliveryPoType": "Type de commande",
-    "creditName": "N° d'avoir"
+    "creditName": "N° d'avoir",
+    "sellerAccountingCode": "Code comptable du vendeur",
+    "buyerAccountingCode": "Code comptable de l'acheteur",
+    "vatAccountingCode": "Code Comptable TVA",
+    "documentAttached": "Document joint"
 }
