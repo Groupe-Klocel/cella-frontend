@@ -26,7 +26,7 @@
     "error-message-select-an": "You must select an {{name}}",
     "error-space": "Input should not contain only spaces",
     "please-enter-a": "Please enter a {{name}}",
-    "please-fill-letter-your": "Please fill first letters of your {{name}}",
+    "please-fill-letter-your": "Please fill letters of your {{name}}",
     "please-fill-your": "Please fill your {{name}}",
     "please-input": "Please input {{name}}",
     "please-select": "Please select {{name}}",
@@ -115,5 +115,13 @@
     "no-delivery-address": "No delivery address defined",
     "no-printer-behaviour": "If no printer is chosen, document will be downloaded",
     "success-cycle-count-creation": "Cycle count successfully created",
-    "cycle-count-finished": "Cycle count is finished"
+    "cycle-count-finished": "Cycle count is finished",
+    "success-sending-magento-request": "Import request successfully sent to Magento",
+    "error-sending-magento-request": "Error during Magento import request",
+    "mangento-get-orders-confirm": "Are you sure you want to import data from Magento ?",
+    "confirm-quote": "Are you sure you want to confirm this as a quote ?",
+    "confirm-order": "Are you sure you want to confirm this as an order ?",
+    "confirm-payment": "Are you sure you want to confirm this as a payment ?",
+    "confirm-delivery": "Are you sure you want to confirm this as a delivery ?",
+    "no-invoice-address": "No invoice address allocated"
 }
