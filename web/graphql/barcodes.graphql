@@ -137,24 +137,6 @@ mutation DeleteBarcode($id: String!) {
     deleteBarcode(id: $id)
 }
 
-mutation ExportBarcodes(
-    $format: ExportFormat
-    $compression: ExportCompression
-    $separator: String
-    $orderBy: [BarcodeOrderByCriterion!]
-    $filters: BarcodeSearchFilters
-) {
-    exportBarcodes(
-        format: $format
-        compression: $compression
-        separator: $separator
-        orderBy: $orderBy
-        filters: $filters
-    ) {
-        url
-    }
-}
-
 mutation RenderDocument($templateFilename: String!, $context: JSON!) {
     renderDocument(templateFilename: $templateFilename, context: $context) {
         __typename
