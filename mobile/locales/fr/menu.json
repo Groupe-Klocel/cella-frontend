@@ -49,7 +49,7 @@
     "preparation": "Préparation",
     "preparation-management": "Préparation",
     "preparatory-tour": "Tournée de préparati",
-    "purchase-orders": "Commandes fournisseurs",
+    "purchase-orders": "Réceptions",
     "recommended": "Conseillés",
     "return-codes": "Codes retour",
     "rights": "Droits d'accès",
@@ -89,5 +89,8 @@
     "equipment-check": "Info équipement",
     "set-unbuilding": "Casser une nomenclature",
     "set-building": "Créer une nomenclature",
-    "shipping-unit-box-info": "Info Unité d'expédition/Colis"
+    "shipping-unit-box-info": "Info Unité d'expédition/Colis",
+    "palletization": "Palettisation",
+    "pick-and-pack": "Pick & pack",
+    "full-box": "Colis complet"
 }
