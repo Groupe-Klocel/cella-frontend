@@ -155,6 +155,13 @@ const SideMenu: FC = () => {
                         <></>
                     )}
                 </SubMenu>
+                {getModesFromPermissions(permissions, Table.ThirdParty).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-third-parties">
+                        <Link href="/third-parties">{t('third-parties')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 {getModesFromPermissions(permissions, Table.Carrier).includes(ModeEnum.Read) ? (
                     <Menu.Item key="configuration-carriers">
                         <Link href="/carriers">{t('carriers')}</Link>
@@ -208,6 +215,40 @@ const SideMenu: FC = () => {
                     <Menu.Item key="configuration-conversions">
                         <Link href="/conversions">{t('conversions')}</Link>
                     </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Rule).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-rules">
+                        <Link href="/rules">{t('rules')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <SubMenu
+                        key="configuration-business-management"
+                        title={t('business-management')}
+                    >
+                        <Menu.Item key="configuration-price-types">
+                            <Link href="/price-types">{t('price-types')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-currencies">
+                            <Link href="/currencies">{t('currencies')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-payment-terms">
+                            <Link href="/payment-terms">{t('payment-terms')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-payment-methods">
+                            <Link href="/payment-methods">{t('payment-methods')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-bank-accounts">
+                            <Link href="/bank-accounts">{t('bank-accounts')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-vat-rates">
+                            <Link href="/vat-rates">{t('vat-rates')}</Link>
+                        </Menu.Item>
+                    </SubMenu>
                 ) : (
                     <></>
                 )}
@@ -282,6 +323,15 @@ const SideMenu: FC = () => {
                 ) ? (
                     <Menu.Item key="stock-management-contents">
                         <Link href="/handling-unit-contents">{t('contents')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.HandlingUnitContentFeature).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="stock-management-features">
+                        <Link href="/handling-unit-content-features">{t('features-in-stock')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>

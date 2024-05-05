@@ -25,6 +25,7 @@ import { Form, Input } from 'antd';
 import CameraScanner from 'modules/Common/CameraScanner';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 
 export interface IScanBoxFormProps {
     process: string;
@@ -45,6 +46,7 @@ export const ScanBoxForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
+    const router = useRouter();
 
     //camera scanner section
     const [camData, setCamData] = useState();
@@ -82,7 +84,8 @@ export const ScanBoxForm = ({
         { name: `${handlingUnitOutboundName}` },
         1,
         100,
-        null
+        null,
+        router.locale
     );
 
     //ScanBox-3: manage information for persistence storage and front-end errors

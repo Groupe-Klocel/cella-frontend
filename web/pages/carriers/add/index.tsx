@@ -27,6 +27,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { addCarrierRoutes } from 'modules/Carriers/Static/carriersRoutes';
 import { META_DEFAULTS } from '@helpers';
 import configs from '../../../../common/configs.json';
+import { AddCarrierComponent } from 'modules/Carriers/PagesContainer/AddCarrier';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -40,7 +41,7 @@ const AddCarrierPage: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddItemComponent
+            <AddCarrierComponent
                 dataModel={CarrierModelV2}
                 headerComponent={
                     <HeaderContent

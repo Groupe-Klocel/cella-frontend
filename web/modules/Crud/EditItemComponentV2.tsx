@@ -415,10 +415,14 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
             const result: { [key: string]: any } = {};
 
             options[queryName].results.forEach((item: any) => {
-                let valueToDisplay: any = item.name;
+                let valueToDisplay: any = item[`${fieldToDisplay}`];
 
                 Object.values(item).forEach((subItem: any) => {
-                    valueToDisplay = subItem?.name ? subItem?.name : valueToDisplay;
+                    subItem == null
+                        ? item.id
+                        : (valueToDisplay = subItem[`${fieldToDisplay}`]
+                              ? subItem[`${fieldToDisplay}`]
+                              : valueToDisplay);
                 });
 
                 if (!result[tableName]) {

@@ -22,13 +22,12 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { StockOwnerModelV2 } from 'models/StockOwnerModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import configs from '../../../../common/configs.json';
 
 import { META_DEFAULTS } from '@helpers';
-import { FormDataType } from 'models/Models';
 import { addStockOwnerRoutes } from 'modules/StockOwners/Static/stockOwnersRoutes';
+import { AddStockOwner } from 'modules/StockOwners/PageContainer/AddStockOwner';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -42,7 +41,7 @@ const AddStockOwnerPage: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddItemComponent
+            <AddStockOwner
                 dataModel={StockOwnerModelV2}
                 headerComponent={
                     <HeaderContent

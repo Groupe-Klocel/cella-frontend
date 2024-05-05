@@ -110,7 +110,7 @@ const useArticleLuBarcodeIds = (search: any, page: number, itemsPerPage: number,
     return articleLuBarcode;
 };
 
-const useBoxes = (search: any, page: number, itemsPerPage: number, sort: any) => {
+const useBoxes = (search: any, page: number, itemsPerPage: number, sort: any, language: any) => {
     const { graphqlRequestClient } = useAuth();
 
     const sortByDate = {
@@ -130,7 +130,8 @@ const useBoxes = (search: any, page: number, itemsPerPage: number, sort: any) =>
         filters: search,
         orderBy: newSort,
         page: page,
-        itemsPerPage: itemsPerPage
+        itemsPerPage: itemsPerPage,
+        language: language
     });
 
     return boxes;

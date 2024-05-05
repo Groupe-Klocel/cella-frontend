@@ -379,6 +379,7 @@ const DeliveryPage: PageComponent = () => {
                         dataToPrint={{ id: idToPrint }}
                         documentName="K_Delivery"
                         documentReference={data?.name}
+                        customLanguage={data?.printLanguage ?? undefined}
                     />
                 </Space>
             ) : (
