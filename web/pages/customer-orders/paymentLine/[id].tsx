@@ -55,7 +55,7 @@ const CustomerOrderLinePage: PageComponent = () => {
     const breadCrumb = [
         ...customerOrderDetailBreadCrumb,
         {
-            breadcrumbName: `${t('common:payment-line')} ${data?.lineNumber}`
+            breadcrumbName: `${t('common:payment-line')} ${data?.payment_name}`
         }
     ];
 
