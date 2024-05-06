@@ -30,6 +30,7 @@ import { purchaseOrdersRoutes as itemRoutes } from 'modules/PurchaseOrders/Stati
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
+import { PurchaseOrderLineDetailsExtra } from 'modules/PurchaseOrders/Elements/PurchaseOrderLineDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -163,6 +164,9 @@ const PurchaseOrderLinePage: PageComponent = () => {
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 triggerReopen={{ reopenInfo, setReopenInfo }}
+                extraDataComponent={
+                    <PurchaseOrderLineDetailsExtra purchaseOrderLineId={id} type={type} />
+                }
             />
         </>
     );
