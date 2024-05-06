@@ -366,5 +366,6 @@
     "credit-address": "Address",
     "credit-addresses": "Addresses",
     "purchase-order-line-feature": "Reception Line Feature",
-    "purchase-order-line-features": "Reception Line Features"
+    "purchase-order-line-features": "Reception Line Features",
+    "carrier-shipping-mode": "Carrier - Shipping Mode"
 }

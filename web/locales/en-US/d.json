@@ -729,5 +729,12 @@
     "amount": "Amount",
     "address": "Address",
     "general": "General",
-    "documentAttached": "Attached Document"
+    "documentAttached": "Attached Document",
+    "deliveryTypeText": "Delivery Type",
+    "orderTypeText": "Order Type",
+    "orderedQuantity": "Ordered Quantity",
+    "invoicePdfFile": "Invoice (pdf)",
+    "paymentDate": "Payment Date",
+    "payment_paymentAccountText": "Payment Account",
+    "order_orderTypeText": "Order Type"
 }
