@@ -330,5 +330,6 @@
     "credit-address": "Adresse",
     "credit-addresses": "Adresses",
     "purchase-order-line-feature": "Donnée traçabilité ligne réception",
-    "purchase-order-line-features": "Données traçabilité ligne réception"
+    "purchase-order-line-features": "Données traçabilité ligne réception",
+    "carrier-shipping-mode": "Transporteur - Mode d'expédition"
 }
