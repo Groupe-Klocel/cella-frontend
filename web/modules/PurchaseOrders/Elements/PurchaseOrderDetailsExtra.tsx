@@ -30,6 +30,7 @@ import { MovementModelV2 } from 'models/MovementModelV2';
 import { useState } from 'react';
 import configs from '../../../../common/configs.json';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+//import { PurchaseOrderLineDetailsExtra } from './PurchaseOrderLineDetailsExtra';
 
 export interface IItemDetailsProps {
     purchaseOrderId?: string | any;
