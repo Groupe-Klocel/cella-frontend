@@ -90,7 +90,7 @@ const CurrenciesPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ListComponent
-                searchCriteria={{ scope: 'payment_term' }}
+                searchCriteria={{ scope: 'payment_terms' }}
                 headerData={headerData}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
