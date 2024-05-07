@@ -61,7 +61,7 @@
     "handlingUnitContent_handlingUnit_handlingUnitOutbound_name": "Colis",
     "handlingUnitContent_handlingUnit_handlingUnitOutbounds_name": "Colis",
     "handlingUnitContent_handlingUnit_stockOwner_name": "Société",
-    "handlingUnitContent_quantity": "Quantité",
+    "handlingUnitContent_quantity": "Quantité du contenu",
     "handlingUnitContent_reservation": "Réservation",
     "handlingUnitContentId": "Article",
     "handlingUnitContentOutboundId": "ID ligne de colis",
