@@ -80,7 +80,7 @@
     "handlingUnitContent_handlingUnit_handlingUnitOutbound_name": "Box",
     "handlingUnitContent_handlingUnit_handlingUnitOutbounds_name": "Box",
     "handlingUnitContent_handlingUnit_stockOwner_name": "Stock Owner",
-    "handlingUnitContent_quantity": "Quantity",
+    "handlingUnitContent_quantity": "Content Quantity",
     "handlingUnitContent_reservation": "Reservation",
     "handlingUnitContentId": "Article",
     "handlingUnitContentOutboundId": "Box Line ID",
