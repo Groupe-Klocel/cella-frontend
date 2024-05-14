@@ -32,7 +32,8 @@ export const CustomerOrderModelV2: ModelType = {
         list: 'orders',
         create: 'createOrder',
         update: 'updateOrder',
-        delete: 'deleteOrder'
+        delete: 'deleteOrder',
+        export: true
     },
 
     fieldsInfo: {
@@ -65,7 +66,7 @@ export const CustomerOrderModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
-            link: 'orders/id',
+            link: 'customer-orders/id',
             addEditFormat: 'String',
             addEditStep: null,
             maxLength: 25,

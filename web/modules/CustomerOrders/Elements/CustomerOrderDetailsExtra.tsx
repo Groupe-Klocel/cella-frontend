@@ -376,12 +376,9 @@ const CustomerOrderDetailsExtra = ({
                                     <>
                                         <LinkButton
                                             icon={<EyeTwoTone />}
-                                            path={pathParamsFromDictionary(
-                                                '/customer-orders/paymentLine/[id]',
-                                                {
-                                                    id: record.id
-                                                }
-                                            )}
+                                            path={pathParamsFromDictionary('/payments/line/[id]', {
+                                                id: record.id
+                                            })}
                                         />
                                     </>
                                 )}
