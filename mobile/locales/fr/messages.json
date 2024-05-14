@@ -92,5 +92,6 @@
     "error-updating-data": "Erreur lors de la mise à jour des données",
     "hu-ready-to-be-loaded": "L'unité de manutention est prête pour chargement",
     "picked-and-packed-successfully": "Pick & pack effectué avec succès",
-    "pick-and-pack-round-finished": "Pick & pack de la ramasse terminés"
+    "pick-and-pack-round-finished": "Pick & pack de la ramasse terminés",
+    "wrong-handling-unit-outbound": "L'unité d'expédition scannée n'est pas celle attendue"
 }
