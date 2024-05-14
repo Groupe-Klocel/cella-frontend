@@ -45,9 +45,6 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
     const [alternativeSubmitButtonTrigger, setAlternativeSubmitButtonTrigger] = useState<Boolean>(
         input?.alternativeSubmitButton
     );
-    const [alternativeSubmitButtonTrigger1, setAlternativeSubmitButtonTrigger1] = useState<Boolean>(
-        input?.alternativeSubmitButton1
-    );
     const [action1ButtonTrigger, setAction1ButtonTrigger] = useState<Boolean>(input?.action1Button);
     const [action1ButtonVisible, setAction1ButtonVisible] = useState<Boolean>(false);
 
@@ -102,11 +99,10 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                 <StyledButton
                     type="primary"
                     block
-                    hidden={alternativeSubmitButtonTrigger1 ? false : true}
+                    hidden={input?.alternativeSubmitButton1 ? false : true}
                     onClick={() => {
                         // setDisabled(true);
                         output?.setTriggerAlternativeSubmit1(!input?.triggerAlternativeSubmit1);
-                        // setAlternativeSubmitButtonTrigger1(!alternativeSubmitButtonTrigger1);
                     }}
                     loading={submitLoading}
                     // disabled={disabled}

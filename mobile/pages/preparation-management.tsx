@@ -37,7 +37,7 @@ const menuItemDatas = [
     },
     {
         title: 'menu:pick-and-pack',
-        path: '/pick-and-pack-subMenu'
+        path: '/pick-and-pack'
     },
     // {
     //     title: 'menu:round',
