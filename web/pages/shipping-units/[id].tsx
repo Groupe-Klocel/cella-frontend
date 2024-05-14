@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
@@ -31,6 +31,7 @@ import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { ShippingUnitDetailsExtra } from 'modules/ShippingUnits/Elements/ShippingUnitDetailsExtra';
+import { BarcodeOutlined } from '@ant-design/icons';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -43,6 +44,8 @@ const ShippingUnitPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
 
     // #region to customize information
     const breadCrumb = [
@@ -111,6 +114,24 @@ const ShippingUnitPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                <Button
+                    type="primary"
+                    ghost
+                    onClick={() => {
+                        setShowNumberOfPrintsModal(true);
+                        setIdToPrint(data?.id as string);
+                    }}
+                    icon={<BarcodeOutlined />}
+                />
+                <NumberOfPrintsModalV2
+                    showModal={{
+                        showNumberOfPrintsModal,
+                        setShowNumberOfPrintsModal
+                    }}
+                    dataToPrint={{ boxes: [idToPrint] }}
+                    documentName="K_OutboundHandlingUnitLabel"
+                    documentReference={data?.name}
+                />
             </Space>
         )
     };

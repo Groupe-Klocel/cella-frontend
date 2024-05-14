@@ -67,6 +67,7 @@ const MagentoImportModal = ({
             ) {
                 showError(t(`errors:${MagentoImportResult.executeFunction.output.output.code}`));
                 console.log('Backend_message', MagentoImportResult.executeFunction.output.output);
+                setIsRequestLoading(false);
             } else {
                 console.log('MagentoImportResult', MagentoImportResult);
                 showSuccess(t('messages:success-sending-magento-request'));

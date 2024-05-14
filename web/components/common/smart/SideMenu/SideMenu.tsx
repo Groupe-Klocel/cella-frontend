@@ -422,7 +422,7 @@ const SideMenu: FC = () => {
                 title={t('business-management')}
             >
                 {getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="business-management-orders">
+                    <Menu.Item key="business-management-credits">
                         <Link href="/credits">{t('credits')}</Link>
                     </Menu.Item>
                 ) : (
@@ -435,9 +435,9 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
-                {getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) ? (
+                {getModesFromPermissions(permissions, Table.Payment).includes(ModeEnum.Read) ? (
                     <Menu.Item key="business-management-payments">
-                        <Link href="/">{t('payments')}</Link>
+                        <Link href="/payments">{t('payments')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -471,18 +471,18 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
-                {getModesFromPermissions(permissions, Table.Round).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="preparation-management-rounds">
-                        <Link href="/rounds">{t('rounds')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
                 {getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
                     ModeEnum.Read
                 ) ? (
                     <Menu.Item key="preparation-management-shipping-units">
                         <Link href="/shipping-units">{t('shipping-units')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Round).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="preparation-management-rounds">
+                        <Link href="/rounds">{t('rounds')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
