@@ -138,7 +138,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             id
                             status
                             carrierId
-                            deliveryId
                             carrierShippingModeId
                         }
                     }
@@ -222,11 +221,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             id
                             toBePalletized
                         }
-                        deliveryId
-                        delivery {
-                            id
-                            name
-                        }
                         handlingUnitModelId
                         handlingUnitModel {
                             id
@@ -295,10 +289,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     name: handlingUnit.name,
                     status: configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_IN_PREPARATION,
                     handlingUnitModelId: box.handlingUnitOutbounds[0].handlingUnitModelId,
-                    deliveryId: box.handlingUnitOutbounds[0].deliveryId,
                     carrierId: box.handlingUnitOutbounds[0].carrierId,
                     carrierShippingModeId: box.handlingUnitOutbounds[0].carrierShippingModeId,
                     handlingUnitId: finalHandlingUnitId,
+                    theoriticalWeight: 0,
                     lastTransactionId
                 }
             };
@@ -314,6 +308,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             canRollbackTransaction = true;
         } else {
             finalHandlingUnitId = handlingUnitResult.handlingUnits.results[0].id;
+            finalHandlingUnitOutbound =
+                handlingUnitResult.handlingUnits.results[0]?.handlingUnitOutbounds[0];
             console.log('finalHandlingUnitId', finalHandlingUnitId);
         }
 
@@ -338,6 +334,35 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const updateChildrenHUResult = await graphqlRequestClient.request(
             updateChildrenHUMutation,
             updateChildrenHUVariables,
+            requestHeader
+        );
+
+        // Pallet HUO theoriticalWeight update
+        const updatePalletHUOMutation = gql`
+            mutation UpdateHandlingUnitOutbound(
+                $id: String!
+                $advancedInput: JSON!
+                $input: UpdateHandlingUnitOutboundInput!
+            ) {
+                updateHandlingUnitOutbound(id: $id, advancedInput: $advancedInput, input: $input) {
+                    id
+                    lastTransactionId
+                }
+            }
+        `;
+        const updatePalletHUOVariables = {
+            id: finalHandlingUnitOutbound?.id,
+            input: {
+                lastTransactionId
+            },
+            advancedInput: {
+                theoriticalWeight: `theoriticalWeight+${box.handlingUnitOutbounds[0].theoriticalWeight}`
+            }
+        };
+
+        const updatePalletHUOResult = await graphqlRequestClient.request(
+            updatePalletHUOMutation,
+            updatePalletHUOVariables,
             requestHeader
         );
 
@@ -472,7 +497,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 id
                                 name
                             }
-                            deliveryId
                             carrierShippingModeId
                             handlingUnitModelId
                         }

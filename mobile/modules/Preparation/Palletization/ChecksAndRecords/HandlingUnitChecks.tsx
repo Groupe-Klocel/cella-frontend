@@ -58,7 +58,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 handlingUnitInfos.handlingUnits.results[0].handlingUnitOutbounds[0]?.status >=
                     configs.HANDLING_UNIT_OUTBOUND_STATUS_PREPARED &&
                 handlingUnitInfos.handlingUnits.results[0].handlingUnitOutbounds[0]?.status <=
-                    configs.HANDLING_UNIT_OUTBOUND_STATUS_TO_BE_PALLETIZED
+                    configs.HANDLING_UNIT_OUTBOUND_STATUS_TO_BE_LOADED
             ) {
                 //if first box do not check location
                 if (

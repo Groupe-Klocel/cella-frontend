@@ -207,6 +207,7 @@ export const ScanHandlingUnit = ({
                                 deliveryId
                                 carrierShippingModeId
                                 handlingUnitModelId
+                                theoriticalWeight
                             }
                         }
                     }
