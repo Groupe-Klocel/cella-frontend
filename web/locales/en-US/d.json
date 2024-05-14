@@ -736,5 +736,6 @@
     "invoicePdfFile": "Invoice (pdf)",
     "paymentDate": "Payment Date",
     "payment_paymentAccountText": "Payment Account",
-    "order_orderTypeText": "Order Type"
+    "order_orderTypeText": "Order Type",
+    "genericDeliveryComment": "Delivery instructions"
 }

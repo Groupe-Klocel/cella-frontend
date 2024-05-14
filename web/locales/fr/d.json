@@ -742,5 +742,6 @@
     "buyerAccountingCode": "Code comptable de l'acheteur",
     "vatAccountingCode": "Code Comptable TVA",
     "documentAttached": "Document joint",
-    "order_orderTypeText": "Type de commande"
+    "order_orderTypeText": "Type de commande",
+    "genericDeliveryComment": "Instructions de livraison"
 }

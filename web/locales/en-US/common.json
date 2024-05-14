@@ -248,8 +248,8 @@
     "logistic-unit-models": "Logistic Unit Models",
     "hook-config": "Hook Config",
     "hook-configs": "Hook Configs",
-    "shipping-unit": "Shipping Unit",
-    "shipping-units": "Shipping Units",
+    "shipping-unit": "Shipping Pallet",
+    "shipping-units": "Shipping Pallets",
     "shippingUnitLines": "Shipping Unit Lines",
     "children-shipping-units": "Children Shipping Units",
     "status-history": "Status History",
@@ -367,5 +367,7 @@
     "credit-addresses": "Addresses",
     "purchase-order-line-feature": "Reception Line Feature",
     "purchase-order-line-features": "Reception Line Features",
-    "carrier-shipping-mode": "Carrier - Shipping Mode"
+    "carrier-shipping-mode": "Carrier - Shipping Mode",
+    "payments": "Payments",
+    "payment": "Payment"
 }
