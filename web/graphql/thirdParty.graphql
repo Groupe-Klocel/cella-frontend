@@ -41,6 +41,8 @@ query GetThirdParties(
             vatRateCode
             vatRateCodeText
             vatEligible
+            priceType
+            priceTypeText
         }
     }
 }

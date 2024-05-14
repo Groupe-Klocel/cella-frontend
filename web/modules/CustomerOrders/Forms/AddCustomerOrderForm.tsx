@@ -18,7 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, InputNumber, Select, Modal, AutoComplete, DatePicker } from 'antd';
+import {
+    Button,
+    Input,
+    Form,
+    InputNumber,
+    Select,
+    Modal,
+    AutoComplete,
+    DatePicker,
+    Checkbox
+} from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -38,6 +48,7 @@ import {
 } from 'generated/graphql';
 import moment from 'moment';
 import { debounce } from 'lodash';
+import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 interface IOption {
     value: string;
@@ -87,6 +98,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     const reference3Label = t('d:reference3');
     const thirdPartyLabel = t('d:thirdParty');
     const submit = t('actions:submit');
+    const carrierImposed = t('d:carrierImposed');
     // END TEXTS TRANSLATION
 
     const { Option } = Select;
@@ -434,6 +446,11 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
         }
     };
 
+    //manage call back on change checkbox
+    const onCarrierImposedChange = (e: CheckboxChangeEvent) => {
+        form.setFieldsValue({ carrierImposed: e.target.checked });
+    };
+
     const onCancel = () => {
         setUnsavedChanges(false);
         Modal.confirm({
@@ -508,7 +525,9 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                                                 currencyText:
                                                     customerThirdParty.defaultCurrencyText,
                                                 currency: customerThirdParty.defaultCurrency,
-                                                invoiceDiscount: customerThirdParty.defaultDiscount
+                                                invoiceDiscount: customerThirdParty.defaultDiscount,
+                                                priceTypeText: customerThirdParty.priceTypeText,
+                                                priceType: customerThirdParty.priceType
                                             });
                                         }
                                     }
@@ -615,7 +634,11 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                         showTime={{ defaultValue: moment('YYYY-MM-DD') }}
                     />
                 </Form.Item>
-                <Form.Item label={deliveryTypeLabel} name="deliveryPoType">
+                <Form.Item
+                    label={deliveryTypeLabel}
+                    name="deliveryPoType"
+                    rules={[{ required: true, message: errorMessageEmptyInput }]}
+                >
                     <Select allowClear>
                         {deliveryTypes?.map((deliveryType: any) => (
                             <Option key={deliveryType.key} value={deliveryType.key}>
@@ -623,6 +646,9 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                             </Option>
                         ))}
                     </Select>
+                </Form.Item>
+                <Form.Item name="carrierImposed">
+                    <Checkbox onChange={onCarrierImposedChange}>{carrierImposed}</Checkbox>
                 </Form.Item>
                 <Form.Item label={carrierShippingModeNameLabel} name="carrierShippingModeId">
                     <Select allowClear>

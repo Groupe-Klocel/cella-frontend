@@ -544,7 +544,11 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 >
                     <InputNumber />
                 </Form.Item>
-                <Form.Item label={deliveryPoTypeLabel} name="deliveryPoType">
+                <Form.Item
+                    label={deliveryPoTypeLabel}
+                    name="deliveryPoType"
+                    rules={[{ required: true, message: errorMessageEmptyInput }]}
+                >
                     <Select>
                         {deliveryTypes?.map((deliveryType: any) => (
                             <Option key={deliveryType.key} value={deliveryType.key}>
