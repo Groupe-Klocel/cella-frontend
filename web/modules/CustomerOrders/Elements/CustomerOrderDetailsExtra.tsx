@@ -31,6 +31,7 @@ import { CustomerOrderLineModelV2 } from 'models/CustomerOrderLineModelV2';
 import { CustomerOrderAddressModelV2 } from 'models/CustomerOrderAddressModelV2';
 import configs from '../../../../common/configs.json';
 import { PaymentLineModelV2 } from 'models/PaymentLineModelV2';
+import { DeliveryModelV2 } from 'models/DeliveryModelV2';
 
 export interface IItemDetailsProps {
     orderId?: string | any;
@@ -62,6 +63,8 @@ const CustomerOrderDetailsExtra = ({
     const customerOrderAddressModes = getModesFromPermissions(permissions, Table.OrderAddress);
     const customerOrderLineModes = getModesFromPermissions(permissions, Table.OrderLine);
     const [customerOrderAddressesData, setCustomerOrderAddressesData] = useState<any>();
+    const paymentLineModes = getModesFromPermissions(permissions, Table.PaymentLine);
+    const deliveryModes = getModesFromPermissions(permissions, Table.Delivery);
 
     const customerOrderAddressHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:customer-order-addresses') }),
@@ -114,6 +117,12 @@ const CustomerOrderDetailsExtra = ({
 
     const paymentLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:payment-lines') }),
+        routes: [],
+        actionsComponent: undefined
+    };
+
+    const deliveryHeaderData: HeaderData = {
+        title: t('common:associated', { name: t('common:deliveries') }),
         routes: [],
         actionsComponent: undefined
     };
@@ -360,8 +369,8 @@ const CustomerOrderDetailsExtra = ({
                         key: 'actions',
                         render: (record: { id: string }) => (
                             <Space>
-                                {customerOrderLineModes.length == 0 ||
-                                !customerOrderLineModes.includes(ModeEnum.Read) ? (
+                                {paymentLineModes.length == 0 ||
+                                !paymentLineModes.includes(ModeEnum.Read) ? (
                                     <></>
                                 ) : (
                                     <>
@@ -373,6 +382,38 @@ const CustomerOrderDetailsExtra = ({
                                                     id: record.id
                                                 }
                                             )}
+                                        />
+                                    </>
+                                )}
+                            </Space>
+                        )
+                    }
+                ]}
+            />
+            <ListComponent
+                searchCriteria={{ orderId: orderId }}
+                dataModel={DeliveryModelV2}
+                headerData={deliveryHeaderData}
+                searchable={false}
+                triggerDelete={undefined}
+                triggerSoftDelete={undefined}
+                columnFilter={false}
+                actionColumns={[
+                    {
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: { id: string }) => (
+                            <Space>
+                                {deliveryModes.length == 0 ||
+                                !deliveryModes.includes(ModeEnum.Read) ? (
+                                    <></>
+                                ) : (
+                                    <>
+                                        <LinkButton
+                                            icon={<EyeTwoTone />}
+                                            path={pathParamsFromDictionary('/deliveries/[id]', {
+                                                id: record.id
+                                            })}
                                         />
                                     </>
                                 )}

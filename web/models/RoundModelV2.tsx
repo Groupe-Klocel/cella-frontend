@@ -147,7 +147,7 @@ export const RoundModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
-            link: 'equipments/equipmentId',
+            link: 'equipment/equipmentId',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
