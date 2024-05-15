@@ -33,7 +33,6 @@ import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Stati
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../common/configs.json';
-import { config } from 'process';
 import { PaymentModal } from 'modules/CustomerOrders/Modals/PaymentModal';
 
 type PageComponent = FC & { layout: typeof MainLayout };

@@ -30,6 +30,8 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { ModeEnum } from 'generated/graphql';
 import { creditsRoutes as itemRoutes } from 'modules/Credits/Static/creditsRoutes';
 import { CreditDetailsExtra } from 'modules/Credits/Elements/CreditDetailsExtra';
+import { CreditPaymentModal } from 'modules/Credits/Modals/CreditPaymentModal';
+import configs from '../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -42,6 +44,7 @@ const CreditPage: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const { id } = router.query;
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
+    const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -77,6 +80,21 @@ const CreditPage: PageComponent = () => {
         onBackRoute: rootPath,
         actionsComponent: (
             <Space>
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                model.isEditable &&
+                data?.status == configs.ORDER_STATUS_TO_BE_PAID ? (
+                    <Button
+                        onClick={() => {
+                            setShowCreditPaymentModal(true);
+                        }}
+                        style={{ color: 'orange' }}
+                    >
+                        {t(`actions:enter-payment`)}
+                    </Button>
+                ) : (
+                    <></>
+                )}
                 {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                     <LinkButton
                         title={t('actions:edit')}
@@ -118,6 +136,13 @@ const CreditPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 refetch={triggerRefresh}
+            />
+            <CreditPaymentModal
+                showModal={{
+                    showCreditPaymentModal,
+                    setShowCreditPaymentModal
+                }}
+                orderId={id as string}
             />
         </>
     );

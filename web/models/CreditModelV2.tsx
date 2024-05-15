@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-
 import { Table } from 'generated/graphql';
 import { ModelType } from './ModelsV2';
 
@@ -364,7 +363,7 @@ export const CreditModelV2: ModelType = {
             param: null
         },
         parentOrderId: {
-            isListRequested: false,
+            isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
@@ -384,19 +383,19 @@ export const CreditModelV2: ModelType = {
             param: null
         },
         'parentOrder{name}': {
-            isListRequested: false,
+            isListRequested: true,
             isDefaultHiddenList: false,
-            isExcludedFromList: true,
+            isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: null,
+            searchingFormat: 'String',
             isDetailRequested: false,
             isExcludedFromDetail: false,
-            detailGroup: null,
-            link: null,
+            detailGroup: '{"label":"general", "position":0}',
+            link: 'customer_orders/parentOrderId',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
-            displayName: null,
+            displayName: 'originalOrder',
             isMandatory: false,
             minRule: null,
             maxRule: null,
@@ -924,14 +923,14 @@ export const CreditModelV2: ModelType = {
             param: null
         },
         invoiceTotalIncludingTaxes: {
-            isListRequested: false,
-            isDefaultHiddenList: true,
+            isListRequested: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
             isDetailRequested: false,
             isExcludedFromDetail: false,
-            detailGroup: null,
+            detailGroup: '{"label":"billing", "position":1}',
             link: null,
             addEditFormat: null,
             addEditStep: null,
@@ -944,14 +943,14 @@ export const CreditModelV2: ModelType = {
             param: null
         },
         invoiceTotalExcludingTaxes: {
-            isListRequested: false,
-            isDefaultHiddenList: true,
+            isListRequested: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
             isDetailRequested: false,
             isExcludedFromDetail: false,
-            detailGroup: null,
+            detailGroup: '{"label":"billing", "position":1}',
             link: null,
             addEditFormat: null,
             addEditStep: null,
@@ -964,7 +963,7 @@ export const CreditModelV2: ModelType = {
             param: null
         },
         invoiceShipping: {
-            isListRequested: false,
+            isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,
             isSortable: false,
@@ -984,7 +983,7 @@ export const CreditModelV2: ModelType = {
             param: null
         },
         companyOrigin: {
-            isListRequested: false,
+            isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,
             isSortable: false,
