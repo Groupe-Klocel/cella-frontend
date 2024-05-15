@@ -743,5 +743,6 @@
     "vatAccountingCode": "Code Comptable TVA",
     "documentAttached": "Document joint",
     "order_orderTypeText": "Type de commande",
-    "genericDeliveryComment": "Instructions de livraison"
+    "genericDeliveryComment": "Instructions de livraison",
+    "originalOrder" : "Commande originale"
 }
