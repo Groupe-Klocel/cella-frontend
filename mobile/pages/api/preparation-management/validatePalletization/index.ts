@@ -73,6 +73,29 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     let canRollbackTransaction = false;
 
     try {
+        // get DEFAULT_PALLET_WEIGHT
+        const defaultPalletWeightParameterQuery = gql`
+            query parameters($filters: ParameterSearchFilters) {
+                parameters(filters: $filters) {
+                    results {
+                        code
+                        value
+                        scope
+                    }
+                }
+            }
+        `;
+
+        const defaultPalletWeightParameterVariables = {
+            filters: { scope: 'outbound', code: 'DEFAULT_PALLET_WEIGHT' }
+        };
+
+        const defaultPalletWeightParameterResult = await graphqlRequestClient.request(
+            defaultPalletWeightParameterQuery,
+            defaultPalletWeightParameterVariables,
+            requestHeader
+        );
+
         // get DEFAULT_SHIPPING_LOCATION
         const defaultShippingLocationParameterQuery = gql`
             query parameters($filters: ParameterSearchFilters) {
@@ -292,7 +315,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     carrierId: box.handlingUnitOutbounds[0].carrierId,
                     carrierShippingModeId: box.handlingUnitOutbounds[0].carrierShippingModeId,
                     handlingUnitId: finalHandlingUnitId,
-                    theoriticalWeight: 0,
+                    theoriticalWeight: parseInt(
+                        defaultPalletWeightParameterResult.parameters.results[0].value
+                    ),
                     lastTransactionId
                 }
             };
