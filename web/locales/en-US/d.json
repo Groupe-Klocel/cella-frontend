@@ -737,5 +737,6 @@
     "paymentDate": "Payment Date",
     "payment_paymentAccountText": "Payment Account",
     "order_orderTypeText": "Order Type",
-    "genericDeliveryComment": "Delivery instructions"
+    "genericDeliveryComment": "Delivery instructions",
+    "originalOrder" : "Original order"
 }
