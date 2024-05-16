@@ -102,9 +102,11 @@ export const SelectGoodsInForm = ({
     useEffect(() => {
         if (goodsIns && goodsIns !== 'to-be-created') {
             const newTypeTexts: Array<any> = [];
-            goodsIns.forEach((item: any) => {
-                newTypeTexts.push({ key: item.id, text: item.name });
-            });
+            goodsIns
+                .filter((item: any) => item.status < configs.ROUND_STATUS_CLOSED)
+                .forEach((item: any) => {
+                    newTypeTexts.push({ key: item.id, text: item.name });
+                });
             setRounds(newTypeTexts);
         }
     }, [goodsIns]);
@@ -166,7 +168,6 @@ export const SelectGoodsInForm = ({
 
         const selectedRound = await graphqlRequestClient.request(query, variables);
 
-        //REWORK FROM HERE:
         data['chosenGoodsIn'] = selectedRound.round;
         const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
             ?.filter((raa: any) => raa.quantity != 0)

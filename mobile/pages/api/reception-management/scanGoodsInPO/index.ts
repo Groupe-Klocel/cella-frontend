@@ -291,7 +291,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             extractPoResponse?.status <= configs.PURCHASE_ORDER_STATUS_IN_PROGRESS &&
             extractPoResponse?.status >= configs.PURCHASE_ORDER_STATUS_RECEIVED
         ) {
-            //REWORK WHEN RELATIONSHIP: retrieve goodsIns from purchaseOrder
             const { purchaseOrderLines } = extractPoResponse;
             // extract Rounds as goodsIns
             let goodsIns: any[] = [];
@@ -336,10 +335,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     }
                 });
             }
-            //REWORK ONCE GOODSIN CREATED
             const extractGoodsInResponse = GoodsInResponse.rounds?.results[0];
             if (extractGoodsInResponse!.status <= configs.ROUND_STATUS_CLOSED) {
-                //TO BE CHECKED ONCE GOODSINS CREATED
                 const { roundLines, ...goodsInOnly } = extractGoodsInResponse;
                 // extract Rounds as goodsIns
                 let purchaseOrders: any[] = [];
