@@ -62,12 +62,9 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 //if first box do not check location
                 if (
                     !firstBox &&
-                    (handlingUnitInfos.handlingUnits.results[0].locationId !=
-                        storedObject.step10.data.handlingUnit?.locationId ||
-                        handlingUnitInfos.handlingUnits.results[0].handlingUnitOutbounds[0]
-                            ?.carrierId !=
-                            storedObject.step10.data.handlingUnit?.handlingUnitOutbounds[0]
-                                ?.carrierId)
+                    handlingUnitInfos.handlingUnits.results[0].handlingUnitOutbounds[0]
+                        ?.carrierId !=
+                        storedObject.step10.data.handlingUnit?.handlingUnitOutbounds[0]?.carrierId
                 ) {
                     showError(t('messages:scanned-hu-cannot-be-palletized-on-this-pallet'));
                     setResetForm(true);
