@@ -52,7 +52,6 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
             const firstBox = storedObject.step10.data.isHuToCreate ? true : false;
             if (
                 handlingUnitInfos.handlingUnits?.count !== 0 &&
-                !handlingUnitInfos.handlingUnits.results[0].parentHandlingUnitId &&
                 handlingUnitInfos.handlingUnits.results[0].type ===
                     parameters.HANDLING_UNIT_TYPE_BOX &&
                 handlingUnitInfos.handlingUnits.results[0].handlingUnitOutbounds[0]?.status >=
