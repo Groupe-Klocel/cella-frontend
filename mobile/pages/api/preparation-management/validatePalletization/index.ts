@@ -338,6 +338,69 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             console.log('finalHandlingUnitId', finalHandlingUnitId);
         }
 
+        // Update old parentHU theoriticalWeight if exists
+        if (box.parentHandlingUnitId) {
+            console.log('IKI', box.parentHandlingUnit.handlingUnitOutbounds);
+
+            const oldParentHandlingUnitQuery = gql`
+                query handlingUnits($filters: HandlingUnitSearchFilters) {
+                    handlingUnits(filters: $filters) {
+                        count
+                        results {
+                            id
+                            handlingUnitOutbounds {
+                                id
+                            }
+                        }
+                    }
+                }
+            `;
+
+            const oldParentHandlingUnitVariables = {
+                filters: { id: box.parentHandlingUnitId }
+            };
+
+            const oldParentHandlingUnitResult = await graphqlRequestClient.request(
+                oldParentHandlingUnitQuery,
+                oldParentHandlingUnitVariables,
+                requestHeader
+            );
+            const oldHUO =
+                oldParentHandlingUnitResult.handlingUnits.results[0]?.handlingUnitOutbounds[0];
+
+            const updateOldPalletHUOMutation = gql`
+                mutation UpdateHandlingUnitOutbound(
+                    $id: String!
+                    $advancedInput: JSON!
+                    $input: UpdateHandlingUnitOutboundInput!
+                ) {
+                    updateHandlingUnitOutbound(
+                        id: $id
+                        advancedInput: $advancedInput
+                        input: $input
+                    ) {
+                        id
+                        lastTransactionId
+                    }
+                }
+            `;
+            const updateOldPalletHUOVariables = {
+                id: oldHUO?.id,
+                input: {
+                    lastTransactionId
+                },
+                advancedInput: {
+                    theoriticalWeight: `theoriticalWeight-${box.handlingUnitOutbounds[0].theoriticalWeight}`
+                }
+            };
+
+            const updateOldPalletHUOResult = await graphqlRequestClient.request(
+                updateOldPalletHUOMutation,
+                updateOldPalletHUOVariables,
+                requestHeader
+            );
+        }
+
         // children hu update
         const updateChildrenHUMutation = gql`
             mutation UpdateHandlingUnit($id: String!, $input: UpdateHandlingUnitInput!) {
