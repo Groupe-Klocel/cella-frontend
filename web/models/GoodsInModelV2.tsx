@@ -67,7 +67,7 @@ export const GoodsInModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
-            link: 'rounds/id',
+            link: 'goods-ins/id',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
