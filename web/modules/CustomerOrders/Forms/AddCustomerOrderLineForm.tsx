@@ -82,7 +82,6 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const [thirdPartyData, setThirdPartyData] = useState<any>();
     const [enteredQuantity, setEnteredQuantity] = useState<number | null>();
     const [articleVatRate, setArticleVatRate] = useState<number | undefined>();
-    const [vatRateValue, setVatRateValue] = useState<number | undefined>();
 
     const customerOrderLines = useOrderLineIds({ orderId: `${props.orderId}%` }, 1, 100, null);
 
@@ -155,17 +154,6 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
         setEnteredQuantity(data);
     };
 
-    const onVatRateChange = (value: number | 0) => {
-        //setVatRateValue(value);
-        async function fetchData() {
-            const result = await getVatRate(value.toString());
-            if (result) {
-                const vatRateVal = parseFloat(result.parameters.results[0].value!);
-                setVatRateValue(vatRateVal);
-            }
-        }
-        fetchData();
-    };
     // to retrieve default price from third party and article
 
     const getPrice = async (
@@ -311,7 +299,6 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
             .then(() => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
-                formData.vatRate = vatRateValue;
 
                 delete formData.orderName;
                 delete formData.stockOwnerName;
@@ -427,7 +414,6 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                             name: t('d:vatRate')
                         })}`}
                         allowClear
-                        onChange={onVatRateChange}
                     >
                         <Option value=""> </Option>
                         {vatRates?.map((vatRate: any) => (
