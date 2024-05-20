@@ -212,7 +212,7 @@ export const ArticlePriceModelV2: ModelType = {
             isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
-            addEditFormat: null,
+            addEditFormat: 'Dropdown',
             addEditStep: null,
             maxLength: null,
             displayName: null,
@@ -222,7 +222,7 @@ export const ArticlePriceModelV2: ModelType = {
             config: null,
             param: null,
             optionTable:
-                '{"table": "Barcode", "fieldToDisplay": "name","filtersToApply":{"articleLuId":"articleLuId"}}'
+                '{"table": "ArticleLuBarcode", "fieldToDisplay": "barcode{name}", "filtersToApply":{"articleId":"articleId"}}'
         },
         'articleLuBarcode{barcode{name}}': {
             isListRequested: true,
@@ -234,7 +234,7 @@ export const ArticlePriceModelV2: ModelType = {
             isExcludedFromDetail: false,
             detailGroup: null,
             link: 'articles/barcode/articleLuBarcodeId',
-            addEditFormat: 'Dropdown',
+            addEditFormat: null,
             addEditStep: null,
             maxLength: null,
             displayName: 'barcode',
