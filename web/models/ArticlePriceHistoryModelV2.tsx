@@ -286,7 +286,7 @@ export const ArticlePriceHistoryModelV2: ModelType = {
         },
         thirdPartyId: {
             isListRequested: true,
-            isDefaultHiddenList: false,
+            isDefaultHiddenList: true,
             isExcludedFromList: true,
             isSortable: false,
             searchingFormat: 'Dropdown',
@@ -307,7 +307,7 @@ export const ArticlePriceHistoryModelV2: ModelType = {
         },
         'thirdParty{name}': {
             isListRequested: true,
-            isDefaultHiddenList: false,
+            isDefaultHiddenList: true,
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
@@ -327,7 +327,7 @@ export const ArticlePriceHistoryModelV2: ModelType = {
         },
         thirdPartyAddressId: {
             isListRequested: true,
-            isDefaultHiddenList: false,
+            isDefaultHiddenList: true,
             isExcludedFromList: true,
             isSortable: false,
             searchingFormat: 'Dropdown',
@@ -349,7 +349,7 @@ export const ArticlePriceHistoryModelV2: ModelType = {
         },
         'thirdPartyAddress{entityName}': {
             isListRequested: true,
-            isDefaultHiddenList: false,
+            isDefaultHiddenList: true,
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
@@ -369,7 +369,7 @@ export const ArticlePriceHistoryModelV2: ModelType = {
         },
         thirdPartyAddressContactId: {
             isListRequested: true,
-            isDefaultHiddenList: false,
+            isDefaultHiddenList: true,
             isExcludedFromList: true,
             isSortable: false,
             searchingFormat: 'Dropdown',
@@ -391,7 +391,7 @@ export const ArticlePriceHistoryModelV2: ModelType = {
         },
         'thirdPartyAddressContact{contactName}': {
             isListRequested: true,
-            isDefaultHiddenList: false,
+            isDefaultHiddenList: true,
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
@@ -445,6 +445,26 @@ export const ArticlePriceHistoryModelV2: ModelType = {
             displayName: null,
             isMandatory: false,
             minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        quantity: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'Number',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: 'Number',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: 0,
             maxRule: null,
             config: null,
             param: null
