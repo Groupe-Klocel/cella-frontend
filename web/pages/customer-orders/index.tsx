@@ -116,9 +116,12 @@ const CustomerOrderPages: PageComponent = () => {
         onChange: onSelectChange,
         getCheckboxProps: (record: any) => ({
             disabled:
-                record.status == 1005 || record.status == configs.ORDER_STATUS_TO_INVOICE
-                    ? true
-                    : false
+                record.status == configs.ORDER_STATUS_CREATED ||
+                record.status == configs.ORDER_STATUS_QUOTE_TRANSMITTED ||
+                record.status == configs.ORDER_STATUS_TO_INVOICE ||
+                record.status == configs.ORDER_STATUS_TO_BE_DELIVERED
+                    ? false
+                    : true
         })
     };
 
@@ -132,7 +135,7 @@ const CustomerOrderPages: PageComponent = () => {
             case configs.ORDER_STATUS_TO_BE_DELIVERED:
                 return configs.ORDER_STATUS_DELIVERY_IN_PROGRESS;
             default:
-                return configs.ORDER_STATUS_CREATED;
+                return undefined;
         }
     }
 
@@ -173,16 +176,18 @@ const CustomerOrderPages: PageComponent = () => {
                 case configs.ORDER_STATUS_TO_BE_DELIVERED:
                     return 'confirm-delivery';
                 default:
-                    return 'to-be-defined';
+                    return undefined;
             }
         })();
         return () => {
-            Modal.confirm({
-                title: t(`messages:${switchStatusMessage}`),
-                onOk: () => switchNextStatus(ids, status),
-                okText: t('messages:confirm'),
-                cancelText: t('messages:cancel')
-            });
+            if (switchStatusMessage) {
+                Modal.confirm({
+                    title: t(`messages:${switchStatusMessage}`),
+                    onOk: () => switchNextStatus(ids, status),
+                    okText: t('messages:confirm'),
+                    cancelText: t('messages:cancel')
+                });
+            }
         };
     };
 
