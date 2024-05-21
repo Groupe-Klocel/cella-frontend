@@ -1,0 +1,90 @@
+query GetRuleVersionConfigIds(
+    $filters: RuleVersionConfigSearchFilters
+    $orderBy: [RuleVersionConfigOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    ruleVersionConfigs(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            ruleVersionId
+            ruleVersion {
+                version
+                ruleId
+                rule {
+                    name
+                }
+            }
+            ruleLineConfigurationIn
+            ruleLineConfigurationOut
+        }
+    }
+}
+
+query GetRuleVersionConfigById($id: String!) {
+    ruleVersionConfig(id: $id) {
+        id
+        ruleLineConfigurationIn
+        ruleLineConfigurationOut
+        order
+        ruleVersionId
+        ruleVersion {
+            version
+            ruleId
+            rule {
+                name
+                description
+            }
+        }
+    }
+}
+
+mutation CreateRuleVersionConfig($input: CreateRuleVersionConfigInput!) {
+    createRuleVersionConfig(input: $input) {
+        id
+        ruleVersionId
+        ruleVersion {
+            version
+            ruleId
+            rule {
+                name
+            }
+        }
+        ruleLineConfigurationIn
+        ruleLineConfigurationOut
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
+
+mutation UpdateRuleVersionConfig($id: String!, $input: UpdateRuleVersionConfigInput!) {
+    updateRuleVersionConfig(id: $id, input: $input) {
+        id
+        ruleVersionId
+        ruleVersion {
+            version
+            ruleId
+            rule {
+                name
+            }
+        }
+        ruleLineConfigurationIn
+        ruleLineConfigurationOut
+        extras
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
