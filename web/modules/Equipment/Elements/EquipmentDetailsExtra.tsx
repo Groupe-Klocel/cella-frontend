@@ -36,13 +36,17 @@ export interface IItemDetailsProps {
     equipmentName?: string | any;
     equipmentStatus?: number | any;
     stockOwnerId?: string | any;
+    carrierShippingModeId?: string | any;
+    carrierShippingModeName?: string | any;
 }
 
 const EquipmentDetailsExtra = ({
     equipmentId,
     equipmentName,
     equipmentStatus,
-    stockOwnerId
+    stockOwnerId,
+    carrierShippingModeId,
+    carrierShippingModeName
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
@@ -50,6 +54,7 @@ const EquipmentDetailsExtra = ({
     const modes = getModesFromPermissions(permissions, Table.EquipmentDetail);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [refetchEquipmentDetail, setRefetchEquipmentDetail] = useState<boolean>(false);
 
     const equipmentDetailsHeaderData: HeaderData = {
         title: t('common:equipment-details'),
@@ -64,7 +69,9 @@ const EquipmentDetailsExtra = ({
                         equipmentId: equipmentId,
                         equipmentName: equipmentName,
                         equipmentStatus: equipmentStatus,
-                        stockOwnerId: stockOwnerId
+                        stockOwnerId: stockOwnerId,
+                        carrierShippingModeId: carrierShippingModeId,
+                        carrierShippingModeName: carrierShippingModeName
                     })}
                     type="primary"
                 />
@@ -96,6 +103,7 @@ const EquipmentDetailsExtra = ({
                         routeDetailPage={'/equipment/details/:id'}
                         triggerDelete={{ idToDelete, setIdToDelete }}
                         triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        refetch={refetchEquipmentDetail}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
@@ -115,15 +123,7 @@ const EquipmentDetailsExtra = ({
                                         EquipmentDetailModelV2.isEditable ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
-                                                path={pathParamsFromDictionary(
-                                                    '/equipment/details/add',
-                                                    {
-                                                        equipmentId: equipmentId,
-                                                        equipmentName: equipmentName,
-                                                        equipmentStatus: equipmentStatus,
-                                                        stockOwnerId: stockOwnerId
-                                                    }
-                                                )}
+                                                path={`/equipment/details/edit/${record.id}`}
                                             />
                                         ) : (
                                             <></>
