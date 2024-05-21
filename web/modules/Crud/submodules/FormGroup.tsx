@@ -46,7 +46,7 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                             key={item.name}
                             rules={item.rules!}
                             initialValue={item.initialValue}
-                            normalize={(value) => (value ? value : undefined)}
+                            // normalize={(value) => (value ? value : undefined)}
                         >
                             <InputNumber
                                 disabled={item.disabled ? true : false}

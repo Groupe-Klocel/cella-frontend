@@ -349,6 +349,10 @@ query GetEquipmentDetailById($id: String!) {
         handlingUnitModel {
             name
         }
+        carrierShippingModeId
+        carrierShippingMode {
+            name
+        }
         extras
         created
         createdBy

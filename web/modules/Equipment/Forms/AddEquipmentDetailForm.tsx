@@ -29,7 +29,13 @@ import {
     CreateEquipmentDetailMutation,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo, useHandlingUnitModels } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    useHandlingUnitModels,
+    useCarrierShippingModeIds
+} from '@helpers';
 
 import { FormOptionType } from 'models/Models';
 
@@ -49,6 +55,7 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
     const equipment = t('common:equipment');
     const handlingUnitModel = t('common:handling-unit-model');
     const modePreparations = t('d:preparationMode');
+    const carrierShippingMode = t('d:carrierShippingMode');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const submit = t('actions:submit');
     const cancel = t('actions:cancel');
@@ -57,6 +64,7 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
 
     const [handlingUnitModelId, setStatusHandlingUnitModel] = useState<Array<FormOptionType>>();
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
+    const [carrierShippingModes, setCarrierShippingModes] = useState<any>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
 
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
@@ -86,6 +94,18 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
             setStatusHandlingUnitModel(newIdOpts);
         }
     }, [handlingUnitModelData.data]);
+
+    const carrierShippingModeData = useCarrierShippingModeIds({}, 1, 100, null);
+
+    useEffect(() => {
+        if (carrierShippingModeData) {
+            const newIdOpts: { text: string; key: string }[] = [];
+            carrierShippingModeData.data?.carrierShippingModes?.results.forEach(({ id, name }) => {
+                newIdOpts.push({ text: name!, key: id! });
+            });
+            setCarrierShippingModes(newIdOpts);
+        }
+    }, [carrierShippingModeData.data]);
 
     const { mutate, isLoading: createLoading } = useCreateEquipmentDetailMutation<Error>(
         graphqlRequestClient,
@@ -176,6 +196,21 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
                             })}`}
                         >
                             {preparationMode?.map((ed: any) => (
+                                <Option key={ed.key} value={ed.key}>
+                                    {ed.text}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                </Col>
+                <Col>
+                    <Form.Item label={carrierShippingMode} name="carrierShippingModeId">
+                        <Select
+                            placeholder={`${t('messages:please-select-a', {
+                                name: t('d:carrierShippingMode')
+                            })}`}
+                        >
+                            {carrierShippingModes?.map((ed: any) => (
                                 <Option key={ed.key} value={ed.key}>
                                     {ed.text}
                                 </Option>
