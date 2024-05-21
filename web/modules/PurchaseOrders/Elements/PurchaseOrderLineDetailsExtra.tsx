@@ -17,34 +17,69 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { LinkButton } from '@components';
+import { LinkButton, AppHead } from '@components';
 import { EyeTwoTone } from '@ant-design/icons';
-import { pathParams, getModesFromPermissions } from '@helpers';
+import { pathParams, getModesFromPermissions, META_DEFAULTS } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Divider, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponent';
-
-const { Title } = Typography;
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { PurchaseOrderLineFeatureModelV2 as model } from 'models/PurchaseOrderLineFeatureModelV2';
+import { purchaseOrdersRoutes as itemRoutes } from 'modules/PurchaseOrders/Static/purchaseOrdersRoutes';
 
 export interface IItemDetailsProps {
     purchaseOrderLineId?: string | any;
-    status?: number | any;
     type?: number | any;
 }
 
-const PurchaseOrderLineDetailsExtra = ({
-    purchaseOrderLineId,
-    status,
-    type
-}: IItemDetailsProps) => {
+const PurchaseOrderLineDetailsExtra = ({ purchaseOrderLineId, type }: IItemDetailsProps) => {
     const { t } = useTranslation();
-
+    let rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
+    rootPath += '/feature';
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.PurchaseOrderLine);
 
-    return <></>;
+    const headerData: HeaderData = {
+        title: t('common:purchase-order-line-features'),
+        routes: [],
+        actionsComponent: null
+    };
+
+    return (
+        <>
+            <Divider />
+            <AppHead title={META_DEFAULTS.title} />
+            <ListComponent
+                searchCriteria={{ purchaseOrderLineId: purchaseOrderLineId }}
+                dataModel={model}
+                headerData={headerData}
+                searchable={true}
+                triggerDelete={undefined}
+                triggerSoftDelete={undefined}
+                actionColumns={[
+                    {
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: { id: string }) => (
+                            <Space>
+                                {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams(`${rootPath}/[id]`, record.id)}
+                                    />
+                                ) : (
+                                    <></>
+                                )}
+                            </Space>
+                        )
+                    }
+                ]}
+                routeDetailPage={'/purchase-orders/feature/:id'}
+            />
+            <Divider />
+        </>
+    );
 };
 
 export { PurchaseOrderLineDetailsExtra };
