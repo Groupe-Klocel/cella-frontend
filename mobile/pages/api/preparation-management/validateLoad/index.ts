@@ -48,22 +48,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     // retrieve information from front
     const { box, load } = req.body;
 
-    const handlingUnitOutboundQuery = gql`
-        query handlingUnitOutbounds($filters: HandlingUnitOutboundSearchFilters) {
-            handlingUnitOutbounds(filters: $filters) {
-                results {
-                    id
-                    deliveryId
-                    loadId
-                }
-            }
-        }
-    `;
-
-    const handlingUnitOutboundVariables = {
-        filters: { deliveryId: box.delivery.id }
-    };
-
     //Transaction management
     const generateTransactionId = gql`
         mutation {
@@ -142,48 +126,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             requestHeader
         );
         console.log('Result of Load Status', resultLoadResponse);
-
-        // Update deliverys status
-        const handlingUnitOutboundResult = await graphqlRequestClient.request(
-            handlingUnitOutboundQuery,
-            handlingUnitOutboundVariables,
-            requestHeader
-        );
-        const boxInDelivery = handlingUnitOutboundResult.handlingUnitOutbounds.results;
-        let deliveryFinish = false;
-        for (const i in boxInDelivery) {
-            if (boxInDelivery[i].loadId != null) {
-                deliveryFinish = true;
-            } else {
-                deliveryFinish = false;
-                break;
-            }
-        }
-        if (deliveryFinish == true) {
-            const updatedDeliveryMutation = gql`
-                mutation updateDelivery($id: String!, $input: UpdateDeliveryInput!) {
-                    updateDelivery(id: $id, input: $input) {
-                        id
-                        status
-                    }
-                }
-            `;
-            const dataForDelivery = {
-                status: configs.DELIVERY_STATUS_LOADED,
-                lastTransactionId
-            };
-            const updatedDeliveryVariables = {
-                id: box.delivery.id,
-                input: dataForDelivery
-            };
-
-            const resultDeliveryResponse = await graphqlRequestClient.request(
-                updatedDeliveryMutation,
-                updatedDeliveryVariables,
-                requestHeader
-            );
-            console.log('Result of delivery Status', resultDeliveryResponse);
-        }
 
         // Create Load Line
         const createLoadLineMutation = gql`
