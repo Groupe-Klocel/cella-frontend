@@ -337,6 +337,10 @@ query GetEquipmentDetailById($id: String!) {
         id
         preparationMode
         preparationModeText
+        carrierShippingModeId
+        carrierShippingMode {
+            name
+        }
         stockOwnerId
         stockOwner {
             name

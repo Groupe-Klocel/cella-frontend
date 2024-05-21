@@ -117,7 +117,9 @@ import {
     useGetOrderLineIdsQuery,
     GetOrderLineIdsQuery,
     useGetCarrierShippingModeIdsQuery,
-    GetCarrierShippingModeIdsQuery
+    GetCarrierShippingModeIdsQuery,
+    useSimpleGetAllCarrierShippingModesQuery,
+    SimpleGetAllCarrierShippingModesQuery
 } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import parameters from '../../../common/parameters.json';
@@ -523,6 +525,42 @@ const useCarrierIds = (search: any, page: number, itemsPerPage: number, sort: an
     );
 
     return carriers;
+};
+
+const useGetCarrierShippingModes = (
+    search: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any,
+    language = 'en'
+) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'name',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const carrierShippingModes = useSimpleGetAllCarrierShippingModesQuery<
+        Partial<SimpleGetAllCarrierShippingModesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage,
+        language: language
+    });
+
+    return carrierShippingModes;
 };
 
 const useCarrierShippingModeIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
@@ -1686,5 +1724,6 @@ export {
     useHandlingUnitModels,
     useRuleVersionIds,
     useRuleVersionConfigIds,
-    useOrderLineIds
+    useOrderLineIds,
+    useGetCarrierShippingModes
 };
