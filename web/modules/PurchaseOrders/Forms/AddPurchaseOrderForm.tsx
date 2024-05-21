@@ -144,6 +144,8 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
         if (value === null || value === undefined) {
             setChosenAddress(undefined);
             form.setFieldsValue({
+                supplier: null,
+                entityCode: null,
                 entityName: null,
                 entityStreetNumber: null,
                 entityAddress1: null,
@@ -170,6 +172,8 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                 if (address.id == key) {
                     setChosenAddress(value?.key);
                     form.setFieldsValue({
+                        supplier: address.thirdParty.name,
+                        entityCode: address.entityCode,
                         entityName: address.entityName,
                         entityStreetNumber: address.entityStreetNumber,
                         entityAddress1: address.entityAddress1,
@@ -341,6 +345,7 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                 form.validateFields()
                     .then(() => {
                         const formData = form.getFieldsValue(true);
+
                         delete formData.thirdPartyId;
                         delete formData.thirdPartyAddressId;
                         delete formData.thirdPartyAddressContactId;

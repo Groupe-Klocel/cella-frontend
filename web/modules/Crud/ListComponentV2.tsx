@@ -18,9 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { SearchOutlined } from '@ant-design/icons';
-import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components';
-import { Space, Form, Button, Empty, Alert, Badge, Card } from 'antd';
-import { EyeTwoTone } from '@ant-design/icons';
+import { AppTableV2, ContentSpin, HeaderContent } from '@components';
+import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import useTranslation from 'next-translate/useTranslation';
 import {
@@ -479,7 +478,13 @@ const ListComponent = (props: IListProps) => {
     );
 
     useEffect(() => {
-        reloadData();
+        //Time delay is to avoid reload before backend has finished (100ms does not work, 200ms seems to be fine)
+        const delay = 200;
+        const timer = setTimeout(() => {
+            reloadData();
+        }, delay);
+
+        return () => clearTimeout(timer);
     }, [search, props.refetch, pagination.current, pagination.itemsPerPage, sort, router.locale]);
 
     // #endregion

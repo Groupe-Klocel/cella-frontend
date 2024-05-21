@@ -114,6 +114,7 @@ const useList = (
                         }
                     });
                 });
+
                 setData(result);
                 setIsLoading(false);
             })
@@ -536,42 +537,44 @@ const useSoftDelete = (queryName: string) => {
     const [result, setResult] = useState<any>({ data: null, success: false });
 
     const mutate = (id: string) => {
-        setIsLoading(true);
-        graphqlRequestClient
-            .request(query, {
-                id: id
-            })
-            .then((result: any) => {
-                setIsLoading(false);
-                setResult({ data: result, success: true });
-            })
-            .catch((error: any) => {
-                if (error.response && error.response.errors[0].extensions) {
-                    const errorCode = error.response.errors[0].extensions.code;
-                    if (
-                        error.response.errors[0].extensions.variables &&
-                        error.response.errors[0].extensions.variables.table_name
-                    ) {
-                        const errorTableName =
-                            error.response.errors[0].extensions.variables.table_name;
-                        const associatedTableName =
-                            error.response.errors[0].extensions.variables.associated_table_name;
-                        showError(
-                            t(`errors:${errorCode}`, {
-                                tableName: t(`common:${errorTableName}`),
-                                associatedTableName: t(`common:${associatedTableName}`)
-                            })
-                        );
+        if (query && queryName) {
+            setIsLoading(true);
+            graphqlRequestClient
+                .request(query, {
+                    id: id
+                })
+                .then((result: any) => {
+                    setIsLoading(false);
+                    setResult({ data: result, success: true });
+                })
+                .catch((error: any) => {
+                    if (error.response && error.response.errors[0].extensions) {
+                        const errorCode = error.response.errors[0].extensions.code;
+                        if (
+                            error.response.errors[0].extensions.variables &&
+                            error.response.errors[0].extensions.variables.table_name
+                        ) {
+                            const errorTableName =
+                                error.response.errors[0].extensions.variables.table_name;
+                            const associatedTableName =
+                                error.response.errors[0].extensions.variables.associated_table_name;
+                            showError(
+                                t(`errors:${errorCode}`, {
+                                    tableName: t(`common:${errorTableName}`),
+                                    associatedTableName: t(`common:${associatedTableName}`)
+                                })
+                            );
+                        } else {
+                            showError(t(`errors:${errorCode}`));
+                        }
                     } else {
-                        showError(t(`errors:${errorCode}`));
+                        showError(t('messages:error-disabling-element'));
+                        console.log(error);
                     }
-                } else {
-                    showError(t('messages:error-disabling-element'));
-                    console.log(error);
-                }
-                setResult({ data: null, success: false });
-                setIsLoading(false);
-            });
+                    setResult({ data: null, success: false });
+                    setIsLoading(false);
+                });
+        }
     };
 
     return { isLoading, result, mutate };
