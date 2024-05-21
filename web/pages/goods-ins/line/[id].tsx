@@ -18,23 +18,22 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
-import { GoodsInModelV2 as model } from 'models/GoodsInModelV2';
+import { RoundLineModelV2 as model } from 'models/RoundLineModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
-import MainLayout from '../../components/layouts/MainLayout';
+import MainLayout from '../../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { goodsInsRoutes as itemRoutes } from 'modules/GoodsIns/Static/goodsInsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
-import { GoodsInDetailsExtra } from 'modules/GoodsIns/Elements/GoodsInDetailsExtra';
+import { GoodsInLineDetailsExtra } from 'modules/GoodsIns/Elements/GoodsInLineDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const GoodsInPage: PageComponent = () => {
+const GoodsInLinePage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -45,14 +44,24 @@ const GoodsInPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     // #region to customize information
-    const breadCrumb = [
+    const roundDetailBreadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${data?.round_name}`,
+            path: '/goods-ins/' + data?.roundId
         }
     ];
 
-    const pageTitle = `${t('common:goods-in')} ${data?.name}`;
+    const breadCrumb = [
+        ...roundDetailBreadCrumb,
+        {
+            breadcrumbName: `${t('common:line')} ${data?.lineNumber}`
+        }
+    ];
+
+    const pageTitle = `${t('common:goods-in-line')} ${data?.round_name} - ${t('common:line')} ${
+        data?.lineNumber
+    }`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -61,7 +70,7 @@ const GoodsInPage: PageComponent = () => {
     const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
             Modal.confirm({
-                title: t('messages:close-confirm'),
+                title: t('messages:delete-confirm'),
                 onOk: () => {
                     setId(id);
                 },
@@ -74,43 +83,37 @@ const GoodsInPage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
-        onBackRoute: rootPath,
-        actionsComponent:
-            data?.status !== configs.ROUND_STATUS_CLOSED ? (
-                <Space>
-                    {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
-                        <LinkButton
-                            title={t('actions:edit')}
-                            path={`${rootPath}/edit/${id}`}
-                            type="primary"
-                        />
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 &&
-                    modes.includes(ModeEnum.Delete) &&
-                    model.isSoftDeletable ? (
-                        <Button
-                            onClick={() => confirmAction(id as string, setIdToDisable)()}
-                            type="primary"
-                            danger
-                        >
-                            {t('actions:close')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
-                            {t('actions:delete')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                </Space>
-            ) : (
-                <></>
-            )
+        onBackRoute: rootPath + '/' + data?.roundId,
+        actionsComponent: (
+            <Space>
+                {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
+                    <LinkButton
+                        title={t('actions:edit')}
+                        path={`${rootPath}/line/edit/${id}`}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isSoftDeletable ? (
+                    <Button
+                        onClick={() => confirmAction(id as string, setIdToDisable)()}
+                        type="primary"
+                    >
+                        {t('actions:cancel')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
+                    <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
+                        {t('actions:delete')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+            </Space>
+        )
     };
     // #endregion
 
@@ -119,7 +122,7 @@ const GoodsInPage: PageComponent = () => {
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
                 id={id!}
-                extraDataComponent={<GoodsInDetailsExtra roundId={id} />}
+                extraDataComponent={<GoodsInLineDetailsExtra roundLineId={id} />}
                 headerData={headerData}
                 dataModel={model}
                 setData={setData}
@@ -130,8 +133,6 @@ const GoodsInPage: PageComponent = () => {
     );
 };
 
-GoodsInPage.layout = MainLayout;
+GoodsInLinePage.layout = MainLayout;
 
-export default GoodsInPage;
-
-//
+export default GoodsInLinePage;

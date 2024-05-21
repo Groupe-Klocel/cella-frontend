@@ -45,6 +45,8 @@ export interface IScanProps {
     action1Trigger?: any;
     initValue?: string;
     isSelected?: boolean;
+    getFormData?: boolean;
+    setFormData?: (value: string) => void;
 }
 
 export const ScanForm = ({
@@ -66,7 +68,9 @@ export const ScanForm = ({
     action1Label,
     action1Trigger,
     initValue,
-    isSelected
+    isSelected,
+    getFormData,
+    setFormData
 }: IScanProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -133,6 +137,11 @@ export const ScanForm = ({
         setButtonsState(buttons);
     }, [buttons]);
 
+    const onChange = (e: any) => {
+        if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
+        if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
+    };
+
     return (
         <WrapperForm>
             <StyledForm
@@ -153,7 +162,9 @@ export const ScanForm = ({
                 >
                     <Input
                         style={{ height: '20px', marginBottom: '5px' }}
+                        onChange={onChange}
                         autoFocus
+                        allowClear
                         onFocus={isSelected ? (e) => e.target.select() : undefined}
                     />
                 </StyledFormItem>
