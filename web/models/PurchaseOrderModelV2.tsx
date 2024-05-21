@@ -138,8 +138,7 @@ export const PurchaseOrderModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null,
-            defaultSort: 'descending'
+            param: null
         },
         entityCode: {
             isListRequested: true,
