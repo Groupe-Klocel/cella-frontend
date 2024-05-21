@@ -102,7 +102,7 @@
     "error-delete-article-impossible": "This article cannot be deleted",
     "error-delete-articleLu-impossible": "This logistic unit cannot be deleted for this article",
     "error-delete-cycleCount-impossible": "This cycle count cannot be deleted",
-    "messages:error-delete-feature-types-impossible": "This feature type cannot be deleted",
+    "error-delete-feature-types-impossible": "This feature type cannot be deleted",
     "selected-items-number": "selected {{number}} item(s)",
     "select-number-min-max": "Select a number between {{min}} and {{max}}",
     "dispatch-load-confirm": "Are you sure you want to dispatch this load?",

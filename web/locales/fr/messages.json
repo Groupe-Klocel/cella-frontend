@@ -102,7 +102,7 @@
     "error-delete-article-impossible": "Cet article ne peut pas être supprimé",
     "error-delete-articleLu-impossible": "Ce conditionnement ne peut pas être supprimé pour cet article",
     "error-delete-cycleCount-impossible": "Cet inventaire ne peut pas être supprimé",
-    "messages:error-delete-feature-types-impossible": "Cette règle de traçabilité ne peut être supprimée",
+    "error-delete-feature-types-impossible": "Cette règle de traçabilité ne peut être supprimée",
     "selected-items-number": "{{number}} élément(s) sélectionné(s)",
     "select-number-min-max": "Sélectionner un nombre entre {{min}} et {{max}}",
     "dispatch-load-confirm": "Etes-vous sûr(e) de vouloir expédier ce chargement ?",
