@@ -25,6 +25,7 @@ export * from './Articles/PagesContainer/ScanArticle';
 export * from './Articles/PagesContainer/ScanArticleOrFeature';
 export * from './Boxes/PagesContainer/ScanBox';
 export * from './ScanForm';
+export * from './DatePickerForm';
 export * from './Contents/Forms/SelectContentForArticleForm';
 export * from './HandlingUnits/Forms/ScanBoxForm';
 export * from './HandlingUnits/Forms/ScanEmptyHuForm';
