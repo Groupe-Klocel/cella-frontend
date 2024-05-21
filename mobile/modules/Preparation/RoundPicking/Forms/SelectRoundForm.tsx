@@ -91,7 +91,7 @@ export const SelectRoundForm = ({
     const roundsList = useSimpleGetRoundsQuery<Partial<SimpleGetRoundsQuery>, Error>(
         graphqlRequestClient,
         {
-            filters: { status: configsToFilterOn },
+            filters: { status: configsToFilterOn, category: [configs.ROUND_CATEGORY_PREPARATION] },
             orderBy: null,
             page: 1,
             itemsPerPage: 100
