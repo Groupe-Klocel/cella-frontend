@@ -79,7 +79,6 @@
     "incorrect-hu-carrier": "Le transporteur n'est pas celui attendu",
     "article-creation-confirm": "Article inconnu en stock, voulez-vous le créer ?",
     "already-scanned": "Element déjà scanné",
-    "wrong-stock-status-or-reservation": "L'élément scanné n'a pas le statut de stock ou la réservation attendue",
     "wrong-article-stockOwner-stockStatus-or-reservation": "L'élément scanné n'a pas l'article, le propriétaire de stock, l'état de stock ou la réservation attendue",
     "hu-already-used": "Cette UM est déjà utilisée",
     "no-articleLuBarcode": "Aucun article trouvé avec ce code à barres",

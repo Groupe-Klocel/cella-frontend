@@ -24,7 +24,6 @@ import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../common/configs.json';
 import CameraScanner from './CameraScanner';
-import moment from 'moment';
 
 export interface IDatePickerProps {
     process: string;

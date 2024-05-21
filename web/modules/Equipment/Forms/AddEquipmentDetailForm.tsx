@@ -34,7 +34,7 @@ import {
     showSuccess,
     showInfo,
     useHandlingUnitModels,
-    useCarrierShippingModeIds
+    useGetCarrierShippingModes
 } from '@helpers';
 
 import { FormOptionType } from 'models/Models';
@@ -45,6 +45,8 @@ export interface ISingleItemProps {
     equipmentId: string | any;
     equipmentName: string | any;
     stockOwnerId: string | any;
+    carrierShippingModeId: string | any;
+    carrierShippingModeName: string | any;
 }
 
 export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
@@ -55,10 +57,10 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
     const equipment = t('common:equipment');
     const handlingUnitModel = t('common:handling-unit-model');
     const modePreparations = t('d:preparationMode');
-    const carrierShippingMode = t('d:carrierShippingMode');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const submit = t('actions:submit');
     const cancel = t('actions:cancel');
+    const carrierShippingMode = t('common:carrier-shipping-mode');
 
     const [form] = Form.useForm();
 
@@ -66,6 +68,8 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
     const [carrierShippingModes, setCarrierShippingModes] = useState<any>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
+    const [carrierShippingModeIds, setcarrierShippingMode] = useState<Array<FormOptionType>>();
+    const carrierShippingModeData = useGetCarrierShippingModes({}, 1, 100, null);
 
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'preparation_mode'
@@ -95,15 +99,13 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
         }
     }, [handlingUnitModelData.data]);
 
-    const carrierShippingModeData = useCarrierShippingModeIds({}, 1, 100, null);
-
     useEffect(() => {
-        if (carrierShippingModeData) {
-            const newIdOpts: { text: string; key: string }[] = [];
-            carrierShippingModeData.data?.carrierShippingModes?.results.forEach(({ id, name }) => {
+        if (carrierShippingModeData.data) {
+            const newIdOpts: Array<FormOptionType> = [];
+            carrierShippingModeData.data.carrierShippingModes?.results.forEach(({ id, name }) => {
                 newIdOpts.push({ text: name!, key: id! });
             });
-            setCarrierShippingModes(newIdOpts);
+            setcarrierShippingMode(newIdOpts);
         }
     }, [carrierShippingModeData.data]);
 
@@ -134,6 +136,7 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 delete formData.equipmentName;
+                delete formData.carrierShippingModeName;
                 createEquipmentDetail({ input: formData });
             })
             .catch((err) => {
@@ -145,7 +148,9 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
         const tmp_details = {
             equipmentId: props.equipmentId,
             equipmentName: props.equipmentName,
-            stockOwnerId: props.stockOwnerId
+            stockOwnerId: props.stockOwnerId,
+            carrierShippingModeId: props.carrierShippingModeId,
+            carrierShippingModeName: props.carrierShippingModeName
         };
         form.setFieldsValue(tmp_details);
         if (createLoading) {
@@ -204,13 +209,17 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
                     </Form.Item>
                 </Col>
                 <Col>
-                    <Form.Item label={carrierShippingMode} name="carrierShippingModeId">
+                    <Form.Item
+                        label={carrierShippingMode}
+                        name="carrierShippingModeId"
+                        rules={[{ required: false, message: errorMessageEmptyInput }]}
+                    >
                         <Select
                             placeholder={`${t('messages:please-select-a', {
-                                name: t('d:carrierShippingMode')
+                                name: t('d:shippingMode')
                             })}`}
                         >
-                            {carrierShippingModes?.map((ed: any) => (
+                            {carrierShippingModeIds?.map((ed: any) => (
                                 <Option key={ed.key} value={ed.key}>
                                     {ed.text}
                                 </Option>

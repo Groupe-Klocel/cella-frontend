@@ -36,6 +36,8 @@ export interface ISingleItemProps {
     equipmentId: string | any;
     equipmentName: string | any;
     stockOwnerId: string | any;
+    carrierShippingModeId: string | any;
+    carrierShippingModeName: string | any;
 }
 
 const AddEquipmentDetail = (props: ISingleItemProps) => {
@@ -83,6 +85,8 @@ const AddEquipmentDetail = (props: ISingleItemProps) => {
                                 equipmentId={props.equipmentId}
                                 equipmentName={props.equipmentName}
                                 stockOwnerId={props.stockOwnerId}
+                                carrierShippingModeId={props.carrierShippingModeId}
+                                carrierShippingModeName={props.carrierShippingModeName}
                             />
                         </StyledPageContent>
                     </>
