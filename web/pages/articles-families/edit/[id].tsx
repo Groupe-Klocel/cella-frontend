@@ -19,49 +19,51 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ArticleModelV2 } from 'models/ArticleModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { SingleParameterModelV2 } from 'models/SingleParameterModelV2';
 import useTranslation from 'next-translate/useTranslation';
-import { addArticleRoutes } from 'modules/Articles/Static/articlesRoutes';
+import { articlesFamiliesRoutes } from 'modules/ArticlesFamilies/Static/articlesFamiliesRoutes';
 import { META_DEFAULTS } from '@helpers';
-import configs from '../../../../common/configs.json';
+import { EditConfigParamComponent } from 'modules/Crud/EditConfigParamComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const AddArticlePage: PageComponent = () => {
+const EditArticleFamilyPage: PageComponent = () => {
     const { t } = useTranslation();
 
     const router = useRouter();
+    const [data, setData] = useState<any>();
+    const { id } = router.query;
 
-    //enter between {} the default values for the form (for instance status "In progress"))
-    const defaultValues = { status: configs.ARTICLE_STATUS_IN_PROGRESS };
+    const breadsCrumb = [
+        ...articlesFamiliesRoutes,
+        {
+            breadcrumbName: `${data?.value}`
+        }
+    ];
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddItemComponent
-                dataModel={ArticleModelV2}
+            <EditConfigParamComponent
+                id={id!}
+                setData={setData}
+                dataModel={SingleParameterModelV2}
                 headerComponent={
                     <HeaderContent
-                        title={t('actions:add-article')}
-                        routes={addArticleRoutes}
-                        onBack={() => router.push(`/articles`)}
+                        title={`${t('actions:edit-articles-family')} ${data?.value}`}
+                        routes={breadsCrumb}
+                        onBack={() => router.back()}
                     />
                 }
-                extraData={
-                    defaultValues || Object.keys(defaultValues).length !== 0
-                        ? defaultValues
-                        : undefined
-                }
-                routeAfterSuccess={`/articles/:id`}
-                stringCodeScopes={['article_family', 'article_subfamily']}
+                comeFromFiltered={true}
+                routeAfterSuccess={`/articles-families/:id`}
             />
         </>
     );
 };
 
-AddArticlePage.layout = MainLayout;
+EditArticleFamilyPage.layout = MainLayout;
 
-export default AddArticlePage;
+export default EditArticleFamilyPage;

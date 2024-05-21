@@ -21,33 +21,32 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ArticleModelV2 } from 'models/ArticleModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { SingleParameterModelV2 } from 'models/SingleParameterModelV2';
 import useTranslation from 'next-translate/useTranslation';
-import { addArticleRoutes } from 'modules/Articles/Static/articlesRoutes';
+import { articlesFamiliesRoutes } from 'modules/ArticlesFamilies/Static/articlesFamiliesRoutes';
 import { META_DEFAULTS } from '@helpers';
-import configs from '../../../../common/configs.json';
+import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const AddArticlePage: PageComponent = () => {
+const AddArticleFamilyPage: PageComponent = () => {
     const { t } = useTranslation();
 
     const router = useRouter();
 
     //enter between {} the default values for the form (for instance status "In progress"))
-    const defaultValues = { status: configs.ARTICLE_STATUS_IN_PROGRESS };
+    const defaultValues = { scope: 'article_family' };
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddItemComponent
-                dataModel={ArticleModelV2}
+            <AddConfigParamComponent
+                dataModel={SingleParameterModelV2}
                 headerComponent={
                     <HeaderContent
-                        title={t('actions:add-article')}
-                        routes={addArticleRoutes}
-                        onBack={() => router.push(`/articles`)}
+                        title={t('actions:add-articles-family')}
+                        routes={articlesFamiliesRoutes}
+                        onBack={() => router.back()}
                     />
                 }
                 extraData={
@@ -55,13 +54,13 @@ const AddArticlePage: PageComponent = () => {
                         ? defaultValues
                         : undefined
                 }
-                routeAfterSuccess={`/articles/:id`}
-                stringCodeScopes={['article_family', 'article_subfamily']}
+                comeFromFiltered={true}
+                routeAfterSuccess={`/articles-families`}
             />
         </>
     );
 };
 
-AddArticlePage.layout = MainLayout;
+AddArticleFamilyPage.layout = MainLayout;
 
-export default AddArticlePage;
+export default AddArticleFamilyPage;

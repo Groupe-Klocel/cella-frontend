@@ -59,6 +59,7 @@ const EditArticlePage: PageComponent = () => {
                     />
                 }
                 routeAfterSuccess={`/articles/:id`}
+                stringCodeScopes={['article_family', 'article_subfamily']}
             />
         </>
     );
