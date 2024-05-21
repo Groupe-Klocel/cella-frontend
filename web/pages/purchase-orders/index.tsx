@@ -133,6 +133,7 @@ const PurchaseOrderPages: PageComponent = () => {
                                 model.isDeletable &&
                                 record.type !== configs.PURCHASE_ORDER_TYPE_L3 &&
                                 record.type !== configs.PURCHASE_ORDER_TYPE_L3_RETURN &&
+                                // WARNING : if purchaseOrderLines exists, it means that there is no po line
                                 record.purchaseOrderLines ? (
                                     <Button
                                         icon={<DeleteOutlined />}

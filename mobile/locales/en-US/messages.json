@@ -79,6 +79,7 @@
     "incorrect-hu-carrier": "Carrier is not the expected one",
     "article-creation-confirm": "Article unknown in stock, do you want to create it?",
     "already-scanned": "Already scanned",
+    "wrong-stock-status-or-reservation": "Scanned item does not have expected stock status or reservation",
     "wrong-article-stockOwner-stockStatus-or-reservation": "Scanned item does not have expected article, stock owner, stock status or reservation",
     "hu-already-used": "This HU is already used",
     "no-articleLuBarcode": "No article found with this barcode",
