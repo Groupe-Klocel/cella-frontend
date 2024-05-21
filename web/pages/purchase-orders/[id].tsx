@@ -52,7 +52,8 @@ const PurchaseOrderPage: PageComponent = () => {
     const breadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${data?.name}`,
+            path: `/purchase-orders/${data?.purchaseOrderId}`
         }
     ];
 
