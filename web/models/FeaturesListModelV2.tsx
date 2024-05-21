@@ -415,12 +415,12 @@ export const FeaturesListModelV2: ModelType = {
             param: null,
             optionTable: null
         },
-        quantity: {
+        'handlingUnitContent{quantity}': {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: false,
-            searchingFormat: null,
+            isSortable: true,
+            searchingFormat: 'Number',
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,
