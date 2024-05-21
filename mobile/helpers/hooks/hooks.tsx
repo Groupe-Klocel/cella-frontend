@@ -37,7 +37,9 @@ import {
     useGetLoadsQuery,
     GetLoadsQuery,
     useGetHandlingUnitContentFeaturesQuery,
-    GetHandlingUnitContentFeaturesQuery
+    GetHandlingUnitContentFeaturesQuery,
+    useGetFeatureTypeDetailsQuery,
+    GetFeatureTypeDetailsQuery
 } from 'generated/graphql';
 
 const useDrawerState = (initialState: { isOpen: boolean; drawerProps: any }) => {
@@ -135,6 +137,42 @@ const useBoxes = (search: any, page: number, itemsPerPage: number, sort: any, la
     });
 
     return boxes;
+};
+
+const useFeatureTypeDetails = (
+    search: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any,
+    language: any
+) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'featureCode_unique',
+        ascending: true
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const featureTypeDetails = useGetFeatureTypeDetailsQuery<
+        Partial<GetFeatureTypeDetailsQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage,
+        language: language
+    });
+
+    return featureTypeDetails;
 };
 
 const useHandlingUnits = (search: any, page: number, itemsPerPage: number, sort: any) => {
@@ -368,6 +406,7 @@ export {
     useArticles,
     useArticleLuBarcodeIds,
     useBoxes,
+    useFeatureTypeDetails,
     useLocationIds,
     useHandlingUnits,
     useHandlingUnitContents,

@@ -15,63 +15,43 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-query GetArticleLuBarcodeIds(
-    $filters: ArticleLuBarcodeSearchFilters
-    $orderBy: [ArticleLuBarcodeOrderByCriterion!]
+query getFeatureTypeDetails(
+    $filters: FeatureTypeDetailSearchFilters
+    $orderBy: [FeatureTypeDetailOrderByCriterion!]
     $page: Int!
     $itemsPerPage: Int!
+    $language: String = "en"
 ) {
-    articleLuBarcodes(
+    featureTypeDetails(
         filters: $filters
         orderBy: $orderBy
         page: $page
         itemsPerPage: $itemsPerPage
+        language: $language
     ) {
         count
         itemsPerPage
         totalPages
         results {
             id
-            articleId
-            article {
+            featureType
+            featureTypeText
+            featureCodeId
+            featureCode {
                 id
                 name
-                description
-                newProduct
-                featureType
+                unique
+                dateType
             }
-            barcodeId
-            barcode {
-                name
-            }
+            atReception
+            atPreparation
             stockOwnerId
             stockOwner {
+                id
                 name
             }
-            articleLuId
-        }
-    }
-}
-
-query GetArticleLuBarcodeByBarcodeName($barcodeName: String!) {
-    articleLuBarcodesByBarcodeName(barcodeName: $barcodeName) {
-        id
-        articleId
-        article {
-            name
-            additionalDescription
-        }
-        stockOwnerId
-        stockOwner {
-            name
-        }
-        articleLuId
-        articleLu {
-            name
-        }
-        barcodeId
-        barcode {
-            name
+            sortType
+            sortTypeText
         }
     }
 }
