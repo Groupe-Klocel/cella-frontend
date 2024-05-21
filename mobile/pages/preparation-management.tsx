@@ -48,6 +48,10 @@ const menuItemDatas = [
         path: '/box-preparation'
     },
     {
+        title: 'menu:palletization',
+        path: '/palletization'
+    },
+    {
         title: 'menu:load',
         path: '/loads'
     }
