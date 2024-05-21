@@ -21,6 +21,7 @@ import {
     ApartmentOutlined,
     AppstoreAddOutlined,
     AuditOutlined,
+    DeploymentUnitOutlined,
     ExportOutlined,
     HourglassOutlined,
     QuestionCircleOutlined,
@@ -64,7 +65,21 @@ const SideMenu: FC = () => {
     return (
         <Menu mode="inline" className="menu">
             <SubMenu icon={<AuditOutlined />} key="administration" title={t('administration')}>
+                {getModesFromPermissions(permissions, Table.Config).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="administration-configurations">
+                        <Link href="/configurations">{t('configurations')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 <SubMenu key="administration-access-management" title={t('access-management')}>
+                    {getModesFromPermissions(permissions, Table.Role).includes(ModeEnum.Read) ? (
+                        <Menu.Item key="administration-access-management-roles">
+                            <Link href="/roles">{t('roles')}</Link>
+                        </Menu.Item>
+                    ) : (
+                        <></>
+                    )}
                     {getModesFromPermissions(permissions, Table.WarehouseWorker).includes(
                         ModeEnum.Read
                     ) ? (
@@ -74,17 +89,10 @@ const SideMenu: FC = () => {
                     ) : (
                         <></>
                     )}
-                    {getModesFromPermissions(permissions, Table.Role).includes(ModeEnum.Read) ? (
-                        <Menu.Item key="administration-access-management-roles">
-                            <Link href="/roles">{t('roles')}</Link>
-                        </Menu.Item>
-                    ) : (
-                        <></>
-                    )}
                 </SubMenu>
-                {getModesFromPermissions(permissions, Table.Config).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="administration-configurations">
-                        <Link href="/configurations">{t('configurations')}</Link>
+                {getModesFromPermissions(permissions, Table.HookConfig).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="administration-hook-configs">
+                        <Link href="/hook-configs">{t('hook-configs')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -96,22 +104,8 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
-                {getModesFromPermissions(permissions, Table.HookConfig).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="administration-hook-configs">
-                        <Link href="/hook-configs">{t('hook-configs')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
             </SubMenu>
             <SubMenu key="configuration" icon={<SettingOutlined />} title={t('configuration')}>
-                {getModesFromPermissions(permissions, Table.StockOwner).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="configuration-stock-owners">
-                        <Link href="/stock-owners">{t('stock-owners')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
                 <SubMenu key="configuration-cartography" title={t('cartography')}>
                     {getModesFromPermissions(permissions, Table.Building).includes(
                         ModeEnum.Read
@@ -155,30 +149,9 @@ const SideMenu: FC = () => {
                         <></>
                     )}
                 </SubMenu>
-                {getModesFromPermissions(permissions, Table.ThirdParty).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="configuration-third-parties">
-                        <Link href="/third-parties">{t('third-parties')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.Carrier).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="configuration-carriers">
-                        <Link href="/carriers">{t('carriers')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="configuration-shipping-modes">
-                        <Link href="/shipping-modes">{t('shipping-modes')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="configuration-stock-statuses">
-                        <Link href="/stock-statuses">{t('stock-statuses')}</Link>
+                {getModesFromPermissions(permissions, Table.Conversion).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-conversions">
+                        <Link href="/conversions">{t('conversions')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -200,27 +173,8 @@ const SideMenu: FC = () => {
                     <></>
                 )}
                 {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
-                    <SubMenu key="configuration-return" title={t('returns')}>
-                        <Menu.Item key="configuration-return-codes">
-                            <Link href="/return-codes">{t('return-codes')}</Link>
-                        </Menu.Item>
-                        <Menu.Item key="configuration-action-codes">
-                            <Link href="/action-codes">{t('action-codes')}</Link>
-                        </Menu.Item>
-                    </SubMenu>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.Conversion).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="configuration-conversions">
-                        <Link href="/conversions">{t('conversions')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.Rule).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="configuration-rules">
-                        <Link href="/rules">{t('rules')}</Link>
+                    <Menu.Item key="configuration-stock-statuses">
+                        <Link href="/stock-statuses">{t('stock-statuses')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -230,8 +184,8 @@ const SideMenu: FC = () => {
                         key="configuration-business-management"
                         title={t('business-management')}
                     >
-                        <Menu.Item key="configuration-price-types">
-                            <Link href="/price-types">{t('price-types')}</Link>
+                        <Menu.Item key="configuration-bank-accounts">
+                            <Link href="/bank-accounts">{t('bank-accounts')}</Link>
                         </Menu.Item>
                         <Menu.Item key="configuration-currencies">
                             <Link href="/currencies">{t('currencies')}</Link>
@@ -242,13 +196,60 @@ const SideMenu: FC = () => {
                         <Menu.Item key="configuration-payment-methods">
                             <Link href="/payment-methods">{t('payment-methods')}</Link>
                         </Menu.Item>
-                        <Menu.Item key="configuration-bank-accounts">
-                            <Link href="/bank-accounts">{t('bank-accounts')}</Link>
-                        </Menu.Item>
                         <Menu.Item key="configuration-vat-rates">
                             <Link href="/vat-rates">{t('vat-rates')}</Link>
                         </Menu.Item>
+                        <Menu.Item key="configuration-price-types">
+                            <Link href="/price-types">{t('price-types')}</Link>
+                        </Menu.Item>
                     </SubMenu>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-shipping-modes">
+                        <Link href="/shipping-modes">{t('shipping-modes')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.StockOwner).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-stock-owners">
+                        <Link href="/stock-owners">{t('stock-owners')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <SubMenu key="configuration-return" title={t('returns')}>
+                        <Menu.Item key="configuration-action-codes">
+                            <Link href="/action-codes">{t('action-codes')}</Link>
+                        </Menu.Item>
+                        <Menu.Item key="configuration-return-codes">
+                            <Link href="/return-codes">{t('return-codes')}</Link>
+                        </Menu.Item>
+                    </SubMenu>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Rule).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-rules">
+                        <Link href="/rules">{t('rules')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.ThirdParty).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-third-parties">
+                        <Link href="/third-parties">{t('third-parties')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Carrier).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="configuration-carriers">
+                        <Link href="/carriers">{t('carriers')}</Link>
+                    </Menu.Item>
                 ) : (
                     <></>
                 )}
@@ -262,10 +263,64 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
-                {getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) ? (
+                {getModesFromPermissions(permissions, Table.ArticleSet).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-sets">
+                        <Link href="/article-sets">{t('sets')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-families">
+                        <Link href="/articles-families">{t('articles-families')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-subfamilies">
+                        <Link href="/articles-subfamilies">{t('articles-subfamilies')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-barcodes">
+                        <Link href="/barcodes">{t('barcodes')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {/* {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-blacklisted-barcodes">
+                        <Link href="/blacklisted-barcodes">{t('blacklisted-barcodes')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )} */}
+                {getModesFromPermissions(permissions, Table.LogisticUnit).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="articles-logistic-unit-models">
+                        <Link href="/logistic-units">{t('logistic-unit-models')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.ArticlePrice).includes(
+                    ModeEnum.Read
+                ) ? (
                     <Menu.Item key="articles-article-prices">
-                        {' '}
                         <Link href="/article-prices">{t('article-prices')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.ArticlePriceHistory).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="articles-article-price-histories">
+                        <Link href="/article-price-histories">{t('article-price-histories')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -290,83 +345,12 @@ const SideMenu: FC = () => {
                         <></>
                     )}
                 </SubMenu>
-                {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-barcodes">
-                        <Link href="/barcodes">{t('barcodes')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {/* {getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-blacklisted-barcodes">
-                        <Link href="/blacklisted-barcodes">{t('blacklisted-barcodes')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )} */}
-                {getModesFromPermissions(permissions, Table.ArticleSet).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-sets">
-                        <Link href="/article-sets">{t('sets')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.LogisticUnit).includes(
-                    ModeEnum.Read
-                ) ? (
-                    <Menu.Item key="articles-logistic-unit-models">
-                        <Link href="/logistic-units">{t('logistic-unit-models')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-articles-families">
-                        <Link href="/articles-families">{t('articles-families')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="articles-articles-subfamilies">
-                        <Link href="/articles-subfamilies">{t('articles-subfamilies')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
             </SubMenu>
             <SubMenu
                 icon={<ApartmentOutlined />}
                 key="stock-management"
                 title={t('stock-management')}
             >
-                {getModesFromPermissions(permissions, Table.HandlingUnitContent).includes(
-                    ModeEnum.Read
-                ) ? (
-                    <Menu.Item key="stock-management-contents">
-                        <Link href="/handling-unit-contents">{t('contents')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.HandlingUnitContentFeature).includes(
-                    ModeEnum.Read
-                ) ? (
-                    <Menu.Item key="stock-management-features">
-                        <Link href="/handling-unit-content-features">{t('features-in-stock')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.PurchaseOrder).includes(
-                    ModeEnum.Read
-                ) ? (
-                    <Menu.Item key="stock-management-purchase-orders">
-                        <Link href="/purchase-orders">{t('purchase-orders')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
                 {getModesFromPermissions(permissions, Table.HandlingUnitInbound).includes(
                     ModeEnum.Read
                 ) ? (
@@ -376,9 +360,20 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
-                {getModesFromPermissions(permissions, Table.Movement).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="stock-management-movements">
-                        <Link href="/movements">{t('movements')}</Link>
+                {getModesFromPermissions(permissions, Table.HandlingUnitContent).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="stock-management-contents">
+                        <Link href="/handling-unit-contents">{t('contents')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.HandlingUnit).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="dummy-hu-generator">
+                        <Link href="/dummy-hu-generator">{t('dummy-hu-generator')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -395,11 +390,54 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
-                {getModesFromPermissions(permissions, Table.HandlingUnit).includes(
+                {getModesFromPermissions(permissions, Table.Movement).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="stock-management-movements">
+                        <Link href="/movements">{t('movements')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.PurchaseOrder).includes(
                     ModeEnum.Read
                 ) ? (
-                    <Menu.Item key="dummy-hu-generator">
-                        <Link href="/dummy-hu-generator">{t('dummy-hu-generator')}</Link>
+                    <Menu.Item key="stock-management-purchase-orders">
+                        <Link href="/purchase-orders">{t('purchase-orders')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.HandlingUnitContentFeature).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="stock-management-features">
+                        <Link href="/handling-unit-content-features">{t('features-in-stock')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+            </SubMenu>
+            <SubMenu
+                icon={<DeploymentUnitOutlined />}
+                key="business-management"
+                title={t('business-management')}
+            >
+                {getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="business-management-credits">
+                        <Link href="/credits">{t('credits')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="business-management-orders">
+                        <Link href="/customer-orders">{t('customer-orders')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.Payment).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="business-management-payments">
+                        <Link href="/payments">{t('payments')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -410,6 +448,22 @@ const SideMenu: FC = () => {
                 key="preparation-management"
                 title={t('preparation-management')}
             >
+                {getModesFromPermissions(permissions, Table.Load).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="preparation-management-loads">
+                        <Link href="/loads">{t('loads')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
+                {getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="preparation-management-boxes">
+                        <Link href="/boxes">{t('boxes')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 {getModesFromPermissions(permissions, Table.Delivery).includes(ModeEnum.Read) ? (
                     <Menu.Item key="preparation-management-deliveries">
                         <Link href="/deliveries">{t('deliveries')}</Link>
@@ -422,15 +476,6 @@ const SideMenu: FC = () => {
                 ) ? (
                     <Menu.Item key="preparation-management-shipping-units">
                         <Link href="/shipping-units">{t('shipping-units')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
-                    ModeEnum.Read
-                ) ? (
-                    <Menu.Item key="preparation-management-boxes">
-                        <Link href="/boxes">{t('boxes')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -460,13 +505,6 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )} */}
-                {getModesFromPermissions(permissions, Table.Load).includes(ModeEnum.Read) ? (
-                    <Menu.Item key="preparation-management-loads">
-                        <Link href="/loads">{t('loads')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
             </SubMenu>
             <SubMenu icon={<SlidersOutlined />} key="monitoring" title={t('monitoring')}>
                 {getModesFromPermissions(permissions, Table.RecordHistory).includes(
@@ -474,15 +512,6 @@ const SideMenu: FC = () => {
                 ) ? (
                     <Menu.Item key="monitoring-record-history">
                         <Link href="/record-history">{t('record-history')}</Link>
-                    </Menu.Item>
-                ) : (
-                    <></>
-                )}
-                {getModesFromPermissions(permissions, Table.StatusHistory).includes(
-                    ModeEnum.Read
-                ) ? (
-                    <Menu.Item key="monitoring-status-history">
-                        <Link href="/status-history">{t('status-history')}</Link>
                     </Menu.Item>
                 ) : (
                     <></>
@@ -496,14 +525,23 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
-                <Menu.Item key="monitoring-dashboard">
-                    <Link href="/dashboard">{t('dashboard')}</Link>
-                </Menu.Item>
+                {getModesFromPermissions(permissions, Table.StatusHistory).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="monitoring-status-history">
+                        <Link href="/status-history">{t('status-history')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 <Menu.Item key="monitoring-metabase">
                     <Link href={bi_link}>{t('bi-solution')}</Link>
                 </Menu.Item>
                 <Menu.Item key="monitoring-notifications">
                     <Link href="/notifications">{t('notifications')}</Link>
+                </Menu.Item>
+                <Menu.Item key="monitoring-dashboard">
+                    <Link href="/dashboard">{t('dashboard')}</Link>
                 </Menu.Item>
             </SubMenu>
             <Menu.Item icon={<QuestionCircleOutlined />} key="about">

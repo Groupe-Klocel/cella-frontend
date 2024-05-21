@@ -103,9 +103,13 @@ const ListComponent = (props: IListProps) => {
 
     searchCriterias = props.searchCriteria;
 
-    const specificSearch = searchCriterias?.scope;
-    let scope = '';
-    specificSearch ? (scope = `_${specificSearch}`) : (scope = '');
+    const mandatory_Filter = searchCriterias?.scope
+        ? `_${searchCriterias.scope}`
+        : searchCriterias?.category
+        ? `_${searchCriterias.category}`
+        : searchCriterias?.orderType
+        ? `_${searchCriterias.orderType}`
+        : '';
     // #endregion
 
     // #region extract data from modelV2
@@ -181,8 +185,10 @@ const ListComponent = (props: IListProps) => {
         });
 
     //retrieve saved sorters from cookies if any
-    const savedSorters = cookie.get(`${props.dataModel.resolverName}SavedSorters${scope}`)
-        ? JSON.parse(cookie.get(`${props.dataModel.resolverName}SavedSorters${scope}`)!)
+    const savedSorters = cookie.get(
+        `${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`
+    )
+        ? JSON.parse(cookie.get(`${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`)!)
         : undefined;
 
     // extract id, name and link from props.dataModel.fieldsInfo where link is not null
@@ -314,9 +320,9 @@ const ListComponent = (props: IListProps) => {
     // #region SEARCH OPERATIONS
 
     if (props.searchable) {
-        if (cookie.get(`${props.dataModel.resolverName}SavedFilters${scope}`)) {
+        if (cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)) {
             const savedFilters = JSON.parse(
-                cookie.get(`${props.dataModel.resolverName}SavedFilters${scope}`)!
+                cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)!
             );
 
             searchCriterias = { ...savedFilters, ...props.searchCriteria };
@@ -374,7 +380,7 @@ const ListComponent = (props: IListProps) => {
     );
 
     const handleReset = () => {
-        cookie.remove(`${props.dataModel.resolverName}SavedFilters${scope}`);
+        cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
         !props.searchCriteria ? setSearch({}) : setSearch({ ...props.searchCriteria });
         resetForm = true;
         for (const obj of filterFields) {
@@ -395,7 +401,7 @@ const ListComponent = (props: IListProps) => {
                     ...props.searchCriteria
                 };
 
-                cookie.remove(`${props.dataModel.resolverName}SavedFilters${scope}`);
+                cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
                 showBadge = false;
                 const savedFilters: any = {};
 
@@ -412,7 +418,7 @@ const ListComponent = (props: IListProps) => {
 
                     if (Object.keys(savedFilters).length > 0) {
                         cookie.set(
-                            `${props.dataModel.resolverName}SavedFilters${scope}`,
+                            `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
                             JSON.stringify(savedFilters)
                         );
                         showBadge = true;
@@ -687,12 +693,12 @@ const ListComponent = (props: IListProps) => {
         await setSort(tmp_array);
         if (tmp_array.length > 0) {
             cookie.set(
-                `${props.dataModel.resolverName}SavedSorters${scope}`,
+                `${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`,
                 JSON.stringify(tmp_array)
             );
         }
         if (orderByFormater(sorter) === null) {
-            cookie.remove(`${props.dataModel.resolverName}SavedSorters${scope}`);
+            cookie.remove(`${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`);
         }
     };
 
@@ -723,7 +729,7 @@ const ListComponent = (props: IListProps) => {
                                                     <Badge
                                                         size="default"
                                                         count={
-                                                            !specificSearch
+                                                            !mandatory_Filter
                                                                 ? Object.keys(search).length
                                                                 : Object.keys(search).length - 1
                                                         }

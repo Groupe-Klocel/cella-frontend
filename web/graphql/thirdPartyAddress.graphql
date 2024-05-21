@@ -33,6 +33,7 @@ query GetThirdPartyAddresses(
         results {
             id
             category
+            categoryText
             status
             entityName
             entityCode

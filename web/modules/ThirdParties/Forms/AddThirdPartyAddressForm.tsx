@@ -428,7 +428,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                     <Checkbox />
                 </Form.Item>
 
-                <Form.Item label={t('d:vatRate')} name="vatRate">
+                <Form.Item label={t('d:vatRate')} name="vatRateCode">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {

@@ -28,6 +28,21 @@ query GetThirdParties(
         results {
             id
             name
+            description
+            defaultCurrency
+            defaultCurrencyText
+            defaultPaymentTerms
+            defaultPaymentTermsText
+            defaultPaymentAccount
+            defaultPaymentAccountText
+            defaultDiscount
+            defaultPaymentMethod
+            defaultPaymentMethodText
+            vatRateCode
+            vatRateCodeText
+            vatEligible
+            priceType
+            priceTypeText
         }
     }
 }

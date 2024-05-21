@@ -113,7 +113,11 @@ import {
     useGetRuleVersionIdsQuery,
     GetRuleVersionIdsQuery,
     useGetRuleVersionConfigIdsQuery,
-    GetRuleVersionConfigIdsQuery
+    GetRuleVersionConfigIdsQuery,
+    useGetOrderLineIdsQuery,
+    GetOrderLineIdsQuery,
+    useGetCarrierShippingModeIdsQuery,
+    GetCarrierShippingModeIdsQuery
 } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import parameters from '../../../common/parameters.json';
@@ -519,6 +523,35 @@ const useCarrierIds = (search: any, page: number, itemsPerPage: number, sort: an
     );
 
     return carriers;
+};
+
+const useCarrierShippingModeIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'name',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const carrierShippingModes = useGetCarrierShippingModeIdsQuery<
+        Partial<GetCarrierShippingModeIdsQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage
+    });
+
+    return carrierShippingModes;
 };
 
 const useConfigs = (search: any, page: number, itemsPerPage: number, sort: any) => {
@@ -1573,6 +1606,35 @@ const useRuleVersionConfigIds = (search: any, page: number, itemsPerPage: number
     return ruleVersionConfigIds;
 };
 
+const useOrderLineIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const orderLineIds = useGetOrderLineIdsQuery<Partial<GetOrderLineIdsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: search,
+            orderBy: newSort,
+            page: page,
+            itemsPerPage: itemsPerPage
+        }
+    );
+
+    return orderLineIds;
+};
+
 export {
     useArticles,
     useArticleLus,
@@ -1583,6 +1645,7 @@ export {
     useBuildings,
     useCarriers,
     useCarrierIds,
+    useCarrierShippingModeIds,
     useConfigs,
     useEquipment,
     useEquipmentIds,
@@ -1622,5 +1685,6 @@ export {
     useGetPermissions,
     useHandlingUnitModels,
     useRuleVersionIds,
-    useRuleVersionConfigIds
+    useRuleVersionConfigIds,
+    useOrderLineIds
 };

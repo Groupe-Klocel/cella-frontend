@@ -61,6 +61,8 @@ query GetAllArticles(
             cubingTypeText
             baseUnitRotationText
             featureTypeText
+            vatRateCode
+            vatRateCodeText
         }
     }
 }

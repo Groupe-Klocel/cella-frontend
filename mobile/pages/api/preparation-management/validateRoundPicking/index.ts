@@ -116,7 +116,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         `;
 
         const defaultRoundLocationVariables = {
-            filters: { name: defaultRoundParameterResult.parameters.results[0].value }
+            filters: { scope: 'vat_rate', code: '20' }
         };
 
         const defaultRoundLocationResult = await graphqlRequestClient.request(
