@@ -80,7 +80,7 @@
     "handlingUnitContent_handlingUnit_handlingUnitOutbound_name": "Box",
     "handlingUnitContent_handlingUnit_handlingUnitOutbounds_name": "Box",
     "handlingUnitContent_handlingUnit_stockOwner_name": "Stock Owner",
-    "handlingUnitContent_quantity": "Quantity",
+    "handlingUnitContent_quantity": "Content Quantity",
     "handlingUnitContent_reservation": "Reservation",
     "handlingUnitContentId": "Article",
     "handlingUnitContentOutboundId": "Box Line ID",
@@ -729,5 +729,14 @@
     "amount": "Amount",
     "address": "Address",
     "general": "General",
-    "documentAttached": "Attached Document"
+    "documentAttached": "Attached Document",
+    "deliveryTypeText": "Delivery Type",
+    "orderTypeText": "Order Type",
+    "orderedQuantity": "Ordered Quantity",
+    "invoicePdfFile": "Invoice (pdf)",
+    "paymentDate": "Payment Date",
+    "payment_paymentAccountText": "Payment Account",
+    "order_orderTypeText": "Order Type",
+    "genericDeliveryComment": "Delivery instructions",
+    "originalOrder" : "Original order"
 }
