@@ -21,33 +21,32 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ArticleModelV2 } from 'models/ArticleModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { SingleParameterModelV2 } from 'models/SingleParameterModelV2';
 import useTranslation from 'next-translate/useTranslation';
-import { addArticleRoutes } from 'modules/Articles/Static/articlesRoutes';
+import { articlesSubFamiliesRoutes } from 'modules/ArticlesSubFamilies/Static/articlesSubFamiliesRoutes';
 import { META_DEFAULTS } from '@helpers';
-import configs from '../../../../common/configs.json';
+import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const AddArticlePage: PageComponent = () => {
+const AddArticleSubFamilyPage: PageComponent = () => {
     const { t } = useTranslation();
 
     const router = useRouter();
 
     //enter between {} the default values for the form (for instance status "In progress"))
-    const defaultValues = { status: configs.ARTICLE_STATUS_IN_PROGRESS };
+    const defaultValues = { scope: 'article_subfamily' };
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddItemComponent
-                dataModel={ArticleModelV2}
+            <AddConfigParamComponent
+                dataModel={SingleParameterModelV2}
                 headerComponent={
                     <HeaderContent
-                        title={t('actions:add-article')}
-                        routes={addArticleRoutes}
-                        onBack={() => router.push(`/articles`)}
+                        title={t('actions:add-articles-subfamily')}
+                        routes={articlesSubFamiliesRoutes}
+                        onBack={() => router.back()}
                     />
                 }
                 extraData={
@@ -55,13 +54,13 @@ const AddArticlePage: PageComponent = () => {
                         ? defaultValues
                         : undefined
                 }
-                routeAfterSuccess={`/articles/:id`}
-                stringCodeScopes={['article_family', 'article_subfamily']}
+                comeFromFiltered={true}
+                routeAfterSuccess={`/articles-subfamilies`}
             />
         </>
     );
 };
 
-AddArticlePage.layout = MainLayout;
+AddArticleSubFamilyPage.layout = MainLayout;
 
-export default AddArticlePage;
+export default AddArticleSubFamilyPage;
