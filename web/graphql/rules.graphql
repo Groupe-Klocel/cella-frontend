@@ -1,0 +1,36 @@
+mutation CancelRule($id: String!) {
+    deleteRule(id: $id)
+}
+
+query GetRuleById($id: String!) {
+    rule(id: $id) {
+        id
+        name
+        activeVersion
+        status
+        description
+    }
+}
+
+mutation UpdateRule($id: String!, $input: UpdateRuleInput!) {
+    updateRule(id: $id, input: $input) {
+        id
+        name
+        activeVersion
+        status
+        description
+    }
+}
+
+mutation CreateRule($input: CreateRuleInput!) {
+    createRule(input: $input) {
+        id
+        name
+        status
+        description
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
