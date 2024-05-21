@@ -1,4 +1,5 @@
 {
+    "buildCommand": "graphql-codegen --config codegen.yml && next build",
     "functions": {
         "pages/api/**/*": {
             "maxDuration": 300
