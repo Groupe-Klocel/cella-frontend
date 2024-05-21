@@ -35,6 +35,10 @@ const menuItemDatas = [
         title: 'menu:round-packing',
         path: '/round-packing'
     },
+    {
+        title: 'menu:pick-and-pack',
+        path: '/pick-and-pack'
+    },
     // {
     //     title: 'menu:round',
     //     path: '/'
@@ -49,7 +53,7 @@ const menuItemDatas = [
     }
 ];
 
-const ReceptionManagementPage: PageComponent = () => {
+const PreparationManagementPage: PageComponent = () => {
     const { t } = useTranslation();
     const router = useRouter();
     return (
@@ -70,6 +74,6 @@ const ReceptionManagementPage: PageComponent = () => {
     );
 };
 
-ReceptionManagementPage.layout = MainLayout;
+PreparationManagementPage.layout = MainLayout;
 
-export default ReceptionManagementPage;
+export default PreparationManagementPage;

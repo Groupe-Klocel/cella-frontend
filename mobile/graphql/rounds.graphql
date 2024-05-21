@@ -35,6 +35,10 @@ query SimpleGetRounds(
         results {
             id
             name
+            equipment {
+                name
+            }
+            expectedDeliveryDate
         }
     }
 }
