@@ -417,6 +417,10 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
             options[queryName].results.forEach((item: any) => {
                 let valueToDisplay: any = item[`${fieldToDisplay}`];
 
+                // check if fieldToDisplay is a nested field (example: fieldToDisplay = 'barcode{name}')
+                const match = fieldToDisplay?.match(/\{(.+?)\}/);
+                fieldToDisplay = match ? match[1] : fieldToDisplay;
+
                 Object.values(item).forEach((subItem: any) => {
                     subItem == null
                         ? item.id
