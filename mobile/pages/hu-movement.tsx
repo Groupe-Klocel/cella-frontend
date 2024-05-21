@@ -192,6 +192,14 @@ const HuMovement: PageComponent = () => {
                         storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
                             .handlingUnitContents[0].id
                     }
+                    stockOwnerId={
+                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                            .handlingUnitContents[0].stockOwnerId
+                    }
+                    stockStatus={
+                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                            .handlingUnitContents[0].stockStatus
+                    }
                 />
             ) : (
                 <></>
