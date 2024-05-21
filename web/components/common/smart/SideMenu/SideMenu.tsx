@@ -262,6 +262,14 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                {getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) ? (
+                    <Menu.Item key="articles-article-prices">
+                        {' '}
+                        <Link href="/article-prices">{t('article-prices')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
                 <SubMenu key="articles-features" title={t('features')}>
                     {getModesFromPermissions(permissions, Table.FeatureCode).includes(
                         ModeEnum.Read
