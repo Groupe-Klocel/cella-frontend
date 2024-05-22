@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Alert, Layout } from 'antd';
-
 import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
@@ -281,6 +280,7 @@ const AddFeatureComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =>
     // # subregion create filter (dynamic on another field or static) if present in the optionTable
     const [processedOptions, setProcessedOptions] = useState<any>([]);
     const [dependentFields, setDependentFields] = useState<any>([]);
+
     useEffect(() => {
         const processedOptionsTables = optionsTables.map((obj) => {
             const matchingKeys = checkValueInKey(obj);
@@ -363,6 +363,35 @@ const AddFeatureComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =>
         return;
     }
 
+    //bloc query
+    async function getFeatureTypeDetails(
+        featureType: number | undefined
+    ): Promise<{ [key: string]: any } | undefined> {
+        const query = gql`
+            query featureTypeDetails($filters: FeatureTypeDetailSearchFilters) {
+                featureTypeDetails(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        featureCode {
+                            id
+                            name
+                            dateType
+                        }
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: { featureType: [`${featureType}`] }
+        };
+        const result = await graphqlRequestClient.request(query, variables);
+        return result;
+    }
+    //end bloc query
+
     useEffect(() => {
         async function fetchData() {
             const promises = processedOptions.map((element: any) =>
@@ -373,16 +402,27 @@ const AddFeatureComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =>
                 )
             );
             const options = await Promise.all(promises);
-            const optionsObject: { [key: string]: any } = {};
-            options.forEach((item: any) => {
-                if (item) {
-                    const key = Object.keys(item)[0];
-                    optionsObject[key] = item[key];
-                }
-            });
-
-            if (Object.keys(optionsObject).length > 0) {
-                setOptionsList(optionsObject);
+            //
+            let result;
+            if (props.extraData.featureType)
+                result = await getFeatureTypeDetails(props.extraData.featureType);
+            const filteredOptionsObject: { [key: string]: any } = {};
+            if (result) {
+                const tmpArray: Array<any> = [];
+                result.featureTypeDetails.results.forEach((elm: any) => {
+                    let tmpObj: { [key: string]: any } = {};
+                    tmpObj = {
+                        key: elm['featureCode']['id'],
+                        text: elm['featureCode']['name'],
+                        type: elm['featureCode']['dateType']
+                    };
+                    tmpArray.push(tmpObj);
+                });
+                filteredOptionsObject['FeatureCode'] = tmpArray;
+            }
+            //
+            if (Object.keys(filteredOptionsObject).length > 0) {
+                setOptionsList(filteredOptionsObject);
             }
         }
         fetchData();

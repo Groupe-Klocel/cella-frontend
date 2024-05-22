@@ -299,10 +299,17 @@ function flatten(data: any) {
     return result;
 }
 
-const isStringDate = (dateString: string) => {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})?$/;
-    const dateFormattedRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}$/;
-    if (!dateRegex.test(dateString) && !dateFormattedRegex.test(dateString)) return false;
+const isStringDateTime = (dateString: string) => {
+    const dateTimeZuluRegex =
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})?$/;
+    const dateTimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}$/;
+    const dateTimeOffsetRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
+    if (
+        !dateTimeZuluRegex.test(dateString) &&
+        !dateTimeRegex.test(dateString) &&
+        !dateTimeOffsetRegex.test(dateString)
+    )
+        return false;
 
     if (isNaN(Date.parse(dateString))) return false;
 
@@ -340,6 +347,38 @@ function formatUTCLocaleDateTime(date: any, locale: any) {
     date = new Date(date);
     const dateUTC = new Date(setUTCDateTime(date));
     return formatLocaleDateTime(dateUTC, locale);
+}
+
+const isStringDate = (dateString: string) => {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) return false;
+
+    if (isNaN(Date.parse(dateString))) return false;
+
+    if (!moment(dateString, moment.ISO_8601).isValid()) return false;
+
+    return true;
+};
+
+function setUTCDate(date: string) {
+    const dateValue = new Date(date);
+    return moment(
+        new Date(Date.UTC(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate()))
+    ).format();
+}
+
+function formatLocaleDate(date: any, locale: any) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return date.toLocaleString(locale, {
+        dateStyle: 'short',
+        timeZone: timezone
+    });
+}
+
+function formatUTCLocaleDate(date: any, locale: any) {
+    date = new Date(date);
+    const dateUTC = new Date(setUTCDate(date));
+    return formatLocaleDate(dateUTC, locale);
 }
 
 function removeDuplicatesAndSort(arr: any[]) {
@@ -548,10 +587,14 @@ export {
     getKeys,
     getModesFromPermissions,
     flatten,
+    isStringDateTime,
     setUTCDateTime,
     formatLocaleDateTime,
     formatUTCLocaleDateTime,
     isStringDate,
+    setUTCDate,
+    formatLocaleDate,
+    formatUTCLocaleDate,
     removeDuplicatesAndSort,
     pascalToSnakeUpper,
     checkOperator,
