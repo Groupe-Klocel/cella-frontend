@@ -19,7 +19,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { FC } from 'react';
 import { Descriptions, Typography, Row, Col } from 'antd';
-import { formatDigits, formatUTCLocaleDateTime, isStringDate, isFloat } from '@helpers';
+import {
+    formatDigits,
+    formatUTCLocaleDateTime,
+    isStringDateTime,
+    formatUTCLocaleDate,
+    isStringDate,
+    isFloat
+} from '@helpers';
 import { CheckCircleOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import useTranslation from 'next-translate/useTranslation';
 import { isString } from 'lodash';
@@ -71,8 +78,10 @@ const DetailsList: FC<IDetailsListProps> = ({
                             ' '
                         ) : isFloat(details[key]) ? (
                             formatDigits(details[key])
-                        ) : isString(details[key]) && isStringDate(details[key]) ? (
+                        ) : isString(details[key]) && isStringDateTime(details[key]) ? (
                             formatUTCLocaleDateTime(details[key], router.locale)
+                        ) : isString(details[key]) && isStringDate(details[key]) ? (
+                            formatUTCLocaleDate(details[key], router.locale)
                         ) : key === 'logo' ? (
                             <img
                                 src={details.logo}

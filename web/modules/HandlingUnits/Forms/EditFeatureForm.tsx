@@ -18,21 +18,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { FC, useEffect, useState } from 'react';
-import { Button, Form, Modal, Space } from 'antd';
+import { Button, Form, Modal, Space, DatePicker, Input, Select } from 'antd';
 import { StepsPanel, WrapperForm, WrapperStepContent } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-
 import { useRouter } from 'next/router';
-
-import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
-import { FormGroup } from 'modules/Crud/submodules/FormGroup';
-import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
+import { showError, showSuccess, showInfo, useUpdate, setUTCDateTime } from '@helpers';
+import { FilterFieldType, FormDataType, ModelType, FormOptionType } from 'models/ModelsV2';
 import moment from 'moment';
 import {
     GetHandlingUnitContentByIdQuery,
     useGetHandlingUnitContentByIdQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+
+require('moment/locale/fr'); // French
 
 export interface IEditItemFormProps {
     id: string;
@@ -44,6 +43,7 @@ export interface IEditItemFormProps {
     routeOnCancel?: string;
     setFormInfos: (formInfos: any) => void;
     dependentFields: Array<string>;
+    setIsDateType: any;
 }
 
 export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) => {
@@ -54,6 +54,11 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [imageData, setImageData] = useState<string | null>(null);
     const { graphqlRequestClient } = useAuth();
+    const errorMessageEmptyInput = t('messages:error-message-empty-input');
+
+    moment.locale(router.locale);
+    const localeData = moment.localeData();
+    const localeDateTimeFormat = localeData.longDateFormat('L');
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -172,6 +177,7 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
 
     // function to reset data in case of fields dependencies
     const [changedFormValues, setChangedFormValues] = useState<any>({});
+    const optionsList = props.editSteps[current][0].subOptions;
 
     useEffect(() => {
         if (
@@ -185,7 +191,24 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                 }
             });
         }
-    }, [props.dependentFields, changedFormValues]);
+        if (form.getFieldsValue(true)) {
+            const fields = form.getFieldsValue(true);
+            const id = fields['featureCodeId'];
+            optionsList?.forEach((item: any) => {
+                if (item['key'] === id) {
+                    props.setIsDateType.setIsDateType(item['type']);
+                }
+            });
+        }
+        if (form.getFieldsValue(true) && changedFormValues['featureCodeId']) {
+            const id = changedFormValues['featureCodeId'];
+            optionsList?.forEach((item: any) => {
+                if (item['key'] === id) {
+                    props.setIsDateType.setIsDateType(item['type']);
+                }
+            });
+        }
+    }, [props.dependentFields, changedFormValues, optionsList]);
 
     //check fields if contain undefined value and set field to null
     const checkUndefinedValues = () => {
@@ -203,25 +226,39 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
         form.validateFields()
             .then(() => {
                 checkUndefinedValues();
+
+                let value = form.getFieldsValue(true)['value'];
+                if (props.setIsDateType.isDateType) {
+                    const valueFromField = form.getFieldsValue(true)['value'];
+                    value = moment(valueFromField).format('YYYY-MM-DD');
+                }
+                const inputs = {
+                    featureCodeId: form.getFieldsValue(true)['featureCodeId'],
+                    value: value
+                };
+
                 mutate({
                     id: props.id,
-                    input: { ...form.getFieldsValue(true) }
+                    input: { ...inputs }
                 });
             })
             .catch((err) => {
                 showError(t('errors:DB-000111'));
             });
     };
-
     useEffect(() => {
         const tmp_details = { ...props.details };
-
         if (props.editSteps.length > 0) {
             let allFields = props.editSteps[0].map((item) => {
                 // DatePicker's value only accept moment, Conversion string -> moment required
-                Object.keys(tmp_details).forEach((key) => {
+                Object.keys(tmp_details).forEach((key: any) => {
                     if (key == item.name && item.type == FormDataType.Calendar) {
-                        tmp_details[key] = moment(tmp_details[key]);
+                        const momentDate = moment(tmp_details[key]);
+                        if (tmp_details[key] && momentDate.isValid()) {
+                            tmp_details[key] = moment(setUTCDateTime(tmp_details[key]));
+                        } else {
+                            tmp_details[key] = undefined;
+                        }
                     }
                     if (key === 'logo') {
                         setImageData(tmp_details[key]);
@@ -237,7 +274,12 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                         // DatePicker's value only accept moment, Conversion string -> moment required
                         Object.keys(tmp_details).forEach((key) => {
                             if (key == item.name && item.type == FormDataType.Calendar) {
-                                tmp_details[key] = moment(tmp_details[key]);
+                                const momentDate = moment(tmp_details[key]);
+                                if (tmp_details[key] && momentDate.isValid()) {
+                                    tmp_details[key] = moment(setUTCDateTime(tmp_details[key]));
+                                } else {
+                                    tmp_details[key] = undefined;
+                                }
                             }
                         });
 
@@ -245,7 +287,12 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                     })
                 );
             }
-
+            if (tmp_details['featureCode'] && tmp_details['featureCode']['dateType']) {
+                const momentDate = moment(tmp_details['value']);
+                if (tmp_details['value'] && momentDate.isValid()) {
+                    tmp_details['value'] = moment(setUTCDateTime(tmp_details['value']));
+                }
+            }
             Object.keys(tmp_details).forEach((key) => {
                 if (!allFields.includes(key)) {
                     delete tmp_details[key];
@@ -290,7 +337,6 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
             })
             .catch((err) => console.log(err));
     };
-
     return (
         <WrapperForm>
             {steps.length > 1 && <StepsPanel currentStep={current} steps={steps} />}
@@ -305,11 +351,53 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                         setUnsavedChanges(true);
                     }}
                 >
-                    <FormGroup
-                        inputs={props.editSteps[current]}
-                        setValues={form.setFieldsValue}
-                        imageData={imageData ?? undefined}
-                    />
+                    <Form.Item
+                        label={t('d:featureCodeId')}
+                        name="featureCodeId"
+                        rules={[{ required: true, message: errorMessageEmptyInput }]}
+                    >
+                        <Select
+                            disabled={false}
+                            allowClear
+                            showSearch
+                            filterOption={(inputValue, option) =>
+                                option!.props.children
+                                    .toUpperCase()
+                                    .indexOf(inputValue.toUpperCase()) !== -1
+                            }
+                            mode={undefined}
+                        >
+                            {props.editSteps[current][0].subOptions?.map(
+                                (option: FormOptionType) => (
+                                    <Select.Option key={option.key} value={option.key}>
+                                        {option.text}
+                                    </Select.Option>
+                                )
+                            )}
+                        </Select>
+                    </Form.Item>
+                    {props.setIsDateType.isDateType ? (
+                        <Form.Item
+                            label={t('d:value')}
+                            name="value"
+                            hidden={false}
+                            rules={[{ required: true, message: errorMessageEmptyInput }]}
+                            initialValue={moment().startOf('day')}
+                        >
+                            <DatePicker format={localeDateTimeFormat} />
+                        </Form.Item>
+                    ) : (
+                        <Form.Item
+                            name={'value'}
+                            label={t('d:value')}
+                            key={'value'}
+                            hidden={false}
+                            rules={[{ required: true, message: errorMessageEmptyInput }]}
+                            normalize={(value) => (value ? value : undefined)}
+                        >
+                            <Input disabled={false} maxLength={100} />
+                        </Form.Item>
+                    )}
                 </Form>
             </WrapperStepContent>
             {current === 0 && steps.length > 1 ? (

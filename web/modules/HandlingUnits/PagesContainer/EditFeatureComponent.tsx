@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ContentSpin } from '@components';
 import { Alert, Layout } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
-
 import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import {
@@ -363,6 +362,35 @@ const EditFeatureComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
     }, [formInfos, detail]);
     //#end sub-region
 
+    //bloc query
+    async function getFeatureTypeDetails(
+        featureType: number | undefined
+    ): Promise<{ [key: string]: any } | undefined> {
+        const query = gql`
+            query featureTypeDetails($filters: FeatureTypeDetailSearchFilters) {
+                featureTypeDetails(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        featureCode {
+                            id
+                            name
+                            dateType
+                        }
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: { featureType: [`${featureType}`] }
+        };
+        const result = await graphqlRequestClient.request(query, variables);
+        return result;
+    }
+    //end bloc query
+
     async function getOptions(
         tableName: string | undefined,
         fieldToDisplay: string | undefined,
@@ -436,7 +464,7 @@ const EditFeatureComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
         }
         return;
     }
-
+    const [isDateType, setIsDateType] = useState(false);
     useEffect(() => {
         async function fetchData() {
             const promises = processedOptions.map((element: any) =>
@@ -448,35 +476,33 @@ const EditFeatureComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
             );
 
             const options = await Promise.all(promises);
+            //
+            const ft =
+                detail.data.handlingUnitContentFeature?.handlingUnitContent.article.featureType;
+            const result = await getFeatureTypeDetails(ft);
 
-            const optionsObject: { [key: string]: any } = {};
-            options.forEach((item: any) => {
-                if (Object.keys(item).length > 0) {
-                    if (
-                        detail &&
-                        detail.data[props.dataModel.endpoints.detail] !== undefined &&
-                        detail.data[props.dataModel.endpoints.detail] !== null
-                    ) {
-                        const itemId = detail.data[props.dataModel.endpoints.detail].id;
-                        //remove id from option object if present
-                        const key = Object.keys(item)[0];
-                        const index = item[key].findIndex((element: any) => element.key === itemId);
-                        if (index > -1) {
-                            item[key].splice(index, 1);
-                        }
-                    }
-                    if (item) {
-                        const key = Object.keys(item)[0];
-                        optionsObject[key] = item[key];
-                    }
-                }
-            });
-            if (Object.keys(optionsObject).length > 0) {
-                setOptionsList(optionsObject);
+            const filteredOptionsObject: { [key: string]: any } = {};
+            if (result) {
+                const tmpArray: Array<any> = [];
+                result.featureTypeDetails.results.forEach((elm: any) => {
+                    let tmpObj: { [key: string]: any } = {};
+                    tmpObj = {
+                        key: elm['featureCode']['id'],
+                        text: elm['featureCode']['name'],
+                        type: elm['featureCode']['dateType']
+                    };
+                    tmpArray.push(tmpObj);
+                });
+                filteredOptionsObject['FeatureCode'] = tmpArray;
+            }
+
+            if (Object.keys(filteredOptionsObject).length > 0) {
+                setOptionsList(filteredOptionsObject);
             }
         }
-        fetchData();
-    }, [processedOptions]);
+        if (detail.data.handlingUnitContentFeature?.handlingUnitContent.article.featureType)
+            fetchData();
+    }, [processedOptions, detail.data]);
     // #endregion
 
     // #region handle checks from external tables fields
@@ -719,6 +745,7 @@ const EditFeatureComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                                     detailFields={detailFields}
                                     setFormInfos={setFormInfos}
                                     dependentFields={dependentFields}
+                                    setIsDateType={{ isDateType, setIsDateType }}
                                 />
                             ) : (
                                 <ContentSpin />

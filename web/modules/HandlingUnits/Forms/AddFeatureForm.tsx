@@ -18,19 +18,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { useState, useEffect, FC } from 'react';
-import { Form, Button, Space, Modal } from 'antd';
+import { Form, Button, Space, Modal, DatePicker, Input, Select } from 'antd';
 import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
-
+import moment from 'moment';
 import { showError, showSuccess, showInfo, useCreate } from '@helpers';
-import { FilterFieldType, ModelType } from 'models/ModelsV2';
-import { FormGroup } from '../../Crud/submodules/FormGroup';
+import { FilterFieldType, ModelType, FormOptionType } from 'models/ModelsV2';
 import {
     GetHandlingUnitContentByIdQuery,
     useGetHandlingUnitContentByIdQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+
+require('moment/locale/fr'); // French
 
 export interface IAddItemFormProps {
     dataModel: ModelType;
@@ -47,9 +48,13 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
     const router = useRouter();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const { graphqlRequestClient } = useAuth();
-
+    const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const [current, setCurrent] = useState(0);
     const [form] = Form.useForm();
+
+    moment.locale(router.locale);
+    const localeData = moment.localeData();
+    const localeDateTimeFormat = localeData.longDateFormat('L');
 
     // #region extract data from modelV2
     const detailFields = Object.keys(props.dataModel.fieldsInfo).filter(
@@ -182,7 +187,18 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
 
     // function to reset data in case of fields dependencies
     const [changedFormValues, setChangedFormValues] = useState<any>({});
+    const [isDateType, setIsDateType] = useState(false);
+    const optionsList = props.addSteps[current][0].subOptions;
+
     useEffect(() => {
+        if (form.getFieldsValue(true) && changedFormValues['featureCodeId']) {
+            const id = changedFormValues['featureCodeId'];
+            optionsList?.forEach((item: any) => {
+                if (item['key'] === id) {
+                    setIsDateType(item['type']);
+                }
+            });
+        }
         if (
             form.getFieldsValue(true) &&
             props.dependentFields &&
@@ -200,10 +216,22 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
         Modal.confirm({
             title: t('messages:create-confirm'),
             onOk: () => {
+                delete props.extraData['featureType'];
+
                 form.validateFields()
                     .then(() => {
+                        let value = form.getFieldsValue(true)['value'];
+                        if (isDateType) {
+                            const valueFromField = form.getFieldsValue(true)['value'];
+                            value = moment(valueFromField).format('YYYY-MM-DD');
+                        }
+                        const inputs = {
+                            featureCodeId: form.getFieldsValue(true)['featureCodeId'],
+                            value: value
+                        };
+
                         mutate({
-                            input: { ...form.getFieldsValue(true), ...props.extraData }
+                            input: { ...inputs, ...props.extraData }
                         });
                     })
                     .catch((err) => {
@@ -254,7 +282,54 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                         setUnsavedChanges(true);
                     }}
                 >
-                    <FormGroup inputs={props.addSteps[current]} setValues={form.setFieldsValue} />
+                    <Form.Item
+                        label={t('d:featureCodeId')}
+                        name="featureCodeId"
+                        rules={[{ required: true, message: errorMessageEmptyInput }]}
+                        initialValue={undefined}
+                    >
+                        <Select
+                            disabled={false}
+                            allowClear
+                            showSearch
+                            filterOption={(inputValue, option) =>
+                                option!.props.children
+                                    .toUpperCase()
+                                    .indexOf(inputValue.toUpperCase()) !== -1
+                            }
+                            mode={undefined}
+                        >
+                            {props.addSteps[current][0].subOptions?.map(
+                                (option: FormOptionType) => (
+                                    <Select.Option key={option.key} value={option.key}>
+                                        {option.text}
+                                    </Select.Option>
+                                )
+                            )}
+                        </Select>
+                    </Form.Item>
+                    {isDateType ? (
+                        <Form.Item
+                            label={t('d:value')}
+                            name="value"
+                            hidden={false}
+                            rules={[{ required: true, message: errorMessageEmptyInput }]}
+                            initialValue={moment().startOf('day')}
+                        >
+                            <DatePicker format={localeDateTimeFormat} />
+                        </Form.Item>
+                    ) : (
+                        <Form.Item
+                            name={'value'}
+                            label={t('d:value')}
+                            key={'value'}
+                            hidden={false}
+                            rules={[{ required: true, message: errorMessageEmptyInput }]}
+                            normalize={(value) => (value ? value : undefined)}
+                        >
+                            <Input disabled={false} maxLength={100} />
+                        </Form.Item>
+                    )}
                 </Form>
             </WrapperStepContent>
             {current === 0 && steps.length > 1 ? (
