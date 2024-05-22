@@ -26,14 +26,14 @@ import MainLayout from '../../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
-import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
+import { paymentsRoutes as itemRoutes } from 'modules/Payments/Static/paymentsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const CustomerOrderLinePage: PageComponent = () => {
+const PaymentLinePage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -44,22 +44,22 @@ const CustomerOrderLinePage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     // #region to customize information
-    const customerOrderDetailBreadCrumb = [
+    const paymentDetailBreadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.order_name}`,
-            path: '/customer-orders/' + data?.orderId
+            breadcrumbName: `${data?.payment_name}`,
+            path: '/payments/' + data?.paymentId
         }
     ];
 
     const breadCrumb = [
-        ...customerOrderDetailBreadCrumb,
+        ...paymentDetailBreadCrumb,
         {
             breadcrumbName: `${t('common:payment-line')} ${data?.payment_name}`
         }
     ];
 
-    const pageTitle = `${data?.order_name} - ${t('common:payment-line')} ${data?.payment_name}`;
+    const pageTitle = `${t('common:payment-line')} ${data?.payment_name}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -68,7 +68,22 @@ const CustomerOrderLinePage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
-        actionsComponent: undefined
+        onBackRoute: rootPath,
+        actionsComponent: !data?.system ? (
+            <Space>
+                {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
+                    <LinkButton
+                        title={t('actions:edit')}
+                        path={`${rootPath}/line/edit/${id}`}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
+            </Space>
+        ) : (
+            <></>
+        )
     };
     // #endregion
 
@@ -87,6 +102,6 @@ const CustomerOrderLinePage: PageComponent = () => {
     );
 };
 
-CustomerOrderLinePage.layout = MainLayout;
+PaymentLinePage.layout = MainLayout;
 
-export default CustomerOrderLinePage;
+export default PaymentLinePage;
