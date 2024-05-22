@@ -369,5 +369,6 @@
     "purchase-order-line-features": "Reception Line Features",
     "carrier-shipping-mode": "Carrier - Shipping Mode",
     "payments": "Payments",
-    "payment": "Payment"
+    "payment": "Payment",
+    "genericArticleComment": "Comment line"
 }
