@@ -333,5 +333,6 @@
     "purchase-order-line-features": "Données traçabilité ligne réception",
     "carrier-shipping-mode": "Transporteur - Mode d'expédition",
     "payments": "Règlements",
-    "payment": "Règlement"
+    "payment": "Règlement",
+    "genericArticleComment": "Ligne de commentaire"
 }

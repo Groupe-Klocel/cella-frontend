@@ -738,5 +738,12 @@
     "payment_paymentAccountText": "Payment Account",
     "order_orderTypeText": "Order Type",
     "genericDeliveryComment": "Delivery instructions",
-    "originalOrder": "Original order"
+    "originalOrder": "Original order",
+    "customer-order": "Customer order",
+    "genericArticleComment": "Comment line",
+    "orderId": "Order Name",
+    "paymentId": "Payment Name",
+    "payment_orderType": "Order Type",
+    "payment_paymentMethod": "Payment Method",
+    "payment_paymentAccount": "Payment Account"
 }

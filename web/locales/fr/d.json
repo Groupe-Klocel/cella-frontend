@@ -744,5 +744,12 @@
     "documentAttached": "Document joint",
     "order_orderTypeText": "Type de commande",
     "genericDeliveryComment": "Instructions de livraison",
-    "originalOrder": "Commande originale"
+    "originalOrder": "Commande originale",
+    "customer-order": "Commande client",
+    "genericArticleComment": "Ligne de commentaire",
+    "orderId": "N° de commande",
+    "paymentId": "Règlement",
+    "payment_orderType": "Type de commande",
+    "payment_paymentMethod": "Mode de règlement",
+    "payment_paymentAccount": "Compte de règlement"
 }
