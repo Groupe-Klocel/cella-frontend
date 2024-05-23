@@ -82,6 +82,7 @@ query GetPurchaseOrderLineById($id: String!, $language: String = "en") {
         statusText
         blockingStatusText
         lineNumber
+        unitPriceExcludingTaxes
         purchaseOrder {
             id
             name
