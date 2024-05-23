@@ -483,6 +483,27 @@ export const PurchaseOrderLineModelV2: ModelType = {
             param: null,
             optionTable: null
         },
+        unitPriceExcludingTaxes: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: 'Number',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: null
+        },
         created: {
             isListRequested: true,
             isDefaultHiddenList: true,

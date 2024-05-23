@@ -75,6 +75,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     const reservedQuantity = t('d:reservedQuantity');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const submit = t('actions:submit');
+    const unitPriceExcludingTaxes = t('d:unitPriceExcludingTaxes');
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -111,7 +112,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     useEffect(() => {
         const formValue = form.getFieldsValue(true);
         form.setFieldsValue({ ...formValue, articleId: aId, articleName: articleName });
-    }, [aId]);
+    }, [aId, details]);
 
     useEffect(() => {
         if (articleData.data) {
@@ -183,7 +184,6 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
                 showError(t('messages:error-creating-data'));
             });
     };
-
     useEffect(() => {
         const tmp_details = {
             ...details,
@@ -203,7 +203,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
         if (updateLoading) {
             showInfo(t('messages:info-create-wip'));
         }
-    }, [updateLoading]);
+    }, [updateLoading, details]);
 
     const onCancel = () => {
         setUnsavedChanges(false);
@@ -219,7 +219,12 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
 
     return (
         <WrapperForm>
-            <Form form={form} layout="vertical" scrollToFirstError>
+            <Form
+                form={form}
+                layout="vertical"
+                scrollToFirstError
+                onValuesChange={() => setUnsavedChanges(true)}
+            >
                 <Form.Item name="stockOwnerName" label={stockOwner}>
                     <Input disabled />
                 </Form.Item>
@@ -319,6 +324,9 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
                                 : false
                         }
                     />
+                </Form.Item>
+                <Form.Item label={unitPriceExcludingTaxes} name="unitPriceExcludingTaxes">
+                    <InputNumber />
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>
