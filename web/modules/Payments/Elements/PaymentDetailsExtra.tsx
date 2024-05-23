@@ -82,7 +82,7 @@ const PaymentDetailsExtra = ({
                 searchable={false}
                 triggerDelete={undefined}
                 triggerSoftDelete={undefined}
-                columnFilter={false}
+                columnFilter={true}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -98,6 +98,21 @@ const PaymentDetailsExtra = ({
                                             path={pathParamsFromDictionary('/payments/line/[id]', {
                                                 id: record.id
                                             })}
+                                        />
+                                    </>
+                                )}
+                                {!paymentLineModes.includes(ModeEnum.Update) ? (
+                                    <></>
+                                ) : (
+                                    <>
+                                        <LinkButton
+                                            icon={<EditTwoTone />}
+                                            path={pathParamsFromDictionary(
+                                                '/payments/line/edit/[id]',
+                                                {
+                                                    id: record.id
+                                                }
+                                            )}
                                         />
                                     </>
                                 )}
