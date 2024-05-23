@@ -72,6 +72,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     const quantity = t('d:quantity');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const submit = t('actions:submit');
+    const unitPriceExcludingTaxes = t('d:unitPriceExcludingTaxes');
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -325,6 +326,9 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
                 </Form.Item>
                 <Form.Item label={reservation} name="reservation">
                     <Input />
+                </Form.Item>
+                <Form.Item label={unitPriceExcludingTaxes} name="unitPriceExcludingTaxes">
+                    <InputNumber min={1} style={{ width: '100%' }} />
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>
