@@ -76,7 +76,8 @@ const CustomerOrderDetailsExtra = ({
                     title={t('actions:add2', { name: t('common:customer-order-address') })}
                     path={pathParamsFromDictionary('/customer-orders/address/add', {
                         orderId: orderId,
-                        orderName: orderName
+                        orderName: orderName,
+                        orderStatus: status
                     })}
                     type="primary"
                 />
@@ -99,7 +100,7 @@ const CustomerOrderDetailsExtra = ({
         actionsComponent:
             customerOrderLineModes.length > 0 &&
             customerOrderLineModes.includes(ModeEnum.Create) &&
-            status < 30 ? (
+            status < configs.ORDER_STATUS_TO_INVOICE ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:customer-order-line') })}
                     path={pathParamsFromDictionary('/customer-orders/line/add', {
@@ -180,7 +181,7 @@ const CustomerOrderDetailsExtra = ({
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: { id: string; status: number }) => (
+                                render: (record: { id: string; category: number }) => (
                                     <Space>
                                         {customerOrderAddressModes.length == 0 ||
                                         !customerOrderAddressModes.includes(ModeEnum.Read) ? (
@@ -200,7 +201,12 @@ const CustomerOrderDetailsExtra = ({
                                         )}
                                         {customerOrderAddressModes.length > 0 &&
                                         customerOrderAddressModes.includes(ModeEnum.Update) &&
-                                        CustomerOrderAddressModelV2.isEditable ? (
+                                        CustomerOrderAddressModelV2.isEditable &&
+                                        (record.category ==
+                                            configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY ||
+                                            (record.category ==
+                                                configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE &&
+                                                status <= configs.ORDER_STATUS_TO_INVOICE)) ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary(
@@ -215,7 +221,12 @@ const CustomerOrderDetailsExtra = ({
                                         )}
                                         {customerOrderAddressModes.length > 0 &&
                                         customerOrderAddressModes.includes(ModeEnum.Delete) &&
-                                        CustomerOrderAddressModelV2.isSoftDeletable ? (
+                                        CustomerOrderAddressModelV2.isSoftDeletable &&
+                                        (record.category ==
+                                            configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY ||
+                                            (record.category ==
+                                                configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE &&
+                                                status <= configs.ORDER_STATUS_TO_INVOICE)) ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
@@ -231,7 +242,12 @@ const CustomerOrderDetailsExtra = ({
                                         )}
                                         {customerOrderAddressModes.length > 0 &&
                                         customerOrderAddressModes.includes(ModeEnum.Delete) &&
-                                        CustomerOrderAddressModelV2.isDeletable ? (
+                                        CustomerOrderAddressModelV2.isDeletable &&
+                                        (record.category ==
+                                            configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY ||
+                                            (record.category ==
+                                                configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE &&
+                                                status <= configs.ORDER_STATUS_TO_INVOICE)) ? (
                                             <Button
                                                 icon={<DeleteOutlined />}
                                                 danger
