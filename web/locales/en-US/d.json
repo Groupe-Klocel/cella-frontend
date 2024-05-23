@@ -740,5 +740,10 @@
     "genericDeliveryComment": "Delivery instructions",
     "originalOrder": "Original order",
     "customer-order": "Customer order",
-    "genericArticleComment": "Comment line"
+    "genericArticleComment": "Comment line",
+    "orderId": "Order Name",
+    "paymentId": "Payment Name",
+    "payment_orderType": "Order Type",
+    "payment_paymentMethod": "Payment Method",
+    "payment_paymentAccount": "Payment Account"
 }
