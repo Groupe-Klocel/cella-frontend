@@ -112,7 +112,7 @@ export const PurchaseOrderModelV2: ModelType = {
             addEditStep: null,
             maxLength: 25,
             displayName: 'purchaseOrder',
-            isMandatory: true,
+            isMandatory: false,
             minRule: null,
             maxRule: null,
             config: null,
