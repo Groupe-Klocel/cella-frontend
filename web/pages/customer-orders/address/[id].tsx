@@ -29,6 +29,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
+import configs from '../../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -83,7 +84,11 @@ const CustomerOrderAddressPage: PageComponent = () => {
         onBackRoute: rootPath,
         actionsComponent: (
             <Space>
-                {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                (data?.category == configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY ||
+                    (data?.category == configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE &&
+                        data?.order_status <= configs.ORDER_STATUS_TO_INVOICE)) ? (
                     <Space>
                         <LinkButton
                             title={t('actions:edit')}

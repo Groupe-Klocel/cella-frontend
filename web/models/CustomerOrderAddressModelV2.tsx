@@ -96,6 +96,27 @@ export const CustomerOrderAddressModelV2: ModelType = {
             config: null,
             param: null
         },
+        'order{status}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            isEditDisabled: true
+        },
         category: {
             isListRequested: true,
             isDefaultHiddenList: false,
