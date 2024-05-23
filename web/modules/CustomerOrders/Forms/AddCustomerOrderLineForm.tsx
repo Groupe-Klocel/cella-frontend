@@ -35,6 +35,7 @@ import {
     useListParametersForAScopeQuery
 } from 'generated/graphql';
 import { gql } from 'graphql-request';
+import TextArea from 'antd/lib/input/TextArea';
 
 const { Option } = Select;
 
@@ -69,6 +70,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const comment = t('d:comment');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const errorMessageNegativeNumberInput = t('messages:select-number-min', { min: 0 });
+    const genericArticleComment = t('d:genericArticleComment');
     const submit = t('actions:submit');
     // END TEXTS TRANSLATION
 
@@ -391,44 +393,54 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                         onChange={onChange}
                     />
                 </Form.Item>
-                <Form.Item
-                    label={orderedQuantity}
-                    name="orderedQuantity"
-                    rules={[
-                        { required: false, message: errorMessageEmptyInput },
-                        { type: 'number', min: 0, message: errorMessageNegativeNumberInput }
-                    ]}
-                >
-                    <InputNumber onChange={onQuantityChange} />
-                </Form.Item>
-                <Form.Item
-                    label={unitPriceExcludingTaxes}
-                    name="unitPriceExcludingTaxes"
-                    rules={[{ type: 'number', min: 0, message: errorMessageNegativeNumberInput }]}
-                >
-                    <InputNumber />
-                </Form.Item>
-                <Form.Item name="vatRateCode" label={vatRate}>
-                    <Select
-                        placeholder={`${t('messages:please-select-a', {
-                            name: t('d:vatRate')
-                        })}`}
-                        allowClear
-                    >
-                        <Option value=""> </Option>
-                        {vatRates?.map((vatRate: any) => (
-                            <Option key={vatRate.id} value={parseInt(vatRate.code)}>
-                                {vatRate.text}
-                            </Option>
-                        ))}
-                    </Select>
-                </Form.Item>
-                <Form.Item label={t('d:discount_percent')} name="discount" initialValue={0}>
-                    <InputNumber min={0} max={100} precision={1} />
-                </Form.Item>
-                <Form.Item label={comment} name="comment">
-                    <Input />
-                </Form.Item>
+                {articleName !== 'Commentaire' ? (
+                    <>
+                        <Form.Item
+                            label={orderedQuantity}
+                            name="orderedQuantity"
+                            rules={[
+                                { required: false, message: errorMessageEmptyInput },
+                                { type: 'number', min: 0, message: errorMessageNegativeNumberInput }
+                            ]}
+                        >
+                            <InputNumber onChange={onQuantityChange} />
+                        </Form.Item>
+                        <Form.Item
+                            label={unitPriceExcludingTaxes}
+                            name="unitPriceExcludingTaxes"
+                            rules={[
+                                { type: 'number', min: 0, message: errorMessageNegativeNumberInput }
+                            ]}
+                        >
+                            <InputNumber />
+                        </Form.Item>
+                        <Form.Item name="vatRateCode" label={vatRate}>
+                            <Select
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:vatRate')
+                                })}`}
+                                allowClear
+                            >
+                                <Option value=""> </Option>
+                                {vatRates?.map((vatRate: any) => (
+                                    <Option key={vatRate.id} value={parseInt(vatRate.code)}>
+                                        {vatRate.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item label={t('d:discount_percent')} name="discount" initialValue={0}>
+                            <InputNumber min={0} max={100} precision={1} />
+                        </Form.Item>
+                        <Form.Item label={comment} name="comment">
+                            <Input />
+                        </Form.Item>
+                    </>
+                ) : (
+                    <Form.Item label={genericArticleComment} name="genericArticleComment">
+                        <TextArea />
+                    </Form.Item>
+                )}
             </Form>
             <div style={{ textAlign: 'center' }}>
                 <Space>
