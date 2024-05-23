@@ -225,8 +225,9 @@ const CustomerOrderPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                data?.status >= configs.ORDER_STATUS_TO_INVOICE &&
-                data?.status < configs.ORDER_STATUS_DELIVERY_IN_PROGRESS ? (
+                ((data?.status >= configs.ORDER_STATUS_TO_INVOICE &&
+                    data?.status < configs.ORDER_STATUS_DELIVERY_IN_PROGRESS) ||
+                    data?.status == configs.ORDER_STATUS_CLOSED) ? (
                     <Button
                         onClick={() =>
                             switchNextStatus(
