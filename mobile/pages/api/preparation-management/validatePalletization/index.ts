@@ -340,8 +340,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
         // Update old parentHU theoriticalWeight if exists
         if (box.parentHandlingUnitId) {
-            console.log('IKI', box.parentHandlingUnit.handlingUnitOutbounds);
-
             const oldParentHandlingUnitQuery = gql`
                 query handlingUnits($filters: HandlingUnitSearchFilters) {
                     handlingUnits(filters: $filters) {

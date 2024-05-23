@@ -23,12 +23,24 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
+import {
+    META_DEFAULTS,
+    getModesFromPermissions,
+    showError,
+    setUTCDateTime,
+    formatUTCLocaleDateTime,
+    isStringDateTime,
+    setUTCDate,
+    isStringDate,
+    formatUTCLocaleDate
+} from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
+import moment from 'moment';
+import { isString } from 'lodash';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -42,6 +54,15 @@ const HandlingUnitContentPage: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
+    let displayedValue;
+    if (isString(data?.value) && isStringDateTime(data?.value)) {
+        displayedValue = formatUTCLocaleDateTime(data?.value, router.locale);
+    } else if (isString(data?.value) && isStringDate(data?.value)) {
+        displayedValue = formatUTCLocaleDate(data?.value, router.locale);
+    } else {
+        displayedValue = data?.value;
+    }
+
     // #region to customize information
     const hucDetailBreadcrumb = [
         ...itemRoutes,
@@ -53,11 +74,12 @@ const HandlingUnitContentPage: PageComponent = () => {
     const breadCrumb = [
         ...hucDetailBreadcrumb,
         {
-            breadcrumbName: `${data?.featureCode_name} - ${data?.value}`
+            breadcrumbName: `${data?.featureCode_name} - ${displayedValue}`
         }
     ];
-
-    const pageTitle = `${t('common:content-feature')} ${data?.featureCode_name} - ${data?.value}`;
+    const pageTitle = `${t('common:content-feature')} ${
+        data?.featureCode_name
+    } - ${displayedValue}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
