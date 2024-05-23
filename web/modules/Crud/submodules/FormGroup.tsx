@@ -25,6 +25,9 @@ import { FC } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/Models';
 import { getRulesWithNoSpacesValidator } from '@helpers';
 import { DraggerInput } from 'components/common/smart/Form/DraggerInput';
+import { useRouter } from 'next/router';
+
+require('moment/locale/fr'); // French
 
 export interface IFormGroupProps {
     inputs: Array<FilterFieldType>;
@@ -34,6 +37,12 @@ export interface IFormGroupProps {
 
 const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
     const { t } = useTranslation();
+    const router = useRouter();
+
+    moment.locale(router.locale);
+    const localeData = moment.localeData();
+    const localeDateTimeFormat =
+        localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
 
     return (
         <>
@@ -147,13 +156,13 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                         >
                             {item.initialValue ? (
                                 <DatePicker
-                                    format="YYYY-MM-DD HH:mm:ss"
+                                    format={localeDateTimeFormat}
                                     showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
                                     defaultValue={item.initialValue}
                                 />
                             ) : (
                                 <DatePicker
-                                    format="YYYY-MM-DD HH:mm:ss"
+                                    format={localeDateTimeFormat}
                                     showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
                                 />
                             )}

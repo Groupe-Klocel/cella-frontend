@@ -457,7 +457,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                                 { required: true, message: t('messages:error-message-empty-input') }
                             ]}
                         >
-                            <InputNumber />
+                            <InputNumber min={0} />
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>

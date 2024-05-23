@@ -195,6 +195,7 @@ const HandlingUnitContentPage: PageComponent = () => {
                         articleName={data?.article_name}
                         quantity={data?.quantity}
                         handlingUnit_category={data?.handlingUnit_category}
+                        articleFeatureType={data?.article_featureType}
                     />
                 }
                 id={id!}

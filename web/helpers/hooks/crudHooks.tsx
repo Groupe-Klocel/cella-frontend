@@ -22,7 +22,13 @@ import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { isString } from 'lodash';
 import moment from 'moment';
-import { isStringDate, setUTCDateTime, showError } from 'helpers/utils/utils';
+import {
+    isStringDateTime,
+    setUTCDateTime,
+    isStringDate,
+    setUTCDate,
+    showError
+} from 'helpers/utils/utils';
 import { useRouter } from 'next/router';
 import useTranslation from 'next-translate/useTranslation';
 
@@ -109,8 +115,14 @@ const useList = (
             .then((result: any) => {
                 Object.keys(result).forEach((element) => {
                     Object.keys(result[element]).forEach((key) => {
-                        if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                        if (
+                            isString(result[element][key]) &&
+                            isStringDateTime(result[element][key])
+                        ) {
                             result[element][key] = setUTCDateTime(result[element][key]);
+                        }
+                        if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                            result[element][key] = setUTCDate(result[element][key]);
                         }
                     });
                 });
@@ -163,7 +175,7 @@ const useDetail = (id: string, queryName: string, fields: Array<string>, languag
             .then((result: any) => {
                 // Object.keys(result).forEach((element) => {
                 //     Object.keys(result[element]).forEach((key) => {
-                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                //         if (isString(result[element][key]) && isStringDateTime(result[element][key])) {
                 //             result[element][key] = setUTCDateTime(result[element][key]);
                 //         }
                 //     });
@@ -218,7 +230,7 @@ const useRecordHistoryDetail = (
             .then((result: any) => {
                 // Object.keys(result).forEach((element) => {
                 //     Object.keys(result[element]).forEach((key) => {
-                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                //         if (isString(result[element][key]) && isStringDateTime(result[element][key])) {
                 //             result[element][key] = setUTCDateTime(result[element][key]);
                 //         }
                 //     });
@@ -273,7 +285,7 @@ const useItemWithNumericIdDetail = (
             .then((result: any) => {
                 // Object.keys(result).forEach((element) => {
                 //     Object.keys(result[element]).forEach((key) => {
-                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                //         if (isString(result[element][key]) && isStringDateTime(result[element][key])) {
                 //             result[element][key] = setUTCDateTime(result[element][key]);
                 //         }
                 //     });
