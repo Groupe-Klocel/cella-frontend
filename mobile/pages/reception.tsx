@@ -84,7 +84,7 @@ const Reception: PageComponent = () => {
     // [9] : 110 -> Validate reception
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
-    console.log('DLA-reception', storedObject);
+    console.log('reception', storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {

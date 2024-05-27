@@ -239,7 +239,6 @@ export const ScanLocation = ({
                 filters: { barcode: [`${scannedInfo}`] }
             };
             const locationInfos = await graphqlRequestClient.request(query, variables);
-            console.log('DLA-loc-inside', locationInfos);
 
             return locationInfos;
         }

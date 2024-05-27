@@ -105,8 +105,6 @@ export const ScanFinalHandlingUnitOutbound = ({
         }
     };
 
-    console.log('DLA-huoInfos', handlingUnitOutboundInfos);
-
     useEffect(() => {
         async function fetchData() {
             const result = await getHU(scannedInfo);
