@@ -140,5 +140,7 @@
     "enter-payment": "Saisir paiement",
     "generate-credit": "Générer Avoir",
     "print-invoice": "Imprimer facture",
-    "print-quote": "Imprimer devis"
+    "print-quote": "Imprimer devis",
+    "print-order-form": "Imprimer bon de commande",
+    "print-receipt": "Imprimer bordereau de réception"
 }

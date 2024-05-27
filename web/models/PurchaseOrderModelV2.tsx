@@ -251,7 +251,7 @@ export const PurchaseOrderModelV2: ModelType = {
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
             link: null,
-            addEditFormat: 'String',
+            addEditFormat: 'TextArea',
             addEditStep: null,
             maxLength: 500,
             displayName: null,
