@@ -84,6 +84,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     const [articleName, setArticleName] = useState<string>('');
     const [blockingStatuses, setBlockingStatuses] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [vatRates, setVatRates] = useState<any>();
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -142,6 +143,18 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
         }
     }, [stockStatusTextList.data]);
 
+    //To render Simple vat rates list
+    const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'vat_rate',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (vatRatesList) {
+            setVatRates(vatRatesList?.data?.listParametersForAScope);
+        }
+    }, [vatRatesList.data]);
+
     //CREATE purchase order line
     const { mutate, isLoading: updateLoading } = useUpdatePurchaseOrderLineMutation<Error>(
         graphqlRequestClient,
@@ -177,6 +190,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
                 delete formData['stockOwner'];
                 delete formData['purchaseOrder'];
                 delete formData['article'];
+                delete formData['vatRateCodeText'];
                 updatePurchaseOrderLine({ id: id, input: formData });
                 setUnsavedChanges(false);
             })
@@ -184,6 +198,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
                 showError(t('messages:error-creating-data'));
             });
     };
+
     useEffect(() => {
         const tmp_details = {
             ...details,
@@ -325,8 +340,33 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
                         }
                     />
                 </Form.Item>
-                <Form.Item label={unitPriceExcludingTaxes} name="unitPriceExcludingTaxes">
+                <Form.Item
+                    label={unitPriceExcludingTaxes}
+                    name="unitPriceExcludingTaxes"
+                    rules={[
+                        {
+                            type: 'number',
+                            min: 0,
+                            message: t('messages:select-number-min', { min: 0 })
+                        }
+                    ]}
+                >
                     <InputNumber />
+                </Form.Item>
+                <Form.Item name="vatRateCode" label={t('d:vatRate')}>
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:vatRate')
+                        })}`}
+                        allowClear
+                    >
+                        <Option value=""> </Option>
+                        {vatRates?.map((vatRate: any) => (
+                            <Option key={vatRate.id} value={parseInt(vatRate.code)}>
+                                {vatRate.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>
