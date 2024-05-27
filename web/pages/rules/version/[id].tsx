@@ -59,8 +59,6 @@ const RuleVersionPage: PageComponent = () => {
         }
     ];
 
-    console.log('DLA-data', data);
-
     const pageTitle = `${data?.rule_name} - ${t('common:version')} ${data?.version}`;
     // #endregions
 

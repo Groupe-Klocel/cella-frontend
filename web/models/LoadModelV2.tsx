@@ -84,7 +84,7 @@ export const LoadModelV2: ModelType = {
             defaultSort: 'descending'
         },
         carrierId: {
-            isListRequested: false,
+            isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,

@@ -47,6 +47,7 @@ const PurchaseOrderPage: PageComponent = () => {
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [refetchSubList, setRefetchSubList] = useState(false);
+    const [documentToPrint, setDocumentToPrint] = useState<string>();
 
     // #region to customize information
     const breadCrumb = [
@@ -100,6 +101,20 @@ const PurchaseOrderPage: PageComponent = () => {
                         <></>
                     )}
 
+                    {modes.includes(ModeEnum.Read) ? (
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setShowSinglePrintModal(true);
+                                setIdToPrint(data.id);
+                                setDocumentToPrint('CGP_OrderForm');
+                            }}
+                        >
+                            {t('actions:print-order-form')}
+                        </Button>
+                    ) : (
+                        <></>
+                    )}
                     {modes.includes(ModeEnum.Read) &&
                     data?.status != configs.PURCHASE_ORDER_STATUS_CLOSED ? (
                         <Button
@@ -107,9 +122,10 @@ const PurchaseOrderPage: PageComponent = () => {
                             onClick={() => {
                                 setShowSinglePrintModal(true);
                                 setIdToPrint(data.id);
+                                setDocumentToPrint('K_PurchaseOrder');
                             }}
                         >
-                            {t('actions:print')}
+                            {t('actions:print-receipt')}
                         </Button>
                     ) : (
                         <></>
@@ -147,7 +163,7 @@ const PurchaseOrderPage: PageComponent = () => {
                             setShowSinglePrintModal
                         }}
                         dataToPrint={{ id: idToPrint, date: dateLocal }}
-                        documentName="K_PurchaseOrder"
+                        documentName={documentToPrint!}
                         documentReference={data?.name}
                     />
                 </Space>
