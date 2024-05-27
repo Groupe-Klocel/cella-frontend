@@ -142,5 +142,7 @@
     "enter-payment": "Enter Payment",
     "generate-credit": "Generate Credit Note",
     "print-invoice": "Print Invoice",
-    "print-quote": "Print Quote"
+    "print-quote": "Print Quote",
+    "print-order-form": "Print Order Form",
+    "print-receipt": "Print Receipt"
 }

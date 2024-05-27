@@ -27,22 +27,18 @@ import {
     useCreatePurchaseOrderLineMutation,
     CreatePurchaseOrderLineMutationVariables,
     CreatePurchaseOrderLineMutation,
-    useListParametersForAScopeQuery,
-    useSimpleGetAllStockOwnersQuery,
-    SimpleGetAllStockOwnersQuery
+    useListParametersForAScopeQuery
 } from 'generated/graphql';
 import {
     showError,
     showSuccess,
     showInfo,
-    useArticleIds,
     usePurchaseOrderLineIds,
     useArticles,
     useStockOwners
 } from '@helpers';
 import { debounce } from 'lodash';
 import configs from '../../../../common/configs.json';
-import { FormOptionType } from 'models/Models';
 
 interface IOption {
     value: string;
@@ -82,6 +78,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     const [stockOwners, setStockOwners] = useState<any>();
     const [blockingStatuses, setBlockingStatuses] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [vatRates, setVatRates] = useState<any>();
 
     //To render Simple stockOwners list
     const stockOwnerData = useStockOwners({}, 1, 100, null);
@@ -176,6 +173,18 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
             setBlockingStatuses(stockStatusTextList?.data?.listParametersForAScope);
         }
     }, [stockStatusTextList.data]);
+
+    //To render Simple vat rates list
+    const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'vat_rate',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (vatRatesList) {
+            setVatRates(vatRatesList?.data?.listParametersForAScope);
+        }
+    }, [vatRatesList.data]);
 
     //CREATE purchase order line
     const { mutate, isLoading: createLoading } = useCreatePurchaseOrderLineMutation<Error>(
@@ -327,8 +336,33 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
                 <Form.Item label={reservation} name="reservation">
                     <Input />
                 </Form.Item>
-                <Form.Item label={unitPriceExcludingTaxes} name="unitPriceExcludingTaxes">
-                    <InputNumber min={1} style={{ width: '100%' }} />
+                <Form.Item
+                    label={unitPriceExcludingTaxes}
+                    name="unitPriceExcludingTaxes"
+                    rules={[
+                        {
+                            type: 'number',
+                            min: 0,
+                            message: t('messages:select-number-min', { min: 0 })
+                        }
+                    ]}
+                >
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item name="vatRateCode" label={t('d:vatRate')}>
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:vatRate')
+                        })}`}
+                        allowClear
+                    >
+                        <Option value=""> </Option>
+                        {vatRates?.map((vatRate: any) => (
+                            <Option key={vatRate.id} value={parseInt(vatRate.code)}>
+                                {vatRate.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>

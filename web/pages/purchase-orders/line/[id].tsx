@@ -66,8 +66,6 @@ const PurchaseOrderLinePage: PageComponent = () => {
     }`;
     // #endregions
 
-    console.log('DLA-data', data);
-
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
