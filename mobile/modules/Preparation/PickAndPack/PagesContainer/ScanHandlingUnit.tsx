@@ -227,8 +227,6 @@ export const ScanHandlingUnit = ({
         }
     };
 
-    console.log('DLA-huInfos', handlingUnitInfos);
-
     useEffect(() => {
         async function fetchData() {
             const result = await getHU(scannedInfo);
