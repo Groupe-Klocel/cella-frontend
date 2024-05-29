@@ -551,7 +551,6 @@ export const AddStockOwnerForm: FC<IAddStockOwnerFormProps> = (props: IAddStockO
                                     placeholder={`${t('messages:please-select-a', {
                                         name: t('d:third-party-address-sender-model')
                                     })}`}
-                                    // RESTART HERE : Another function must be done to send info on sender fields
                                     onChange={handleSenderAddressChange}
                                 >
                                     {thirdPartyAddresses

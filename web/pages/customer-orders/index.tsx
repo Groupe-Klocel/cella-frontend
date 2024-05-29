@@ -26,7 +26,14 @@ import {
     LockTwoTone
 } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import {
+    areObjectsIdentical,
+    getModesFromPermissions,
+    META_DEFAULTS,
+    pathParams,
+    showError,
+    showSuccess
+} from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -34,13 +41,15 @@ import { ModeEnum } from 'generated/graphql';
 import { CustomerOrderModelV2 as model } from 'models/CustomerOrderModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
 import configs from '../../../common/configs.json';
+import parameters from '../../../common/parameters.json';
 import { MagentoImportModal } from 'modules/Orders/MagentoImportModal';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { PaymentModal } from 'modules/CustomerOrders/Modals/PaymentModal';
+import { useRouter } from 'next/router';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -60,6 +69,8 @@ const CustomerOrderPages: PageComponent = () => {
     const [commonStatus, setCommonStatus] = useState<number | undefined>();
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [orderId, setOrderId] = useState<any>();
+    const [isCreateDeliveryAllowed, setIsCreateDeliveryAllowed] = useState<boolean>(false);
+    const router = useRouter();
 
     const headerData: HeaderData = {
         title: t('common:customer-orders'),
@@ -102,27 +113,91 @@ const CustomerOrderPages: PageComponent = () => {
 
     const hasSelected = selectedRowKeys.length > 0;
 
-    const onSelectChange = (newSelectedRowKeys: React.Key[], newSelectedRows: any) => {
+    // function that will retrieve delivery orderAddress for given orderId
+    const getDeliveryOrderAddress = async (orderId: String[]) => {
+        const query = gql`
+            query getOrderAddress($filters: OrderAddressSearchFilters) {
+                orderAddresses(filters: $filters) {
+                    results {
+                        entityCode
+                        entityName
+                        entityAddress1
+                        entityAddress2
+                        entityAddress3
+                        entityStreetNumber
+                        entityPostCode
+                        entityCity
+                        entityState
+                        entityDistrict
+                        entityCountry
+                        entityCountryCode
+                        thirdPartyAddressId
+                    }
+                }
+            }
+        `;
+        const variables = {
+            filters: { orderId, category: configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY }
+        };
+        const deliveryOrderAddress = await graphqlRequestClient.request(query, variables);
+        return deliveryOrderAddress;
+    };
+
+    const [fetchOrderAddressTrigger, setFetchOrderAddressTrigger] = useState<{
+        keys: React.Key[];
+        rows: any[];
+    } | null>(null);
+
+    const onSelectChange = async (newSelectedRowKeys: React.Key[], newSelectedRows: any) => {
         setSelectedRowKeys(newSelectedRowKeys);
         setSelectedRows(newSelectedRows);
+        setFetchOrderAddressTrigger({ keys: newSelectedRowKeys, rows: newSelectedRows });
         if (newSelectedRows.length === 0) return undefined;
         const firstStatus = newSelectedRows[0].status;
+        //this section manages conditions to allow or not bulk status change button
+        const allowedStatuses = [
+            configs.ORDER_STATUS_CREATED,
+            configs.ORDER_STATUS_QUOTE_TRANSMITTED,
+            configs.ORDER_STATUS_TO_INVOICE,
+            configs.ORDER_STATUS_TO_BE_DELIVERED
+        ];
+        const allowedStatus = allowedStatuses.includes(firstStatus);
         const allSameStatus = newSelectedRows.every((item: any) => item.status === firstStatus);
-        setCommonStatus(allSameStatus ? firstStatus : undefined);
+        setCommonStatus(allSameStatus ? (allowedStatus ? firstStatus : undefined) : undefined);
     };
+
+    //this useEffect checks deliveries addresses for selected orders and allow create delivery button or not
+    useEffect(() => {
+        if (!fetchOrderAddressTrigger || fetchOrderAddressTrigger.keys.length === 0) return;
+        const fetchOrderAddress = async () => {
+            const { keys, rows } = fetchOrderAddressTrigger;
+            // Fetch order addresses
+            const result = await getDeliveryOrderAddress(
+                keys.filter((key) => typeof key === 'string') as string[]
+            );
+            let isSameOrderAddress = false;
+            if (result) {
+                const orderAddresses = result.orderAddresses.results;
+                if (orderAddresses.length === keys.length) {
+                    if (orderAddresses.length === 1) {
+                        isSameOrderAddress = true;
+                    } else {
+                        isSameOrderAddress = areObjectsIdentical(orderAddresses);
+                    }
+                }
+            }
+            // This section manages conditions to allow or not delivery creation button
+            const allowedOrderDeliveryStatus = rows.every(
+                (item: any) => item.extraStatus2 < parameters.ORDER_EXTRA_STATUS2_DELIVERED
+            );
+            setIsCreateDeliveryAllowed(isSameOrderAddress && allowedOrderDeliveryStatus);
+        };
+        fetchOrderAddress();
+    }, [fetchOrderAddressTrigger]);
 
     const rowSelection = {
         selectedRowKeys,
-        onChange: onSelectChange,
-        getCheckboxProps: (record: any) => ({
-            disabled:
-                record.status == configs.ORDER_STATUS_CREATED ||
-                record.status == configs.ORDER_STATUS_QUOTE_TRANSMITTED ||
-                record.status == configs.ORDER_STATUS_TO_INVOICE ||
-                record.status == configs.ORDER_STATUS_TO_BE_DELIVERED
-                    ? false
-                    : true
-        })
+        onChange: onSelectChange
     };
 
     //#region : Specific functions for this page
@@ -162,6 +237,64 @@ const CustomerOrderPages: PageComponent = () => {
             console.error('Error updating order:', error);
         }
     };
+
+    // confirm and execute delivery creation function
+    const [isCreateDeliveryLoading, setIsCreateDeliveryLoading] = useState(false);
+    const createDelivery = (orderIds: [string]) => {
+        Modal.confirm({
+            title: t('messages:create-delivery-confirm'),
+            onOk: async () => {
+                setIsCreateDeliveryLoading(true);
+
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+
+                const variables = {
+                    functionName: 'K_orderDelivery',
+                    event: {
+                        orderIds
+                    }
+                };
+
+                try {
+                    const deliveryCreatedResult = await graphqlRequestClient.request(
+                        query,
+                        variables
+                    );
+                    if (deliveryCreatedResult.executeFunction.status === 'ERROR') {
+                        showError(deliveryCreatedResult.executeFunction.output);
+                    } else if (
+                        deliveryCreatedResult.executeFunction.status === 'OK' &&
+                        deliveryCreatedResult.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(
+                            t(`errors:${deliveryCreatedResult.executeFunction.output.output.code}`)
+                        );
+                        console.log(
+                            'Backend_message',
+                            deliveryCreatedResult.executeFunction.output.output
+                        );
+                    } else {
+                        showSuccess(t('messages:success-delivery-creation'));
+                    }
+                    setIsCreateDeliveryLoading(false);
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                    setIsCreateDeliveryLoading(false);
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
+    };
+
     //#endregion
 
     const confirmSwitchStatus = (ids: [string], status: any) => {
@@ -208,29 +341,36 @@ const CustomerOrderPages: PageComponent = () => {
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Update) ? (
                 <>
-                    <>
-                        <span style={{ marginLeft: 16 }}>
-                            {hasSelected
-                                ? `${t('messages:selected-items-number', {
-                                      number: selectedRowKeys.length
-                                  })}`
-                                : ''}
-                        </span>
-                        <span style={{ marginLeft: 16 }}>
-                            <Button
-                                type="primary"
-                                onClick={() => {
-                                    confirmSwitchStatus(
-                                        selectedRowKeys as [string],
-                                        commonStatus!
-                                    )();
-                                }}
-                                disabled={!hasSelected || !commonStatus}
-                            >
-                                {t('actions:bulk-order-change')}
-                            </Button>
-                        </span>
-                    </>
+                    <span style={{ marginLeft: 16 }}>
+                        {hasSelected
+                            ? `${t('messages:selected-items-number', {
+                                  number: selectedRowKeys.length
+                              })}`
+                            : ''}
+                    </span>
+                    <span style={{ marginLeft: 16 }}>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                confirmSwitchStatus(selectedRowKeys as [string], commonStatus!)();
+                            }}
+                            disabled={!hasSelected || !commonStatus}
+                        >
+                            {t('actions:bulk-order-change')}
+                        </Button>
+                    </span>
+                    <span style={{ marginLeft: 16 }}>
+                        <Button
+                            type="primary"
+                            loading={isCreateDeliveryLoading}
+                            onClick={() => {
+                                createDelivery(selectedRowKeys as [string]);
+                            }}
+                            disabled={!hasSelected || !isCreateDeliveryAllowed}
+                        >
+                            {t('actions:create-delivery')}
+                        </Button>
+                    </span>
                 </>
             ) : null
     };
