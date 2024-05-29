@@ -58,7 +58,6 @@ export const ScanEANorID = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    //RESTART HERE: launch the useEffect for frontAPI launching here + how can I handle the dataToCheck???
     const boxesInfos = useBoxes({ name: `${scannedInfo}` }, 1, 100, null, router.locale);
 
     const dataToCheck = {

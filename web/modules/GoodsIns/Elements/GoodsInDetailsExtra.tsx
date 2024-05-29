@@ -84,7 +84,6 @@ const GoodsInDetailsExtra = ({ roundId }: IItemDetailsProps) => {
     //     actionsComponent: <></>
     // };
 
-    //RESTART HERE : link to HUIs
     const boxHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:boxes') }),
         routes: [],

@@ -42,6 +42,7 @@ export interface IItemDetailsProps {
     priceType?: number | any;
     status?: string | any;
     setInvoiceAddress?: any;
+    deliveriesIds?: any[];
 }
 
 const CustomerOrderDetailsExtra = ({
@@ -52,7 +53,8 @@ const CustomerOrderDetailsExtra = ({
     thirdPartyId,
     priceType,
     status,
-    setInvoiceAddress
+    setInvoiceAddress,
+    deliveriesIds
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
@@ -403,38 +405,42 @@ const CustomerOrderDetailsExtra = ({
                     }
                 ]}
             />
-            <ListComponent
-                searchCriteria={{ orderId: orderId }}
-                dataModel={DeliveryModelV2}
-                headerData={deliveryHeaderData}
-                searchable={false}
-                triggerDelete={undefined}
-                triggerSoftDelete={undefined}
-                columnFilter={false}
-                actionColumns={[
-                    {
-                        title: 'actions:actions',
-                        key: 'actions',
-                        render: (record: { id: string }) => (
-                            <Space>
-                                {deliveryModes.length == 0 ||
-                                !deliveryModes.includes(ModeEnum.Read) ? (
-                                    <></>
-                                ) : (
-                                    <>
-                                        <LinkButton
-                                            icon={<EyeTwoTone />}
-                                            path={pathParamsFromDictionary('/deliveries/[id]', {
-                                                id: record.id
-                                            })}
-                                        />
-                                    </>
-                                )}
-                            </Space>
-                        )
-                    }
-                ]}
-            />
+            {deliveriesIds && deliveriesIds.length != 0 ? (
+                <ListComponent
+                    searchCriteria={{ id: deliveriesIds }}
+                    dataModel={DeliveryModelV2}
+                    headerData={deliveryHeaderData}
+                    searchable={false}
+                    triggerDelete={undefined}
+                    triggerSoftDelete={undefined}
+                    columnFilter={false}
+                    actionColumns={[
+                        {
+                            title: 'actions:actions',
+                            key: 'actions',
+                            render: (record: { id: string }) => (
+                                <Space>
+                                    {deliveryModes.length == 0 ||
+                                    !deliveryModes.includes(ModeEnum.Read) ? (
+                                        <></>
+                                    ) : (
+                                        <>
+                                            <LinkButton
+                                                icon={<EyeTwoTone />}
+                                                path={pathParamsFromDictionary('/deliveries/[id]', {
+                                                    id: record.id
+                                                })}
+                                            />
+                                        </>
+                                    )}
+                                </Space>
+                            )
+                        }
+                    ]}
+                />
+            ) : (
+                <> </>
+            )}
         </>
     );
 };
