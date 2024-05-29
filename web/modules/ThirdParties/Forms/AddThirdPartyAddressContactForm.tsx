@@ -103,7 +103,6 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
     }, [thirdPartyAddressContactCategoryList.data]);
 
     // CREATION //
-    //RESTART HERE: adjust mutation and test
     const { mutate, isLoading: createLoading } = useCreateThirdPartyAddressContactMutation<Error>(
         graphqlRequestClient,
         {

@@ -721,6 +721,11 @@ const ListComponent = (props: IListProps) => {
                             <HeaderContent
                                 title={props.headerData.title}
                                 routes={props.headerData.routes}
+                                onBack={
+                                    props.headerData.onBackRoute
+                                        ? () => router.push(props.headerData!.onBackRoute!)
+                                        : undefined
+                                }
                                 actionsRight={
                                     <Space>
                                         {props.searchable ? (

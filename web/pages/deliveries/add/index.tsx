@@ -27,6 +27,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { addDeliveryRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { META_DEFAULTS } from '@helpers';
 import configs from '../../../../common/configs.json';
+import parameters from '../../../../common/parameters.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -36,7 +37,10 @@ const AddDeliveryPage: PageComponent = () => {
     const router = useRouter();
 
     //enter between {} the default values for the form (for instance status "In progress"))
-    const defaultValues = { status: configs.DELIVERY_STATUS_CREATED };
+    const defaultValues = {
+        status: configs.DELIVERY_STATUS_CREATED,
+        extraStatus1: parameters.DELIVERY_EXTRA_STATUS1_NOT_ORDERED
+    };
 
     return (
         <>

@@ -109,8 +109,6 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
         id: props.extraData.handlingUnitContentId
     });
 
-    // RESTART HERE: retrieve features structure for movements
-
     useEffect(() => {
         if (!(createResult && createResult.data)) return;
 

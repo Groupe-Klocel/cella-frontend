@@ -18,9 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton, SinglePrintModal } from '@components';
-import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
@@ -33,6 +33,7 @@ import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Stati
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../common/configs.json';
+import parameters from '../../../common/parameters.json';
 import { PaymentModal } from 'modules/CustomerOrders/Modals/PaymentModal';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -118,6 +119,118 @@ const CustomerOrderPage: PageComponent = () => {
                 return 'to-be-defined';
         }
     })();
+
+    // confirm and execute delivery creation function
+    const [isCreateDeliveryLoading, setIsCreateDeliveryLoading] = useState(false);
+    const createDelivery = (orderIds: [string]) => {
+        Modal.confirm({
+            title: t('messages:create-delivery-confirm'),
+            onOk: async () => {
+                setIsCreateDeliveryLoading(true);
+
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+
+                const variables = {
+                    functionName: 'K_orderDelivery',
+                    event: {
+                        orderIds
+                    }
+                };
+
+                try {
+                    const deliveryCreatedResult = await graphqlRequestClient.request(
+                        query,
+                        variables
+                    );
+                    if (deliveryCreatedResult.executeFunction.status === 'ERROR') {
+                        showError(deliveryCreatedResult.executeFunction.output);
+                    } else if (
+                        deliveryCreatedResult.executeFunction.status === 'OK' &&
+                        deliveryCreatedResult.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(
+                            t(`errors:${deliveryCreatedResult.executeFunction.output.output.code}`)
+                        );
+                        console.log(
+                            'Backend_message',
+                            deliveryCreatedResult.executeFunction.output.output
+                        );
+                    } else {
+                        showSuccess(t('messages:success-delivery-creation'));
+                    }
+                    setIsCreateDeliveryLoading(false);
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                    setIsCreateDeliveryLoading(false);
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
+    };
+
+    const [deliveriesToDisplay, setDeliveriesToDisplay] = useState<any[]>([]);
+
+    //to retrieve deliveries Ids from orderLines_deliveryLine attached to current order
+    const getOrderLines = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query orderLines($filters: OrderLineSearchFilters) {
+                orderLines(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        deliveryLines {
+                            delivery {
+                                id
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                orderId: id
+            }
+        };
+        const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
+        return handlingUnitInfos;
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const result = await getOrderLines();
+            if (result) {
+                const orderLines = result.orderLines.results;
+                const deliveries: any[] = [];
+                // Iterate through results
+                orderLines.forEach((result: any) => {
+                    // Iterate through delivery lines
+                    result.deliveryLines.forEach((deliveryLine: any) => {
+                        // Extract delivery information
+                        const delivery = deliveryLine.delivery;
+                        const isDuplicate = deliveries.some((d) => d.id === delivery.id);
+                        if (!isDuplicate) {
+                            deliveries.push(delivery.id);
+                        }
+                    });
+                });
+                setDeliveriesToDisplay(deliveries);
+            }
+        }
+        fetchData();
+    }, [id]);
+
     //#endregion
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -171,7 +284,6 @@ const CustomerOrderPage: PageComponent = () => {
                     <Button
                         onClick={() => {
                             setShowPaymentModal(true);
-                            // setOrderId(data?.id);
                         }}
                         style={{ color: 'orange' }}
                     >
@@ -244,6 +356,21 @@ const CustomerOrderPage: PageComponent = () => {
                     <></>
                 )}
                 {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                data?.extraStatus2 < parameters.ORDER_EXTRA_STATUS2_DELIVERED ? (
+                    <Button
+                        type="primary"
+                        loading={isCreateDeliveryLoading}
+                        onClick={() => {
+                            createDelivery([data.id]);
+                        }}
+                    >
+                        {t('actions:create-delivery')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
                 modes.includes(ModeEnum.Delete) &&
                 model.isDeletable &&
                 data?.status > configs.ORDER_STATUS_CREATED &&
@@ -292,6 +419,7 @@ const CustomerOrderPage: PageComponent = () => {
                         priceType={data?.priceType}
                         status={data?.status}
                         setInvoiceAddress={setInvoiceAddress}
+                        deliveriesIds={deliveriesToDisplay}
                     />
                 }
                 headerData={headerData}
