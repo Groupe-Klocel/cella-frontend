@@ -556,6 +556,19 @@ function queryString(
     return queryString;
 }
 
+function areObjectsIdentical(arr: Array<any>) {
+    if (arr.length === 0) return true;
+
+    const firstObject = JSON.stringify(arr[0]);
+
+    for (let i = 1; i < arr.length; i++) {
+        if (JSON.stringify(arr[i]) !== firstObject) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export {
     isNumeric,
     formatDigitsForData,
@@ -602,5 +615,6 @@ export {
     getRulesWithNoSpacesValidator,
     checkValueInKey,
     extractComparisonValues,
-    queryString
+    queryString,
+    areObjectsIdentical
 };

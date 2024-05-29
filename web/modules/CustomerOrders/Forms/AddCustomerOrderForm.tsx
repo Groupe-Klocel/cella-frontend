@@ -160,7 +160,9 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     status: configs.ORDER_STATUS_CREATED,
                     orderType: configs.ORDER_TYPE_CUSTOMER_ORDER,
                     orderDate: nowDate,
-                    thirdPartyId
+                    thirdPartyId,
+                    extraStatus1: parameters.ORDER_EXTRA_STATUS1_NOT_PAID,
+                    extraStatus2: parameters.ORDER_EXTRA_STATUS2_NOT_DELIVERED
                 });
 
                 const formData = form.getFieldsValue(true);

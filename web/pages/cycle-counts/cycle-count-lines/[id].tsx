@@ -85,8 +85,6 @@ const CycleCountLinePage: PageComponent = () => {
         };
     };
 
-    //RESTART HERE: Regenerate model, + page title = CC name + location name
-
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,

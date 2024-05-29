@@ -1128,6 +1128,46 @@ export const DeliveryModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null
+        },
+        extraStatus1: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: 'delivery_extra_status1'
+        },
+        extraStatus1Text: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
         }
     }
 };
