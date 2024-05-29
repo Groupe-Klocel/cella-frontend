@@ -681,7 +681,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                     updatedFinalHUC.updateHandlingUnitContent;
                                 quantityToPack -= minQuantity;
 
-                                // RESTART HERE : check consistency
                                 canRollbackTransaction = true;
                             }
                             //updateROundLineDetail
