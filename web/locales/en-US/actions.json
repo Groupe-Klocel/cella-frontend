@@ -144,5 +144,8 @@
     "print-invoice": "Print Invoice",
     "print-quote": "Print Quote",
     "print-order-form": "Print Order Form",
-    "print-receipt": "Print Receipt"
+    "print-receipt": "Print Receipt",
+    "create-delivery": "Create delivery",
+    "view-deliveries-without-orders": "View deliveries without customer orders",
+    "create-order": "Create customer order"
 }
