@@ -334,5 +334,7 @@
     "carrier-shipping-mode": "Transporteur - Mode d'expédition",
     "payments": "Règlements",
     "payment": "Règlement",
-    "genericArticleComment": "Ligne de commentaire"
+    "genericArticleComment": "Ligne de commentaire",
+    "deliveries-without-orders": "Livraisons sans commande client",
+    "delivery-without-orders": "Livraison sans commande client"
 }

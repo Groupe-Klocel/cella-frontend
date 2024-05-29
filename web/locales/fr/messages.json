@@ -123,5 +123,9 @@
     "confirm-order": "Etes-vous sûr(e) de vouloir valider en tant que commande ?",
     "confirm-payment": "Etes-vous sûr(e) de vouloir valider en tant que règlement ?",
     "confirm-delivery": "Etes-vous sûr(e) de vouloir valider en tant que livraison ?",
-    "no-invoice-address": "Aucune adresse de facturation allouée"
+    "no-invoice-address": "Aucune adresse de facturation allouée",
+    "create-delivery-confirm":  "Etes-vous sûr(e) de vouloir créer une livraison depuis les commandes clients sélectionnées ?",
+    "success-delivery-creation": "La livraison a été créée avec succès",
+    "create-order-confirm": "Etes-vous sûr(e) de vouloir créer une commande client depuis les livraisons sélectionnées ?",
+    "success-order-creation": "La commande client a été créée avec succès"
 }

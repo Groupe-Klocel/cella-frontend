@@ -142,5 +142,8 @@
     "print-invoice": "Imprimer facture",
     "print-quote": "Imprimer devis",
     "print-order-form": "Imprimer bon de commande",
-    "print-receipt": "Imprimer bordereau de réception"
+    "print-receipt": "Imprimer bordereau de réception",
+    "create-delivery": "Créér livraison",
+    "view-deliveries-without-orders": "Voir les livraisons sans commande client",
+    "create-order": "Créer commande client"
 }
