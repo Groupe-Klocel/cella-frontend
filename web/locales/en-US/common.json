@@ -370,5 +370,7 @@
     "carrier-shipping-mode": "Carrier - Shipping Mode",
     "payments": "Payments",
     "payment": "Payment",
-    "genericArticleComment": "Comment line"
+    "genericArticleComment": "Comment line",
+    "deliveries-without-orders": "Deliveries without customer orders",
+    "delivery-without-orders": "Delivery without customer order"
 }
