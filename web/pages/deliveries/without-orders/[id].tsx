@@ -21,7 +21,7 @@ import { AppHead } from '@components';
 import { DeliveryModelV2 as model } from 'models/DeliveryModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import {
     META_DEFAULTS,
@@ -75,7 +75,7 @@ const DeliveryPage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:delivery-without-order')} ${data?.name}`;
+    const pageTitle = `${t('common:delivery-without-orders')} ${data?.name}`;
 
     // confirm and execute delivery creation function
     const [isCreateOrderLoading, setIsCreateOrderLoading] = useState(false);
@@ -181,107 +181,53 @@ const DeliveryPage: PageComponent = () => {
         });
     };
 
-    // CUBING
-    const [isCubingLoading, setIsCubingLoading] = useState(false);
-    const cubingDelivery = (deliveryId: string) => {
-        Modal.confirm({
-            title: t('messages:cubing-confirm'),
-            onOk: async () => {
-                setIsCubingLoading(true);
-                const deliveries: Array<any> = [];
-                deliveries.push({ id: deliveryId });
-
-                const query = gql`
-                    mutation executeFunction($functionName: String!, $event: JSON!) {
-                        executeFunction(functionName: $functionName, event: $event) {
-                            status
-                            output
-                        }
-                    }
-                `;
-
-                const variables = {
-                    functionName: 'CGP_customCubing',
-                    event: {
-                        deliveries: deliveries
-                    }
-                };
-
-                try {
-                    const cubingResult = await graphqlRequestClient.request(query, variables);
-                    if (cubingResult.executeFunction.status === 'ERROR') {
-                        showError(cubingResult.executeFunction.output);
-                    } else if (
-                        cubingResult.executeFunction.status === 'OK' &&
-                        cubingResult.executeFunction.output.status === 'KO'
-                    ) {
-                        showError(t(`errors:${cubingResult.executeFunction.output.output.code}`));
-                        console.log('Backend_message', cubingResult.executeFunction.output.output);
-                    } else {
-                        showSuccess(t('messages:success-cubing'));
-                        router.reload();
-                    }
-                    setIsCubingLoading(false);
-                } catch (error) {
-                    showError(t('messages:error-executing-function'));
-                    console.log('executeFunctionError', error);
-                    setIsCubingLoading(false);
-                }
-            },
-            okText: t('messages:confirm'),
-            cancelText: t('messages:cancel')
-        });
-    };
-
-    // START
-    const startDelivery = (deliveryId: string, status: Number) => {
-        Modal.confirm({
-            title: t('messages:start-confirm'),
-            onOk: async () => {
-                const deliveries: Array<any> = [];
-                deliveries.push({ id: deliveryId, status: status });
-
-                const res = await fetch(`/api/preparation/start`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        deliveries: deliveries
-                    })
-                });
-
-                const response = await res.json();
-
-                if (res.ok) {
-                    // start success
-                    showSuccess(t('messages:success-start'));
-                    router.reload();
-                } else {
-                    if (response.error.is_error) {
-                        // specific error
-                        showError(t(`errors:${response.error.code}`));
-                    } else {
-                        // generic error
-                        showError(t('messages:error-start'));
+    // function that will retrieve order deliveryAddress for given deliveryId
+    const getOrderDeliveryAddress = async (deliveryId: String[]) => {
+        const query = gql`
+            query getDeliveryAddress($filters: DeliveryAddressSearchFilters) {
+                deliveryAddresses(filters: $filters) {
+                    results {
+                        entityCode
+                        entityName
+                        entityAddress1
+                        entityAddress2
+                        entityAddress3
+                        entityStreetNumber
+                        entityPostCode
+                        entityCity
+                        entityState
+                        entityDistrict
+                        entityCountry
+                        entityCountryCode
+                        thirdPartyAddressId
                     }
                 }
-            },
-            okText: t('messages:confirm'),
-            cancelText: t('messages:cancel')
-        });
+            }
+        `;
+        const variables = {
+            filters: { deliveryId, category: configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE }
+        };
+        const deliveryOrderAddress = await graphqlRequestClient.request(query, variables);
+        return deliveryOrderAddress;
     };
 
-    const associateToRound = ({ id }: CancelDeliveryMutationVariables) => {
-        Modal.confirm({
-            title: t('messages:round-association-confirm'),
-            onOk: () => {
-                // TODO:  CALL MUTATE HERE
-            },
-            okText: t('messages:confirm'),
-            cancelText: t('messages:cancel')
-        });
-    };
+    const [isInvoiceAddressExist, setIsInvoiceAddressExist] = useState(false);
+
+    useEffect(() => {
+        const fetchOrderAddress = async () => {
+            // Fetch order addresses
+            const result = await getOrderDeliveryAddress(data?.id);
+            let isInvoiceAddressExist = false;
+            if (result) {
+                const deliveryAddresses = result.deliveryAddresses.results;
+                if (deliveryAddresses.length != 0) {
+                    isInvoiceAddressExist = true;
+                }
+                setIsInvoiceAddressExist(isInvoiceAddressExist);
+            }
+        };
+        fetchOrderAddress();
+    }, [data]);
 
     const headerData: HeaderData = {
         title: pageTitle,
@@ -299,6 +245,7 @@ const DeliveryPage: PageComponent = () => {
                             onClick={() => {
                                 createOrder([data.id]);
                             }}
+                            disabled={!isInvoiceAddressExist}
                         >
                             {t('actions:create-order')}
                         </Button>
