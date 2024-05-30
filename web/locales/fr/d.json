@@ -751,5 +751,8 @@
     "paymentId": "Règlement",
     "payment_orderType": "Type de commande",
     "payment_paymentMethod": "Mode de règlement",
-    "payment_paymentAccount": "Compte de règlement"
+    "payment_paymentAccount": "Compte de règlement",
+    "payment-status": "Etat règlement",
+    "delivery-status": "Etat livraison",
+    "order-status" : "Etat commande client"
 }
