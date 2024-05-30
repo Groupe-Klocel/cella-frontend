@@ -745,5 +745,8 @@
     "paymentId": "Payment Name",
     "payment_orderType": "Order Type",
     "payment_paymentMethod": "Payment Method",
-    "payment_paymentAccount": "Payment Account"
+    "payment_paymentAccount": "Payment Account",
+    "payment-status": "Payment status",
+    "delivery-status": "Delivery status",
+    "order-status": "Customer order status"
 }
