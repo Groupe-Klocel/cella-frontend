@@ -336,5 +336,7 @@
     "payment": "Règlement",
     "genericArticleComment": "Ligne de commentaire",
     "deliveries-without-orders": "Livraisons sans commande client",
-    "delivery-without-orders": "Livraison sans commande client"
+    "delivery-without-orders": "Livraison sans commande client",
+    "genericDeliveryComment": "Instructions de livraison",
+    "notes": "Notes"
 }

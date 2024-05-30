@@ -372,5 +372,6 @@
     "payment": "Payment",
     "genericArticleComment": "Comment line",
     "deliveries-without-orders": "Deliveries without customer orders",
-    "delivery-without-orders": "Delivery without customer order"
+    "delivery-without-orders": "Delivery without customer order",
+    "genericDeliveryComment": "Delivery instructions"
 }
