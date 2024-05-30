@@ -43,6 +43,7 @@ query GetThirdParties(
             vatEligible
             priceType
             priceTypeText
+            genericDeliveryComment
         }
     }
 }

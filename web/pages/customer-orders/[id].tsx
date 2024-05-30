@@ -120,6 +120,53 @@ const CustomerOrderPage: PageComponent = () => {
         }
     })();
 
+    // function that will retrieve delivery orderAddress for given orderId
+    const getDeliveryOrderAddress = async (orderId: String[]) => {
+        const query = gql`
+            query getOrderAddress($filters: OrderAddressSearchFilters) {
+                orderAddresses(filters: $filters) {
+                    results {
+                        entityCode
+                        entityName
+                        entityAddress1
+                        entityAddress2
+                        entityAddress3
+                        entityStreetNumber
+                        entityPostCode
+                        entityCity
+                        entityState
+                        entityDistrict
+                        entityCountry
+                        entityCountryCode
+                        thirdPartyAddressId
+                    }
+                }
+            }
+        `;
+        const variables = {
+            filters: { orderId, category: configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY }
+        };
+        const deliveryOrderAddress = await graphqlRequestClient.request(query, variables);
+        return deliveryOrderAddress;
+    };
+    const [isDeliveryAddressExist, setIsDeliveryAddressExist] = useState(false);
+
+    useEffect(() => {
+        const fetchDeliveryAddress = async () => {
+            // Fetch order addresses
+            const result = await getDeliveryOrderAddress(data?.id);
+            let isDeliveryAddressExist = false;
+            if (result) {
+                const orderAddresses = result.orderAddresses.results;
+                if (orderAddresses.length != 0) {
+                    isDeliveryAddressExist = true;
+                }
+                setIsDeliveryAddressExist(isDeliveryAddressExist);
+            }
+        };
+        fetchDeliveryAddress();
+    }, [data]);
+
     // confirm and execute delivery creation function
     const [isCreateDeliveryLoading, setIsCreateDeliveryLoading] = useState(false);
     const createDelivery = (orderIds: [string]) => {
@@ -364,6 +411,7 @@ const CustomerOrderPage: PageComponent = () => {
                         onClick={() => {
                             createDelivery([data.id]);
                         }}
+                        disabled={!isDeliveryAddressExist}
                     >
                         {t('actions:create-delivery')}
                     </Button>

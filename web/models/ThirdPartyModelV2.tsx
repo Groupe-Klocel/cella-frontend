@@ -560,7 +560,7 @@ export const ThirdPartyModelV2: ModelType = {
             config: null,
             param: null
         },
-        extraText1: {
+        genericExtraComment: {
             isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,
@@ -568,7 +568,7 @@ export const ThirdPartyModelV2: ModelType = {
             searchingFormat: 'TextArea',
             isDetailRequested: true,
             isExcludedFromDetail: false,
-            detailGroup: '{"label":"financial-info", "position":2}',
+            detailGroup: '{"label":"notes", "position":3}',
             link: null,
             addEditFormat: 'TextArea',
             addEditStep: null,
@@ -628,7 +628,7 @@ export const ThirdPartyModelV2: ModelType = {
             searchingFormat: 'TextArea',
             isDetailRequested: true,
             isExcludedFromDetail: false,
-            detailGroup: '{"label":"general", "position":0}',
+            detailGroup: '{"label":"genericDeliveryComment", "position":4}',
             link: null,
             addEditFormat: 'TextArea',
             addEditStep: null,

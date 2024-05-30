@@ -28,10 +28,12 @@ import { FormOptionType } from 'models/Models';
 import {
     CreateDeliveryAddressMutation,
     CreateDeliveryAddressMutationVariables,
+    GetDeliveryByIdQuery,
     GetThirdPartiesQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
     useCreateDeliveryAddressMutation,
+    useGetDeliveryByIdQuery,
     useGetThirdPartiesQuery,
     useGetThirdPartyAddressContactsQuery,
     useGetThirdPartyAddressesQuery,
@@ -62,6 +64,25 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
         useState<Array<FormOptionType>>();
 
     //ThirdParties
+    const delivery = useGetDeliveryByIdQuery<GetDeliveryByIdQuery, Error>(graphqlRequestClient, {
+        id: props.deliveryId
+    });
+    useEffect(() => {
+        if (delivery) {
+            form.setFieldsValue({ thirdPartyId: delivery.data?.delivery?.thirdPartyId });
+            form.setFieldsValue({
+                thirdPartyName:
+                    delivery.data?.delivery?.thirdParty?.name +
+                    ' - ' +
+                    delivery.data?.delivery?.thirdParty?.description,
+                customerOrderName: delivery.data?.delivery?.name
+            });
+            const thirdPartyIdOrder = delivery.data?.delivery?.thirdPartyId;
+            if (thirdPartyIdOrder) {
+                setChosenThirdParty(thirdPartyIdOrder);
+            }
+        }
+    }, [delivery.data]);
     const customerThirdPartiesList = useGetThirdPartiesQuery<Partial<GetThirdPartiesQuery>, Error>(
         graphqlRequestClient,
         {
@@ -310,6 +331,8 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 delete formData.deliveryName;
+                delete formData.thirdPartyName;
+                delete formData.customerOrderName;
                 createDeliveryAddress({ input: formData });
             })
             .catch((err) => {
