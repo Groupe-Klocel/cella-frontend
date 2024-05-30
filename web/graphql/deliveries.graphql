@@ -92,6 +92,11 @@ query GetDeliveryById($id: String!) {
             id
             name
         }
+        thirdPartyId
+        thirdParty {
+            name
+            description
+        }
         orderDate
         expectedDeliveryDate
         carrierService
