@@ -49,6 +49,7 @@ import {
 import moment from 'moment';
 import { debounce } from 'lodash';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import TextArea from 'antd/lib/input/TextArea';
 
 interface IOption {
     value: string;
@@ -99,6 +100,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     const thirdPartyLabel = t('d:thirdParty');
     const submit = t('actions:submit');
     const carrierImposed = t('d:carrierImposed');
+    const genericDeliveryComment = t('d:genericDeliveryComment');
     // END TEXTS TRANSLATION
 
     const { Option } = Select;
@@ -529,7 +531,9 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                                                 currency: customerThirdParty.defaultCurrency,
                                                 invoiceDiscount: customerThirdParty.defaultDiscount,
                                                 priceTypeText: customerThirdParty.priceTypeText,
-                                                priceType: customerThirdParty.priceType
+                                                priceType: customerThirdParty.priceType,
+                                                genericDeliveryComment:
+                                                    customerThirdParty.genericDeliveryComment
                                             });
                                         }
                                     }
@@ -660,6 +664,9 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                             </Option>
                         ))}
                     </Select>
+                </Form.Item>
+                <Form.Item label={genericDeliveryComment} name="genericDeliveryComment">
+                    <TextArea />
                 </Form.Item>
                 <Form.Item
                     label={priorityLabel}

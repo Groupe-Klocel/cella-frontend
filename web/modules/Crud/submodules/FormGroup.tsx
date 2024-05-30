@@ -115,7 +115,7 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                         >
                             <Input.TextArea
                                 disabled={item.disabled ? true : false}
-                                maxLength={item.maxLength ? item.maxLength : 100}
+                                maxLength={item.maxLength ? item.maxLength : undefined}
                             />
                         </Form.Item>
                     );
