@@ -369,7 +369,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 paymentAccount: null,
                 currencyText: null,
                 currency: null,
-                discount: null
+                invoiceDiscount: null
             });
         }
         if (customerThirdPartiesList.data) {
@@ -385,7 +385,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                             paymentAccount: customerThirdParty.defaultPaymentAccount,
                             currencyText: customerThirdParty.defaultCurrencyText,
                             currency: customerThirdParty.defaultCurrency,
-                            discount: customerThirdParty.defaultDiscount
+                            invoiceDiscount: customerThirdParty.defaultDiscount
                         });
                     }
                 }
@@ -536,7 +536,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 </Form.Item>
                 <Form.Item
                     label={discountLabel}
-                    name="discount"
+                    name="invoiceDiscount"
                     rules={[
                         { type: 'number', min: 0, message: errorMessageMinInputNumber },
                         { type: 'number', max: 100, message: errorMessageMaxInputNumber }
