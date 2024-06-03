@@ -207,8 +207,6 @@ const CustomerOrderPages: PageComponent = () => {
                 return configs.ORDER_STATUS_QUOTE_TRANSMITTED;
             case configs.ORDER_STATUS_QUOTE_TRANSMITTED:
                 return configs.ORDER_STATUS_TO_INVOICE;
-            case configs.ORDER_STATUS_TO_BE_DELIVERED:
-                return configs.ORDER_STATUS_DELIVERY_IN_PROGRESS;
             default:
                 return undefined;
         }
@@ -306,8 +304,6 @@ const CustomerOrderPages: PageComponent = () => {
                     return 'confirm-order';
                 case configs.ORDER_STATUS_TO_INVOICE:
                     return 'confirm-payment';
-                case configs.ORDER_STATUS_TO_BE_DELIVERED:
-                    return 'confirm-delivery';
                 default:
                     return undefined;
             }
@@ -414,8 +410,7 @@ const CustomerOrderPages: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable &&
-                                record.status != configs.ORDER_STATUS_TO_INVOICE &&
-                                record.status < configs.ORDER_STATUS_DELIVERY_IN_PROGRESS ? (
+                                record.status < configs.ORDER_STATUS_TO_INVOICE ? (
                                     <Button
                                         icon={<FileDoneOutlined />}
                                         style={{ color: 'green' }}
