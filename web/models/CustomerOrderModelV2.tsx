@@ -32,7 +32,8 @@ export const CustomerOrderModelV2: ModelType = {
         list: 'orders',
         create: 'createOrder',
         update: 'updateOrder',
-        delete: 'deleteOrder'
+        delete: 'deleteOrder',
+        export: true
     },
 
     fieldsInfo: {
