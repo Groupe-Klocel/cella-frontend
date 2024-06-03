@@ -72,8 +72,6 @@ const CustomerOrderPage: PageComponent = () => {
                 return configs.ORDER_STATUS_QUOTE_TRANSMITTED;
             case configs.ORDER_STATUS_QUOTE_TRANSMITTED:
                 return configs.ORDER_STATUS_TO_INVOICE;
-            case configs.ORDER_STATUS_TO_BE_DELIVERED:
-                return configs.ORDER_STATUS_DELIVERY_IN_PROGRESS;
             default:
                 return configs.ORDER_STATUS_CREATED;
         }
@@ -113,8 +111,6 @@ const CustomerOrderPage: PageComponent = () => {
                 return 'confirm-order';
             case configs.ORDER_STATUS_TO_INVOICE:
                 return 'confirm-payment';
-            case configs.ORDER_STATUS_TO_BE_DELIVERED:
-                return 'confirm-delivery';
             default:
                 return 'to-be-defined';
         }
@@ -316,8 +312,7 @@ const CustomerOrderPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                data?.status != configs.ORDER_STATUS_TO_INVOICE &&
-                data?.status < configs.ORDER_STATUS_DELIVERY_IN_PROGRESS ? (
+                data?.status < configs.ORDER_STATUS_TO_INVOICE ? (
                     <Button
                         onClick={() => switchNextStatus(data.id, data.status)}
                         style={{ color: 'green' }}
