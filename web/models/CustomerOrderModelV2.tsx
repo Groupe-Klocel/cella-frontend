@@ -32,8 +32,7 @@ export const CustomerOrderModelV2: ModelType = {
         list: 'orders',
         create: 'createOrder',
         update: 'updateOrder',
-        delete: 'deleteOrder',
-        export: true
+        delete: 'deleteOrder'
     },
 
     fieldsInfo: {
@@ -964,6 +963,46 @@ export const CustomerOrderModelV2: ModelType = {
             config: null,
             param: null
         },
+        invoiceNumber: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"billing", "position":1}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        invoiceDate: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'CalendarRange',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"billing", "position":1}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         invoiceDiscount: {
             isListRequested: true,
             isDefaultHiddenList: false,
@@ -1326,27 +1365,6 @@ export const CustomerOrderModelV2: ModelType = {
             config: null,
             param: null
         },
-        genericDeliveryComment: {
-            isListRequested: true,
-            isDefaultHiddenList: true,
-            isExcludedFromList: false,
-            isSortable: false,
-            searchingFormat: 'TextArea',
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
-            detailGroup: '{"label":"genericDeliveryComment", "position":2}',
-            link: null,
-            addEditFormat: 'TextArea',
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: false,
-            minRule: null,
-            maxRule: null,
-            config: null,
-            param: null,
-            defaultSort: 'ascending'
-        },
         created: {
             isListRequested: true,
             isDefaultHiddenList: true,
@@ -1365,8 +1383,7 @@ export const CustomerOrderModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null,
-            defaultSort: 'descending'
+            param: null
         },
         createdBy: {
             isListRequested: true,
@@ -1502,6 +1519,26 @@ export const CustomerOrderModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: 'delivery-status',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        genericDeliveryComment: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: false,
+            searchingFormat: 'TextArea',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"genericDeliveryComment", "position":2}',
+            link: null,
+            addEditFormat: 'TextArea',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
             isMandatory: false,
             minRule: null,
             maxRule: null,

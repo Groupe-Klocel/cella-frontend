@@ -126,6 +126,7 @@ const ListComponent = (props: IListProps) => {
                 }
                 return obj;
             }) || [];
+
     const displayedLabels = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].displayName !== null)
         .reduce((obj: any, key) => {
@@ -459,7 +460,11 @@ const ListComponent = (props: IListProps) => {
         }
     }
 
+    console.log('DLA-sortersInfo', savedSorters, sortParameter, props.sortDefault);
+
     const [sort, setSort] = useState<any>(savedSorters || sortParameter || props.sortDefault);
+
+    console.log('DLA-sort', sort);
 
     const [pagination, setPagination] = useState<PaginationType>({
         total: undefined,
@@ -641,6 +646,7 @@ const ListComponent = (props: IListProps) => {
                         }
                     });
                 }
+                console.log('SentCols', result_list);
 
                 // set columns to use in table
                 setColumns(result_list);
@@ -662,6 +668,8 @@ const ListComponent = (props: IListProps) => {
     // }, [props.refresh]);
 
     const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
+        console.log('Dla-tblChangeinput', sorter);
+
         const newSorter = orderByFormater(sorter);
 
         let tmp_array: any[] = [];
