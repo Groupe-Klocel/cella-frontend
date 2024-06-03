@@ -748,5 +748,7 @@
     "payment_paymentAccount": "Payment Account",
     "payment-status": "Payment status",
     "delivery-status": "Delivery status",
-    "order-status": "Customer order status"
+    "order-status": "Customer order status",
+    "invoiceNumber": "Invoice number",
+    "invoiceDate": "Invoice date"
 }
