@@ -159,5 +159,6 @@
     "expected-location_abbr": "Expected loc.",
     "expected-stock-owner_abbr": "Expected stock own.",
     "expected-article_abbr": "Expected art.",
-    "expected-quantity_abbr": "Expected qty"
+    "expected-quantity_abbr": "Expected qty",
+    "change-location": "Change location"
 }
