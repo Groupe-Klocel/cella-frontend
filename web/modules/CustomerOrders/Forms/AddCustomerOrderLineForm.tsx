@@ -363,9 +363,6 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                 delete formData.stockOwnerName;
                 delete formData.articleName;
                 delete formData.articleLuId;
-                if (articleCubingType !== configs.ARTICLE_CUBING_TYPE_COMMENT) {
-                    formData.genericArticleComment = articleDescription;
-                }
 
                 createOrderLine({ input: formData });
             })
