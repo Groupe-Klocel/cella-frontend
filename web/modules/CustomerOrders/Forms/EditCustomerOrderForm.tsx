@@ -66,6 +66,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     const paymentTermLabel = t('d:paymentTerms');
     const paymentMethodLabel = t('d:paymentMethod');
     const paymentAccountLabel = t('d:paymentAccount');
+    const priceTypeLabel = t('d:priceType');
     const currencyLabel = t('d:currency');
     const discountLabel = t('d:discount_percent');
     const deliveryPoTypeLabel = t('d:deliveryType');
@@ -147,6 +148,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 delete formData['paymentMethodText'];
                 delete formData['paymentTermsText'];
                 delete formData['currencyText'];
+                delete formData['priceTypeText'];
                 delete formData['stockOwnerName'];
                 delete formData['thirdParty'];
                 delete formData['stockOwner'];
@@ -198,7 +200,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
             },
             orderBy: null,
             page: 1,
-            itemsPerPage: 100
+            itemsPerPage: 20000
         }
     );
 
@@ -313,6 +315,27 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
         }
     }, [currenciesList.data]);
 
+    // Retrieve price types list
+    const [priceTypes, setPriceTypes] = useState<any>();
+    const priceTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'price_type'
+    });
+
+    useEffect(() => {
+        if (priceTypesList) {
+            const newPriceType: Array<FormOptionType> = [];
+
+            const cData = priceTypesList?.data?.listParametersForAScope;
+            if (cData) {
+                cData.forEach((item) => {
+                    newPriceType.push({ key: parseInt(item.code), text: item.text });
+                });
+                setPriceTypes(newPriceType);
+            }
+        }
+    }, [priceTypesList.data]);
+
     // Retrieve delivery types list
     const [deliveryTypes, setDeliveryTypes] = useState<any>();
     const deliveryTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -385,7 +408,9 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                             paymentAccount: customerThirdParty.defaultPaymentAccount,
                             currencyText: customerThirdParty.defaultCurrencyText,
                             currency: customerThirdParty.defaultCurrency,
-                            invoiceDiscount: customerThirdParty.defaultDiscount
+                            invoiceDiscount: customerThirdParty.defaultDiscount,
+                            priceTypeText: customerThirdParty.priceTypeText,
+                            priceType: customerThirdParty.priceType
                         });
                     }
                 }
@@ -414,6 +439,14 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
             form.setFieldsValue({ paymentAccount: null });
         } else {
             form.setFieldsValue({ paymentAccount: key });
+        }
+    };
+
+    const handlePriceTypeSelection = (key: any, value: any) => {
+        if (key === undefined) {
+            form.setFieldsValue({ priceType: null });
+        } else {
+            form.setFieldsValue({ priceType: key });
         }
     };
 
@@ -458,9 +491,14 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         showTime={{ defaultValue: moment('YYYY-MM-DD') }}
                     />
                 </Form.Item>
-
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
                     <Select
+                        showSearch
+                        filterOption={(inputValue, option) =>
+                            option!.props.children
+                                .toUpperCase()
+                                .indexOf(inputValue.toUpperCase()) !== -1
+                        }
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:thirdParty')
@@ -515,6 +553,21 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         {paymentAccounts?.map((paymentAccount: any) => (
                             <Option key={paymentAccount.key} value={paymentAccount.key}>
                                 {paymentAccount.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={priceTypeLabel} name="priceTypeText">
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:priceType')
+                        })}`}
+                        onChange={handlePriceTypeSelection}
+                    >
+                        {priceTypes?.map((priceType: any) => (
+                            <Option key={priceType.key} value={priceType.key}>
+                                {priceType.text}
                             </Option>
                         ))}
                     </Select>

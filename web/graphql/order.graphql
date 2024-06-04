@@ -56,6 +56,8 @@ query GetOrderById($id: String!) {
         }
         currency
         currencyText
+        priceType
+        priceTypeText
         created
         createdBy
         modified
