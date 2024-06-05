@@ -32,14 +32,17 @@ import {
     GetThirdPartiesQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
+    SimpleGetThirdPartiesQuery,
     useCreateDeliveryAddressMutation,
     useGetDeliveryByIdQuery,
     useGetThirdPartiesQuery,
     useGetThirdPartyAddressContactsQuery,
     useGetThirdPartyAddressesQuery,
-    useListConfigsForAScopeQuery
+    useListConfigsForAScopeQuery,
+    useSimpleGetThirdPartiesQuery
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
+import { gql } from 'graphql-request';
 
 interface IOption {
     value: string;
@@ -83,18 +86,18 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
             }
         }
     }, [delivery.data]);
-    const customerThirdPartiesList = useGetThirdPartiesQuery<Partial<GetThirdPartiesQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: {
-                category: [configs.THIRD_PARTY_CATEGORY_CUSTOMER],
-                status: [configs.THIRD_PARTY_STATUS_ENABLED]
-            },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 30000
-        }
-    );
+    const customerThirdPartiesList = useSimpleGetThirdPartiesQuery<
+        Partial<SimpleGetThirdPartiesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: {
+            category: [configs.THIRD_PARTY_CATEGORY_CUSTOMER],
+            status: [configs.THIRD_PARTY_STATUS_ENABLED]
+        },
+        orderBy: null,
+        page: 1,
+        itemsPerPage: 30000
+    });
 
     useEffect(() => {
         if (customerThirdPartiesList) {
@@ -111,8 +114,9 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
     }, [customerThirdPartiesList.data]);
 
     const [chosenThirdParty, setChosenThirdParty] = useState<string | undefined>();
+
     // handle call back on thirdparty change
-    const handleThirdPartyChange = (value: any) => {
+    const handleThirdPartyChange = async (value: any) => {
         setChosenThirdParty(value);
     };
 
