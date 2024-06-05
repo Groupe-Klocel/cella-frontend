@@ -15,6 +15,24 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+query SimpleGetThirdParties(
+    $filters: ThirdPartySearchFilters
+    $orderBy: [ThirdPartyOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    thirdParties(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+        }
+    }
+}
+
 query GetThirdParties(
     $filters: ThirdPartySearchFilters
     $orderBy: [ThirdPartyOrderByCriterion!]
