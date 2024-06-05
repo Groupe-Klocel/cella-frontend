@@ -208,7 +208,7 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
         filters: contactFilters,
         orderBy: null,
         page: 1,
-        itemsPerPage: 100
+        itemsPerPage: 100000
     });
 
     useEffect(() => {
