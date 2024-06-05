@@ -344,7 +344,7 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
                 filters: filtersToApply,
                 orderBy: null,
                 page: 1,
-                itemsPerPage: 100
+                itemsPerPage: 100000
             };
 
             const options = await graphqlRequestClient.request(query, variables);
