@@ -121,7 +121,7 @@ export const EditCustomerOrderAddressForm: FC<EditCustomerOrderAddressFormProps>
         filters: contactFilters,
         orderBy: null,
         page: 1,
-        itemsPerPage: 100000
+        itemsPerPage: 100
     });
 
     useEffect(() => {
