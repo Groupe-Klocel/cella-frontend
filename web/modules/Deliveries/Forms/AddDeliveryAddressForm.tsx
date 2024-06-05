@@ -92,7 +92,7 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
             },
             orderBy: null,
             page: 1,
-            itemsPerPage: 100
+            itemsPerPage: 30000
         }
     );
 
@@ -247,7 +247,7 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
         filters: contactFilters,
         orderBy: null,
         page: 1,
-        itemsPerPage: 100000
+        itemsPerPage: 100
     });
 
     useEffect(() => {
@@ -390,6 +390,12 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                                     name: t('d:customer')
                                 })}`}
                                 onChange={handleThirdPartyChange}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option?.props.children
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
                             >
                                 {thirdParties?.map((item: any) => (
                                     <Option key={item.key} value={item.key}>
@@ -408,6 +414,12 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                                     name: t('d:third-party-address-model')
                                 })}`}
                                 onChange={handleAddressChange}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option?.props.children
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
                             >
                                 {thirdPartyAddresses?.map((item: any) => (
                                     <Option key={item.key} value={item.key}>
@@ -426,6 +438,12 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                                     name: t('d:third-party-address-contact-model')
                                 })}`}
                                 onChange={handleContactChange}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option?.props.children
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
                             >
                                 {thirdPartyAddressContacts?.map((item: any) => (
                                     <Option key={item.key} value={item.key}>
