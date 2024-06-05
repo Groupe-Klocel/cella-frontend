@@ -243,7 +243,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
         filters: contactFilters,
         orderBy: null,
         page: 1,
-        itemsPerPage: 100000
+        itemsPerPage: 100
     });
 
     useEffect(() => {
