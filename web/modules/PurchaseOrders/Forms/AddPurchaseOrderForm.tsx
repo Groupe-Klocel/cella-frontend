@@ -214,7 +214,7 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
         filters: contactFilters,
         orderBy: null,
         page: 1,
-        itemsPerPage: 100
+        itemsPerPage: 100000
     });
 
     useEffect(() => {
