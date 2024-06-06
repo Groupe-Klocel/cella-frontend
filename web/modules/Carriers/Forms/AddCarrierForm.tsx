@@ -30,9 +30,11 @@ import {
     GetThirdPartiesQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
+    SimpleGetThirdPartiesQuery,
     useGetThirdPartiesQuery,
     useGetThirdPartyAddressContactsQuery,
-    useGetThirdPartyAddressesQuery
+    useGetThirdPartyAddressesQuery,
+    useSimpleGetThirdPartiesQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../../common/configs.json';
@@ -70,23 +72,23 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
     // #endregion
 
     //ThirdParties
-    const customerThirdPartiesList = useGetThirdPartiesQuery<Partial<GetThirdPartiesQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: {
-                category: [configs.THIRD_PARTY_CATEGORY_CARRIER],
-                status: [configs.THIRD_PARTY_STATUS_ENABLED]
-            },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
-        }
-    );
+    const carrierThirdPartiesList = useSimpleGetThirdPartiesQuery<
+        Partial<SimpleGetThirdPartiesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: {
+            category: [configs.THIRD_PARTY_CATEGORY_CARRIER],
+            status: [configs.THIRD_PARTY_STATUS_ENABLED]
+        },
+        orderBy: null,
+        page: 1,
+        itemsPerPage: 30000
+    });
 
     useEffect(() => {
-        if (customerThirdPartiesList) {
+        if (carrierThirdPartiesList) {
             const newTypeTexts: Array<any> = [];
-            const cData = customerThirdPartiesList?.data?.thirdParties?.results;
+            const cData = carrierThirdPartiesList?.data?.thirdParties?.results;
             if (cData) {
                 cData.forEach((item) => {
                     newTypeTexts.push({ key: item.id, text: item.name });
@@ -95,7 +97,7 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
                 setThirdParties(newTypeTexts);
             }
         }
-    }, [customerThirdPartiesList.data]);
+    }, [carrierThirdPartiesList.data]);
 
     const [chosenThirdParty, setChosenThirdParty] = useState<string | undefined>();
     // handle call back on thirdparty change
