@@ -460,11 +460,7 @@ const ListComponent = (props: IListProps) => {
         }
     }
 
-    console.log('DLA-sortersInfo', savedSorters, sortParameter, props.sortDefault);
-
     const [sort, setSort] = useState<any>(savedSorters || sortParameter || props.sortDefault);
-
-    console.log('DLA-sort', sort);
 
     const [pagination, setPagination] = useState<PaginationType>({
         total: undefined,
@@ -668,8 +664,6 @@ const ListComponent = (props: IListProps) => {
     // }, [props.refresh]);
 
     const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
-        console.log('Dla-tblChangeinput', sorter);
-
         const newSorter = orderByFormater(sorter);
 
         let tmp_array: any[] = [];
