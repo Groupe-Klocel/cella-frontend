@@ -72,6 +72,7 @@ query GetOrderAddressById($id: String!) {
         contactFirstName
         contactLastName
         contactPhone
+        contactMobile
         contactEmail
         contactLanguage
         contactComment
