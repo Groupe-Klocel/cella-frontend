@@ -185,7 +185,8 @@ export const DeliveryLineModelV2: ModelType = {
             param: null,
             optionTable:
                 '{"table": "Article", "fieldToDisplay": "name","filtersToApply": {"stockOwnerId":"stockOwnerId"}}',
-            isEditDisabled: true
+            toBeEditDisabled:
+                '[{"table": "DeliveryLine","field": "status","conditions": "value >= started"}]'
         },
         'article{name}': {
             isListRequested: true,
@@ -205,8 +206,7 @@ export const DeliveryLineModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null,
-            isEditDisabled: true
+            param: null
         },
         status: {
             isListRequested: true,
