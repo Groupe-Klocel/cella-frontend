@@ -56,6 +56,8 @@ const EditThirdPartyAddressPage: PageComponent = () => {
     }`;
     const pageTitle = `${t('common:third-party-address')} ${title}`;
 
+    console.log('DLA-data', data);
+
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
@@ -71,6 +73,7 @@ const EditThirdPartyAddressPage: PageComponent = () => {
                     />
                 }
                 routeAfterSuccess={`/third-parties/address/:id`}
+                stringCodeScopes={['payment_terms', 'payment_method', 'bank_account']}
             />
         </>
     );
