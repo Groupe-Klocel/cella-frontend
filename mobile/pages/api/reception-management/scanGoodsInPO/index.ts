@@ -52,7 +52,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         filters: { name: scannedInfo },
         advancedFilters: {
             filter: {
-                field: { type: 10103 },
+                field: { type: 10104 },
                 searchType: 'INFERIOR'
             }
         }
