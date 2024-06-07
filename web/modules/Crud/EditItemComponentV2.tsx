@@ -204,10 +204,10 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
     const configs = useConfigs(
         { scope: configScopes.length > 0 ? configScopes : '' },
         1,
-        100,
+        10000,
         null
     );
-    const params = useParams({ scope: paramScopes.length > 0 ? paramScopes : '' }, 1, 100, null);
+    const params = useParams({ scope: paramScopes.length > 0 ? paramScopes : '' }, 1, 10000, null);
 
     useEffect(() => {
         const tmp_results: Array<any> = [];
