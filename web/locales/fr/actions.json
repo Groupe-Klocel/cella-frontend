@@ -145,5 +145,6 @@
     "print-receipt": "Imprimer bordereau de réception",
     "create-delivery": "Créér livraison",
     "view-deliveries-without-orders": "Voir les livraisons sans commande client",
-    "create-order": "Créer commande client"
+    "create-order": "Créer commande client",
+    "print-boxes-labels": "Imprimer étiquettes colis associés"
 }
