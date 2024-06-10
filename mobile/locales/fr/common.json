@@ -159,5 +159,6 @@
     "expected-stock-owner_abbr": "Prop. stock attendu",
     "expected-article_abbr": "Art. attendu",
     "expected-quantity_abbr": "Qté attendue",
-    "change-location": "Changer d'emplacement"
+    "change-location": "Changer d'emplacement",
+    "total-picked-quantity": "Quantité préparée totale"
 }
