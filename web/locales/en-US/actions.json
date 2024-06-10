@@ -147,5 +147,6 @@
     "print-receipt": "Print Receipt",
     "create-delivery": "Create delivery",
     "view-deliveries-without-orders": "View deliveries without customer orders",
-    "create-order": "Create customer order"
+    "create-order": "Create customer order",
+    "print-boxes-labels": "Print associated boxes labels"
 }
