@@ -94,10 +94,18 @@ const PickAndPack: PageComponent = () => {
             storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddresses
         ) {
             const round = storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round;
+            const totalProcessedQuantity = round.roundAdvisedAddresses.reduce(
+                (sum: number, address: any) => {
+                    return sum + address.roundLineDetail.processedQuantity;
+                },
+                0
+            );
             const proposedRoundAdvisedAddress =
                 storedObject[`step${workflow.expectedSteps[0]}`]?.data
                     ?.proposedRoundAdvisedAddresses[0];
             object[t('common:round')] = round.name;
+            object[t('common:total-picked-quantity')] =
+                totalProcessedQuantity + '/' + round.nbPickArticle;
             if (
                 storedObject[`step${workflow.expectedSteps[0]}`]?.data?.pickAndPackType === 'detail'
             ) {
