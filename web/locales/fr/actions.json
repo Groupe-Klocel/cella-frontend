@@ -146,5 +146,7 @@
     "create-delivery": "Créér livraison",
     "view-deliveries-without-orders": "Voir les livraisons sans commande client",
     "create-order": "Créer commande client",
-    "print-boxes-labels": "Imprimer étiquettes colis associés"
+    "print-boxes-labels": "Imprimer étiquettes colis associés",
+    "with-closed-cancel-items": "Avec les éléments fermés et annulés",
+    "without-closed-cancel-items": "Sans les éléments fermés et annulés"
 }

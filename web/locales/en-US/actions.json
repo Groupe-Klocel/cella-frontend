@@ -148,5 +148,7 @@
     "create-delivery": "Create delivery",
     "view-deliveries-without-orders": "View deliveries without customer orders",
     "create-order": "Create customer order",
-    "print-boxes-labels": "Print associated boxes labels"
+    "print-boxes-labels": "Print associated boxes labels",
+    "with-closed-cancel-items": "With closed and cancelled items",
+    "without-closed-cancel-items": "Without closed and cancelled items"
 }
