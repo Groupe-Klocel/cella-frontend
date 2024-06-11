@@ -756,5 +756,6 @@
     "delivery-status": "Etat livraison",
     "order-status" : "Etat commande client",
     "invoiceNumber": "N° facture",
-    "invoiceDate": "Date de facture"
+    "invoiceDate": "Date de facture",
+    "all-fields-search": "Recherche tous champs"
 }
