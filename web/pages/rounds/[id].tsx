@@ -17,20 +17,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
+import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { RoundModelV2 as model } from 'models/RoundModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
 import { Button, Modal, Space } from 'antd';
-import { ModeEnum } from 'generated/graphql';
+import { GetOnlyBoxIdsQuery, ModeEnum, useGetOnlyBoxIdsQuery } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { RoundDetailsExtra } from 'modules/Rounds/Elements/RoundDetailsExtra';
+import { useAuth } from 'context/AuthContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -43,6 +44,9 @@ const RoundPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
+    const [idsToPrint, setIdsToPrint] = useState<string[]>();
+    const { graphqlRequestClient } = useAuth();
 
     // #region to customize information
     const breadCrumb = [
@@ -53,6 +57,36 @@ const RoundPage: PageComponent = () => {
     ];
 
     const pageTitle = `${t('common:round')} ${data?.name}`;
+
+    //Associated boxes
+    const boxesIds = useGetOnlyBoxIdsQuery<Partial<GetOnlyBoxIdsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: {
+                roundId: id
+            },
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 500
+        }
+    );
+
+    const [boxesList, setBoxesList] = useState<Array<string>>([]);
+
+    useEffect(() => {
+        if (boxesIds) {
+            const tmp_array: Array<any> = [];
+            const cData = boxesIds?.data?.handlingUnitOutbounds?.results;
+
+            if (cData) {
+                cData.forEach((item) => {
+                    tmp_array.push(item.id);
+                });
+                setBoxesList(tmp_array);
+            }
+        }
+    }, [boxesIds.data]);
+
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -75,41 +109,65 @@ const RoundPage: PageComponent = () => {
         title: pageTitle,
         routes: breadCrumb,
         onBackRoute: rootPath,
-        actionsComponent:
-            data?.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
-                <Space>
-                    {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
-                        <LinkButton
-                            title={t('actions:edit')}
-                            path={`${rootPath}/edit/${id}`}
-                            type="primary"
-                        />
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 &&
-                    modes.includes(ModeEnum.Delete) &&
-                    model.isSoftDeletable ? (
-                        <Button
-                            onClick={() => confirmAction(id as string, setIdToDisable)()}
-                            type="primary"
-                        >
-                            {t('actions:disable')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
-                            {t('actions:delete')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                </Space>
-            ) : (
-                <></>
-            )
+        actionsComponent: (
+            <Space>
+                {data?.status !== configs.ROUND_STATUS_CLOSED ? (
+                    <>
+                        {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
+                            <LinkButton
+                                title={t('actions:edit')}
+                                path={`${rootPath}/edit/${id}`}
+                                type="primary"
+                            />
+                        ) : (
+                            <></>
+                        )}
+                        {modes.length > 0 &&
+                        modes.includes(ModeEnum.Delete) &&
+                        model.isSoftDeletable ? (
+                            <Button
+                                onClick={() => confirmAction(id as string, setIdToDisable)()}
+                                type="primary"
+                            >
+                                {t('actions:disable')}
+                            </Button>
+                        ) : (
+                            <></>
+                        )}
+                        {modes.length > 0 &&
+                        modes.includes(ModeEnum.Delete) &&
+                        model.isDeletable ? (
+                            <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
+                                {t('actions:delete')}
+                            </Button>
+                        ) : (
+                            <></>
+                        )}
+                    </>
+                ) : (
+                    <></>
+                )}
+                <Button
+                    type="primary"
+                    ghost
+                    onClick={() => {
+                        setShowNumberOfPrintsModal(true);
+                        setIdsToPrint(boxesList);
+                    }}
+                >
+                    {t('actions:print-boxes-labels')}
+                </Button>
+                <NumberOfPrintsModalV2
+                    showModal={{
+                        showNumberOfPrintsModal,
+                        setShowNumberOfPrintsModal
+                    }}
+                    dataToPrint={{ boxes: idsToPrint }}
+                    documentName="K_OutboundHandlingUnitLabel"
+                    documentReference={data?.name}
+                />
+            </Space>
+        )
     };
     // #endregion
 
