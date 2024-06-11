@@ -331,6 +331,13 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                     name="control-hooks"
                     onKeyPress={handleKeyPress}
                 >
+                    <Form.Item
+                        name={'allFields'}
+                        label={t('d:all-fields-search')}
+                        key={'allFields'}
+                    >
+                        <Input allowClear />
+                    </Form.Item>
                     {columnsInfos?.map((item: FilterFieldType) => {
                         if (item.type === FormDataType.Number)
                             return (
