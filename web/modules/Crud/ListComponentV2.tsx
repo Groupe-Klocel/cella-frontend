@@ -642,7 +642,6 @@ const ListComponent = (props: IListProps) => {
                         }
                     });
                 }
-                console.log('SentCols', result_list);
 
                 // set columns to use in table
                 setColumns(result_list);

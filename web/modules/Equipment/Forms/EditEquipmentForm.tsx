@@ -630,7 +630,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         })}`}
                     >
                         {printers?.map((printer: any) => (
-                            <Option key={printer.id} value={parseInt(printer.code)}>
+                            <Option key={printer.id} value={printer.code}>
                                 {printer.text}
                             </Option>
                         ))}

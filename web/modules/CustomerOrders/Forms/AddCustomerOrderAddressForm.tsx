@@ -467,10 +467,18 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                     <Form.Item label={t('d:entityDistrict')} name="entityDistrict">
                         <Input />
                     </Form.Item>
-                    <Form.Item label={t('d:entityCountry')} name="entityCountry">
+                    <Form.Item
+                        label={t('d:entityCountry')}
+                        name="entityCountry"
+                        initialValue={'France'}
+                    >
                         <Input />
                     </Form.Item>
-                    <Form.Item label={t('d:entityCountryCode')} name="entityCountryCode">
+                    <Form.Item
+                        label={t('d:entityCountryCode')}
+                        name="entityCountryCode"
+                        initialValue={'FR'}
+                    >
                         <Input />
                     </Form.Item>
                     <Form.Item label={t('d:entityVatCode')} name="entityVatCode">
