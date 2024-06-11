@@ -404,7 +404,8 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                 >
                                     <Select
                                         disabled={item.disabled ? true : false}
-                                        mode={item.mode ? item.mode : false}
+                                        // mode={item.mode ? item.mode : false}
+                                        mode="multiple"
                                         allowClear
                                         showSearch
                                         filterOption={(inputValue, option) =>
