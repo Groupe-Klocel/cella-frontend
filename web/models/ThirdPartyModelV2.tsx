@@ -238,7 +238,8 @@ export const ThirdPartyModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: 'currency'
+            param: 'currency',
+            addEditInitialValue: 'EUR'
         },
         defaultCurrencyText: {
             isListRequested: true,
@@ -298,7 +299,8 @@ export const ThirdPartyModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: 'payment_terms'
+            param: 'payment_terms',
+            addEditInitialValue: 'recep'
         },
         defaultPaymentTermsText: {
             isListRequested: true,
@@ -338,7 +340,8 @@ export const ThirdPartyModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: 'payment_method'
+            param: 'payment_method',
+            addEditInitialValue: 'CB'
         },
         defaultPaymentMethodText: {
             isListRequested: true,
@@ -418,7 +421,8 @@ export const ThirdPartyModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: null,
+            addEditInitialValue: true
         },
         vatRateCode: {
             isListRequested: true,
