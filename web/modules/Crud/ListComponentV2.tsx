@@ -45,8 +45,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
-import { ExportFormat, ModeEnum } from 'generated/graphql';
+import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { useRouter } from 'next/router';
+import { useAuth } from 'context/AuthContext';
 
 export type HeaderData = {
     title: string;
@@ -86,6 +87,7 @@ const ListComponent = (props: IListProps) => {
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const router = useRouter();
+    const { graphqlRequestClient } = useAuth();
 
     // #region DEFAULT PROPS
     const defaultProps = {
@@ -184,6 +186,39 @@ const ListComponent = (props: IListProps) => {
                 initialValue: undefined
             };
         });
+
+    // handle cancelled or closed item
+    const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>(false);
+    function getStatusConfig(objects: any) {
+        const statusObj = objects.find((obj: any) => obj.name === 'status');
+        return statusObj ? statusObj.config : null;
+    }
+    const statusScope = getStatusConfig(filterFields);
+
+    const retrievedStatuses = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: statusScope
+    });
+    const btnName = isWithoutClosed
+        ? t('actions: with-closed-cancel-items')
+        : t('actions: without-closed-cancel-items');
+
+    if (retrievedStatuses.data) {
+        if (isWithoutClosed) {
+            const statuses = retrievedStatuses.data.listConfigsForAScope;
+            const filteredStatuses = statuses
+                .filter((status: any) => status.code !== '2000' && status.code !== '1005')
+                .map((status: any) => parseInt(status.code));
+
+            searchCriterias = { ...searchCriterias, status: filteredStatuses };
+            filterFields = filterFields.map((field: any) => {
+                if (field.name === 'status') {
+                    return { ...field, initialValue: filteredStatuses };
+                }
+                return field;
+            });
+            showBadge = true;
+        }
+    }
 
     //retrieve saved sorters from cookies if any
     const savedSorters = cookie.get(
@@ -345,6 +380,12 @@ const ListComponent = (props: IListProps) => {
 
     const [search, setSearch] = useState(searchCriterias);
 
+    useEffect(() => {
+        if (JSON.stringify(search) !== JSON.stringify(searchCriterias)) {
+            setSearch(searchCriterias);
+        }
+    }, [searchCriterias]);
+
     //	Search Drawer
     const [formSearch] = Form.useForm();
 
@@ -383,6 +424,7 @@ const ListComponent = (props: IListProps) => {
     const handleReset = () => {
         cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
         !props.searchCriteria ? setSearch({}) : setSearch({ ...props.searchCriteria });
+        setIsWithoutClosed(false);
         resetForm = true;
         for (const obj of filterFields) {
             obj.initialValue = undefined;
@@ -492,7 +534,15 @@ const ListComponent = (props: IListProps) => {
         }, delay);
 
         return () => clearTimeout(timer);
-    }, [search, props.refetch, pagination.current, pagination.itemsPerPage, sort, router.locale]);
+    }, [
+        search,
+        props.refetch,
+        pagination.current,
+        pagination.itemsPerPage,
+        sort,
+        router.locale,
+        isWithoutClosed
+    ]);
 
     // #endregion
 
@@ -729,6 +779,23 @@ const ListComponent = (props: IListProps) => {
                                 }
                                 actionsRight={
                                     <Space>
+                                        {statusScope ? (
+                                            <Button
+                                                onClick={() => setIsWithoutClosed(!isWithoutClosed)}
+                                                style={
+                                                    isWithoutClosed
+                                                        ? {
+                                                              backgroundColor: '#1890ff',
+                                                              color: 'white'
+                                                          }
+                                                        : {}
+                                                }
+                                            >
+                                                {btnName}
+                                            </Button>
+                                        ) : (
+                                            <></>
+                                        )}
                                         {props.searchable ? (
                                             <>
                                                 {showBadge ? (
