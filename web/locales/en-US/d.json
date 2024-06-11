@@ -750,5 +750,6 @@
     "delivery-status": "Delivery status",
     "order-status": "Customer order status",
     "invoiceNumber": "Invoice number",
-    "invoiceDate": "Invoice date"
+    "invoiceDate": "Invoice date",
+    "all-fields-search": "All fields search"
 }
