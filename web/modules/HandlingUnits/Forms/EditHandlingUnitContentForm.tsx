@@ -36,7 +36,8 @@ import {
     getRulesWithNoSpacesValidator,
     useArticleIds,
     useStockOwners,
-    useLocationIds
+    useLocationIds,
+    checkUndefinedValues
 } from '@helpers';
 import configs from '../../../../common/configs.json';
 
@@ -225,6 +226,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 const formData = form.getFieldsValue(true);
                 setIsLoading(true);
                 const fetchData = async () => {

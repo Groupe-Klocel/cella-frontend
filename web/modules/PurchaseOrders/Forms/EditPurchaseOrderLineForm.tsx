@@ -39,7 +39,14 @@ import {
     UpdatePurchaseOrderLineMutation,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo, useArticleIds, usePurchaseOrderLineIds } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    useArticleIds,
+    usePurchaseOrderLineIds,
+    checkUndefinedValues
+} from '@helpers';
 import { debounce } from 'lodash';
 import configs from '../../../../common/configs.json';
 
@@ -180,6 +187,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 delete formData.articleName;
