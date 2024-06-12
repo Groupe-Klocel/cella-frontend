@@ -35,7 +35,7 @@ import {
     useListConfigsForAScopeQuery,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo } from '@helpers';
+import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 const { Option } = Select;
@@ -207,6 +207,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 //update replenish type

@@ -569,6 +569,18 @@ function areObjectsIdentical(arr: Array<any>) {
     return true;
 }
 
+//check fields if contain undefined value and set field to null
+const checkUndefinedValues = (form: any) => {
+    const tmpFieldsValues = { ...form.getFieldsValue(true) };
+
+    for (const [key, value] of Object.entries(tmpFieldsValues)) {
+        if (value === undefined) {
+            tmpFieldsValues[key] = null;
+        }
+    }
+    form.setFieldsValue(tmpFieldsValues);
+};
+
 export {
     isNumeric,
     formatDigitsForData,
@@ -616,5 +628,6 @@ export {
     checkValueInKey,
     extractComparisonValues,
     queryString,
-    areObjectsIdentical
+    areObjectsIdentical,
+    checkUndefinedValues
 };

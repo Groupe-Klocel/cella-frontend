@@ -36,7 +36,8 @@ import {
     showSuccess,
     showInfo,
     useHandlingUnitModels,
-    useGetCarrierShippingModes
+    useGetCarrierShippingModes,
+    checkUndefinedValues
 } from '@helpers';
 
 import { FormOptionType } from 'models/Models';
@@ -140,6 +141,7 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 delete formData.equipmentName;

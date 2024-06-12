@@ -23,7 +23,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo } from '@helpers';
+import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import {
     GetThirdPartiesQuery,
     SimpleGetAllStockOwnersQuery,
@@ -140,6 +140,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
 
