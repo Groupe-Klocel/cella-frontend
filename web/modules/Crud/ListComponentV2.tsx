@@ -41,13 +41,14 @@ import {
     useUpdate,
     queryString
 } from '@helpers';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
+import { initial } from 'lodash';
 
 export type HeaderData = {
     title: string;
@@ -189,6 +190,10 @@ const ListComponent = (props: IListProps) => {
 
     // handle cancelled or closed item
     const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>(false);
+    const previousIsWithoutClosed = useRef(isWithoutClosed);
+    useEffect(() => {
+        previousIsWithoutClosed.current = isWithoutClosed;
+    }, [isWithoutClosed]);
     function getStatusConfig(objects: any) {
         const statusObj = objects.find((obj: any) => obj.name === 'status');
         return statusObj ? statusObj.config : null;
@@ -199,24 +204,76 @@ const ListComponent = (props: IListProps) => {
         scope: statusScope
     });
     const btnName = isWithoutClosed
-        ? t('actions: with-closed-cancel-items')
-        : t('actions: without-closed-cancel-items');
+        ? t('actions:with-closed-cancel-items')
+        : t('actions:without-closed-cancel-items');
 
     if (retrievedStatuses.data) {
-        if (isWithoutClosed) {
-            const statuses = retrievedStatuses.data.listConfigsForAScope;
-            const filteredStatuses = statuses
-                .filter((status: any) => status.code !== '2000' && status.code !== '1005')
-                .map((status: any) => parseInt(status.code));
+        const statuses = retrievedStatuses.data.listConfigsForAScope.map((status: any) =>
+            parseInt(status.code)
+        );
 
-            searchCriterias = { ...searchCriterias, status: filteredStatuses };
+        const filteredStatuses = statuses.filter(
+            (status: any) => status !== 2000 && status !== 1005
+        );
+
+        let currentSavedFilters = cookie.get(
+            `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`
+        )
+            ? JSON.parse(
+                  cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)!
+              )
+            : undefined;
+
+        if (isWithoutClosed) {
+            let statusesToUpdate = filteredStatuses;
+            if (currentSavedFilters && currentSavedFilters.status) {
+                statusesToUpdate = currentSavedFilters.status.filter(
+                    (status: any) => status !== 2000 && status !== 1005
+                );
+            }
+
+            searchCriterias = { ...searchCriterias, status: statusesToUpdate };
             filterFields = filterFields.map((field: any) => {
                 if (field.name === 'status') {
-                    return { ...field, initialValue: filteredStatuses };
+                    return { ...field, initialValue: statusesToUpdate };
                 }
                 return field;
             });
+            currentSavedFilters = { ...currentSavedFilters, status: statusesToUpdate };
+            cookie.set(
+                `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
+                JSON.stringify(currentSavedFilters)
+            );
             showBadge = true;
+        } else {
+            if (previousIsWithoutClosed.current) {
+                if (currentSavedFilters && currentSavedFilters.status) {
+                    if (currentSavedFilters.status.length !== statuses.length) {
+                        if (
+                            statuses.some(
+                                (status: any) =>
+                                    status === 1005 && !currentSavedFilters.status.includes(1005)
+                            )
+                        ) {
+                            currentSavedFilters.status.push(1005);
+                        }
+                        if (
+                            statuses.some(
+                                (status: any) =>
+                                    status === 2000 && !currentSavedFilters.status.includes(2000)
+                            )
+                        ) {
+                            currentSavedFilters.status.push(2000);
+                        }
+                    } else {
+                        currentSavedFilters.status = undefined;
+                    }
+                    cookie.set(
+                        `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
+                        JSON.stringify(currentSavedFilters)
+                    );
+                }
+            }
         }
     }
 
@@ -408,6 +465,7 @@ const ListComponent = (props: IListProps) => {
                         columns={filterFields}
                         handleSubmit={handleSubmit}
                         resetForm={resetForm}
+                        allFieldsInitialValue={allFieldsInitialValue ?? undefined}
                     />
                 ),
                 onCancel: () => handleReset(),
@@ -425,12 +483,15 @@ const ListComponent = (props: IListProps) => {
         cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
         !props.searchCriteria ? setSearch({}) : setSearch({ ...props.searchCriteria });
         setIsWithoutClosed(false);
+        allFieldsInitialValue = undefined;
         resetForm = true;
         for (const obj of filterFields) {
             obj.initialValue = undefined;
         }
         closeDrawer();
     };
+
+    let allFieldsInitialValue: any = undefined;
 
     const handleSubmit = () => {
         formSearch
@@ -447,7 +508,6 @@ const ListComponent = (props: IListProps) => {
                 cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
                 showBadge = false;
                 const savedFilters: any = {};
-
                 if (newSearchValues) {
                     for (const [key, value] of Object.entries(newSearchValues)) {
                         if (
@@ -457,6 +517,10 @@ const ListComponent = (props: IListProps) => {
                         ) {
                             savedFilters[key] = value;
                         }
+                    }
+
+                    if (savedFilters.allFields) {
+                        allFieldsInitialValue = savedFilters.allFields;
                     }
 
                     if (Object.keys(savedFilters).length > 0) {

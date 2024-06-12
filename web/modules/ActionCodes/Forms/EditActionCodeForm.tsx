@@ -69,9 +69,22 @@ export const EditActionCodeForm: FC<EditActionCodeFormProps> = ({
         mutate({ id, input });
     };
 
+    //check fields if contain undefined value and set field to null
+    const checkUndefinedValues = () => {
+        const tmpFieldsValues = { ...form.getFieldsValue(true) };
+
+        for (const [key, value] of Object.entries(tmpFieldsValues)) {
+            if (value === undefined) {
+                tmpFieldsValues[key] = null;
+            }
+        }
+        form.setFieldsValue(tmpFieldsValues);
+    };
+
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues();
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 const translation = { en: formData.en, fr: formData.fr };

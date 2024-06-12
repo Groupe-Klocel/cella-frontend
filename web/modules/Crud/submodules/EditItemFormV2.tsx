@@ -24,7 +24,14 @@ import useTranslation from 'next-translate/useTranslation';
 
 import { useRouter } from 'next/router';
 
-import { showError, showSuccess, showInfo, useUpdate, setUTCDateTime } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    useUpdate,
+    setUTCDateTime,
+    checkUndefinedValues
+} from '@helpers';
 import { FormGroup } from 'modules/Crud/submodules/FormGroup';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import moment from 'moment';
@@ -114,22 +121,10 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
         }
     }, [props.dependentFields, changedFormValues]);
 
-    //check fields if contain undefined value and set field to null
-    const checkUndefinedValues = () => {
-        const tmpFieldsValues = { ...form.getFieldsValue(true) };
-
-        for (const [key, value] of Object.entries(tmpFieldsValues)) {
-            if (value === undefined) {
-                tmpFieldsValues[key] = null;
-            }
-        }
-        form.setFieldsValue(tmpFieldsValues);
-    };
-
     const onFinish = () => {
         form.validateFields()
             .then(() => {
-                checkUndefinedValues();
+                checkUndefinedValues(form);
                 mutate({
                     id: props.id,
                     input: { ...form.getFieldsValue(true) }

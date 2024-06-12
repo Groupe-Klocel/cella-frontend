@@ -226,7 +226,6 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
         form.validateFields()
             .then(() => {
                 checkUndefinedValues();
-
                 let value = form.getFieldsValue(true)['value'];
                 if (props.setIsDateType.isDateType) {
                     const valueFromField = form.getFieldsValue(true)['value'];

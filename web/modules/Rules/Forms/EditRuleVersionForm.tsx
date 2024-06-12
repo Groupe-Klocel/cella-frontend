@@ -29,7 +29,7 @@ import {
     UpdateRuleVersionMutationVariables,
     useListConfigsForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo } from '@helpers';
+import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 
 export type EditRuleVersionFormProps = {
     ruleVersionId: string;
@@ -106,6 +106,7 @@ export const EditRuleVersionForm: FC<EditRuleVersionFormProps> = ({
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
 

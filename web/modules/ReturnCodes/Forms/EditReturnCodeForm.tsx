@@ -28,7 +28,7 @@ import {
     UpdateParameterMutation,
     UpdateParameterMutationVariables
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo } from '@helpers';
+import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 
 const { Title } = Typography;
 
@@ -72,6 +72,7 @@ export const EditReturnCodeForm: FC<EditReturnCodeFormProps> = ({
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 const translation = { en: formData.en, fr: formData.fr };
