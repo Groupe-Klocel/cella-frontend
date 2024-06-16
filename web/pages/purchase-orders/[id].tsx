@@ -23,7 +23,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { purchaseOrdersRoutes as itemRoutes } from 'modules/PurchaseOrders/Static/purchaseOrdersRoutes';
@@ -46,12 +46,15 @@ const PurchaseOrderPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
+    const [refetchSubList, setRefetchSubList] = useState(false);
+    const [documentToPrint, setDocumentToPrint] = useState<string>();
 
     // #region to customize information
     const breadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${data?.name}`,
+            path: `/purchase-orders/${data?.purchaseOrderId}`
         }
     ];
 
@@ -67,12 +70,15 @@ const PurchaseOrderPage: PageComponent = () => {
                 title: t('messages:action-confirm'),
                 onOk: () => {
                     setId(id);
+                    //to replace
+                    // router.reload();
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
         };
     };
+
     // PRINT
     const local = moment();
     local.locale();
@@ -95,6 +101,20 @@ const PurchaseOrderPage: PageComponent = () => {
                         <></>
                     )}
 
+                    {modes.includes(ModeEnum.Read) ? (
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setShowSinglePrintModal(true);
+                                setIdToPrint(data.id);
+                                setDocumentToPrint('CGP_OrderForm');
+                            }}
+                        >
+                            {t('actions:print-order-form')}
+                        </Button>
+                    ) : (
+                        <></>
+                    )}
                     {modes.includes(ModeEnum.Read) &&
                     data?.status != configs.PURCHASE_ORDER_STATUS_CLOSED ? (
                         <Button
@@ -102,9 +122,10 @@ const PurchaseOrderPage: PageComponent = () => {
                             onClick={() => {
                                 setShowSinglePrintModal(true);
                                 setIdToPrint(data.id);
+                                setDocumentToPrint('K_PurchaseOrder');
                             }}
                         >
-                            {t('actions:print')}
+                            {t('actions:print-receipt')}
                         </Button>
                     ) : (
                         <></>
@@ -142,7 +163,7 @@ const PurchaseOrderPage: PageComponent = () => {
                             setShowSinglePrintModal
                         }}
                         dataToPrint={{ id: idToPrint, date: dateLocal }}
-                        documentName="K_PurchaseOrder"
+                        documentName={documentToPrint!}
                         documentReference={data?.name}
                     />
                 </Space>
@@ -168,10 +189,12 @@ const PurchaseOrderPage: PageComponent = () => {
                         stockOwnerName={data?.stockOwner_name}
                         stockOwnerId={data?.stockOwnerId}
                         status={data?.status}
+                        refetchSubList={refetchSubList}
                     />
                 }
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                refetchSubList={{ refetchSubList, setRefetchSubList }}
             />
         </>
     );

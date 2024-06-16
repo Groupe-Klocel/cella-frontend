@@ -22,7 +22,13 @@ import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { isString } from 'lodash';
 import moment from 'moment';
-import { isStringDate, setUTCDateTime, showError } from 'helpers/utils/utils';
+import {
+    isStringDateTime,
+    setUTCDateTime,
+    isStringDate,
+    setUTCDate,
+    showError
+} from 'helpers/utils/utils';
 import { useRouter } from 'next/router';
 import useTranslation from 'next-translate/useTranslation';
 
@@ -109,11 +115,18 @@ const useList = (
             .then((result: any) => {
                 Object.keys(result).forEach((element) => {
                     Object.keys(result[element]).forEach((key) => {
-                        if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                        if (
+                            isString(result[element][key]) &&
+                            isStringDateTime(result[element][key])
+                        ) {
                             result[element][key] = setUTCDateTime(result[element][key]);
+                        }
+                        if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                            result[element][key] = setUTCDate(result[element][key]);
                         }
                     });
                 });
+
                 setData(result);
                 setIsLoading(false);
             })
@@ -162,7 +175,7 @@ const useDetail = (id: string, queryName: string, fields: Array<string>, languag
             .then((result: any) => {
                 // Object.keys(result).forEach((element) => {
                 //     Object.keys(result[element]).forEach((key) => {
-                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                //         if (isString(result[element][key]) && isStringDateTime(result[element][key])) {
                 //             result[element][key] = setUTCDateTime(result[element][key]);
                 //         }
                 //     });
@@ -217,7 +230,7 @@ const useRecordHistoryDetail = (
             .then((result: any) => {
                 // Object.keys(result).forEach((element) => {
                 //     Object.keys(result[element]).forEach((key) => {
-                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                //         if (isString(result[element][key]) && isStringDateTime(result[element][key])) {
                 //             result[element][key] = setUTCDateTime(result[element][key]);
                 //         }
                 //     });
@@ -272,7 +285,7 @@ const useItemWithNumericIdDetail = (
             .then((result: any) => {
                 // Object.keys(result).forEach((element) => {
                 //     Object.keys(result[element]).forEach((key) => {
-                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                //         if (isString(result[element][key]) && isStringDateTime(result[element][key])) {
                 //             result[element][key] = setUTCDateTime(result[element][key]);
                 //         }
                 //     });
@@ -536,42 +549,44 @@ const useSoftDelete = (queryName: string) => {
     const [result, setResult] = useState<any>({ data: null, success: false });
 
     const mutate = (id: string) => {
-        setIsLoading(true);
-        graphqlRequestClient
-            .request(query, {
-                id: id
-            })
-            .then((result: any) => {
-                setIsLoading(false);
-                setResult({ data: result, success: true });
-            })
-            .catch((error: any) => {
-                if (error.response && error.response.errors[0].extensions) {
-                    const errorCode = error.response.errors[0].extensions.code;
-                    if (
-                        error.response.errors[0].extensions.variables &&
-                        error.response.errors[0].extensions.variables.table_name
-                    ) {
-                        const errorTableName =
-                            error.response.errors[0].extensions.variables.table_name;
-                        const associatedTableName =
-                            error.response.errors[0].extensions.variables.associated_table_name;
-                        showError(
-                            t(`errors:${errorCode}`, {
-                                tableName: t(`common:${errorTableName}`),
-                                associatedTableName: t(`common:${associatedTableName}`)
-                            })
-                        );
+        if (query && queryName) {
+            setIsLoading(true);
+            graphqlRequestClient
+                .request(query, {
+                    id: id
+                })
+                .then((result: any) => {
+                    setIsLoading(false);
+                    setResult({ data: result, success: true });
+                })
+                .catch((error: any) => {
+                    if (error.response && error.response.errors[0].extensions) {
+                        const errorCode = error.response.errors[0].extensions.code;
+                        if (
+                            error.response.errors[0].extensions.variables &&
+                            error.response.errors[0].extensions.variables.table_name
+                        ) {
+                            const errorTableName =
+                                error.response.errors[0].extensions.variables.table_name;
+                            const associatedTableName =
+                                error.response.errors[0].extensions.variables.associated_table_name;
+                            showError(
+                                t(`errors:${errorCode}`, {
+                                    tableName: t(`common:${errorTableName}`),
+                                    associatedTableName: t(`common:${associatedTableName}`)
+                                })
+                            );
+                        } else {
+                            showError(t(`errors:${errorCode}`));
+                        }
                     } else {
-                        showError(t(`errors:${errorCode}`));
+                        showError(t('messages:error-disabling-element'));
+                        console.log(error);
                     }
-                } else {
-                    showError(t('messages:error-disabling-element'));
-                    console.log(error);
-                }
-                setResult({ data: null, success: false });
-                setIsLoading(false);
-            });
+                    setResult({ data: null, success: false });
+                    setIsLoading(false);
+                });
+        }
     };
 
     return { isLoading, result, mutate };

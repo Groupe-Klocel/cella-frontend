@@ -31,9 +31,11 @@ import {
     GetThirdPartiesQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
+    SimpleGetThirdPartiesQuery,
     useGetThirdPartiesQuery,
     useGetThirdPartyAddressContactsQuery,
-    useGetThirdPartyAddressesQuery
+    useGetThirdPartyAddressesQuery,
+    useSimpleGetThirdPartiesQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 
@@ -72,23 +74,23 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
     // #endregion
 
     //ThirdParties
-    const customerThirdPartiesList = useGetThirdPartiesQuery<Partial<GetThirdPartiesQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: {
-                category: [configs.THIRD_PARTY_CATEGORY_SUPPLIER],
-                status: [configs.THIRD_PARTY_STATUS_ENABLED]
-            },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
-        }
-    );
+    const supplierThirdPartiesList = useSimpleGetThirdPartiesQuery<
+        Partial<SimpleGetThirdPartiesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: {
+            category: [configs.THIRD_PARTY_CATEGORY_SUPPLIER],
+            status: [configs.THIRD_PARTY_STATUS_ENABLED]
+        },
+        orderBy: null,
+        page: 1,
+        itemsPerPage: 30000
+    });
 
     useEffect(() => {
-        if (customerThirdPartiesList) {
+        if (supplierThirdPartiesList) {
             const newTypeTexts: Array<any> = [];
-            const cData = customerThirdPartiesList?.data?.thirdParties?.results;
+            const cData = supplierThirdPartiesList?.data?.thirdParties?.results;
             if (cData) {
                 cData.forEach((item) => {
                     newTypeTexts.push({ key: item.id, text: item.name });
@@ -97,7 +99,7 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                 setThirdParties(newTypeTexts);
             }
         }
-    }, [customerThirdPartiesList.data]);
+    }, [supplierThirdPartiesList.data]);
 
     const [chosenThirdParty, setChosenThirdParty] = useState<string | undefined>();
     // handle call back on thirdparty change
@@ -144,6 +146,8 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
         if (value === null || value === undefined) {
             setChosenAddress(undefined);
             form.setFieldsValue({
+                supplier: null,
+                entityCode: null,
                 entityName: null,
                 entityStreetNumber: null,
                 entityAddress1: null,
@@ -170,6 +174,8 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                 if (address.id == key) {
                     setChosenAddress(value?.key);
                     form.setFieldsValue({
+                        supplier: address.thirdParty.name,
+                        entityCode: address.entityCode,
                         entityName: address.entityName,
                         entityStreetNumber: address.entityStreetNumber,
                         entityAddress1: address.entityAddress1,
@@ -341,6 +347,7 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                 form.validateFields()
                     .then(() => {
                         const formData = form.getFieldsValue(true);
+
                         delete formData.thirdPartyId;
                         delete formData.thirdPartyAddressId;
                         delete formData.thirdPartyAddressContactId;

@@ -164,7 +164,6 @@ const HandlingUnitModelsPage: PageComponent = () => {
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
             />
-            {/* RESTART HERE: test it works with backend adjustments*/}
             <NumberOfPrintsModalV2
                 showModal={{
                     showNumberOfPrintsModal,

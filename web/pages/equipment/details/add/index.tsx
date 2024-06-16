@@ -36,6 +36,8 @@ const AddEquipmentDetailPage: PageComponent = () => {
                 equipmentId={router.query.equipmentId}
                 equipmentName={router.query.equipmentName}
                 stockOwnerId={router.query.stockOwnerId}
+                carrierShippingModeId={router.query.carrierShippingModeId}
+                carrierShippingModeName={router.query.carrierShippingModeName}
             />
         </>
     );

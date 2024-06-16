@@ -17,16 +17,77 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Typography } from 'antd';
-
-const { Title } = Typography;
+import { LinkButton } from '@components';
+import { EyeTwoTone } from '@ant-design/icons';
+import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
+import useTranslation from 'next-translate/useTranslation';
+import { Divider, Space } from 'antd';
+import { useAppState } from 'context/AppContext';
+import { ModeEnum, Table } from 'generated/graphql';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { useState } from 'react';
+import { GoodsInLineDetailModelV2 } from 'models/GoodsInLineDetailModelV2';
 
 export interface IItemDetailsProps {
-    goodsInLineId?: string | any;
+    roundLineId?: string | any;
 }
 
-const GoodsInLineDetailsExtra = ({ goodsInLineId }: IItemDetailsProps) => {
-    return <></>;
+const GoodsInLineDetailsExtra = ({ roundLineId }: IItemDetailsProps) => {
+    const { t } = useTranslation();
+    const { permissions } = useAppState();
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const RoundLineModes = getModesFromPermissions(permissions, Table.RoundLine);
+
+    const roundLineDetailData: HeaderData = {
+        title: t('common:associated', { name: t('common:goods-in-line-details') }),
+        routes: [],
+        actionsComponent: <></>
+    };
+
+    return (
+        <>
+            {RoundLineModes.length > 0 && RoundLineModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ roundLineId: roundLineId }}
+                        dataModel={GoodsInLineDetailModelV2}
+                        headerData={roundLineDetailData}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string }) => (
+                                    <Space>
+                                        {RoundLineModes.length == 0 ||
+                                        !RoundLineModes.includes(ModeEnum.Read) ? (
+                                            <></>
+                                        ) : (
+                                            <>
+                                                <LinkButton
+                                                    icon={<EyeTwoTone />}
+                                                    path={pathParamsFromDictionary('detail/[id]', {
+                                                        id: record.id,
+                                                        roundLineId
+                                                    })}
+                                                />
+                                            </>
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
+        </>
+    );
 };
 
 export { GoodsInLineDetailsExtra };

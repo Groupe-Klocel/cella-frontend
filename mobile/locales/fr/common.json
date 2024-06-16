@@ -154,9 +154,11 @@
     "palletization": "Palettisation",
     "number-of-boxes": "Nombre de colis",
     "close-pallet": "Fermer la palette",
-    "pickAndPack-fullBox": "Pick & pack - Colis complet",
+    "pickAndPack": "Pick & pack",
     "expected-location_abbr": "Empl. attendu",
     "expected-stock-owner_abbr": "Prop. stock attendu",
     "expected-article_abbr": "Art. attendu",
-    "expected-quantity_abbr": "Qté attendue"
+    "expected-quantity_abbr": "Qté attendue",
+    "change-location": "Changer d'emplacement",
+    "total-picked-quantity": "Quantité préparée totale"
 }

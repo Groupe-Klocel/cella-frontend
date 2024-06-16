@@ -18,9 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { SearchOutlined } from '@ant-design/icons';
-import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components';
-import { Space, Form, Button, Empty, Alert, Badge, Card } from 'antd';
-import { EyeTwoTone } from '@ant-design/icons';
+import { AppTableV2, ContentSpin, HeaderContent } from '@components';
+import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import useTranslation from 'next-translate/useTranslation';
 import {
@@ -42,12 +41,14 @@ import {
     useUpdate,
     queryString
 } from '@helpers';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
-import { ExportFormat, ModeEnum } from 'generated/graphql';
+import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { useRouter } from 'next/router';
+import { useAuth } from 'context/AuthContext';
+import { initial } from 'lodash';
 
 export type HeaderData = {
     title: string;
@@ -87,6 +88,7 @@ const ListComponent = (props: IListProps) => {
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const router = useRouter();
+    const { graphqlRequestClient } = useAuth();
 
     // #region DEFAULT PROPS
     const defaultProps = {
@@ -104,9 +106,13 @@ const ListComponent = (props: IListProps) => {
 
     searchCriterias = props.searchCriteria;
 
-    const specificSearch = searchCriterias?.scope;
-    let scope = '';
-    specificSearch ? (scope = `_${specificSearch}`) : (scope = '');
+    const mandatory_Filter = searchCriterias?.scope
+        ? `_${searchCriterias.scope}`
+        : searchCriterias?.category
+        ? `_${searchCriterias.category}`
+        : searchCriterias?.orderType
+        ? `_${searchCriterias.orderType}`
+        : '';
     // #endregion
 
     // #region extract data from modelV2
@@ -123,6 +129,7 @@ const ListComponent = (props: IListProps) => {
                 }
                 return obj;
             }) || [];
+
     const displayedLabels = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].displayName !== null)
         .reduce((obj: any, key) => {
@@ -181,9 +188,100 @@ const ListComponent = (props: IListProps) => {
             };
         });
 
+    // handle cancelled or closed item
+    const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>(false);
+    const previousIsWithoutClosed = useRef(isWithoutClosed);
+    useEffect(() => {
+        previousIsWithoutClosed.current = isWithoutClosed;
+    }, [isWithoutClosed]);
+    function getStatusConfig(objects: any) {
+        const statusObj = objects.find((obj: any) => obj.name === 'status');
+        return statusObj ? statusObj.config : null;
+    }
+    const statusScope = getStatusConfig(filterFields);
+
+    const retrievedStatuses = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: statusScope
+    });
+    const btnName = isWithoutClosed
+        ? t('actions:with-closed-cancel-items')
+        : t('actions:without-closed-cancel-items');
+
+    if (retrievedStatuses.data) {
+        const statuses = retrievedStatuses.data.listConfigsForAScope.map((status: any) =>
+            parseInt(status.code)
+        );
+
+        const filteredStatuses = statuses.filter(
+            (status: any) => status !== 2000 && status !== 1005
+        );
+
+        let currentSavedFilters = cookie.get(
+            `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`
+        )
+            ? JSON.parse(
+                  cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)!
+              )
+            : undefined;
+
+        if (isWithoutClosed) {
+            let statusesToUpdate = filteredStatuses;
+            if (currentSavedFilters && currentSavedFilters.status) {
+                statusesToUpdate = currentSavedFilters.status.filter(
+                    (status: any) => status !== 2000 && status !== 1005
+                );
+            }
+
+            searchCriterias = { ...searchCriterias, status: statusesToUpdate };
+            filterFields = filterFields.map((field: any) => {
+                if (field.name === 'status') {
+                    return { ...field, initialValue: statusesToUpdate };
+                }
+                return field;
+            });
+            currentSavedFilters = { ...currentSavedFilters, status: statusesToUpdate };
+            cookie.set(
+                `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
+                JSON.stringify(currentSavedFilters)
+            );
+            showBadge = true;
+        } else {
+            if (previousIsWithoutClosed.current) {
+                if (currentSavedFilters && currentSavedFilters.status) {
+                    if (currentSavedFilters.status.length !== statuses.length) {
+                        if (
+                            statuses.some(
+                                (status: any) =>
+                                    status === 1005 && !currentSavedFilters.status.includes(1005)
+                            )
+                        ) {
+                            currentSavedFilters.status.push(1005);
+                        }
+                        if (
+                            statuses.some(
+                                (status: any) =>
+                                    status === 2000 && !currentSavedFilters.status.includes(2000)
+                            )
+                        ) {
+                            currentSavedFilters.status.push(2000);
+                        }
+                    } else {
+                        currentSavedFilters.status = undefined;
+                    }
+                    cookie.set(
+                        `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
+                        JSON.stringify(currentSavedFilters)
+                    );
+                }
+            }
+        }
+    }
+
     //retrieve saved sorters from cookies if any
-    const savedSorters = cookie.get(`${props.dataModel.resolverName}SavedSorters${scope}`)
-        ? JSON.parse(cookie.get(`${props.dataModel.resolverName}SavedSorters${scope}`)!)
+    const savedSorters = cookie.get(
+        `${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`
+    )
+        ? JSON.parse(cookie.get(`${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`)!)
         : undefined;
 
     // extract id, name and link from props.dataModel.fieldsInfo where link is not null
@@ -315,9 +413,9 @@ const ListComponent = (props: IListProps) => {
     // #region SEARCH OPERATIONS
 
     if (props.searchable) {
-        if (cookie.get(`${props.dataModel.resolverName}SavedFilters${scope}`)) {
+        if (cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)) {
             const savedFilters = JSON.parse(
-                cookie.get(`${props.dataModel.resolverName}SavedFilters${scope}`)!
+                cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)!
             );
 
             searchCriterias = { ...savedFilters, ...props.searchCriteria };
@@ -338,6 +436,12 @@ const ListComponent = (props: IListProps) => {
     }
 
     const [search, setSearch] = useState(searchCriterias);
+
+    useEffect(() => {
+        if (JSON.stringify(search) !== JSON.stringify(searchCriterias)) {
+            setSearch(searchCriterias);
+        }
+    }, [searchCriterias]);
 
     //	Search Drawer
     const [formSearch] = Form.useForm();
@@ -361,6 +465,7 @@ const ListComponent = (props: IListProps) => {
                         columns={filterFields}
                         handleSubmit={handleSubmit}
                         resetForm={resetForm}
+                        allFieldsInitialValue={allFieldsInitialValue ?? undefined}
                     />
                 ),
                 onCancel: () => handleReset(),
@@ -375,14 +480,18 @@ const ListComponent = (props: IListProps) => {
     );
 
     const handleReset = () => {
-        cookie.remove(`${props.dataModel.resolverName}SavedFilters${scope}`);
+        cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
         !props.searchCriteria ? setSearch({}) : setSearch({ ...props.searchCriteria });
+        setIsWithoutClosed(false);
+        allFieldsInitialValue = undefined;
         resetForm = true;
         for (const obj of filterFields) {
             obj.initialValue = undefined;
         }
         closeDrawer();
     };
+
+    let allFieldsInitialValue: any = undefined;
 
     const handleSubmit = () => {
         formSearch
@@ -396,10 +505,9 @@ const ListComponent = (props: IListProps) => {
                     ...props.searchCriteria
                 };
 
-                cookie.remove(`${props.dataModel.resolverName}SavedFilters${scope}`);
+                cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
                 showBadge = false;
                 const savedFilters: any = {};
-
                 if (newSearchValues) {
                     for (const [key, value] of Object.entries(newSearchValues)) {
                         if (
@@ -411,9 +519,13 @@ const ListComponent = (props: IListProps) => {
                         }
                     }
 
+                    if (savedFilters.allFields) {
+                        allFieldsInitialValue = savedFilters.allFields;
+                    }
+
                     if (Object.keys(savedFilters).length > 0) {
                         cookie.set(
-                            `${props.dataModel.resolverName}SavedFilters${scope}`,
+                            `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
                             JSON.stringify(savedFilters)
                         );
                         showBadge = true;
@@ -479,8 +591,22 @@ const ListComponent = (props: IListProps) => {
     );
 
     useEffect(() => {
-        reloadData();
-    }, [search, props.refetch, pagination.current, pagination.itemsPerPage, sort, router.locale]);
+        //Time delay is to avoid reload before backend has finished (100ms does not work, 200ms seems to be fine)
+        const delay = 200;
+        const timer = setTimeout(() => {
+            reloadData();
+        }, delay);
+
+        return () => clearTimeout(timer);
+    }, [
+        search,
+        props.refetch,
+        pagination.current,
+        pagination.itemsPerPage,
+        sort,
+        router.locale,
+        isWithoutClosed
+    ]);
 
     // #endregion
 
@@ -682,12 +808,12 @@ const ListComponent = (props: IListProps) => {
         await setSort(tmp_array);
         if (tmp_array.length > 0) {
             cookie.set(
-                `${props.dataModel.resolverName}SavedSorters${scope}`,
+                `${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`,
                 JSON.stringify(tmp_array)
             );
         }
         if (orderByFormater(sorter) === null) {
-            cookie.remove(`${props.dataModel.resolverName}SavedSorters${scope}`);
+            cookie.remove(`${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`);
         }
     };
 
@@ -710,15 +836,37 @@ const ListComponent = (props: IListProps) => {
                             <HeaderContent
                                 title={props.headerData.title}
                                 routes={props.headerData.routes}
+                                onBack={
+                                    props.headerData.onBackRoute
+                                        ? () => router.push(props.headerData!.onBackRoute!)
+                                        : undefined
+                                }
                                 actionsRight={
                                     <Space>
+                                        {statusScope ? (
+                                            <Button
+                                                onClick={() => setIsWithoutClosed(!isWithoutClosed)}
+                                                style={
+                                                    isWithoutClosed
+                                                        ? {
+                                                              backgroundColor: '#1890ff',
+                                                              color: 'white'
+                                                          }
+                                                        : {}
+                                                }
+                                            >
+                                                {btnName}
+                                            </Button>
+                                        ) : (
+                                            <></>
+                                        )}
                                         {props.searchable ? (
                                             <>
                                                 {showBadge ? (
                                                     <Badge
                                                         size="default"
                                                         count={
-                                                            !specificSearch
+                                                            !mandatory_Filter
                                                                 ? Object.keys(search).length
                                                                 : Object.keys(search).length - 1
                                                         }

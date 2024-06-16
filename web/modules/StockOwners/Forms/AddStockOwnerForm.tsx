@@ -29,9 +29,11 @@ import {
     GetThirdPartiesQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
+    SimpleGetThirdPartiesQuery,
     useGetThirdPartiesQuery,
     useGetThirdPartyAddressContactsQuery,
-    useGetThirdPartyAddressesQuery
+    useGetThirdPartyAddressesQuery,
+    useSimpleGetThirdPartiesQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../../common/configs.json';
@@ -72,23 +74,23 @@ export const AddStockOwnerForm: FC<IAddStockOwnerFormProps> = (props: IAddStockO
     // #endregion
 
     //ThirdParties
-    const customerThirdPartiesList = useGetThirdPartiesQuery<Partial<GetThirdPartiesQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: {
-                category: [configs.THIRD_PARTY_CATEGORY_STOCK_OWNER],
-                status: [configs.THIRD_PARTY_STATUS_ENABLED]
-            },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
-        }
-    );
+    const stockOwnerThirdPartiesList = useSimpleGetThirdPartiesQuery<
+        Partial<SimpleGetThirdPartiesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: {
+            category: [configs.THIRD_PARTY_CATEGORY_STOCK_OWNER],
+            status: [configs.THIRD_PARTY_STATUS_ENABLED]
+        },
+        orderBy: null,
+        page: 1,
+        itemsPerPage: 30000
+    });
 
     useEffect(() => {
-        if (customerThirdPartiesList) {
+        if (stockOwnerThirdPartiesList) {
             const newTypeTexts: Array<any> = [];
-            const cData = customerThirdPartiesList?.data?.thirdParties?.results;
+            const cData = stockOwnerThirdPartiesList?.data?.thirdParties?.results;
             if (cData) {
                 cData.forEach((item) => {
                     newTypeTexts.push({ key: item.id, text: item.name });
@@ -97,7 +99,7 @@ export const AddStockOwnerForm: FC<IAddStockOwnerFormProps> = (props: IAddStockO
                 setThirdParties(newTypeTexts);
             }
         }
-    }, [customerThirdPartiesList.data]);
+    }, [stockOwnerThirdPartiesList.data]);
 
     const [chosenThirdParty, setChosenThirdParty] = useState<string | undefined>();
     // handle call back on thirdparty change
@@ -551,7 +553,6 @@ export const AddStockOwnerForm: FC<IAddStockOwnerFormProps> = (props: IAddStockO
                                     placeholder={`${t('messages:please-select-a', {
                                         name: t('d:third-party-address-sender-model')
                                     })}`}
-                                    // RESTART HERE : Another function must be done to send info on sender fields
                                     onChange={handleSenderAddressChange}
                                 >
                                     {thirdPartyAddresses

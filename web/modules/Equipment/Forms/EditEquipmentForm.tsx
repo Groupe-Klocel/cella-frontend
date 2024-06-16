@@ -23,7 +23,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo } from '@helpers';
+import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import {
     GetListOfPrioritiesQuery,
@@ -278,6 +278,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 if (formData.limitType === configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY) {
@@ -630,7 +631,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         })}`}
                     >
                         {printers?.map((printer: any) => (
-                            <Option key={printer.id} value={parseInt(printer.code)}>
+                            <Option key={printer.id} value={printer.code}>
                                 {printer.text}
                             </Option>
                         ))}

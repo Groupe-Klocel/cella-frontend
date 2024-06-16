@@ -92,5 +92,7 @@
     "error-updating-data": "Error updating data",
     "hu-ready-to-be-loaded": "Handling unit is ready for loading",
     "picked-and-packed-successfully": "Picked and packed successfully",
-    "pick-and-pack-round-finished": "Pick and pack round finished"
+    "pick-and-pack-round-finished": "Pick and pack round finished",
+    "wrong-handling-unit-outbound": "Scanned shipping unit is not the expected one",
+    "location-updated": "Location updated"
 }

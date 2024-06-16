@@ -33,8 +33,10 @@ query GetThirdPartyAddresses(
         results {
             id
             category
+            categoryText
             status
             entityName
+            entityCode
             entityStreetNumber
             entityAddress1
             entityAddress2
@@ -51,6 +53,10 @@ query GetThirdPartyAddresses(
             entityIdentificationNumber
             entityLanguage
             entityDeliveryPointNumber
+            thirdParty {
+                id
+                name
+            }
         }
     }
 }

@@ -83,6 +83,8 @@ const AddPurchaseOrderLine = (props: ISingleItemProps) => {
                             <AddPurchaseOrderLineForm
                                 purchaseOrderId={props.purchaseOrderId}
                                 purchaseOrderName={props.purchaseOrderName}
+                                stockOwnerId={props.stockOwnerId}
+                                stockOwnerName={props.stockOwnerName}
                             />
                         </StyledPageContent>
                     </>

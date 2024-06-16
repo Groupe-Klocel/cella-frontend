@@ -55,7 +55,14 @@ const AddThirdPartyPage: PageComponent = () => {
                         ? defaultValues
                         : undefined
                 }
-                stringCodeScopes={['currency', 'payment_terms', 'payment_method', 'bank_account']}
+                stringCodeScopes={[
+                    'currency',
+                    'payment_terms',
+                    'payment_method',
+                    'bank_account',
+                    'third_party_extra_status1',
+                    'third_party_extra_status2'
+                ]}
             />
         </>
     );

@@ -30,6 +30,8 @@ import {
     checkKeyPresenceInArray,
     formatDigitsForData,
     formatUTCLocaleDateTime,
+    isStringDateTime,
+    formatUTCLocaleDate,
     isStringDate
 } from '@helpers';
 import { Space, Button, Table, Typography } from 'antd';
@@ -173,8 +175,10 @@ const AppTableV2: FC<IAppTableV2Props> = ({
             <CheckCircleOutlined style={{ color: 'green' }} />
         ) : text === false ? (
             <CloseSquareOutlined style={{ color: 'red' }} />
-        ) : isString(text) && isStringDate(text) ? (
+        ) : isString(text) && isStringDateTime(text) ? (
             formatUTCLocaleDateTime(text, router.locale)
+        ) : isString(text) && isStringDate(text) ? (
+            formatUTCLocaleDate(text, router.locale)
         ) : (
             text
         );

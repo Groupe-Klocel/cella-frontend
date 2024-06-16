@@ -23,9 +23,16 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { HandlingUnitContentFeatureModelV2 as model } from 'models/HandlingUnitContentFeatureModelV2';
 import useTranslation from 'next-translate/useTranslation';
-import { META_DEFAULTS } from '@helpers';
+import {
+    META_DEFAULTS,
+    formatUTCLocaleDate,
+    formatUTCLocaleDateTime,
+    isStringDate,
+    isStringDateTime
+} from '@helpers';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { EditFeatureComponent } from 'modules/HandlingUnits/PagesContainer/EditFeatureComponent';
+import { isString } from 'lodash';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -35,6 +42,15 @@ const EditStockOwnerPage: PageComponent = () => {
     const router = useRouter();
     const { id } = router.query;
     const [data, setData] = useState<any>();
+
+    let displayedValue;
+    if (isString(data?.value) && isStringDateTime(data?.value)) {
+        displayedValue = formatUTCLocaleDateTime(data?.value, router.locale);
+    } else if (isString(data?.value) && isStringDate(data?.value)) {
+        displayedValue = formatUTCLocaleDate(data?.value, router.locale);
+    } else {
+        displayedValue = data?.value;
+    }
 
     const hucDetailBreadcrumb = [
         ...itemRoutes,
@@ -46,10 +62,12 @@ const EditStockOwnerPage: PageComponent = () => {
     const breadCrumb = [
         ...hucDetailBreadcrumb,
         {
-            breadcrumbName: `${data?.featureCode_name} - ${data?.value}`
+            breadcrumbName: `${data?.featureCode_name} - ${displayedValue}`
         }
     ];
-    const pageTitle = `${t('common:content-feature')} ${data?.featureCode_name} - ${data?.value}`;
+    const pageTitle = `${t('common:content-feature')} ${
+        data?.featureCode_name
+    } - ${displayedValue}`;
 
     return (
         <>

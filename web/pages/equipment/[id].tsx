@@ -153,6 +153,8 @@ const EquipmentPage: PageComponent = () => {
                         equipmentName={data?.name}
                         equipmentStatus={data?.status}
                         stockOwnerId={data?.stockOwnerId}
+                        carrierShippingModeId={data?.carrierShippingModeId}
+                        carrierShippingModeName={data?.carrierShippingModeName}
                     />
                 }
                 id={id!}

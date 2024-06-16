@@ -18,7 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { getRulesWithNoSpacesValidator, showError, showInfo, showSuccess } from '@helpers';
+import {
+    checkUndefinedValues,
+    getRulesWithNoSpacesValidator,
+    showError,
+    showInfo,
+    showSuccess
+} from '@helpers';
 import { Button, Col, Form, Input, Row, Select } from 'antd';
 import Checkbox, { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { useAuth } from 'context/AuthContext';
@@ -89,9 +95,11 @@ export const EditArticleBarcodeForm: FC<EditArticleBarcodeFormProps> = ({
         setMasterValue(!masterValue);
         form.setFieldsValue({ master: e.target.checked });
     };
+
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 //Call Api front to update barcode and articleLuBarcode table
                 const formData = form.getFieldsValue(true);
                 setIsLoading(true);

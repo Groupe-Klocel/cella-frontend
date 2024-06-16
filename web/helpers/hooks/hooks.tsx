@@ -109,7 +109,17 @@ import {
     useGetAllConfigsQuery,
     GetAllConfigsQuery,
     useGetAllStockOwnersQuery,
-    GetAllStockOwnersQuery
+    GetAllStockOwnersQuery,
+    useGetRuleVersionIdsQuery,
+    GetRuleVersionIdsQuery,
+    useGetRuleVersionConfigIdsQuery,
+    GetRuleVersionConfigIdsQuery,
+    useGetOrderLineIdsQuery,
+    GetOrderLineIdsQuery,
+    useGetCarrierShippingModeIdsQuery,
+    GetCarrierShippingModeIdsQuery,
+    useSimpleGetAllCarrierShippingModesQuery,
+    SimpleGetAllCarrierShippingModesQuery
 } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import parameters from '../../../common/parameters.json';
@@ -515,6 +525,71 @@ const useCarrierIds = (search: any, page: number, itemsPerPage: number, sort: an
     );
 
     return carriers;
+};
+
+const useGetCarrierShippingModes = (
+    search: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any,
+    language = 'en'
+) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'name',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const carrierShippingModes = useSimpleGetAllCarrierShippingModesQuery<
+        Partial<SimpleGetAllCarrierShippingModesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage,
+        language: language
+    });
+
+    return carrierShippingModes;
+};
+
+const useCarrierShippingModeIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'name',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const carrierShippingModes = useGetCarrierShippingModeIdsQuery<
+        Partial<GetCarrierShippingModeIdsQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage
+    });
+
+    return carrierShippingModes;
 };
 
 const useConfigs = (search: any, page: number, itemsPerPage: number, sort: any) => {
@@ -1511,6 +1586,93 @@ const useGetPermissions = (search: any, page: number, itemsPerPage: number, sort
     return permissions;
 };
 
+const useRuleVersionIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const ruleVersionIds = useGetRuleVersionIdsQuery<Partial<GetRuleVersionIdsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: search,
+            orderBy: newSort,
+            page: page,
+            itemsPerPage: itemsPerPage
+        }
+    );
+
+    return ruleVersionIds;
+};
+
+const useRuleVersionConfigIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const ruleVersionConfigIds = useGetRuleVersionConfigIdsQuery<
+        Partial<GetRuleVersionConfigIdsQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage
+    });
+
+    return ruleVersionConfigIds;
+};
+
+const useOrderLineIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const orderLineIds = useGetOrderLineIdsQuery<Partial<GetOrderLineIdsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: search,
+            orderBy: newSort,
+            page: page,
+            itemsPerPage: itemsPerPage
+        }
+    );
+
+    return orderLineIds;
+};
+
 export {
     useArticles,
     useArticleLus,
@@ -1521,6 +1683,7 @@ export {
     useBuildings,
     useCarriers,
     useCarrierIds,
+    useCarrierShippingModeIds,
     useConfigs,
     useEquipment,
     useEquipmentIds,
@@ -1558,5 +1721,9 @@ export {
     useGetWarehouseWorkers,
     useGetRoles,
     useGetPermissions,
-    useHandlingUnitModels
+    useHandlingUnitModels,
+    useRuleVersionIds,
+    useRuleVersionConfigIds,
+    useOrderLineIds,
+    useGetCarrierShippingModes
 };

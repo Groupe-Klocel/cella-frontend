@@ -51,7 +51,10 @@ const AddConversionPage: PageComponent = () => {
     ];
 
     //enter between {} the default values for the form (for instance status "In progress"))
-    const defaultValues = { handlingUnitContentId: router.query.handlingUnitContentId };
+    const defaultValues = {
+        handlingUnitContentId: router.query.handlingUnitContentId,
+        featureType: router.query.featureType
+    };
 
     return (
         <>

@@ -79,6 +79,26 @@ export const ArticleLuModelV2: ModelType = {
             defaultSort: 'ascending',
             isEditDisabled: true
         },
+        description: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: 'String',
+            addEditStep: null,
+            maxLength: 70,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         stockOwnerId: {
             isListRequested: true,
             isDefaultHiddenList: false,

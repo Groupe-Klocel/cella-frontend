@@ -155,9 +155,11 @@
     "palletization": "Palletization",
     "number-of-boxes": "Number of boxes",
     "close-pallet": "Close pallet",
-    "pickAndPack-fullBox": "Pick & Pack - full box",
+    "pickAndPack": "Pick & Pack",
     "expected-location_abbr": "Expected loc.",
     "expected-stock-owner_abbr": "Expected stock own.",
     "expected-article_abbr": "Expected art.",
-    "expected-quantity_abbr": "Expected qty"
+    "expected-quantity_abbr": "Expected qty",
+    "change-location": "Change location",
+    "total-picked-quantity": "Total picked quantity"
 }

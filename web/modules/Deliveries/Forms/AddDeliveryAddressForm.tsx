@@ -28,16 +28,21 @@ import { FormOptionType } from 'models/Models';
 import {
     CreateDeliveryAddressMutation,
     CreateDeliveryAddressMutationVariables,
+    GetDeliveryByIdQuery,
     GetThirdPartiesQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
+    SimpleGetThirdPartiesQuery,
     useCreateDeliveryAddressMutation,
+    useGetDeliveryByIdQuery,
     useGetThirdPartiesQuery,
     useGetThirdPartyAddressContactsQuery,
     useGetThirdPartyAddressesQuery,
-    useListConfigsForAScopeQuery
+    useListConfigsForAScopeQuery,
+    useSimpleGetThirdPartiesQuery
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
+import { gql } from 'graphql-request';
 
 interface IOption {
     value: string;
@@ -62,18 +67,37 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
         useState<Array<FormOptionType>>();
 
     //ThirdParties
-    const customerThirdPartiesList = useGetThirdPartiesQuery<Partial<GetThirdPartiesQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: {
-                category: [configs.THIRD_PARTY_CATEGORY_CUSTOMER],
-                status: [configs.THIRD_PARTY_STATUS_ENABLED]
-            },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
+    const delivery = useGetDeliveryByIdQuery<GetDeliveryByIdQuery, Error>(graphqlRequestClient, {
+        id: props.deliveryId
+    });
+    useEffect(() => {
+        if (delivery) {
+            form.setFieldsValue({ thirdPartyId: delivery.data?.delivery?.thirdPartyId });
+            form.setFieldsValue({
+                thirdPartyName:
+                    delivery.data?.delivery?.thirdParty?.name +
+                    ' - ' +
+                    delivery.data?.delivery?.thirdParty?.description,
+                customerOrderName: delivery.data?.delivery?.name
+            });
+            const thirdPartyIdOrder = delivery.data?.delivery?.thirdPartyId;
+            if (thirdPartyIdOrder) {
+                setChosenThirdParty(thirdPartyIdOrder);
+            }
         }
-    );
+    }, [delivery.data]);
+    const customerThirdPartiesList = useSimpleGetThirdPartiesQuery<
+        Partial<SimpleGetThirdPartiesQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: {
+            category: [configs.THIRD_PARTY_CATEGORY_CUSTOMER],
+            status: [configs.THIRD_PARTY_STATUS_ENABLED]
+        },
+        orderBy: null,
+        page: 1,
+        itemsPerPage: 30000
+    });
 
     useEffect(() => {
         if (customerThirdPartiesList) {
@@ -90,8 +114,9 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
     }, [customerThirdPartiesList.data]);
 
     const [chosenThirdParty, setChosenThirdParty] = useState<string | undefined>();
+
     // handle call back on thirdparty change
-    const handleThirdPartyChange = (value: any) => {
+    const handleThirdPartyChange = async (value: any) => {
         setChosenThirdParty(value);
     };
 
@@ -310,6 +335,8 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 delete formData.deliveryName;
+                delete formData.thirdPartyName;
+                delete formData.customerOrderName;
                 createDeliveryAddress({ input: formData });
             })
             .catch((err) => {
@@ -367,6 +394,12 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                                     name: t('d:customer')
                                 })}`}
                                 onChange={handleThirdPartyChange}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option?.props.children
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
                             >
                                 {thirdParties?.map((item: any) => (
                                     <Option key={item.key} value={item.key}>
@@ -385,6 +418,12 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                                     name: t('d:third-party-address-model')
                                 })}`}
                                 onChange={handleAddressChange}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option?.props.children
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
                             >
                                 {thirdPartyAddresses?.map((item: any) => (
                                     <Option key={item.key} value={item.key}>
@@ -403,6 +442,12 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                                     name: t('d:third-party-address-contact-model')
                                 })}`}
                                 onChange={handleContactChange}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option?.props.children
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
                             >
                                 {thirdPartyAddressContacts?.map((item: any) => (
                                     <Option key={item.key} value={item.key}>
