@@ -42,6 +42,7 @@ export interface IItemDetailsProps {
     articleName?: string | any;
     quantity?: Number | any;
     handlingUnit_category?: Number | any;
+    articleFeatureType?: Number | any;
 }
 
 const HandlingUnitContentDetailsExtra = ({
@@ -49,7 +50,8 @@ const HandlingUnitContentDetailsExtra = ({
     handlingUnitName,
     articleName,
     quantity,
-    handlingUnit_category
+    handlingUnit_category,
+    articleFeatureType
 }: IItemDetailsProps) => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -72,7 +74,8 @@ const HandlingUnitContentDetailsExtra = ({
                         handlingUnitContentId: handlingUnitContentId,
                         handlingUnitName: handlingUnitName,
                         articleName: articleName,
-                        quantity: quantity
+                        quantity: quantity,
+                        featureType: articleFeatureType
                     })}
                     type="primary"
                 />

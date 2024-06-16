@@ -57,14 +57,28 @@ const DeliveryPages: PageComponent = () => {
     const headerData: HeaderData = {
         title: t('common:deliveries'),
         routes: itemRoutes,
-        actionsComponent:
-            modes.length > 0 && modes.includes(ModeEnum.Create) ? (
-                <LinkButton
-                    title={t('actions:add2', { name: t('common:delivery') })}
-                    path={`${rootPath}/add`}
-                    type="primary"
-                />
-            ) : null
+        actionsComponent: (
+            <Space>
+                {modes.length > 0 && modes.includes(ModeEnum.Create) ? (
+                    <LinkButton
+                        title={t('actions:add2', { name: t('common:delivery') })}
+                        path={`${rootPath}/add`}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
+                    <LinkButton
+                        title={t('actions:view-deliveries-without-orders')}
+                        path={`/deliveries/without-orders`}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
+            </Space>
+        )
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -85,7 +99,6 @@ const DeliveryPages: PageComponent = () => {
 
     // CUBING
     const [isCubingLoading, setIsCubingLoading] = useState(false);
-    //RESTART HERE: adapt to multi deliverylines
     const cubingDelivery = () => {
         Modal.confirm({
             title: t('messages:cubing-confirm'),
@@ -106,7 +119,7 @@ const DeliveryPages: PageComponent = () => {
                 `;
 
                 const variables = {
-                    functionName: 'K_customCubing',
+                    functionName: 'CGP_customCubing',
                     event: {
                         deliveries: deliveries
                     }
@@ -147,44 +160,42 @@ const DeliveryPages: PageComponent = () => {
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Update) ? (
                 <>
-                    <>
-                        <span style={{ marginLeft: 16 }}>
-                            {hasSelected
-                                ? `${t('messages:selected-items-number', {
-                                      number: selectedRowKeys.length
-                                  })}`
-                                : ''}
-                        </span>
-                        <span style={{ marginLeft: 16 }}>
-                            <Button
-                                type="primary"
-                                onClick={cubingDelivery}
-                                disabled={!hasSelected}
-                                loading={loading}
-                            >
-                                {t('actions:cubing')}
-                            </Button>
-                        </span>
-                        <span style={{ marginLeft: 16 }}>
-                            <Button
-                                type="primary"
-                                onClick={() => {
-                                    setShowModal(true);
-                                }}
-                                disabled={!hasSelected}
-                                loading={loading}
-                            >
-                                {t('actions:edit')}
-                            </Button>
-                        </span>
-                        <BulkEditDeliveriesRenderModal
-                            visible={showModal}
-                            rows={rowSelection}
-                            showhideModal={() => {
-                                setShowModal(!showModal);
+                    <span style={{ marginLeft: 16 }}>
+                        {hasSelected
+                            ? `${t('messages:selected-items-number', {
+                                  number: selectedRowKeys.length
+                              })}`
+                            : ''}
+                    </span>
+                    <span style={{ marginLeft: 16 }}>
+                        <Button
+                            type="primary"
+                            onClick={cubingDelivery}
+                            disabled={!hasSelected}
+                            loading={loading}
+                        >
+                            {t('actions:cubing')}
+                        </Button>
+                    </span>
+                    <span style={{ marginLeft: 16 }}>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setShowModal(true);
                             }}
-                        />
-                    </>
+                            disabled={!hasSelected}
+                            loading={loading}
+                        >
+                            {t('actions:edit')}
+                        </Button>
+                    </span>
+                    <BulkEditDeliveriesRenderModal
+                        visible={showModal}
+                        rows={rowSelection}
+                        showhideModal={() => {
+                            setShowModal(!showModal);
+                        }}
+                    />
                 </>
             ) : null
     };

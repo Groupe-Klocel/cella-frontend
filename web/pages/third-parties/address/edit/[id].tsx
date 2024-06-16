@@ -71,6 +71,7 @@ const EditThirdPartyAddressPage: PageComponent = () => {
                     />
                 }
                 routeAfterSuccess={`/third-parties/address/:id`}
+                stringCodeScopes={['payment_terms', 'payment_method', 'bank_account']}
             />
         </>
     );

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { showError, showInfo, showSuccess } from '@helpers';
+import { checkUndefinedValues, showError, showInfo, showSuccess } from '@helpers';
 import { AutoComplete, Button, Col, Form, Input, Row, Select } from 'antd';
 import Checkbox, { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { useAuth } from 'context/AuthContext';
@@ -123,6 +123,7 @@ export const EditBarcodeForm: FC<EditBarcodeFormProps> = ({
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 const formData = form.getFieldsValue(true);
                 if (formData['rotation'] == '') {
                     formData['rotation'] = null;

@@ -39,7 +39,14 @@ import {
     UpdatePurchaseOrderLineMutation,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo, useArticleIds, usePurchaseOrderLineIds } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    useArticleIds,
+    usePurchaseOrderLineIds,
+    checkUndefinedValues
+} from '@helpers';
 import { debounce } from 'lodash';
 import configs from '../../../../common/configs.json';
 
@@ -75,6 +82,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     const reservedQuantity = t('d:reservedQuantity');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const submit = t('actions:submit');
+    const unitPriceExcludingTaxes = t('d:unitPriceExcludingTaxes');
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -83,6 +91,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     const [articleName, setArticleName] = useState<string>('');
     const [blockingStatuses, setBlockingStatuses] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [vatRates, setVatRates] = useState<any>();
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -111,7 +120,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     useEffect(() => {
         const formValue = form.getFieldsValue(true);
         form.setFieldsValue({ ...formValue, articleId: aId, articleName: articleName });
-    }, [aId]);
+    }, [aId, details]);
 
     useEffect(() => {
         if (articleData.data) {
@@ -141,6 +150,18 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
         }
     }, [stockStatusTextList.data]);
 
+    //To render Simple vat rates list
+    const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'vat_rate',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (vatRatesList) {
+            setVatRates(vatRatesList?.data?.listParametersForAScope);
+        }
+    }, [vatRatesList.data]);
+
     //CREATE purchase order line
     const { mutate, isLoading: updateLoading } = useUpdatePurchaseOrderLineMutation<Error>(
         graphqlRequestClient,
@@ -166,6 +187,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 delete formData.articleName;
@@ -176,6 +198,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
                 delete formData['stockOwner'];
                 delete formData['purchaseOrder'];
                 delete formData['article'];
+                delete formData['vatRateCodeText'];
                 updatePurchaseOrderLine({ id: id, input: formData });
                 setUnsavedChanges(false);
             })
@@ -203,7 +226,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
         if (updateLoading) {
             showInfo(t('messages:info-create-wip'));
         }
-    }, [updateLoading]);
+    }, [updateLoading, details]);
 
     const onCancel = () => {
         setUnsavedChanges(false);
@@ -219,7 +242,12 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
 
     return (
         <WrapperForm>
-            <Form form={form} layout="vertical" scrollToFirstError>
+            <Form
+                form={form}
+                layout="vertical"
+                scrollToFirstError
+                onValuesChange={() => setUnsavedChanges(true)}
+            >
                 <Form.Item name="stockOwnerName" label={stockOwner}>
                     <Input disabled />
                 </Form.Item>
@@ -319,6 +347,34 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
                                 : false
                         }
                     />
+                </Form.Item>
+                <Form.Item
+                    label={unitPriceExcludingTaxes}
+                    name="unitPriceExcludingTaxes"
+                    rules={[
+                        {
+                            type: 'number',
+                            min: 0,
+                            message: t('messages:select-number-min', { min: 0 })
+                        }
+                    ]}
+                >
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item name="vatRateCode" label={t('d:vatRate')}>
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:vatRate')
+                        })}`}
+                        allowClear
+                    >
+                        <Option value=""> </Option>
+                        {vatRates?.map((vatRate: any) => (
+                            <Option key={vatRate.id} value={parseInt(vatRate.code)}>
+                                {vatRate.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>

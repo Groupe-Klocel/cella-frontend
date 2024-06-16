@@ -26,7 +26,8 @@ import { useRouter } from 'next/router';
 import {
     useCreateDeliveryLineMutation,
     CreateDeliveryLineMutationVariables,
-    CreateDeliveryLineMutation
+    CreateDeliveryLineMutation,
+    useListParametersForAScopeQuery
 } from 'generated/graphql';
 import {
     showError,
@@ -71,6 +72,8 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const errorMessageNegativeNumberInput = t('messages:select-number-min', { min: 0 });
     const submit = t('actions:submit');
+    const unitPriceExcludingTaxes = t('d:unitPriceExcludingTaxes');
+    const vatRate = t('d:vatRate');
     // END TEXTS TRANSLATION
 
     // TYPED SAFE ALL
@@ -78,6 +81,7 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
     const [aId, setAId] = useState<string>();
     const [articleName, setArticleName] = useState<string>('');
+    const [vatRates, setVatRates] = useState<any>();
 
     const deliveryLines = useDeliveryLineIds({ deliveryId: `${props.deliveryId}%` }, 1, 100, null);
 
@@ -104,13 +108,13 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     useEffect(() => {
         if (articleData.data) {
             const newIdOpts: Array<IOption> = [];
-            articleData.data.articles?.results.forEach(({ id, name, status }) => {
+            articleData.data.articles?.results.forEach(({ id, name, description, status }) => {
                 if (form.getFieldsValue(true).articleId === id) {
                     setArticleName(name!);
                     setAId(id!);
                 }
                 if (status != configs.ARTICLE_STATUS_CLOSED) {
-                    newIdOpts.push({ value: name!, id: id! });
+                    newIdOpts.push({ value: name! + ' - ' + description!, id: id! });
                 }
             });
             setAIdOptions(newIdOpts);
@@ -136,6 +140,18 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
             setStockOwners(newIdOpts);
         }
     }, [stockOwnerData.data]);
+
+    //To render Simple vat rates list
+    const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'vat_rate',
+        language: router.locale
+    });
+
+    useEffect(() => {
+        if (vatRatesList) {
+            setVatRates(vatRatesList?.data?.listParametersForAScope);
+        }
+    }, [vatRatesList.data]);
 
     //CREATE delivery line
     const { mutate, isLoading: createLoading } = useCreateDeliveryLineMutation<Error>(
@@ -262,6 +278,31 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
                 </Form.Item>
                 <Form.Item label={reservation} name="reservation">
                     <Input />
+                </Form.Item>
+                <Form.Item
+                    label={unitPriceExcludingTaxes}
+                    name="unitPriceExcludingTaxes"
+                    rules={[{ type: 'number', min: 0, message: errorMessageNegativeNumberInput }]}
+                >
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item name="vatRateCode" label={vatRate}>
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:vatRate')
+                        })}`}
+                        allowClear
+                    >
+                        <Option value=""> </Option>
+                        {vatRates?.map((vatRate: any) => (
+                            <Option key={vatRate.id} value={parseInt(vatRate.code)}>
+                                {vatRate.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:discount_percent')} name="discount" initialValue={0}>
+                    <InputNumber min={0} max={100} precision={1} />
                 </Form.Item>
                 <Form.Item label={comment} name="comment">
                     <Input />

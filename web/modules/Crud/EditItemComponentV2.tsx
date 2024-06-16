@@ -204,10 +204,10 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
     const configs = useConfigs(
         { scope: configScopes.length > 0 ? configScopes : '' },
         1,
-        100,
+        10000,
         null
     );
-    const params = useParams({ scope: paramScopes.length > 0 ? paramScopes : '' }, 1, 100, null);
+    const params = useParams({ scope: paramScopes.length > 0 ? paramScopes : '' }, 1, 10000, null);
 
     useEffect(() => {
         const tmp_results: Array<any> = [];
@@ -225,7 +225,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                 if (filter.filter.includedValues?.includes?.(item[filter.filter.field])) {
                     tmp_results[item.scope].push({
                         key:
-                            isNumeric(item.code) &&
+                            !isNumeric(item.code) &&
                             props.stringCodeScopes &&
                             props.stringCodeScopes.includes(item.scope)
                                 ? item.code
@@ -235,7 +235,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                 } else if (!filter.filter.excludedValues?.includes?.(item[filter.filter.field])) {
                     tmp_results[item.scope].push({
                         key:
-                            isNumeric(item.code) &&
+                            !isNumeric(item.code) &&
                             props.stringCodeScopes &&
                             props.stringCodeScopes.includes(item.scope)
                                 ? item.code
@@ -246,7 +246,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
             } else {
                 tmp_results[item.scope].push({
                     key:
-                        isNumeric(item.code) &&
+                        !isNumeric(item.code) &&
                         props.stringCodeScopes &&
                         props.stringCodeScopes.includes(item.scope)
                             ? item.code
@@ -407,7 +407,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                 filters: filtersToApply,
                 orderBy: null,
                 page: 1,
-                itemsPerPage: 100
+                itemsPerPage: 100000
             };
 
             const options = await graphqlRequestClient.request(query, variables);
@@ -416,6 +416,10 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
 
             options[queryName].results.forEach((item: any) => {
                 let valueToDisplay: any = item[`${fieldToDisplay}`];
+
+                // check if fieldToDisplay is a nested field (example: fieldToDisplay = 'barcode{name}')
+                const match = fieldToDisplay?.match(/\{(.+?)\}/);
+                fieldToDisplay = match ? match[1] : fieldToDisplay;
 
                 Object.values(item).forEach((subItem: any) => {
                     subItem == null

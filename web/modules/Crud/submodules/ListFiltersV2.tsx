@@ -44,13 +44,15 @@ export interface IGeneralSearchProps {
     columns: Array<FilterFieldType>;
     handleSubmit?: any;
     resetForm?: boolean;
+    allFieldsInitialValue?: string;
 }
 
 const ListFilters: FC<IGeneralSearchProps> = ({
     form,
     columns,
     handleSubmit,
-    resetForm
+    resetForm,
+    allFieldsInitialValue
 }: IGeneralSearchProps) => {
     const { t } = useTranslation();
     const { RangePicker } = DatePicker;
@@ -61,6 +63,8 @@ const ListFilters: FC<IGeneralSearchProps> = ({
     const [configParamOptionsList, setConfigParamOptionsList] = useState<any>();
     const [optionsList, setOptionsList] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
+
+    console.log('allFieldsInitialValue', allFieldsInitialValue);
 
     const onChange = (value: RangePickerProps['value'], dateString: [string, string] | string) => {
         console.log('Selected Time: ', value);
@@ -221,7 +225,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                 filters: {},
                 orderBy: null,
                 page: 1,
-                itemsPerPage: 1000
+                itemsPerPage: 100000
             };
             const options = await graphqlRequestClient.request(query, variables);
             const result: { [key: string]: any } = {};
@@ -331,6 +335,15 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                     name="control-hooks"
                     onKeyPress={handleKeyPress}
                 >
+                    <Form.Item
+                        name={'allFields'}
+                        label={t('d:all-fields-search')}
+                        key={'allFields'}
+                        normalize={(value) => (value ? value : undefined)}
+                        initialValue={allFieldsInitialValue ? allFieldsInitialValue : undefined}
+                    >
+                        <Input allowClear />
+                    </Form.Item>
                     {columnsInfos?.map((item: FilterFieldType) => {
                         if (item.type === FormDataType.Number)
                             return (
@@ -404,7 +417,8 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                 >
                                     <Select
                                         disabled={item.disabled ? true : false}
-                                        mode={item.mode ? item.mode : false}
+                                        // mode={item.mode ? item.mode : false}
+                                        mode="multiple"
                                         allowClear
                                         showSearch
                                         filterOption={(inputValue, option) =>

@@ -58,6 +58,14 @@ const EditThirdPartyPage: PageComponent = () => {
                     />
                 }
                 routeAfterSuccess={`/third-parties/:id`}
+                stringCodeScopes={[
+                    'currency',
+                    'payment_terms',
+                    'payment_method',
+                    'bank_account',
+                    'third_party_extra_status1',
+                    'third_party_extra_status2'
+                ]}
             />
         </>
     );

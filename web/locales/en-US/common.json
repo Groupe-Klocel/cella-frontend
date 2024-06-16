@@ -248,8 +248,8 @@
     "logistic-unit-models": "Logistic Unit Models",
     "hook-config": "Hook Config",
     "hook-configs": "Hook Configs",
-    "shipping-unit": "Shipping Unit",
-    "shipping-units": "Shipping Units",
+    "shipping-unit": "Shipping Pallet",
+    "shipping-units": "Shipping Pallets",
     "shippingUnitLines": "Shipping Unit Lines",
     "children-shipping-units": "Children Shipping Units",
     "status-history": "Status History",
@@ -366,5 +366,12 @@
     "credit-address": "Address",
     "credit-addresses": "Addresses",
     "purchase-order-line-feature": "Reception Line Feature",
-    "purchase-order-line-features": "Reception Line Features"
+    "purchase-order-line-features": "Reception Line Features",
+    "carrier-shipping-mode": "Carrier - Shipping Mode",
+    "payments": "Payments",
+    "payment": "Payment",
+    "genericArticleComment": "Comment line",
+    "deliveries-without-orders": "Deliveries without customer orders",
+    "delivery-without-orders": "Delivery without customer order",
+    "genericDeliveryComment": "Delivery instructions"
 }

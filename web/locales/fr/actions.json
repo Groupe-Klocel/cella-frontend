@@ -39,7 +39,7 @@
     "back-step": "Etape précédente",
     "cancel": "Annuler",
     "chose-locations-range": "Choisir la plage d'emplacements",
-    "close": "Close",
+    "close": "Fermer",
     "collapse-menu": "Fermer Menu",
     "cycleCountLines": "Lignes d'inventaire",
     "dark-mode": "Mode Dark",
@@ -140,5 +140,13 @@
     "enter-payment": "Saisir paiement",
     "generate-credit": "Générer Avoir",
     "print-invoice": "Imprimer facture",
-    "print-quote": "Imprimer devis"
+    "print-quote": "Imprimer devis",
+    "print-order-form": "Imprimer bon de commande",
+    "print-receipt": "Imprimer bordereau de réception",
+    "create-delivery": "Créér livraison",
+    "view-deliveries-without-orders": "Voir les livraisons sans commande client",
+    "create-order": "Créer commande client",
+    "print-boxes-labels": "Imprimer étiquettes colis associés",
+    "with-closed-cancel-items": "Avec les éléments fermés et annulés",
+    "without-closed-cancel-items": "Sans les éléments fermés et annulés"
 }

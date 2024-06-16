@@ -402,6 +402,27 @@ export const HandlingUnitContentModelV2: ModelType = {
             param: null,
             optionTable: null
         },
+        'article{featureType}': {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: null
+        },
         quantity: {
             isListRequested: true,
             isDefaultHiddenList: false,

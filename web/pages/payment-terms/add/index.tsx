@@ -35,7 +35,7 @@ const AddPaymentTermPage: PageComponent = () => {
     const router = useRouter();
 
     //enter between {} the default values for the form (for instance status "In progress"))
-    const defaultValues = { scope: 'payment_term' };
+    const defaultValues = { scope: 'payment_terms' };
 
     return (
         <>

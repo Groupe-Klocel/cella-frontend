@@ -244,8 +244,8 @@
     "logistic-unit-models": "Modèles de conditionnement",
     "hook-config": "Hook Config",
     "hook-configs": "Hook Configs",
-    "shipping-unit": "Unité d'expédition",
-    "shipping-units": "Unités d'expédition",
+    "shipping-unit": "Palette d'expédition",
+    "shipping-units": "Palettes d'expédition",
     "shippingUnitLines": "Lignes d'unité d'expédition",
     "children-shipping-units": "Unités d'expédition enfants",
     "status-history": "Historique des états",
@@ -330,5 +330,13 @@
     "credit-address": "Adresse",
     "credit-addresses": "Adresses",
     "purchase-order-line-feature": "Donnée traçabilité ligne réception",
-    "purchase-order-line-features": "Données traçabilité ligne réception"
+    "purchase-order-line-features": "Données traçabilité ligne réception",
+    "carrier-shipping-mode": "Transporteur - Mode d'expédition",
+    "payments": "Règlements",
+    "payment": "Règlement",
+    "genericArticleComment": "Ligne de commentaire",
+    "deliveries-without-orders": "Livraisons sans commande client",
+    "delivery-without-orders": "Livraison sans commande client",
+    "genericDeliveryComment": "Instructions de livraison",
+    "notes": "Notes"
 }

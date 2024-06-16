@@ -30,6 +30,7 @@ import { purchaseOrdersRoutes as itemRoutes } from 'modules/PurchaseOrders/Stati
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
+import { PurchaseOrderLineDetailsExtra } from 'modules/PurchaseOrders/Elements/PurchaseOrderLineDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -49,7 +50,7 @@ const PurchaseOrderLinePage: PageComponent = () => {
         ...itemRoutes,
         {
             breadcrumbName: `${data?.purchaseOrder_name}`,
-            path: `${itemRoutes[itemRoutes.length - 1].path}/${poId}`
+            path: `${itemRoutes[itemRoutes.length - 1].path}/${data?.purchaseOrderId}`
         }
     ];
 
@@ -84,7 +85,7 @@ const PurchaseOrderLinePage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
-        onBackRoute: rootPath + '/' + poId,
+        onBackRoute: rootPath + '/' + data?.purchaseOrderId,
         actionsComponent:
             data?.status !== configs.PURCHASE_ORDER_LINE_STATUS_CLOSED ? (
                 <Space>
@@ -129,7 +130,10 @@ const PurchaseOrderLinePage: PageComponent = () => {
                         <></>
                     )}
                 </Space>
-            ) : modes.length > 0 && modes.includes(ModeEnum.Update) && model.isSoftDeletable ? (
+            ) : modes.length > 0 &&
+              modes.includes(ModeEnum.Update) &&
+              model.isSoftDeletable &&
+              data.purchaseOrder_status !== configs.PURCHASE_ORDER_STATUS_CLOSED ? (
                 <Button
                     onClick={() =>
                         confirmAction(
@@ -158,6 +162,9 @@ const PurchaseOrderLinePage: PageComponent = () => {
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 triggerReopen={{ reopenInfo, setReopenInfo }}
+                extraDataComponent={
+                    <PurchaseOrderLineDetailsExtra purchaseOrderLineId={id} type={type} />
+                }
             />
         </>
     );

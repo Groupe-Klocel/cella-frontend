@@ -102,7 +102,7 @@
     "error-delete-article-impossible": "Cet article ne peut pas être supprimé",
     "error-delete-articleLu-impossible": "Ce conditionnement ne peut pas être supprimé pour cet article",
     "error-delete-cycleCount-impossible": "Cet inventaire ne peut pas être supprimé",
-    "messages:error-delete-feature-types-impossible": "Cette règle de traçabilité ne peut être supprimée",
+    "error-delete-feature-types-impossible": "Cette règle de traçabilité ne peut être supprimée",
     "selected-items-number": "{{number}} élément(s) sélectionné(s)",
     "select-number-min-max": "Sélectionner un nombre entre {{min}} et {{max}}",
     "dispatch-load-confirm": "Etes-vous sûr(e) de vouloir expédier ce chargement ?",
@@ -123,5 +123,9 @@
     "confirm-order": "Etes-vous sûr(e) de vouloir valider en tant que commande ?",
     "confirm-payment": "Etes-vous sûr(e) de vouloir valider en tant que règlement ?",
     "confirm-delivery": "Etes-vous sûr(e) de vouloir valider en tant que livraison ?",
-    "no-invoice-address": "Aucune adresse de facturation allouée"
+    "no-invoice-address": "Aucune adresse de facturation allouée",
+    "create-delivery-confirm":  "Etes-vous sûr(e) de vouloir créer une livraison depuis les commandes clients sélectionnées ?",
+    "success-delivery-creation": "La livraison a été créée avec succès",
+    "create-order-confirm": "Etes-vous sûr(e) de vouloir créer une commande client depuis les livraisons sélectionnées ?",
+    "success-order-creation": "La commande client a été créée avec succès"
 }

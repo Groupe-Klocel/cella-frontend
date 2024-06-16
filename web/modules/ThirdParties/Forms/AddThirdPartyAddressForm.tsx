@@ -197,7 +197,6 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     }, [vatRatesList.data]);
 
     // CREATION //
-    //RESTART HERE: adjust mutation and test
     const { mutate, isLoading: createLoading } = useCreateThirdPartyAddressMutation<Error>(
         graphqlRequestClient,
         {
@@ -428,7 +427,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                     <Checkbox />
                 </Form.Item>
 
-                <Form.Item label={t('d:vatRate')} name="vatRate">
+                <Form.Item label={t('d:vatRate')} name="vatRateCode">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {

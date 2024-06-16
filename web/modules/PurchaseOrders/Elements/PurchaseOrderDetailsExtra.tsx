@@ -21,7 +21,7 @@ import { LinkButton } from '@components';
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
-import { Button, Divider, Modal, Space, Typography } from 'antd';
+import { Button, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
@@ -30,6 +30,7 @@ import { MovementModelV2 } from 'models/MovementModelV2';
 import { useState } from 'react';
 import configs from '../../../../common/configs.json';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+//import { PurchaseOrderLineDetailsExtra } from './PurchaseOrderLineDetailsExtra';
 
 export interface IItemDetailsProps {
     purchaseOrderId?: string | any;
@@ -38,6 +39,7 @@ export interface IItemDetailsProps {
     stockOwnerName?: string | any;
     status?: number | any;
     type?: number | any;
+    refetchSubList?: any;
 }
 
 const PurchaseOrderDetailsExtra = ({
@@ -46,7 +48,8 @@ const PurchaseOrderDetailsExtra = ({
     stockOwnerId,
     stockOwnerName,
     status,
-    type
+    type,
+    refetchSubList
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const [, setPurchaseOrderLinesData] = useState<any>();
@@ -56,6 +59,8 @@ const PurchaseOrderDetailsExtra = ({
     const movementModes = getModesFromPermissions(permissions, Table.Movement);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [idMvtToDelete, setIdMvtToDelete] = useState<string | undefined>();
+    const [idMvtToDisable, setIdMvtToDisable] = useState<string | undefined>();
 
     const PurchaseOrderLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:purchase-order-lines') }),
@@ -127,6 +132,7 @@ const PurchaseOrderDetailsExtra = ({
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 routeDetailPage={'/purchase-orders/detail/:id'}
+                refetch={refetchSubList}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -159,7 +165,8 @@ const PurchaseOrderDetailsExtra = ({
                                 poLineModes.includes(ModeEnum.Update) &&
                                 PurchaseOrderLineModelV2.isEditable &&
                                 type !== configs.PURCHASE_ORDER_TYPE_L3 &&
-                                type !== configs.PURCHASE_ORDER_TYPE_L3_RETURN ? (
+                                type !== configs.PURCHASE_ORDER_TYPE_L3_RETURN &&
+                                record.status !== configs.PURCHASE_ORDER_LINE_STATUS_CLOSED ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParamsFromDictionary(
@@ -216,8 +223,8 @@ const PurchaseOrderDetailsExtra = ({
             <Divider />
             <ListComponent
                 searchCriteria={{ purchaseOrderIdStr: purchaseOrderId }}
-                triggerDelete={{ idToDelete, setIdToDelete }}
-                triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerDelete={{ idMvtToDelete, setIdMvtToDelete }}
+                triggerSoftDelete={{ idMvtToDisable, setIdMvtToDisable }}
                 dataModel={MovementModelV2}
                 headerData={MovementData}
                 routeDetailPage={'/movements/:id'}

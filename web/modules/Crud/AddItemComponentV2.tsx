@@ -185,10 +185,10 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
     const configs = useConfigs(
         { scope: configScopes.length > 0 ? configScopes : '' },
         1,
-        100,
+        1000,
         null
     );
-    const params = useParams({ scope: paramScopes.length > 0 ? paramScopes : '' }, 1, 100, null);
+    const params = useParams({ scope: paramScopes.length > 0 ? paramScopes : '' }, 1, 1000, null);
 
     useEffect(() => {
         const tmp_results: Array<any> = [];
@@ -306,15 +306,17 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
         fieldToDisplay: string | undefined,
         filtersToApply?: { [key: string]: any }
     ): Promise<{ [key: string]: any } | undefined> {
-        if (tableName && fieldToDisplay) {
+        if (tableName) {
             const statusToRemove =
                 existingConfigs[
                     `${pascalToSnakeUpper(tableName)}_STATUS_CLOSED` as keyof typeof existingConfigs
                 ];
+
             const queryName = pluralize(tableName.charAt(0).toLowerCase() + tableName.slice(1));
             const queriedFields: any = statusToRemove
                 ? ['id', `${fieldToDisplay}`, 'status']
                 : ['id', `${fieldToDisplay}`];
+
             const query = gql`
             query CustomListQuery(
                 $filters: ${tableName}SearchFilters
@@ -342,22 +344,39 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
                 filters: filtersToApply,
                 orderBy: null,
                 page: 1,
-                itemsPerPage: 100
+                itemsPerPage: 100000
             };
+
             const options = await graphqlRequestClient.request(query, variables);
+
             const result: { [key: string]: any } = {};
 
             options[queryName].results.forEach((item: any) => {
+                let valueToDisplay: any = item[`${fieldToDisplay}`];
+
+                // check if fieldToDisplay is a nested field (example: fieldToDisplay = 'barcode{name}')
+                const match = fieldToDisplay?.match(/\{(.+?)\}/);
+                fieldToDisplay = match ? match[1] : fieldToDisplay;
+
+                Object.values(item).forEach((subItem: any) => {
+                    subItem == null
+                        ? item.id
+                        : (valueToDisplay = subItem[`${fieldToDisplay}`]
+                              ? subItem[`${fieldToDisplay}`]
+                              : valueToDisplay);
+                });
+
                 if (!result[tableName]) {
                     result[tableName] = [];
                 }
                 if (!statusToRemove || item.status !== statusToRemove) {
                     result[tableName].push({
                         key: item.id,
-                        text: item.name
+                        text: valueToDisplay
                     });
                 }
             });
+
             return result;
         }
         return;
