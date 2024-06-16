@@ -141,7 +141,7 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                                 // Check HU carrier vs load carrier
                                 if (
                                     handlingUnitOutboundInfos.handlingUnitOutbounds.results[0]
-                                        .delivery.carrierShippingMode.carrier.id !==
+                                        .carrierShippingMode.carrier.id !==
                                     storedObject.step10.data.load.carrierId
                                 ) {
                                     showError(t('messages:incorrect-hu-carrier'));

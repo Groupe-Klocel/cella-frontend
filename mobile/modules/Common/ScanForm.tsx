@@ -43,6 +43,10 @@ export interface IScanProps {
     alternativeSubmitLabel1?: any;
     action1Label?: any;
     action1Trigger?: any;
+    initValue?: string;
+    isSelected?: boolean;
+    getFormData?: boolean;
+    setFormData?: (value: string) => void;
 }
 
 export const ScanForm = ({
@@ -62,13 +66,18 @@ export const ScanForm = ({
     triggerAlternativeSubmit1,
     alternativeSubmitLabel1,
     action1Label,
-    action1Trigger
+    action1Trigger,
+    initValue,
+    isSelected,
+    getFormData,
+    setFormData
 }: IScanProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
+    const [buttonsState, setButtonsState] = useState<any>({ ...buttons });
 
     // TYPED SAFE ALL
     //Scan-1a: retrieve value from input and set values for display
@@ -112,12 +121,25 @@ export const ScanForm = ({
 
     //optional: when camera is set to on
     useEffect(() => {
-        form.setFieldsValue({ scannedItem: camData });
-    }, [camData]);
+        if (camData) {
+            form.setFieldsValue({ scannedItem: camData });
+        } else {
+            form.setFieldsValue({ scannedItem: initValue ? initValue : undefined });
+        }
+    }, [camData, initValue]);
 
     const handleCleanData = () => {
         form.resetFields();
         setCamData(undefined);
+    };
+
+    useEffect(() => {
+        setButtonsState(buttons);
+    }, [buttons]);
+
+    const onChange = (e: any) => {
+        if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
+        if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
     };
 
     return (
@@ -130,13 +152,21 @@ export const ScanForm = ({
                 scrollToFirstError
                 size="small"
                 form={form}
+                initialValues={{ scannedItem: initValue ? initValue : undefined }}
             >
                 <StyledFormItem
                     label={label}
                     name="scannedItem"
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
+                    // initialValue={initValue ? initValue : undefined}
                 >
-                    <Input style={{ height: '20px', marginBottom: '5px' }} autoFocus />
+                    <Input
+                        style={{ height: '20px', marginBottom: '5px' }}
+                        onChange={onChange}
+                        autoFocus
+                        allowClear
+                        onFocus={isSelected ? (e) => e.target.select() : undefined}
+                    />
                 </StyledFormItem>
                 {configs.SCAN_CAMERA_ACTIVATED === 1 ? (
                     <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
@@ -145,7 +175,7 @@ export const ScanForm = ({
                 )}
                 <RadioButtons
                     input={{
-                        ...buttons,
+                        ...buttonsState,
                         showSimilarLocations: showSimilarLocations?.showSimilarLocations,
                         showEmptyLocations: showEmptyLocations?.showEmptyLocations,
                         triggerAlternativeSubmit:

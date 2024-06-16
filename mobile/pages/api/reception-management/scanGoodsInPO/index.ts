@@ -49,28 +49,95 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const { scannedInfo } = req.body;
 
     const purchaseOrderFilter = {
-        filters: { name: scannedInfo }
+        filters: { name: scannedInfo },
+        advancedFilters: {
+            filter: {
+                field: { type: 10104 },
+                searchType: 'INFERIOR'
+            }
+        }
     };
+
+    // configs.PURCHASE_ORDER_TYPE_L3_RETURN
 
     const purchaseOrderQuery = gql`
         query GetPurchaseOrders(
             $filters: PurchaseOrderSearchFilters
             $orderBy: [PurchaseOrderOrderByCriterion!]
+            $advancedFilters: [PurchaseOrderAdvancedSearchFilters!]
         ) {
-            purchaseOrders(filters: $filters, orderBy: $orderBy) {
+            purchaseOrders(
+                filters: $filters
+                orderBy: $orderBy
+                advancedFilters: $advancedFilters
+            ) {
                 count
                 results {
                     id
                     name
                     status
                     supplier
+                    stockOwnerId
+                    stockOwner {
+                        id
+                        name
+                    }
                     purchaseOrderLines {
                         id
                         lineNumber
                         status
+                        quantity
                         quantityMax
                         receivedQuantity
+                        blockingStatus
+                        blockingStatusText
+                        stockOwnerId
+                        stockOwner {
+                            name
+                        }
                         articleId
+                        article {
+                            id
+                            name
+                            description
+                        }
+                        roundLineDetails {
+                            id
+                            roundLineId
+                            roundLine {
+                                id
+                                roundId
+                                round {
+                                    id
+                                    name
+                                    status
+                                    status
+                                    statusText
+                                    priority
+                                    priorityText
+                                    nbPickArticle
+                                    nbBox
+                                    nbRoundLine
+                                    pickingTime
+                                    productivity
+                                    expectedDeliveryDate
+                                    roundLines {
+                                        id
+                                        lineNumber
+                                        articleId
+                                        status
+                                        statusText
+                                        roundLineDetails {
+                                            id
+                                            status
+                                            statusText
+                                            quantityToBeProcessed
+                                            processedQuantity
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     handlingUnitInbounds {
                         id
@@ -105,55 +172,105 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     `;
 
     const goodsInFilter = {
-        filters: { name: scannedInfo }
+        filters: { name: scannedInfo, category: configs['ROUND_CATEGORY_RECEPTION'] }
     };
 
     const goodsInQuery = gql`
-        query GetHandlingUnitInbounds(
-            $filters: HandlingUnitInboundSearchFilters
-            $orderBy: [HandlingUnitInboundOrderByCriterion!]
-        ) {
-            handlingUnitInbounds(filters: $filters, orderBy: $orderBy) {
+        query GetRounds($filters: RoundSearchFilters, $orderBy: [RoundOrderByCriterion!]) {
+            rounds(filters: $filters, orderBy: $orderBy) {
                 count
                 results {
                     id
                     name
                     status
-                    carrierBox
-                    comment
-                    handlingUnitId
-                    handlingUnit {
-                        name
-                        barcode
-                    }
-                    handlingUnitContentInbounds {
+                    status
+                    statusText
+                    priority
+                    priorityText
+                    nbPickArticle
+                    nbBox
+                    nbRoundLine
+                    pickingTime
+                    productivity
+                    expectedDeliveryDate
+                    roundLines {
                         id
-                        receivedQuantity
-                        missingQuantity
-                        handlingUnitContent {
-                            id
-                            articleId
-                            article {
-                                id
-                                name
-                                description
-                                baseUnitWeight
-                            }
-                        }
-                    }
-                    purchaseOrderId
-                    purchaseOrder {
-                        id
-                        name
+                        lineNumber
+                        articleId
                         status
-                        supplier
-                        purchaseOrderLines {
+                        statusText
+                        roundLineDetails {
                             id
-                            lineNumber
                             status
-                            quantityMax
-                            receivedQuantity
-                            articleId
+                            statusText
+                            quantityToBeProcessed
+                            processedQuantity
+                            roundLineId
+                            purchaseOrderLineId
+                            purchaseOrderLine {
+                                id
+                                stockOwnerId
+                                purchaseOrderId
+                                purchaseOrder {
+                                    id
+                                    name
+                                    status
+                                    supplier
+                                    stockOwnerId
+                                    stockOwner {
+                                        id
+                                        name
+                                    }
+                                    purchaseOrderLines {
+                                        id
+                                        lineNumber
+                                        status
+                                        quantity
+                                        quantityMax
+                                        receivedQuantity
+                                        blockingStatus
+                                        blockingStatusText
+                                        stockOwnerId
+                                        reservation
+                                        stockOwner {
+                                            name
+                                        }
+                                        articleId
+                                        article {
+                                            id
+                                            name
+                                            description
+                                        }
+                                    }
+                                    handlingUnitInbounds {
+                                        id
+                                        name
+                                        status
+                                        carrierBox
+                                        comment
+                                        handlingUnitId
+                                        handlingUnit {
+                                            name
+                                            barcode
+                                        }
+                                        handlingUnitContentInbounds {
+                                            id
+                                            receivedQuantity
+                                            missingQuantity
+                                            handlingUnitContent {
+                                                id
+                                                articleId
+                                                article {
+                                                    id
+                                                    name
+                                                    description
+                                                    baseUnitWeight
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -174,12 +291,24 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             extractPoResponse?.status <= configs.PURCHASE_ORDER_STATUS_IN_PROGRESS &&
             extractPoResponse?.status >= configs.PURCHASE_ORDER_STATUS_RECEIVED
         ) {
-            const { handlingUnitInbounds, ...poOnly } = extractPoResponse;
-            const handlingUnitInboundOnly =
-                handlingUnitInbounds.length !== 0
-                    ? { ...handlingUnitInbounds[0] }
-                    : 'to-be-created';
-            response = { handlingUnitInbound: handlingUnitInboundOnly, purchaseOrder: poOnly };
+            const { purchaseOrderLines } = extractPoResponse;
+            // extract Rounds as goodsIns
+            let goodsIns: any[] = [];
+            purchaseOrderLines.forEach((purchaseOrderLine: any) => {
+                purchaseOrderLine.roundLineDetails.forEach((roundLineDetail: any) => {
+                    let round = roundLineDetail.roundLine.round;
+                    if (!goodsIns.some((r) => r.id === round.id)) {
+                        goodsIns.push(round);
+                    }
+                });
+            });
+
+            const goodsInOnly = goodsIns && goodsIns.length !== 0 ? goodsIns : 'to-be-created';
+            response = {
+                goodsIns: goodsInOnly,
+                purchaseOrder: extractPoResponse,
+                responseType: 'purchaseOrder'
+            };
         } else {
             res.status(500).json({
                 error: {
@@ -190,14 +319,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             });
         }
     } else {
-        const HUIResponse = await graphqlRequestClient.request(
+        const GoodsInResponse = await graphqlRequestClient.request(
             goodsInQuery,
             goodsInFilter,
             requestHeader
         );
 
-        if (HUIResponse && HUIResponse.handlingUnitInbounds.count !== 0) {
-            if (!HUIResponse) {
+        if (GoodsInResponse && GoodsInResponse.rounds.count !== 0) {
+            if (!GoodsInResponse) {
                 res.status(500).json({
                     error: {
                         is_error: true,
@@ -206,23 +335,32 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     }
                 });
             }
-            if (HUIResponse.handlingUnitInbounds.count === 1) {
-                const extractHUIResponse = HUIResponse.handlingUnitInbounds?.results[0];
-                if (extractHUIResponse!.status <= configs.HANDLING_UNIT_INBOUND_STATUS_CLOSED) {
-                    const { purchaseOrder, ...handlingUnitInboundOnly } = extractHUIResponse;
-                    response = {
-                        handlingUnitInbound: handlingUnitInboundOnly,
-                        purchaseOrder: { ...purchaseOrder }
-                    };
-                } else {
-                    res.status(500).json({
-                        error: {
-                            is_error: true,
-                            code: 'FAPI_000002',
-                            message: 'wrong element status'
+            const extractGoodsInResponse = GoodsInResponse.rounds?.results[0];
+            if (extractGoodsInResponse!.status <= configs.ROUND_STATUS_CLOSED) {
+                const { roundLines, ...goodsInOnly } = extractGoodsInResponse;
+                // extract Rounds as goodsIns
+                let purchaseOrders: any[] = [];
+                roundLines.forEach((roundLine: any) => {
+                    roundLine.roundLineDetails.forEach((roundLineDetail: any) => {
+                        let purchaseOrder = roundLineDetail.purchaseOrderLine.purchaseOrder;
+                        if (!purchaseOrders.some((r) => r.id === purchaseOrder.id)) {
+                            purchaseOrders.push(purchaseOrder);
                         }
                     });
-                }
+                });
+                response = {
+                    goodsIns: [goodsInOnly],
+                    purchaseOrder: purchaseOrders[0],
+                    responseType: 'goodsIn'
+                };
+            } else {
+                res.status(500).json({
+                    error: {
+                        is_error: true,
+                        code: 'FAPI_000002',
+                        message: 'wrong element status'
+                    }
+                });
             }
         } else {
             res.status(500).json({

@@ -86,6 +86,11 @@ export const ScanPalletBox = ({
                             carrierShippingModeId
                             carrierShippingMode {
                                 id
+                                carrierId
+                                carrier {
+                                    id
+                                    name
+                                }
                                 toBePalletized
                             }
                             deliveryId

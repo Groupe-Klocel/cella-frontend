@@ -235,6 +235,17 @@ function extractGivenConfigsParams(
     return values;
 }
 
+function isNonUniqueAndMatches(feature: any, features: any) {
+    const matchingFeature = features.find(
+        (ft: any) =>
+            ft.featureCode.name === feature.featureCode.name &&
+            ft.featureCode.unique === false &&
+            ft.value === feature.value
+    );
+    //Note: !!matchingFeature is to convert found object matchingFeature to a boolean format
+    return !!matchingFeature;
+}
+
 export {
     isEmpty,
     pathParams,
@@ -259,5 +270,6 @@ export {
     getKeys,
     LsIsSecured,
     removeDuplicatesAndSort,
-    extractGivenConfigsParams
+    extractGivenConfigsParams,
+    isNonUniqueAndMatches
 };
