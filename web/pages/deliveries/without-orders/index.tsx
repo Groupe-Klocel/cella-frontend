@@ -32,7 +32,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { DeliveryModelV2 as model } from 'models/DeliveryModelV2';
-import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2HighLimit';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';
@@ -70,8 +70,8 @@ const DeliveryPages: PageComponent = () => {
     // function that will retrieve order deliveryAddress for given deliveryId
     const getOrderDeliveryAddress = async (deliveryId: String[]) => {
         const query = gql`
-            query getDeliveryAddress($filters: DeliveryAddressSearchFilters) {
-                deliveryAddresses(filters: $filters) {
+            query getDeliveryAddress($filters: DeliveryAddressSearchFilters, $itemsPerPage: Int!) {
+                deliveryAddresses(filters: $filters, itemsPerPage: $itemsPerPage) {
                     results {
                         entityCode
                         entityName
@@ -91,7 +91,8 @@ const DeliveryPages: PageComponent = () => {
             }
         `;
         const variables = {
-            filters: { deliveryId, category: configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE }
+            filters: { deliveryId, category: configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE },
+            itemsPerPage: 100
         };
         const deliveryOrderAddress = await graphqlRequestClient.request(query, variables);
         return deliveryOrderAddress;
