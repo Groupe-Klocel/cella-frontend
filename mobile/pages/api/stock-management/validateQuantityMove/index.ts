@@ -100,8 +100,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     //update mutation is shared for origin and destination
     const updateHUCMutation = gql`
-        mutation updateHandlingUnitContent($id: String!, $input: UpdateHandlingUnitContentInput!) {
-            updateHandlingUnitContent(id: $id, input: $input) {
+        mutation updateHandlingUnitContent(
+            $id: String!
+            $input: UpdateHandlingUnitContentInput!
+            $advancedInput: JSON!
+        ) {
+            updateHandlingUnitContent(id: $id, input: $input, advancedInput: $advancedInput) {
                 id
                 quantity
                 handlingUnitContentFeatures {
@@ -257,8 +261,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             const destinationHUCVariables = {
                 id: destinationContentToUpdate.id,
                 input: {
-                    quantity: destinationContentToUpdate.quantity + movingQuantity,
                     lastTransactionId
+                },
+                advancedInput: {
+                    quantity: `quantity+${movingQuantity}`
                 }
             };
             const destinationHucResult = await graphqlRequestClient.request(
@@ -340,8 +346,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 const destinationHUCVariables = {
                     id: destinationHUC?.id,
                     input: {
-                        quantity: movingQuantity,
                         lastTransactionId
+                    },
+                    advancedInput: {
+                        quantity: `${movingQuantity}`
                     }
                 };
 
@@ -359,8 +367,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const originHUCVariables = {
             id: originalLocation.originalContent.id,
             input: {
-                quantity: originalLocation.originalContent.quantity - movingQuantity,
                 lastTransactionId
+            },
+            advancedInput: {
+                quantity: `quantity-${movingQuantity}`
             }
         };
 

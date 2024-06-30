@@ -386,7 +386,7 @@ const CustomerOrderPages: PageComponent = () => {
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: { id: string; status: number }) => (
+                        render: (record: { id: string; status: number; extraStatus1: number }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
@@ -421,7 +421,8 @@ const CustomerOrderPages: PageComponent = () => {
                                 ) : modes.length > 0 &&
                                   modes.includes(ModeEnum.Update) &&
                                   model.isEditable &&
-                                  record.status == configs.ORDER_STATUS_TO_INVOICE ? (
+                                  record.status >= configs.ORDER_STATUS_TO_INVOICE &&
+                                  record.extraStatus1 !== parameters.ORDER_EXTRA_STATUS1_PAID ? (
                                     <Button
                                         icon={<CalculatorTwoTone twoToneColor="orange" />}
                                         onClick={() => {
