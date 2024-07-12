@@ -343,7 +343,7 @@ const CustomerOrderPage: PageComponent = () => {
                                 if (invoiceAddress) {
                                     setShowSinglePrintModal(true);
                                     setIdToPrint(invoiceAddress.id);
-                                    setDocumentToPrint('CGP_Quote');
+                                    setDocumentToPrint('K_Quote');
                                 } else {
                                     showError(t('messages:no-invoice-address'));
                                 }
@@ -365,7 +365,7 @@ const CustomerOrderPage: PageComponent = () => {
                                 if (invoiceAddress) {
                                     setShowSinglePrintModal(true);
                                     setIdToPrint(invoiceAddress.id);
-                                    setDocumentToPrint('CGP_Invoice');
+                                    setDocumentToPrint('K_Invoice');
                                 } else {
                                     showError(t('messages:no-invoice-address'));
                                 }

@@ -51,7 +51,7 @@ const MagentoImportModal = ({
         `;
 
         const variables = {
-            functionName: 'CGP_magento_get_orders',
+            functionName: 'K_magento_get_orders',
             event: {}
         };
 
