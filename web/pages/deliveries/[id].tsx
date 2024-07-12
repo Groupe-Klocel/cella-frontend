@@ -144,7 +144,7 @@ const DeliveryPage: PageComponent = () => {
                 `;
 
                 const variables = {
-                    functionName: 'CGP_customCubing',
+                    functionName: 'K_customCubing',
                     event: {
                         deliveries: deliveries
                     }
