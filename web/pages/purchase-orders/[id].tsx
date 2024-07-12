@@ -107,7 +107,7 @@ const PurchaseOrderPage: PageComponent = () => {
                             onClick={() => {
                                 setShowSinglePrintModal(true);
                                 setIdToPrint(data.id);
-                                setDocumentToPrint('CGP_OrderForm');
+                                setDocumentToPrint('K_OrderForm');
                             }}
                         >
                             {t('actions:print-order-form')}

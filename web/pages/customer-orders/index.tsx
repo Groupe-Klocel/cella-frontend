@@ -37,7 +37,7 @@ import {
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
-import { ModeEnum } from 'generated/graphql';
+import { ModeEnum, useListParametersForAScopeQuery } from 'generated/graphql';
 import { CustomerOrderModelV2 as model } from 'models/CustomerOrderModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
@@ -72,6 +72,19 @@ const CustomerOrderPages: PageComponent = () => {
     const [isCreateDeliveryAllowed, setIsCreateDeliveryAllowed] = useState<boolean>(false);
     const router = useRouter();
 
+    const MagentoImport = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'global',
+        code: 'magento_import_on'
+    });
+    const [isMagentoImportOn, setIsMagentoImportOn] = useState<boolean>(false);
+    useEffect(() => {
+        if (MagentoImport) {
+            setIsMagentoImportOn(MagentoImport.data?.listParametersForAScope[0].text === '1');
+        }
+    }, [MagentoImport.data]);
+
+    console.log('MagentoImport', isMagentoImportOn);
+
     const headerData: HeaderData = {
         title: t('common:customer-orders'),
         routes: itemRoutes,
@@ -84,7 +97,7 @@ const CustomerOrderPages: PageComponent = () => {
                         type="primary"
                     />
                 ) : null}
-                {
+                {isMagentoImportOn && (
                     <span style={{ marginLeft: 16 }}>
                         <Button
                             type="primary"
@@ -96,7 +109,7 @@ const CustomerOrderPages: PageComponent = () => {
                             {t('actions:mangento-get-orders')}
                         </Button>
                     </span>
-                }
+                )}
                 <MagentoImportModal
                     showModal={{
                         showMagentoModal,
