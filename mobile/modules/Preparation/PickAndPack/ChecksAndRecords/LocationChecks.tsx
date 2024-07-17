@@ -24,6 +24,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useAuth } from 'context/AuthContext';
+import { Modal } from 'antd';
 
 export interface ILocationChecksProps {
     dataToCheck: any;
@@ -42,6 +43,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1,
         alternativeSubmitInput,
+        showSimilarLocations,
         setResetForm
     } = dataToCheck;
 
@@ -51,7 +53,28 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     useEffect(() => {
         if (scannedInfo && locationInfos) {
             if (locationInfos.locations?.count !== 0) {
+                const proposedRaaIds = storedObject[
+                    `step10`
+                ].data.proposedRoundAdvisedAddresses.map((raa: any) => raa.id);
+
                 const location = locationInfos.locations?.results[0];
+
+                const proposedRoundAdvisedAddress =
+                    storedObject[`step10`].data.proposedRoundAdvisedAddresses[0];
+                const { articleId, stockOwnerId, stockStatus, reservation } =
+                    proposedRoundAdvisedAddress.handlingUnitContent;
+
+                const matchingHandlingUnitContent = location.handlingUnits
+                    .flatMap((unit: any) => unit.handlingUnitContents)
+                    .find(
+                        (content: any) =>
+                            content.articleId === articleId &&
+                            content.stockOwnerId === stockOwnerId &&
+                            content.stockStatus === stockStatus &&
+                            content.reservation === reservation &&
+                            content.quantity > 0
+                    );
+
                 if (
                     location.id ==
                     storedObject[`step10`].data.proposedRoundAdvisedAddresses[0].locationId
@@ -79,6 +102,195 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         ...storedObject[`step${stepNumber}`],
                         data
                     };
+                    showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
+                    storage.set(process, JSON.stringify(storedObject));
+                } else if (
+                    location.category === configs.LOCATION_CATEGORY_PICKING &&
+                    matchingHandlingUnitContent
+                ) {
+                    Modal.confirm({
+                        title: (
+                            <span style={{ fontSize: '14px' }}>
+                                {t('messages:change-picking-location-confirm')}
+                            </span>
+                        ),
+                        onOk: async () => {
+                            //check whether the modal is already visible before opening it again and avoid useEffect re-rendering
+                            console.log('Otherlocation');
+                            const updateRoundAdvisedAddressesMutation = gql`
+                                mutation updateRoundAdvisedAddresses(
+                                    $ids: [String!]!
+                                    $input: UpdateRoundAdvisedAddressInput!
+                                ) {
+                                    updateRoundAdvisedAddresses(ids: $ids, input: $input)
+                                }
+                            `;
+                            const updateRoundAdvisedAddressesVariables = {
+                                ids: proposedRaaIds,
+                                input: {
+                                    locationId: location.id,
+                                    handlingUnitContentId: matchingHandlingUnitContent.id
+                                }
+                            };
+                            const updateRoundAdvisedAddressesResponse =
+                                await graphqlRequestClient.request(
+                                    updateRoundAdvisedAddressesMutation,
+                                    updateRoundAdvisedAddressesVariables
+                                );
+
+                            if (updateRoundAdvisedAddressesResponse.updateRoundAdvisedAddresses) {
+                                const raaQuery = gql`
+                                    query roundAdvisedAddresses(
+                                        $filters: RoundAdvisedAddressSearchFilters!
+                                    ) {
+                                        roundAdvisedAddresses(filters: $filters) {
+                                            count
+                                            results {
+                                                id
+                                                roundOrderId
+                                                quantity
+                                                status
+                                                statusText
+                                                locationId
+                                                location {
+                                                    name
+                                                }
+                                                handlingUnitContentId
+                                                handlingUnitContent {
+                                                    quantity
+                                                    articleId
+                                                    article {
+                                                        id
+                                                        name
+                                                        stockOwnerId
+                                                        stockOwner {
+                                                            name
+                                                        }
+                                                        baseUnitWeight
+                                                    }
+                                                    stockOwnerId
+                                                    stockOwner {
+                                                        name
+                                                    }
+                                                    handlingUnitContentFeatures {
+                                                        featureCode {
+                                                            name
+                                                            unique
+                                                        }
+                                                        value
+                                                    }
+                                                    handlingUnitId
+                                                    handlingUnit {
+                                                        id
+                                                        name
+                                                        barcode
+                                                        status
+                                                        statusText
+                                                        type
+                                                        typeText
+                                                        category
+                                                        categoryText
+                                                        stockOwnerId
+                                                        stockOwner {
+                                                            name
+                                                        }
+                                                    }
+                                                }
+                                                roundLineDetailId
+                                                roundLineDetail {
+                                                    status
+                                                    statusText
+                                                    quantityToBeProcessed
+                                                    processedQuantity
+                                                    roundLineId
+                                                    roundLine {
+                                                        lineNumber
+                                                        articleId
+                                                        status
+                                                        statusText
+                                                    }
+                                                    deliveryLineId
+                                                    deliveryLine {
+                                                        id
+                                                        stockOwnerId
+                                                        deliveryId
+                                                        stockStatus
+                                                        stockStatusText
+                                                        reservation
+                                                        articleId
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                `;
+
+                                const raaVariables = {
+                                    filters: {
+                                        id: proposedRaaIds
+                                    }
+                                };
+
+                                const raaResults = await graphqlRequestClient.request(
+                                    raaQuery,
+                                    raaVariables
+                                );
+                                if (raaResults?.roundAdvisedAddresses?.count > 0) {
+                                    const data: { [label: string]: any } = {};
+                                    data['locations'] = locationInfos.locations?.results.map(
+                                        ({
+                                            id,
+                                            name,
+                                            barcode,
+                                            level,
+                                            handlingUnits
+                                        }: {
+                                            id: string;
+                                            name: string;
+                                            barcode: string;
+                                            level: number;
+                                            handlingUnits: any;
+                                        }) => {
+                                            return { id, name, barcode, level, handlingUnits };
+                                        }
+                                    );
+                                    const step10Data = storedObject.step10.data;
+                                    storage.remove(process);
+                                    const newStoredObject = JSON.parse(
+                                        storage.get(process) || '{}'
+                                    );
+                                    newStoredObject['currentStep'] = 20;
+                                    const newStep10Data = {
+                                        round: step10Data.round,
+                                        proposedRoundAdvisedAddresses:
+                                            raaResults?.roundAdvisedAddresses?.results,
+                                        pickAndPackType: step10Data.pickAndPackType
+                                    };
+                                    newStoredObject[`step10`] = {
+                                        previousStep: 0,
+                                        data: newStep10Data
+                                    };
+                                    newStoredObject[`step${stepNumber}`] = {
+                                        previousStep: 10,
+                                        data
+                                    };
+                                    showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(
+                                        false
+                                    );
+                                    storage.set(process, JSON.stringify(newStoredObject));
+                                    setTriggerRender(!triggerRender);
+                                }
+                            }
+                        },
+                        onCancel: () => {
+                            console.log('Reset');
+                            setResetForm(true);
+                            setScannedInfo(undefined);
+                        },
+                        okText: t('messages:confirm'),
+                        cancelText: t('messages:cancel'),
+                        bodyStyle: { fontSize: '2px' }
+                    });
                 } else {
                     showError(t('messages:unexpected-scanned-item'));
                     setResetForm(true);
@@ -90,15 +302,14 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                 setScannedInfo(undefined);
             }
         }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
-        }
+        // if (
+        //     storedObject[`step${stepNumber}`] &&
+        //     Object.keys(storedObject[`step${stepNumber}`]).length != 0
+        // ) {
+        //     storage.set(process, JSON.stringify(storedObject));
+        // }
     }, [locationInfos]);
 
-    // due to
     const [isHuClosureLoading, setIsHuClosureLoading] = useState(false);
     async function closeHUO(currentShippingPalletId: any) {
         setIsHuClosureLoading(true);
