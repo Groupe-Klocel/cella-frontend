@@ -224,8 +224,10 @@ export const ScanLocation = ({
                                     handlingUnitContentFeatures {
                                         id
                                         featureCode {
+                                            id
                                             name
                                             unique
+                                            dateType
                                         }
                                         value
                                     }

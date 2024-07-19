@@ -94,5 +94,6 @@
     "picked-and-packed-successfully": "Picked and packed successfully",
     "pick-and-pack-round-finished": "Pick and pack round finished",
     "wrong-handling-unit-outbound": "Scanned shipping unit is not the expected one",
-    "location-updated": "Location updated"
+    "location-updated": "Location updated",
+    "change-picking-location-confirm": "The picking location will be changed, do you want to proceed?"
 }
