@@ -358,9 +358,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                             roundAdvisedAddresses[0].handlingUnitContentId
                     ),
                     round: updatedRound,
-                    pickAndPackType: updatedRound.round.equipment.checkPosition
-                        ? 'detail'
-                        : 'fullBox'
+                    pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
                 };
                 newStoredObject['currentStep'] = 10;
                 newStoredObject[`step10`] = { previousStep: 0, data };
