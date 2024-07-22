@@ -377,5 +377,9 @@
     "excel-imports": "Excel Import",
     "select-file": "Select file",
     "importing": "Importing...",
-    "start-import": "Start import"
+    "start-import": "Start import",
+    "scheduler-configs": "Scheduler Configs",
+    "scheduler-config": "Scheduler Config",
+    "argument": "Argument",
+    "crontab": "Cron"
 }

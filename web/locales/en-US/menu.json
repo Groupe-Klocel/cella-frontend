@@ -137,5 +137,6 @@
     "credit-address": "Address",
     "building": "Building",
     "payments": "Payments",
-    "excel-imports": "Excel Import"
+    "excel-imports": "Excel Import",
+    "scheduler-configs": "Scheduler Configs"
 }
