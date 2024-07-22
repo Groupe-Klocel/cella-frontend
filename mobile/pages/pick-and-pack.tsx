@@ -142,6 +142,10 @@ const PickAndPack: PageComponent = () => {
                 object[t('common:article_abbr')] =
                     storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article.name;
             }
+            if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.content) {
+                object[t('common:available-quantity')] =
+                    storedObject[`step${workflow.expectedSteps[4]}`]?.data?.content.quantity;
+            }
             if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures) {
                 const processedFeatures =
                     storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures;
@@ -416,11 +420,14 @@ const PickAndPack: PageComponent = () => {
                         submitButton: true,
                         backButton: true
                     }}
-                    availableQuantity={storedObject[
-                        `step${workflow.expectedSteps[0]}`
-                    ].data.proposedRoundAdvisedAddresses.reduce(
-                        (total: number, current: any) => total + current.quantity,
-                        0
+                    availableQuantity={Math.min(
+                        storedObject[
+                            `step${workflow.expectedSteps[0]}`
+                        ].data.proposedRoundAdvisedAddresses.reduce(
+                            (total: number, current: any) => total + current.quantity,
+                            0
+                        ),
+                        storedObject[`step${workflow.expectedSteps[4]}`].data?.content?.quantity
                     )}
                     checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                 ></EnterQuantity>
