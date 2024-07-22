@@ -751,5 +751,20 @@
     "order-status": "Customer order status",
     "invoiceNumber": "Invoice number",
     "invoiceDate": "Invoice date",
-    "all-fields-search": "All fields search"
+    "all-fields-search": "All fields search",
+    "cron": "Cron",
+    "functionName": "Fonction Name",
+    "lastExecutionDate": "Last execution date",
+    "index": "Index",
+    "key": "Key",
+    "minute": "Minute",
+    "hour": "Hour",
+    "dayofmonth": "Day of month",
+    "month": "Month",
+    "dayofweek": "Day of week",
+    "any-value": "'*' Any value",
+    "value-list-separator": "',' Value list separator",
+    "range-of-values": "'-' Range of values",
+    "step-values": "'/' Step values",
+    "allowed-values": "Allowed values"
 }

@@ -148,5 +148,7 @@
     "create-order": "Créer commande client",
     "print-boxes-labels": "Imprimer étiquettes colis associés",
     "with-closed-cancel-items": "Avec les éléments fermés et annulés",
-    "without-closed-cancel-items": "Sans les éléments fermés et annulés"
+    "without-closed-cancel-items": "Sans les éléments fermés et annulés",
+    "add-scheduler-config": "Ajouter ordonnanceur",
+    "edit-crontab": "Modifier le Cron"
 }

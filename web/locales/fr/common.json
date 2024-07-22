@@ -342,5 +342,9 @@
     "excel-imports": "Import Excel",
     "select-file": "Sélectionner un fichier",
     "importing": "Importation...",
-    "start-import": "Lancer l'import"
+    "start-import": "Lancer l'import",
+    "scheduler-configs": "Ordonnanceurs",
+    "scheduler-config": "Ordonnanceur",
+    "argument": "Argument",
+    "crontab": "Cron"
 }

@@ -132,5 +132,6 @@
     "xlsx-file-size-error": "File size must be less than {{size}}MB",
     "xlsx-file-import-error-output": "Erreur l'ors de l'import Excel {{output}}",
     "xlsx-file-import-error": "Erreur l'ors de l'import Excel",
-    "xlsx-success-importing": "Excel import was successfully completed"
+    "xlsx-success-importing": "Excel import was successfully completed",
+    "not-allowed-value": "Not allowed value"
 }
