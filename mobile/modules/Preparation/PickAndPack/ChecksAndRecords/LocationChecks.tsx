@@ -77,7 +77,8 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
 
                 if (
                     location.id ==
-                    storedObject[`step10`].data.proposedRoundAdvisedAddresses[0].locationId
+                        storedObject[`step10`].data.proposedRoundAdvisedAddresses[0].locationId &&
+                    matchingHandlingUnitContent
                 ) {
                     const data: { [label: string]: any } = {};
                     data['locations'] = locationInfos.locations?.results.map(
