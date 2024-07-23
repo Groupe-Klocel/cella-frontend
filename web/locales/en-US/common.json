@@ -373,5 +373,13 @@
     "genericArticleComment": "Comment line",
     "deliveries-without-orders": "Deliveries without customer orders",
     "delivery-without-orders": "Delivery without customer order",
-    "genericDeliveryComment": "Delivery instructions"
+    "genericDeliveryComment": "Delivery instructions",
+    "excel-imports": "Excel Import",
+    "select-file": "Select file",
+    "importing": "Importing...",
+    "start-import": "Start import",
+    "scheduler-configs": "Scheduler Configs",
+    "scheduler-config": "Scheduler Config",
+    "argument": "Argument",
+    "crontab": "Cron"
 }
