@@ -124,8 +124,14 @@
     "confirm-payment": "Etes-vous sûr(e) de vouloir valider en tant que règlement ?",
     "confirm-delivery": "Etes-vous sûr(e) de vouloir valider en tant que livraison ?",
     "no-invoice-address": "Aucune adresse de facturation allouée",
-    "create-delivery-confirm":  "Etes-vous sûr(e) de vouloir créer une livraison depuis les commandes clients sélectionnées ?",
+    "create-delivery-confirm": "Etes-vous sûr(e) de vouloir créer une livraison depuis les commandes clients sélectionnées ?",
     "success-delivery-creation": "La livraison a été créée avec succès",
     "create-order-confirm": "Etes-vous sûr(e) de vouloir créer une commande client depuis les livraisons sélectionnées ?",
-    "success-order-creation": "La commande client a été créée avec succès"
+    "success-order-creation": "La commande client a été créée avec succès",
+    "xlsx-file-format-error": "Seul les fichiers formats Excel sont autorisés",
+    "xlsx-file-size-error": "La taille du fichier doit être inférieure à {{size}}Mo",
+    "xlsx-file-import-error-output": "Erreur lors de l'import Excel {{output}}",
+    "xlsx-file-import-error": "Erreur lors de l'import Excel",
+    "xlsx-success-importing": "L'import Excel a été réalisé avec succès",
+    "not-allowed-value": "valeur non autorisée"
 }

@@ -338,5 +338,13 @@
     "deliveries-without-orders": "Livraisons sans commande client",
     "delivery-without-orders": "Livraison sans commande client",
     "genericDeliveryComment": "Instructions de livraison",
-    "notes": "Notes"
+    "notes": "Notes",
+    "excel-imports": "Import Excel",
+    "select-file": "Sélectionner un fichier",
+    "importing": "Importation...",
+    "start-import": "Lancer l'import",
+    "scheduler-configs": "Ordonnanceurs",
+    "scheduler-config": "Ordonnanceur",
+    "argument": "Argument",
+    "crontab": "Cron"
 }
