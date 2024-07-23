@@ -63,7 +63,8 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                             content.articleId === deliveryLine.articleId &&
                             content.stockOwnerId === deliveryLine.stockOwnerId &&
                             content.stockStatus === deliveryLine.stockStatus &&
-                            content.reservation === deliveryLine.reservation
+                            content.reservation === deliveryLine.reservation &&
+                            content.quantity > 0
                     )
                 ) {
                     const data: { [label: string]: any } = {};
