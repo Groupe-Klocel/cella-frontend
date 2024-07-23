@@ -37,6 +37,7 @@ export interface IScanLocationProps {
     checkComponent: any;
     headerContent?: any;
     triggerAlternativeSubmit1?: any;
+    action1Trigger?: any;
 }
 
 export const ScanLocation = ({
@@ -223,8 +224,10 @@ export const ScanLocation = ({
                                     handlingUnitContentFeatures {
                                         id
                                         featureCode {
+                                            id
                                             name
                                             unique
+                                            dateType
                                         }
                                         value
                                     }
@@ -270,6 +273,7 @@ export const ScanLocation = ({
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
         alternativeSubmitInput: storedObject?.step10?.data?.round.extraText1 ?? undefined,
+        showSimilarLocations: { showSimilarLocations },
         setResetForm
     };
 

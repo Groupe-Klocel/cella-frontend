@@ -27,6 +27,7 @@ import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { EnterQuantity, SelectLocationByLevelForm } from '@CommonRadio';
+import { SimilarPickingLocations } from 'modules/Preparation/PickAndPack/Elements/SimilarLocations';
 import { QuantityChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/QuantityChecks';
 import { SelectRoundForm } from 'modules/Preparation/PickAndPack/Forms/SelectRoundForm';
 import { HandlingUnitChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/HandlingUnitChecks';
@@ -61,6 +62,7 @@ const PickAndPack: PageComponent = () => {
     const [triggerHuClose, setTriggerHuClose] = useState<boolean>(false);
     const [isButtonDisplayed, setIsButtonDisplayed] = useState<boolean>(false);
     const [isAutoValidateLoading, setIsAutoValidateLoading] = useState<boolean>(false);
+    const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     //define workflow parameters
     const workflow = {
         processName: 'pickAndPack',
@@ -140,6 +142,10 @@ const PickAndPack: PageComponent = () => {
                 object[t('common:article_abbr')] =
                     storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article.name;
             }
+            if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.content) {
+                object[t('common:available-quantity')] =
+                    storedObject[`step${workflow.expectedSteps[4]}`]?.data?.content.quantity;
+            }
             if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures) {
                 const processedFeatures =
                     storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures;
@@ -209,6 +215,7 @@ const PickAndPack: PageComponent = () => {
         storage.removeAll();
         setHeaderContent(false);
         setShowEmptyLocations(false);
+        setShowSimilarLocations(false);
         setTriggerRender(!triggerRender);
     };
 
@@ -216,6 +223,7 @@ const PickAndPack: PageComponent = () => {
         router.back();
         storage.removeAll();
         setHeaderContent(false);
+        setShowSimilarLocations(false);
         setShowEmptyLocations(false);
     };
 
@@ -243,6 +251,28 @@ const PickAndPack: PageComponent = () => {
                     }}
                 ></RadioInfosHeader>
             )}
+            {showSimilarLocations && storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
+                <SimilarPickingLocations
+                    articleId={
+                        storedObject[`step${workflow.expectedSteps[0]}`].data
+                            .proposedRoundAdvisedAddresses[0].handlingUnitContent.articleId
+                    }
+                    chosenContentId={
+                        storedObject[`step${workflow.expectedSteps[0]}`].data
+                            .proposedRoundAdvisedAddresses[0].handlingUnitContent.id
+                    }
+                    stockOwnerId={
+                        storedObject[`step${workflow.expectedSteps[0]}`].data
+                            .proposedRoundAdvisedAddresses[0].handlingUnitContent.stockOwnerId
+                    }
+                    stockStatus={
+                        storedObject[`step${workflow.expectedSteps[0]}`].data
+                            .proposedRoundAdvisedAddresses[0].handlingUnitContent.stockStatus
+                    }
+                />
+            ) : (
+                <></>
+            )}
             {!storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
                 <SelectRoundForm
                     process={workflow.processName}
@@ -269,9 +299,13 @@ const PickAndPack: PageComponent = () => {
                     buttons={{
                         submitButton: true,
                         backButton: true,
-                        alternativeSubmitButton1: isButtonDisplayed
+                        alternativeSubmitButton1: isButtonDisplayed,
+                        locationButton: true
                     }}
                     checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
+                    showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
+                    showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
+                    headerContent={{ headerContent, setHeaderContent }}
                 ></ScanLocation>
             ) : (
                 <></>
@@ -386,11 +420,14 @@ const PickAndPack: PageComponent = () => {
                         submitButton: true,
                         backButton: true
                     }}
-                    availableQuantity={storedObject[
-                        `step${workflow.expectedSteps[0]}`
-                    ].data.proposedRoundAdvisedAddresses.reduce(
-                        (total: number, current: any) => total + current.quantity,
-                        0
+                    availableQuantity={Math.min(
+                        storedObject[
+                            `step${workflow.expectedSteps[0]}`
+                        ].data.proposedRoundAdvisedAddresses.reduce(
+                            (total: number, current: any) => total + current.quantity,
+                            0
+                        ),
+                        storedObject[`step${workflow.expectedSteps[4]}`].data?.content?.quantity
                     )}
                     checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                 ></EnterQuantity>

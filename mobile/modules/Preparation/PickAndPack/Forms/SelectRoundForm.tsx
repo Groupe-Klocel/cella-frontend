@@ -115,6 +115,7 @@ export const SelectRoundForm = ({
                     }`;
                     newTypeTexts.push({ key: item.id, text: displayedText });
                 });
+                newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
                 setRounds(newTypeTexts);
             }
         }
