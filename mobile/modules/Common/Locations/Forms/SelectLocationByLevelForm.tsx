@@ -31,7 +31,7 @@ export interface ISelectLocationByLevelProps {
     stepNumber: number;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
-    locations: Array<Object>;
+    locations: Array<any>;
 }
 
 export const SelectLocationByLevelForm = ({
@@ -77,6 +77,9 @@ export const SelectLocationByLevelForm = ({
                 // N.B.: in this case previous step is kept at its previous value
                 const data: { [label: string]: any } = {};
                 data['chosenLocation'] = locations[0];
+                if (data['chosenLocation']?.handlingUnits?.length == 1) {
+                    data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
+                }
                 storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
                 setTriggerRender(!triggerRender);
             } else if (storedObject.currentStep < stepNumber) {
@@ -113,6 +116,9 @@ export const SelectLocationByLevelForm = ({
         data['chosenLocation'] = locations?.find((e: any) => {
             return e.level == values.level;
         });
+        if (data['chosenLocation']?.handlingUnits?.length == 1) {
+            data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
+        }
         storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
         storage.set(process, JSON.stringify(storedObject));
         setTriggerRender(!triggerRender);

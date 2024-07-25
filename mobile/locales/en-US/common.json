@@ -161,5 +161,6 @@
     "expected-article_abbr": "Expected art.",
     "expected-quantity_abbr": "Expected qty",
     "change-location": "Change location",
-    "total-picked-quantity": "Total picked quantity"
+    "total-picked-quantity": "Total picked quantity",
+    "available-quantity": "Available quantity"
 }
