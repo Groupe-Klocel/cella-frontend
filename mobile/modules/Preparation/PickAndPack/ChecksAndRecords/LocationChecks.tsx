@@ -202,6 +202,13 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                                                     status
                                                     statusText
                                                     quantityToBeProcessed
+                                                    handlingUnitContentOutbounds {
+                                                        id
+                                                        handlingUnitOutbound {
+                                                            id
+                                                            name
+                                                        }
+                                                    }
                                                     processedQuantity
                                                     roundLineId
                                                     roundLine {
