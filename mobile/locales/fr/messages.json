@@ -94,5 +94,6 @@
     "picked-and-packed-successfully": "Pick & pack effectué avec succès",
     "pick-and-pack-round-finished": "Pick & pack de la ramasse terminés",
     "wrong-handling-unit-outbound": "L'unité d'expédition scannée n'est pas celle attendue",
-    "location-updated": "Emplacement mis à jour"
+    "location-updated": "Emplacement mis à jour",
+    "change-picking-location-confirm": "L'emplacement de prélèvement sera modifié, voulez-vous continuer ?"
 }

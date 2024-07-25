@@ -136,5 +136,7 @@
     "article-set-details": "Article Set Details",
     "credit-address": "Address",
     "building": "Building",
-    "payments": "Payments"
+    "payments": "Payments",
+    "excel-imports": "Excel Import",
+    "scheduler-configs": "Scheduler Configs"
 }
