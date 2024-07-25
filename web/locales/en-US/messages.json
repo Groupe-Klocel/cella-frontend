@@ -127,5 +127,11 @@
     "create-delivery-confirm": "Are you sure you want to create a delivery from selected customer orders ?",
     "success-delivery-creation": "Delivery successfully created",
     "create-order-confirm": "Are you sure you want to create a customer order from selected deliveries ?",
-    "success-order-creation": "Customer order successfully created"
+    "success-order-creation": "Customer order successfully created",
+    "xlsx-file-format-error": "Only Excel format files are allowed",
+    "xlsx-file-size-error": "File size must be less than {{size}}MB",
+    "xlsx-file-import-error-output": "Erreur l'ors de l'import Excel {{output}}",
+    "xlsx-file-import-error": "Erreur l'ors de l'import Excel",
+    "xlsx-success-importing": "Excel import was successfully completed",
+    "not-allowed-value": "Not allowed value"
 }

@@ -136,5 +136,7 @@
     "credits": "Avoirs",
     "credit-address": "Adresse",
     "payments": "Règlements",
-    "barcode": "Code-barres"
+    "barcode": "Code-barres",
+    "excel-imports": "Import Excel",
+    "scheduler-configs": "Ordonnanceurs"
 }
