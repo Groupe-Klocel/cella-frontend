@@ -50,7 +50,7 @@ const LoadsPage: PageComponent = () => {
         expectedSteps: [10, 20, 25, 30]
     };
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
-
+    console.log(storedObject);
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
         storedObject[`step${workflow.expectedSteps[0]}`] = { previousStep: 0 };

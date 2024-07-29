@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
+import parameters from '../../../../../common/parameters.json';
 
 const parseCookie = (str: string) =>
     str
@@ -48,21 +49,30 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     // retrieve information from front
     const { box, load } = req.body;
 
-    const handlingUnitOutboundQuery = gql`
-        query handlingUnitOutbounds($filters: HandlingUnitOutboundSearchFilters) {
-            handlingUnitOutbounds(filters: $filters) {
-                results {
-                    id
-                    deliveryId
-                    loadId
-                }
-            }
-        }
-    `;
+    const childrenHandlingUnits = box.handlingUnit?.childrenHandlingUnits;
+    const boxes: any = [];
+    childrenHandlingUnits.forEach((huo: any) => {
+        huo.handlingUnitOutbounds.forEach((ele: any) => {
+            boxes.push(ele);
+        });
+    });
 
-    const handlingUnitOutboundVariables = {
-        filters: { deliveryId: box.delivery.id }
-    };
+    // const handlingUnitOutboundQuery = gql`
+    //     query handlingUnitOutbounds($filters: HandlingUnitOutboundSearchFilters) {
+    //         handlingUnitOutbounds(filters: $filters) {
+    //             results {
+    //                 id
+    //                 deliveryId
+    //                 loadId
+    //             }
+    //         }
+    //     }
+    // `;
+
+    // const handlingUnitOutboundVariables = {
+    //     filters: { deliveryId: box.delivery.id }
+    // };
+
     //Transaction management
     const generateTransactionId = gql`
         mutation {
@@ -103,18 +113,52 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             loadId: null,
             lastTransactionId
         };
-        const updatedBoxVariables = {
-            id: box.id,
-            input: data
-        };
+        const boxesResponse: any = [];
+        if (boxes.length > 0) {
+            for (let index = 0; index < boxes.length; index++) {
+                const hu = boxes[index];
+                const updatedBoxVariables = {
+                    id: hu.id,
+                    input: data
+                };
 
-        const resultBoxResponse = await graphqlRequestClient.request(
-            updatedBoxMutation,
-            updatedBoxVariables,
-            requestHeader
-        );
-        console.log('Result of box Status', resultBoxResponse);
+                const resultBoxResponse = await graphqlRequestClient.request(
+                    updatedBoxMutation,
+                    updatedBoxVariables,
+                    requestHeader
+                );
+                boxesResponse.push(resultBoxResponse.updateHandlingUnitOutbound);
+                console.log(`Result of box [${index + 1}] Status`, resultBoxResponse);
+            }
+        }
 
+        //update palet
+        if (box.handlingUnit.type === parameters.HANDLING_UNIT_TYPE_PALLET) {
+            console.log('Pallet OK: ', box.handlingUnit.id);
+            const updatedPalletVariables = {
+                id: box.handlingUnit?.handlingUnitOutbounds[0]?.id,
+                input: data
+            };
+            const resultPalletResponse = await graphqlRequestClient.request(
+                updatedBoxMutation,
+                updatedPalletVariables,
+                requestHeader
+            );
+            console.log('Result of pallet Status', resultPalletResponse);
+        } else {
+            if (box.handlingUnit.type === parameters.HANDLING_UNIT_TYPE_BOX) {
+                const updatedBoxVariables = {
+                    id: box.handlingUnit?.handlingUnitOutbounds[0]?.id,
+                    input: data
+                };
+                const resultBoxResponse = await graphqlRequestClient.request(
+                    updatedBoxMutation,
+                    updatedBoxVariables,
+                    requestHeader
+                );
+                console.log('Result of Box Status', resultBoxResponse);
+            }
+        }
         // Update load
         const updatedLoadMutation = gql`
             mutation updateLoad($id: String!, $input: UpdateLoadInput!) {
@@ -162,46 +206,33 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             console.log('Result of Load Status', resultLoadResponse);
         }
 
-        // Update delivery status
-        const handlingUnitOutboundResult = await graphqlRequestClient.request(
-            handlingUnitOutboundQuery,
-            handlingUnitOutboundVariables,
-            requestHeader
-        );
-        const boxInDelivery = handlingUnitOutboundResult.handlingUnitOutbounds.results;
-        let deliveryFinish = false;
-        for (const i in boxInDelivery) {
-            if (boxInDelivery[i].loadId != null) {
-                deliveryFinish = false;
-            } else {
-                deliveryFinish = true;
-                break;
-            }
-        }
-        if (deliveryFinish == true) {
-            const updatedDeliveryMutation = gql`
-                mutation updateDelivery($id: String!, $input: UpdateDeliveryInput!) {
-                    updateDelivery(id: $id, input: $input) {
-                        id
-                        status
+        for (let index = 0; index < boxes.length; index++) {
+            const hu = boxes[index];
+            if (hu.loadId !== null) {
+                const updatedDeliveryMutation = gql`
+                    mutation updateDelivery($id: String!, $input: UpdateDeliveryInput!) {
+                        updateDelivery(id: $id, input: $input) {
+                            id
+                            status
+                        }
                     }
-                }
-            `;
-            const dataForDelivery = {
-                status: configs.DELIVERY_STATUS_PREPARED,
-                lastTransactionId
-            };
-            const updatedDeliveryVariables = {
-                id: box.delivery.id,
-                input: dataForDelivery
-            };
+                `;
+                const dataForDelivery = {
+                    status: configs.DELIVERY_STATUS_PREPARED, //500
+                    lastTransactionId
+                };
+                const updatedDeliveryVariables = {
+                    id: hu.deliveryId,
+                    input: dataForDelivery
+                };
 
-            const resultDeliveryResponse = await graphqlRequestClient.request(
-                updatedDeliveryMutation,
-                updatedDeliveryVariables,
-                requestHeader
-            );
-            console.log('Result of delivery Status', resultDeliveryResponse);
+                const resultDeliveryResponse = await graphqlRequestClient.request(
+                    updatedDeliveryMutation,
+                    updatedDeliveryVariables,
+                    requestHeader
+                );
+                console.log('Result of delivery Status', resultDeliveryResponse);
+            }
         }
 
         // Query Load Line
@@ -245,7 +276,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         //merge results
         res.status(200).json({
             response: {
-                updatedBox: resultBoxResponse.handlingUnitOutbound,
+                updatedBox: boxesResponse,
                 lastTransactionId
             }
         });

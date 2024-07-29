@@ -52,7 +52,6 @@ const EditPaymentLinePage: PageComponent = () => {
     ];
 
     const pageTitle = `${t('common:payment-line')} ${data?.payment_name}`;
-    console.log('RAB-data: ', data);
 
     return (
         <>
