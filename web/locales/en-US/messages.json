@@ -133,5 +133,6 @@
     "xlsx-file-import-error-output": "Erreur l'ors de l'import Excel {{output}}",
     "xlsx-file-import-error": "Erreur l'ors de l'import Excel",
     "xlsx-success-importing": "Excel import was successfully completed",
-    "not-allowed-value": "Not allowed value"
+    "not-allowed-value": "Not allowed value",
+    "file-drag": "Click or drag a file to this area to upload"
 }

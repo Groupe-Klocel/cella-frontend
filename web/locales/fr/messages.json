@@ -133,5 +133,6 @@
     "xlsx-file-import-error-output": "Erreur lors de l'import Excel {{output}}",
     "xlsx-file-import-error": "Erreur lors de l'import Excel",
     "xlsx-success-importing": "L'import Excel a été réalisé avec succès",
-    "not-allowed-value": "valeur non autorisée"
+    "not-allowed-value": "valeur non autorisée",
+    "file-drag": "Cliquer ou faire glisser un fichier dans cette zône pour télécharger"
 }
