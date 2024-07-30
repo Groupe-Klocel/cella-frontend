@@ -766,5 +766,6 @@
     "value-list-separator": "',' Value list separator",
     "range-of-values": "'-' Range of values",
     "step-values": "'/' Step values",
-    "allowed-values": "Allowed values"
+    "allowed-values": "Allowed values",
+    "documents": "Documents"
 }

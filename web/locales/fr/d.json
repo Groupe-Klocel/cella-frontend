@@ -772,5 +772,6 @@
     "value-list-separator": "',' Séparateur de liste de valeurs",
     "range-of-values": "'-' Plage de valeurs",
     "step-values": "'/' Tranche de valeurs",
-    "allowed-values": "valeures autorisées"
+    "allowed-values": "valeures autorisées",
+    "documents": "Documents"
 }
