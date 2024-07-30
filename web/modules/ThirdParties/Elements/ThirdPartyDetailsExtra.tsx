@@ -21,6 +21,7 @@ import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { ThirdPartyAddressModelV2 as model } from 'models/ThirdPartyAddressModelV2';
+import { ThirdPartyDocumentModelV2 } from 'models/ThirdPartyDocumentModelV2';
 import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
@@ -32,6 +33,7 @@ import {
     EditTwoTone,
     EyeTwoTone,
     LockTwoTone,
+    PrinterOutlined,
     UnlockTwoTone
 } from '@ant-design/icons';
 
@@ -54,6 +56,8 @@ const ThirdPartyDetailsExtra = ({
     const [reopenInfo, setReopenInfo] = useState<string | undefined>();
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, model.tableName);
+    const documentModes = getModesFromPermissions(permissions, ThirdPartyDocumentModelV2.tableName);
+    const [documentIdToDelete, setDocumentIdToDelete] = useState<string | undefined>();
 
     const thirdPartyAddressHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:third-party-addresses') }),
@@ -65,6 +69,24 @@ const ThirdPartyDetailsExtra = ({
                 <LinkButton
                     title={t('actions:associate', { name: t('common:third-party-address') })}
                     path={pathParamsFromDictionary('/third-parties/address/add', {
+                        thirdPartyId: thirdPartyId,
+                        thirdPartyName: thirdPartyName
+                    })}
+                    type="primary"
+                />
+            ) : null
+    };
+
+    const thirdPartyDocumentHeaderData: HeaderData = {
+        title: t('common:associated', { name: t('common:documents') }),
+        routes: [],
+        actionsComponent:
+            modes.length > 0 &&
+            modes.includes(ModeEnum.Create) &&
+            thirdPartyStatus != configs.THIRD_PARTY_STATUS_DISABLED ? (
+                <LinkButton
+                    title={t('actions:associate', { name: t('common:documents') })}
+                    path={pathParamsFromDictionary('/third-parties/document/add', {
                         thirdPartyId: thirdPartyId,
                         thirdPartyName: thirdPartyName
                     })}
@@ -95,6 +117,26 @@ const ThirdPartyDetailsExtra = ({
             });
         };
     };
+
+    function downloadDocument(base64Data: string, fileName: string) {
+        const [header, actualBase64] = base64Data.split(',');
+        const fileType = header.split(':')[1].split(';')[0];
+
+        const byteCharacters = window.atob(actualBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: fileType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     return (
         <>
@@ -190,6 +232,119 @@ const ThirdPartyDetailsExtra = ({
                                         )}
                                         {record.status ==
                                         configs.THIRD_PARTY_ADDRESS_STATUS_DISABLED ? (
+                                            <Button
+                                                icon={<UnlockTwoTone twoToneColor="#b3cad6" />}
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        {
+                                                            id: record.id,
+                                                            status: configs.THIRD_PARTY_ADDRESS_STATUS_ENABLED
+                                                        },
+                                                        setReopenInfo,
+                                                        'enable'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                    />
+                    <ListComponent
+                        searchCriteria={{ thirdPartyId: thirdPartyId }}
+                        dataModel={ThirdPartyDocumentModelV2}
+                        headerData={thirdPartyDocumentHeaderData}
+                        routeDetailPage={'/third-parties/document/:id'}
+                        triggerDelete={{
+                            idToDelete: documentIdToDelete,
+                            setIdToDelete: setDocumentIdToDelete
+                        }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        triggerReopen={{ reopenInfo, setReopenInfo }}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: {
+                                    id: string;
+                                    name: string;
+                                    documentAttached: string;
+                                }) => (
+                                    <Space>
+                                        {documentModes.length > 0 &&
+                                        documentModes.includes(ModeEnum.Read) ? (
+                                            <LinkButton
+                                                icon={<EyeTwoTone />}
+                                                path={pathParams(
+                                                    '/third-parties/document/[id]',
+                                                    record.id
+                                                )}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
+                                        <Button
+                                            onClick={() =>
+                                                downloadDocument(
+                                                    record.documentAttached,
+                                                    record.name
+                                                )
+                                            }
+                                            icon={<PrinterOutlined />}
+                                        />
+                                        {documentModes.length > 0 &&
+                                        documentModes.includes(ModeEnum.Update) &&
+                                        ThirdPartyDocumentModelV2.isEditable ? (
+                                            <LinkButton
+                                                icon={<EditTwoTone />}
+                                                path={pathParamsFromDictionary(
+                                                    '/third-parties/document/edit/[id]',
+                                                    {
+                                                        id: record.id
+                                                    }
+                                                )}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {documentModes.length > 0 &&
+                                        documentModes.includes(ModeEnum.Delete) &&
+                                        ThirdPartyDocumentModelV2.isSoftDeletable ? (
+                                            <Button
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        record.id,
+                                                        setIdToDisable,
+                                                        'disable'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {documentModes.length > 0 &&
+                                        documentModes.includes(ModeEnum.Delete) &&
+                                        ThirdPartyDocumentModelV2.isDeletable ? (
+                                            <Button
+                                                icon={<DeleteOutlined />}
+                                                danger
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        record.id,
+                                                        setDocumentIdToDelete,
+                                                        'delete'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {ThirdPartyDocumentModelV2.isSoftDeletable ? (
                                             <Button
                                                 icon={<UnlockTwoTone twoToneColor="#b3cad6" />}
                                                 onClick={() =>
