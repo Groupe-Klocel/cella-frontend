@@ -47,7 +47,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
     // TYPED SAFE ALL
     useEffect(() => {
         if (scannedInfo) {
-            if (handlingUnitInfos && handlingUnitInfos.handlingUnits) {
+            if (handlingUnitInfos && handlingUnitInfos.handlingUnits.results.length > 0) {
                 const handlingUnit = handlingUnitInfos.handlingUnits.results[0];
                 // HU origin/final identical = error
                 if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {
