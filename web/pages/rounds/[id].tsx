@@ -28,10 +28,11 @@ import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
 import { Button, Modal, Space } from 'antd';
-import { GetOnlyBoxIdsQuery, ModeEnum, useGetOnlyBoxIdsQuery } from 'generated/graphql';
+import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { RoundDetailsExtra } from 'modules/Rounds/Elements/RoundDetailsExtra';
 import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -58,35 +59,50 @@ const RoundPage: PageComponent = () => {
 
     const pageTitle = `${t('common:round')} ${data?.name}`;
 
-    //Associated boxes
-    const boxesIds = useGetOnlyBoxIdsQuery<Partial<GetOnlyBoxIdsQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: {
-                roundId: id
-            },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 500
-        }
-    );
+    //This specific request is to sort boxes according to raa order
+    const getRoundWithSortedRaa = async () => {
+        const query = gql`
+            query getRound($id: String!) {
+                round(id: $id) {
+                    id
+                    equipment {
+                        printer
+                        automaticLabelPrinting
+                    }
+                    roundAdvisedAddresses(
+                        orderBy: [{ fieldName: "roundOrderId", ascending: true }]
+                    ) {
+                        roundLineDetail {
+                            handlingUnitContentOutbounds {
+                                handlingUnitOutbound {
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+        const variables = { id };
+        const round = await graphqlRequestClient.request(query, variables);
+        return round;
+    };
 
     const [boxesList, setBoxesList] = useState<Array<string>>([]);
-
     useEffect(() => {
-        if (boxesIds) {
-            const tmp_array: Array<any> = [];
-            const cData = boxesIds?.data?.handlingUnitOutbounds?.results;
-
-            if (cData) {
-                cData.forEach((item) => {
-                    tmp_array.push(item.id);
+        const getBoxesBySortedRaa = async () => {
+            // Fetch order addresses
+            const result = await getRoundWithSortedRaa();
+            const tmp_boxes: string[] = [];
+            result.round.roundAdvisedAddresses.forEach((raa: any) => {
+                raa.roundLineDetail.handlingUnitContentOutbounds.forEach((huco: any) => {
+                    tmp_boxes?.push(huco.handlingUnitOutbound.id);
                 });
-                setBoxesList(tmp_array);
-            }
-        }
-    }, [boxesIds.data]);
-
+            });
+            setBoxesList(tmp_boxes);
+        };
+        getBoxesBySortedRaa();
+    }, [data]);
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
