@@ -49,6 +49,7 @@ import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { initial } from 'lodash';
+import { gql } from 'graphql-request';
 
 export type HeaderData = {
     title: string;
@@ -200,15 +201,45 @@ const ListComponent = (props: IListProps) => {
     }
     const statusScope = getStatusConfig(filterFields);
 
-    const retrievedStatuses = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: statusScope
-    });
+    const [retrievedStatuses, setRetrievedStatuses] = useState<any>();
+
+    async function getStatusesList(scope: string): Promise<{ [key: string]: any } | undefined> {
+        const query = gql`
+            query ListConfigsForAScope($scope: String!, $code: String, $language: String = "en") {
+                listConfigsForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    scope
+                    code
+                    text
+                }
+            }
+        `;
+
+        try {
+            const result = await graphqlRequestClient.request(query, { scope: scope });
+            return result;
+        } catch (error) {
+            return {};
+        }
+    }
+
+    useEffect(() => {
+        async function getStatuses() {
+            const promise = getStatusesList(statusScope);
+            const statuses = await promise;
+            if (statuses) {
+                setRetrievedStatuses(statuses);
+            }
+        }
+        getStatuses();
+    }, []);
+
     const btnName = isWithoutClosed
         ? t('actions:with-closed-cancel-items')
         : t('actions:without-closed-cancel-items');
 
-    if (retrievedStatuses.data) {
-        const statuses = retrievedStatuses.data.listConfigsForAScope.map((status: any) =>
+    if (retrievedStatuses?.listConfigsForAScope?.length > 0) {
+        const statuses = retrievedStatuses.listConfigsForAScope.map((status: any) =>
             parseInt(status.code)
         );
 
