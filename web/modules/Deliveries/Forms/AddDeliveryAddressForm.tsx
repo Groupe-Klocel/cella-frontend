@@ -170,9 +170,9 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
             const cData = addressesList?.data?.thirdPartyAddresses?.results;
             if (cData) {
                 cData.forEach((item) => {
-                    newTypeTexts.push({ key: item.id, text: item.entityName });
+                    newTypeTexts.push({ key: item.id, text: item.entityName ?? item.entityCode });
                 });
-                newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
+                newTypeTexts.sort((a, b) => a?.text?.localeCompare(b?.text));
                 setThirdPartyAddresses(newTypeTexts);
             }
         }
