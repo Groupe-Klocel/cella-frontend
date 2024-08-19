@@ -51,3 +51,4 @@ export * from './common/smart/Page/Page';
 export * from './common/smart/SideMenu/SideMenu';
 export * from './common/smart/Switchs/MenuSwitch';
 export * from './common/smart/Switchs/ThemeSwitch';
+export * from './common/smart/Modals/CrontabModalV2';
