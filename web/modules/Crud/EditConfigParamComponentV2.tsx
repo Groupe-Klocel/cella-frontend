@@ -500,8 +500,7 @@ const EditConfigParamComponent: FC<IEditItemProps> = (props: IEditItemProps) => 
     return (
         <>
             {permissions ? (
-                !modes.includes(ModeEnum.Update) ||
-                (props.dataModel.tableName == Table.Config && detail.data?.config?.system) ? (
+                !modes.includes(ModeEnum.Update) ? (
                     <>
                         <Alert
                             message={t('messages:error')}
