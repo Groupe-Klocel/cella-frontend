@@ -30,6 +30,7 @@ import { hookConfigsRoutes as itemRoutes } from 'modules/HookConfigs/Static/hook
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
+import { HookConfigDetailsExtra } from 'modules/HookConfigs/Elements/HookConfigDetailExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -114,6 +115,7 @@ const HookConfigPage: PageComponent = () => {
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
+                extraDataComponent={<HookConfigDetailsExtra Id={id} details={data} />}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
