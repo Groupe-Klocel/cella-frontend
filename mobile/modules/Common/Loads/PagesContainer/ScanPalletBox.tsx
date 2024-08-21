@@ -136,6 +136,16 @@ export const ScanPalletBox = ({
                                 statusText
                                 warehouseCode
                                 parentHandlingUnitId
+                                handlingUnitOutbounds {
+                                    id
+                                }
+                                childrenHandlingUnits {
+                                    handlingUnitOutbounds {
+                                        id
+                                        name
+                                        deliveryId
+                                    }
+                                }
                             }
                             handlingUnitContentOutbounds {
                                 id
@@ -195,6 +205,7 @@ export const ScanPalletBox = ({
             if (result) setHandlingUnitOutboundInfos(result);
         }
         fetchData();
+        setTriggerRender(!triggerRender);
     }, [scannedInfo]);
 
     const dataToCheck = {

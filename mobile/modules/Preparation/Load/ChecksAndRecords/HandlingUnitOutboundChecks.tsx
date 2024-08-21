@@ -23,6 +23,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { useEffect } from 'react';
 import parameters from '../../../../../common/parameters.json';
 import { Modal } from 'antd';
+import configs from '../../../../../common/configs.json';
 
 export interface IHandlingUnitOutboundChecksProps {
     dataToCheck: any;
@@ -72,13 +73,14 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                         if (
                             // if Support/Box loaded
                             handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0].status ==
-                                1500 &&
+                                configs.HANDLING_UNIT_OUTBOUND_STATUS_LOADED &&
                             handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0].loadId ==
                                 storedObject.step10.data.load.id
                         ) {
                             // Unload Support/Box
                             const box = handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0];
                             const load = storedObject.step10.data.load;
+
                             const onFinish = async () => {
                                 const res = await fetch(
                                     `/api/preparation-management/validateUnload/`,
@@ -93,6 +95,7 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                                         })
                                     }
                                 );
+
                                 if (res.ok) {
                                     showSuccess(t('messages:unload-success'));
                                     storedObject.step10.data.load.numberHuLoaded =
@@ -136,7 +139,8 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                             if (
                                 // If Support/Box is to be loaded
                                 handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0]
-                                    .status == 1400
+                                    .status ==
+                                configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_TO_BE_LOADED //1400
                             ) {
                                 // Check HU carrier vs load carrier
                                 if (
@@ -164,7 +168,8 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                                 if (
                                     // Support/Box status is < 1400 (to be loaded)
                                     handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0]
-                                        .status < 1400
+                                        .status <
+                                    configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_TO_BE_LOADED //1400
                                 ) {
                                     showError(t('messages:box-not-ready'));
                                 } else {
