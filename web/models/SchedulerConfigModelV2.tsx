@@ -127,7 +127,7 @@ export const SchedulerConfigModelV2: ModelType = {
             isExcludedFromDetail: false,
             detailGroup: null,
             link: null,
-            addEditFormat: null,
+            addEditFormat: 'String',
             addEditStep: null,
             maxLength: null,
             displayName: null,
@@ -135,7 +135,8 @@ export const SchedulerConfigModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: null,
+            addEditInitialValue: '* * * * *'
         },
         extras: {
             isListRequested: true,
