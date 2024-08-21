@@ -24,6 +24,8 @@ import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useRouter } from 'next/router';
 import parameters from '../../../../../common/parameters.json';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 export interface ISimilarLocationsProps {
     articleId: string;
@@ -40,19 +42,111 @@ export const SimilarLocations = ({
 }: ISimilarLocationsProps) => {
     const { t } = useTranslation();
     const router = useRouter();
-
+    const [similarLocations, setSimilarLocationsInfos] = useState<any>();
+    const { graphqlRequestClient } = useAuth();
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
+
     //ENHANCEMENT: nbMaxLocations will be used to change according to a parameter
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
     const defaultFilter = { articleId: `${articleId}` };
     const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
     const stockStatusFilter = stockStatus ? { stockStatus: stockStatus } : undefined;
     const filters = { ...defaultFilter, ...stockOwnerFilter, ...stockStatusFilter };
-    const {
-        isLoading: huContentLoading,
-        data: huContentData,
-        error: huContentError
-    } = useHandlingUnitContents(filters, 1, 100, null, router.locale);
+
+    //bloc
+    const getSimilarLocations = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query handlingUnitContents(
+                $filters: HandlingUnitContentSearchFilters
+                $orderBy: [HandlingUnitContentOrderByCriterion!]
+                $page: Int!
+                $itemsPerPage: Int!
+                $language: String = "en"
+            ) {
+                handlingUnitContents(
+                    filters: $filters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                    language: $language
+                ) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        stockOwnerId
+                        stockOwner {
+                            id
+                            name
+                        }
+                        article {
+                            description
+                            name
+                            featureTypeText
+                            baseUnitWeight
+                        }
+                        quantity
+                        stockStatus
+                        stockStatusText
+                        extraText1
+                        handlingUnitId
+                        handlingUnit {
+                            name
+                            code
+                            type
+                            typeText
+                            category
+                            categoryText
+                            locationId
+                            location {
+                                name
+                                replenish
+                                category
+                                categoryText
+                                extraText1
+                                extraText3
+                                block {
+                                    name
+                                    building {
+                                        name
+                                    }
+                                }
+                            }
+                            parentHandlingUnit {
+                                name
+                            }
+                            stockOwner {
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+        const sortByQuantity = {
+            field: 'quantity',
+            ascending: false
+        };
+        const variables = {
+            filters: filters,
+            orderBy: sortByQuantity,
+            page: 1,
+            itemsPerPage: 100,
+            language: router.locale
+        };
+        const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
+        return handlingUnitInfos;
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const result = await getSimilarLocations();
+            if (result) setSimilarLocationsInfos(result);
+        }
+        fetchData();
+    }, []);
+    //end bloc
 
     useEffect(() => {
         function compare(a: any, b: any) {
@@ -64,9 +158,9 @@ export const SimilarLocations = ({
             }
             return 0;
         }
-        if (huContentData) {
+        if (similarLocations) {
             const locData: Array<any> = [];
-            huContentData?.handlingUnitContents?.results
+            similarLocations?.handlingUnitContents?.results
                 .filter(
                     (e: any) =>
                         e.id !== chosenContentId &&
@@ -82,7 +176,7 @@ export const SimilarLocations = ({
                         type: 'Stock'
                     });
                 });
-            huContentData?.handlingUnitContents?.results
+            similarLocations?.handlingUnitContents?.results
                 .filter(
                     (e: any) =>
                         e.id !== chosenContentId &&
@@ -101,7 +195,7 @@ export const SimilarLocations = ({
             locData.sort(compare);
             setDisplayedLocations(locData);
         }
-    }, [huContentData]);
+    }, [similarLocations]);
 
     const columns = [
         {
@@ -123,7 +217,7 @@ export const SimilarLocations = ({
 
     return (
         <PageTableContentWrapper>
-            {huContentData && !huContentLoading ? (
+            {similarLocations ? (
                 <RadioSimpleTable columns={columns} displayedLocations={displayedLocations} />
             ) : (
                 <ContentSpin />
