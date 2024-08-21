@@ -74,6 +74,7 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                             name={item.name}
                             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
                             key={item.name}
+                            initialValue={item.initialValue}
                             rules={getRulesWithNoSpacesValidator(
                                 item.rules!,
                                 t('messages:error-space')
