@@ -23,6 +23,8 @@ import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useRouter } from 'next/router';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 export interface IEmptyLocationsProps {
     withAvailableHU?: boolean;
@@ -31,24 +33,146 @@ export interface IEmptyLocationsProps {
 export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
     const { t } = useTranslation();
     const router = useRouter();
-
+    const { graphqlRequestClient } = useAuth();
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
-    const {
-        isLoading: emptyLocLoading,
-        data: emptyLocData,
-        error
-    } = useLocationIds({ autocountHandlingUnit: 0 }, 1, 100, null, router.locale);
-    const {
-        isLoading: availableHULoading,
-        data: availableHUData,
-        error: availableHUError
-    } = useHandlingUnits(
-        { autocountHandlingUnitContent: 0, location_Category: 20710 },
-        1,
-        100,
-        null
-    );
+    const [emptyLocations, setEmptyLocationsInfos] = useState<any>();
+    const [locationsData, setLocationsData] = useState<any>();
+
+    const getLocationIds = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query locations(
+                $filters: LocationSearchFilters
+                $orderBy: [LocationOrderByCriterion!]
+                $page: Int!
+                $itemsPerPage: Int!
+                $language: String = "en"
+            ) {
+                locations(
+                    filters: $filters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                    language: $language
+                ) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        name
+                        barcode
+                        aisle
+                        column
+                        level
+                        position
+                        replenish
+                        blockId
+                        block {
+                            name
+                        }
+                        replenishType
+                        constraint
+                        comment
+                        baseUnitRotation
+                        allowCycleCountStockMin
+                        category
+                        categoryText
+                        stockStatus
+                        stockStatusText
+                        status
+                        statusText
+                    }
+                }
+            }
+        `;
+        const sortByDate = {
+            field: 'created',
+            ascending: false
+        };
+        const variables = {
+            filters: { autocountHandlingUnit: 0 },
+            orderBy: sortByDate,
+            page: 1,
+            itemsPerPage: 100,
+            language: router.locale
+        };
+        const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
+        return handlingUnitInfos;
+    };
+
+    const getEmptyLocations = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query handlingUnits(
+                $filters: HandlingUnitSearchFilters
+                $orderBy: [HandlingUnitOrderByCriterion!]
+                $page: Int!
+                $itemsPerPage: Int!
+                $language: String = "en"
+            ) {
+                handlingUnits(
+                    filters: $filters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                    language: $language
+                ) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        name
+                        type
+                        typeText
+                        barcode
+                        category
+                        categoryText
+                        code
+                        parentHandlingUnitId
+                        reservation
+                        status
+                        stockOwnerId
+                        stockOwner {
+                            name
+                        }
+                        locationId
+                        location {
+                            name
+                            category
+                            categoryText
+                        }
+                    }
+                }
+            }
+        `;
+        const sortByName = {
+            field: 'name',
+            ascending: false
+        };
+        const variables = {
+            filters: { autocountHandlingUnitContent: 0, location_Category: 20710 },
+            orderBy: sortByName,
+            page: 1,
+            itemsPerPage: 100,
+            language: router.locale
+        };
+        const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
+        return handlingUnitInfos;
+    };
+    useEffect(() => {
+        async function fetchLocationIdsData() {
+            const result = await getLocationIds();
+            if (result) setLocationsData(result);
+        }
+        fetchLocationIdsData();
+
+        async function fetchEmptyLocationsData() {
+            const result = await getEmptyLocations();
+            if (result) setEmptyLocationsInfos(result);
+        }
+        fetchEmptyLocationsData();
+    }, []);
 
     //When location
     useEffect(() => {
@@ -61,9 +185,9 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
             }
             return 0;
         }
-        if (emptyLocData) {
+        if (locationsData) {
             const locData: Array<any> = [];
-            emptyLocData?.locations?.results.slice(0, nbMaxLocations).forEach((e: any) => {
+            locationsData?.locations?.results.slice(0, nbMaxLocations).forEach((e: any) => {
                 locData.push({
                     locationId: e.id,
                     locationName: e.name,
@@ -72,7 +196,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
                 });
             });
             if (withAvailableHU) {
-                availableHUData?.handlingUnits?.results
+                emptyLocations?.handlingUnits?.results
                     .slice(0, nbMaxLocations)
                     .forEach((e: any) => {
                         locData.push({
@@ -89,7 +213,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
             locData.sort(compare);
             setDisplayedLocations(locData);
         }
-    }, [emptyLocData]);
+    }, [locationsData]);
 
     const columns = [
         {
@@ -106,7 +230,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
 
     return (
         <PageTableContentWrapper>
-            {emptyLocData && !emptyLocLoading && !availableHULoading ? (
+            {locationsData ? (
                 <RadioSimpleTable columns={columns} displayedLocations={displayedLocations} />
             ) : (
                 <ContentSpin />
