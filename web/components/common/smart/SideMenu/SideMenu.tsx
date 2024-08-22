@@ -104,6 +104,18 @@ const SideMenu: FC = () => {
                 ) : (
                     <></>
                 )}
+                <Menu.Item key="administration-excel-import">
+                    <Link href="/excel-imports">{t('excel-imports')}</Link>
+                </Menu.Item>
+                {getModesFromPermissions(permissions, Table.SchedulerConfig).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <Menu.Item key="administration-scheduler-configs">
+                        <Link href="/scheduler-configs">{t('scheduler-configs')}</Link>
+                    </Menu.Item>
+                ) : (
+                    <></>
+                )}
             </SubMenu>
             <SubMenu key="configuration" icon={<SettingOutlined />} title={t('configuration')}>
                 <SubMenu key="configuration-cartography" title={t('cartography')}>

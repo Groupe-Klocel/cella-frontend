@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
-import { HookConfigModelV2 as model } from 'models/HookConfigModelV2';
+import { SchedulerConfigModelV2 as model } from 'models/SchedulerConfigModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
@@ -26,15 +26,13 @@ import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
-import { hookConfigsRoutes as itemRoutes } from 'modules/HookConfigs/Static/hookConfigsRoutes';
+import { schedulerConfigsRoutes as itemRoutes } from 'modules/SchedulerConfigs/Static/schedulerConfigsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
-import { HookConfigDetailsExtra } from 'modules/HookConfigs/Elements/HookConfigDetailExtra';
-
+import { SchedulerConfigDetailsExtra } from 'modules/SchedulerConfigs/Elements/SchedulerConfigDetailsExtra';
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const HookConfigPage: PageComponent = () => {
+const SchedulerConfigPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -52,7 +50,7 @@ const HookConfigPage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:hook-config')} ${data?.name}`;
+    const pageTitle = `${t('common:scheduler-config')} ${data?.name}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -115,7 +113,7 @@ const HookConfigPage: PageComponent = () => {
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
-                extraDataComponent={<HookConfigDetailsExtra Id={id} details={data} />}
+                extraDataComponent={<SchedulerConfigDetailsExtra Id={id} details={data} />}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
@@ -124,6 +122,6 @@ const HookConfigPage: PageComponent = () => {
     );
 };
 
-HookConfigPage.layout = MainLayout;
+SchedulerConfigPage.layout = MainLayout;
 
-export default HookConfigPage;
+export default SchedulerConfigPage;

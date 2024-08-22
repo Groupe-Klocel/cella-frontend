@@ -20,38 +20,28 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
-import MainLayout from '../../../../components/layouts/MainLayout';
-import { PaymentLineModelV2 } from 'models/PaymentLineModelV2';
+import MainLayout from '../../../components/layouts/MainLayout';
+import { SchedulerConfigModelV2 } from 'models/SchedulerConfigModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
 import useTranslation from 'next-translate/useTranslation';
-import { paymentsRoutes as itemRoutes } from 'modules/Payments/Static/paymentsRoutes';
+import { schedulerConfigsRoutes } from 'modules/SchedulerConfigs/Static/schedulerConfigsRoutes';
 import { META_DEFAULTS } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditPaymentLinePage: PageComponent = () => {
+const EditSchedulerConfigsPage: PageComponent = () => {
     const { t } = useTranslation();
 
     const router = useRouter();
     const [data, setData] = useState<any>();
-    const { id, paymentName } = router.query;
+    const { id } = router.query;
 
-    const paymentDetailBreadCrumb = [
-        ...itemRoutes,
+    const breadsCrumb = [
+        ...schedulerConfigsRoutes,
         {
-            breadcrumbName: `${data?.payment_name}`,
-            path: '/payments/' + data?.paymentId
+            breadcrumbName: `${data?.name}`
         }
     ];
-
-    const breadCrumb = [
-        ...paymentDetailBreadCrumb,
-        {
-            breadcrumbName: `${t('common:payment-line')} ${data?.payment_name}`
-        }
-    ];
-
-    const pageTitle = `${t('common:payment-line')} ${data?.payment_name}`;
 
     return (
         <>
@@ -59,20 +49,22 @@ const EditPaymentLinePage: PageComponent = () => {
             <EditItemComponent
                 id={id!}
                 setData={setData}
-                dataModel={PaymentLineModelV2}
+                dataModel={SchedulerConfigModelV2}
                 headerComponent={
                     <HeaderContent
-                        title={pageTitle}
-                        routes={breadCrumb}
-                        onBack={() => router.push(`/payments/line/${id}`)}
+                        title={`${t('common:scheduler-configs')}${data?.name}`}
+                        routes={breadsCrumb}
+                        onBack={() => router.push(`/scheduler-configs/${id}`)}
                     />
                 }
-                routeAfterSuccess={`/payments/line/:id`}
+                routeAfterSuccess={`/scheduler-configs/${id}`}
+                routeOnCancel={`/scheduler-configs/${id}`}
+                stringCodeScopes={[]}
             />
         </>
     );
 };
 
-EditPaymentLinePage.layout = MainLayout;
+EditSchedulerConfigsPage.layout = MainLayout;
 
-export default EditPaymentLinePage;
+export default EditSchedulerConfigsPage;
