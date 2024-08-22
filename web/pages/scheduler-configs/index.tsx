@@ -23,55 +23,35 @@ import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
-import { ModeEnum, useGetConfigScopesQuery } from 'generated/graphql';
-import { ConfigModelV2 as model } from 'models/ConfigModelV2';
+import { ModeEnum } from 'generated/graphql';
+import { SchedulerConfigModelV2 as model } from 'models/SchedulerConfigModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
-import { FC, useEffect, useState } from 'react';
-import { configurationsRoutes as itemRoutes } from 'modules/Configurations/Static/configurationRoutes';
-import { FormDataType } from 'models/ModelsV2';
-import { useAuth } from 'context/AuthContext';
+import { FC, useState } from 'react';
+import { schedulerConfigsRoutes as itemRoutes } from 'modules/SchedulerConfigs/Static/schedulerConfigsRoutes';
+import configs from '../../../common/configs.json';
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const ConfigurationPages: PageComponent = () => {
+const SchedulerConfigPages: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
-    const { graphqlRequestClient } = useAuth();
 
     const headerData: HeaderData = {
-        title: t('common:configurations'),
+        title: t('common:scheduler-config'),
         routes: itemRoutes,
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (
                 <LinkButton
-                    title={t('actions:add2', { name: t('common:configuration') })}
+                    title={t('actions:add2', { name: t('common:scheduler-config') })}
                     path={`${rootPath}/add`}
                     type="primary"
                 />
             ) : null
     };
-
-    // specific to configs view
-    const listScopeConfig = useGetConfigScopesQuery(graphqlRequestClient);
-    const [scopesList, setScopesList] = useState<any>();
-
-    useEffect(() => {
-        if (listScopeConfig) {
-            const newParameter: Array<any> = [];
-
-            const cData = listScopeConfig?.data?.configScopes;
-            if (cData) {
-                cData.forEach((item) => {
-                    newParameter.push({ key: item.scope, text: item.scope });
-                });
-                setScopesList(newParameter);
-            }
-        }
-    }, [listScopeConfig.data]);
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
@@ -94,18 +74,11 @@ const ConfigurationPages: PageComponent = () => {
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
-                filterFields={[
-                    {
-                        name: 'scope',
-                        type: FormDataType.Dropdown,
-                        subOptions: scopesList
-                    }
-                ]}
                 actionColumns={[
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: { id: string; system: boolean }) => (
+                        render: (record: { id: string; status: number }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
@@ -139,8 +112,7 @@ const ConfigurationPages: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isDeletable &&
-                                record.system == false ? (
+                                model.isDeletable ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger
@@ -161,6 +133,6 @@ const ConfigurationPages: PageComponent = () => {
     );
 };
 
-ConfigurationPages.layout = MainLayout;
+SchedulerConfigPages.layout = MainLayout;
 
-export default ConfigurationPages;
+export default SchedulerConfigPages;
