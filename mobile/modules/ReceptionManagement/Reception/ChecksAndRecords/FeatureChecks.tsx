@@ -59,13 +59,16 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                 });
                 //this to record only date when scannedInfo is a valid date
                 let shortDate;
-                if (moment(scannedInfo).isValid()) {
+                if (moment(scannedInfo).isValid() && currentFeatureCode.dateType) {
                     shortDate = moment(scannedInfo).format('YYYY-MM-DD');
                 }
                 if (!currentFeatureCode.unique) {
                     const updatedFeature = {
                         ...featureToUpdate,
-                        value: moment(scannedInfo).isValid() ? shortDate : scannedInfo
+                        value:
+                            moment(scannedInfo).isValid() && currentFeatureCode.dateType
+                                ? shortDate
+                                : scannedInfo
                     };
                     tmp_processedFeatures.push(updatedFeature);
 
