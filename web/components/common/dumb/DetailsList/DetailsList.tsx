@@ -79,9 +79,21 @@ const DetailsList: FC<IDetailsListProps> = ({
                         ) : isFloat(details[key]) ? (
                             formatDigits(details[key])
                         ) : isString(details[key]) && isStringDateTime(details[key]) ? (
-                            formatUTCLocaleDateTime(details[key], router.locale)
+                            key == 'value' &&
+                            'featureCode_dateType' in details &&
+                            !details['featureCode_dateType'] ? (
+                                details[key]
+                            ) : (
+                                formatUTCLocaleDateTime(details[key], router.locale)
+                            )
                         ) : isString(details[key]) && isStringDate(details[key]) ? (
-                            formatUTCLocaleDate(details[key], router.locale)
+                            key == 'value' &&
+                            'featureCode_dateType' in details &&
+                            !details['featureCode_dateType'] ? (
+                                details[key]
+                            ) : (
+                                formatUTCLocaleDate(details[key], router.locale)
+                            )
                         ) : key === 'logo' ? (
                             <img
                                 src={details.logo}

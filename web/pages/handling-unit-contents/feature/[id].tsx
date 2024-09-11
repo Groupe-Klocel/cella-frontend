@@ -55,9 +55,9 @@ const HandlingUnitContentPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     let displayedValue;
-    if (isString(data?.value) && isStringDateTime(data?.value)) {
+    if (isString(data?.value) && isStringDateTime(data?.value) && data?.featureCode_dateType) {
         displayedValue = formatUTCLocaleDateTime(data?.value, router.locale);
-    } else if (isString(data?.value) && isStringDate(data?.value)) {
+    } else if (isString(data?.value) && isStringDate(data?.value) && data?.featureCode_dateType) {
         displayedValue = formatUTCLocaleDate(data?.value, router.locale);
     } else {
         displayedValue = data?.value;
