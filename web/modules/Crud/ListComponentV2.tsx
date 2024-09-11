@@ -52,7 +52,7 @@ import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { initial } from 'lodash';
+import { initial, isString } from 'lodash';
 import { gql } from 'graphql-request';
 
 export type HeaderData = {
