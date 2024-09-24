@@ -28,11 +28,7 @@ import {
     getKeys,
     setCustomColumnsProps,
     checkKeyPresenceInArray,
-    formatDigitsForData,
-    formatUTCLocaleDateTime,
-    isStringDateTime,
-    formatUTCLocaleDate,
-    isStringDate
+    formatDigitsForData
 } from '@helpers';
 import { Space, Button, Table, Typography } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
@@ -175,10 +171,6 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
             <CheckCircleOutlined style={{ color: 'green' }} />
         ) : text === false ? (
             <CloseSquareOutlined style={{ color: 'red' }} />
-        ) : isString(text) && isStringDateTime(text) ? (
-            formatUTCLocaleDateTime(text, router.locale)
-        ) : isString(text) && isStringDate(text) ? (
-            formatUTCLocaleDate(text, router.locale)
         ) : (
             text
         );

@@ -38,7 +38,11 @@ import {
     flatten,
     useSoftDelete,
     cookie,
-    useUpdate
+    useUpdate,
+    isStringDateTime,
+    formatUTCLocaleDateTime,
+    isStringDate,
+    formatUTCLocaleDate
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { ListFilters } from '../../Crud/submodules/ListFiltersV2';
@@ -53,6 +57,7 @@ import {
 } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
+import { isString } from 'lodash';
 
 export type HeaderData = {
     title: string;
@@ -728,6 +733,35 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
         await setSort(orderByFormater(sorter));
     };
 
+    // date formatting
+    if (rows?.results && rows?.results.length > 0) {
+        rows.results.forEach((row: any) => {
+            Object.keys(row).forEach((key) => {
+                if (isString(row[key]) && isStringDateTime(row[key])) {
+                    if (
+                        !(
+                            key === 'value' &&
+                            'featureCode_dateType' in row &&
+                            !row['featureCode_dateType']
+                        )
+                    ) {
+                        row[key] = formatUTCLocaleDateTime(row[key], router.locale);
+                    }
+                }
+                if (isString(row[key]) && isStringDate(row[key])) {
+                    if (
+                        !(
+                            key === 'value' &&
+                            'featureCode_dateType' in row &&
+                            !row['featureCode_dateType']
+                        )
+                    ) {
+                        row[key] = formatUTCLocaleDate(row[key], router.locale);
+                    }
+                }
+            });
+        });
+    }
     // #endregion
     return (
         <>
