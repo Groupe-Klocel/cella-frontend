@@ -138,9 +138,13 @@ const PickAndPack: PageComponent = () => {
             if (!storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article) {
                 object[t('common:expected-article_abbr')] =
                     proposedRoundAdvisedAddress.handlingUnitContent.article?.name;
+                object[t('common:article-description')] =
+                    proposedRoundAdvisedAddress.handlingUnitContent.article?.description;
             } else {
                 object[t('common:article_abbr')] =
                     storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article.name;
+                object[t('common:article-description')] =
+                    storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article.description;
             }
             if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.content) {
                 object[t('common:available-quantity')] =

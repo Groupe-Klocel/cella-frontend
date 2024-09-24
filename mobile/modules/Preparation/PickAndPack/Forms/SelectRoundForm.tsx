@@ -178,6 +178,7 @@ export const SelectRoundForm = ({
                                 stockOwner {
                                     name
                                 }
+                                description
                                 baseUnitWeight
                             }
                             stockOwnerId
