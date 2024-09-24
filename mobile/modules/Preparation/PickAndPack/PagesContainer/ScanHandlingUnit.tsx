@@ -136,6 +136,7 @@ export const ScanHandlingUnit = ({
                                     article {
                                         id
                                         name
+                                        description
                                         stockOwnerId
                                         stockOwner {
                                             name
@@ -180,6 +181,7 @@ export const ScanHandlingUnit = ({
                                 article {
                                     id
                                     name
+                                    description
                                     stockOwnerId
                                     stockOwner {
                                         name
