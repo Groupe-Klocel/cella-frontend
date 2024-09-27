@@ -376,6 +376,112 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
         canRollbackTransaction = true;
 
+        // 5- Update RoundAdvisedAddress status (To be verified - 457)
+        const updateRoundAdvisedAddressMutation = gql`
+            mutation updateRoundAdvisedAddress(
+                $id: String!
+                $input: UpdateRoundAdvisedAddressInput!
+            ) {
+                updateRoundAdvisedAddress(id: $id, input: $input) {
+                    id
+                    roundOrderId
+                    quantity
+                    status
+                    statusText
+                    locationId
+                    location {
+                        name
+                    }
+                    handlingUnitContentId
+                    handlingUnitContent {
+                        quantity
+                        articleId
+                        article {
+                            id
+                            name
+                            baseUnitWeight
+                        }
+                        handlingUnitContentFeatures {
+                            featureCode {
+                                name
+                                unique
+                            }
+                            value
+                        }
+                        handlingUnitId
+                        handlingUnit {
+                            id
+                            name
+                            barcode
+                            status
+                            statusText
+                            type
+                            typeText
+                            category
+                            categoryText
+                        }
+                        stockOwnerId
+                        stockOwner {
+                            id
+                            name
+                        }
+                    }
+                    roundLineDetailId
+                    roundLineDetail {
+                        status
+                        statusText
+                        quantityToBeProcessed
+                        processedQuantity
+                        roundLineId
+                        roundLine {
+                            lineNumber
+                            articleId
+                            status
+                            statusText
+                        }
+                        deliveryLineId
+                        deliveryLine {
+                            id
+                            articleId
+                            stockOwnerId
+                            deliveryId
+                            stockStatus
+                            stockStatusText
+                            reservation
+                        }
+                    }
+                    lastTransactionId
+                }
+            }
+        `;
+
+        const newQuantity = (proposedRoundAdvisedAddress.quantity -= movingQuantity);
+        let updateRoundAdvisedAddressVariables = {};
+        if (newQuantity == 0) {
+            updateRoundAdvisedAddressVariables = {
+                id: proposedRoundAdvisedAddress.id,
+                input: {
+                    status: configs.ROUND_ADVISED_ADDRESS_STATUS_TO_BE_VERIFIED,
+                    quantity: newQuantity,
+                    lastTransactionId
+                }
+            };
+        } else {
+            updateRoundAdvisedAddressVariables = {
+                id: proposedRoundAdvisedAddress.id,
+                input: {
+                    quantity: newQuantity,
+                    lastTransactionId
+                }
+            };
+        }
+        const updateRoundAdvisedAddressResponse = await graphqlRequestClient.request(
+            updateRoundAdvisedAddressMutation,
+            updateRoundAdvisedAddressVariables
+        );
+
+        console.log('updateRoundAdvisedAddressResponse', updateRoundAdvisedAddressResponse);
+
         // 6- Update RoundLineDetail processed quantity (To be verified - 457) (RLD + RL + R statuses will be updated if needed)
         const updateRoundLineDetailMutation = gql`
             mutation updateRoundLineDetail($id: String!, $input: UpdateRoundLineDetailInput!) {
@@ -500,112 +606,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
         console.log('updateRoundLineDetailResponse', updateRoundLineDetailResponse);
 
-        // 5- Update RoundAdvisedAddress status (To be verified - 457)
-        const updateRoundAdvisedAddressMutation = gql`
-            mutation updateRoundAdvisedAddress(
-                $id: String!
-                $input: UpdateRoundAdvisedAddressInput!
-            ) {
-                updateRoundAdvisedAddress(id: $id, input: $input) {
-                    id
-                    roundOrderId
-                    quantity
-                    status
-                    statusText
-                    locationId
-                    location {
-                        name
-                    }
-                    handlingUnitContentId
-                    handlingUnitContent {
-                        quantity
-                        articleId
-                        article {
-                            id
-                            name
-                            baseUnitWeight
-                        }
-                        handlingUnitContentFeatures {
-                            featureCode {
-                                name
-                                unique
-                            }
-                            value
-                        }
-                        handlingUnitId
-                        handlingUnit {
-                            id
-                            name
-                            barcode
-                            status
-                            statusText
-                            type
-                            typeText
-                            category
-                            categoryText
-                        }
-                        stockOwnerId
-                        stockOwner {
-                            id
-                            name
-                        }
-                    }
-                    roundLineDetailId
-                    roundLineDetail {
-                        status
-                        statusText
-                        quantityToBeProcessed
-                        processedQuantity
-                        roundLineId
-                        roundLine {
-                            lineNumber
-                            articleId
-                            status
-                            statusText
-                        }
-                        deliveryLineId
-                        deliveryLine {
-                            id
-                            articleId
-                            stockOwnerId
-                            deliveryId
-                            stockStatus
-                            stockStatusText
-                            reservation
-                        }
-                    }
-                    lastTransactionId
-                }
-            }
-        `;
-
-        const newQuantity = (proposedRoundAdvisedAddress.quantity -= movingQuantity);
-        let updateRoundAdvisedAddressVariables = {};
-        if (newQuantity == 0) {
-            updateRoundAdvisedAddressVariables = {
-                id: proposedRoundAdvisedAddress.id,
-                input: {
-                    status: configs.ROUND_ADVISED_ADDRESS_STATUS_TO_BE_VERIFIED,
-                    quantity: newQuantity,
-                    lastTransactionId
-                }
-            };
-        } else {
-            updateRoundAdvisedAddressVariables = {
-                id: proposedRoundAdvisedAddress.id,
-                input: {
-                    quantity: newQuantity,
-                    lastTransactionId
-                }
-            };
-        }
-        const updateRoundAdvisedAddressResponse = await graphqlRequestClient.request(
-            updateRoundAdvisedAddressMutation,
-            updateRoundAdvisedAddressVariables
-        );
-
-        console.log('updateRoundAdvisedAddressResponse', updateRoundAdvisedAddressResponse);
-
         // 7- Create Movement (from stock to roundHU)
         const createMovement = gql`
             mutation createMovement($input: CreateMovementInput!) {
@@ -654,98 +654,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
         //end movement creation section
 
-        // 8- Retrieve all RoundAdvisedAddresses of the Round
-        const allRoundAdvisedAddressesQuery = gql`
-            query roundAdvisedAddresses($filters: RoundAdvisedAddressSearchFilters) {
-                roundAdvisedAddresses(filters: $filters) {
-                    results {
-                        id
-                        roundOrderId
-                        quantity
-                        status
-                        statusText
-                        locationId
-                        location {
-                            name
-                        }
-                        handlingUnitContentId
-                        handlingUnitContent {
-                            quantity
-                            articleId
-                            article {
-                                id
-                                name
-                                baseUnitWeight
-                            }
-                            stockOwnerId
-                            stockOwner {
-                                id
-                                name
-                            }
-                            handlingUnitContentFeatures {
-                                featureCode {
-                                    name
-                                    unique
-                                }
-                                value
-                            }
-                            handlingUnitId
-                            handlingUnit {
-                                id
-                                name
-                                barcode
-                                status
-                                statusText
-                                type
-                                typeText
-                                category
-                                categoryText
-                            }
-                        }
-                        roundLineDetailId
-                        roundLineDetail {
-                            status
-                            statusText
-                            quantityToBeProcessed
-                            processedQuantity
-                            roundLineId
-                            roundLine {
-                                lineNumber
-                                articleId
-                                status
-                                statusText
-                            }
-                            deliveryLineId
-                            deliveryLine {
-                                id
-                                articleId
-                                stockOwnerId
-                                deliveryId
-                                stockStatus
-                                stockStatusText
-                                reservation
-                            }
-                        }
-                    }
-                }
-            }
-        `;
-
-        const allRoundAdvisedAddressesVariables = {
-            filters: { roundId: round.id }
-        };
-
-        const allRoundAdvisedAddressesResult = await graphqlRequestClient.request(
-            allRoundAdvisedAddressesQuery,
-            allRoundAdvisedAddressesVariables,
-            requestHeader
-        );
-
         //merge results
         res.status(200).json({
             response: {
-                allRoundAdvisedAddresses:
-                    allRoundAdvisedAddressesResult?.roundAdvisedAddresses?.results,
                 updatedRoundAdvisedAddress: updateRoundAdvisedAddressResponse,
                 updatedRoundLineDetail: updateRoundLineDetailResponse,
                 lastTransactionId
