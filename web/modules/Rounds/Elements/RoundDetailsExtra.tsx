@@ -39,6 +39,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { RoundLineModelV2 } from 'models/RoundLineModelV2';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { RoundAdvisedAddressListComponent } from './RoundAdvisedAddressListComponent';
 
 const { Title } = Typography;
 
@@ -179,7 +180,12 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
             RoundAdvisedAddressModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
-                    <ListComponent
+                    <RoundAdvisedAddressListComponent
+                        headerData={roundAdvisedAddressData}
+                        dataModel={RoundAdvisedAddressModelV2}
+                        searchCriteria={{ roundId: roundId }}
+                    />
+                    {/* <ListComponent
                         searchCriteria={{ roundId: roundId }}
                         dataModel={RoundAdvisedAddressModelV2}
                         headerData={roundAdvisedAddressData}
@@ -222,7 +228,7 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                             }
                         ]}
                         searchable={false}
-                    />
+                    /> */}
                 </>
             ) : (
                 <></>
