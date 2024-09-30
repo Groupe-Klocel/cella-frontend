@@ -406,7 +406,7 @@ const RoundAdvisedAddressListComponent = (props: IListProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage, itemsPerPage) => {
+        (currentPage: any, itemsPerPage: any) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: rows?.count,
@@ -481,7 +481,7 @@ const RoundAdvisedAddressListComponent = (props: IListProps) => {
     }, [props.refresh]);
 
     //RoundOrderId up and down management (this part of code could be improved in the next phase by e.g. factorising it)
-    const { mutate: raaMutate, isLoading: updatedLoading } =
+    const { mutate: raaMutate, isPending: updatedLoading } =
         useUpdateRoundAdvisedAddressMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdateRoundAdvisedAddressMutation,
