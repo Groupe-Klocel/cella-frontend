@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -58,7 +59,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -95,11 +96,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { scope: 'cubing', code: 'DEFAULT_DECLARATIVE_LU' }
         };
 
-        const defaultDeclarativeLuParameterResult = await graphqlRequestClient.request(
-            parameterQuery,
-            defaultDeclarativeLuParameterVariables,
-            requestHeader
-        );
+        const defaultDeclarativeLuParameterResult: GraphQLResponseType =
+            await graphqlRequestClient.request(
+                parameterQuery,
+                defaultDeclarativeLuParameterVariables,
+                requestHeader
+            );
 
         const defaultDeclarativeLuQuery = gql`
             query handlingUnitModels($filters: HandlingUnitModelSearchFilters) {
@@ -116,7 +118,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { name: defaultDeclarativeLuParameterResult.parameters.results[0].value }
         };
 
-        const defaultDeclarativeLuResult = await graphqlRequestClient.request(
+        const defaultDeclarativeLuResult: GraphQLResponseType = await graphqlRequestClient.request(
             defaultDeclarativeLuQuery,
             defaultDeclarativeLuVariables,
             requestHeader
@@ -148,7 +150,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         };
 
-        const declarativeHUOResult = await graphqlRequestClient.request(
+        const declarativeHUOResult: GraphQLResponseType = await graphqlRequestClient.request(
             declarativeHUOQuery,
             declarativeHUOVariables,
             requestHeader
@@ -265,22 +267,24 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { scope: 'global', code: 'default_print_language' }
         };
 
-        const defaultPrintLanguageParameterResult = await graphqlRequestClient.request(
-            parameterQuery,
-            defaultPrintLanguageParameterVariables,
-            requestHeader
-        );
+        const defaultPrintLanguageParameterResult: GraphQLResponseType =
+            await graphqlRequestClient.request(
+                parameterQuery,
+                defaultPrintLanguageParameterVariables,
+                requestHeader
+            );
 
         // 3b- Get default printer value
         const defaultPrinterParameterVariables = {
             filters: { scope: 'global', code: 'default_printer' }
         };
 
-        const defaultPrinterParameterResult = await graphqlRequestClient.request(
-            parameterQuery,
-            defaultPrinterParameterVariables,
-            requestHeader
-        );
+        const defaultPrinterParameterResult: GraphQLResponseType =
+            await graphqlRequestClient.request(
+                parameterQuery,
+                defaultPrinterParameterVariables,
+                requestHeader
+            );
 
         // 3c- Get printer code
         const printerParameterVariables = {
@@ -290,7 +294,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         };
 
-        const printerParameterResult = await graphqlRequestClient.request(
+        const printerParameterResult: GraphQLResponseType = await graphqlRequestClient.request(
             parameterQuery,
             printerParameterVariables,
             requestHeader
@@ -334,7 +338,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             context: { boxes: [handlingUnitOutbound.id] }
         };
 
-        const documentResult = await graphqlRequestClient.request(
+        const documentResult: GraphQLResponseType = await graphqlRequestClient.request(
             documentMutation,
             documentVariables
         );
@@ -414,7 +418,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { id: roundHU.id }
         };
 
-        const updatedRoundHUResult = await graphqlRequestClient.request(
+        const updatedRoundHUResult: GraphQLResponseType = await graphqlRequestClient.request(
             updatedRoundHUQuery,
             updatedRoundHUVariables,
             requestHeader

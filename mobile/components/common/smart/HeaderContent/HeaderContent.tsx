@@ -17,11 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { GlobalBreadcrumb } from '@components';
 import { BreadcrumbType } from '@helpers';
-import { PageHeader } from 'antd';
+// import { PageHeader } from 'antd';
+import CustomPageHeader from 'components/common/dumb/PageHeader/CustomPageHeader';
 import { FC, ReactNode } from 'react';
-import styled from 'styled-components';
 
 export interface IHeaderContentProps {
     children?: ReactNode;
@@ -35,22 +34,20 @@ export interface IHeaderContentProps {
 const HeaderContent: FC<IHeaderContentProps> = ({
     children,
     title,
-    routes,
     actionsRight,
     actionsLeft,
     onBack
 }: IHeaderContentProps) => {
     return (
-        <PageHeader
+        <CustomPageHeader
             title={title}
-            // breadcrumb={<GlobalBreadcrumb routes={routes} />}
             onBack={onBack}
             subTitle={actionsLeft}
             extra={actionsRight}
-            style={{ background: 'white', padding: '0px 12px 0px 12px', textAlign: 'center' }}
+            // style={{ background: 'white', padding: '0px 12px 0px 12px', textAlign: 'center' }}
         >
             {children}
-        </PageHeader>
+        </CustomPageHeader>
     );
 };
 

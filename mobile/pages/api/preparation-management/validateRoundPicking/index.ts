@@ -21,6 +21,7 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -63,7 +64,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -119,7 +120,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { scope: 'vat_rate', code: '20' }
         };
 
-        const defaultRoundLocationResult = await graphqlRequestClient.request(
+        const defaultRoundLocationResult: GraphQLResponseType = await graphqlRequestClient.request(
             defaultRoundLocationQuery,
             defaultRoundLocationVariables,
             requestHeader
@@ -151,7 +152,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { name: round.name }
         };
 
-        const handlingUnitResult = await graphqlRequestClient.request(
+        const handlingUnitResult: GraphQLResponseType = await graphqlRequestClient.request(
             handlingUnitQuery,
             handlingUnitVariables,
             requestHeader
@@ -197,7 +198,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const createdHu = await graphqlRequestClient.request(
+            const createdHu: GraphQLResponseType = await graphqlRequestClient.request(
                 createHUMutation,
                 createHUvariables
             );
@@ -229,7 +230,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { handlingUnitId: finalHandlingUnitId, articleId: articleInfos.articleId }
         };
 
-        const handlingUnitContentResult = await graphqlRequestClient.request(
+        const handlingUnitContentResult: GraphQLResponseType = await graphqlRequestClient.request(
             handlingUnitContentQuery,
             handlingUnitContentVariables,
             requestHeader
@@ -259,7 +260,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const createdHuc = await graphqlRequestClient.request(
+            const createdHuc: GraphQLResponseType = await graphqlRequestClient.request(
                 createHUCMutation,
                 createHUCvariables
             );
@@ -292,7 +293,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const updatedHUC = await graphqlRequestClient.request(
+            const updatedHUC: GraphQLResponseType = await graphqlRequestClient.request(
                 updateHUCMutation,
                 updateHUCvariable
             );
@@ -339,11 +340,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { handlingUnitId: handlingUnit.id, articleId: articleInfos.articleId }
         };
 
-        const originalHandlingUnitContentResult = await graphqlRequestClient.request(
-            handlingUnitContentQuery,
-            originalHandlingUnitContentVariables,
-            requestHeader
-        );
+        const originalHandlingUnitContentResult: GraphQLResponseType =
+            await graphqlRequestClient.request(
+                handlingUnitContentQuery,
+                originalHandlingUnitContentVariables,
+                requestHeader
+            );
 
         // update origin huc
         const updateHUCMutation = gql`
