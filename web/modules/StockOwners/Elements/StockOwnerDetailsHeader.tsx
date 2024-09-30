@@ -57,7 +57,7 @@ const StockOwnerDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) 
             breadcrumbName: `${props.name}`
         }
     ];
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeleteStockOwnerMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeleteStockOwnerMutation,

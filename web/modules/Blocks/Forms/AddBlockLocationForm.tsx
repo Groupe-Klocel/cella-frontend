@@ -122,7 +122,7 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: createLoading } = useBulkCreateLocationsMutation<Error>(
+    const { mutate, isPending: createLoading } = useBulkCreateLocationsMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

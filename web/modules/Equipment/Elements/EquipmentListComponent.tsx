@@ -404,7 +404,7 @@ const EquipmentListComponent = (props: IListProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage, itemsPerPage) => {
+        (currentPage: any, itemsPerPage: any) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: rows?.count,
@@ -479,7 +479,7 @@ const EquipmentListComponent = (props: IListProps) => {
     }, [props.refresh]);
 
     //Priority up and down management (this part of code could be improved in the next phase by e.g. factorising it)
-    const { mutate: equipMutate, isLoading: updatedLoading } = useUpdateEquipmentMutation<Error>(
+    const { mutate: equipMutate, isPending: updatedLoading } = useUpdateEquipmentMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

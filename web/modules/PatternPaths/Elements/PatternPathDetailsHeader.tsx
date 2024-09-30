@@ -99,7 +99,7 @@ const PatternPathDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps)
         .sort(compare);
 
     //For order updates on Finish
-    const { mutate: updateMutate, isLoading: updateLoading } = useUpdatePatternPathMutation<Error>(
+    const { mutate: updateMutate, isPending: updateLoading } = useUpdatePatternPathMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -120,7 +120,7 @@ const PatternPathDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps)
     };
 
     // DISABLE PATTERN PATH
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeletePatternPathMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeletePatternPathMutation,
@@ -158,7 +158,7 @@ const PatternPathDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps)
     };
 
     // ENABLE PATTERN PATH
-    const { mutate: updatePatternPathMutate, isLoading: enableLoading } =
+    const { mutate: updatePatternPathMutate, isPending: enableLoading } =
         useUpdatePatternPathMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdatePatternPathMutation,

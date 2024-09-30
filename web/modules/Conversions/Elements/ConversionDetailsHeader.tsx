@@ -60,7 +60,7 @@ const ConversionDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) 
     ];
 
     // DISABLE CONVERSION
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeleteConversionMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeleteConversionMutation,

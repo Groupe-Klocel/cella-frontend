@@ -29,7 +29,7 @@ import {
 import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 export interface IBulkEditDeliveriesRenderModalProps {
     visible: boolean;
@@ -53,7 +53,7 @@ const BulkEditDeliveriesRenderModal = ({
     // UPDATE Delivery Line
     const {
         mutate,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useBulkUpdateDeliveriesMutation<Error>(graphqlRequestClient, {
         onSuccess: (
@@ -96,7 +96,7 @@ const BulkEditDeliveriesRenderModal = ({
     return (
         <Modal
             title={t('actions:edit-deliveries')}
-            visible={visible}
+            open={visible}
             onOk={onClickOk}
             onCancel={handleCancel}
         >
@@ -108,7 +108,7 @@ const BulkEditDeliveriesRenderModal = ({
                     >
                         <DatePicker
                             format="YYYY-MM-DD HH:mm:ss"
-                            showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
+                            showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
                         />
                     </Form.Item>
                 </Form>

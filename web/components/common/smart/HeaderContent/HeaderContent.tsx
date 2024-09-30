@@ -19,7 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { GlobalBreadcrumb } from '@components';
 import { BreadcrumbType } from '@helpers';
-import { PageHeader } from 'antd';
+// import { PageHeader } from 'antd';
+import CustomPageHeader from 'components/common/dumb/PageHeader/CustomPageHeader';
 import { FC, ReactNode } from 'react';
 
 export interface IHeaderContentProps {
@@ -40,7 +41,7 @@ const HeaderContent: FC<IHeaderContentProps> = ({
     onBack
 }: IHeaderContentProps) => {
     return (
-        <PageHeader
+        <CustomPageHeader
             title={title}
             breadcrumb={<GlobalBreadcrumb routes={routes} />}
             onBack={onBack}
@@ -48,7 +49,7 @@ const HeaderContent: FC<IHeaderContentProps> = ({
             extra={actionsRight}
         >
             {children}
-        </PageHeader>
+        </CustomPageHeader>
     );
 };
 

@@ -18,10 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { gql } from 'graphql-request';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { isString } from 'lodash';
-import moment from 'moment';
 import {
     isStringDateTime,
     setUTCDateTime,
@@ -29,7 +28,6 @@ import {
     setUTCDate,
     showError
 } from 'helpers/utils/utils';
-import { useRouter } from 'next/router';
 import useTranslation from 'next-translate/useTranslation';
 
 /**

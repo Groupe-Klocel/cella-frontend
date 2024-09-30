@@ -75,8 +75,8 @@ const ArticlePages: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {
@@ -107,7 +107,7 @@ const ArticlePages: PageComponent = () => {
             modes.length > 0 && modes.includes(ModeEnum.Update) ? (
                 <>
                     <>
-                        <span style={{ marginLeft: 16 }}>
+                        <span className="selected-span" style={{ marginLeft: 16 }}>
                             {hasSelected
                                 ? `${t('messages:selected-items-number', {
                                       number: selectedRowKeys.length

@@ -149,7 +149,7 @@ const CrontabModalV2 = ({ showModal, idToUpdate, model, fields }: ICrontabModalV
     return (
         <Modal
             title={t('actions:edit-crontab')}
-            visible={showModal.open}
+            open={showModal.open}
             onOk={onClickOk}
             onCancel={handleCancel}
             width={850}

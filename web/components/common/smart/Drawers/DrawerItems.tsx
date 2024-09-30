@@ -44,10 +44,13 @@ const DrawerItems = () => {
     return (
         <Drawer
             onClose={closeDrawer}
-            visible={isOpen}
+            open={isOpen}
             title={t(title)}
             width={size}
             placement="right"
+            motion={{
+                motionName: 'ant-slide-right'
+            }}
             extra={
                 <Space>
                     {cancelButton ? (

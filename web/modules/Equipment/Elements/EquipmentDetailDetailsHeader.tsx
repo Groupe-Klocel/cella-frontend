@@ -68,7 +68,7 @@ const EquipmentDetailDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemPr
     ];
 
     // DELETE
-    const { mutate: DeleteMutate, isLoading: deleteLoading } =
+    const { mutate: DeleteMutate, isPending: deleteLoading } =
         useDeleteEquipmentDetailMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeleteEquipmentDetailMutation,

@@ -92,7 +92,7 @@ const PurchaseOrderDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProp
     };
 
     // DISABLE PUCHASE ORDER
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeletePurchaseOrderMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeletePurchaseOrderMutation,
@@ -125,7 +125,7 @@ const PurchaseOrderDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProp
     };
 
     //DELETE
-    const { mutate: deleteMutate, isLoading: deleteLoading } =
+    const { mutate: deleteMutate, isPending: deleteLoading } =
         useDeletePurchaseOrderMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeletePurchaseOrderMutation,

@@ -62,7 +62,7 @@ const CarrierDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) => 
     ];
 
     // DISABLE CARRIER
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeleteCarrierMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeleteCarrierMutation,
@@ -96,7 +96,7 @@ const CarrierDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) => 
     };
 
     // ENABLE CARRIER
-    const { mutate: updateCarrierMutate, isLoading: enableLoading } =
+    const { mutate: updateCarrierMutate, isPending: enableLoading } =
         useUpdateCarrierMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdateCarrierMutation,

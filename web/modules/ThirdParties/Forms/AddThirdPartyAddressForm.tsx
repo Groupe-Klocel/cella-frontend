@@ -197,7 +197,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     }, [vatRatesList.data]);
 
     // CREATION //
-    const { mutate, isLoading: createLoading } = useCreateThirdPartyAddressMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateThirdPartyAddressMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

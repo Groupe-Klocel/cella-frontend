@@ -61,7 +61,7 @@ export const ResetPasswordForm = () => {
         ChangePasswordMutate({ id, password, password2 });
     };
 
-    const { mutate: ChangePasswordMutate, isLoading: changePasswordLoading } =
+    const { mutate: ChangePasswordMutate, isPending: changePasswordLoading } =
         useChangeWarehouseWorkerPasswordMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: ChangeWarehouseWorkerPasswordMutation,

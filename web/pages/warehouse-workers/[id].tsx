@@ -93,7 +93,7 @@ const WarehouseWorkerPage: PageComponent = () => {
     };
 
     // RESET PASSWORD MUTATION
-    const { mutate: ResetPasswordMutate, isLoading: ResetPasswordLoading } =
+    const { mutate: ResetPasswordMutate, isPending: ResetPasswordLoading } =
         useResetWarehouseWorkerPasswordMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: ResetWarehouseWorkerPasswordMutation,
@@ -124,7 +124,7 @@ const WarehouseWorkerPage: PageComponent = () => {
     };
 
     // DELETE MUTATION
-    const { mutate: DeleteWarehouseWorkerMutate, isLoading: DeleteLoading } =
+    const { mutate: DeleteWarehouseWorkerMutate, isPending: DeleteLoading } =
         useDeleteWarehouseWorkerMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeleteWarehouseWorkerMutation,

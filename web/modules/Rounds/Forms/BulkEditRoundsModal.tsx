@@ -30,7 +30,6 @@ import {
 import { showError, showSuccess, useRoundIds } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import moment from 'moment';
 import { FormOptionType } from 'models/Models';
 import { PropertySafetyFilled } from '@ant-design/icons';
 
@@ -80,7 +79,7 @@ const BulkEditRoundsRenderModal = ({
     // UPDATE Round
     const {
         mutate,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useBulkUpdateRoundsMutation<Error>(graphqlRequestClient, {
         onSuccess: (
@@ -121,7 +120,7 @@ const BulkEditRoundsRenderModal = ({
     return (
         <Modal
             title={t('actions:edit-rounds')}
-            visible={visible}
+            open={visible}
             onOk={onClickOk}
             onCancel={handleCancel}
         >

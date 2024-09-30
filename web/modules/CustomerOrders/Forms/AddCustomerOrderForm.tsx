@@ -47,6 +47,7 @@ import {
     useListParametersForAScopeQuery
 } from 'generated/graphql';
 import moment from 'moment';
+import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import TextArea from 'antd/lib/input/TextArea';
@@ -130,7 +131,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: createLoading } = useCreateOrderMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateOrderMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -637,7 +638,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     <DatePicker
                         allowClear
                         format="YYYY-MM-DD"
-                        showTime={{ defaultValue: moment('YYYY-MM-DD') }}
+                        showTime={{ defaultValue: dayjs('YYYY-MM-DD') }}
                     />
                 </Form.Item>
                 <Form.Item

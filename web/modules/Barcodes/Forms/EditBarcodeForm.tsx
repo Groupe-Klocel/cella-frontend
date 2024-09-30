@@ -95,7 +95,7 @@ export const EditBarcodeForm: FC<EditBarcodeFormProps> = ({
 
     const {
         mutate,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useUpdateBarcodeMutation<Error>(graphqlRequestClient, {
         onSuccess: (

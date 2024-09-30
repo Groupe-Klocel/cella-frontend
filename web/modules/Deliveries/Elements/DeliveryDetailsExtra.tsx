@@ -28,8 +28,6 @@ import {
 import { pathParams, getModesFromPermissions, pathParamsFromDictionary, showError } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Button, Divider, Modal, Space, Typography } from 'antd';
-import moment from 'moment';
-import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';

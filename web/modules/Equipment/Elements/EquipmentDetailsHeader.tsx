@@ -93,7 +93,7 @@ const EquipmentDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) =
         .sort(compare);
 
     //For priority updates on Finish
-    const { mutate: updateMutate, isLoading: updateLoading } = useUpdateEquipmentMutation<Error>(
+    const { mutate: updateMutate, isPending: updateLoading } = useUpdateEquipmentMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -114,7 +114,7 @@ const EquipmentDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) =
     };
 
     // DISABLE EQUIPMENT
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeleteEquipmentMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeleteEquipmentMutation,
@@ -151,7 +151,7 @@ const EquipmentDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) =
     };
 
     // ENABLE EQUIPMENT
-    const { mutate: updateEquipmentMutate, isLoading: enableLoading } =
+    const { mutate: updateEquipmentMutate, isPending: enableLoading } =
         useUpdateEquipmentMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdateEquipmentMutation,

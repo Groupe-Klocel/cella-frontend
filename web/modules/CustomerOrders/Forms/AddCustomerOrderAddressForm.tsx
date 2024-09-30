@@ -300,7 +300,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
     const [form] = Form.useForm();
 
     //CREATE order address
-    const { mutate, isLoading: createLoading } = useCreateOrderAddressMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateOrderAddressMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

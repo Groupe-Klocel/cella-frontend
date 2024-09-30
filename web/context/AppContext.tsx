@@ -25,7 +25,7 @@ import { createCtx } from './create-context';
 const menuInitialState = cookie.get('isSettingMenuCollapsed')
     ? stringToBoolean(cookie.get('isSettingMenuCollapsed'))
     : true;
-const themeInitialState = cookie.get('theme') ? cookie.get('theme') : 'light';
+const themeInitialState = cookie.get('mobile_theme') ? cookie.get('mobile_theme') : 'light';
 
 const userInfoStr = cookie.get('user') !== undefined ? cookie.get('user') : '{}';
 const userInitData = JSON.parse(userInfoStr!);

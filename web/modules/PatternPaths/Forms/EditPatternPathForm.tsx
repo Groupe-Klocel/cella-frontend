@@ -115,7 +115,7 @@ export const EditPatternPathForm: FC<EditPatternPathFormProps> = ({
         ?.filter((e: any) => e.order !== null)
         .sort(compare);
 
-    const { mutate, isLoading: updateLoading } = useUpdatePatternPathMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdatePatternPathMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

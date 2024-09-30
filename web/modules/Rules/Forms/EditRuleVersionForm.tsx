@@ -82,7 +82,7 @@ export const EditRuleVersionForm: FC<EditRuleVersionFormProps> = ({
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: updateLoading } = useUpdateRuleVersionMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateRuleVersionMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

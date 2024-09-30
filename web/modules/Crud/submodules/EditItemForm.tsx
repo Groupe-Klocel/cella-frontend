@@ -28,7 +28,6 @@ import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
 import { FormGroup } from 'modules/Crud/submodules/FormGroup';
 import { FilterFieldType, FormDataType, ModelType } from 'models/Models';
 import moment from 'moment';
-import Item from 'antd/lib/list/Item';
 
 export interface IEditItemFormProps {
     id: string;

@@ -69,7 +69,7 @@ const BarcodesList = ({ searchCriteria }: BarcodesListTypeProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage, itemsPerPage) => {
+        (currentPage: any, itemsPerPage: any) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: barcodes?.count,

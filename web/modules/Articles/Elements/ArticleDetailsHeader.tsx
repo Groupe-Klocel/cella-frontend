@@ -63,7 +63,7 @@ const ArticleDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) => 
     ];
 
     // DISABLE ARTICLE
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeleteArticleMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeleteArticleMutation,
@@ -96,7 +96,7 @@ const ArticleDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) => 
     };
 
     // ENABLE ARTICLE
-    const { mutate: updateArticleMutate, isLoading: enableLoading } =
+    const { mutate: updateArticleMutate, isPending: enableLoading } =
         useUpdateArticleMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdateArticleMutation,
