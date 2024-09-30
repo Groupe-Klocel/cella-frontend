@@ -57,7 +57,7 @@ const BlockDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     ];
 
     // DELETE
-    const { mutate: DeleteMutate, isLoading: deleteLoading } = useDeleteBlockMutation<Error>(
+    const { mutate: DeleteMutate, isPending: deleteLoading } = useDeleteBlockMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

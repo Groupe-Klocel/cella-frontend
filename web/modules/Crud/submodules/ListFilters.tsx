@@ -21,7 +21,7 @@ import { DoubleLeftOutlined } from '@ant-design/icons';
 import { Form, Input, InputNumber, Checkbox, Select, DatePicker, AutoComplete } from 'antd';
 import { RangePickerProps } from 'antd/lib/date-picker';
 import { debounce } from 'lodash';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import useTranslation from 'next-translate/useTranslation';
 import { FC } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/Models';
@@ -118,7 +118,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({ form, columns }: IGeneralSearchP
                             >
                                 <DatePicker
                                     format="YYYY-MM-DD HH:mm:ss"
-                                    showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
+                                    showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
                                 />
                             </Form.Item>
                         );
@@ -152,7 +152,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({ form, columns }: IGeneralSearchP
                                 <AutoComplete
                                     value={item.value}
                                     filterOption={(inputValue, option) =>
-                                        option!.value
+                                        (option?.value as string)
                                             .toUpperCase()
                                             .indexOf(inputValue.toUpperCase()) !== -1
                                     }

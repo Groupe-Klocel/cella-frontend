@@ -90,7 +90,7 @@ const DeliveryDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) =>
     };
 
     // CANCEL DELIVERY
-    const { mutate: cancelDeliveryMutate, isLoading: cancelLoading } =
+    const { mutate: cancelDeliveryMutate, isPending: cancelLoading } =
         useCancelDeliveryMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: CancelDeliveryMutation,

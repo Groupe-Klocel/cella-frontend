@@ -308,7 +308,7 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
     const [form] = Form.useForm();
 
     //CREATE delivery address
-    const { mutate, isLoading: createLoading } = useCreateDeliveryAddressMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateDeliveryAddressMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

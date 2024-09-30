@@ -66,7 +66,7 @@ const ReturnCodePage: PageComponent = () => {
 
     // delete
 
-    const { mutate: deleteParameter, isLoading: deleteLoading } = useDeleteParameterMutation<Error>(
+    const { mutate: deleteParameter, isPending: deleteLoading } = useDeleteParameterMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

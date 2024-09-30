@@ -307,7 +307,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     };
 
     //CREATE delivery line
-    const { mutate, isLoading: createLoading } = useCreateOrderLineMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateOrderLineMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

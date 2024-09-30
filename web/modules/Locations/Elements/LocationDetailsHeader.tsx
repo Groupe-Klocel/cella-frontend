@@ -58,7 +58,7 @@ const LocationDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) =>
     ];
 
     // DELETE
-    const { mutate: DeleteMutate, isLoading: deleteLoading } = useDeleteLocationMutation<Error>(
+    const { mutate: DeleteMutate, isPending: deleteLoading } = useDeleteLocationMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

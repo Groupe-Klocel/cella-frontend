@@ -172,7 +172,7 @@ export const AddCarrierShippingModeForm = (props: ISingleItemProps) => {
     };
 
     // CREATION //
-    const { mutate, isLoading: createLoading } = useCreateCarrierShippingModeMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateCarrierShippingModeMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

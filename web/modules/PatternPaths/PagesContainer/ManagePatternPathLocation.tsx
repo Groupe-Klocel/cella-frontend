@@ -231,7 +231,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
         }
     }, [error]);
 
-    const { mutate: createLocations, isLoading: createLoading } =
+    const { mutate: createLocations, isPending: createLoading } =
         useBulkCreatePatternPathLocationsMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: BulkCreatePatternPathLocationsMutation,
@@ -244,7 +244,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                 showError(t('messages:error-update-data'));
             }
         });
-    const { mutate: deleteLocations, isLoading: deleteLoading } =
+    const { mutate: deleteLocations, isPending: deleteLoading } =
         useBulkDeletePatternPathLocationsMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: BulkDeletePatternPathLocationsMutation,

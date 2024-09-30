@@ -45,7 +45,7 @@ export interface IMenuItemProps {
 const MenuItem: FC<IMenuItemProps> = ({ title, path }: IMenuItemProps) => {
     return (
         <ButtonContainer>
-            <Link href={path} passHref>
+            <Link href={path} passHref style={{ width: '100%' }}>
                 <Button block style={buttonStyle}>
                     {title}
                     <RightOutlined />

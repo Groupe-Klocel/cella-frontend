@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 /* eslint-disable prefer-const */
+import { GraphQLResponseType } from '@helpers';
 import { GraphQLClient, gql } from 'graphql-request';
 import { NextApiRequest, NextApiResponse } from 'next';
 
@@ -53,7 +54,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -93,14 +94,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         `;
 
-        const createdPayment = await graphqlRequestClient.request(
+        const createdPayment: GraphQLResponseType = await graphqlRequestClient.request(
             createPaymentMutation,
             createPaymentVariables,
             requestHeader
         );
 
         //createArticleLuBarcode section
-        let createdPaymentLineResponse;
+        let createdPaymentLineResponse: GraphQLResponseType | undefined;
         if (createdPayment) {
             const createPaymentLineInput = {
                 input: {
@@ -127,7 +128,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         res.status(200).json({
             response: {
                 createdBarcode: createdPayment.createPayment ?? undefined,
-                createdArticleLuBarcode: createdPaymentLineResponse.createPaymentLine ?? undefined
+                createdArticleLuBarcode: createdPaymentLineResponse?.createPaymentLine ?? undefined
             }
         });
     } catch (error: any) {

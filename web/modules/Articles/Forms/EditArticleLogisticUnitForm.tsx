@@ -296,7 +296,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     }, [articleLuRotationList]);
 
     // UPDATE MUTATION
-    const { mutate, isLoading: updateLoading } = useUpdateArticleLuMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateArticleLuMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

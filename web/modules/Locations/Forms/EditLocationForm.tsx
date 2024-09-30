@@ -162,7 +162,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: updateLoading } = useUpdateLocationMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateLocationMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

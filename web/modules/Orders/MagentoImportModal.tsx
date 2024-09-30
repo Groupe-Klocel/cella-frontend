@@ -93,7 +93,7 @@ const MagentoImportModal = ({
     return (
         <Modal
             title={t('messages:mangento-get-orders-confirm')}
-            visible={showModal.showMagentoModal}
+            open={showModal.showMagentoModal}
             onOk={onClickOk}
             onCancel={handleCancel}
             width={450}

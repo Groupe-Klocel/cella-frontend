@@ -91,7 +91,7 @@ const ArticleSetDetailsExtra = ({
     };
 
     // DELETE
-    const { mutate: DeleteMutate, isLoading: deleteLoading } =
+    const { mutate: DeleteMutate, isPending: deleteLoading } =
         useDeleteArticleSetDetailMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeleteArticleSetDetailMutation,

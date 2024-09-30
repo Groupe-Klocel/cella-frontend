@@ -347,7 +347,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
     };
 
     // Create Mutation
-    const { mutate, isLoading: createLoading } = useCreateArticleLuMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateArticleLuMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

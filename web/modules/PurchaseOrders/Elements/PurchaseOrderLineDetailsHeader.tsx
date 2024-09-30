@@ -79,7 +79,7 @@ const PurchaseOrderLineDetailsHeader: FC<ISingleItemProps> = (props: ISingleItem
     ];
 
     // DISABLE PURCHASE ORDER LINE
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeletePurchaseOrderLineMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeletePurchaseOrderLineMutation,
@@ -108,7 +108,7 @@ const PurchaseOrderLineDetailsHeader: FC<ISingleItemProps> = (props: ISingleItem
     };
 
     //DELETE
-    const { mutate: deleteMutate, isLoading: deleteLoading } =
+    const { mutate: deleteMutate, isPending: deleteLoading } =
         useDeletePurchaseOrderLineMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeletePurchaseOrderLineMutation,

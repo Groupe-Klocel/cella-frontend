@@ -79,7 +79,7 @@ export const AddWarehouseWorkerForm = () => {
     }, [unsavedChanges]);
 
     //CREATE user role
-    const { mutate, isLoading: createLoading } = useCreateWarehouseWorkerMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateWarehouseWorkerMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

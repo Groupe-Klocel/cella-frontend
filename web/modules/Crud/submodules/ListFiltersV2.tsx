@@ -30,6 +30,7 @@ import {
 import { RangePickerProps } from 'antd/lib/date-picker';
 import { debounce } from 'lodash';
 import moment from 'moment';
+import dayjs from 'dayjs';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/ModelsV2';
@@ -63,8 +64,6 @@ const ListFilters: FC<IGeneralSearchProps> = ({
     const [configParamOptionsList, setConfigParamOptionsList] = useState<any>();
     const [optionsList, setOptionsList] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
-
-    console.log('allFieldsInitialValue', allFieldsInitialValue);
 
     const onChange = (value: RangePickerProps['value'], dateString: [string, string] | string) => {
         console.log('Selected Time: ', value);
@@ -411,6 +410,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     }
                                     name={item.name}
                                     rules={item.rules!}
+                                    key={item.name}
                                     initialValue={
                                         item?.initialValue ? item?.initialValue : undefined
                                     }
@@ -451,7 +451,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                 >
                                     <DatePicker
                                         format="YYYY-MM-DD HH:mm:ss"
-                                        showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
+                                        showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
                                         allowClear
                                     />
                                 </Form.Item>
@@ -460,9 +460,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                             let startDate = null;
                             let endDate = null;
                             if (item.initialValue && item.initialValue[0])
-                                startDate = moment(item.initialValue[0]);
+                                startDate = dayjs(moment(item.initialValue[0]).toDate());
                             if (item.initialValue && item.initialValue[1])
-                                endDate = moment(item.initialValue[1]);
+                                endDate = dayjs(moment(item.initialValue[1]).toDate());
 
                             return (
                                 <Form.Item
@@ -494,6 +494,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                         item.displayName ? item.displayName : t(`d:${item.name}`)
                                     }
                                     name={item.name}
+                                    key={item.name}
                                     rules={item.rules!}
                                     initialValue={
                                         item?.initialValue ? item?.initialValue : undefined
@@ -503,7 +504,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     <AutoComplete
                                         value={item.value}
                                         filterOption={(inputValue, option) =>
-                                            option!.value
+                                            (option?.value as string)
                                                 .toUpperCase()
                                                 .indexOf(inputValue.toUpperCase()) !== -1
                                         }

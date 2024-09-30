@@ -63,7 +63,7 @@ const PatternDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) => 
     ];
 
     // DISABLE PATTERN
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeletePatternMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeletePatternMutation,
@@ -97,7 +97,7 @@ const PatternDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) => 
     };
 
     // ENABLE PATTERN
-    const { mutate: updatePatternMutate, isLoading: enableLoading } =
+    const { mutate: updatePatternMutate, isPending: enableLoading } =
         useUpdatePatternMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdatePatternMutation,

@@ -77,7 +77,7 @@ const RulePage: PageComponent = () => {
     };
 
     // CANCEL RULE
-    const { mutate: cancelRuleMutate, isLoading: cancelLoading } = useCancelRuleMutation<Error>(
+    const { mutate: cancelRuleMutate, isPending: cancelLoading } = useCancelRuleMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

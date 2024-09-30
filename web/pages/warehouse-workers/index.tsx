@@ -69,7 +69,7 @@ const RolePages: PageComponent = () => {
     };
 
     // DELETE MUTATION
-    const { mutate: DeleteWarehouseWorkerMutate, isLoading: DeleteLoading } =
+    const { mutate: DeleteWarehouseWorkerMutate, isPending: DeleteLoading } =
         useDeleteWarehouseWorkerMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeleteWarehouseWorkerMutation,

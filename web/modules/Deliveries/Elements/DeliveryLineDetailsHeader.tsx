@@ -71,7 +71,7 @@ const DeliveryLineDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps
     ];
 
     // CANCEL DELIVERY LINE
-    const { mutate: CancelDeliveryLineMutate, isLoading: cancelLoading } =
+    const { mutate: CancelDeliveryLineMutate, isPending: cancelLoading } =
         useCancelDeliveryLineMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: CancelDeliveryLineMutation,

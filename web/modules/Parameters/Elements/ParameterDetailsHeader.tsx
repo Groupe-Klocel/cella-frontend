@@ -60,7 +60,7 @@ const ParameterDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) =
     ];
 
     // DELETE
-    const { mutate: DeleteMutate, isLoading: deleteLoading } = useDeleteParameterMutation<Error>(
+    const { mutate: DeleteMutate, isPending: deleteLoading } = useDeleteParameterMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

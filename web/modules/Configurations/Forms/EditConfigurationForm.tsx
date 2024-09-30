@@ -48,7 +48,7 @@ export const EditConfigurationForm: FC<EditConfigProps> = ({
     // TYPED SAFE ALL
     const [form] = Form.useForm();
 
-    const { mutate, isLoading: updateLoading } = useUpdateConfigMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateConfigMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

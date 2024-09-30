@@ -63,7 +63,7 @@ const LogisticUnitDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps
     ];
 
     // DISABLE LOGISTIC UNIT
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeleteLogisticUnitMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeleteLogisticUnitMutation,
@@ -96,7 +96,7 @@ const LogisticUnitDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps
     };
 
     // ENABLE LOGISTIC UNIT
-    const { mutate: updateLogisticUnitMutate, isLoading: enableLoading } =
+    const { mutate: updateLogisticUnitMutate, isPending: enableLoading } =
         useUpdateLogisticUnitMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdateLogisticUnitMutation,

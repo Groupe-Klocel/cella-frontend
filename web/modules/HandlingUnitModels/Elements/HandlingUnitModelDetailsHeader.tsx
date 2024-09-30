@@ -64,7 +64,7 @@ const HandlingUnitModelDetailsHeader: FC<ISingleItemProps> = (props: ISingleItem
     ];
 
     //  DISABLE PACKAGING
-    const { mutate: softDeleteMutate, isLoading: softDeleteLoading } =
+    const { mutate: softDeleteMutate, isPending: softDeleteLoading } =
         useSoftDeleteHandlingUnitModelMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: SoftDeleteHandlingUnitModelMutation,
@@ -97,7 +97,7 @@ const HandlingUnitModelDetailsHeader: FC<ISingleItemProps> = (props: ISingleItem
     };
 
     // ENABLE PACKAGING
-    const { mutate: updateHandlingUnitModelMutate, isLoading: enableLoading } =
+    const { mutate: updateHandlingUnitModelMutate, isPending: enableLoading } =
         useUpdateHandlingUnitModelMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdateHandlingUnitModelMutation,

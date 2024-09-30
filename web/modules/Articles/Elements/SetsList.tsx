@@ -57,7 +57,7 @@ export const SetsList = ({ searchCriteria }: ArticleSetsListTypeProps) => {
     });
 
     const onChangePagination = useCallback(
-        (currentPage, itemsPerPage) => {
+        (currentPage: any, itemsPerPage: any) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: articleSets?.count,
@@ -89,7 +89,7 @@ export const SetsList = ({ searchCriteria }: ArticleSetsListTypeProps) => {
         await setSort(orderByFormater(sorter));
     };
 
-    const { mutate, isLoading: deleteLoading } = useDeleteArticleSetMutation<Error>(
+    const { mutate, isPending: deleteLoading } = useDeleteArticleSetMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

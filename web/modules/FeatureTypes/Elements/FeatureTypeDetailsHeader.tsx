@@ -64,7 +64,7 @@ const FeatureTypeDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps)
         }
     ];
 
-    const { mutate: DeleteFeatureType, isLoading: deleteLoading } =
+    const { mutate: DeleteFeatureType, isPending: deleteLoading } =
         useDeleteFeatureTypeMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeleteFeatureTypeMutation,

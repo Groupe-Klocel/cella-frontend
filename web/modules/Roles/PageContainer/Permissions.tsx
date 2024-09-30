@@ -92,7 +92,7 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
     ];
 
     // Update
-    const { mutate: updateMutate, isLoading: softDeleteLoading } = useUpdateRoleMutation<Error>(
+    const { mutate: updateMutate, isPending: softDeleteLoading } = useUpdateRoleMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

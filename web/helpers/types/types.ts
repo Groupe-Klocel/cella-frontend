@@ -90,3 +90,7 @@ export type OnlyChildrenType = {
 export type RequireKeys<T, TNames extends keyof T> = T & {
     [P in keyof T]-?: P extends TNames ? T[P] : never;
 };
+
+export type GraphQLResponseType = {
+    [key: string]: any;
+};

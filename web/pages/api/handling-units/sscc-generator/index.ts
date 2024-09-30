@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { corsMiddleware } from '@helpers';
+import { corsMiddleware, GraphQLResponseType } from '@helpers';
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -74,7 +74,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     `;
 
-    const counterResponse = await graphqlRequestClient.request(counterQuery, requestHeader);
+    const counterResponse: GraphQLResponseType = await graphqlRequestClient.request(
+        counterQuery,
+        requestHeader
+    );
 
     //GCP = Global Company Prefix
     const GCPQuery = gql`
@@ -87,7 +90,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     `;
 
-    const GCPResponse = await graphqlRequestClient.request(GCPQuery, requestHeader);
+    const GCPResponse: GraphQLResponseType = await graphqlRequestClient.request(
+        GCPQuery,
+        requestHeader
+    );
 
     // call the function with queried values
     const GCP = GCPResponse.configs.results[0].value;
@@ -112,7 +118,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const HU_SSCC_Variables = {
             filters: { name: sscc }
         };
-        const HUResponse = await graphqlRequestClient.request(
+        const HUResponse: GraphQLResponseType = await graphqlRequestClient.request(
             HUQuery,
             HU_SSCC_Variables,
             requestHeader
@@ -120,7 +126,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         if (HUResponse.handlingUnits.results.length === 0) {
             HUexists = false;
         } else {
-            const counterResponse = await graphqlRequestClient.request(counterQuery, requestHeader);
+            const counterResponse: GraphQLResponseType = await graphqlRequestClient.request(
+                counterQuery,
+                requestHeader
+            );
             const serialCounter = counterResponse.getNextCounter;
             const newSSCC = generateSSCC(extensionDigit, GCP, serialCounter);
             sscc = newSSCC;

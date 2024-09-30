@@ -103,7 +103,7 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
     }, [thirdPartyAddressContactCategoryList.data]);
 
     // CREATION //
-    const { mutate, isLoading: createLoading } = useCreateThirdPartyAddressContactMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateThirdPartyAddressContactMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

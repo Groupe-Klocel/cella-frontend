@@ -112,7 +112,7 @@ function isCookieSet(cookieName: string) {
 }
 
 function getDefaultTheme() {
-    switch (cookie.get('theme')) {
+    switch (cookie.get('mobile_theme')) {
         case 'dark':
             return 'dark';
         default:

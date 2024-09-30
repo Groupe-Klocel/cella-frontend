@@ -246,7 +246,7 @@ export const AddHandlingUnitContentForm = () => {
     console.log('formData', form.getFieldsValue(true));
 
     // CREATE MUTATION
-    const { mutate, isLoading: createLoading } = useCreateHandlingUnitWithContentMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateHandlingUnitWithContentMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

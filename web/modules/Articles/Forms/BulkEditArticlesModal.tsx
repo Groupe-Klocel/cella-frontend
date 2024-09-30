@@ -33,7 +33,6 @@ import {
 import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import moment from 'moment';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { FormOptionType } from 'models/ModelsV2';
 
@@ -126,7 +125,7 @@ const BulkEditArticlesRenderModal = ({
     // UPDATE Delivery Line
     const {
         mutate,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useBulkUpdateArticlesMutation<Error>(graphqlRequestClient, {
         onSuccess: (
@@ -168,7 +167,7 @@ const BulkEditArticlesRenderModal = ({
     return (
         <Modal
             title={t('actions:edit-articles')}
-            visible={visible}
+            open={visible}
             onOk={onClickOk}
             onCancel={handleCancel}
             width="auto"
