@@ -39,7 +39,11 @@ import {
     useSoftDelete,
     cookie,
     useUpdate,
-    queryString
+    queryString,
+    formatUTCLocaleDateTime,
+    isStringDateTime,
+    isStringDate,
+    formatUTCLocaleDate
 } from '@helpers';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
@@ -48,7 +52,8 @@ import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { initial } from 'lodash';
+import { initial, isString } from 'lodash';
+import { gql } from 'graphql-request';
 
 export type HeaderData = {
     title: string;
@@ -109,10 +114,10 @@ const ListComponent = (props: IListProps) => {
     const mandatory_Filter = searchCriterias?.scope
         ? `_${searchCriterias.scope}`
         : searchCriterias?.category
-        ? `_${searchCriterias.category}`
-        : searchCriterias?.orderType
-        ? `_${searchCriterias.orderType}`
-        : '';
+          ? `_${searchCriterias.category}`
+          : searchCriterias?.orderType
+            ? `_${searchCriterias.orderType}`
+            : '';
     // #endregion
 
     // #region extract data from modelV2
@@ -200,15 +205,45 @@ const ListComponent = (props: IListProps) => {
     }
     const statusScope = getStatusConfig(filterFields);
 
-    const retrievedStatuses = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: statusScope
-    });
+    const [retrievedStatuses, setRetrievedStatuses] = useState<any>();
+
+    async function getStatusesList(scope: string): Promise<{ [key: string]: any } | undefined> {
+        const query = gql`
+            query ListConfigsForAScope($scope: String!, $code: String, $language: String = "en") {
+                listConfigsForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    scope
+                    code
+                    text
+                }
+            }
+        `;
+
+        try {
+            const result = await graphqlRequestClient.request(query, { scope: scope });
+            return result;
+        } catch (error) {
+            return {};
+        }
+    }
+
+    useEffect(() => {
+        async function getStatuses() {
+            const promise = getStatusesList(statusScope);
+            const statuses = await promise;
+            if (statuses) {
+                setRetrievedStatuses(statuses);
+            }
+        }
+        getStatuses();
+    }, []);
+
     const btnName = isWithoutClosed
         ? t('actions:with-closed-cancel-items')
         : t('actions:without-closed-cancel-items');
 
-    if (retrievedStatuses.data) {
-        const statuses = retrievedStatuses.data.listConfigsForAScope.map((status: any) =>
+    if (retrievedStatuses?.listConfigsForAScope?.length > 0) {
+        const statuses = retrievedStatuses.listConfigsForAScope.map((status: any) =>
             parseInt(status.code)
         );
 
@@ -816,6 +851,36 @@ const ListComponent = (props: IListProps) => {
             cookie.remove(`${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`);
         }
     };
+
+    // date formatting
+    if (rows?.results && rows?.results.length > 0) {
+        rows.results.forEach((row: any) => {
+            Object.keys(row).forEach((key) => {
+                if (isString(row[key]) && isStringDateTime(row[key])) {
+                    if (
+                        !(
+                            key === 'value' &&
+                            'featureCode_dateType' in row &&
+                            !row['featureCode_dateType']
+                        )
+                    ) {
+                        row[key] = formatUTCLocaleDateTime(row[key], router.locale);
+                    }
+                }
+                if (isString(row[key]) && isStringDate(row[key])) {
+                    if (
+                        !(
+                            key === 'value' &&
+                            'featureCode_dateType' in row &&
+                            !row['featureCode_dateType']
+                        )
+                    ) {
+                        row[key] = formatUTCLocaleDate(row[key], router.locale);
+                    }
+                }
+            });
+        });
+    }
 
     // #endregion
     return (
