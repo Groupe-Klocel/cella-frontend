@@ -381,7 +381,7 @@ export const HandlingUnitContentFeatureModelV2: ModelType = {
             isSortable: false,
             searchingFormat: null,
             isDetailRequested: true,
-            isExcludedFromDetail: true,
+            isExcludedFromDetail: false,
             detailGroup: null,
             link: null,
             addEditFormat: null,

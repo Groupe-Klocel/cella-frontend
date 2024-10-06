@@ -36,7 +36,11 @@ import {
     useExport,
     useList,
     flatten,
-    queryString
+    queryString,
+    isStringDateTime,
+    formatUTCLocaleDateTime,
+    isStringDate,
+    formatUTCLocaleDate
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
@@ -53,6 +57,7 @@ import {
 import { ListFilters } from 'modules/Crud/submodules/ListFilters';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
+import { isString } from 'lodash';
 
 export type HeaderData = {
     title: string;
@@ -538,6 +543,36 @@ const EquipmentListComponent = (props: IListProps) => {
             }
         }
     }, [priorityDownId]);
+
+    // date formatting
+    if (rows?.results && rows?.results.length > 0) {
+        rows.results.forEach((row: any) => {
+            Object.keys(row).forEach((key) => {
+                if (isString(row[key]) && isStringDateTime(row[key])) {
+                    if (
+                        !(
+                            key === 'value' &&
+                            'featureCode_dateType' in row &&
+                            !row['featureCode_dateType']
+                        )
+                    ) {
+                        row[key] = formatUTCLocaleDateTime(row[key], router.locale);
+                    }
+                }
+                if (isString(row[key]) && isStringDate(row[key])) {
+                    if (
+                        !(
+                            key === 'value' &&
+                            'featureCode_dateType' in row &&
+                            !row['featureCode_dateType']
+                        )
+                    ) {
+                        row[key] = formatUTCLocaleDate(row[key], router.locale);
+                    }
+                }
+            });
+        });
+    }
 
     // #endregion
     return (

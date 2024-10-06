@@ -19,8 +19,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components';
-import { Space, Button, Alert, Empty } from 'antd';
+import { Space, Form, Button, Alert, Empty } from 'antd';
 import { EyeTwoTone } from '@ant-design/icons';
+import { useDrawerDispatch } from 'context/DrawerContext';
 import useTranslation from 'next-translate/useTranslation';
 import {
     DataQueryType,
@@ -35,27 +36,24 @@ import {
     useExport,
     useList,
     flatten,
-    queryString,
-    isStringDateTime,
-    formatUTCLocaleDateTime,
-    isStringDate,
-    formatUTCLocaleDate
+    queryString
 } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
 import {
     ExportFormat,
-    GetListOfOrdersQuery,
+    GetListOfRaaPrioritiesQuery,
     ModeEnum,
-    UpdatePatternPathMutation,
-    UpdatePatternPathMutationVariables,
-    useGetListOfOrdersQuery,
-    useUpdatePatternPathMutation
+    UpdateRoundAdvisedAddressMutation,
+    UpdateRoundAdvisedAddressMutationVariables,
+    useGetListOfRaaPrioritiesQuery,
+    useUpdateRoundAdvisedAddressMutation
 } from 'generated/graphql';
+import { ListFilters } from 'modules/Crud/submodules/ListFilters';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { isString } from 'lodash';
+import configs from '../../../../common/configs.json';
 
 export type HeaderData = {
     title: string;
@@ -76,29 +74,34 @@ export interface IListProps {
     filterFields?: Array<FilterFieldType>;
 }
 
-const PatternPathListComponent = (props: IListProps) => {
+const RoundAdvisedAddressListComponent = (props: IListProps) => {
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
 
-    const [orderUpId, setOrderUpId] = useState<string>();
-    const [orderDownId, setOrderDownId] = useState<string>();
+    const [roundOrderIdUpId, setRoundOrderIdUpId] = useState<string>();
+    const [roundOrderIdDownId, setRoundOrderIdDownId] = useState<string>();
 
-    const [, setPatternPathWithOrders] = useState<any>();
-    const [, setMaxOrder] = useState<number>(0);
+    const [, setRoundAdvisedAddressWithPriorities] = useState<any>();
+    const [, setMaxRoundOrderId] = useState<number>(0);
 
-    const orderList = useGetListOfOrdersQuery<Partial<GetListOfOrdersQuery>, Error>(
-        graphqlRequestClient
-    );
+    const roundOrderIdList = useGetListOfRaaPrioritiesQuery<
+        Partial<GetListOfRaaPrioritiesQuery>,
+        Error
+    >(graphqlRequestClient);
     useEffect(() => {
-        setPatternPathWithOrders(orderList?.data?.patternPaths?.results);
-        const receivedList = orderList?.data?.patternPaths?.results.map((e: any) => e.order);
+        setRoundAdvisedAddressWithPriorities(
+            roundOrderIdList?.data?.roundAdvisedAddresses?.results
+        );
+        const receivedList = roundOrderIdList?.data?.roundAdvisedAddresses?.results.map(
+            (e: any) => e.roundOrderId
+        );
         if (receivedList) {
-            setMaxOrder(Math.max(...receivedList));
+            setMaxRoundOrderId(Math.max(...receivedList));
         }
-    }, [orderList]);
+    }, [roundOrderIdList]);
 
     // #region extract data from modelV2
     const listFields = Object.keys(props.dataModel.fieldsInfo).filter(
@@ -192,26 +195,27 @@ const PatternPathListComponent = (props: IListProps) => {
             {
                 title: 'actions:actions',
                 key: 'actions',
-                render: (record: { id: string; name: string; order: number; status: number }) => (
+                render: (record: {
+                    id: string;
+                    name: string;
+                    roundOrderId: number;
+                    status: number;
+                }) => (
                     <Space>
-                        {record.order === null ? (
-                            <></>
-                        ) : (
+                        {record.roundOrderId && record.status < configs.ROUND_STATUS_STARTED ? (
                             <>
                                 <Button
-                                    onClick={() => orderUp(record.id)}
+                                    onClick={() => roundOrderIdUp(record.id)}
                                     icon={<CaretUpOutlined />}
                                 />
                                 <Button
-                                    onClick={() => orderDown(record.id)}
+                                    onClick={() => roundOrderIdDown(record.id)}
                                     icon={<CaretDownOutlined />}
                                 />
                             </>
+                        ) : (
+                            <></>
                         )}
-                        <LinkButton
-                            icon={<EyeTwoTone />}
-                            path={(props.routeDetailPage || '').replace(':id', record.id)}
-                        />
                     </Space>
                 )
             }
@@ -250,13 +254,56 @@ const PatternPathListComponent = (props: IListProps) => {
 
     const [search, setSearch] = useState(props.searchCriteria);
 
+    //	Search Drawer
+    const [formSearch] = Form.useForm();
+
+    const dispatchDrawer = useDrawerDispatch();
+
+    const openSearchDrawer = useCallback(
+        (filterFields: Array<FilterFieldType>) =>
+            dispatchDrawer({
+                size: 450,
+                type: 'OPEN_DRAWER',
+                title: 'actions:search',
+                comfirmButtonTitle: 'actions:search',
+                comfirmButton: true,
+                cancelButtonTitle: 'actions:reset',
+                cancelButton: true,
+                submit: true,
+                content: <ListFilters form={formSearch} columns={filterFields} />,
+                onCancel: () => handleReset(),
+                onComfirm: () => handleSubmit()
+            }),
+        [dispatchDrawer]
+    );
+
+    const closeDrawer = useCallback(
+        () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
+        [dispatchDrawer]
+    );
+
+    const handleReset = () => {
+        formSearch.resetFields();
+    };
+
+    const handleSubmit = () => {
+        formSearch
+            .validateFields()
+            .then(() => {
+                // Here make api call of something else
+                setSearch(formSearch.getFieldsValue(true));
+                closeDrawer();
+            })
+            .catch((err) => showError(t('messages:error-getting-data')));
+    };
+
     // #endregion
 
     // #region DATATABLE
     const [rows, setRows] = useState<DataQueryType>();
     const [columns, setColumns] = useState<Array<any>>([]);
 
-    const [sort] = useState<any>({ ascending: true, field: 'order' });
+    const [sort] = useState<any>({ ascending: true, field: 'roundOrderId' });
 
     const [pagination, setPagination] = useState<PaginationType>({
         total: undefined,
@@ -284,8 +331,6 @@ const PatternPathListComponent = (props: IListProps) => {
     }, [search, pagination.current, pagination.itemsPerPage, sort]);
 
     // #endregion
-
-    // #region EXPORT DATA
     const exportFields = Object.keys(props.dataModel.fieldsInfo).filter((key) => {
         const fieldInfo = props.dataModel.fieldsInfo[key];
         return fieldInfo.isListRequested && !fieldInfo.isExcludedFromList;
@@ -377,7 +422,6 @@ const PatternPathListComponent = (props: IListProps) => {
         if (data) {
             // if data is refreshed
             const listData: any = data?.[props.dataModel.endpoints.list];
-
             if (listData && listData['results']) {
                 const result_list: Array<any> = [];
                 if (listData['results'].length > 0) {
@@ -388,14 +432,22 @@ const PatternPathListComponent = (props: IListProps) => {
                     });
 
                     // iterate over the first result and get list of columns to define table structure
-                    Object.keys(listData['results'][0]).forEach((column_name) => {
+                    listFields.forEach((column_name: any, index: number) => {
+                        if (column_name.includes('{')) {
+                            column_name = column_name.replaceAll('{', '_').replaceAll('}', '');
+                        }
+                        // Customize title name
+                        let title = `d:${column_name}`;
+                        if (displayedLabels && column_name in displayedLabels) {
+                            title = `d:${displayedLabels[column_name]}`;
+                        }
+
                         const row_data: any = {
-                            title: `d:${column_name}`,
+                            title: title,
                             dataIndex: column_name,
                             key: column_name,
                             showSorterTooltip: false
                         };
-
                         // if column is in sortable list add sorter property
                         if (sortableFields.length > 0 && sortableFields.includes(column_name)) {
                             row_data['sorter'] = { multiple: sort_index };
@@ -409,6 +461,7 @@ const PatternPathListComponent = (props: IListProps) => {
                         }
                     });
                 }
+
                 // set columns to use in table
                 setColumns(result_list);
 
@@ -427,12 +480,12 @@ const PatternPathListComponent = (props: IListProps) => {
         reloadData(); //children function of interest
     }, [props.refresh]);
 
-    // Order up and down management (this part of code could be improved in the next phase by e.g. factorising it)
-    const { mutate: patternPathMutate, isLoading: updatedLoading } =
-        useUpdatePatternPathMutation<Error>(graphqlRequestClient, {
+    //RoundOrderId up and down management (this part of code could be improved in the next phase by e.g. factorising it)
+    const { mutate: raaMutate, isLoading: updatedLoading } =
+        useUpdateRoundAdvisedAddressMutation<Error>(graphqlRequestClient, {
             onSuccess: (
-                data: UpdatePatternPathMutation,
-                _variables: UpdatePatternPathMutationVariables,
+                data: UpdateRoundAdvisedAddressMutation,
+                _variables: UpdateRoundAdvisedAddressMutationVariables,
                 _context: any
             ) => {
                 reloadData();
@@ -443,85 +496,66 @@ const PatternPathListComponent = (props: IListProps) => {
             }
         });
 
-    const updatePatternPath = ({ id, input }: UpdatePatternPathMutationVariables) => {
-        patternPathMutate({ id, input });
+    const updateRoundAdvisedAddress = ({
+        id,
+        input
+    }: UpdateRoundAdvisedAddressMutationVariables) => {
+        raaMutate({ id, input });
     };
 
-    const orderUp = (id: string) => {
-        setOrderUpId(id);
+    const roundOrderIdUp = (id: string) => {
+        setRoundOrderIdUpId(id);
     };
 
-    const orderDown = (id: string) => {
-        setOrderDownId(id);
+    const roundOrderIdDown = (id: string) => {
+        setRoundOrderIdDownId(id);
     };
 
     useEffect(() => {
-        const currentPatternPath = data?.patternPaths?.results.find((e: any) => e.id == orderUpId);
-        const currentOrder = currentPatternPath?.order;
-        const minusOneOrder = currentOrder ? currentOrder - 1 : undefined;
-        const minusOnePatternPathId = data?.patternPaths?.results.find(
-            (e: any) => e.order == minusOneOrder
-        )?.id;
-        if (minusOneOrder && orderUpId) {
-            updatePatternPath({ id: orderUpId, input: { order: minusOneOrder as any } });
-            if (minusOnePatternPathId) {
-                updatePatternPath({
-                    id: minusOnePatternPathId,
-                    input: { order: currentOrder }
-                });
-            }
-        }
-    }, [orderUpId]);
-
-    useEffect(() => {
-        const currentPatternPath = data?.patternPaths?.results.find(
-            (e: any) => e.id == orderDownId
+        const currentRoundAdvisedAddress = data?.roundAdvisedAddresses?.results.find(
+            (e: any) => e.id == roundOrderIdUpId
         );
-        const currentOrder = currentPatternPath?.order;
-        const plusOneOrder = currentOrder ? currentOrder + 1 : undefined;
-        const plusOnePatternPathId = data?.patternPaths?.results.find(
-            (e: any) => e.order == plusOneOrder
+        const currentRoundOrderId = currentRoundAdvisedAddress?.roundOrderId;
+        const minusOneRoundOrderId = currentRoundOrderId ? currentRoundOrderId - 1 : undefined;
+        const minusOneRoundAdvisedAddressId = data?.roundAdvisedAddresses?.results.find(
+            (e: any) => e.roundOrderId == minusOneRoundOrderId
         )?.id;
-        if (plusOneOrder && orderDownId) {
-            updatePatternPath({ id: orderDownId, input: { order: plusOneOrder } });
-            if (plusOnePatternPathId) {
-                updatePatternPath({
-                    id: plusOnePatternPathId,
-                    input: { order: currentOrder }
+        if (minusOneRoundOrderId && roundOrderIdUpId) {
+            updateRoundAdvisedAddress({
+                id: roundOrderIdUpId,
+                input: { roundOrderId: minusOneRoundOrderId as any }
+            });
+            if (minusOneRoundAdvisedAddressId) {
+                updateRoundAdvisedAddress({
+                    id: minusOneRoundAdvisedAddressId,
+                    input: { roundOrderId: currentRoundOrderId }
                 });
             }
         }
-    }, [orderDownId]);
+    }, [roundOrderIdUpId]);
 
-    // date formatting
-    if (rows?.results && rows?.results.length > 0) {
-        rows.results.forEach((row: any) => {
-            Object.keys(row).forEach((key) => {
-                if (isString(row[key]) && isStringDateTime(row[key])) {
-                    if (
-                        !(
-                            key === 'value' &&
-                            'featureCode_dateType' in row &&
-                            !row['featureCode_dateType']
-                        )
-                    ) {
-                        row[key] = formatUTCLocaleDateTime(row[key], router.locale);
-                    }
-                }
-                if (isString(row[key]) && isStringDate(row[key])) {
-                    if (
-                        !(
-                            key === 'value' &&
-                            'featureCode_dateType' in row &&
-                            !row['featureCode_dateType']
-                        )
-                    ) {
-                        row[key] = formatUTCLocaleDate(row[key], router.locale);
-                    }
-                }
+    useEffect(() => {
+        const currentRoundAdvisedAddress = data?.roundAdvisedAddresses?.results.find(
+            (e: any) => e.id == roundOrderIdDownId
+        );
+        const currentRoundOrderId = currentRoundAdvisedAddress?.roundOrderId;
+        const plusOneRoundOrderId = currentRoundOrderId ? currentRoundOrderId + 1 : undefined;
+        const plusOneRoundAdvisedAddressId = data?.roundAdvisedAddresses?.results.find(
+            (e: any) => e.roundOrderId == plusOneRoundOrderId
+        )?.id;
+        if (plusOneRoundOrderId && roundOrderIdDownId) {
+            updateRoundAdvisedAddress({
+                id: roundOrderIdDownId,
+                input: { roundOrderId: plusOneRoundOrderId }
             });
-        });
-    }
+            if (plusOneRoundAdvisedAddressId) {
+                updateRoundAdvisedAddress({
+                    id: plusOneRoundAdvisedAddressId,
+                    input: { roundOrderId: currentRoundOrderId }
+                });
+            }
+        }
+    }, [roundOrderIdDownId]);
 
     // #endregion
     return (
@@ -586,5 +620,5 @@ const PatternPathListComponent = (props: IListProps) => {
     );
 };
 
-PatternPathListComponent.displayName = 'ListWithFilter';
-export { PatternPathListComponent };
+RoundAdvisedAddressListComponent.displayName = 'ListWithFilter';
+export { RoundAdvisedAddressListComponent };
