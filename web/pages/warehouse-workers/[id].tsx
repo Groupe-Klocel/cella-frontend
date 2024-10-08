@@ -131,12 +131,10 @@ const WarehouseWorkerPage: PageComponent = () => {
                 _variables: DeleteWarehouseWorkerMutationVariables,
                 _context: any
             ) => {
-                if (!DeleteLoading) {
-                    showSuccess(t('messages:success-deleted'));
-                    if (isDeletingActualUser) logout();
-                    else {
-                        router.push(`/warehouse-workers/`);
-                    }
+                showSuccess(t('messages:success-deleted'));
+                if (isDeletingActualUser) logout();
+                else {
+                    router.push(`/warehouse-workers/`);
                 }
             },
             onError: (err) => {

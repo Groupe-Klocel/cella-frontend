@@ -8539,7 +8539,6 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     transition: margin-bottom 0.3s 0.017s linear;
 }
 .ant-form-item-with-help {
-    margin-bottom: 0;
     transition: none;
 }
 .ant-form-hide-required-mark .ant-form-item-label > label .ant-form-item-optional,
@@ -16525,6 +16524,7 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     left: 0;
     margin-left: 0;
     border-right: 0;
+    width: auto !important;
 }
 .ant-menu-vertical-left.ant-menu-sub .ant-menu-item::after,
 .ant-menu-vertical-right.ant-menu-sub .ant-menu-item::after,
@@ -17309,6 +17309,7 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
 .ant-menu-rtl .ant-menu-submenu-vertical > .ant-menu-submenu-title .ant-menu-submenu-arrow {
     right: auto;
     left: 16px;
+    opacity: 1;
 }
 .ant-menu-rtl
     .ant-menu-submenu-vertical-left
@@ -26082,4 +26083,8 @@ div.ant-typography-edit-content.ant-typography-rtl {
 .custom-header {
     background: '#fff';
     padding: 12px 24px 16px 24px;
+}
+.ant-menu-submenu-popup > .ant-menu .ant-menu-submenu-expand-icon,
+.ant-menu-submenu-popup > .ant-menu .ant-menu-submenu-arrow {
+    color: #fff;
 }

@@ -340,6 +340,7 @@ export const AddHandlingUnitContentForm = () => {
                 delete formData.locationName;
                 delete formData.articleName;
                 CreateHandlingUnitWithContent({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

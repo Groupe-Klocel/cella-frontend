@@ -330,6 +330,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                 delete formData.customerOrderName;
                 delete formData.thirdPartyName;
                 createCustomerOrderAddress({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

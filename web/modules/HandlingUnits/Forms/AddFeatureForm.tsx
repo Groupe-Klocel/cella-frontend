@@ -231,6 +231,7 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                         mutate({
                             input: { ...inputs, ...props.extraData }
                         });
+                        setUnsavedChanges(false);
                     })
                     .catch((err) => {
                         showError(t('errors:DB-000111'));

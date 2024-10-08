@@ -216,6 +216,7 @@ export const AddLocationForm = () => {
                 delete formData.rotation;
 
                 bulkCreateLocation({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('error-creating-data'));

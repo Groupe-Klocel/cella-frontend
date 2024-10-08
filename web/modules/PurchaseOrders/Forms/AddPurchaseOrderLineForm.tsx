@@ -218,6 +218,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
                 delete formData.purchaseOrderName;
                 delete formData.stockOwnerName;
                 createPurchaseOrderLine({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

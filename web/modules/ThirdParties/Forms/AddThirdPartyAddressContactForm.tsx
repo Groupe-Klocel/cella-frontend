@@ -137,6 +137,7 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
                 delete formData.thirdPartyName;
                 delete formData.thirdPartyAddressName;
                 createThirdPartyAddressContact({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));
