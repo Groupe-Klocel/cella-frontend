@@ -56,7 +56,7 @@ export const AddItemForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) => 
         const handleWindowClose = (e: BeforeUnloadEvent) => {
             if (!unsavedChanges) return;
             e.preventDefault();
-            return (e.returnValue = t('messages:confirm-leaving-page'));
+            return (e.returnValue = t('messages:confirm-leaving-page')); //deprecated but still required for some old browsers
         };
         const handleBrowseAway = () => {
             if (!unsavedChanges) return;
@@ -95,7 +95,6 @@ export const AddItemForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) => 
         if (!(createResult && createResult.data)) return;
 
         if (createResult.success) {
-            setUnsavedChanges(false);
             router.push(
                 props.routeAfterSuccess.replace(
                     ':id',
@@ -133,6 +132,7 @@ export const AddItemForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) => 
                         mutate({
                             input: { ...form.getFieldsValue(true), ...props.extraData }
                         });
+                        setUnsavedChanges(false);
                     })
                     .catch((err) => {
                         showError(t('errors:DB-000111'));

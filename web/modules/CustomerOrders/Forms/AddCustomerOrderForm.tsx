@@ -177,6 +177,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                 delete formData['currencyText'];
 
                 createOrder({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

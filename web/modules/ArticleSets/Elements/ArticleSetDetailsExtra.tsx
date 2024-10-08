@@ -98,13 +98,11 @@ const ArticleSetDetailsExtra = ({
                 _variables: DeleteArticleSetDetailMutationVariables,
                 _context: any
             ) => {
-                if (!deleteLoading) {
-                    if (data.deleteArticleSetDetail) {
-                        showSuccess(t('messages:success-deleted'));
-                        router.reload();
-                    } else {
-                        showError(t('messages:error-delete-set-impossible'));
-                    }
+                if (data.deleteArticleSetDetail) {
+                    showSuccess(t('messages:success-deleted'));
+                    router.reload();
+                } else {
+                    showError(t('messages:error-delete-set-impossible'));
                 }
             },
             onError: (err) => {

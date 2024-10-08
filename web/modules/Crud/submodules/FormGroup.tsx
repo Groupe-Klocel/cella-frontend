@@ -41,9 +41,12 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
     const router = useRouter();
 
     moment.locale(router.locale);
+
     const localeData = moment.localeData();
     const localeDateTimeFormat =
         localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
+
+        console.log(localeDateTimeFormat, 'localeDateTimeFormat');
 
     return (
         <>

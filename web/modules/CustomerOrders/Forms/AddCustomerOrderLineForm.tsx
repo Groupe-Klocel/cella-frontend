@@ -365,10 +365,9 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                 delete formData.articleLuId;
 
                 createOrderLine({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
-                console.log(err);
-
                 showError(t('messages:error-creating-data'));
             });
     };

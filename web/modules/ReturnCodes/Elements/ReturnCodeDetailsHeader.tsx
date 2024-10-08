@@ -67,13 +67,11 @@ const ReturnCodeDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) 
                 _variables: DeleteParameterMutationVariables,
                 _context: unknown
             ) => {
-                if (!deleteLoading) {
-                    if (data.deleteParameter) {
-                        showSuccess(t('messages:success-deleted'));
-                        router.push('/return-codes/');
-                    } else {
-                        showError(t('messages:error-delete-feature-types-impossible'));
-                    }
+                if (data.deleteParameter) {
+                    showSuccess(t('messages:success-deleted'));
+                    router.push('/return-codes/');
+                } else {
+                    showError(t('messages:error-delete-feature-types-impossible'));
                 }
             },
 
