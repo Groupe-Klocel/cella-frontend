@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-import { Checkbox, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
+import { Checkbox, Col, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
     BulkUpdateArticlesMutation,

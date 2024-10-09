@@ -486,11 +486,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                     </Select>
                 </Form.Item>
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
-                    <DatePicker
-                        allowClear
-                        format="YYYY-MM-DD"
-                        showTime={{ defaultValue: dayjs('YYYY-MM-DD') }}
-                    />
+                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
                 </Form.Item>
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
                     <Select

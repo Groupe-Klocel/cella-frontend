@@ -636,11 +636,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     <InputNumber />
                 </Form.Item>
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
-                    <DatePicker
-                        allowClear
-                        format="YYYY-MM-DD"
-                        showTime={{ defaultValue: dayjs('YYYY-MM-DD') }}
-                    />
+                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
                 </Form.Item>
                 <Form.Item
                     label={deliveryTypeLabel}

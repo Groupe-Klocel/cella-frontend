@@ -270,10 +270,7 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                     initialValue={moment()}
                 >
-                    <DatePicker
-                        format="YYYY-MM-DD"
-                        showTime={{ defaultValue: dayjs('YYYY-MM-DD') }}
-                    />
+                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
                 </Form.Item>
                 <Form.Item
                     label={t('d:amount')}
