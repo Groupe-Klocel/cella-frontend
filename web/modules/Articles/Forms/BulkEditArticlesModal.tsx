@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-import { Checkbox, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
+import { Checkbox, Col, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
     BulkUpdateArticlesMutation,
@@ -33,7 +33,6 @@ import {
 import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import moment from 'moment';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { FormOptionType } from 'models/ModelsV2';
 
@@ -126,7 +125,7 @@ const BulkEditArticlesRenderModal = ({
     // UPDATE Delivery Line
     const {
         mutate,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useBulkUpdateArticlesMutation<Error>(graphqlRequestClient, {
         onSuccess: (
@@ -168,7 +167,7 @@ const BulkEditArticlesRenderModal = ({
     return (
         <Modal
             title={t('actions:edit-articles')}
-            visible={visible}
+            open={visible}
             onOk={onClickOk}
             onCancel={handleCancel}
             width="auto"

@@ -307,7 +307,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     };
 
     //CREATE delivery line
-    const { mutate, isLoading: createLoading } = useCreateOrderLineMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateOrderLineMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -365,10 +365,9 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                 delete formData.articleLuId;
 
                 createOrderLine({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
-                console.log(err);
-
                 showError(t('messages:error-creating-data'));
             });
     };

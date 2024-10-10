@@ -47,6 +47,7 @@ import {
     useListParametersForAScopeQuery
 } from 'generated/graphql';
 import moment from 'moment';
+import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import TextArea from 'antd/lib/input/TextArea';
@@ -130,7 +131,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: createLoading } = useCreateOrderMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateOrderMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -176,6 +177,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                 delete formData['currencyText'];
 
                 createOrder({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));
@@ -634,11 +636,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     <InputNumber />
                 </Form.Item>
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
-                    <DatePicker
-                        allowClear
-                        format="YYYY-MM-DD"
-                        showTime={{ defaultValue: moment('YYYY-MM-DD') }}
-                    />
+                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
                 </Form.Item>
                 <Form.Item
                     label={deliveryTypeLabel}

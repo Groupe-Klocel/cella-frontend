@@ -36,9 +36,27 @@ import { isString } from 'lodash';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
 import { FC, useCallback, useEffect, useState, useRef, Key } from 'react';
+import styled from 'styled-components';
 
 const { Column } = Table;
 const { Link } = Typography;
+
+const StyledTable = styled(Table)`
+    &&& {
+        .ant-table-thead {
+            > tr {
+                > th:not(:last-child):not(.ant-table-selection-column):not(
+                        .ant-table-row-expand-icon-cell
+                    ):not([colspan])::before,
+                > td:not(:last-child):not(.ant-table-selection-column):not(
+                        .ant-table-row-expand-icon-cell
+                    ):not([colspan])::before {
+                    display: none !important;
+                }
+            }
+        }
+    }
+`;
 
 export interface IAppTableV2Props {
     // Refactory to strong type
@@ -202,7 +220,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     // make wrapper function to give child
 
     const childSetVisibleColumnKeys = useCallback(
-        (val) => {
+        (val: any) => {
             setVisibleColumnKeys(val);
         },
         [setVisibleColumnKeys]
@@ -210,7 +228,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
 
     // make wrapper function to give child
     const childSetFixedColumns = useCallback(
-        (val) => {
+        (val: any) => {
             setFixedColumns(val);
         },
         [setFixedColumns]
@@ -218,7 +236,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
 
     // make wrapper function to give child
     const childSetTableColumns = useCallback(
-        (val) => {
+        (val: any) => {
             const valWithoutDuplicates = val.filter(
                 (obj: any, index: number, self: any) =>
                     index === self.findIndex((t: any) => t.key === obj.key)
@@ -335,7 +353,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                     )}
                 </Space>
             </WrapperStickyActions>
-            <Table
+            <StyledTable
                 rowKey="id"
                 dataSource={data}
                 scroll={scroll}
@@ -369,7 +387,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                         defaultSortOrder={c.defaultSortOrder}
                     />
                 ))}
-            </Table>
+            </StyledTable>
         </PageTableContentWrapper>
     );
 };

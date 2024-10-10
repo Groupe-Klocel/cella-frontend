@@ -42,7 +42,6 @@ import {
 } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { DeliveryDetailsExtra } from 'modules/Deliveries/Elements/DeliveryDetailsExtra';
-import moment from 'moment';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 
@@ -92,7 +91,7 @@ const DeliveryPage: PageComponent = () => {
     const deliveryLines = useDeliveryLineIds({ deliveryId: `${data?.id}%` }, 1, 100, null);
 
     // CANCEL DELIVERY
-    const { mutate: cancelDeliveryMutate, isLoading: cancelLoading } =
+    const { mutate: cancelDeliveryMutate, isPending: cancelLoading } =
         useCancelDeliveryMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: CancelDeliveryMutation,

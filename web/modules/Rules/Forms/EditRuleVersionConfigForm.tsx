@@ -80,7 +80,7 @@ export const EditRuleVersionConfigForm: FC<EditRuleVersionConfigFormProps> = ({
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: updateLoading } = useUpdateRuleVersionConfigMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateRuleVersionConfigMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

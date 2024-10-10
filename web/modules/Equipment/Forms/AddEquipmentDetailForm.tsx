@@ -109,7 +109,7 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
         }
     }, [carrierShippingModeData.data]);
 
-    const { mutate, isLoading: createLoading } = useCreateEquipmentDetailMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateEquipmentDetailMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

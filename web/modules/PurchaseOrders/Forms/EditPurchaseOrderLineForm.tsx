@@ -163,7 +163,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     }, [vatRatesList.data]);
 
     //CREATE purchase order line
-    const { mutate, isLoading: updateLoading } = useUpdatePurchaseOrderLineMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdatePurchaseOrderLineMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

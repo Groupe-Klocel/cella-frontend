@@ -194,7 +194,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
         ?.filter((e: any) => e.priority !== null)
         .sort(compare);
 
-    const { mutate, isLoading: updateLoading } = useUpdateEquipmentMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateEquipmentMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

@@ -181,7 +181,7 @@ const NumberOfPrintsModalV2 = ({
     return (
         <Modal
             title={t('actions:number-of-copies')}
-            visible={showModal.showNumberOfPrintsModal}
+            open={showModal.showNumberOfPrintsModal}
             onOk={onClickOk}
             onCancel={handleCancel}
             width={450}

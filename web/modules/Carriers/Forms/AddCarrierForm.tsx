@@ -347,6 +347,7 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
                         mutate({
                             input: { ...formData, ...props.extraData }
                         });
+                        setUnsavedChanges(false);
                     })
                     .catch((err) => {
                         showError(t('errors:DB-000111'));

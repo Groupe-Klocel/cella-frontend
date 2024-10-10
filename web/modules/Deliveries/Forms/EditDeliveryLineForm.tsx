@@ -101,7 +101,7 @@ export const EditDeliveryLineForm: FC<EditDeliveryLineFormProps> = ({
     // UPDATE Delivery Line
     const {
         mutate,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useUpdateDeliveryLineMutation<Error>(graphqlRequestClient, {
         onSuccess: (

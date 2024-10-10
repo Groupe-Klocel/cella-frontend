@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { cookie } from '@helpers';
+import { cookie, GraphQLResponseType } from '@helpers';
 import { errorMonitor } from 'events';
 import { gql, GraphQLClient } from 'graphql-request';
 import { FormOptionType } from 'models/Models';
@@ -90,7 +90,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         finalLocationName: finalLocationName
     };
 
-    const locations = await graphqlRequestClient
+    const locations: any = await graphqlRequestClient
         .request(query, variables, requestHeader)
         .catch((error: any) => {
             if (error.response.errors[0].extensions.is_error) {

@@ -27,21 +27,17 @@ export interface IProfileMenuProps {
 }
 
 const ProfileMenu: FC<IProfileMenuProps> = ({ username, profileMenu }: IProfileMenuProps) => {
-    const profileMenuItem = (
-        <Menu>
-            {profileMenu.map((menu) => (
-                <Menu.Item onClick={menu.onClick} key={menu.key} icon={menu.icon}>
-                    {menu.title}
-                </Menu.Item>
-            ))}
-        </Menu>
-    );
+    const items = profileMenu.map((menu) => ({
+        key: menu.key,
+        icon: menu.icon,
+        label: <a onClick={menu.onClick}>{menu.title}</a>
+    }));
 
     return (
         <>
             <Space>
                 <Avatar>{username.charAt(0).toUpperCase()}</Avatar>
-                <Dropdown overlay={profileMenuItem} placement="bottomCenter">
+                <Dropdown menu={{ items }} placement="bottom">
                     <a onClick={(e) => e.preventDefault()} style={{ color: 'black' }}>
                         {`${username}   `} <DownOutlined />
                     </a>

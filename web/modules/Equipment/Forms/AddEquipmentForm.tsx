@@ -129,7 +129,7 @@ export const AddEquipmentForm = () => {
         .sort(compare);
 
     //For priority updates on Finish
-    const { mutate: updateMutate, isLoading: updateLoading } = useUpdateEquipmentMutation<Error>(
+    const { mutate: updateMutate, isPending: updateLoading } = useUpdateEquipmentMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -214,7 +214,7 @@ export const AddEquipmentForm = () => {
     // TYPED SAFE ALL
     const [form] = Form.useForm();
 
-    const { mutate, isLoading: createLoading } = useCreateEquipmentMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateEquipmentMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

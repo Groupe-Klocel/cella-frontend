@@ -45,7 +45,7 @@ export const AddConfigurationForm = () => {
     const [form] = Form.useForm();
     const [scopeListConfig, setScopeList] = useState<any>();
 
-    const { mutate, isLoading: createLoading } = useCreateConfigMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateConfigMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

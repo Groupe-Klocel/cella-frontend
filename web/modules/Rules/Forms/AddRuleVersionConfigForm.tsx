@@ -105,7 +105,7 @@ export const AddRuleVersionConfigForm = (props: ISingleItemProps) => {
     }
 
     //CREATE rule version
-    const { mutate, isLoading: createLoading } = useCreateRuleVersionConfigMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateRuleVersionConfigMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -135,8 +135,8 @@ export const AddRuleVersionConfigForm = (props: ISingleItemProps) => {
 
                 const ruleLineConfiguration = formData;
 
-                const input_tmp: InputMaybe<Scalars['JSON']> = {};
-                const output_tmp: InputMaybe<Scalars['JSON']> = {};
+                const input_tmp: any = {};
+                const output_tmp: any = {};
 
                 let new_element: any = {};
                 let keyToSearch;
