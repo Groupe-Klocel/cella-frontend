@@ -21,6 +21,7 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -278,7 +279,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     `;
 
-    const PoResponse = await graphqlRequestClient.request(
+    const PoResponse: GraphQLResponseType = await graphqlRequestClient.request(
         purchaseOrderQuery,
         purchaseOrderFilter,
         requestHeader
@@ -319,7 +320,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             });
         }
     } else {
-        const GoodsInResponse = await graphqlRequestClient.request(
+        const GoodsInResponse: GraphQLResponseType = await graphqlRequestClient.request(
             goodsInQuery,
             goodsInFilter,
             requestHeader

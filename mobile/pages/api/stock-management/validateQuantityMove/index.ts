@@ -21,7 +21,7 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
-import { isNonUniqueAndMatches } from '@helpers';
+import { GraphQLResponseType, isNonUniqueAndMatches } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -81,7 +81,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -148,7 +148,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     }
                 }
             `;
-            const destinationHuResult = await graphqlRequestClient.request(
+            const destinationHuResult: GraphQLResponseType = await graphqlRequestClient.request(
                 queryHUM,
                 newHUVariables,
                 requestHeader
@@ -184,7 +184,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         }
                     }
                 `;
-                const destinationHuResult = await graphqlRequestClient.request(
+                const destinationHuResult: GraphQLResponseType = await graphqlRequestClient.request(
                     createHUMutation,
                     newHUVariables,
                     requestHeader
@@ -242,7 +242,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     }
                 }
             `;
-            const destinationHucResult = await graphqlRequestClient.request(
+            const destinationHucResult: GraphQLResponseType = await graphqlRequestClient.request(
                 createHUCMutation,
                 newHUCVariables,
                 requestHeader
@@ -267,7 +267,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     quantity: `quantity+${movingQuantity}`
                 }
             };
-            const destinationHucResult = await graphqlRequestClient.request(
+            const destinationHucResult: GraphQLResponseType = await graphqlRequestClient.request(
                 updateHUCMutation,
                 destinationHUCVariables,
                 requestHeader
@@ -353,11 +353,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     }
                 };
 
-                const destinationHucResult = await graphqlRequestClient.request(
-                    updateHUCMutation,
-                    destinationHUCVariables,
-                    requestHeader
-                );
+                const destinationHucResult: GraphQLResponseType =
+                    await graphqlRequestClient.request(
+                        updateHUCMutation,
+                        destinationHUCVariables,
+                        requestHeader
+                    );
 
                 destinationHUC = destinationHucResult.updateHandlingUnitContent;
             }

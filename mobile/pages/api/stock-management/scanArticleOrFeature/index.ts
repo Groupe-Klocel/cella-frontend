@@ -22,6 +22,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
 import { HandlingUnitContentFeatureFieldName } from 'generated/graphql';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -163,7 +164,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     `;
 
-    const HUCFeatureResponse = await graphqlRequestClient.request(
+    const HUCFeatureResponse: GraphQLResponseType = await graphqlRequestClient.request(
         huFeaturesQuery,
         hucFeatureFilter,
         requestHeader
@@ -194,7 +195,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         };
     } else {
-        const articleLuBarcodeResponse = await graphqlRequestClient.request(
+        const articleLuBarcodeResponse: GraphQLResponseType = await graphqlRequestClient.request(
             articleLuBarcodesQuery,
             articleLuBarcodeFilter,
             requestHeader
