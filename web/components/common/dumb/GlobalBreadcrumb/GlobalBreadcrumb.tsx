@@ -19,41 +19,51 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { BreadcrumbType, isNumeric } from '@helpers';
 import { Breadcrumb } from 'antd';
+import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
 import Link from 'next/link';
 import { FC } from 'react';
+import styled, { css } from 'styled-components';
 
 export interface IBreadcrumbProps {
     routes?: Array<BreadcrumbType>;
 }
 
+const StyledBreadcrumb = styled(Breadcrumb)<{ isDarkTheme: boolean }>`
+    ${({ isDarkTheme }) =>
+        isDarkTheme &&
+        css`
+            .ant-breadcrumb-separator {
+                color: rgba(255, 255, 255, 0.45);
+            }
+
+            li:last-child,
+            li:last-child a {
+                color: rgba(255, 255, 255, 0.85);
+            }
+        `}
+`;
+
 const GlobalBreadcrumb: FC<IBreadcrumbProps> = ({ routes }: IBreadcrumbProps) => {
+    const { theme } = useAppState();
     const { t } = useTranslation();
-    return (
-        <Breadcrumb>
-            {routes ? (
-                routes.map((item, index) => {
-                    return item.path ? (
-                        <Breadcrumb.Item key={index}>
-                            <Link href={item.path}>
-                                {isNumeric(item.breadcrumbName)
-                                    ? item.breadcrumbName
-                                    : t(item.breadcrumbName)}
-                            </Link>
-                        </Breadcrumb.Item>
-                    ) : (
-                        <Breadcrumb.Item key={index}>
-                            {isNumeric(item.breadcrumbName)
-                                ? item.breadcrumbName
-                                : t(item.breadcrumbName)}
-                        </Breadcrumb.Item>
-                    );
-                })
+
+    const breadcrumbItems =
+        routes?.map((item) => ({
+            title: item.path ? (
+                <Link href={item.path}>
+                    {isNumeric(item.breadcrumbName) ? item.breadcrumbName : t(item.breadcrumbName)}
+                </Link>
+            ) : isNumeric(item.breadcrumbName) ? (
+                item.breadcrumbName
             ) : (
-                <></>
-            )}
-        </Breadcrumb>
-    );
+                t(item.breadcrumbName)
+            )
+        })) || [];
+
+    const isDarkTheme = theme !== 'light';
+
+    return <StyledBreadcrumb items={breadcrumbItems} isDarkTheme={isDarkTheme} />;
 };
 
 GlobalBreadcrumb.displayName = 'GlobalBreadcrumb';

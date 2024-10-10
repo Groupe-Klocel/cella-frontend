@@ -1,9 +1,22 @@
 /** @type {import('next').NextConfig} */
-const withAntdLess = require('next-plugin-antd-less');
-const nextTranslate = require('next-translate');
+import withAntdLess from 'next-plugin-antd-less';
+import nextTranslate from 'next-translate-plugin';
 
-module.exports = withAntdLess(
+const config = withAntdLess(
     nextTranslate({
-        reactStrictMode: true
+        reactStrictMode: true,
+        transpilePackages: [
+            'antd',
+            '@ant-design/icons',
+            'rc-util',
+            'rc-pagination',
+            'rc-picker',
+            'rc-tree',
+            'rc-table',
+            'lodash-es',
+            '@ant-design/pro-form'
+        ]
     })
 );
+
+export default config;

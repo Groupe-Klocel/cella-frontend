@@ -48,7 +48,7 @@ const HandlingUnitsPage: PageComponent = () => {
 
     const [uploadedFileUrl, setUploadedFileUrl] = useState('');
 
-    const { mutate: uploadFileMutate, isLoading: uploadFileLoading } = useUploadFileMutation<Error>(
+    const { mutate: uploadFileMutate, isPending: uploadFileLoading } = useUploadFileMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

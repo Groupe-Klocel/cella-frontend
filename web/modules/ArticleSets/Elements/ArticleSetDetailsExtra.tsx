@@ -91,20 +91,18 @@ const ArticleSetDetailsExtra = ({
     };
 
     // DELETE
-    const { mutate: DeleteMutate, isLoading: deleteLoading } =
+    const { mutate: DeleteMutate, isPending: deleteLoading } =
         useDeleteArticleSetDetailMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeleteArticleSetDetailMutation,
                 _variables: DeleteArticleSetDetailMutationVariables,
                 _context: any
             ) => {
-                if (!deleteLoading) {
-                    if (data.deleteArticleSetDetail) {
-                        showSuccess(t('messages:success-deleted'));
-                        router.reload();
-                    } else {
-                        showError(t('messages:error-delete-set-impossible'));
-                    }
+                if (data.deleteArticleSetDetail) {
+                    showSuccess(t('messages:success-deleted'));
+                    router.reload();
+                } else {
+                    showError(t('messages:error-delete-set-impossible'));
                 }
             },
             onError: (err) => {

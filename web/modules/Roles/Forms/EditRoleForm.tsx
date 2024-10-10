@@ -81,7 +81,7 @@ export const EditRoleForm: FC<EditRoleFormProps> = ({
 
     const {
         mutate,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useUpdateRoleMutation<Error>(graphqlRequestClient, {
         onSuccess: (

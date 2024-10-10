@@ -42,7 +42,7 @@ export const AddReturnCodeForm = () => {
     const [form] = Form.useForm();
 
     // IF ERRORS print MODALE or if  Suceess save to BDD
-    const { mutate, isLoading: createLoading } = useCreateParameterMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateParameterMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

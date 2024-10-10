@@ -361,7 +361,7 @@ const PatternPathListComponent = (props: IListProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage, itemsPerPage) => {
+        (currentPage: any, itemsPerPage: any) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: rows?.count,
@@ -428,7 +428,7 @@ const PatternPathListComponent = (props: IListProps) => {
     }, [props.refresh]);
 
     // Order up and down management (this part of code could be improved in the next phase by e.g. factorising it)
-    const { mutate: patternPathMutate, isLoading: updatedLoading } =
+    const { mutate: patternPathMutate, isPending: updatedLoading } =
         useUpdatePatternPathMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: UpdatePatternPathMutation,

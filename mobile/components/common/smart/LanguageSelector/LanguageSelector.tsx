@@ -28,6 +28,23 @@ const { Option } = Select;
 const StyledSelect = styled(Select)`
     width: 40px;
     padding: 0px 5px 0px 5px;
+
+    .ant-select-selector {
+        border: none !important;
+        background-color: transparent !important;
+        padding: 0 !important;
+    }
+
+    .ant-select-selection-item {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+
+    .ant-select-arrow {
+        display: none;
+    }
 `;
 const LanguageSelector: FC = () => {
     const router = useRouter();
@@ -40,12 +57,7 @@ const LanguageSelector: FC = () => {
     };
 
     return (
-        <StyledSelect
-            defaultValue={locale}
-            bordered={false}
-            onChange={changeLanguage}
-            showArrow={false}
-        >
+        <StyledSelect defaultValue={locale} onChange={changeLanguage}>
             {isoLangs.map((language: LanguageType) => (
                 <Option key={language.code} value={language.code}>
                     <img src={language.flag} width={15} />

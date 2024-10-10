@@ -34,7 +34,7 @@ const ProtectRoute: any | null = ({ children }: OnlyChildrenType) => {
     const { user, permissions } = useAppState();
     const dispatchUser = useAppDispatch();
     const setUserInfo = useCallback(
-        (newUser) =>
+        (newUser: any) =>
             dispatchUser({
                 type: 'SET_USER_INFO',
                 user: newUser

@@ -159,7 +159,7 @@ export const EditCreditAddressForm: FC<EditCreditAddressFormProps> = ({
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: updateLoading } = useUpdateOrderAddressMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateOrderAddressMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

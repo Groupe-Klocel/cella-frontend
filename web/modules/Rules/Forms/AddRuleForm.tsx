@@ -47,7 +47,7 @@ export const AddRuleForm = () => {
     const [form] = Form.useForm();
 
     //CREATE rule version
-    const { mutate, isLoading: createLoading } = useCreateRuleMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateRuleMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

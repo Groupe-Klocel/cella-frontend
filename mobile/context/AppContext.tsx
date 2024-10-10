@@ -25,7 +25,7 @@ import { createCtx } from './create-context';
 const menuInitialState = cookie.get('isSettingMenuCollapsed')
     ? stringToBoolean(cookie.get('isSettingMenuCollapsed'))
     : true;
-const themeInitialState = cookie.get('theme') ? cookie.get('theme') : 'light';
+const themeInitialState = cookie.get('mobile_theme') ? cookie.get('mobile_theme') : 'light';
 
 const initialState = {
     theme: themeInitialState,
@@ -65,7 +65,7 @@ function reducer(state: State, action: Action) {
 
 const saveUserSettings = (menu: boolean, theme: string) => {
     cookie.set('isSettingMenuCollapsed', menu.toString());
-    cookie.set('theme', theme);
+    cookie.set('mobile_theme', theme);
 };
 
 const [useAppState, useAppDispatch, AppProvider] = createCtx(initialState, reducer);

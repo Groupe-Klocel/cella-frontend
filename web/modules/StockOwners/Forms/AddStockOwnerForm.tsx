@@ -434,6 +434,7 @@ export const AddStockOwnerForm: FC<IAddStockOwnerFormProps> = (props: IAddStockO
                         mutate({
                             input: { ...form.getFieldsValue(true), ...props.extraData }
                         });
+                        setUnsavedChanges(false);
                     })
                     .catch((err) => {
                         showError(t('errors:DB-000111'));

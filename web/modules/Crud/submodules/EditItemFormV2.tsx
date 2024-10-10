@@ -21,6 +21,10 @@ import { FC, useEffect, useState } from 'react';
 import { Button, Form, Modal, Space } from 'antd';
 import { StepsPanel, WrapperForm, WrapperStepContent } from '@components';
 import useTranslation from 'next-translate/useTranslation';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 
 import { useRouter } from 'next/router';
 
@@ -129,6 +133,7 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
                     id: props.id,
                     input: { ...form.getFieldsValue(true) }
                 });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('errors:DB-000111'));
@@ -140,12 +145,12 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
 
         if (props.editSteps.length > 0) {
             let allFields = props.editSteps[0].map((item) => {
-                // DatePicker's value only accept moment, Conversion string -> moment required
+                // DatePicker's value only accept dayjs, Conversion string -> dayjs required
                 Object.keys(tmp_details).forEach((key) => {
                     if (key == item.name && item.type == FormDataType.Calendar) {
-                        const momentDate = moment(tmp_details[key]);
-                        if (tmp_details[key] && momentDate.isValid()) {
-                            tmp_details[key] = moment(setUTCDateTime(tmp_details[key]));
+                        const dayjsDate = dayjs(tmp_details[key]);
+                        if (tmp_details[key] && dayjsDate.isValid()) {
+                            tmp_details[key] = dayjs(setUTCDateTime(tmp_details[key]));
                         } else {
                             tmp_details[key] = undefined;
                         }
@@ -161,12 +166,12 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
             for (let i = 1; i < props.editSteps.length; i++) {
                 allFields = allFields.concat(
                     props.editSteps[i].map((item) => {
-                        // DatePicker's value only accept moment, Conversion string -> moment required
+                        // DatePicker's value only accept dayjs, Conversion string -> dayjs required
                         Object.keys(tmp_details).forEach((key) => {
                             if (key == item.name && item.type == FormDataType.Calendar) {
-                                const momentDate = moment(tmp_details[key]);
-                                if (tmp_details[key] && momentDate.isValid()) {
-                                    tmp_details[key] = moment(setUTCDateTime(tmp_details[key]));
+                                const dayjsDate = dayjs(tmp_details[key]);
+                                if (tmp_details[key] && dayjsDate.isValid()) {
+                                    tmp_details[key] = dayjs(setUTCDateTime(tmp_details[key]));
                                 } else {
                                     tmp_details[key] = undefined;
                                 }
@@ -222,6 +227,9 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
             })
             .catch((err) => console.log(err));
     };
+
+console.log("DLA-form", form.getFieldsValue(true));
+
 
     return (
         <WrapperForm>

@@ -33,11 +33,13 @@ const StyledProgressWrapper = styled.div`
     margin: 15px auto;
     height: 20px;
     width: 90%;
-`
+`;
 
 const StyledDivProgressDone = styled.div`
-    background: linear-gradient(to left,#7cf270,#c3ff72);
-    box-shadow: 0 1px 1px -3px #7cf270, 0 1px 3px #7cf270;
+    background: linear-gradient(to left, #7cf270, #c3ff72);
+    box-shadow:
+        0 1px 1px -3px #7cf270,
+        0 1px 3px #7cf270;
     border-radius: 5px;
     color: #000;
     display: flex;
@@ -45,39 +47,35 @@ const StyledDivProgressDone = styled.div`
     justify-content: center;
     height: 100%;
     width: 0;
-    opacity: 0; 
+    opacity: 0;
     transition: 1s ease 0.3s;
     position: absolute;
-    z-index:1;
-`
+    z-index: 1;
+`;
 
 const StyledDivValue = styled.div`
     z-index: 100;
     position: relative;
-    text-align: center
-`
+    text-align: center;
+`;
 
-const ProgressBar: FC<IProgressBarProps> = ({
-    value,
-}: IProgressBarProps) => {
+const ProgressBar: FC<IProgressBarProps> = ({ value }: IProgressBarProps) => {
     const [style, setStyle] = useState({});
 
     setTimeout(() => {
-		const newStyle = {
-			opacity: 1,
-			width: `${value}%`
-		}
-		
-		setStyle(newStyle);
-	}, 100);
+        const newStyle = {
+            opacity: 1,
+            width: `${value}%`
+        };
+
+        setStyle(newStyle);
+    }, 100);
 
     return (
         <StyledProgressWrapper>
-			<StyledDivProgressDone style={style}/>
-            <StyledDivValue>
-                {value}%
-            </StyledDivValue>
-		</StyledProgressWrapper>
+            <StyledDivProgressDone style={style} />
+            <StyledDivValue>{value}%</StyledDivValue>
+        </StyledProgressWrapper>
     );
 };
 

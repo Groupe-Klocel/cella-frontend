@@ -164,7 +164,7 @@ export const AddLocationForm = () => {
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: createLoading } = useBulkCreateLocationsMutation<Error>(
+    const { mutate, isPending: createLoading } = useBulkCreateLocationsMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -216,6 +216,7 @@ export const AddLocationForm = () => {
                 delete formData.rotation;
 
                 bulkCreateLocation({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('error-creating-data'));

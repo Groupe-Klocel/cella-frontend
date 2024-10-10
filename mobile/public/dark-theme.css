@@ -1701,9 +1701,11 @@ mark {
     box-shadow: 0 0 0 0 #00adb5;
     box-shadow: 0 0 0 0 var(--antd-wave-shadow-color);
     opacity: 0.2;
-    -webkit-animation: fadeEffect 2s cubic-bezier(0.08, 0.82, 0.17, 1),
+    -webkit-animation:
+        fadeEffect 2s cubic-bezier(0.08, 0.82, 0.17, 1),
         waveEffect 0.4s cubic-bezier(0.08, 0.82, 0.17, 1);
-    animation: fadeEffect 2s cubic-bezier(0.08, 0.82, 0.17, 1),
+    animation:
+        fadeEffect 2s cubic-bezier(0.08, 0.82, 0.17, 1),
         waveEffect 0.4s cubic-bezier(0.08, 0.82, 0.17, 1);
     -webkit-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
@@ -2113,7 +2115,8 @@ mark {
 }
 .ant-motion-collapse,
 .ant-motion-collapse-legacy-active {
-    transition: height 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+    transition:
+        height 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
         opacity 0.2s cubic-bezier(0.645, 0.045, 0.355, 1) !important;
 }
 .ant-motion-collapse {
@@ -2232,7 +2235,8 @@ mark {
 .ant-alert.ant-alert-motion-leave {
     overflow: hidden;
     opacity: 1;
-    transition: max-height 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86),
+    transition:
+        max-height 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86),
         opacity 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86),
         padding-top 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86),
         padding-bottom 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86),
@@ -4636,11 +4640,15 @@ a.ant-btn-sm {
 }
 .ant-card-hoverable {
     cursor: pointer;
-    transition: box-shadow 0.3s, border-color 0.3s;
+    transition:
+        box-shadow 0.3s,
+        border-color 0.3s;
 }
 .ant-card-hoverable:hover {
     border-color: transparent;
-    box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.64), 0 3px 6px 0 rgba(0, 0, 0, 0.48),
+    box-shadow:
+        0 1px 2px -2px rgba(0, 0, 0, 0.64),
+        0 3px 6px 0 rgba(0, 0, 0, 0.48),
         0 5px 12px 4px rgba(0, 0, 0, 0.36);
 }
 .ant-card-bordered {
@@ -4726,7 +4734,11 @@ a.ant-btn-sm {
     padding: 24px;
     border: 0;
     border-radius: 0;
-    box-shadow: 1px 0 0 0 #424242, 0 1px 0 0 #424242, 1px 1px 0 0 #424242, 1px 0 0 0 #424242 inset,
+    box-shadow:
+        1px 0 0 0 #424242,
+        0 1px 0 0 #424242,
+        1px 1px 0 0 #424242,
+        1px 0 0 0 #424242 inset,
         0 1px 0 0 #424242 inset;
     transition: all 0.3s;
 }
@@ -4737,7 +4749,9 @@ a.ant-btn-sm {
 .ant-card-grid-hoverable:hover {
     position: relative;
     z-index: 1;
-    box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.64), 0 3px 6px 0 rgba(0, 0, 0, 0.48),
+    box-shadow:
+        0 1px 2px -2px rgba(0, 0, 0, 0.64),
+        0 3px 6px 0 rgba(0, 0, 0, 0.48),
         0 5px 12px 4px rgba(0, 0, 0, 0.36);
 }
 .ant-card-contain-tabs > .ant-card-head .ant-card-head-title {
@@ -5221,7 +5235,9 @@ a.ant-btn-sm {
     border-left: 0;
     transform: rotate(45deg) scale(0) translate(-50%, -50%);
     opacity: 0;
-    transition: all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6), opacity 0.1s;
+    transition:
+        all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6),
+        opacity 0.1s;
     content: ' ';
 }
 .ant-cascader-checkbox-input {
@@ -5516,7 +5532,9 @@ a.ant-btn-sm {
     height: 9.14285714px;
     transform: rotate(45deg) scale(0) translate(-50%, -50%);
     opacity: 0;
-    transition: all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6), opacity 0.1s;
+    transition:
+        all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6),
+        opacity 0.1s;
 }
 .ant-checkbox-input {
     position: absolute;
@@ -5670,7 +5688,9 @@ a.ant-btn-sm {
     color: rgba(255, 255, 255, 0.85);
     line-height: 1.5715;
     cursor: pointer;
-    transition: all 0.3s, visibility 0s;
+    transition:
+        all 0.3s,
+        visibility 0s;
 }
 .ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-arrow {
     display: inline-block;
@@ -5898,7 +5918,9 @@ a.ant-btn-sm {
     display: inline-flex;
     align-items: center;
     border: 1px solid #6f6c6c;
-    transition: border 0.3s, box-shadow 0.3s;
+    transition:
+        border 0.3s,
+        box-shadow 0.3s;
 }
 .ant-picker-focused,
 .ant-picker:hover {
@@ -6021,7 +6043,9 @@ textarea.ant-picker-input > input {
     min-height: 32px;
     line-height: 1.5715;
     vertical-align: bottom;
-    transition: all 0.3s, height 0s;
+    transition:
+        all 0.3s,
+        height 0s;
 }
 .ant-picker-input > input-lg {
     padding: 6.5px 11px;
@@ -6072,7 +6096,9 @@ textarea.ant-picker-input > input {
     transform: translateY(-50%);
     cursor: pointer;
     opacity: 0;
-    transition: opacity 0.3s, color 0.3s;
+    transition:
+        opacity 0.3s,
+        color 0.3s;
 }
 .ant-picker-clear > * {
     vertical-align: top;
@@ -6233,7 +6259,9 @@ textarea.ant-picker-input > input {
     vertical-align: top;
     background: #303030;
     border-radius: 4px;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
     transition: margin 0.3s;
 }
@@ -6391,7 +6419,9 @@ textarea.ant-picker-input > input {
     content: '';
 }
 .ant-picker-cell:hover:not(.ant-picker-cell-in-view) .ant-picker-cell-inner,
-.ant-picker-cell:hover:not(.ant-picker-cell-selected):not(.ant-picker-cell-range-start):not(.ant-picker-cell-range-end):not(.ant-picker-cell-range-hover-start):not(.ant-picker-cell-range-hover-end)
+.ant-picker-cell:hover:not(.ant-picker-cell-selected):not(.ant-picker-cell-range-start):not(
+        .ant-picker-cell-range-end
+    ):not(.ant-picker-cell-range-hover-start):not(.ant-picker-cell-range-hover-end)
     .ant-picker-cell-inner {
     background: rgba(255, 255, 255, 0.08);
 }
@@ -6419,7 +6449,9 @@ textarea.ant-picker-input > input {
     background: #00adb5;
 }
 .ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single)::before,
-.ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single)::before {
+.ant-picker-cell-in-view.ant-picker-cell-range-start:not(
+        .ant-picker-cell-range-start-single
+    )::before {
     background: #293739;
 }
 .ant-picker-cell-in-view.ant-picker-cell-range-start::before {
@@ -6431,10 +6463,14 @@ textarea.ant-picker-input > input {
 }
 .ant-picker-cell-in-view.ant-picker-cell-range-hover-end.ant-picker-cell-range-end-single::after,
 .ant-picker-cell-in-view.ant-picker-cell-range-hover-end.ant-picker-cell-range-start.ant-picker-cell-range-end.ant-picker-cell-range-start-near-hover::after,
-.ant-picker-cell-in-view.ant-picker-cell-range-hover-end:not(.ant-picker-cell-in-range):not(.ant-picker-cell-range-start):not(.ant-picker-cell-range-end)::after,
+.ant-picker-cell-in-view.ant-picker-cell-range-hover-end:not(.ant-picker-cell-in-range):not(
+        .ant-picker-cell-range-start
+    ):not(.ant-picker-cell-range-end)::after,
 .ant-picker-cell-in-view.ant-picker-cell-range-hover-start.ant-picker-cell-range-start-single::after,
 .ant-picker-cell-in-view.ant-picker-cell-range-hover-start.ant-picker-cell-range-start.ant-picker-cell-range-end.ant-picker-cell-range-end-near-hover::after,
-.ant-picker-cell-in-view.ant-picker-cell-range-hover-start:not(.ant-picker-cell-in-range):not(.ant-picker-cell-range-start):not(.ant-picker-cell-range-end)::after,
+.ant-picker-cell-in-view.ant-picker-cell-range-hover-start:not(.ant-picker-cell-in-range):not(
+        .ant-picker-cell-range-start
+    ):not(.ant-picker-cell-range-end)::after,
 .ant-picker-cell-in-view.ant-picker-cell-range-hover:not(.ant-picker-cell-in-range)::after {
     position: absolute;
     top: 50%;
@@ -6454,9 +6490,13 @@ textarea.ant-picker-input > input {
 }
 .ant-picker-cell-in-view.ant-picker-cell-in-range.ant-picker-cell-range-hover::before,
 .ant-picker-cell-in-view.ant-picker-cell-range-end.ant-picker-cell-range-hover::before,
-.ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single).ant-picker-cell-range-hover-end::before,
+.ant-picker-cell-in-view.ant-picker-cell-range-end:not(
+        .ant-picker-cell-range-end-single
+    ).ant-picker-cell-range-hover-end::before,
 .ant-picker-cell-in-view.ant-picker-cell-range-start.ant-picker-cell-range-hover::before,
-.ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single).ant-picker-cell-range-hover-start::before,
+.ant-picker-cell-in-view.ant-picker-cell-range-start:not(
+        .ant-picker-cell-range-start-single
+    ).ant-picker-cell-range-hover-start::before,
 .ant-picker-panel
     > :not(.ant-picker-date-panel)
     .ant-picker-cell-in-view.ant-picker-cell-in-range.ant-picker-cell-range-hover-end::before,
@@ -6465,14 +6505,20 @@ textarea.ant-picker-input > input {
     .ant-picker-cell-in-view.ant-picker-cell-in-range.ant-picker-cell-range-hover-start::before {
     background: #000203;
 }
-.ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single):not(.ant-picker-cell-range-end)
+.ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single):not(
+        .ant-picker-cell-range-end
+    )
     .ant-picker-cell-inner {
     border-radius: 4px 0 0 4px;
 }
-.ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single):not(.ant-picker-cell-range-start)
+.ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single):not(
+        .ant-picker-cell-range-start
+    )
     .ant-picker-cell-inner,
 .ant-picker-panel-rtl
-    .ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single):not(.ant-picker-cell-range-end)
+    .ant-picker-cell-in-view.ant-picker-cell-range-start:not(
+        .ant-picker-cell-range-start-single
+    ):not(.ant-picker-cell-range-end)
     .ant-picker-cell-inner {
     border-radius: 0 4px 4px 0;
 }
@@ -6509,7 +6555,9 @@ textarea.ant-picker-input > input {
 .ant-picker-cell-range-hover.ant-picker-cell-range-end::after {
     left: 50%;
 }
-.ant-picker-cell-in-view.ant-picker-cell-range-hover-edge-start:not(.ant-picker-cell-range-hover-edge-start-near-range)::after,
+.ant-picker-cell-in-view.ant-picker-cell-range-hover-edge-start:not(
+        .ant-picker-cell-range-hover-edge-start-near-range
+    )::after,
 .ant-picker-cell-in-view.ant-picker-cell-range-hover-start::after,
 .ant-picker-cell-in-view.ant-picker-cell-start.ant-picker-cell-range-hover-edge-start.ant-picker-cell-range-hover-edge-start-near-range::after,
 tr > .ant-picker-cell-in-view.ant-picker-cell-range-hover-end:first-child::after,
@@ -6520,7 +6568,9 @@ tr > .ant-picker-cell-in-view.ant-picker-cell-range-hover:first-child::after {
     border-bottom-left-radius: 4px;
 }
 .ant-picker-cell-in-view.ant-picker-cell-end.ant-picker-cell-range-hover-edge-end.ant-picker-cell-range-hover-edge-end-near-range::after,
-.ant-picker-cell-in-view.ant-picker-cell-range-hover-edge-end:not(.ant-picker-cell-range-hover-edge-end-near-range)::after,
+.ant-picker-cell-in-view.ant-picker-cell-range-hover-edge-end:not(
+        .ant-picker-cell-range-hover-edge-end-near-range
+    )::after,
 .ant-picker-cell-in-view.ant-picker-cell-range-hover-end::after,
 tr > .ant-picker-cell-in-view.ant-picker-cell-range-hover-start:last-child::after,
 tr > .ant-picker-cell-in-view.ant-picker-cell-range-hover:last-child::after {
@@ -6845,7 +6895,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     height: 24px;
     line-height: 24px;
     border-radius: 4px;
-    transition: background 0.3s, border 0.3s;
+    transition:
+        background 0.3s,
+        border 0.3s;
 }
 .ant-picker-panel-rtl .ant-picker-cell-in-view.ant-picker-cell-range-start::before {
     right: 50%;
@@ -6873,18 +6925,24 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     left: 0;
 }
 .ant-picker-panel-rtl
-    .ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single):not(.ant-picker-cell-range-start)
+    .ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single):not(
+        .ant-picker-cell-range-start
+    )
     .ant-picker-cell-inner {
     border-radius: 4px 0 0 4px;
 }
 .ant-picker-panel-rtl
-    .ant-picker-cell-in-view.ant-picker-cell-range-hover-edge-start:not(.ant-picker-cell-range-hover-edge-start-near-range)::after,
+    .ant-picker-cell-in-view.ant-picker-cell-range-hover-edge-start:not(
+        .ant-picker-cell-range-hover-edge-start-near-range
+    )::after,
 .ant-picker-panel-rtl .ant-picker-cell-in-view.ant-picker-cell-range-hover-start::after,
 .ant-picker-panel-rtl
     .ant-picker-cell-in-view.ant-picker-cell-start.ant-picker-cell-range-hover-edge-start.ant-picker-cell-range-hover-edge-start-near-range::after,
 .ant-picker-panel-rtl
     tr
-    > .ant-picker-cell-in-view.ant-picker-cell-range-hover:not(.ant-picker-cell-selected):first-child::after {
+    > .ant-picker-cell-in-view.ant-picker-cell-range-hover:not(
+        .ant-picker-cell-selected
+    ):first-child::after {
     right: 6px;
     left: 0;
     border-right: 1px dashed #004c4f;
@@ -6894,11 +6952,15 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
 .ant-picker-panel-rtl
     .ant-picker-cell-in-view.ant-picker-cell-end.ant-picker-cell-range-hover-edge-end.ant-picker-cell-range-hover-edge-end-near-range::after,
 .ant-picker-panel-rtl
-    .ant-picker-cell-in-view.ant-picker-cell-range-hover-edge-end:not(.ant-picker-cell-range-hover-edge-end-near-range)::after,
+    .ant-picker-cell-in-view.ant-picker-cell-range-hover-edge-end:not(
+        .ant-picker-cell-range-hover-edge-end-near-range
+    )::after,
 .ant-picker-panel-rtl .ant-picker-cell-in-view.ant-picker-cell-range-hover-end::after,
 .ant-picker-panel-rtl
     tr
-    > .ant-picker-cell-in-view.ant-picker-cell-range-hover:not(.ant-picker-cell-selected):last-child::after {
+    > .ant-picker-cell-in-view.ant-picker-cell-range-hover:not(
+        .ant-picker-cell-selected
+    ):last-child::after {
     right: 0;
     left: 6px;
     border-right: none;
@@ -6906,11 +6968,17 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     border-radius: 4px 0 0 4px;
 }
 .ant-picker-panel-rtl
-    .ant-picker-cell-in-view.ant-picker-cell-end.ant-picker-cell-range-hover-start.ant-picker-cell-range-hover-edge-end:not(.ant-picker-cell-range-hover)::after,
+    .ant-picker-cell-in-view.ant-picker-cell-end.ant-picker-cell-range-hover-start.ant-picker-cell-range-hover-edge-end:not(
+        .ant-picker-cell-range-hover
+    )::after,
 .ant-picker-panel-rtl
-    .ant-picker-cell-in-view.ant-picker-cell-start.ant-picker-cell-range-hover-edge-start:not(.ant-picker-cell-range-hover)::after,
+    .ant-picker-cell-in-view.ant-picker-cell-start.ant-picker-cell-range-hover-edge-start:not(
+        .ant-picker-cell-range-hover
+    )::after,
 .ant-picker-panel-rtl
-    .ant-picker-cell-in-view.ant-picker-cell-start.ant-picker-cell-range-hover-end.ant-picker-cell-range-hover-edge-start:not(.ant-picker-cell-range-hover)::after,
+    .ant-picker-cell-in-view.ant-picker-cell-start.ant-picker-cell-range-hover-end.ant-picker-cell-range-hover-edge-start:not(
+        .ant-picker-cell-range-hover
+    )::after,
 .ant-picker-panel-rtl
     tr
     > .ant-picker-cell-in-view.ant-picker-cell-end.ant-picker-cell-range-hover.ant-picker-cell-range-hover-edge-end:first-child::after,
@@ -7180,13 +7248,16 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     z-index: 1000;
     width: 0%;
     height: 100%;
-    transition: width 0s ease 0.3s, height 0s ease 0.3s;
+    transition:
+        width 0s ease 0.3s,
+        height 0s ease 0.3s;
 }
 .ant-drawer-content-wrapper {
     position: absolute;
     width: 100%;
     height: 100%;
-    transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+    transition:
+        transform 0.3s cubic-bezier(0.23, 1, 0.32, 1),
         box-shadow 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 .ant-drawer .ant-drawer-content {
@@ -7214,7 +7285,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     left: 0;
 }
 .ant-drawer-left.ant-drawer-open .ant-drawer-content-wrapper {
-    box-shadow: 6px 0 16px -8px rgba(0, 0, 0, 0.32), 9px 0 28px 0 rgba(0, 0, 0, 0.2),
+    box-shadow:
+        6px 0 16px -8px rgba(0, 0, 0, 0.32),
+        9px 0 28px 0 rgba(0, 0, 0, 0.2),
         12px 0 48px 16px rgba(0, 0, 0, 0.12);
 }
 .ant-drawer-right,
@@ -7222,7 +7295,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     right: 0;
 }
 .ant-drawer-right.ant-drawer-open .ant-drawer-content-wrapper {
-    box-shadow: -6px 0 16px -8px rgba(0, 0, 0, 0.08), -9px 0 28px 0 rgba(0, 0, 0, 0.05),
+    box-shadow:
+        -6px 0 16px -8px rgba(0, 0, 0, 0.08),
+        -9px 0 28px 0 rgba(0, 0, 0, 0.05),
         -12px 0 48px 16px rgba(0, 0, 0, 0.03);
 }
 .ant-drawer-right.ant-drawer-open.no-mask {
@@ -7248,7 +7323,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     top: 0;
 }
 .ant-drawer-top.ant-drawer-open .ant-drawer-content-wrapper {
-    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.32), 0 9px 28px 0 rgba(0, 0, 0, 0.2),
+    box-shadow:
+        0 6px 16px -8px rgba(0, 0, 0, 0.32),
+        0 9px 28px 0 rgba(0, 0, 0, 0.2),
         0 12px 48px 16px rgba(0, 0, 0, 0.12);
 }
 .ant-drawer-bottom,
@@ -7256,7 +7333,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     bottom: 0;
 }
 .ant-drawer-bottom.ant-drawer-open .ant-drawer-content-wrapper {
-    box-shadow: 0 -6px 16px -8px rgba(0, 0, 0, 0.32), 0 -9px 28px 0 rgba(0, 0, 0, 0.2),
+    box-shadow:
+        0 -6px 16px -8px rgba(0, 0, 0, 0.32),
+        0 -9px 28px 0 rgba(0, 0, 0, 0.2),
         0 -12px 48px 16px rgba(0, 0, 0, 0.12);
 }
 .ant-drawer-bottom.ant-drawer-open.no-mask {
@@ -7354,7 +7433,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     height: 0;
     background-color: rgba(0, 0, 0, 0.45);
     opacity: 0;
-    transition: opacity 0.3s linear, height 0s ease 0.3s;
+    transition:
+        opacity 0.3s linear,
+        height 0s ease 0.3s;
     pointer-events: none;
 }
 .ant-drawer .ant-picker-clear {
@@ -7566,7 +7647,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     background-clip: padding-box;
     border-radius: 4px;
     outline: 0;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
 }
 .ant-dropdown-menu-item-group-title {
@@ -8201,18 +8284,26 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     color: #dc9a18;
 }
 .ant-form-item-has-warning
-    :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper,
+    :not(.ant-input-affix-wrapper-disabled):not(
+        .ant-input-affix-wrapper-borderless
+    ).ant-input-affix-wrapper,
 .ant-form-item-has-warning
-    :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper:hover,
+    :not(.ant-input-affix-wrapper-disabled):not(
+        .ant-input-affix-wrapper-borderless
+    ).ant-input-affix-wrapper:hover,
 .ant-form-item-has-warning :not(.ant-input-disabled):not(.ant-input-borderless).ant-input,
 .ant-form-item-has-warning :not(.ant-input-disabled):not(.ant-input-borderless).ant-input:hover {
     background-color: transparent;
     border-color: #dc9a18;
 }
 .ant-form-item-has-warning
-    :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper-focused,
+    :not(.ant-input-affix-wrapper-disabled):not(
+        .ant-input-affix-wrapper-borderless
+    ).ant-input-affix-wrapper-focused,
 .ant-form-item-has-warning
-    :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper:focus,
+    :not(.ant-input-affix-wrapper-disabled):not(
+        .ant-input-affix-wrapper-borderless
+    ).ant-input-affix-wrapper:focus,
 .ant-form-item-has-warning :not(.ant-input-disabled):not(.ant-input-borderless).ant-input-focused,
 .ant-form-item-has-warning :not(.ant-input-disabled):not(.ant-input-borderless).ant-input:focus {
     border-color: #dc9a18;
@@ -8286,18 +8377,26 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     color: #b0272e;
 }
 .ant-form-item-has-error
-    :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper,
+    :not(.ant-input-affix-wrapper-disabled):not(
+        .ant-input-affix-wrapper-borderless
+    ).ant-input-affix-wrapper,
 .ant-form-item-has-error
-    :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper:hover,
+    :not(.ant-input-affix-wrapper-disabled):not(
+        .ant-input-affix-wrapper-borderless
+    ).ant-input-affix-wrapper:hover,
 .ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input,
 .ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input:hover {
     background-color: transparent;
     border-color: #b0272e;
 }
 .ant-form-item-has-error
-    :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper-focused,
+    :not(.ant-input-affix-wrapper-disabled):not(
+        .ant-input-affix-wrapper-borderless
+    ).ant-input-affix-wrapper-focused,
 .ant-form-item-has-error
-    :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper:focus,
+    :not(.ant-input-affix-wrapper-disabled):not(
+        .ant-input-affix-wrapper-borderless
+    ).ant-input-affix-wrapper:focus,
 .ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input-focused,
 .ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input:focus {
     border-color: #b0272e;
@@ -8519,7 +8618,6 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     transition: margin-bottom 0.3s 0.017s linear;
 }
 .ant-form-item-with-help {
-    margin-bottom: 0;
     transition: none;
 }
 .ant-form-hide-required-mark .ant-form-item-label > label .ant-form-item-optional,
@@ -8625,7 +8723,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     opacity: 1;
 }
 .ant-show-help {
-    transition: height 0.3s linear, min-height 0.3s linear,
+    transition:
+        height 0.3s linear,
+        min-height 0.3s linear,
         margin-bottom 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         opacity 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
@@ -8637,7 +8737,8 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
 }
 .ant-show-help-item {
     overflow: hidden;
-    transition: height 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+    transition:
+        height 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         opacity 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1) !important;
 }
@@ -15117,14 +15218,22 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     > .ant-input-number:not(:first-child):not(:last-child) {
     border-right-width: 1px;
 }
-.ant-input-number-group.ant-input-number-group-compact-addon:not(:first-child):not(:last-child):hover,
-.ant-input-number-group.ant-input-number-group-compact-wrap:not(:first-child):not(:last-child):hover,
+.ant-input-number-group.ant-input-number-group-compact-addon:not(:first-child):not(
+        :last-child
+    ):hover,
+.ant-input-number-group.ant-input-number-group-compact-wrap:not(:first-child):not(
+        :last-child
+    ):hover,
 .ant-input-number-group.ant-input-number-group-compact
     > .ant-input-number:not(:first-child):not(:last-child):hover {
     z-index: 1;
 }
-.ant-input-number-group.ant-input-number-group-compact-addon:not(:first-child):not(:last-child):focus,
-.ant-input-number-group.ant-input-number-group-compact-wrap:not(:first-child):not(:last-child):focus,
+.ant-input-number-group.ant-input-number-group-compact-addon:not(:first-child):not(
+        :last-child
+    ):focus,
+.ant-input-number-group.ant-input-number-group-compact-wrap:not(:first-child):not(
+        :last-child
+    ):focus,
 .ant-input-number-group.ant-input-number-group-compact
     > .ant-input-number:not(:first-child):not(:last-child):focus {
     z-index: 1;
@@ -16156,7 +16265,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     background-color: #303030;
     border-radius: 4px;
     outline: 0;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
 }
 .ant-mentions-dropdown-hidden {
@@ -16253,9 +16364,13 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     list-style: none;
     background: #424242;
     outline: 0;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
-    transition: background 0.3s, width 0.3s cubic-bezier(0.2, 0, 0, 1) 0s;
+    transition:
+        background 0.3s,
+        width 0.3s cubic-bezier(0.2, 0, 0, 1) 0s;
 }
 .ant-menu::after,
 .ant-menu::before {
@@ -16287,12 +16402,14 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     transition: all 0.3s;
 }
 .ant-menu-horizontal .ant-menu-submenu {
-    transition: border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+    transition:
+        border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 .ant-menu-submenu,
 .ant-menu-submenu-inline {
-    transition: border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+    transition:
+        border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
@@ -16307,7 +16424,8 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
 }
 .ant-menu-submenu .ant-menu-sub {
     cursor: initial;
-    transition: background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+    transition:
+        background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         padding 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 .ant-menu-title-content {
@@ -16509,7 +16627,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
 }
 .ant-menu-horizontal .ant-menu-item,
 .ant-menu-horizontal .ant-menu-submenu-title {
-    transition: border-color 0.3s, background 0.3s;
+    transition:
+        border-color 0.3s,
+        background 0.3s;
 }
 .ant-menu-item,
 .ant-menu-submenu-title {
@@ -16519,7 +16639,9 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
     padding: 0 20px;
     white-space: nowrap;
     cursor: pointer;
-    transition: border-color 0.3s, background 0.3s,
+    transition:
+        border-color 0.3s,
+        background 0.3s,
         padding 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 .ant-menu-item .ant-menu-item-icon,
@@ -16528,8 +16650,10 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
 .ant-menu-submenu-title .anticon {
     min-width: 14px;
     font-size: 14px;
-    transition: font-size 0.15s cubic-bezier(0.215, 0.61, 0.355, 1),
-        margin 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), color 0.3s;
+    transition:
+        font-size 0.15s cubic-bezier(0.215, 0.61, 0.355, 1),
+        margin 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+        color 0.3s;
 }
 .ant-menu-item .ant-menu-item-icon + span,
 .ant-menu-item .anticon + span,
@@ -16537,7 +16661,10 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
 .ant-menu-submenu-title .anticon + span {
     margin-left: 10px;
     opacity: 1;
-    transition: opacity 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), margin 0.3s, color 0.3s;
+    transition:
+        opacity 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+        margin 0.3s,
+        color 0.3s;
 }
 .ant-menu-item .ant-menu-item-icon.svg,
 .ant-menu-submenu-title .ant-menu-item-icon.svg {
@@ -16611,7 +16738,8 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
     height: 1.5px;
     background-color: currentColor;
     border-radius: 2px;
-    transition: background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+    transition:
+        background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         top 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
         color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
@@ -16737,7 +16865,8 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
     border-right: 3px solid #00adb5;
     transform: scaleY(0.0001);
     opacity: 0;
-    transition: transform 0.15s cubic-bezier(0.215, 0.61, 0.355, 1),
+    transition:
+        transform 0.15s cubic-bezier(0.215, 0.61, 0.355, 1),
         opacity 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
     content: '';
 }
@@ -16791,7 +16920,8 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
 .ant-menu-inline .ant-menu-selected::after {
     transform: scaleY(1);
     opacity: 1;
-    transition: transform 0.15s cubic-bezier(0.645, 0.045, 0.355, 1),
+    transition:
+        transform 0.15s cubic-bezier(0.645, 0.045, 0.355, 1),
         opacity 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 .ant-menu-inline .ant-menu-item,
@@ -16806,7 +16936,10 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
 .ant-menu-inline.ant-menu-root .ant-menu-submenu-title {
     display: flex;
     align-items: center;
-    transition: border-color 0.3s, background 0.3s, padding 0.1s cubic-bezier(0.215, 0.61, 0.355, 1);
+    transition:
+        border-color 0.3s,
+        background 0.3s,
+        padding 0.1s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 .ant-menu-inline.ant-menu-root .ant-menu-item > .ant-menu-title-content,
 .ant-menu-inline.ant-menu-root .ant-menu-submenu-title > .ant-menu-title-content {
@@ -17351,7 +17484,9 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
     padding: 10px 16px;
     background: #303030;
     border-radius: 4px;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
     pointer-events: all;
 }
@@ -17453,7 +17588,9 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
     background-clip: padding-box;
     border: 0;
     border-radius: 4px;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
     pointer-events: auto;
 }
@@ -17812,7 +17949,9 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
     word-wrap: break-word;
     background: #303030;
     border-radius: 4px;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
 }
 .ant-notification-bottomLeft .ant-notification-notice,
@@ -18373,7 +18512,9 @@ textarea.ant-pagination-options-quick-jumper input {
     min-height: 32px;
     line-height: 1.5715;
     vertical-align: bottom;
-    transition: all 0.3s, height 0s;
+    transition:
+        all 0.3s,
+        height 0s;
 }
 .ant-pagination-simple .ant-pagination-next,
 .ant-pagination-simple .ant-pagination-prev {
@@ -18604,13 +18745,17 @@ textarea.ant-pagination-options-quick-jumper input {
     background-color: #303030;
     background-clip: padding-box;
     border-radius: 4px;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.45) \9;
 }
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
     .ant-popover-inner {
-        box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+        box-shadow:
+            0 3px 6px -4px rgba(0, 0, 0, 0.48),
+            0 6px 16px 0 rgba(0, 0, 0, 0.32),
             0 9px 28px 8px rgba(0, 0, 0, 0.2);
     }
 }
@@ -19159,7 +19304,11 @@ span.ant-radio + * {
     border-top-width: 1.02px;
     border-left-width: 0;
     cursor: pointer;
-    transition: color 0.3s, background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    transition:
+        color 0.3s,
+        background 0.3s,
+        border-color 0.3s,
+        box-shadow 0.3s;
 }
 .ant-radio-button-wrapper,
 .ant-radio-button-wrapper a {
@@ -19304,7 +19453,9 @@ span.ant-radio + * {
     border-right-width: 0;
     border-left-width: 1px;
 }
-.ant-radio-button-wrapper.ant-radio-button-wrapper-rtl.ant-radio-button-wrapper:not(:first-child)::before {
+.ant-radio-button-wrapper.ant-radio-button-wrapper-rtl.ant-radio-button-wrapper:not(
+        :first-child
+    )::before {
     right: -1px;
     left: 0;
 }
@@ -19312,7 +19463,9 @@ span.ant-radio + * {
     border-right: 1px solid #6f6c6c;
     border-radius: 0 4px 4px 0;
 }
-.ant-radio-button-wrapper-checked:not([class*=' ant-radio-button-wrapper-disabled']).ant-radio-button-wrapper:first-child {
+.ant-radio-button-wrapper-checked:not(
+        [class*=' ant-radio-button-wrapper-disabled']
+    ).ant-radio-button-wrapper:first-child {
     border-right-color: #118186;
 }
 .ant-radio-button-wrapper.ant-radio-button-wrapper-rtl.ant-radio-button-wrapper:last-child {
@@ -19351,7 +19504,9 @@ span.ant-radio + * {
     margin-right: 8px;
 }
 .ant-rate-star > div {
-    transition: all 0.3s, outline 0s;
+    transition:
+        all 0.3s,
+        outline 0s;
 }
 .ant-rate-star > div:focus-visible,
 .ant-rate-star > div:hover {
@@ -19659,7 +19814,10 @@ span.ant-radio + * {
     border: 1px solid #424242;
     border-radius: 4px;
     cursor: default;
-    transition: font-size 0.3s, line-height 0.3s, height 0.3s;
+    transition:
+        font-size 0.3s,
+        line-height 0.3s,
+        height 0.3s;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -19973,7 +20131,9 @@ span.ant-radio + * {
     background: #303030;
     cursor: pointer;
     opacity: 0;
-    transition: color 0.3s ease, opacity 0.15s ease;
+    transition:
+        color 0.3s ease,
+        opacity 0.15s ease;
     text-rendering: auto;
 }
 .ant-select-clear:hover {
@@ -20000,7 +20160,9 @@ span.ant-radio + * {
     background-color: #303030;
     border-radius: 4px;
     outline: 0;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
 }
 .ant-select-dropdown.ant-slide-up-appear.ant-slide-up-appear-active.ant-select-dropdown-placement-bottomLeft,
@@ -20143,13 +20305,19 @@ span.ant-radio + * {
     padding-right: 0;
     padding-left: 18px;
 }
-.ant-select-rtl.ant-select-single.ant-select-sm:not(.ant-select-customize-input).ant-select-show-arrow
+.ant-select-rtl.ant-select-single.ant-select-sm:not(
+        .ant-select-customize-input
+    ).ant-select-show-arrow
     .ant-select-selection-search {
     right: 6px;
 }
-.ant-select-rtl.ant-select-single.ant-select-sm:not(.ant-select-customize-input).ant-select-show-arrow
+.ant-select-rtl.ant-select-single.ant-select-sm:not(
+        .ant-select-customize-input
+    ).ant-select-show-arrow
     .ant-select-selection-item,
-.ant-select-rtl.ant-select-single.ant-select-sm:not(.ant-select-customize-input).ant-select-show-arrow
+.ant-select-rtl.ant-select-single.ant-select-sm:not(
+        .ant-select-customize-input
+    ).ant-select-show-arrow
     .ant-select-selection-placeholder {
     padding-right: 0;
     padding-left: 21px;
@@ -20465,7 +20633,9 @@ span.ant-radio + * {
     border-radius: 50%;
     box-shadow: 0;
     cursor: pointer;
-    transition: border-color 0.3s, box-shadow 0.6s,
+    transition:
+        border-color 0.3s,
+        box-shadow 0.6s,
         transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
 .ant-slider-handle-dragging.ant-slider-handle-dragging.ant-slider-handle-dragging {
@@ -20880,7 +21050,9 @@ span.ant-radio + * {
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 32px;
-    transition: background-color 0.3s, border-color 0.3s;
+    transition:
+        background-color 0.3s,
+        border-color 0.3s;
 }
 .ant-steps-item-icon .ant-steps-icon {
     position: relative;
@@ -21432,7 +21604,9 @@ span.ant-radio + * {
     width: 0;
     height: 2px;
     background-color: #00adb5;
-    transition: width 0.3s, left 0.3s;
+    transition:
+        width 0.3s,
+        left 0.3s;
     transition-timing-function: ease-out;
     content: '';
 }
@@ -22057,7 +22231,9 @@ span.ant-radio + * {
 }
 .ant-table-thead
     > tr
-    > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+    > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not(
+        [colspan]
+    )::before {
     position: absolute;
     top: 50%;
     right: 0;
@@ -22271,7 +22447,9 @@ td.ant-table-column-sort {
     min-width: 120px;
     background-color: #303030;
     border-radius: 4px;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
 }
 .ant-table-filter-dropdown .ant-dropdown-menu {
@@ -22615,7 +22793,9 @@ tr.ant-table-expanded-row .ant-descriptions-view table {
 .ant-table-wrapper-rtl
     .ant-table-thead
     > tr
-    > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+    > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not(
+        [colspan]
+    )::before {
     right: auto;
     left: 0;
 }
@@ -22756,7 +22936,10 @@ tr.ant-table-expanded-row .ant-descriptions-view table {
 .ant-tabs-bottom > div > .ant-tabs-nav .ant-tabs-ink-bar-animated,
 .ant-tabs-top > .ant-tabs-nav .ant-tabs-ink-bar-animated,
 .ant-tabs-top > div > .ant-tabs-nav .ant-tabs-ink-bar-animated {
-    transition: width 0.3s, left 0.3s, right 0.3s;
+    transition:
+        width 0.3s,
+        left 0.3s,
+        right 0.3s;
 }
 .ant-tabs-bottom > .ant-tabs-nav .ant-tabs-nav-wrap::after,
 .ant-tabs-bottom > .ant-tabs-nav .ant-tabs-nav-wrap::before,
@@ -22888,7 +23071,9 @@ tr.ant-table-expanded-row .ant-descriptions-view table {
 .ant-tabs-left > div > .ant-tabs-nav .ant-tabs-ink-bar-animated,
 .ant-tabs-right > .ant-tabs-nav .ant-tabs-ink-bar-animated,
 .ant-tabs-right > div > .ant-tabs-nav .ant-tabs-ink-bar-animated {
-    transition: height 0.3s, top 0.3s;
+    transition:
+        height 0.3s,
+        top 0.3s;
 }
 .ant-tabs-left > .ant-tabs-nav .ant-tabs-nav-list,
 .ant-tabs-left > .ant-tabs-nav .ant-tabs-nav-operations,
@@ -22963,7 +23148,9 @@ tr.ant-table-expanded-row .ant-descriptions-view table {
     background-clip: padding-box;
     border-radius: 4px;
     outline: 0;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
 }
 .ant-tabs-dropdown-menu-item {
@@ -23791,7 +23978,9 @@ tr.ant-table-expanded-row .ant-descriptions-view table {
     word-wrap: break-word;
     background-color: #434343;
     border-radius: 4px;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32),
+    box-shadow:
+        0 3px 6px -4px rgba(0, 0, 0, 0.48),
+        0 6px 16px 0 rgba(0, 0, 0, 0.32),
         0 9px 28px 8px rgba(0, 0, 0, 0.2);
 }
 .ant-tooltip-arrow {
@@ -24131,7 +24320,9 @@ a.ant-typography:active {
     background-color: #262626;
     cursor: pointer;
 }
-.ant-transfer-list-content-item:not(.ant-transfer-list-content-item-disabled).ant-transfer-list-content-item-checked:hover {
+.ant-transfer-list-content-item:not(
+        .ant-transfer-list-content-item-disabled
+    ).ant-transfer-list-content-item-checked:hover {
     background-color: #253133;
 }
 .ant-transfer-list-content-show-remove
@@ -24324,7 +24515,9 @@ a.ant-typography:active {
     height: 9.14285714px;
     transform: rotate(45deg) scale(0) translate(-50%, -50%);
     opacity: 0;
-    transition: all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6), opacity 0.1s;
+    transition:
+        all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6),
+        opacity 0.1s;
 }
 .ant-tree-checkbox-input {
     position: absolute;
@@ -24619,7 +24812,11 @@ a.ant-typography:active {
     background: 0 0;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.3s, border 0s, line-height 0s, box-shadow 0s;
+    transition:
+        all 0.3s,
+        border 0s,
+        line-height 0s,
+        box-shadow 0s;
 }
 .ant-tree .ant-tree-node-content-wrapper:hover {
     background-color: rgba(255, 255, 255, 0.08);
@@ -24786,7 +24983,9 @@ a.ant-typography:active {
     border-left: 0;
     transform: rotate(45deg) scale(0) translate(-50%, -50%);
     opacity: 0;
-    transition: all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6), opacity 0.1s;
+    transition:
+        all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6),
+        opacity 0.1s;
     content: ' ';
 }
 .ant-select-tree-checkbox-input {
@@ -25074,7 +25273,11 @@ a.ant-typography:active {
     background: 0 0;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.3s, border 0s, line-height 0s, box-shadow 0s;
+    transition:
+        all 0.3s,
+        border 0s,
+        line-height 0s,
+        box-shadow 0s;
 }
 .ant-select-tree .ant-select-tree-node-content-wrapper:hover {
     background-color: rgba(255, 255, 255, 0.08);
@@ -25943,7 +26146,9 @@ div.ant-typography-edit-content.ant-typography-rtl {
 }
 .ant-upload-list-picture-container,
 .ant-upload-list-text-container {
-    transition: opacity 0.3s, height 0.3s;
+    transition:
+        opacity 0.3s,
+        height 0.3s;
 }
 .ant-upload-list-picture-container::before,
 .ant-upload-list-text-container::before {

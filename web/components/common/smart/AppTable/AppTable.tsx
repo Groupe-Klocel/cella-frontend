@@ -33,10 +33,8 @@ import {
 import { Space, Button, Table } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { isString } from 'lodash';
-import moment from 'moment';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
-import { bool } from 'prop-types';
 import { FC, useCallback, useEffect, useState, useRef, Key } from 'react';
 
 const { Column } = Table;
@@ -169,7 +167,7 @@ const AppTable: FC<IAppTableProps> = ({
     // make wrapper function to give child
 
     const childSetVisibleColumnKeys = useCallback(
-        (val) => {
+        (val: any) => {
             setVisibleColumnKeys(val);
         },
         [setVisibleColumnKeys]
@@ -177,7 +175,7 @@ const AppTable: FC<IAppTableProps> = ({
 
     // make wrapper function to give child
     const childSetFixedColumns = useCallback(
-        (val) => {
+        (val: any) => {
             setFixedColumns(val);
         },
         [setFixedColumns]
@@ -185,7 +183,7 @@ const AppTable: FC<IAppTableProps> = ({
 
     // make wrapper function to give child
     const childSetTableColumns = useCallback(
-        (val) => {
+        (val: any) => {
             setFilteredColumns(val);
         },
         [setFilteredColumns]

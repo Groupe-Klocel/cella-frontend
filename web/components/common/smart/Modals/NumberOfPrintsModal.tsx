@@ -77,7 +77,7 @@ const NumberOfPrintsModal = ({ showModal, id, path }: INumberOfPrintsModalProps)
     return (
         <Modal
             title={t('actions:number-of-copies')}
-            visible={showModal.showNumberOfPrintsModal}
+            open={showModal.showNumberOfPrintsModal}
             onOk={onClickOk}
             onCancel={handleCancel}
             width={300}

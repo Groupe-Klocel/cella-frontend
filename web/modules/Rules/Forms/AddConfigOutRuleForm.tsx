@@ -61,7 +61,7 @@ export const AddConfigOutRuleForm = (props: ISingleItemProps) => {
     const ruleVersion = useRuleVersionIds({ id: props.ruleVersionId }, 1, 100, null);
 
     //UPDATE rule version
-    const { mutate, isLoading: updateLoading } = useUpdateRuleVersionMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateRuleVersionMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -89,7 +89,7 @@ export const AddConfigOutRuleForm = (props: ISingleItemProps) => {
                 const formData = form.getFieldsValue(true);
                 const ruleConfigurationOut = formData;
 
-                const input_tmp: InputMaybe<Scalars['JSON']> = {};
+                const input_tmp: any = {};
 
                 const new_element: any = {};
 

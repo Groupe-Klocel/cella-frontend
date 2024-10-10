@@ -22,7 +22,6 @@ import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSucces
 import { PatternModelV2 as model } from 'models/PatternModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { PatternDetailsExtra } from 'modules/Patterns/Elements/PatternDetailsExtras';
-import { PatternDetailsHeader } from 'modules/Patterns/Elements/PatternDetailsHeader';
 import { patternsSubRoutes as itemRoutes } from 'modules/Patterns/Static/patternsRoutes';
 import { useRouter } from 'next/router';
 import { useAppState } from 'context/AppContext';
@@ -69,8 +68,8 @@ const PatternPage: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {

@@ -74,7 +74,7 @@ export const AddRuleVersionForm = (props: ISingleItemProps) => {
     }, [ruleVersions]);
 
     //CREATE rule version
-    const { mutate, isLoading: createLoading } = useCreateRuleVersionMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateRuleVersionMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

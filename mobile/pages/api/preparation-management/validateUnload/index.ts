@@ -21,6 +21,7 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -55,7 +56,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -109,11 +110,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         input: data
                     };
 
-                    const resultBoxResponse = await graphqlRequestClient.request(
-                        updatedBoxMutation,
-                        updatedBoxVariables,
-                        requestHeader
-                    );
+                    const resultBoxResponse: GraphQLResponseType =
+                        await graphqlRequestClient.request(
+                            updatedBoxMutation,
+                            updatedBoxVariables,
+                            requestHeader
+                        );
                     boxesResponse.push(resultBoxResponse.updateHandlingUnitOutbound);
                     console.log(`Result of box [${index + 1}] Status`, resultBoxResponse);
                 }
@@ -202,7 +204,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const loadLineVariables = {
             filters: { handlingUnitName: box.handlingUnit.name }
         };
-        const loadLineResult = await graphqlRequestClient.request(
+        const loadLineResult: GraphQLResponseType = await graphqlRequestClient.request(
             loadLineQuery,
             loadLineVariables,
             requestHeader
@@ -220,7 +222,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             id: loadLineId.id
         };
 
-        const resultLoadlineResponse = await graphqlRequestClient.request(
+        const resultLoadlineResponse: GraphQLResponseType = await graphqlRequestClient.request(
             deleteLoadLineMutation,
             deleteLoadLineVariables,
             requestHeader

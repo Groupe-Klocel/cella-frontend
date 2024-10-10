@@ -21,7 +21,7 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
-import { decodeJWT } from '@helpers';
+import { decodeJWT, GraphQLResponseType } from '@helpers';
 import moment from 'moment';
 
 const parseCookie = (str: string) =>
@@ -76,7 +76,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -183,11 +183,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const createCycleCountMovementResult = await graphqlRequestClient.request(
-                createCycleCountMovementMutation,
-                createCycleCountMovementVariables,
-                requestHeader
-            );
+            const createCycleCountMovementResult: GraphQLResponseType =
+                await graphqlRequestClient.request(
+                    createCycleCountMovementMutation,
+                    createCycleCountMovementVariables,
+                    requestHeader
+                );
 
             finalCycleCountMovement = createCycleCountMovementResult.createCycleCountMovement;
         } else {
@@ -306,10 +307,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const updatedCycleCountMovementResponse = await graphqlRequestClient.request(
-                updateCycleCountMovementMutation,
-                updateCycleCountMovementvariable
-            );
+            const updatedCycleCountMovementResponse: GraphQLResponseType =
+                await graphqlRequestClient.request(
+                    updateCycleCountMovementMutation,
+                    updateCycleCountMovementvariable
+                );
 
             finalCycleCountMovement = updatedCycleCountMovementResponse.updateCycleCountMovement;
             console.log('API-UpdateOutput', finalCycleCountMovement);

@@ -27,8 +27,8 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { FormOptionType } from 'models/ModelsV2';
-import configs from '../../../../common/configs.json';
 import moment from 'moment';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -270,7 +270,7 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
     return (
         <Modal
             title={t('actions:enter-payment-information')}
-            visible={showModal.showPaymentModal}
+            open={showModal.showPaymentModal}
             width={800}
             bodyStyle={{ maxHeight: '70vh', overflowY: 'auto', padding: '0px 24px' }}
             onCancel={handleCancel}
@@ -294,10 +294,7 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                     initialValue={moment()}
                 >
-                    <DatePicker
-                        format="YYYY-MM-DD"
-                        showTime={{ defaultValue: moment('YYYY-MM-DD') }}
-                    />
+                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
                 </Form.Item>
                 <Form.Item
                     label={t('d:amount')}

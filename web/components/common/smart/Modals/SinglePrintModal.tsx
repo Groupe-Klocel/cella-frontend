@@ -173,7 +173,7 @@ const SinglePrintModal = ({
     return (
         <Modal
             title={t('actions:set-printer')}
-            visible={showModal.showSinglePrintModal}
+            open={showModal.showSinglePrintModal}
             onOk={onClickOk}
             onCancel={handleCancel}
             width={450}

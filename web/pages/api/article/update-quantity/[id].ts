@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+import { GraphQLResponseType } from '@helpers';
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -56,7 +57,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         id: id
     };
 
-    const data = await graphqlRequestClient.request(query, variables, requestHeader);
+    const data: GraphQLResponseType = await graphqlRequestClient.request(
+        query,
+        variables,
+        requestHeader
+    );
     const qnt = calculateBoxQuantity(data.article);
     console.log('quantity=', qnt);
 
@@ -77,7 +82,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     `;
 
-    const result = await graphqlRequestClient.request(
+    const result: GraphQLResponseType = await graphqlRequestClient.request(
         updateMutation,
         updateVariables,
         requestHeader

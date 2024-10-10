@@ -45,7 +45,7 @@ const LanguageSelector: FC = () => {
     };
 
     const selectLocaleSetting = useCallback(
-        (newLocale) =>
+        (newLocale: any) =>
             dispatchLocale({
                 type: 'SWITCH_LOCALE',
                 globalLocale: newLocale
@@ -54,7 +54,7 @@ const LanguageSelector: FC = () => {
     );
 
     return (
-        <StyledSelect defaultValue={locale} bordered={false} onChange={changeLanguage}>
+        <StyledSelect defaultValue={locale} variant="borderless" onChange={changeLanguage}>
             {isoLangs.map((language: LanguageType) => (
                 <Option key={language.code} value={language.code}>
                     {language.name}

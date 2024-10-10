@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { InputMaybe, Scalars } from 'generated/graphql';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -51,7 +52,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -69,7 +70,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const { id, argument, argKey } = req.body;
 
     try {
-        const input_tmp: InputMaybe<Scalars['JSON']> = {};
+        const input_tmp: any = {};
         const jsonData: any = {};
 
         argument.split(',').forEach((element: any) => {
@@ -99,7 +100,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         };
 
-        const cleanArgumentResponse = await graphqlRequestClient.request(
+        const cleanArgumentResponse: GraphQLResponseType = await graphqlRequestClient.request(
             query,
             cleanArgumentVariables,
             requestHeader
@@ -116,7 +117,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const result = await graphqlRequestClient.request(
+            const result: GraphQLResponseType = await graphqlRequestClient.request(
                 query,
                 updateArgumentVariables,
                 requestHeader

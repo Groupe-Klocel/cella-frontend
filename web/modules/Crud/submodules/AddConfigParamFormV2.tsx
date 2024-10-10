@@ -123,6 +123,7 @@ export const AddConfigParamForm: FC<IAddItemFormProps> = (props: IAddItemFormPro
                         mutate({
                             input: { ...formData, ...props.extraData }
                         });
+                        setUnsavedChanges(false);
                     })
                     .catch((err) => {
                         showError(t('errors:DB-000111'));
