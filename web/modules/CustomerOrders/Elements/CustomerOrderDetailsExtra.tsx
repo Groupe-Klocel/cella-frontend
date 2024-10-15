@@ -18,7 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
+import {
+    DeleteOutlined,
+    EditTwoTone,
+    EyeTwoTone,
+    LockTwoTone,
+    CaretDownOutlined,
+    CaretUpOutlined
+} from '@ant-design/icons';
 import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Button, Divider, Modal, Space } from 'antd';
@@ -67,6 +74,10 @@ const CustomerOrderDetailsExtra = ({
     const [customerOrderAddressesData, setCustomerOrderAddressesData] = useState<any>();
     const paymentLineModes = getModesFromPermissions(permissions, Table.PaymentLine);
     const deliveryModes = getModesFromPermissions(permissions, Table.Delivery);
+    const [priorityStatus, setPriorityStatus] = useState<{ type: string; id: string }>({
+        type: '',
+        id: ''
+    });
 
     const customerOrderAddressHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:customer-order-addresses') }),
@@ -291,12 +302,18 @@ const CustomerOrderDetailsExtra = ({
                             idToDisable: idToDisableLine,
                             setIdToDisable: setIdToDisableLine
                         }}
+                        triggerPriorityChange={{
+                            id: priorityStatus.id,
+                            setId: setPriorityStatus,
+                            type: priorityStatus.type,
+                            orderingField: 'lineNumber'
+                        }}
                         routeDetailPage={'/customer-orders/:id'}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: { id: string }) => (
+                                render: (record: { id: string; lineNumber: number }) => (
                                     <Space>
                                         {customerOrderLineModes.length == 0 ||
                                         !customerOrderLineModes.includes(ModeEnum.Read) ? (
@@ -311,6 +328,30 @@ const CustomerOrderDetailsExtra = ({
                                                             id: record.id
                                                         }
                                                     )}
+                                                />
+                                            </>
+                                        )}
+                                        {record?.lineNumber === null ? (
+                                            <></>
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    onClick={() =>
+                                                        setPriorityStatus({
+                                                            type: 'up',
+                                                            id: record.id
+                                                        })
+                                                    }
+                                                    icon={<CaretUpOutlined />}
+                                                />
+                                                <Button
+                                                    onClick={() =>
+                                                        setPriorityStatus({
+                                                            type: 'down',
+                                                            id: record.id
+                                                        })
+                                                    }
+                                                    icon={<CaretDownOutlined />}
                                                 />
                                             </>
                                         )}
