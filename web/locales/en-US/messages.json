@@ -134,5 +134,7 @@
     "xlsx-file-import-error": "Erreur l'ors de l'import Excel",
     "xlsx-success-importing": "Excel import was successfully completed",
     "not-allowed-value": "Not allowed value",
-    "file-drag": "Click or drag a file to this area to upload"
+    "file-drag": "Click or drag a file to this area to upload",
+    "priority-overflow": "Minimum priority raised",
+    "no-huc-quantity": "This article is no longer in stock"
 }
