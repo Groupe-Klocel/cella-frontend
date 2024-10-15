@@ -19,17 +19,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS } from '@helpers';
+import { EyeTwoTone, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
+import { Button, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { FormDataType, FormOptionType } from 'models/Models';
 import { PatternPathModelV2 } from 'models/PatternPathModelV2';
-import { HeaderData } from 'modules/Crud/ListComponent';
-import { PatternPathListComponent } from 'modules/PatternPaths/Elements/PatternPathListComponent';
 import { patternPathsRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -50,6 +51,10 @@ const PatternPathsPage: PageComponent = () => {
                 />
             ) : null
     };
+    const [priorityStatus, setPriorityStatus] = useState({
+        id: '',
+        type: ''
+    });
 
     const { graphqlRequestClient } = useAuth();
 
@@ -75,22 +80,63 @@ const PatternPathsPage: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <PatternPathListComponent
+            <ListComponent
                 refresh={refresh}
                 headerData={headerData}
                 dataModel={PatternPathModelV2}
-                filterFields={[
+                routeDetailPage={'/pattern-paths/:id'}
+                triggerDelete={undefined}
+                triggerSoftDelete={undefined}
+                triggerPriorityChange={{
+                    id: priorityStatus.id,
+                    setId: setPriorityStatus,
+                    type: priorityStatus.type,
+                    orderingField: 'order'
+                }}
+                sortDefault={[{ ascending: true, field: 'order' }]}
+                actionColumns={[
                     {
-                        name: 'name',
-                        type: FormDataType.String
-                    },
-                    {
-                        name: 'status',
-                        type: FormDataType.Dropdown,
-                        subOptions: statusTexts
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: {
+                            id: string;
+                            name: string;
+                            order: number;
+                            status: number;
+                        }) => (
+                            <Space>
+                                {record.order === null ? (
+                                    <></>
+                                ) : (
+                                    <>
+                                        <Button
+                                            onClick={() =>
+                                                setPriorityStatus({
+                                                    type: 'up',
+                                                    id: record.id
+                                                })
+                                            }
+                                            icon={<CaretUpOutlined />}
+                                        />
+                                        <Button
+                                            onClick={() =>
+                                                setPriorityStatus({
+                                                    type: 'down',
+                                                    id: record.id
+                                                })
+                                            }
+                                            icon={<CaretDownOutlined />}
+                                        />
+                                    </>
+                                )}
+                                <LinkButton
+                                    icon={<EyeTwoTone />}
+                                    path={'/pattern-paths/:id'.replace(':id', record.id)}
+                                />
+                            </Space>
+                        )
                     }
                 ]}
-                routeDetailPage={'/pattern-paths/:id'}
             />
         </>
     );

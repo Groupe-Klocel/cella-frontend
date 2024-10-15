@@ -19,15 +19,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS } from '@helpers';
+import { EyeTwoTone, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
+import { Button, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { HeaderData } from 'modules/Crud/ListComponent';
 import useTranslation from 'next-translate/useTranslation';
 import { FC } from 'react';
 import { EquipmentModelV2 } from 'models/EquipmentModelV2';
 import { equipmentRoutes } from 'modules/Equipment/Static/equipmentRoutes';
-import { EquipmentListComponent } from 'modules/Equipment/Elements/EquipmentListComponent';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { useState } from 'react';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -35,6 +37,11 @@ const EquipmentPage: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, EquipmentModelV2.tableName);
+
+    const [priorityStatus, setPriorityStatus] = useState({
+        id: '',
+        type: ''
+    });
 
     const headerData: HeaderData = {
         title: t('common:equipments'),
@@ -52,10 +59,57 @@ const EquipmentPage: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <EquipmentListComponent
+            <ListComponent
                 headerData={headerData}
                 dataModel={EquipmentModelV2}
                 routeDetailPage={'/equipment/:id'}
+                triggerDelete={undefined}
+                triggerSoftDelete={undefined}
+                triggerPriorityChange={{
+                    id: priorityStatus.id,
+                    setId: setPriorityStatus,
+                    type: priorityStatus.type,
+                    orderingField: 'priority'
+                }}
+                sortDefault={[{ ascending: true, field: 'priority' }]}
+                actionColumns={[
+                    {
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: any) => (
+                            <Space>
+                                {record.priority === null ? (
+                                    <></>
+                                ) : (
+                                    <>
+                                        <Button
+                                            onClick={() =>
+                                                setPriorityStatus({
+                                                    type: 'up',
+                                                    id: record.id
+                                                })
+                                            }
+                                            icon={<CaretUpOutlined />}
+                                        />
+                                        <Button
+                                            onClick={() =>
+                                                setPriorityStatus({
+                                                    type: 'down',
+                                                    id: record.id
+                                                })
+                                            }
+                                            icon={<CaretDownOutlined />}
+                                        />
+                                    </>
+                                )}
+                                <LinkButton
+                                    icon={<EyeTwoTone />}
+                                    path={'/equipment/:id'.replace(':id', record.id)}
+                                />
+                            </Space>
+                        )
+                    }
+                ]}
             />
         </>
     );
