@@ -32,6 +32,9 @@ import { creditsRoutes as itemRoutes } from 'modules/Credits/Static/creditsRoute
 import { CreditDetailsExtra } from 'modules/Credits/Elements/CreditDetailsExtra';
 import { CreditPaymentModal } from 'modules/Credits/Modals/CreditPaymentModal';
 import configs from '../../../common/configs.json';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
+import { triggerAsyncId } from 'async_hooks';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -43,6 +46,7 @@ const CreditPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, model.tableName);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const { id } = router.query;
+    const { graphqlRequestClient } = useAuth();
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
 
@@ -55,25 +59,60 @@ const CreditPage: PageComponent = () => {
     ];
 
     const pageTitle = `${t('common:credit')} ${data?.name}`;
-    // #endregions
+    // #endregion
 
     //#endregion
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+    const confirmAction = (
+        id: string | undefined,
+        setId: any,
+        action: 'delete' | 'disable' | 'update'
+    ) => {
+        const actionTxt =
+            action === 'delete' ? t('messages:delete-confirm') : t('messages:close-confirm');
         return () => {
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: actionTxt,
                 onOk: () => {
-                    setId(id);
+                    if (action === 'delete') {
+                        setId(id);
+                    } else if (action === 'update') {
+                        closeStatus(data.id);
+                    }
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
         };
     };
+
+    const closeStatus = async (id: string) => {
+        const newStatus = configs.ORDER_STATUS_CLOSED;
+        const updateVariables = {
+            id: id,
+            input: {
+                status: newStatus
+            }
+        };
+
+        const updateMutationStatus = gql`
+            mutation updateOrder($id: String!, $input: UpdateOrderInput!) {
+                updateOrder(id: $id, input: $input) {
+                    id
+                    status
+                }
+            }
+        `;
+        const result = await graphqlRequestClient.request(updateMutationStatus, updateVariables);
+        if (result) {
+            setTriggerRefresh(!triggerRefresh);
+        }
+        return result;
+    };
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -107,6 +146,13 @@ const CreditPage: PageComponent = () => {
                 {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
                     <Button onClick={() => confirmAction(data.id, setIdToDelete, 'delete')()}>
                         {t('actions:delete')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 && data?.status !== configs.ORDER_STATUS_CLOSED ? (
+                    <Button onClick={() => confirmAction(data.id, setData, 'update')()}>
+                        {t('actions:close')}
                     </Button>
                 ) : (
                     <></>
