@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { useHandlingUnitContents, LsIsSecured } from '@helpers';
+import { useHandlingUnitContents, LsIsSecured, showError } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import useTranslation from 'next-translate/useTranslation';
@@ -121,8 +121,15 @@ export const SelectContentForArticleForm = ({
     const [contents, setContents] = useState<any>([]);
     useEffect(() => {
         if (data) {
+            const handlingUnitContentsFiltered = data?.handlingUnitContents?.results.filter(
+                (huContent: any) => huContent.quantity > 0
+            );
+            if (handlingUnitContentsFiltered?.length === 0) {
+                showError(t('messages:no-huc-quantity'));
+                onBack();
+            }
             if (data?.handlingUnitContents) {
-                setContents(data?.handlingUnitContents?.results);
+                setContents(handlingUnitContentsFiltered);
             }
         }
     }, [data]);
