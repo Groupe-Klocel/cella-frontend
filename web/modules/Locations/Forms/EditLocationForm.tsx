@@ -284,7 +284,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
         if (updateLoading) {
             showInfo(t('messages:info-create-wip'));
         }
-    }, [updateLoading, replenishTypes, rotations]);
+    }, [updateLoading, replenishTypes, rotations, details]);
 
     return (
         <WrapperForm>

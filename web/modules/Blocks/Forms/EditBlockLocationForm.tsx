@@ -43,13 +43,11 @@ const { TextArea } = Input;
 export type EditLocationFormProps = {
     locationId: string;
     details: any;
-    buildingName?: string;
 };
 
 export const EditBlockLocationForm: FC<EditLocationFormProps> = ({
     locationId,
-    details,
-    buildingName
+    details
 }: EditLocationFormProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
@@ -196,7 +194,7 @@ export const EditBlockLocationForm: FC<EditLocationFormProps> = ({
                 if (formData.replenishType != configs.LOCATION_REPLENISH_TYPE_SAME_ROTATION) {
                     formData['baseUnitRotation'] = null;
                 }
-                delete formData['buildingName'];
+                delete formData['associatedBuilding'];
                 delete formData['associatedBlock'];
                 delete formData['replenishTypeText'];
                 delete formData['baseUnitRotationText'];
@@ -223,7 +221,7 @@ export const EditBlockLocationForm: FC<EditLocationFormProps> = ({
     useEffect(() => {
         const tmp_details = {
             ...details,
-            buildingName,
+            associatedBuilding: details.block.building.name,
             associatedBlock: details.block.name,
             replenishTypeText: details.replenishType
                 ? replenishTypes?.find((e: any) => e.code == details.replenishType).text
@@ -242,13 +240,13 @@ export const EditBlockLocationForm: FC<EditLocationFormProps> = ({
         if (updateLoading) {
             showInfo(t('messages:info-create-wip'));
         }
-    }, [updateLoading, replenishTypes, rotations]);
+    }, [updateLoading, replenishTypes, rotations, details]);
 
     return (
         <WrapperForm>
             <Form form={form} scrollToFirstError onValuesChange={() => setUnsavedChanges(true)}>
                 <Form.Item
-                    name="buildingName"
+                    name="associatedBuilding"
                     label={t('d:associatedBuilding')}
                     rules={[{ required: true }]}
                 >

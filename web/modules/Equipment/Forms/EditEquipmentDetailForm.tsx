@@ -160,9 +160,9 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
     useEffect(() => {
         const tmp_details = {
             ...props.details,
-            equipmentId: props.details.equipment.id,
+            equipmentId: props.details.equipmentId,
             equipmentName: props.details.equipment.name,
-            stockOwnerId: props.details.stockOwner.id,
+            stockOwnerId: props.details.stockOwnerId,
             carrierShippingModeId: props.details.carrierShippingModeId
         };
 

@@ -37,7 +37,6 @@ const EditBlockLocationPage: PageComponent = () => {
                 id={id!}
                 blockId={router.query.blockId}
                 blockName={router.query.blockName}
-                buildingName={router.query.buildingName}
             />
         </>
     );

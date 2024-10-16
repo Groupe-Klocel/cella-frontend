@@ -82,6 +82,22 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     const [equipmentWithPriorities, setEquipmentWithPriorities] = useState<any>();
     const [maxPriority, setMaxPriority] = useState<number>(details.priority);
 
+    useEffect(() => {
+        setAvailableValue(details.available);
+        setDistributedValue(details.distributed);
+        setMonoCompanyValue(details.monoCompany);
+        setMonoCarrierValue(details.monoCarrier);
+        setBoxLineGroupValue(details.boxLineGrouped);
+        setBoxMonoArticleValue(details.boxMonoArticle);
+        setCheckPositionValue(details.checkPosition);
+        setVirtualValue(details.virtual);
+        setAllowPickingOrderFreeValue(details.allowPickingOrderFree);
+        setMonoDeliveryValue(details.monoDelivery);
+        setForceRepackingValue(details.forceRepacking);
+        setForcePickingCheckValue(details.forcePickingCheck);
+        setMaxPriority(details.priority);
+    }, [details]);
+
     // TYPED SAFE ALL
     const [form] = Form.useForm();
 
@@ -348,7 +364,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
             showInfo(t('messages:info-create-wip'));
             showSuccess(t('messages:success-updated'));
         }
-    }, [updateLoading]);
+    }, [updateLoading, details]);
 
     const onCancel = () => {
         setUnsavedChanges(false);
