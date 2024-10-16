@@ -41,15 +41,13 @@ export interface EditLocationProps {
     router: NextRouter;
     blockId: string | any;
     blockName: string | any;
-    buildingName: string | any;
 }
 
 const EditBlockLocation: FC<EditLocationProps> = ({
     id,
     router,
     blockId,
-    blockName,
-    buildingName
+    blockName
 }: EditLocationProps) => {
     const { t } = useTranslation();
 
@@ -65,8 +63,8 @@ const EditBlockLocation: FC<EditLocationProps> = ({
     const blockDetailBreadCrumb = [
         ...blocksRoutes,
         {
-            breadcrumbName: `${blockName}`,
-            path: '/blocks/' + blockId
+            breadcrumbName: `${data?.location?.block?.name}`,
+            path: '/blocks/' + data?.location?.blockId
         }
     ];
     const breadCrumb = [
@@ -106,11 +104,7 @@ const EditBlockLocation: FC<EditLocationProps> = ({
                         />
                         <StyledPageContent>
                             {data && !isLoading ? (
-                                <EditBlockLocationForm
-                                    locationId={id}
-                                    details={data?.location}
-                                    buildingName={buildingName}
-                                />
+                                <EditBlockLocationForm locationId={id} details={data?.location} />
                             ) : (
                                 <ContentSpin />
                             )}

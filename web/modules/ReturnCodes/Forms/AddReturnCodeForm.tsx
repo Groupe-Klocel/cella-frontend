@@ -91,8 +91,8 @@ export const AddReturnCodeForm = () => {
     return (
         <WrapperForm>
             <Form form={form} scrollToFirstError>
-                <Row>
-                    <Col xs={1} xl={4}>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32, xl: 40 }}>
+                    <Col className="gutter-row" span={6}>
                         <Form.Item
                             label={t('d:code')}
                             name="code"
@@ -104,7 +104,7 @@ export const AddReturnCodeForm = () => {
                             <InputNumber min={30000} max={39999} />
                         </Form.Item>
                     </Col>
-                    <Col xs={8} xl={20}>
+                    <Col className="gutter-row" span={20}>
                         <Form.Item
                             label={t('d:value')}
                             name="value"

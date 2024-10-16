@@ -28,7 +28,7 @@ import {
     UpdateParameterMutation,
     UpdateParameterMutationVariables
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
+import { showError, showSuccess, showInfo } from '@helpers';
 
 const { Title } = Typography;
 
@@ -47,6 +47,18 @@ export const EditReturnCodeForm: FC<EditReturnCodeFormProps> = ({
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
+
+    //check fields if contain undefined value and set field to null
+    const checkUndefinedValues = (form: any) => {
+        const tmpFieldsValues = { ...form.getFieldsValue(true) };
+
+        for (const [key, value] of Object.entries(tmpFieldsValues)) {
+            if (value === undefined) {
+                tmpFieldsValues[key] = null;
+            }
+        }
+        form.setFieldsValue(tmpFieldsValues);
+    };
 
     const { mutate, isPending: updateLoading } = useUpdateParameterMutation<Error>(
         graphqlRequestClient,
@@ -103,13 +115,13 @@ export const EditReturnCodeForm: FC<EditReturnCodeFormProps> = ({
         if (updateLoading) {
             showInfo(t('messages:info-create-wip'));
         }
-    }, [updateLoading]);
+    }, [updateLoading, details]);
 
     return (
         <WrapperForm>
             <Form form={form} scrollToFirstError>
-                <Row>
-                    <Col xs={1} xl={4}>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32, xl: 40 }}>
+                    <Col className="gutter-row" span={6}>
                         <Form.Item
                             label={t('d:code')}
                             name="code"
@@ -120,7 +132,7 @@ export const EditReturnCodeForm: FC<EditReturnCodeFormProps> = ({
                             <InputNumber min={30000} max={39999} />
                         </Form.Item>
                     </Col>
-                    <Col xs={8} xl={20}>
+                    <Col className="gutter-row" span={20}>
                         <Form.Item
                             label={t('d:value')}
                             name="value"
