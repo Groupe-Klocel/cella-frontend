@@ -279,17 +279,50 @@ const CustomerOrderPage: PageComponent = () => {
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+    const confirmAction = (
+        id: string | undefined,
+        setId: any,
+        action: 'delete' | 'disable' | 'update'
+    ) => {
+        const actionTxt =
+            action === 'delete' ? t('messages:delete-confirm') : t('messages:close-confirm');
         return () => {
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: actionTxt,
                 onOk: () => {
-                    setId(id);
+                    if (action === 'delete') {
+                        setId(id);
+                    } else if (action === 'update') {
+                        closeStatus(data.id);
+                    }
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
         };
+    };
+
+    const closeStatus = async (id: string) => {
+        const newStatus = configs.ORDER_STATUS_CLOSED;
+        const updateVariables = {
+            id: id,
+            input: {
+                status: newStatus
+            }
+        };
+        const updateMutationStatus = gql`
+            mutation updateOrder($id: String!, $input: UpdateOrderInput!) {
+                updateOrder(id: $id, input: $input) {
+                    id
+                    status
+                }
+            }
+        `;
+        const result = await graphqlRequestClient.request(updateMutationStatus, updateVariables);
+        if (result) {
+            setTriggerRefresh(!triggerRefresh);
+        }
+        return result;
     };
     const headerData: HeaderData = {
         title: pageTitle,
@@ -433,6 +466,13 @@ const CustomerOrderPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                {/* {modes.length > 0 && data?.status === configs.ORDER_STATUS_TO_INVOICE ? ( */}
+                <Button onClick={() => confirmAction(data.id, setData, 'update')()}>
+                    {t('actions:close')}
+                </Button>
+                {/* ) : (
+                    <></>
+                )} */}
                 <SinglePrintModal
                     showModal={{
                         showSinglePrintModal,
