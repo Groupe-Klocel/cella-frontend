@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
-import { EyeTwoTone } from '@ant-design/icons';
+import { EyeTwoTone, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, showSuccess, showError } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { Button, Divider, Form, Modal, Space, Typography } from 'antd';
@@ -39,7 +39,6 @@ import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { RoundLineModelV2 } from 'models/RoundLineModelV2';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
-import { RoundAdvisedAddressListComponent } from './RoundAdvisedAddressListComponent';
 
 const { Title } = Typography;
 
@@ -67,6 +66,10 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
         permissions,
         Table.HandlingUnitOutbound
     );
+    const [priorityStatus, setPriorityStatus] = useState({
+        id: '',
+        type: ''
+    });
     const router = useRouter();
     const [form] = Form.useForm();
     const errorMessageUpdateData = t('messages:error-update-data');
@@ -180,10 +183,57 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
             RoundAdvisedAddressModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
-                    <RoundAdvisedAddressListComponent
+                    <ListComponent
                         headerData={roundAdvisedAddressData}
                         dataModel={RoundAdvisedAddressModelV2}
                         searchCriteria={{ roundId: roundId }}
+                        triggerDelete={undefined}
+                        triggerSoftDelete={undefined}
+                        triggerPriorityChange={{
+                            id: priorityStatus.id,
+                            setId: setPriorityStatus,
+                            type: priorityStatus.type,
+                            orderingField: 'roundOrderId'
+                        }}
+                        sortDefault={[{ ascending: true, field: 'roundOrderId' }]}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: any) => (
+                                    <Space>
+                                        {record.order === null ? (
+                                            <></>
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    onClick={() =>
+                                                        setPriorityStatus({
+                                                            type: 'up',
+                                                            id: record.id
+                                                        })
+                                                    }
+                                                    icon={<CaretUpOutlined />}
+                                                />
+                                                <Button
+                                                    onClick={() =>
+                                                        setPriorityStatus({
+                                                            type: 'down',
+                                                            id: record.id
+                                                        })
+                                                    }
+                                                    icon={<CaretDownOutlined />}
+                                                />
+                                            </>
+                                        )}
+                                        <LinkButton
+                                            icon={<EyeTwoTone />}
+                                            path={'/rounds/:id'.replace(':id', record.id)}
+                                        />
+                                    </Space>
+                                )
+                            }
+                        ]}
                     />
                     {/* <ListComponent
                         searchCriteria={{ roundId: roundId }}
