@@ -385,7 +385,7 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                             name="value"
                             hidden={false}
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
-                            initialValue={moment().startOf('day')}
+                            initialValue={dayjs()}
                         >
                             <DatePicker format={localeDateTimeFormat} />
                         </Form.Item>
