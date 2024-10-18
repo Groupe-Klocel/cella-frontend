@@ -234,7 +234,7 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                 let value = form.getFieldsValue(true)['value'];
                 if (props.setIsDateType.isDateType) {
                     const valueFromField = form.getFieldsValue(true)['value'];
-                    value = moment(valueFromField).format('YYYY-MM-DD');
+                    value = dayjs(valueFromField).format('YYYY-MM-DD');
                 }
                 const inputs = {
                     featureCodeId: form.getFieldsValue(true)['featureCodeId'],
@@ -253,12 +253,13 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
     };
     useEffect(() => {
         const tmp_details = { ...props.details };
+
         if (props.editSteps.length > 0) {
             let allFields = props.editSteps[0].map((item) => {
                 Object.keys(tmp_details).forEach((key: any) => {
                     if (key == item.name && item.type == FormDataType.Calendar) {
-                        const momentDate = dayjs(setUTCDateTime(tmp_details[key]));
-                        if (tmp_details[key] && momentDate.isValid()) {
+                        const dayjsDate = dayjs(tmp_details[key]);
+                        if (tmp_details[key] && dayjsDate.isValid()) {
                             tmp_details[key] = dayjs(setUTCDateTime(tmp_details[key]));
                         } else {
                             tmp_details[key] = undefined;
@@ -277,8 +278,8 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                     props.editSteps[i].map((item) => {
                         Object.keys(tmp_details).forEach((key) => {
                             if (key == item.name && item.type == FormDataType.Calendar) {
-                                const momentDate = dayjs(setUTCDateTime(tmp_details[key]));
-                                if (tmp_details[key] && momentDate.isValid()) {
+                                const dayjsDate = dayjs(tmp_details[key]);
+                                if (tmp_details[key] && dayjsDate.isValid()) {
                                     tmp_details[key] = dayjs(setUTCDateTime(tmp_details[key]));
                                 } else {
                                     tmp_details[key] = undefined;
@@ -291,9 +292,9 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                 );
             }
             if (tmp_details['featureCode'] && tmp_details['featureCode']['dateType']) {
-                const momentDate = moment(tmp_details['value']);
-                if (tmp_details['value'] && momentDate.isValid()) {
-                    tmp_details['value'] = moment(setUTCDateTime(tmp_details['value']));
+                const dayjsDate = dayjs(tmp_details['value']);
+                if (tmp_details['value'] && dayjsDate.isValid()) {
+                    tmp_details['value'] = dayjs(setUTCDateTime(tmp_details['value']));
                 }
             }
             Object.keys(tmp_details).forEach((key) => {
