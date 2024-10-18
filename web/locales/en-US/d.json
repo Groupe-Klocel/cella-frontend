@@ -771,5 +771,5 @@
     "featureCode_dateType": "Date Type",
     "handlingUnit_location": "Location",
     "handlingUnitContent_handlingUnit_location": "Location",
-    "deliveryAddresses_entityName": "Delivery site"
+    "deliveryAddresses_entityName": "Invoicing third party"
 }
