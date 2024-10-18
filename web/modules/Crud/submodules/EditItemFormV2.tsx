@@ -228,9 +228,6 @@ export const EditItemForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) 
             .catch((err) => console.log(err));
     };
 
-console.log("DLA-form", form.getFieldsValue(true));
-
-
     return (
         <WrapperForm>
             {steps.length > 1 && <StepsPanel currentStep={current} steps={steps} />}
