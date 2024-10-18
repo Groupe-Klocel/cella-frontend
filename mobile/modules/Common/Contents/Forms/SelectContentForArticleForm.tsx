@@ -28,6 +28,8 @@ import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 const { Title } = Typography;
 export interface ISelectContentForArticleProps {
@@ -88,6 +90,9 @@ export const SelectContentForArticleForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
+    const { graphqlRequestClient } = useAuth();
+
+    const [data, setData] = useState<any>();
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -106,16 +111,97 @@ export const SelectContentForArticleForm = ({
     const handlingUnitFilter = handlingUnitId ? { handlingUnitId: `${handlingUnitId}` } : undefined;
     let filter = { ...defaultFilter, ...locationFilter, ...handlingUnitFilter };
 
-    const { isLoading, data, error } = useHandlingUnitContents(
-        filter,
-        1,
-        100,
-        {
-            field: 'handlingUnit_location_category',
-            ascending: true
-        },
-        router.locale
-    );
+    const handlingUnitContentsQuery = gql`
+        query GetHandlingUnitContents(
+            $filters: HandlingUnitContentSearchFilters
+            $orderBy: [HandlingUnitContentOrderByCriterion!]
+            $page: Int!
+            $itemsPerPage: Int!
+            $language: String = "en"
+        ) {
+            handlingUnitContents(
+                filters: $filters
+                orderBy: $orderBy
+                page: $page
+                itemsPerPage: $itemsPerPage
+                language: $language
+            ) {
+                count
+                itemsPerPage
+                totalPages
+                results {
+                    id
+                    stockOwnerId
+                    stockOwner {
+                        id
+                        name
+                    }
+                    article {
+                        description
+                        name
+                        featureTypeText
+                        baseUnitWeight
+                    }
+                    quantity
+                    stockStatus
+                    stockStatusText
+                    handlingUnitId
+                    handlingUnit {
+                        name
+                        code
+                        type
+                        typeText
+                        category
+                        categoryText
+                        locationId
+                        location {
+                            name
+                            replenish
+                            category
+                            categoryText
+                            block {
+                                name
+                            }
+                        }
+                        parentHandlingUnit {
+                            name
+                        }
+                        stockOwner {
+                            name
+                        }
+                    }
+                    articleLuBarcodeId
+                    articleLuBarcode {
+                        barcodeId
+                        barcode {
+                            name
+                        }
+                    }
+                    handlingUnitContentFeatures {
+                        featureCode {
+                            id
+                            name
+                        }
+                        value
+                    }
+                }
+            }
+        }
+    `;
+
+    const variables = {
+        filters: filter,
+        orderBy: [{ field: 'handlingUnit_location_category', ascending: true }],
+        page: 1,
+        itemsPerPage: 100
+    };
+
+    function dataFunction() {
+        graphqlRequestClient.request(handlingUnitContentsQuery, variables).then((data: any) => {
+            setData(data);
+        });
+    }
+    dataFunction();
 
     //SelectContentForArticle-2: set contents to provide to carousel
     const [contents, setContents] = useState<any>([]);
@@ -171,7 +257,7 @@ export const SelectContentForArticleForm = ({
 
     return (
         <WrapperForm>
-            {data && !isLoading ? (
+            {data ? (
                 <CarouselWrapper
                     arrows
                     prevArrow={<LeftOutlined />}
