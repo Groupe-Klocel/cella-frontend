@@ -777,5 +777,5 @@
     "featureCode_dateType": "Type Date",
     "handlingUnit_location": "Emplacement",
     "handlingUnitContent_handlingUnit_location": "Emplacement",
-    "deliveryAddresses_entityName": "Site de livraison"
+    "deliveryAddresses_entityName": "Tiers de facturation"
 }
