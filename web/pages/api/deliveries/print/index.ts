@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -96,7 +97,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         filters: { deliveryId, category: configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY }
     };
 
-    const deliveryResponse = await graphqlRequestClient.request(query, variables, requestHeader);
+    const deliveryResponse: GraphQLResponseType = await graphqlRequestClient.request(
+        query,
+        variables,
+        requestHeader
+    );
 
     const tmp_context = {
         delivery: deliveryResponse.deliveryAddresses.results[0],
@@ -128,7 +133,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     `;
 
-    const result = await graphqlRequestClient.request(
+    const result: GraphQLResponseType = await graphqlRequestClient.request(
         renderDocumentDocumentQuery,
         renderDocumentVariables,
         requestHeader

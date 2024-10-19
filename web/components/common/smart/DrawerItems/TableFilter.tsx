@@ -30,20 +30,25 @@ import {
     forwardRef,
     useImperativeHandle,
     ClassAttributes,
-    HTMLAttributes
+    HTMLAttributes,
+    ForwardedRef
 } from 'react';
 import { SortableContainer, SortableElement, SortableHandle } from 'react-sortable-hoc';
 import { arrayMoveImmutable } from 'array-move';
 import { MenuOutlined } from '@ant-design/icons';
+import { ColumnType } from 'antd/lib/table';
 
 export interface ITableFilterProps {
-    ref: any;
     columnsToFilter: any; //need to find what is wrong with this MyColumnType[],
     visibleKeys: Key[];
     fixKeys: Key[];
     onShowChange: Function;
     onSort: Function;
     onFixed: Function;
+}
+
+interface TableFilterRef {
+    reset: (keys: string[], columns: ColumnType<any>[]) => void;
 }
 
 interface Iindex {
@@ -67,10 +72,10 @@ const SortableBody = SortableContainer(
     ) => <tbody {...props} />
 );
 
-const TableFilter: FC<ITableFilterProps> = forwardRef(
+const TableFilter = forwardRef<TableFilterRef, ITableFilterProps>(
     (
-        { columnsToFilter, visibleKeys, onShowChange, onSort, fixKeys, onFixed }: ITableFilterProps,
-        ref
+        { columnsToFilter, visibleKeys, onShowChange, onSort, fixKeys, onFixed },
+        ref: ForwardedRef<TableFilterRef>
     ) => {
         const { t } = useTranslation();
         const [showKeys, setShowKeys] = useState(visibleKeys);

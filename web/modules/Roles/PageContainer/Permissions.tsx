@@ -92,7 +92,7 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
     ];
 
     // Update
-    const { mutate: updateMutate, isLoading: softDeleteLoading } = useUpdateRoleMutation<Error>(
+    const { mutate: updateMutate, isPending: softDeleteLoading } = useUpdateRoleMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -100,9 +100,7 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
                 _variables: UpdateRoleMutationVariables,
                 _context: any
             ) => {
-                if (!softDeleteLoading) {
-                    showSuccess(t('messages:success-updated'));
-                }
+                showSuccess(t('messages:success-updated'));
             },
             onError: (err) => {
                 showError(t('messages:error-update-data'));
@@ -195,6 +193,7 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
                             <PermissionList
                                 searchCriteria={{ roleId: roleId }}
                                 setEnableUpdate={setEnableUpdate}
+                                updatedRows={updatedRows}
                                 setUpdatedRows={setUpdatedRows}
                                 setUnsavedChanges={setUnsavedChanges}
                                 warehouseId={roleData.data?.roles?.results[0].warehouseId}

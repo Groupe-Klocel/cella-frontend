@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+import { GraphQLResponseType } from '@helpers';
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -60,7 +61,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         id
     };
 
-    const loadsInResponse = await graphqlRequestClient.request(query, variables, requestHeader);
+    const loadsInResponse: GraphQLResponseType = await graphqlRequestClient.request(
+        query,
+        variables,
+        requestHeader
+    );
 
     const tmp_context = { load: loadsInResponse.load, labelSize };
 
@@ -88,7 +93,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     `;
 
-    const result = await graphqlRequestClient.request(
+    const result: GraphQLResponseType = await graphqlRequestClient.request(
         renderDocumentDocumentQuery,
         renderDocumentVariables,
         requestHeader

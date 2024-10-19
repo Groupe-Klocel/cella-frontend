@@ -103,6 +103,7 @@ export const AddDocumentsForm = (props: ISingleItemProps) => {
             .then(() => {
                 const tmp_filesList = filesList.map(({ uid, ...rest }) => rest);
                 createDocuments(tmp_filesList);
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

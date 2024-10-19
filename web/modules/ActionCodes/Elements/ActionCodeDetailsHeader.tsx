@@ -58,7 +58,7 @@ const ActionCodeDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) 
     ];
 
     // Delete
-    const { mutate: DeleteParameter, isLoading: deleteLoading } = useDeleteParameterMutation<Error>(
+    const { mutate: DeleteParameter, isPending: deleteLoading } = useDeleteParameterMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -66,13 +66,11 @@ const ActionCodeDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) 
                 _variables: DeleteParameterMutationVariables,
                 _context: unknown
             ) => {
-                if (!deleteLoading) {
-                    if (data.deleteParameter) {
-                        showSuccess(t('messages:success-deleted'));
-                        router.push('/action-codes/');
-                    } else {
-                        showError(t('messages:error-delete-feature-types-impossible'));
-                    }
+                if (data.deleteParameter) {
+                    showSuccess(t('messages:success-deleted'));
+                    router.push('/action-codes/');
+                } else {
+                    showError(t('messages:error-delete-feature-types-impossible'));
                 }
             },
 

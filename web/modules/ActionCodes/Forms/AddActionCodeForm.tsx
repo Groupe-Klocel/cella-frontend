@@ -40,7 +40,7 @@ export const AddActionCodeForm = () => {
     // TYPED SAFE ALL
     const [form] = Form.useForm();
 
-    const { mutate, isLoading: createLoading } = useCreateParameterMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateParameterMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

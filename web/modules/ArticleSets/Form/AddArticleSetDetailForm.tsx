@@ -71,7 +71,7 @@ export const AddArticleSetDetailForm = (props: ISingleItemProps) => {
         }
     }, [ArticleData.data]);
 
-    const { mutate, isLoading: createLoading } = useCreateArticleSetDetailMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateArticleSetDetailMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

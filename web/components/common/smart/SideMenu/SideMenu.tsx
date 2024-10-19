@@ -36,8 +36,23 @@ import React, { FC } from 'react';
 import { useAppState } from 'context/AppContext';
 import { Table, ModeEnum } from 'generated/graphql';
 import { cookie, getModesFromPermissions } from '@helpers';
+import styled from 'styled-components';
 
 const { SubMenu } = Menu;
+
+const StyledMenu = styled(Menu)`
+    &&& {
+        .ant-menu-item,
+        .ant-menu-submenu-title {
+            color: white;
+        }
+    }
+    .ant-menu-submenu-expand-icon,
+    .ant-menu-submenu-arrow {
+      color: #fff !important;
+    }
+  }
+`;
 
 const SideMenu: FC = () => {
     const { t } = useTranslation('menu');
@@ -63,7 +78,7 @@ const SideMenu: FC = () => {
     const bi_link = process.env.NEXT_PUBLIC_BI_URL || 'https://bi.cella.cloud';
 
     return (
-        <Menu mode="inline" className="menu">
+        <StyledMenu mode="inline" className="menu">
             <SubMenu icon={<AuditOutlined />} key="administration" title={t('administration')}>
                 {getModesFromPermissions(permissions, Table.Config).includes(ModeEnum.Read) ? (
                     <Menu.Item key="administration-configurations">
@@ -563,7 +578,7 @@ const SideMenu: FC = () => {
                 {t('logout')}
             </Menu.Item>
             <Menu.Item key="end" /> {/* Need an empty item for scroll behavior */}
-        </Menu>
+        </StyledMenu>
     );
 };
 

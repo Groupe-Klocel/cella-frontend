@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppTable, ContentSpin } from '@components';
 import { Button, Col, Row, Switch } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import {
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
@@ -36,10 +36,20 @@ import { useAppState } from 'context/AppContext';
 import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { useRouter } from 'next/router';
 
+import styled from 'styled-components';
+
+const StyledSwitch = styled(Switch)`
+    &.ant-switch .ant-switch-inner {
+        padding-inline-start: 0 !important;
+        padding-inline-end: 0 !important;
+    }
+`;
+
 export interface IPermissionListProps {
     tables: any;
     searchCriteria?: any;
     setEnableUpdate?: any;
+    updatedRows?: any;
     setUpdatedRows?: any;
     setUnsavedChanges?: any;
     warehouseId?: any;
@@ -49,6 +59,7 @@ const PermissionList = ({
     tables,
     searchCriteria,
     setEnableUpdate,
+    updatedRows,
     setUpdatedRows,
     setUnsavedChanges,
     warehouseId
@@ -59,7 +70,6 @@ const PermissionList = ({
     const router = useRouter();
 
     const [rolePermissions, setRolePermissions] = useState<DataQueryType>();
-    const [rows, setRows] = useState<any>();
 
     const [pagination, setPagination] = useState<PaginationType>({
         total: undefined,
@@ -115,33 +125,36 @@ const PermissionList = ({
             });
         });
         setUpdatedRows(rows);
-        setRows(rows);
     }, [data]);
 
     // Column Switch onChange
 
     function handleColumnChange(state: any, key: any, rows: any) {
-        Object.values(rows).forEach((row: any) => {
-            row[key] = state;
+        setUpdatedRows((prevUpdatedRows: any) => {
+            return prevUpdatedRows.map((row: any) => {
+                return { ...row, [key]: state };
+            });
         });
-        if (setEnableUpdate && warehouseId) setEnableUpdate(true);
-        if (setUpdatedRows) setUpdatedRows(rows);
-        setUnsavedChanges(true);
-        refetch();
+        if (setEnableUpdate && warehouseId) {
+            setEnableUpdate(true);
+            setUnsavedChanges(true);
+        }
     }
 
     // Row Switch onChange
     function handleSwitchChange(e: boolean, record: any, key: any, rows: any) {
-        record[key] = e;
-        Object.values(rows).forEach((row: any) => {
-            if (record['table'] == row['table']) {
-                row[key] = e;
-            }
+        setUpdatedRows((prevUpdatedRows: any) => {
+            return prevUpdatedRows.map((row: any) => {
+                if (record['table'] == row['table']) {
+                    return { ...row, [key]: e };
+                }
+                return row;
+            });
         });
-        if (setEnableUpdate && warehouseId) setEnableUpdate(true);
-        if (setUpdatedRows) setUpdatedRows(rows);
-        setUnsavedChanges(true);
-        refetch();
+        if (setEnableUpdate && warehouseId) {
+            setEnableUpdate(true);
+            setUnsavedChanges(true);
+        }
     }
 
     // Set Columns
@@ -165,7 +178,7 @@ const PermissionList = ({
                         icon={<CheckOutlined style={{ color: '#0B5E00' }} />}
                         key={key}
                         onClick={(e) => {
-                            handleColumnChange(true, key, rows);
+                            handleColumnChange(true, key, updatedRows);
                         }}
                         disabled={
                             modes.length > 0 &&
@@ -181,7 +194,7 @@ const PermissionList = ({
                         icon={<CloseOutlined style={{ color: '#9C0000' }} />}
                         key={key}
                         onClick={(e) => {
-                            handleColumnChange(false, key, rows);
+                            handleColumnChange(false, key, updatedRows);
                         }}
                         disabled={
                             modes.length > 0 &&
@@ -196,12 +209,12 @@ const PermissionList = ({
             dataIndex: [`${key}`],
             key: `${key}`,
             render: (e: boolean | undefined, record: any) => (
-                <Switch
-                    style={{ backgroundColor: e ? '#0B5E00' : '#9C0000' }}
+                <StyledSwitch
+                    style={{ backgroundColor: record[key] ? '#0B5E00' : '#9C0000' }}
                     checkedChildren={<CheckOutlined />}
                     unCheckedChildren={<CloseOutlined />}
-                    onChange={(e) => handleSwitchChange(e, record, key, rows)}
-                    defaultChecked={e}
+                    onChange={(e) => handleSwitchChange(e, record, key, updatedRows)}
+                    defaultChecked={record[key]}
                     checked={record[key]}
                     disabled={
                         modes.length > 0 && modes.includes(ModeEnum.Update) && warehouseId != null
@@ -220,7 +233,7 @@ const PermissionList = ({
                     <AppTable
                         type="permissions"
                         columns={columns}
-                        data={rows}
+                        data={updatedRows}
                         isLoading={isLoading}
                         pagination={false}
                         setPagination={false}

@@ -77,8 +77,7 @@ export const PatternPathModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            isEditDisabled: true,
-            defaultSort: 'ascending'
+            isEditDisabled: true
         },
         status: {
             isListRequested: true,

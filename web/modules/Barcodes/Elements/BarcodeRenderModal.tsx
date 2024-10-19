@@ -74,7 +74,7 @@ const BarcodeRenderModal = ({ visible, showhideModal, code }: IBarcodeRenderModa
         showhideModal();
     };
     return (
-        <Modal title="Input Page Number" visible={visible} onOk={onClickOk} onCancel={handleCancel}>
+        <Modal title="Input Page Number" open={visible} onOk={onClickOk} onCancel={handleCancel}>
             <p>{t('actions:enter-page-number')}</p>
             <Input
                 name="pages"

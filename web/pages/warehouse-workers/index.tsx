@@ -41,7 +41,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import { warehouseWorkersRoutes as itemRoutes } from 'modules/WarehouseWorkers/Static/warehouseWorkersRoutes';
 import { useAuth } from 'context/AuthContext';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const RolePages: PageComponent = () => {
@@ -69,19 +69,17 @@ const RolePages: PageComponent = () => {
     };
 
     // DELETE MUTATION
-    const { mutate: DeleteWarehouseWorkerMutate, isLoading: DeleteLoading } =
+    const { mutate: DeleteWarehouseWorkerMutate, isPending: DeleteLoading } =
         useDeleteWarehouseWorkerMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeleteWarehouseWorkerMutation,
                 _variables: DeleteWarehouseWorkerMutationVariables,
                 _context: any
             ) => {
-                if (!DeleteLoading) {
-                    showSuccess(t('messages:success-deleted'));
-                    if (isDeletingActualUser) logout();
-                    else {
-                        router.reload();
-                    }
+                showSuccess(t('messages:success-deleted'));
+                if (isDeletingActualUser) logout();
+                else {
+                    router.refresh();
                 }
             },
             onError: (err) => {

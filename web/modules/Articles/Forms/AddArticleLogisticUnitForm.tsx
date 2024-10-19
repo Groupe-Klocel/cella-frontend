@@ -347,7 +347,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
     };
 
     // Create Mutation
-    const { mutate, isLoading: createLoading } = useCreateArticleLuMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateArticleLuMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -382,6 +382,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
                 delete formData.stockOwnerName;
                 delete formData.logisticUnit;
                 createArticleLu({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

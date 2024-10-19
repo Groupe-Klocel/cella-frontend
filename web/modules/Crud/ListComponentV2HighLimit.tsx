@@ -113,10 +113,10 @@ const ListComponent = (props: IListProps) => {
     const mandatory_Filter = searchCriterias?.scope
         ? `_${searchCriterias.scope}`
         : searchCriterias?.category
-        ? `_${searchCriterias.category}`
-        : searchCriterias?.orderType
-        ? `_${searchCriterias.orderType}`
-        : '';
+          ? `_${searchCriterias.category}`
+          : searchCriterias?.orderType
+            ? `_${searchCriterias.orderType}`
+            : '';
     // #endregion
 
     // #region extract data from modelV2
@@ -692,7 +692,7 @@ const ListComponent = (props: IListProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage, itemsPerPage) => {
+        (currentPage: any, itemsPerPage: any) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: rows?.count,

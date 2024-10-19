@@ -37,7 +37,7 @@ import {
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
 import { FormOptionType } from 'models/ModelsV2';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 export type EditCustomerOrderFormProps = {
     orderId: string;
@@ -116,7 +116,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
         }
     }, [stockOwnerList]);
 
-    const { mutate, isLoading: updateLoading } = useUpdateOrderMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateOrderMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -486,11 +486,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                     </Select>
                 </Form.Item>
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
-                    <DatePicker
-                        allowClear
-                        format="YYYY-MM-DD"
-                        showTime={{ defaultValue: moment('YYYY-MM-DD') }}
-                    />
+                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
                 </Form.Item>
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
                     <Select

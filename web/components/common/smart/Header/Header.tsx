@@ -27,6 +27,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useCallback, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
+import Link from 'next/link';
 
 const StyledHeader = styled(Layout.Header)`
     padding: 0px 10px 0px 10px;
@@ -106,7 +107,9 @@ const Header: FC = () => {
         <StyledHeader>
             <Row wrap={false} align="middle">
                 <StyledCol flex="10vw">
-                    <Logo width={45} />
+                    <Link href="/" passHref>
+                        <Logo width={45} />
+                    </Link>
                 </StyledCol>
                 <StyledCol flex="0 1 auto" offset={8}>
                     <ProfileMenu username={user.username} profileMenu={profileMenuList} />

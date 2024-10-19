@@ -246,7 +246,7 @@ export const AddHandlingUnitContentForm = () => {
     console.log('formData', form.getFieldsValue(true));
 
     // CREATE MUTATION
-    const { mutate, isLoading: createLoading } = useCreateHandlingUnitWithContentMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateHandlingUnitWithContentMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -340,6 +340,7 @@ export const AddHandlingUnitContentForm = () => {
                 delete formData.locationName;
                 delete formData.articleName;
                 CreateHandlingUnitWithContent({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

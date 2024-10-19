@@ -154,7 +154,7 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     }, [vatRatesList.data]);
 
     //CREATE delivery line
-    const { mutate, isLoading: createLoading } = useCreateDeliveryLineMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateDeliveryLineMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

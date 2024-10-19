@@ -225,7 +225,7 @@ const RoundPages: PageComponent = () => {
                             </Button>
                         </span>
                         <BulkEditRoundsRenderModal
-                            visible={showModal}
+                            open={showModal}
                             rows={rowSelection}
                             showhideModal={() => {
                                 setShowModal(!showModal);

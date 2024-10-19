@@ -3,6 +3,7 @@
 {
     "presets": ["next/babel"],
     "plugins": [
+        ["@babel/plugin-transform-runtime", { "regenerator": true }],
         ["styled-components", { "ssr": true }],
         ["import", { "libraryName": "antd", "style": true }],
         ["module-resolver", { "alias": { "@": "./src" } }]

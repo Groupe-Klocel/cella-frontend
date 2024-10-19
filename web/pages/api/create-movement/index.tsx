@@ -22,6 +22,7 @@ import { GraphQLClient, gql } from 'graphql-request';
 import { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -55,7 +56,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );

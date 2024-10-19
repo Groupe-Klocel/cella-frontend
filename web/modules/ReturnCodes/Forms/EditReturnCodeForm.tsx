@@ -48,7 +48,7 @@ export const EditReturnCodeForm: FC<EditReturnCodeFormProps> = ({
     // TYPED SAFE ALL
     const [form] = Form.useForm();
 
-    const { mutate, isLoading: updateLoading } = useUpdateParameterMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateParameterMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

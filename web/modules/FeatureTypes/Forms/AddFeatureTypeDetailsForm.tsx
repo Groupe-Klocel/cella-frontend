@@ -131,7 +131,7 @@ export const AddFeatureTypeDetailsForm = () => {
         };
     }, [unsavedChanges]);
 
-    const { mutate, isLoading: createLoading } = useCreateFeatureTypeDetailMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateFeatureTypeDetailMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

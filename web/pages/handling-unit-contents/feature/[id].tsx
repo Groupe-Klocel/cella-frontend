@@ -39,7 +39,6 @@ import useTranslation from 'next-translate/useTranslation';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import moment from 'moment';
 import { isString } from 'lodash';
 
 type PageComponent = FC & { layout: typeof MainLayout };

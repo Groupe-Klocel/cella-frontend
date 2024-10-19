@@ -30,6 +30,7 @@ import {
     useGetHandlingUnitContentByIdQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+import dayjs from 'dayjs';
 
 require('moment/locale/fr'); // French
 
@@ -231,6 +232,7 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                         mutate({
                             input: { ...inputs, ...props.extraData }
                         });
+                        setUnsavedChanges(false);
                     })
                     .catch((err) => {
                         showError(t('errors:DB-000111'));
@@ -312,7 +314,7 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                             name="value"
                             hidden={false}
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
-                            initialValue={moment().startOf('day')}
+                            initialValue={dayjs()}
                         >
                             <DatePicker format={localeDateTimeFormat} />
                         </Form.Item>

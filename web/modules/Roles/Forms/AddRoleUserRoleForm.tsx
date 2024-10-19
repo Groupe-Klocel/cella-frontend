@@ -90,7 +90,7 @@ export const AddRoleUserRoleForm = (props: ISingleItemProps) => {
     }, [warehouseWorkerData.data]);
 
     //CREATE user role
-    const { mutate, isLoading: createLoading } = useCreateUserRoleMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateUserRoleMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
