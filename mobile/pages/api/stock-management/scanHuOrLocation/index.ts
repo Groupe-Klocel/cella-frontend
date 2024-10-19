@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+import { GraphQLResponseType } from '@helpers';
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -167,7 +168,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     `;
 
-    const huResponse = await graphqlRequestClient.request(husQuery, sharedFilter, requestHeader);
+    const huResponse: GraphQLResponseType = await graphqlRequestClient.request(
+        husQuery,
+        sharedFilter,
+        requestHeader
+    );
 
     let response;
     if (huResponse && huResponse.handlingUnits.count === 1) {
@@ -179,7 +184,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             location: { ...location }
         };
     } else {
-        const locationResponse = await graphqlRequestClient.request(
+        const locationResponse: GraphQLResponseType = await graphqlRequestClient.request(
             locationsQuery,
             sharedFilter,
             requestHeader

@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { META_DEFAULTS } from '@helpers';
 import { cookie, getDefaultTheme } from '@helpers';
-import 'antd/dist/antd.css';
+import 'antd/dist/reset.css';
 import { AppProvider } from 'context/AppContext';
 import { AuthProvider } from 'context/AuthContext';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
@@ -28,7 +28,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Fragment, useEffect } from 'react';
 import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../styles/globals.css';
 
 const themes = {
