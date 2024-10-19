@@ -20,6 +20,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Switch } from 'antd';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { FC, useCallback } from 'react';
+import styled from 'styled-components';
+
+const StyledSwitch = styled(Switch)`
+    &.ant-switch .ant-switch-inner {
+        padding-inline-start: 0 !important;
+        padding-inline-end: 0 !important;
+    }
+`;
 
 const MenuSwitch: FC = () => {
     const { isSettingMenuCollapsed } = useAppState();
@@ -39,7 +47,9 @@ const MenuSwitch: FC = () => {
         switchMenuSetting();
     };
 
-    return <Switch checked={isSettingMenuCollapsed} onChange={onCollapseMenu} defaultChecked />;
+    return (
+        <StyledSwitch checked={isSettingMenuCollapsed} onChange={onCollapseMenu} defaultChecked />
+    );
 };
 
 MenuSwitch.displayName = 'MenuSwitch';

@@ -100,7 +100,7 @@ const GoodsInDetailsExtra = ({ roundId }: IItemDetailsProps) => {
     // UPDATE Round
     const {
         mutate: userMutate,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useUpdateRoundAdvisedAddressMutation<Error>(graphqlRequestClient, {
         onSuccess: (

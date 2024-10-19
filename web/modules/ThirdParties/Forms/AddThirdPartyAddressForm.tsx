@@ -197,7 +197,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     }, [vatRatesList.data]);
 
     // CREATION //
-    const { mutate, isLoading: createLoading } = useCreateThirdPartyAddressMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateThirdPartyAddressMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -226,6 +226,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                 formData.status = configs.THIRD_PARTY_ADDRESS_STATUS_ENABLED;
                 delete formData.thirdPartyName;
                 createThirdPartyAddress({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

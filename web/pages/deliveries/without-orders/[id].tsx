@@ -149,7 +149,7 @@ const DeliveryPage: PageComponent = () => {
     const deliveryLines = useDeliveryLineIds({ deliveryId: `${data?.id}%` }, 1, 100, null);
 
     // CANCEL DELIVERY
-    const { mutate: cancelDeliveryMutate, isLoading: cancelLoading } =
+    const { mutate: cancelDeliveryMutate, isPending: cancelLoading } =
         useCancelDeliveryMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: CancelDeliveryMutation,

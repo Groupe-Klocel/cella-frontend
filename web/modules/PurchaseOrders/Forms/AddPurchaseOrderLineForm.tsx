@@ -187,7 +187,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     }, [vatRatesList.data]);
 
     //CREATE purchase order line
-    const { mutate, isLoading: createLoading } = useCreatePurchaseOrderLineMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreatePurchaseOrderLineMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -218,6 +218,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
                 delete formData.purchaseOrderName;
                 delete formData.stockOwnerName;
                 createPurchaseOrderLine({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

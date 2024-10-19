@@ -9,3 +9,4 @@ generates:
             - 'typescript-react-query'
         config:
             fetcher: graphql-request
+            reactQueryVersion: 5

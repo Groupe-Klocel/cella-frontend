@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Form, Input, InputNumber, Checkbox, Select, DatePicker } from 'antd';
 import { debounce } from 'lodash';
 import moment from 'moment';
+import dayjs from 'dayjs';
 import useTranslation from 'next-translate/useTranslation';
 import { FC } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/Models';
@@ -40,9 +41,12 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
     const router = useRouter();
 
     moment.locale(router.locale);
+
     const localeData = moment.localeData();
     const localeDateTimeFormat =
         localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
+
+        console.log(localeDateTimeFormat, 'localeDateTimeFormat');
 
     return (
         <>
@@ -158,13 +162,13 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                             {item.initialValue ? (
                                 <DatePicker
                                     format={localeDateTimeFormat}
-                                    showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
+                                    showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
                                     defaultValue={item.initialValue}
                                 />
                             ) : (
                                 <DatePicker
                                     format={localeDateTimeFormat}
-                                    showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
+                                    showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
                                 />
                             )}
                         </Form.Item>

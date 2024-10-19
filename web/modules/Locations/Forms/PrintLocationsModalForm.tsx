@@ -376,7 +376,7 @@ const PrintLocationsModalForm = ({ showModal }: IPrintLocationsModalFormProps) =
     return (
         <Modal
             title={t('actions:chose-locations-range')}
-            visible={showModal.showRangeLocationsModal}
+            open={showModal.showRangeLocationsModal}
             onOk={onClickOk}
             onCancel={handleCancel}
             width={800}

@@ -21,6 +21,14 @@ import { Switch } from 'antd';
 import { FC, useCallback } from 'react';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import styled from 'styled-components';
+
+const StyledSwitch = styled(Switch)`
+    &.ant-switch .ant-switch-inner {
+        padding-inline-start: 0 !important;
+        padding-inline-end: 0 !important;
+    }
+`;
 
 const LightThemeIcon = () => (
     <span role="img" aria-label="light">
@@ -41,7 +49,7 @@ const ThemeSwitch: FC = () => {
     const dispatchMenu = useAppDispatch();
 
     const switchTheme = useCallback(
-        (isChecked) =>
+        (isChecked: boolean) =>
             dispatchMenu({
                 type: 'SWITCH_THEME',
                 theme: isChecked ? themes.dark : themes.light
@@ -54,7 +62,7 @@ const ThemeSwitch: FC = () => {
     };
 
     return (
-        <Switch
+        <StyledSwitch
             checked={theme === 'dark' ? true : false}
             onChange={toggleTheme}
             checkedChildren={<LightThemeIcon />}

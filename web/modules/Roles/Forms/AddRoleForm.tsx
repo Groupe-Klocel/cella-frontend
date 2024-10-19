@@ -70,7 +70,7 @@ export const AddRoleForm = () => {
     }, [unsavedChanges]);
 
     //CREATE role
-    const { mutate, isLoading: createLoading } = useCreateRoleMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateRoleMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (

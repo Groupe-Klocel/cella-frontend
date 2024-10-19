@@ -172,7 +172,7 @@ export const AddCarrierShippingModeForm = (props: ISingleItemProps) => {
     };
 
     // CREATION //
-    const { mutate, isLoading: createLoading } = useCreateCarrierShippingModeMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateCarrierShippingModeMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -200,6 +200,7 @@ export const AddCarrierShippingModeForm = (props: ISingleItemProps) => {
                 const formData = form.getFieldsValue(true);
                 delete formData.carrierName;
                 createCarrierShippingMode({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

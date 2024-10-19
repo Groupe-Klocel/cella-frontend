@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 /* eslint-disable prefer-const */
+import { GraphQLResponseType } from '@helpers';
 import { GraphQLClient, gql } from 'graphql-request';
 import { NextApiRequest, NextApiResponse } from 'next';
 
@@ -53,7 +54,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -96,7 +97,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             }
         `;
-        const updateHandlingUnitResponse = await graphqlRequestClient.request(
+        const updateHandlingUnitResponse: GraphQLResponseType = await graphqlRequestClient.request(
             updateHandlingUnit,
             updateHandlingUnitInput,
             requestHeader
@@ -140,11 +141,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             }
         `;
-        const updateHandlingUnitContentResponse = await graphqlRequestClient.request(
-            updateHandlingUnitContent,
-            updateHandlingUnitContentInput,
-            requestHeader
-        );
+        const updateHandlingUnitContentResponse: GraphQLResponseType =
+            await graphqlRequestClient.request(
+                updateHandlingUnitContent,
+                updateHandlingUnitContentInput,
+                requestHeader
+            );
         res.status(200).json({
             response: {
                 updatedHandlingUnit: updateHandlingUnitResponse.updateHandlingUnit ?? undefined,

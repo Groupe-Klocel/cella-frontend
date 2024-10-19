@@ -21,10 +21,14 @@ import { FC, useEffect, useState } from 'react';
 import { Button, Form, Modal, Space } from 'antd';
 import { StepsPanel, StyledForm, WrapperForm, WrapperStepContent } from '@components';
 import useTranslation from 'next-translate/useTranslation';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 
 import { useRouter } from 'next/router';
 
-import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
+import { showError, showSuccess, showInfo, useUpdate, setUTCDateTime } from '@helpers';
 import { FormGroup } from 'modules/Crud/submodules/FormGroup';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import moment from 'moment';
@@ -107,6 +111,7 @@ export const EditConfigParamForm: FC<IEditItemFormProps> = (props: IEditItemForm
                     id: props.id,
                     input: { ...formData }
                 });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('errors:DB-000111'));
@@ -122,10 +127,9 @@ export const EditConfigParamForm: FC<IEditItemFormProps> = (props: IEditItemForm
 
         if (props.editSteps.length > 0) {
             let allFields = props.editSteps[0].map((item) => {
-                // DatePicker's value only accept moment, Conversion string -> moment required
                 Object.keys(tmp_details).forEach((key) => {
                     if (key == item.name && item.type == FormDataType.Calendar) {
-                        tmp_details[key] = moment(tmp_details[key]);
+                        tmp_details[key] = dayjs(setUTCDateTime(tmp_details[key]));
                     }
                 });
 
@@ -135,10 +139,9 @@ export const EditConfigParamForm: FC<IEditItemFormProps> = (props: IEditItemForm
             for (let i = 1; i < props.editSteps.length; i++) {
                 allFields = allFields.concat(
                     props.editSteps[i].map((item) => {
-                        // DatePicker's value only accept moment, Conversion string -> moment required
                         Object.keys(tmp_details).forEach((key) => {
                             if (key == item.name && item.type == FormDataType.Calendar) {
-                                tmp_details[key] = moment(tmp_details[key]);
+                                tmp_details[key] = dayjs(setUTCDateTime(tmp_details[key]));
                             }
                         });
 

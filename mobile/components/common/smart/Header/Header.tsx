@@ -45,6 +45,7 @@ const StyledCol = styled(Col)`
     min-width: 40px;
     padding: 0px 5px 0px 5px;
     border-right: 1px solid;
+    border-color: black;
     display: flex;
     justify-content: center;
     align-items: center;

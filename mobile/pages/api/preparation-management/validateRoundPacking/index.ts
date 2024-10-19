@@ -21,6 +21,7 @@ import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
+import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
     str
@@ -67,7 +68,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             generateTransactionId
         }
     `;
-    const transactionIdResponse = await graphqlRequestClient.request(
+    const transactionIdResponse: GraphQLResponseType = await graphqlRequestClient.request(
         generateTransactionId,
         requestHeader
     );
@@ -102,11 +103,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { scope: 'outbound', code: 'DEFAULT_SHIPPING_LOCATION' }
         };
 
-        const defaultShippingLocationParameterResult = await graphqlRequestClient.request(
-            defaultShippingLocationParameterQuery,
-            defaultShippingLocationParameterVariables,
-            requestHeader
-        );
+        const defaultShippingLocationParameterResult: GraphQLResponseType =
+            await graphqlRequestClient.request(
+                defaultShippingLocationParameterQuery,
+                defaultShippingLocationParameterVariables,
+                requestHeader
+            );
 
         const defaultShippingLocationQuery = gql`
             query locations($filters: LocationSearchFilters) {
@@ -123,11 +125,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { name: defaultShippingLocationParameterResult.parameters.results[0].value }
         };
 
-        const defaultShippingLocationResult = await graphqlRequestClient.request(
-            defaultShippingLocationQuery,
-            defaultShippingLocationVariables,
-            requestHeader
-        );
+        const defaultShippingLocationResult: GraphQLResponseType =
+            await graphqlRequestClient.request(
+                defaultShippingLocationQuery,
+                defaultShippingLocationVariables,
+                requestHeader
+            );
 
         // 1- Check Final HU
         const finalHandlingUnitQuery = gql`
@@ -161,7 +164,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         `;
 
-        let finalHandlingUnitResult = undefined;
+        let finalHandlingUnitResult: GraphQLResponseType | undefined = undefined;
         if (Object.keys(existingFinalHUO).length > 0) {
             const finalHandlingUnitVariables = {
                 filters: { id: existingFinalHUO.handlingUnitId }
@@ -204,7 +207,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const generateSSCC_result = await graphqlRequestClient.request(query, variables);
+            const generateSSCC_result: GraphQLResponseType = await graphqlRequestClient.request(
+                query,
+                variables
+            );
             if (generateSSCC_result.executeFunction.status === 'ERROR') {
                 res.status(500).json({ error: generateSSCC_result.executeFunction.output });
             } else if (
@@ -261,7 +267,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const createdHu = await graphqlRequestClient.request(
+            const createdHu: GraphQLResponseType = await graphqlRequestClient.request(
                 createHUMutation,
                 createHUvariables
             );
@@ -373,7 +379,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const createdHuo = await graphqlRequestClient.request(
+            const createdHuo: GraphQLResponseType = await graphqlRequestClient.request(
                 createHUOMutation,
                 createHUOvariables
             );
@@ -438,7 +444,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             orderBy: [{ field: 'order', ascending: true }]
         };
 
-        const roundLineDetailsResult = await graphqlRequestClient.request(
+        const roundLineDetailsResult: GraphQLResponseType = await graphqlRequestClient.request(
             roundLineDetailsQuery,
             roundLineDetailsVariables,
             requestHeader
@@ -496,7 +502,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 }
                             };
 
-                            const handlingUnitContentOutboundResult =
+                            const handlingUnitContentOutboundResult: GraphQLResponseType =
                                 await graphqlRequestClient.request(
                                     handlingUnitContentOutboundQuery,
                                     handlingUnitContentOutboundVariables,
@@ -562,10 +568,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                     }
                                 };
 
-                                const createdHuc = await graphqlRequestClient.request(
-                                    createHUCMutation,
-                                    createHUCvariables
-                                );
+                                const createdHuc: GraphQLResponseType =
+                                    await graphqlRequestClient.request(
+                                        createHUCMutation,
+                                        createHUCvariables
+                                    );
                                 console.log('createdHuc', createdHuc.createHandlingUnitContent);
 
                                 finalHandlingUnitContent = createdHuc.createHandlingUnitContent;
@@ -599,10 +606,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                     }
                                 };
 
-                                const createdHuco = await graphqlRequestClient.request(
-                                    createHUCOMutation,
-                                    createHUCOvariables
-                                );
+                                const createdHuco: GraphQLResponseType =
+                                    await graphqlRequestClient.request(
+                                        createHUCOMutation,
+                                        createHUCOvariables
+                                    );
 
                                 console.log(
                                     'createdHucO',
@@ -638,10 +646,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                         lastTransactionId
                                     }
                                 };
-                                const updatedFinalHUCO = await graphqlRequestClient.request(
-                                    updateFinalHUCOMutation,
-                                    updateFinalHUCOvariable
-                                );
+                                const updatedFinalHUCO: GraphQLResponseType =
+                                    await graphqlRequestClient.request(
+                                        updateFinalHUCOMutation,
+                                        updateFinalHUCOvariable
+                                    );
                                 console.log(
                                     'updatedFinalHUCO',
                                     updatedFinalHUCO.updateHandlingUnitContentOutbound
@@ -667,10 +676,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                         lastTransactionId
                                     }
                                 };
-                                const updatedFinalHUC = await graphqlRequestClient.request(
-                                    updateFinalHUCMutation,
-                                    updateFinalHUCvariable
-                                );
+                                const updatedFinalHUC: GraphQLResponseType =
+                                    await graphqlRequestClient.request(
+                                        updateFinalHUCMutation,
+                                        updateFinalHUCvariable
+                                    );
 
                                 console.log(
                                     'updatedFinalHUC',
@@ -705,7 +715,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                     lastTransactionId
                                 }
                             };
-                            const updateRoundLineDetailResponse =
+                            const updateRoundLineDetailResponse: GraphQLResponseType =
                                 await graphqlRequestClient.request(
                                     updateRoundLineDetailMutation,
                                     updateRoundLineDetailVariables
@@ -953,11 +963,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { handlingUnitId: roundHU.id, articleId: articleInfos.id }
         };
 
-        const originalHandlingUnitContentResult = await graphqlRequestClient.request(
-            handlingUnitContentQuery,
-            originalHandlingUnitContentVariables,
-            requestHeader
-        );
+        const originalHandlingUnitContentResult: GraphQLResponseType =
+            await graphqlRequestClient.request(
+                handlingUnitContentQuery,
+                originalHandlingUnitContentVariables,
+                requestHeader
+            );
 
         // 4b- update origin huc
         const updateHUCMutation = gql`
@@ -984,7 +995,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         };
 
-        const updatedHUC = await graphqlRequestClient.request(updateHUCMutation, updateHUCvariable);
+        const updatedHUC: GraphQLResponseType = await graphqlRequestClient.request(
+            updateHUCMutation,
+            updateHUCvariable
+        );
 
         console.log('updatedOriginHUC', updatedHUC);
 
@@ -1124,7 +1138,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { id: roundHU.id }
         };
 
-        const updatedRoundHUResult = await graphqlRequestClient.request(
+        const updatedRoundHUResult: GraphQLResponseType = await graphqlRequestClient.request(
             updatedRoundHUQuery,
             updatedRoundHUVariables,
             requestHeader
@@ -1231,7 +1245,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { id: finalHandlingUnitOutbound.id }
         };
 
-        const updatedFinalHUOResult = await graphqlRequestClient.request(
+        const updatedFinalHUOResult: GraphQLResponseType = await graphqlRequestClient.request(
             updatedFinalHUOQuery,
             updatedFinalHUOVariables,
             requestHeader

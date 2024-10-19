@@ -202,7 +202,7 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
     // make wrapper function to give child
 
     const childSetVisibleColumnKeys = useCallback(
-        (val) => {
+        (val: any) => {
             setVisibleColumnKeys(val);
         },
         [setVisibleColumnKeys]
@@ -210,7 +210,7 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
 
     // make wrapper function to give child
     const childSetFixedColumns = useCallback(
-        (val) => {
+        (val: any) => {
             setFixedColumns(val);
         },
         [setFixedColumns]
@@ -218,7 +218,7 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
 
     // make wrapper function to give child
     const childSetTableColumns = useCallback(
-        (val) => {
+        (val: any) => {
             const valWithoutDuplicates = val.filter(
                 (obj: any, index: number, self: any) =>
                     index === self.findIndex((t: any) => t.key === obj.key)

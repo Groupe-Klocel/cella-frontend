@@ -300,7 +300,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
     const [form] = Form.useForm();
 
     //CREATE order address
-    const { mutate, isLoading: createLoading } = useCreateOrderAddressMutation<Error>(
+    const { mutate, isPending: createLoading } = useCreateOrderAddressMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -330,6 +330,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                 delete formData.customerOrderName;
                 delete formData.thirdPartyName;
                 createCustomerOrderAddress({ input: formData });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

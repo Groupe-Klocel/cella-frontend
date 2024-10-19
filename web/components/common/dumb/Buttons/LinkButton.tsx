@@ -30,7 +30,7 @@ export interface ILinkButtonProps {
               pathname: string;
               query: any;
           };
-    type?: 'link' | 'text' | 'ghost' | 'default' | 'primary' | 'dashed' | undefined;
+    type?: 'link' | 'text' | 'default' | 'primary' | 'dashed' | undefined;
     icon?: ReactNode;
 }
 

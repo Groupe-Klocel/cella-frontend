@@ -66,7 +66,7 @@ const ReturnCodePage: PageComponent = () => {
 
     // delete
 
-    const { mutate: deleteParameter, isLoading: deleteLoading } = useDeleteParameterMutation<Error>(
+    const { mutate: deleteParameter, isPending: deleteLoading } = useDeleteParameterMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -74,13 +74,11 @@ const ReturnCodePage: PageComponent = () => {
                 _variables: DeleteParameterMutationVariables,
                 _context: unknown
             ) => {
-                if (!deleteLoading) {
-                    if (data.deleteParameter) {
-                        showSuccess(t('messages:success-deleted'));
-                        router.reload();
-                    } else {
-                        showError(t('messages:error-delete-feature-types-impossible'));
-                    }
+                if (data.deleteParameter) {
+                    showSuccess(t('messages:success-deleted'));
+                    router.reload();
+                } else {
+                    showError(t('messages:error-delete-feature-types-impossible'));
                 }
             },
 

@@ -157,7 +157,7 @@ const LoadsPage: PageComponent = () => {
 
     // DISPATCH LOAD
     const statusDispatched = configs.DELIVERY_STATUS_DISPATCHED;
-    const { mutate: updateLoadMutate, isLoading: dispatch } = useUpdateLoadMutation<Error>(
+    const { mutate: updateLoadMutate, isPending: dispatch } = useUpdateLoadMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: async (

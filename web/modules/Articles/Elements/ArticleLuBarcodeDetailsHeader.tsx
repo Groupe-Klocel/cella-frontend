@@ -80,7 +80,7 @@ const ArticleLuBarcodeDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemP
     // To Update Barcode as blacklisted
     const {
         mutate: UpdateBarcode,
-        isLoading: updateLoading,
+        isPending: updateLoading,
         data
     } = useUpdateBarcodeMutation<Error>(graphqlRequestClient, {
         onSuccess: (
@@ -96,7 +96,7 @@ const ArticleLuBarcodeDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemP
         }
     });
 
-    const { mutate: DeleteArticleLuBarcode, isLoading: deleteLoading } =
+    const { mutate: DeleteArticleLuBarcode, isPending: deleteLoading } =
         useDeleteArticleLuBarcodeMutation<Error>(graphqlRequestClient, {
             onSuccess: (
                 data: DeleteArticleLuBarcodeMutation,

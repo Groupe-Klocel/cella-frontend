@@ -87,7 +87,7 @@ export const EditSchedulerConfigArgumentForm: FC<ISingleItemProps> = ({
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);
-                const input_tmp: InputMaybe<Scalars['JSON']> = {};
+                const input_tmp: any = {};
 
                 const new_element: any = {};
                 new_element[formData.key] = formData.value;

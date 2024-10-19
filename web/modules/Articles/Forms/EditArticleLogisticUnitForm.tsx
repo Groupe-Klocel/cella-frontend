@@ -296,7 +296,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     }, [articleLuRotationList]);
 
     // UPDATE MUTATION
-    const { mutate, isLoading: updateLoading } = useUpdateArticleLuMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateArticleLuMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
@@ -361,6 +361,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
                 delete formData['automaticStorageLocationPattern'];
                 delete formData['statusText'];
                 updateArticleLu({ input: formData, id: details.id });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(errorMessageUpdateData);
