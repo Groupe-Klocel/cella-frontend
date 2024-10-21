@@ -772,5 +772,10 @@
     "value-list-separator": "',' Séparateur de liste de valeurs",
     "range-of-values": "'-' Plage de valeurs",
     "step-values": "'/' Tranche de valeurs",
-    "allowed-values": "valeures autorisées"
+    "allowed-values": "valeures autorisées",
+    "documents": "Documents",
+    "featureCode_dateType": "Type Date",
+    "handlingUnit_location": "Emplacement",
+    "handlingUnitContent_handlingUnit_location": "Emplacement",
+    "deliveryAddresses_entityName": "Tiers de facturation"
 }
