@@ -346,5 +346,6 @@
     "scheduler-configs": "Ordonnanceurs",
     "scheduler-config": "Ordonnanceur",
     "argument": "Argument",
-    "crontab": "Cron"
+    "crontab": "Cron",
+    "documents": "Documents"
 }

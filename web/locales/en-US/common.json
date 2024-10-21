@@ -381,5 +381,6 @@
     "scheduler-configs": "Scheduler Configs",
     "scheduler-config": "Scheduler Config",
     "argument": "Argument",
-    "crontab": "Cron"
+    "crontab": "Cron",
+    "documents": "Documents"
 }
