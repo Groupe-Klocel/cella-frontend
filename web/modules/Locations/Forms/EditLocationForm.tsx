@@ -403,8 +403,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                     </Checkbox>
                 </Form.Item>
                 <Form.Item label={t('d:blockingStatus')} name="stockStatus" rules={[]}>
-                    <Select>
-                        <Option value="">-</Option>
+                    <Select allowClear>
                         {stockStatusesTexts?.map((stockStatus: any) => (
                             <Option key={stockStatus.id} value={parseInt(stockStatus.code)}>
                                 {stockStatus.text}
@@ -413,8 +412,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                     </Select>
                 </Form.Item>
                 <Form.Item label={t('d:locationGroupIdText')} name="locationGroupId" rules={[]}>
-                    <Select>
-                        <Option value="">-</Option>
+                    <Select allowClear>
                         {locationGroupsTexts?.map((locationGroupId: any) => (
                             <Option key={locationGroupId.id} value={locationGroupId.code}>
                                 {locationGroupId.text}
