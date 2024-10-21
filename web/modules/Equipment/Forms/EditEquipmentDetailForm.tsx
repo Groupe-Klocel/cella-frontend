@@ -200,6 +200,7 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
                             placeholder={`${t('messages:please-select-a', {
                                 name: t('d:handlingUnitModel')
                             })}`}
+                            allowClear
                         >
                             {handlingUnitModelId?.map((ed: any) => (
                                 <Option key={ed.key} value={ed.key}>
@@ -219,6 +220,7 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
                             placeholder={`${t('messages:please-select-a', {
                                 name: t('d:preparationMode')
                             })}`}
+                            allowClear
                         >
                             {preparationMode?.map((ed: any) => (
                                 <Option key={ed.key} value={ed.key}>
@@ -238,6 +240,7 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
                             placeholder={`${t('messages:please-select-a', {
                                 name: t('d:shippingMode')
                             })}`}
+                            allowClear
                         >
                             {carrierShippingModeIds?.map((ed: any) => (
                                 <Option key={ed.key} value={ed.key}>
