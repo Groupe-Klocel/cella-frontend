@@ -69,7 +69,7 @@ export const CreditModelV2: ModelType = {
             addEditFormat: 'String',
             addEditStep: null,
             maxLength: 25,
-            displayName: 'customerOrderName',
+            displayName: 'creditName',
             isMandatory: false,
             minRule: null,
             maxRule: null,
@@ -391,7 +391,7 @@ export const CreditModelV2: ModelType = {
             isDetailRequested: false,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
-            link: 'customer_orders/parentOrderId',
+            link: 'customer-orders/parentOrderId',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
@@ -802,9 +802,9 @@ export const CreditModelV2: ModelType = {
             config: null,
             param: null
         },
-        invoiceReference: {
-            isListRequested: false,
-            isDefaultHiddenList: true,
+        invoiceNumber: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
@@ -1325,7 +1325,7 @@ export const CreditModelV2: ModelType = {
         },
         created: {
             isListRequested: true,
-            isDefaultHiddenList: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
