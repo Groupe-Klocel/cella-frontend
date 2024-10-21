@@ -67,7 +67,7 @@ const HandlingUnitContentDetailsExtra = ({
         title: t('common:content-features'),
         routes: [],
         actionsComponent:
-            modes.length > 0 && modes.includes(ModeEnum.Create) ? (
+            modes.length > 0 && modes.includes(ModeEnum.Create) && articleFeatureType ? (
                 <LinkButton
                     title={t('actions:add2', {
                         name: t('common:content-feature')
