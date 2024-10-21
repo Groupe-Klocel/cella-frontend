@@ -231,6 +231,7 @@ const HuMovement: PageComponent = () => {
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     locations={storedObject[`step${workflow.expectedSteps[0]}`].data.locations}
+                    roundsCheck={true}
                 ></SelectLocationByLevelForm>
             ) : (
                 <></>
