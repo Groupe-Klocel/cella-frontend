@@ -34,6 +34,7 @@ export interface ISelectLocationByLevelProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     locations: Array<any>;
+    roundsCheck?: boolean;
 }
 
 export const SelectLocationByLevelForm = ({
@@ -41,7 +42,8 @@ export const SelectLocationByLevelForm = ({
     stepNumber,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    locations
+    locations,
+    roundsCheck
 }: ISelectLocationByLevelProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -111,22 +113,27 @@ export const SelectLocationByLevelForm = ({
                 const variables = {
                     locationId: data['chosenLocation'].id
                 };
-                if (popModal === 2) {
+                const nextStep = () => {
+                    if (data['chosenLocation']?.handlingUnits?.length === 1) {
+                        data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
+                    }
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
+                    storage.set(process, JSON.stringify(storedObject));
+                    setTriggerRender(!triggerRender);
+                };
+                if (!roundsCheck) {
+                    nextStep();
+                }
+                if (popModal === 2 && roundsCheck) {
                     graphqlRequestClient.request(query, variables).then((result: any) => {
                         if (result.roundAdvisedAddresses.count > 0) {
                             Modal.confirm({
                                 title: t('messages:round-already-planned'),
                                 onOk: () => {
-                                    if (data['chosenLocation']?.handlingUnits?.length === 1) {
-                                        data['handlingUnit'] =
-                                            data['chosenLocation']?.handlingUnits[0];
-                                    }
-                                    storedObject[`step${stepNumber}`] = {
-                                        ...storedObject[`step${stepNumber}`],
-                                        data
-                                    };
-                                    storage.set(process, JSON.stringify(storedObject));
-                                    setTriggerRender(!triggerRender);
+                                    nextStep();
                                 },
                                 onCancel: () => {
                                     onBack();
@@ -134,6 +141,8 @@ export const SelectLocationByLevelForm = ({
                                 okText: t('messages:confirm'),
                                 cancelText: t('messages:cancel')
                             });
+                        } else {
+                            nextStep();
                         }
                     });
                 }
@@ -175,39 +184,38 @@ export const SelectLocationByLevelForm = ({
         const variables = {
             locationId: data['chosenLocation'].id
         };
-        graphqlRequestClient.request(query, variables).then((result: any) => {
-            if (result.roundAdvisedAddresses.count > 0) {
-                Modal.confirm({
-                    title: t('messages:round-planned-for-location'),
-                    onOk: () => {
-                        if (data['chosenLocation']?.handlingUnits?.length === 1) {
-                            data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
-                        }
-                        storedObject[`step${stepNumber}`] = {
-                            ...storedObject[`step${stepNumber}`],
-                            data
-                        };
-                        storage.set(process, JSON.stringify(storedObject));
-                        setTriggerRender(!triggerRender);
-                    },
-                    onCancel: () => {
-                        onBack();
-                    },
-                    okText: t('messages:confirm'),
-                    cancelText: t('messages:cancel')
-                });
-            } else {
-                if (data['chosenLocation']?.handlingUnits?.length === 1) {
-                    data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
-                }
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
-                storage.set(process, JSON.stringify(storedObject));
-                setTriggerRender(!triggerRender);
+        const nextStep = () => {
+            if (data['chosenLocation']?.handlingUnits?.length === 1) {
+                data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
             }
-        });
+            storedObject[`step${stepNumber}`] = {
+                ...storedObject[`step${stepNumber}`],
+                data
+            };
+            storage.set(process, JSON.stringify(storedObject));
+            setTriggerRender(!triggerRender);
+        };
+        if (!roundsCheck) {
+            nextStep();
+        } else {
+            graphqlRequestClient.request(query, variables).then((result: any) => {
+                if (result.roundAdvisedAddresses.count > 0) {
+                    Modal.confirm({
+                        title: t('messages:round-planned-for-location'),
+                        onOk: () => {
+                            nextStep();
+                        },
+                        onCancel: () => {
+                            onBack();
+                        },
+                        okText: t('messages:confirm'),
+                        cancelText: t('messages:cancel')
+                    });
+                } else {
+                    nextStep();
+                }
+            });
+        }
     };
 
     return (
