@@ -141,8 +141,7 @@ const StockStatusesPage: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isDeletable &&
-                                record.system == false ? (
+                                model.isDeletable ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger
@@ -166,5 +165,3 @@ const StockStatusesPage: PageComponent = () => {
 StockStatusesPage.layout = MainLayout;
 
 export default StockStatusesPage;
-
-// {record.system == false ? (

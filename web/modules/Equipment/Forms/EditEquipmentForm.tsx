@@ -386,6 +386,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         placeholder={`${t('messages:please-select-a', {
                             name: t('common:stock-owner')
                         })}`}
+                        allowClear
                     >
                         {stockOwners?.map((stockOwner: any) => (
                             <Option key={stockOwner.id} value={stockOwner.id}>
@@ -610,6 +611,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:mechanizedSystem')
                         })}`}
+                        allowClear
                     >
                         {equipmentMechanizedSystem?.map(
                             // think about changing once configs available
@@ -629,6 +631,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         placeholder={`${t('messages:please-select-an', {
                             name: t('d:automaticLabelPrinting')
                         })}`}
+                        allowClear
                     >
                         {equipmentAutomaticLabelPrinting?.map((automaticLabelPrinting: any) => (
                             <Option
@@ -645,6 +648,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:printer')
                         })}`}
+                        allowClear
                     >
                         {printers?.map((printer: any) => (
                             <Option key={printer.id} value={printer.code}>
