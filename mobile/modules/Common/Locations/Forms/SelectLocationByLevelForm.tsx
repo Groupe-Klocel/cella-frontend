@@ -131,13 +131,9 @@ export const SelectLocationByLevelForm = ({
                     graphqlRequestClient.request(query, variables).then((result: any) => {
                         if (result.roundAdvisedAddresses.count > 0) {
                             Modal.confirm({
-                                title: t('messages:round-already-planned'),
-                                onOk: () => {
-                                    nextStep();
-                                },
-                                onCancel: () => {
-                                    onBack();
-                                },
+                                title: t('messages:round-planned-for-location'),
+                                onOk: () => nextStep(),
+                                onCancel: () => onBack(),
                                 okText: t('messages:confirm'),
                                 cancelText: t('messages:cancel')
                             });
@@ -202,12 +198,8 @@ export const SelectLocationByLevelForm = ({
                 if (result.roundAdvisedAddresses.count > 0) {
                     Modal.confirm({
                         title: t('messages:round-planned-for-location'),
-                        onOk: () => {
-                            nextStep();
-                        },
-                        onCancel: () => {
-                            onBack();
-                        },
+                        onOk: () => nextStep(),
+                        onCancel: () => onBack(),
                         okText: t('messages:confirm'),
                         cancelText: t('messages:cancel')
                     });
