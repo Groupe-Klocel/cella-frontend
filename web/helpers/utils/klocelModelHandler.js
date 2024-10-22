@@ -1,5 +1,5 @@
-const readline = require('readline'); // eslint-disable-line @typescript-eslint/no-var-requires
-const fs = require('fs'); // eslint-disable-line @typescript-eslint/no-var-requires
+import readline from 'readline';
+import fs from 'fs';
 const doubleEntryTable = {};
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
@@ -132,11 +132,11 @@ export const ${objectName}ModelV2: ModelType = {
         create: 'create${objectName}',
         update: 'update${objectName}',
         delete: 'delete${objectName}'${
-        isSoftDeletable
-            ? `,
+            isSoftDeletable
+                ? `,
         softDelete: 'softDelete${objectName}'`
-            : ''
-    }
+                : ''
+        }
     },
 
     fieldsInfo: ${JSON.stringify(doubleEntryTable)}
