@@ -28,7 +28,7 @@ import { ParameterModelV2 as model } from 'models/ParameterModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
-import { stocksRoutes as itemRoutes } from 'modules/Stocks/Static/stocksRoutes';
+import { returnCodeRoutes as itemRoutes } from 'modules/ReturnCodes/Static/ReturnCodeRoutes';
 import { useAuth } from 'context/AuthContext';
 import { FormDataType } from 'models/ModelsV2';
 type PageComponent = FC & { layout: typeof MainLayout };
