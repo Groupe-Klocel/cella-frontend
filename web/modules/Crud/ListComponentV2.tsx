@@ -213,7 +213,7 @@ const ListComponent = (props: IListProps) => {
     const statusScope = getStatusConfig(filterFields);
 
     const [retrievedStatuses, setRetrievedStatuses] = useState<any>();
-
+    //#region handle scopes list (specific to config and param)
     async function getStatusesList(scope: string): Promise<{ [key: string]: any } | undefined> {
         const query = gql`
             query ListConfigsForAScope($scope: String!, $code: String, $language: String = "en") {
@@ -225,7 +225,7 @@ const ListComponent = (props: IListProps) => {
                 }
             }
         `;
-
+        //let result: any = {};
         try {
             const result = await graphqlRequestClient.request(query, { scope: scope });
             return result;
@@ -233,17 +233,19 @@ const ListComponent = (props: IListProps) => {
             return {};
         }
     }
-
-    useEffect(() => {
-        async function getStatuses() {
-            const promise = getStatusesList(statusScope);
-            const statuses = await promise;
-            if (statuses) {
-                setRetrievedStatuses(statuses);
-            }
+    async function getStatuses() {
+        const promise = getStatusesList(statusScope);
+        const statuses = await promise;
+        if (statuses) {
+            setRetrievedStatuses(statuses);
         }
-        getStatuses();
+    }
+    useEffect(() => {
+        if (statusScope) {
+            getStatuses();
+        }
     }, []);
+    //#end region
 
     const btnName = isWithoutClosed
         ? t('actions:with-closed-cancel-items')
@@ -503,6 +505,10 @@ const ListComponent = (props: IListProps) => {
                     listFields,
                     dataToUpdateWithTr
                 );
+                props.triggerPriorityChange.setId({
+                    id: '',
+                    type: ''
+                });
                 reloadData();
             } catch (error) {
                 console.error('Error during priority change:', error);
