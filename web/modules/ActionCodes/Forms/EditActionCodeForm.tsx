@@ -87,8 +87,17 @@ export const EditActionCodeForm: FC<EditActionCodeFormProps> = ({
                 checkUndefinedValues();
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
-                const translation = { en: formData.en, fr: formData.fr };
-                formData['translation'] = translation;
+                let translation: any = { en: formData.en, fr: formData.fr };
+
+                if (Object.keys(translation).length === 0) {
+                    translation = null;
+                }
+                const emptyTranslation = Object.fromEntries(
+                    Object.entries(translation).filter(([_, value]) => value !== undefined)
+                );
+
+                formData['translation'] =
+                    Object.keys(emptyTranslation).length === 0 ? null : translation;
                 formData.code = String(formData.code);
                 delete formData['en'];
                 delete formData['fr'];
@@ -115,13 +124,13 @@ export const EditActionCodeForm: FC<EditActionCodeFormProps> = ({
         if (updateLoading) {
             showInfo(t('messages:info-create-wip'));
         }
-    }, [updateLoading]);
+    }, [updateLoading, details]);
 
     return (
         <WrapperForm>
             <Form form={form} scrollToFirstError>
-                <Row>
-                    <Col xs={1} xl={4}>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32, xl: 40 }}>
+                    <Col className="gutter-row" span={6}>
                         <Form.Item
                             label={t('d:code')}
                             name="code"
@@ -132,7 +141,7 @@ export const EditActionCodeForm: FC<EditActionCodeFormProps> = ({
                             <InputNumber min={40000} max={49999} />
                         </Form.Item>
                     </Col>
-                    <Col xs={8} xl={20}>
+                    <Col className="gutter-row" span={20}>
                         <Form.Item
                             label={t('d:value')}
                             name="value"
