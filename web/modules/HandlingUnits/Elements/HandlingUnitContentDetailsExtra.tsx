@@ -43,6 +43,7 @@ export interface IItemDetailsProps {
     quantity?: Number | any;
     handlingUnit_category?: Number | any;
     articleFeatureType?: Number | any;
+    setRefetch?: any;
 }
 
 const HandlingUnitContentDetailsExtra = ({
@@ -51,7 +52,8 @@ const HandlingUnitContentDetailsExtra = ({
     articleName,
     quantity,
     handlingUnit_category,
-    articleFeatureType
+    articleFeatureType,
+    setRefetch
 }: IItemDetailsProps) => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -107,6 +109,7 @@ const HandlingUnitContentDetailsExtra = ({
                         });
                         if (res.ok) {
                             setId(id);
+                            setRefetch((prev: boolean) => !prev);
                         }
                         if (!res.ok) {
                             const errorResponse = await res.json();

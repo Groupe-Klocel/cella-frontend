@@ -17,153 +17,151 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone } from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import {
-    getModesFromPermissions,
-    META_DEFAULTS,
-    pathParams,
-    showError,
-    showSuccess
-} from '@helpers';
-import { Button, Space } from 'antd';
+import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
-import {
-    DeleteParameterMutation,
-    DeleteParameterMutationVariables,
-    ModeEnum,
-    useDeleteParameterMutation
-} from 'generated/graphql';
-import { useAuth } from 'context/AuthContext';
-import { ParameterModel } from 'models/ParameterModel';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponent';
+import { ModeEnum, useGetParameterScopesQuery } from 'generated/graphql';
+import { ParameterModelV2 as model } from 'models/ParameterModelV2';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
-import { FC } from 'react';
-import { FormDataType } from 'models/Models';
-import router from 'next/router';
-import { returnCodeRoutes } from 'modules/ReturnCodes/Static/ReturnCodeRoutes';
+import { FC, useEffect, useState } from 'react';
+import { returnCodeRoutes as itemRoutes } from 'modules/ReturnCodes/Static/ReturnCodeRoutes';
+import { useAuth } from 'context/AuthContext';
+import { FormDataType } from 'models/ModelsV2';
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const ReturnCodePage: PageComponent = () => {
-    const { graphqlRequestClient } = useAuth();
+const StockStatusesPage: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
-    const modes = getModesFromPermissions(permissions, ParameterModel.tableName);
+    const modes = getModesFromPermissions(permissions, model.tableName);
+    const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const { graphqlRequestClient } = useAuth();
 
     const headerData: HeaderData = {
         title: t('common:return-codes'),
-        routes: returnCodeRoutes,
+        routes: itemRoutes,
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:return-code') })}
-                    path="/return-codes/add"
+                    path={`${rootPath}/add`}
                     type="primary"
                 />
             ) : null
     };
 
-    // delete
+    // specific to params view
+    const listScopeParam = useGetParameterScopesQuery(graphqlRequestClient);
+    const [scopesList, setScopesList] = useState<any>();
 
-    const { mutate: deleteParameter, isPending: deleteLoading } = useDeleteParameterMutation<Error>(
-        graphqlRequestClient,
-        {
-            onSuccess: (
-                data: DeleteParameterMutation,
-                _variables: DeleteParameterMutationVariables,
-                _context: unknown
-            ) => {
-                if (data.deleteParameter) {
-                    showSuccess(t('messages:success-deleted'));
-                    router.reload();
-                } else {
-                    showError(t('messages:error-delete-feature-types-impossible'));
-                }
-            },
+    useEffect(() => {
+        if (listScopeParam) {
+            const newParameter: Array<any> = [];
 
-            onError: () => {
-                showError(t('messages:error-deleting-data'));
+            const cData = listScopeParam?.data?.parameterScopes;
+            if (cData) {
+                cData.forEach((item) => {
+                    newParameter.push({ key: item.scope, text: item.scope });
+                });
+                setScopesList(newParameter);
             }
         }
-    );
+    }, [listScopeParam.data]);
+
+    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:action-confirm'),
+                onOk: () => {
+                    setId(id);
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
+            });
+        };
+    };
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-
             <ListComponent
                 searchCriteria={{ scope: 'return_code' }}
                 headerData={headerData}
-                dataModel={ParameterModel}
+                dataModel={model}
+                triggerDelete={{ idToDelete, setIdToDelete }}
+                triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 filterFields={[
                     {
-                        name: 'value',
-                        type: FormDataType.String
-                    },
-                    {
-                        name: 'code',
-                        type: FormDataType.String
+                        name: 'scope',
+                        type: FormDataType.Dropdown,
+                        subOptions: scopesList
                     }
                 ]}
                 actionColumns={[
                     {
                         title: 'actions:actions',
                         key: 'actions',
-
                         render: (record: { id: string; system: boolean }) => (
                             <Space>
-                                <LinkButton
-                                    icon={<EyeTwoTone />}
-                                    path={pathParams('/return-codes/[id]', record.id)}
-                                />
-
-                                {record.system ? (
-                                    <></>
+                                {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams(`${rootPath}/[id]`, record.id)}
+                                    />
                                 ) : (
-                                    <>
-                                        {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
-                                            <>
-                                                <LinkButton
-                                                    icon={<EditTwoTone />}
-                                                    path={pathParams(
-                                                        '/return-codes/edit/[id]',
-                                                        record.id
-                                                    )}
-                                                />
-                                            </>
-                                        ) : (
-                                            <></>
-                                        )}
-
-                                        {modes.length > 0 && modes.includes(ModeEnum.Delete) ? (
-                                            <>
-                                                <Button
-                                                    loading={deleteLoading}
-                                                    onClick={() =>
-                                                        deleteParameter({
-                                                            id: record.id
-                                                        })
-                                                    }
-                                                    icon={<DeleteOutlined />}
-                                                    danger
-                                                />
-                                            </>
-                                        ) : (
-                                            <></>
-                                        )}
-                                    </>
+                                    <></>
+                                )}
+                                {modes.length > 0 &&
+                                modes.includes(ModeEnum.Update) &&
+                                model.isEditable &&
+                                record.system == false ? (
+                                    <LinkButton
+                                        icon={<EditTwoTone />}
+                                        path={pathParams(`${rootPath}/edit/[id]`, record.id)}
+                                    />
+                                ) : (
+                                    <></>
+                                )}
+                                {modes.length > 0 &&
+                                modes.includes(ModeEnum.Delete) &&
+                                model.isSoftDeletable ? (
+                                    <Button
+                                        icon={<LockTwoTone twoToneColor="#ffbbaf" />}
+                                        onClick={() =>
+                                            confirmAction(record.id, setIdToDisable, 'disable')()
+                                        }
+                                    ></Button>
+                                ) : (
+                                    <></>
+                                )}
+                                {modes.length > 0 &&
+                                modes.includes(ModeEnum.Delete) &&
+                                model.isDeletable ? (
+                                    <Button
+                                        icon={<DeleteOutlined />}
+                                        danger
+                                        onClick={() =>
+                                            confirmAction(record.id, setIdToDelete, 'delete')()
+                                        }
+                                    ></Button>
+                                ) : (
+                                    <></>
                                 )}
                             </Space>
                         )
                     }
                 ]}
-                routeDetailPage={'/return-codes/:id'}
+                routeDetailPage={`${rootPath}/:id`}
             />
         </>
     );
 };
 
-ReturnCodePage.layout = MainLayout;
+StockStatusesPage.layout = MainLayout;
 
-export default ReturnCodePage;
+export default StockStatusesPage;

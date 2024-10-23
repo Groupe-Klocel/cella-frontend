@@ -179,7 +179,11 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     // #endregion
 
     useEffect(() => {
-        reloadData();
+        console.log('reloadData');
+        const timer = setTimeout(() => {
+            reloadData();
+        }, 200);
+        return () => clearTimeout(timer);
     }, [props.refetch, router.locale]);
 
     useEffect(() => {

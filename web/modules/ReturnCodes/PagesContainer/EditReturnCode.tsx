@@ -61,9 +61,9 @@ const EditReturnCode: FC<EditReturnCodeProps> = ({ id, router }: EditReturnCodeP
         }
     );
 
-    if (globalLocale && data && data.parameter) {
-        data.parameter.value = data?.parameter?.translation[searchedLanguage];
-    }
+    // if (globalLocale && data && data.parameter) {
+    //     data.parameter.value = data?.parameter?.translation[searchedLanguage];
+    // }
 
     const breadsCrumb = [
         ...returnCodeRoutes,
