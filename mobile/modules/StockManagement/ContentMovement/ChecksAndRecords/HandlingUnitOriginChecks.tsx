@@ -45,20 +45,33 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && handlingUnitInfos) {
-            const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
             if (
                 handlingUnitInfos.handlingUnits?.count !== 0 &&
                 handlingUnitInfos.handlingUnits.results[0].handlingUnitContents.length !== 0
             ) {
-                if (handlingUnitInfos.handlingUnits.results[0].locationId !== chosenLocationId) {
+                const handlingUnitContentsFiltered =
+                    handlingUnitInfos.handlingUnits.results[0].handlingUnitContents.filter(
+                        (huContent: any) => huContent.quantity > 0
+                    );
+                if (handlingUnitContentsFiltered.length === 0) {
+                    showError(t('messages:no-huc-quantity'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    return;
+                }
+                const handlingUnitInfosFiltered = {
+                    ...handlingUnitInfos.handlingUnits.results[0],
+                    handlingUnitContents: handlingUnitContentsFiltered
+                };
+                const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
+                if (handlingUnitInfosFiltered.locationId !== chosenLocationId) {
                     showError(t('messages:no-hu-location'));
                     setResetForm(true);
                     setScannedInfo(undefined);
                     return;
                 }
                 if (
-                    handlingUnitInfos.handlingUnits.results[0].category !==
-                    parameters.HANDLING_UNIT_CATEGORY_STOCK
+                    handlingUnitInfosFiltered.category !== parameters.HANDLING_UNIT_CATEGORY_STOCK
                 ) {
                     showError(t('messages:only-stock-hu-move'));
                     setResetForm(true);
@@ -66,7 +79,7 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     return;
                 }
                 const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
+                data['handlingUnit'] = handlingUnitInfosFiltered;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
