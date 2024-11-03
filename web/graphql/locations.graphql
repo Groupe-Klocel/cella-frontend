@@ -86,6 +86,10 @@ query GetLocationById($id: String!) {
         blockId
         block {
             name
+            building {
+                id
+                name
+            }
         }
         category
         replenishType

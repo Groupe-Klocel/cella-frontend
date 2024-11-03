@@ -89,8 +89,8 @@ export const AddActionCodeForm = () => {
     return (
         <WrapperForm>
             <Form form={form} scrollToFirstError>
-                <Row>
-                    <Col xs={1} xl={4}>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32, xl: 40 }}>
+                    <Col className="gutter-row" span={6}>
                         <Form.Item
                             label={t('d:code')}
                             name="code"
@@ -102,7 +102,7 @@ export const AddActionCodeForm = () => {
                             <InputNumber min={40000} max={49999} />
                         </Form.Item>
                     </Col>
-                    <Col xs={8} xl={20}>
+                    <Col className="gutter-row" span={20}>
                         <Form.Item
                             label={t('d:value')}
                             name="value"

@@ -177,7 +177,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
             showInfo(t('messages:info-create-wip'));
             showSuccess(t('messages:success-updated'));
         }
-    }, [updateLoading]);
+    }, [updateLoading, details]);
 
     const onCancel = () => {
         setUnsavedChanges(false);

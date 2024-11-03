@@ -149,8 +149,11 @@ export const EditArticleBarcodeForm: FC<EditArticleBarcodeFormProps> = ({
             lu: articleLuBarcodeDetails?.articleLu?.name,
             name: details?.name
         };
+
+        setBlacklistedValue(details.blacklisted);
+        setMasterValue(articleLuBarcodeDetails.master);
         form.setFieldsValue(tmp_details);
-    }, []);
+    }, [details, articleLuBarcodeDetails]);
 
     return (
         <WrapperForm>

@@ -77,7 +77,7 @@ const BlockLocationPage: PageComponent = () => {
                 {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                     <LinkButton
                         title={t('actions:edit')}
-                        path={`${rootPath}/edit/${id}`}
+                        path={`${rootPath}/location/edit/${id}`}
                         type="primary"
                     />
                 ) : (

@@ -51,12 +51,12 @@ const EditEquipment: FC<EditEquipmentProps> = ({ id, router }: EditEquipmentProp
 
     const { graphqlRequestClient } = useAuth();
 
-    const { isLoading, data, error } = useGetEquipmentByIdQuery<GetEquipmentByIdQuery, Error>(
-        graphqlRequestClient,
-        {
-            id: id
-        }
-    );
+    const { isLoading, data, error, refetch } = useGetEquipmentByIdQuery<
+        GetEquipmentByIdQuery,
+        Error
+    >(graphqlRequestClient, {
+        id: id
+    });
 
     const breadsCrumb = [
         ...equipmentRoutes,
@@ -64,6 +64,10 @@ const EditEquipment: FC<EditEquipmentProps> = ({ id, router }: EditEquipmentProp
             breadcrumbName: `${data?.equipment?.name}`
         }
     ];
+
+    // useEffect(() => {
+    //     refetch();
+    // }, []);
 
     useEffect(() => {
         if (error) {
