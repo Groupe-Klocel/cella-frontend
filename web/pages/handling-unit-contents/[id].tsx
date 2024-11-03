@@ -47,6 +47,7 @@ const HandlingUnitContentPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [infoToPrint, setInfoToPrint] = useState<any>();
+    const [refetchContent, setRefetchContent] = useState(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -196,12 +197,14 @@ const HandlingUnitContentPage: PageComponent = () => {
                         quantity={data?.quantity}
                         handlingUnit_category={data?.handlingUnit_category}
                         articleFeatureType={data?.article_featureType}
+                        setRefetch={setRefetchContent}
                     />
                 }
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
                 setData={setData}
+                refetch={refetchContent}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
             />

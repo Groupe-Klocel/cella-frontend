@@ -327,18 +327,6 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         }
     };
 
-    //check fields if contain undefined value and set field to null
-    // const checkUndefinedValues = () => {
-    //     const tmpFieldsValues = { ...form.getFieldsValue(true) };
-
-    //     for (const [key, value] of Object.entries(tmpFieldsValues)) {
-    //         if (value === undefined) {
-    //             tmpFieldsValues[key] = null;
-    //         }
-    //     }
-    //     form.setFieldsValue(tmpFieldsValues);
-    // };
-
     const onFinish = () => {
         form.validateFields()
             .then(() => {
@@ -406,7 +394,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         if (updateLoading) {
             showInfo(t('messages:info-update-wip'));
         }
-    }, [updateLoading]);
+    }, [updateLoading, details]);
 
     return (
         <WrapperForm>
