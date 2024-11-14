@@ -777,5 +777,9 @@
     "featureCode_dateType": "Type Date",
     "handlingUnit_location": "Emplacement",
     "handlingUnitContent_handlingUnit_location": "Emplacement",
-    "deliveryAddresses_entityName": "Tiers de facturation"
+    "deliveryAddresses_entityName": "Tiers de facturation",
+    "round-picking-pattern": "Profil de prélèvement de ramasse",
+    "allocation-pattern-round": "Profil d'allocation de ramasse",
+    "addressToSearch": "adresse à rechercher",
+    "createdByCycleCount": "Créé par inventaire"
 }
