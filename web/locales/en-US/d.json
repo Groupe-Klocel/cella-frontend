@@ -771,5 +771,9 @@
     "featureCode_dateType": "Date Type",
     "handlingUnit_location": "Location",
     "handlingUnitContent_handlingUnit_location": "Location",
-    "deliveryAddresses_entityName": "Invoicing third party"
+    "deliveryAddresses_entityName": "Invoicing third party",
+    "round-picking-pattern": "Round picking pattern",
+    "allocation-pattern-round": "Allocation pattern round",
+    "addressToSearch": "address to search",
+    "createdByCycleCount": "Created by inventory"
 }
