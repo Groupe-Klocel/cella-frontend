@@ -27,6 +27,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
+import parameters from '../../../../../common/parameters.json';
 import {
     GetHandlingUnitModelsQuery,
     GetRoundsQuery,
@@ -119,7 +120,15 @@ export const SelectHuModelForm = ({
     const huModelList = useGetHandlingUnitModelsQuery<Partial<GetHandlingUnitModelsQuery>, Error>(
         graphqlRequestClient,
         {
-            filters: { status: [configs.HANDLING_UNIT_MODEL_STATUS_IN_PROGRESS] },
+            filters: {
+                status: [configs.HANDLING_UNIT_MODEL_STATUS_IN_PROGRESS],
+                category: [
+                    parameters['HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND'],
+                    parameters['HANDLING_UNIT_MODEL_CATEGORY_INBOUND/OUTBOUND'],
+                    parameters['HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND/STOCK'],
+                    parameters['HANDLING_UNIT_MODEL_CATEGORY_INBOUND/STOCK/OUTBOUND']
+                ]
+            },
             orderBy: null,
             page: 1,
             itemsPerPage: 100
