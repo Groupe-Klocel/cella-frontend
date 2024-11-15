@@ -273,9 +273,12 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
 
     // #region region handle options for dropdowns
     const optionsTables = addSteps
-        .filter((obj) => obj.hasOwnProperty('optionTable') && obj.optionTable !== undefined)
+        .filter(
+            (obj) =>
+                obj.hasOwnProperty('optionTable') && obj.optionTable !== undefined && obj.type !== 8
+        )
         .map((obj) => {
-            return { field: obj.name, optionTable: JSON.parse(obj.optionTable) };
+            return { field: obj.name, optionTable: JSON.parse(obj.optionTable), type: obj.type };
         });
 
     // # subregion create filter (dynamic on another field or static) if present in the optionTable
@@ -392,6 +395,7 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
                 )
             );
             const options = await Promise.all(promises);
+
             const optionsObject: { [key: string]: any } = {};
             options.forEach((item: any) => {
                 if (item) {
