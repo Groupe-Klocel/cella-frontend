@@ -62,7 +62,7 @@ export const AutoValidatePickAndPackForm = ({
         setTriggerRender(!triggerRender);
     }, []);
     // retrieve values for update contents/boxline and create movement
-    const { step10, step25, step30, step40, step50, step60, step65 } = storedObject;
+    const { step10, step25, step30, step40, step50, step60, step75 } = storedObject;
 
     const proposedRoundAdvisedAddresses = step10?.data?.proposedRoundAdvisedAddresses;
     const round = step10?.data?.round;
@@ -70,7 +70,7 @@ export const AutoValidatePickAndPackForm = ({
     const pickedHU = step30?.data.handlingUnit;
     const articleInfo = step40?.data.article;
     const movingQuantity = step60?.data?.movingQuantity;
-    const huModel = step65?.data?.handlingUnitModel;
+    const huModel = step75?.data?.handlingUnitModel;
 
     useEffect(() => {
         const onFinish = async () => {

@@ -68,7 +68,7 @@ const PickAndPack: PageComponent = () => {
     //define workflow parameters
     const workflow = {
         processName: 'pickAndPack',
-        expectedSteps: [10, 20, 25, 30, 40, 50, 60, 65, 70, 80]
+        expectedSteps: [10, 20, 25, 30, 40, 50, 60, 70, 75, 80]
     };
     // [0] : 10 -> SelectRoundForm
     // [1] : 20 -> Scan location
@@ -77,8 +77,8 @@ const PickAndPack: PageComponent = () => {
     // [4] : 40 -> Scan Article
     // [5] : 50 -> Scan features
     // [6] : 60 -> Enter quantity
-    // [7] : 65 -> SelectHUModel
-    // [8] : 70 -> (for detail only) scan finalHU
+    // [7] : 70 -> (for detail only) scan finalHU
+    // [8] : 75 -> SelectHUModel
     // [9] : 80 -> Autovalidate pickAndPack
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
@@ -443,21 +443,9 @@ const PickAndPack: PageComponent = () => {
             )}
             {storedObject[`step${workflow.expectedSteps[6]}`]?.data &&
             !storedObject[`step${workflow.expectedSteps[7]}`]?.data ? (
-                <SelectHuModelForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[7]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true }}
-                    defaultValue={isHuInProgress ? 'huModelExist' : undefined}
-                ></SelectHuModelForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[7]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[8]}`]?.data ? (
                 <ScanFinalHandlingUnitOutbound
                     process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[8]}
+                    stepNumber={workflow.expectedSteps[7]}
                     label={t('common:handling-unit-final')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{
@@ -474,6 +462,18 @@ const PickAndPack: PageComponent = () => {
                             : undefined
                     }
                 ></ScanFinalHandlingUnitOutbound>
+            ) : (
+                <></>
+            )}
+            {storedObject[`step${workflow.expectedSteps[7]}`]?.data &&
+            !storedObject[`step${workflow.expectedSteps[8]}`]?.data ? (
+                <SelectHuModelForm
+                    process={workflow.processName}
+                    stepNumber={workflow.expectedSteps[8]}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    buttons={{ submitButton: true, backButton: true }}
+                    defaultValue={isHuInProgress ? 'huModelExist' : undefined}
+                ></SelectHuModelForm>
             ) : (
                 <></>
             )}
