@@ -21,12 +21,14 @@ import { Form, Input, InputNumber, Checkbox, Select, DatePicker } from 'antd';
 import { debounce } from 'lodash';
 import moment from 'moment';
 import dayjs from 'dayjs';
+import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
-import { FC } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/Models';
-import { getRulesWithNoSpacesValidator } from '@helpers';
+import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';
 import { DraggerInput } from 'components/common/smart/Form/DraggerInput';
 import { useRouter } from 'next/router';
+import AutoComplete from './FormGroupAutoComplete';
 
 require('moment/locale/fr'); // French
 
@@ -46,7 +48,7 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
     const localeDateTimeFormat =
         localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
 
-        console.log(localeDateTimeFormat, 'localeDateTimeFormat');
+    console.log(localeDateTimeFormat, 'localeDateTimeFormat');
 
     return (
         <>
@@ -173,46 +175,9 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                             )}
                         </Form.Item>
                     );
-                } else if (item.type == FormDataType.AutoComplete)
-                    return (
-                        <Form.Item
-                            label={item.displayName ? item.displayName : t(`d:${item.name}`)}
-                            name={item.name}
-                            rules={getRulesWithNoSpacesValidator(
-                                item.rules!,
-                                t('messages:error-space')
-                            )}
-                            initialValue={item.initialValue}
-                            normalize={(value) => (value ? value : undefined)}
-                        >
-                            <Select
-                                showSearch
-                                value={item.value}
-                                filterOption={false}
-                                onKeyUp={(e: any) => {
-                                    debounce(() => {
-                                        item.setName(e.target.value);
-                                    }, 3000);
-                                }}
-                                onSearch={(data: string) => {
-                                    if (!data?.length) {
-                                        item.setName('');
-                                        item.setId('');
-                                    } else {
-                                        item.setName(data);
-                                    }
-                                }}
-                                allowClear
-                            >
-                                {item.subOptions?.map((option: FormOptionType) => (
-                                    <Select.Option key={option.key} value={option.key}>
-                                        {option.text}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                    );
-                else if (item.type == FormDataType.File)
+                } else if (item.type == FormDataType.AutoComplete) {
+                    return <AutoComplete item={item} key={item.name} />;
+                } else if (item.type == FormDataType.File)
                     return (
                         <Form.Item
                             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
