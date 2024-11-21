@@ -49,5 +49,6 @@
     "HANDLINGUNIT-000250": "Le Propriétaire de stock sélectionné est différent de celui de l'article sélectionné",
     "CARRIERSHIPPINGMODE-000130": "Suppression impossible : au moins un transporteur est associé à cet élément",
     "FEATURECODE-000200": "Donnée de traçabilité déjà existante",
-    "RULE-000787": "Numéro de version non valide"
+    "RULE-000787": "Numéro de version non valide",
+    "FAPI_000003": "Ce code-barres existe déjà pour ce propriétaire de stock"
 }
