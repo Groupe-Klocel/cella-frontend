@@ -35,7 +35,9 @@ import {
     UpdateEquipmentMutation,
     UpdateEquipmentMutationVariables,
     useListConfigsForAScopeQuery,
-    useListParametersForAScopeQuery
+    useListParametersForAScopeQuery,
+    useGetAllPatternsQuery,
+    GetAllPatternsQuery
 } from 'generated/graphql';
 import { showError, showSuccess, showInfo } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
@@ -57,6 +59,7 @@ export const AddEquipmentForm = () => {
     const [stockOwners, setStockOwners] = useState<any>();
     const [equipmentWithPriorities, setEquipmentWithPriorities] = useState<any>();
     const [equipmentTypes, setEquipmentTypes] = useState<any>();
+    const [pattern, setPattern] = useState<any>();
     const [equipmentLimitTypes, setEquipmentLimitTypes] = useState<any>();
     const [equipmentMechanizedSystem, setEquipmentMechanizedSystem] = useState<any>();
     const [equipmentAutomaticLabelPrinting, setEquipmentAutomaticLabelPrinting] = useState<any>();
@@ -173,6 +176,23 @@ export const AddEquipmentForm = () => {
         }
     }, [equipmentLimitTypeList]);
 
+    //To render Pattern list configs
+    const patternList = useGetAllPatternsQuery<Partial<GetAllPatternsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            page: 1,
+            itemsPerPage: 100
+        }
+    );
+    const filteredPatterns = patternList?.data?.patterns?.results.filter(
+        (pattern: any) => pattern.type === configs.PATTERN_TYPE_ROUNDS
+    );
+    useEffect(() => {
+        if (filteredPatterns) {
+            setPattern;
+        }
+    }, [filteredPatterns]);
+
     //To render Equipment mechanizedSystem list configs
     const equipmentMechanizedSystemList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'equipment_mechanized_system',
@@ -276,6 +296,12 @@ export const AddEquipmentForm = () => {
     //manage call back on change boxes
     const onPriorityChange = (value: number | null) => {
         form.setFieldsValue({ priority: value });
+    };
+    const onPatternIdChange = (value: string) => {
+        form.setFieldsValue({ patternId: value });
+    };
+    const onReservationPatternIdChange = (value: string) => {
+        form.setFieldsValue({ reservationPatternId: value });
     };
     const onAvailableChange = (e: CheckboxChangeEvent) => {
         form.setFieldsValue({ available: e.target.checked });
@@ -410,6 +436,52 @@ export const AddEquipmentForm = () => {
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
                     <Input />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:pattern')}
+                    name="patternId"
+                    rules={[
+                        {
+                            message: `${t('messages:error-message-empty-input')}`
+                        }
+                    ]}
+                >
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:pattern')
+                        })}`}
+                        onChange={onPatternIdChange}
+                    >
+                        {filteredPatterns?.map((patternList: any) => (
+                            <Option key={patternList.id} value={patternList.id}>
+                                {patternList.name}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item
+                    label={t('d:reservation-pattern')}
+                    name="reservationPatternId"
+                    rules={[
+                        {
+                            message: `${t('messages:error-message-empty-input')}`
+                        }
+                    ]}
+                >
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:reservation-pattern')
+                        })}`}
+                        onChange={onReservationPatternIdChange}
+                    >
+                        {filteredPatterns?.map((patternList: any) => (
+                            <Option key={patternList.id} value={patternList.id}>
+                                {patternList.name}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
                 <Col xs={24} xl={12}>
                     <Form.Item
