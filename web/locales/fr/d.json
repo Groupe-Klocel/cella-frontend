@@ -780,6 +780,7 @@
     "deliveryAddresses_entityName": "Tiers de facturation",
     "round-picking-pattern": "Profil de prélèvement de ramasse",
     "allocation-pattern-round": "Profil d'allocation de ramasse",
-    "addressToSearch": "adresse à rechercher",
-    "createdByCycleCount": "Créé par inventaire"
+    "addressToSearch": "Adresse à rechercher (France Uniquement)",
+    "createdByCycleCount": "Créé par inventaire",
+    "reservation-pattern": "Profil de reservation"
 }
