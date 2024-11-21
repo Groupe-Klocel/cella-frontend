@@ -586,7 +586,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                     <Form.Item
                         label={t('d:addressToSearch')}
                         style={{
-                            backgroundColor: '#f0f0f0',
+                            backgroundColor: '#a8a8a8',
                             border: '#d9d9d9',
                             padding: '10px',
                             borderRadius: '4px',
