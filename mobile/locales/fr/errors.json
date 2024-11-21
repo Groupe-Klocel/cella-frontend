@@ -8,5 +8,6 @@
     "STOCKMOVEMENT-000100": "L'emplacement sélectionné ne peut pas recevoir cet article",
     "STOCKMOVEMENT-000101": "L'emplacement sélectionné ne peut pas recevoir cette palette",
     "STOCKMOVEMENT-000200": "La destination ne peut pas être identique à l'origine",
-    "PALLETCLOSURE-000200": "Tous les colis doivent être préparés avant de fermer la palette"
+    "PALLETCLOSURE-000200": "Tous les colis doivent être préparés avant de fermer la palette",
+    "LOAD-000777":"Ce chargement a déjà été expédié"
 }
