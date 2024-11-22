@@ -782,5 +782,6 @@
     "allocation-pattern-round": "Profil d'allocation de ramasse",
     "addressToSearch": "Adresse à rechercher (France Uniquement)",
     "createdByCycleCount": "Créé par inventaire",
-    "reservation-pattern": "Profil de reservation"
+    "reservationPattern_name": "Profil de reservation",
+    "reservationPattern": "Profil de reservation"
 }
