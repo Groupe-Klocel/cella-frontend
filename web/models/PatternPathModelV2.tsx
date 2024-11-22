@@ -24,7 +24,7 @@ export const PatternPathModelV2: ModelType = {
     tableName: Table.PatternPath,
     resolverName: 'PatternPath',
     isEditable: true,
-    isDeletable: false,
+    isDeletable: true,
     isSoftDeletable: true,
 
     endpoints: {
