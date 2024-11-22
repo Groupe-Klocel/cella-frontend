@@ -774,5 +774,6 @@
     "deliveryAddresses_entityName": "Invoicing third party",
     "addressToSearch": "Address to search (France only)",
     "createdByCycleCount": "Created by inventory",
-    "reservationPattern_name": "Reservation pattern"
+    "reservationPattern_name": "Reservation pattern",
+    "reservationPattern": "Reservation pattern"
 }
