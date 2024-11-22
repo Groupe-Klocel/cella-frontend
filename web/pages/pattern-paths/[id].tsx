@@ -28,16 +28,17 @@ import {
     getModesFromPermissions,
     pathParamsFromDictionary,
     showError,
-    showInfo,
     showSuccess
 } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
-import { patternPathsSubRoutes as itemRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
+import { patternPathsRoutes as itemRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum, Table } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { PatternPathDetailsExtra } from 'modules/PatternPaths/Elements/PatternPathDetailsExtra';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -66,6 +67,7 @@ const PatternPathPage: PageComponent = () => {
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
+    const { graphqlRequestClient } = useAuth();
 
     const confirmAction = (
         info: any | undefined,
@@ -77,8 +79,8 @@ const PatternPathPage: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {
@@ -88,6 +90,53 @@ const PatternPathPage: PageComponent = () => {
                 cancelText: t('messages:cancel')
             });
         };
+    };
+    const deletePatternPath = (patternPathId: string) => {
+        Modal.confirm({
+            title: t('messages:delete-confirm'),
+            onOk: async () => {
+                console.log('Deleting pattern path with ID:', patternPathId);
+
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+
+                const variables = {
+                    functionName: 'K_deletePatternPath',
+                    event: {
+                        input: {
+                            patternPathId
+                        }
+                    }
+                };
+
+                try {
+                    const patternResult = await graphqlRequestClient.request(query, variables);
+                    if (patternResult.executeFunction.status === 'ERROR') {
+                        showError(patternResult.executeFunction.output);
+                    } else if (
+                        patternResult.executeFunction.status === 'OK' &&
+                        patternResult.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(t(`errors:${patternResult.executeFunction.output.output.code}`));
+                        console.log('Backend_message', patternResult.executeFunction.output.output);
+                    } else {
+                        showSuccess(t('messages:success-delete'));
+                        router.push(rootPath);
+                    }
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
     };
 
     const headerData: HeaderData = {
@@ -135,9 +184,7 @@ const PatternPathPage: PageComponent = () => {
                         <></>
                     )}
                     {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button
-                            onClick={() => confirmAction(id as string, setIdToDelete, 'delete')()}
-                        >
+                        <Button onClick={() => deletePatternPath(data.id)}>
                             {t('actions:delete')}
                         </Button>
                     ) : (

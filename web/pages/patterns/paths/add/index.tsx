@@ -20,16 +20,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead, HeaderContent } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
-import { META_DEFAULTS, usePatternIds, useStockOwnerIds } from '@helpers';
+import { META_DEFAULTS, usePatternIds, usePatternPaths, useStockOwnerIds } from '@helpers';
 import { AddItemComponent } from 'modules/Crud/AddItemComponent';
 import useTranslation from 'next-translate/useTranslation';
 import { PatternPathModel } from 'models/PatternPathModel';
 import { FormDataType, FormOptionType } from 'models/Models';
-import {
-    GetListOfOrdersQuery,
-    useGetListOfOrdersQuery,
-    useListConfigsForAScopeQuery
-} from 'generated/graphql';
+import { useListConfigsForAScopeQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { patternsRoutes } from 'modules/Patterns/Static/patternsRoutes';
@@ -49,15 +45,25 @@ const AddPatternPathPage: PageComponent = () => {
     const [orderMax, setMaxOrder] = useState<number>(0);
 
     //To render existing orders list
-    const orderList = useGetListOfOrdersQuery<Partial<GetListOfOrdersQuery>, Error>(
-        graphqlRequestClient
+    const patternPaths = usePatternPaths(
+        { status: configs.PATTERN_PATH_STATUS_IN_PROGRESS },
+        1,
+        100,
+        null
     );
-    useEffect(() => {
-        const receivedList = orderList?.data?.patternPaths?.results.map((e: any) => e.order);
-        if (receivedList) {
-            setMaxOrder(Math.max(...receivedList) + 1);
-        }
-    }, [orderList]);
+    let maxOrder = 0;
+    if (patternPaths?.data?.patternPaths && patternPaths?.data?.patternPaths?.count > 0)
+        // Use reduce to find the maximum order value
+        maxOrder = patternPaths.data?.patternPaths?.results?.reduce((max: any, obj: any) => {
+            const order = obj.order;
+            // Check if the order is a valid number and greater than the current max
+            if (typeof order === 'number' && !isNaN(order) && order > max) {
+                return order;
+            }
+            return max;
+        }, -Infinity); // Start with negative infinity to handle undefined or non-numeric values
+    maxOrder++;
+    const defaultValues = { order: maxOrder, status: configs.PATTERN_PATH_STATUS_IN_PROGRESS };
 
     const [statusTexts, setStatusTexts] = useState<Array<FormOptionType>>();
 
@@ -117,7 +123,11 @@ const AddPatternPathPage: PageComponent = () => {
             <AppHead title={META_DEFAULTS.title} />
 
             <AddItemComponent
-                extraData={{ order: orderMax }}
+                extraData={
+                    defaultValues || Object.keys(defaultValues).length !== 0
+                        ? defaultValues
+                        : undefined
+                }
                 headerComponent={
                     <HeaderContent
                         title={t('actions:add-patternPath')}
