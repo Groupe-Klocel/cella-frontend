@@ -172,6 +172,8 @@ query GetEquipmentById($id: String!) {
         createdBy
         modified
         modifiedBy
+        patternId
+        reservationPatternId
     }
 }
 
