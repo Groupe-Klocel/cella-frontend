@@ -20,14 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 // Breadcrumb Name should be the same as in the translation file
 import { cartographyRoutes } from 'modules/Buildings/Static/buildingsRoutes';
 
-export const patternPathsRoutes: any = [
-    {
-        breadcrumbName: 'menu:configuration'
-    }
-];
-
-export const patternPathsSubRoutes = [
-    ...patternPathsRoutes,
+export const patternPathsRoutes = [
+    ...cartographyRoutes,
     {
         path: '/pattern-paths',
         breadcrumbName: 'menu:pattern-paths'

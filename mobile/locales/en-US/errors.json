@@ -8,5 +8,6 @@
     "STOCKMOVEMENT-000100": "Selected location cannot receive this article",
     "STOCKMOVEMENT-000101": "Selected location cannot receive this pallet",
     "STOCKMOVEMENT-000200": "Destination cannot be identical to origin",
-    "PALLETCLOSURE-000200": "All boxes have to be prepared before closing this pallet"
+    "PALLETCLOSURE-000200": "All boxes have to be prepared before closing this pallet",
+    "LOAD-000777":"This load has already been shipped"
 }

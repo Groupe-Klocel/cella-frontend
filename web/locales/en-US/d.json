@@ -771,5 +771,9 @@
     "featureCode_dateType": "Date Type",
     "handlingUnit_location": "Location",
     "handlingUnitContent_handlingUnit_location": "Location",
-    "deliveryAddresses_entityName": "Invoicing third party"
+    "deliveryAddresses_entityName": "Invoicing third party",
+    "addressToSearch": "Address to search (France only)",
+    "createdByCycleCount": "Created by inventory",
+    "reservationPattern_name": "Reservation pattern",
+    "reservationPattern": "Reservation pattern"
 }

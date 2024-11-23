@@ -159,6 +159,8 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                                                 handlingUnitContentId
                                                 handlingUnitContent {
                                                     quantity
+                                                    reservation
+                                                    stockStatus
                                                     articleId
                                                     article {
                                                         id

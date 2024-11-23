@@ -18,19 +18,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
-import { getModesFromPermissions, META_DEFAULTS } from '@helpers';
-import { EyeTwoTone, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
-import { Button, Space } from 'antd';
+import { getModesFromPermissions, META_DEFAULTS, showError, showSuccess } from '@helpers';
+import { EyeTwoTone, CaretDownOutlined, CaretUpOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Button, Space, Modal } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
-import { FormDataType, FormOptionType } from 'models/Models';
+import { FormOptionType } from 'models/Models';
 import { PatternPathModelV2 } from 'models/PatternPathModelV2';
 import { patternPathsRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { gql } from 'graphql-request';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -39,6 +40,7 @@ const PatternPathsPage: PageComponent = () => {
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, PatternPathModelV2.tableName);
     const [statusTexts, setStatusTexts] = useState<Array<FormOptionType>>();
+    const [refetch, setRefetch] = useState<boolean>(false);
     const headerData: HeaderData = {
         title: t('common:pattern-paths'),
         routes: patternPathsRoutes,
@@ -58,8 +60,6 @@ const PatternPathsPage: PageComponent = () => {
 
     const { graphqlRequestClient } = useAuth();
 
-    const [refresh, doRefresh] = useState(0);
-
     const statusPatternPathTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'pattern_path_status'
     });
@@ -77,11 +77,60 @@ const PatternPathsPage: PageComponent = () => {
         }
     }, [statusPatternPathTextList.data]);
 
+    //#region
+    const deletePatternPath = (patternPathId: string) => {
+        Modal.confirm({
+            title: t('messages:delete-confirm'),
+            onOk: async () => {
+                console.log('Deleting pattern path with ID:', patternPathId);
+
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+
+                const variables = {
+                    functionName: 'K_deletePatternPath',
+                    event: {
+                        input: {
+                            patternPathId
+                        }
+                    }
+                };
+                try {
+                    const patternResult = await graphqlRequestClient.request(query, variables);
+                    if (patternResult.executeFunction.status === 'ERROR') {
+                        showError(patternResult.executeFunction.output);
+                    } else if (
+                        patternResult.executeFunction.status === 'OK' &&
+                        patternResult.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(t(`errors:${patternResult.executeFunction.output.output.code}`));
+                        console.log('Backend_message', patternResult.executeFunction.output.output);
+                    } else {
+                        showSuccess(t('messages:success-delete'));
+                        setRefetch(true);
+                    }
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
+    };
+    //#endregion
+
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ListComponent
-                refresh={refresh}
+                refetch={refetch}
                 headerData={headerData}
                 dataModel={PatternPathModelV2}
                 routeDetailPage={'/pattern-paths/:id'}
@@ -133,6 +182,11 @@ const PatternPathsPage: PageComponent = () => {
                                     icon={<EyeTwoTone />}
                                     path={'/pattern-paths/:id'.replace(':id', record.id)}
                                 />
+                                <Button
+                                    icon={<DeleteOutlined />}
+                                    danger
+                                    onClick={() => deletePatternPath(record.id)}
+                                ></Button>
                             </Space>
                         )
                     }

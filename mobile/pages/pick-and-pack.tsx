@@ -43,6 +43,7 @@ import { ScanArticleEAN } from 'modules/Preparation/PickAndPack/PagesContainer/S
 import { AutoValidatePickAndPackForm } from 'modules/Preparation/PickAndPack/Forms/AutoValidatePickAndPack';
 import { HandlingUnitOutboundFinalChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/HandlingUnitOutboundFinalChecks';
 import { ScanFinalHandlingUnitOutbound } from 'modules/Preparation/PickAndPack/PagesContainer/ScanFinalHandlingUnitOutbound';
+import { SelectHuModelForm } from 'modules/Preparation/PickAndPack/Forms/SelectHuModelForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -60,13 +61,14 @@ const PickAndPack: PageComponent = () => {
     const [articleToPropose, setArticleToPropose] = useState<string>();
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
     const [triggerHuClose, setTriggerHuClose] = useState<boolean>(false);
-    const [isButtonDisplayed, setIsButtonDisplayed] = useState<boolean>(false);
+    const [isHuInProgress, setIsHuInProgress] = useState<boolean>(false);
     const [isAutoValidateLoading, setIsAutoValidateLoading] = useState<boolean>(false);
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
+
     //define workflow parameters
     const workflow = {
         processName: 'pickAndPack',
-        expectedSteps: [10, 20, 25, 30, 40, 50, 60, 70, 80]
+        expectedSteps: [10, 20, 25, 30, 40, 50, 60, 70, 75, 80]
     };
     // [0] : 10 -> SelectRoundForm
     // [1] : 20 -> Scan location
@@ -76,7 +78,8 @@ const PickAndPack: PageComponent = () => {
     // [5] : 50 -> Scan features
     // [6] : 60 -> Enter quantity
     // [7] : 70 -> (for detail only) scan finalHU
-    // [8] : 80 -> Autovalidate pickAndPack
+    // [8] : 75 -> SelectHUModel
+    // [9] : 80 -> Autovalidate pickAndPack
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
     console.log('pickAndPack', storedObject);
@@ -206,8 +209,8 @@ const PickAndPack: PageComponent = () => {
         if (storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round) {
             const currentShippingPalletId =
                 storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round.extraText1;
-            const isButtonDisplayed = currentShippingPalletId ? true : false;
-            setIsButtonDisplayed(isButtonDisplayed);
+            const isHuInProgress = currentShippingPalletId ? true : false;
+            setIsHuInProgress(isHuInProgress);
         }
     }, [storedObject, triggerRender]);
 
@@ -303,7 +306,7 @@ const PickAndPack: PageComponent = () => {
                     buttons={{
                         submitButton: true,
                         backButton: true,
-                        alternativeSubmitButton1: isButtonDisplayed,
+                        alternativeSubmitButton1: isHuInProgress,
                         locationButton: true
                     }}
                     checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
@@ -462,10 +465,22 @@ const PickAndPack: PageComponent = () => {
             ) : (
                 <></>
             )}
+            {storedObject[`step${workflow.expectedSteps[7]}`]?.data &&
+            !storedObject[`step${workflow.expectedSteps[8]}`]?.data ? (
+                <SelectHuModelForm
+                    process={workflow.processName}
+                    stepNumber={workflow.expectedSteps[8]}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    buttons={{ submitButton: true, backButton: true }}
+                    defaultValue={isHuInProgress ? 'huModelExist' : undefined}
+                ></SelectHuModelForm>
+            ) : (
+                <></>
+            )}
             {/* {storedObject[`step${workflow.expectedSteps[7]}`]?.data ? (
                 <ValidatePickAndPackForm
                     process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[8]}
+                    stepNumber={workflow.expectedSteps[9]}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}
@@ -473,10 +488,10 @@ const PickAndPack: PageComponent = () => {
             ) : (
                 <></>
             )} */}
-            {storedObject[`step${workflow.expectedSteps[7]}`]?.data || isAutoValidateLoading ? (
+            {storedObject[`step${workflow.expectedSteps[8]}`]?.data || isAutoValidateLoading ? (
                 <AutoValidatePickAndPackForm
                     process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[8]}
+                    stepNumber={workflow.expectedSteps[9]}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}

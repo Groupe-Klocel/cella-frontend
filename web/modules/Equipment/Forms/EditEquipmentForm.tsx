@@ -26,10 +26,12 @@ import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import {
+    GetAllPatternsQuery,
     GetListOfPrioritiesQuery,
     SimpleGetAllStockOwnersQuery,
     UpdateEquipmentMutation,
     UpdateEquipmentMutationVariables,
+    useGetAllPatternsQuery,
     useGetListOfPrioritiesQuery,
     useListConfigsForAScopeQuery,
     useListParametersForAScopeQuery,
@@ -55,6 +57,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     const router = useRouter();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [stockOwners, setStockOwners] = useState<any>();
+    const [pattern, setPattern] = useState<any>();
     const [equipmentLimitTypes, setEquipmentLimitTypes] = useState<any>();
     const [equipmentMechanizedSystem, setEquipmentMechanizedSystem] = useState<any>();
     const [equipmentAutomaticLabelPrinting, setEquipmentAutomaticLabelPrinting] = useState<any>();
@@ -66,6 +69,10 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
         details.limitType === configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY ? false : true
     );
     const [availableValue, setAvailableValue] = useState(details.available);
+    const [patternIdValue, setPatternIdValue] = useState(details.patternId);
+    const [reservationPatternIdValue, setReservationPatternIdValue] = useState(
+        details.reservationPatternId
+    );
     const [distributedValue, setDistributedValue] = useState(details.distributed);
     const [monoCompanyValue, setMonoCompanyValue] = useState(details.monoCompany);
     const [monoCarrierValue, setMonoCarrierValue] = useState(details.monoCarrier);
@@ -84,6 +91,8 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
 
     useEffect(() => {
         setAvailableValue(details.available);
+        setPatternIdValue(details.patternId);
+        setReservationPatternIdValue(details.reservationPatternId);
         setDistributedValue(details.distributed);
         setMonoCompanyValue(details.monoCompany);
         setMonoCarrierValue(details.monoCarrier);
@@ -145,6 +154,23 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
             setEquipmentLimitTypes(equipmentLimitTypeList?.data?.listConfigsForAScope);
         }
     }, [equipmentLimitTypeList]);
+
+    //To render Pattern list configs
+    const patternList = useGetAllPatternsQuery<Partial<GetAllPatternsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            page: 1,
+            itemsPerPage: 100
+        }
+    );
+    const filteredPatterns = patternList?.data?.patterns?.results.filter(
+        (pattern: any) => pattern.type === configs.PATTERN_TYPE_ROUNDS
+    );
+    useEffect(() => {
+        if (filteredPatterns) {
+            setPattern;
+        }
+    }, [filteredPatterns]);
 
     //To render Equipment mechanizedSystem list configs
     const equipmentMechanizedSystemList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -289,7 +315,14 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
             setDisplayLimitTypeRelated(true);
         }
     };
-
+    const onPatternIdChange = (value: any) => {
+        setPatternIdValue(!patternIdValue);
+        form.setFieldsValue({ patternId: value });
+    };
+    const onReservationPatternIdChange = (value: any) => {
+        setReservationPatternIdValue(!reservationPatternIdValue);
+        form.setFieldsValue({ reservationPatternId: value });
+    };
     // Call api to create new group
     const onFinish = () => {
         form.validateFields()
@@ -377,7 +410,6 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
             cancelText: t('common:bool-no')
         });
     };
-
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
@@ -417,6 +449,51 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                     <Input />
                 </Form.Item>
                 <Col xs={24} xl={12}>
+                    <Form.Item
+                        label={t('d:pattern')}
+                        name="patternId"
+                        rules={[
+                            {
+                                message: `${t('messages:error-message-empty-input')}`
+                            }
+                        ]}
+                    >
+                        <Select
+                            allowClear
+                            defaultValue={patternIdValue}
+                            onChange={onPatternIdChange}
+                        >
+                            {filteredPatterns?.map((patternList: any) => (
+                                <Option key={patternList.id} value={patternList.id}>
+                                    {patternList.name}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        label={t('d:reservation-pattern')}
+                        name="reservationPatternId"
+                        rules={[
+                            {
+                                message: `${t('messages:error-message-empty-input')}`
+                            }
+                        ]}
+                    >
+                        <Select
+                            allowClear
+                            defaultValue={reservationPatternIdValue}
+                            placeholder={`${t('messages:please-select-a', {
+                                name: t('d:reservation-pattern')
+                            })}`}
+                            onChange={onReservationPatternIdChange}
+                        >
+                            {filteredPatterns?.map((patternList: any) => (
+                                <Option key={patternList.id} value={patternList.id}>
+                                    {patternList.name}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
                     <Form.Item
                         label={t('d:priority')}
                         name="priority"
