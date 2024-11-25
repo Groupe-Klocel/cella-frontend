@@ -461,7 +461,7 @@ export const AddEquipmentForm = () => {
                     </Select>
                 </Form.Item>
                 <Form.Item
-                    label={t('d:reservation-pattern')}
+                    label={t('d:reservationPattern')}
                     name="reservationPatternId"
                     rules={[
                         {
@@ -472,7 +472,7 @@ export const AddEquipmentForm = () => {
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
-                            name: t('d:reservation-pattern')
+                            name: t('d:reservationPattern')
                         })}`}
                         onChange={onReservationPatternIdChange}
                     >
