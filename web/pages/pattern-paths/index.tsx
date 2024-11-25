@@ -112,7 +112,7 @@ const PatternPathsPage: PageComponent = () => {
                         showError(t(`errors:${patternResult.executeFunction.output.output.code}`));
                         console.log('Backend_message', patternResult.executeFunction.output.output);
                     } else {
-                        showSuccess(t('messages:success-delete'));
+                        showSuccess(t('messages:success-deleted'));
                         setRefetch(true);
                     }
                 } catch (error) {
@@ -125,7 +125,11 @@ const PatternPathsPage: PageComponent = () => {
         });
     };
     //#endregion
-
+    useEffect(() => {
+        if (refetch) {
+            setRefetch(false);
+        }
+    }, [refetch]);
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />

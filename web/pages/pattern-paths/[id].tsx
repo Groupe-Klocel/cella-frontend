@@ -126,7 +126,7 @@ const PatternPathPage: PageComponent = () => {
                         showError(t(`errors:${patternResult.executeFunction.output.output.code}`));
                         console.log('Backend_message', patternResult.executeFunction.output.output);
                     } else {
-                        showSuccess(t('messages:success-delete'));
+                        showSuccess(t('messages:success-deleted'));
                         router.push(rootPath);
                     }
                 } catch (error) {
