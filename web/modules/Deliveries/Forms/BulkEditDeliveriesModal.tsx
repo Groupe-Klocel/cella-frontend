@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-import { DatePicker, Form, Modal } from 'antd';
+import { Form, Modal } from 'antd';
 import { useState } from 'react';
 import {
     BulkUpdateDeliveriesMutation,
@@ -29,7 +29,7 @@ import {
 import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import dayjs from 'dayjs';
+import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
 
 export interface IBulkEditDeliveriesRenderModalProps {
     visible: boolean;
@@ -102,15 +102,10 @@ const BulkEditDeliveriesRenderModal = ({
         >
             <WrapperForm>
                 <Form form={form} layout="vertical" scrollToFirstError>
-                    <Form.Item
+                    <CalendarForm
                         label={t('d:anticipatedDeliveryDate')}
                         name="anticipatedDeliveryDate"
-                    >
-                        <DatePicker
-                            format="YYYY-MM-DD HH:mm:ss"
-                            showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-                        />
-                    </Form.Item>
+                    />
                 </Form>
             </WrapperForm>
         </Modal>

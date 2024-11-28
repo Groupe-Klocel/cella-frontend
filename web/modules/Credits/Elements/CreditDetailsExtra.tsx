@@ -39,6 +39,7 @@ export interface IItemDetailsProps {
     thirdPartyId?: string | any;
     priceType?: number | any;
     status?: string | any;
+    refetchCreditPayment?: boolean;
 }
 
 const CreditDetailsExtra = ({
@@ -48,7 +49,8 @@ const CreditDetailsExtra = ({
     stockOwnerName,
     thirdPartyId,
     priceType,
-    status
+    status,
+    refetchCreditPayment
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
@@ -280,6 +282,7 @@ const CreditDetailsExtra = ({
                 triggerDelete={undefined}
                 triggerSoftDelete={undefined}
                 columnFilter={false}
+                refetch={refetchCreditPayment}
                 actionColumns={[
                     {
                         title: 'actions:actions',

@@ -17,9 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-import { Button, DatePicker, Form, Input, InputNumber, Modal, Select, Typography } from 'antd';
+import { Button, Form, InputNumber, Modal, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess } from '@helpers';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
@@ -27,8 +26,7 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { FormOptionType } from 'models/ModelsV2';
-import moment from 'moment';
-import dayjs from 'dayjs';
+import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -36,15 +34,15 @@ const { Text } = Typography;
 export interface IPaymentModalProps {
     orderId: string;
     showModal: any;
+    setRefetch?: any;
 }
 
-const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
+const PaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
-    const [printers, setPrinters] = useState<Array<FormOptionType>>();
     const [orderData, setOrderData] = useState<any>();
     const [isCreationLoading, setIsCreationLoading] = useState<boolean>(false);
 
@@ -111,8 +109,9 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
         }
     }, [orderId]);
 
-    useEffect(() => {
+    const setFieldsValue = () => {
         form.setFieldsValue({
+            //paymentDate: orderData?.paymentDate,
             paymentMethodText: orderData?.paymentMethodText,
             paymentMethod: orderData?.paymentMethod,
             paymentAccountText: orderData?.paymentAccountText,
@@ -121,6 +120,10 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
             orderType: orderData?.orderType,
             stockOwnerId: orderData?.stockOwnerId
         });
+    };
+
+    useEffect(() => {
+        setFieldsValue();
     }, [orderData]);
 
     // Retrieve Payment methods list
@@ -183,6 +186,8 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
     const handleCancel = () => {
         setIsCreationLoading(false);
         showModal.setShowPaymentModal(false);
+        form.resetFields();
+        setFieldsValue();
     };
 
     const onClickOk = () => {
@@ -215,9 +220,12 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
                         })
                     });
                     if (res.ok) {
-                        showSuccess(t('messages:success-creating-data'));
+                        showSuccess(t('messages:success-created'));
                         setIsCreationLoading(false);
                         showModal.setShowPaymentModal(false);
+                        setRefetch((refetchBool: boolean) => !refetchBool);
+                        form.resetFields();
+                        setFieldsValue();
                     }
                     if (!res.ok) {
                         const errorResponse = await res.json();
@@ -237,18 +245,23 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
                 fetchData();
             })
             .catch((err) => {
-                showError(t('messages:error-input-validation'));
+                showError(t('messages:error-creating-data'));
                 setIsCreationLoading(false);
                 showModal.setShowPaymentModal(false);
             });
     };
-
     return (
         <Modal
             title={t('actions:enter-payment-information')}
             open={showModal.showPaymentModal}
             width={800}
-            bodyStyle={{ maxHeight: '70vh', overflowY: 'auto', padding: '0px 24px' }}
+            styles={{
+                body: {
+                    maxHeight: '70vh',
+                    overflowY: 'auto',
+                    padding: '0px 24px'
+                }
+            }}
             onCancel={handleCancel}
             footer={[
                 <Button key="back" onClick={handleCancel}>
@@ -264,14 +277,11 @@ const PaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
                     {t('d:thirdParty')}: {orderData?.thirdParty?.name} -{' '}
                     {orderData?.thirdParty?.description}
                 </Text>
-                <Form.Item
+                <CalendarForm
                     label={t('d:paymentDate')}
                     name="paymentDate"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
-                    initialValue={moment()}
-                >
-                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
-                </Form.Item>
+                />
                 <Form.Item
                     label={t('d:amount')}
                     name="amount"

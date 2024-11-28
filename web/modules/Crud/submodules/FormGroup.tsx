@@ -29,6 +29,7 @@ import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';
 import { DraggerInput } from 'components/common/smart/Form/DraggerInput';
 import { useRouter } from 'next/router';
 import AutoComplete from './FormGroupAutoComplete';
+import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
 
 require('moment/locale/fr'); // French
 
@@ -155,25 +156,32 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                     );
                 else if (item.type == FormDataType.Calendar) {
                     return (
-                        <Form.Item
+                        <CalendarForm
                             name={item.name}
                             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
-                            key={item.name}
                             rules={item.rules!}
-                        >
-                            {item.initialValue ? (
-                                <DatePicker
-                                    format={localeDateTimeFormat}
-                                    showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-                                    defaultValue={item.initialValue}
-                                />
-                            ) : (
-                                <DatePicker
-                                    format={localeDateTimeFormat}
-                                    showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-                                />
-                            )}
-                        </Form.Item>
+                            key={item.name}
+                        />
+
+                        // <Form.Item
+                        //     name={item.name}
+                        //     label={item.displayName ? item.displayName : t(`d:${item.name}`)}
+                        //     key={item.name}
+                        //     rules={item.rules!}
+                        // >
+                        //     {item.initialValue ? (
+                        //         <DatePicker
+                        //             format={localeDateTimeFormat}
+                        //             showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                        //             defaultValue={item.initialValue}
+                        //         />
+                        //     ) : (
+                        //         <DatePicker
+                        //             format={localeDateTimeFormat}
+                        //             showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                        //         />
+                        //     )}
+                        // </Form.Item>
                     );
                 } else if (item.type == FormDataType.AutoComplete) {
                     return <AutoComplete item={item} key={item.name} />;
