@@ -37,7 +37,7 @@ import {
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
 import { FormOptionType } from 'models/ModelsV2';
-import dayjs from 'dayjs';
+import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
 
 export type EditCustomerOrderFormProps = {
     orderId: string;
@@ -485,9 +485,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
-                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
-                </Form.Item>
+                <CalendarForm label={expectedDeliveryDateLabel} name="expectedDeliveryDate" />
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
                     <Select
                         showSearch

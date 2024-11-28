@@ -39,6 +39,7 @@ import { useAuth } from 'context/AuthContext';
 import { isNumeric, pluralize, useList } from '@helpers';
 import { gql } from 'graphql-request';
 import { ContentSpin } from '@components';
+import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
 
 export interface IGeneralSearchProps {
     form: any;
@@ -437,24 +438,32 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                             );
                         else if (item.type == FormDataType.Calendar)
                             return (
-                                <Form.Item
+                                <CalendarForm
                                     name={item.name}
                                     label={
                                         item.displayName ? item.displayName : t(`d:${item.name}`)
                                     }
                                     key={item.name}
                                     rules={item.rules!}
-                                    normalize={(value) => (value ? value : undefined)}
-                                    initialValue={
-                                        item?.initialValue ? item?.initialValue : undefined
-                                    }
-                                >
-                                    <DatePicker
-                                        format="YYYY-MM-DD HH:mm:ss"
-                                        showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-                                        allowClear
-                                    />
-                                </Form.Item>
+                                />
+                                // <Form.Item
+                                //     name={item.name}
+                                //     label={
+                                //         item.displayName ? item.displayName : t(`d:${item.name}`)
+                                //     }
+                                //     key={item.name}
+                                //     rules={item.rules!}
+                                //     normalize={(value) => (value ? value : undefined)}
+                                //     initialValue={
+                                //         item?.initialValue ? item?.initialValue : undefined
+                                //     }
+                                // >
+                                //     <DatePicker
+                                //         format="YYYY-MM-DD HH:mm:ss"
+                                //         showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                                //         allowClear
+                                //     />
+                                // </Form.Item>
                             );
                         else if (item.type == FormDataType.CalendarRange) {
                             let startDate = null;

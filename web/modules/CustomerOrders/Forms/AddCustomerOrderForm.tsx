@@ -51,6 +51,7 @@ import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import TextArea from 'antd/lib/input/TextArea';
+import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
 
 interface IOption {
     value: string;
@@ -635,9 +636,8 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                 >
                     <InputNumber />
                 </Form.Item>
-                <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
-                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
-                </Form.Item>
+                <CalendarForm label={expectedDeliveryDateLabel} name="expectedDeliveryDate" />
+
                 <Form.Item
                     label={deliveryTypeLabel}
                     name="deliveryPoType"

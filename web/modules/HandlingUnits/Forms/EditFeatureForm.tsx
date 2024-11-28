@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { FC, useEffect, useState } from 'react';
-import { Button, Form, Modal, Space, DatePicker, Input, Select } from 'antd';
+import { Button, Form, Modal, Space, Input, Select } from 'antd';
 import { StepsPanel, WrapperForm, WrapperStepContent } from '@components';
 import useTranslation from 'next-translate/useTranslation';
 import dayjs from 'dayjs';
@@ -35,6 +35,7 @@ import {
     useGetHandlingUnitContentByIdQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
 
 require('moment/locale/fr'); // French
 
@@ -381,15 +382,12 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                         </Select>
                     </Form.Item>
                     {props.setIsDateType.isDateType ? (
-                        <Form.Item
+                        <CalendarForm
                             label={t('d:value')}
                             name="value"
                             hidden={false}
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
-                            initialValue={dayjs()}
-                        >
-                            <DatePicker format={localeDateTimeFormat} />
-                        </Form.Item>
+                        />
                     ) : (
                         <Form.Item
                             name={'value'}
