@@ -59,6 +59,7 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
     const [form] = Form.useForm();
     const [articleLus, setArticleLus] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [formValues, setFormValues] = useState<any>();
 
     // to render article_lu list and thus Lu related to selected article
     const articleLuData = useArticleLus({ articleId: props.articleId }, 1, 100, null);
@@ -92,10 +93,10 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
                     }
                     if (!res.ok) {
                         const errorResponse = await res.json();
-                        if (errorResponse.error.response.errors[0].extensions) {
+                        if (errorResponse.error.code) {
                             showError(
                                 t(
-                                    `errors:${errorResponse.error.response.errors[0].extensions.code}`
+                                    `errors:${errorResponse.error.code}`
                                 )
                             );
                         } else {
@@ -105,6 +106,7 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
                     if (res) {
                         setIsLoading(false);
                         form.resetFields();
+                        form.setFieldsValue(formValues);
                     }
                 };
                 fetchData();
@@ -121,6 +123,7 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
             stockOwnerId: props?.stockOwnerId,
             stockOwnerName: props?.stockOwnerName
         };
+        setFormValues(tmp_details);
         form.setFieldsValue(tmp_details);
     }, []);
 
