@@ -17,7 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton, SinglePrintModal } from '@components';
+import {
+    AppHead,
+    LinkButton,
+    SinglePrintModal,
+    SingleInvoicePrintModal,
+    SingleQuotePrintModal
+} from '@components';
 import { META_DEFAULTS, getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
@@ -50,7 +56,8 @@ const CustomerOrderPage: PageComponent = () => {
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [showSingleInvoicePrintModal, setShowSingleInvoicePrintModal] = useState(false);
+    const [showSingleQuotePrintModal, setShowSingleQuotePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [documentToPrint, setDocumentToPrint] = useState<string>();
     const [invoiceAddress, setInvoiceAddress] = useState<any>();
@@ -377,7 +384,7 @@ const CustomerOrderPage: PageComponent = () => {
                             type="primary"
                             onClick={() => {
                                 if (invoiceAddress) {
-                                    setShowSinglePrintModal(true);
+                                    setShowSingleQuotePrintModal(true);
                                     setIdToPrint(invoiceAddress.id);
                                     setDocumentToPrint('K_Quote');
                                 } else {
@@ -399,7 +406,7 @@ const CustomerOrderPage: PageComponent = () => {
                             type="primary"
                             onClick={() => {
                                 if (invoiceAddress) {
-                                    setShowSinglePrintModal(true);
+                                    setShowSingleInvoicePrintModal(true);
                                     setIdToPrint(invoiceAddress.id);
                                     setDocumentToPrint('K_Invoice');
                                 } else {
@@ -476,10 +483,20 @@ const CustomerOrderPage: PageComponent = () => {
                 {/* ) : (
                     <></>
                 )} */}
-                <SinglePrintModal
+                <SingleInvoicePrintModal
                     showModal={{
-                        showSinglePrintModal,
-                        setShowSinglePrintModal
+                        showSingleInvoicePrintModal,
+                        setShowSingleInvoicePrintModal
+                    }}
+                    dataToPrint={{ id: idToPrint }}
+                    documentName={documentToPrint!}
+                    documentReference={data?.name}
+                    customLanguage={data?.printLanguage ?? undefined}
+                />
+                <SingleQuotePrintModal
+                    showModal={{
+                        showSingleQuotePrintModal,
+                        setShowSingleQuotePrintModal
                     }}
                     dataToPrint={{ id: idToPrint }}
                     documentName={documentToPrint!}
