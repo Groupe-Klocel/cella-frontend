@@ -47,6 +47,8 @@ export * from './common/smart/LanguageSelector/LanguageSelector';
 export * from './common/smart/Modals/NumberOfPrintsModal';
 export * from './common/smart/Modals/NumberOfPrintsModalV2';
 export * from './common/smart/Modals/SinglePrintModal';
+export * from './common/smart/Modals/SingleInvoicePrintModal';
+export * from './common/smart/Modals/SingleQuotePrintModal';
 export * from './common/smart/Page/Page';
 export * from './common/smart/SideMenu/SideMenu';
 export * from './common/smart/Switchs/MenuSwitch';
