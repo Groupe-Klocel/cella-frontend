@@ -48,7 +48,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     // retrieve information from front
-    const { handlingUnit, box } = req.body;
+    const { handlingUnit, box, hUModel } = req.body;
 
     //Transaction management
     const generateTransactionId = gql`
@@ -315,13 +315,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 input: {
                     name: handlingUnit.name,
                     status: configs.HANDLING_UNIT_CONTENT_OUTBOUND_STATUS_IN_PREPARATION,
-                    handlingUnitModelId: box.handlingUnitOutbounds[0].handlingUnitModelId,
+                    handlingUnitModelId: hUModel.id,
                     carrierId: box.handlingUnitOutbounds[0].carrierId,
                     carrierShippingModeId: box.handlingUnitOutbounds[0].carrierShippingModeId,
                     handlingUnitId: finalHandlingUnitId,
-                    theoriticalWeight: parseInt(
-                        defaultPalletWeightParameterResult.parameters.results[0].value
-                    ),
+                    theoriticalWeight: hUModel.weight,
+                    handlingUnitModelClosureWeight: hUModel.closureWeight,
                     lastTransactionId
                 }
             };

@@ -27,8 +27,8 @@ export interface IValidateHandlingUnitPalletizationProps {
     stepNumber: number;
     trigger: { [label: string]: any };
     handlingUnit: any;
+    hUModel: any;
     box: string;
-    headerContent: { [label: string]: any };
 }
 
 export const ValidateHandlingUnitPalletizationForm = ({
@@ -36,8 +36,8 @@ export const ValidateHandlingUnitPalletizationForm = ({
     stepNumber,
     trigger: { triggerRender, setTriggerRender },
     handlingUnit,
-    box,
-    headerContent: { setHeaderContent }
+    hUModel,
+    box
 }: IValidateHandlingUnitPalletizationProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -76,7 +76,8 @@ export const ValidateHandlingUnitPalletizationForm = ({
                 },
                 body: JSON.stringify({
                     handlingUnit,
-                    box
+                    box,
+                    hUModel
                 })
             });
             const response = await res.json();
@@ -88,7 +89,6 @@ export const ValidateHandlingUnitPalletizationForm = ({
                     showError(t('messages:check-failed'));
                 }
                 onBack();
-                setHeaderContent(false);
             }
         };
         fetchData();
@@ -97,8 +97,8 @@ export const ValidateHandlingUnitPalletizationForm = ({
     //Step-2: record values in securedLS once validated
     useEffect(() => {
         if (fetchResult) {
-            delete storedObject[`step${20}`]?.data;
-            delete storedObject[`step${20}`]?.nextStep;
+            delete storedObject[`step${25}`]?.data;
+            delete storedObject[`step${25}`]?.nextStep;
             storedObject.step10.data.isHuToCreate = false;
             storedObject.step10.data = fetchResult;
             storedObject.currentStep =
@@ -106,7 +106,6 @@ export const ValidateHandlingUnitPalletizationForm = ({
                     `step${storedObject[`step${stepNumber}`]?.previousStep}`
                 ]?.previousStep;
             storage.set(process, JSON.stringify(storedObject));
-            setHeaderContent(false);
             setTriggerRender(!triggerRender);
         }
     }, [fetchResult]);
