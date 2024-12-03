@@ -30,6 +30,7 @@ import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
+import dayjs from 'dayjs';
 
 export interface IBulkEditDeliveriesRenderModalProps {
     visible: boolean;
@@ -105,6 +106,9 @@ const BulkEditDeliveriesRenderModal = ({
                     <CalendarForm
                         label={t('d:anticipatedDeliveryDate')}
                         name="anticipatedDeliveryDate"
+                        format="YYYY-MM-DD HH:mm:ss"
+                        showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                        defaultValue={dayjs()}
                     />
                 </Form>
             </WrapperForm>

@@ -31,6 +31,7 @@ import {
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
+import dayjs from 'dayjs';
 
 require('moment/locale/fr'); // French
 
@@ -314,6 +315,8 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                             name="value"
                             hidden={false}
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
+                            format={localeDateTimeFormat}
+                            defaultValue={dayjs()}
                         />
                     ) : (
                         <Form.Item

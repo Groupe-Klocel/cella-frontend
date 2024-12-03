@@ -27,6 +27,7 @@ import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { FormOptionType } from 'models/ModelsV2';
 import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -278,6 +279,8 @@ const CreditPaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalPro
                     label={t('d:paymentDate')}
                     name="paymentDate"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
+                    format="YYYY-MM-DD"
+                    defaultValue={dayjs()}
                 />
                 <Form.Item
                     label={t('d:amount')}
