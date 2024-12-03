@@ -29,10 +29,8 @@ import { debounce, result, set } from 'lodash';
 import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
 import {
-    GetThirdPartiesQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
-    useGetThirdPartiesQuery,
     useGetThirdPartyAddressContactsQuery,
     useGetThirdPartyAddressesQuery,
     useListConfigsForAScopeQuery,
@@ -305,6 +303,37 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                 }
             });
         }
+    };
+
+    // Get all civility
+    useEffect(() => {
+        const query = gql`
+            query ListParametersForAScope($scope: String!, $code: String, $language: String) {
+                listParametersForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    text
+                    scope
+                    code
+                }
+            }
+        `;
+        const queryVariables = {
+            language: router.locale,
+            scope: 'civility'
+        };
+
+        graphqlRequestClient.request(query, queryVariables).then((data: any) => {
+            setCivilities(data?.listParametersForAScope);
+        });
+    }, []);
+    const [civilities, setCivilities] = useState([]);
+    const civilityList = civilities.map((item: any) => ({ value: item.text }));
+    const [options, setOptions] = useState<{ value: string }[]>([]);
+    useEffect(() => {
+        setOptions(civilityList);
+    }, [civilities]);
+    const handleSearch = (value: string) => {
+        setOptions(!value ? [] : civilities.map((item: any) => ({ value: item.text })));
     };
 
     const submit = t('actions:submit');
@@ -681,8 +710,15 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                     <Form.Item label={t('d:contactName')} name="contactName">
                         <Input />
                     </Form.Item>
-                    <Form.Item label={t('d:contactCivility')} name="contactCivility">
-                        <Input />
+                    <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
+                        <AutoComplete
+                            options={options}
+                            onSearch={handleSearch}
+                            placeholder={`${t('messages:please-select-a', {
+                                name: t('d:contactCivility')
+                            })}`}
+                            className="custom"
+                        ></AutoComplete>
                     </Form.Item>
                     <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
                         <Input />

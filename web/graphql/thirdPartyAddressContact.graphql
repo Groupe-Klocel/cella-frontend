@@ -71,3 +71,22 @@ mutation CreateThirdPartyAddressContact($input: CreateThirdPartyAddressContactIn
         modifiedBy
     }
 }
+
+mutation updateThirdPartyAddressContact(
+    $id: String!
+    $input: UpdateThirdPartyAddressContactInput!
+) {
+    updateThirdPartyAddressContact(id: $id, input: $input) {
+        id
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactEmail
+        contactLanguage
+        category
+        categoryText
+    }
+}

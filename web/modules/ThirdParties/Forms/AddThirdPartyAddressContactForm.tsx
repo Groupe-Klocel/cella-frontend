@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, Select, Modal, Space } from 'antd';
+import { Button, Input, Form, Select, Modal, Space, AutoComplete } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -32,6 +32,7 @@ import {
 import { showError, showSuccess, showInfo } from '@helpers';
 import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
+import { gql } from 'graphql-request';
 
 const { Option } = Select;
 
@@ -67,6 +68,41 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
             router.events.off('routeChangeStart', handleBrowseAway);
         };
     }, [unsavedChanges]);
+
+    // Get all civility
+    useEffect(() => {
+        const query = gql`
+            query ListParametersForAScope($scope: String!, $code: String, $language: String) {
+                listParametersForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    text
+                    scope
+                    code
+                }
+            }
+        `;
+        const queryVariables = {
+            language: router.locale,
+            scope: 'civility'
+        };
+
+        graphqlRequestClient.request(query, queryVariables).then((data: any) => {
+            setCivilities(data?.listParametersForAScope);
+        });
+    }, []);
+    const [civilities, setCivilities] = useState([]);
+
+    const civilityList = civilities.map((item: any) => ({ value: item.text }));
+
+    const [options, setOptions] = useState<{ value: string }[]>([]);
+
+    useEffect(() => {
+        setOptions(civilityList);
+    }, [civilities]);
+
+    const handleSearch = (value: string) => {
+        setOptions(!value ? [] : civilities.map((item: any) => ({ value: item.text })));
+    };
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
@@ -209,8 +245,15 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
                     </Select>
                 </Form.Item>
 
-                <Form.Item label={t('d:contactCivility')} name="contactCivility">
-                    <Input maxLength={20} />
+                <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
+                    <AutoComplete
+                        options={options}
+                        onSearch={handleSearch}
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:contactCivility')
+                        })}`}
+                        className="custom"
+                    ></AutoComplete>
                 </Form.Item>
 
                 <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
