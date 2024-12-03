@@ -86,7 +86,7 @@ const PalletizationInfo: PageComponent = () => {
                       .childrenHandlingUnits?.length
                 : '0';
         }
-        if (palletizationInfos[`step${workflow.expectedSteps[1]}`].data) {
+        if (palletizationInfos[`step${workflow.expectedSteps[1]}`]?.data) {
             object[t('common:handling-unit-model')] =
                 palletizationInfos[`step${workflow.expectedSteps[1]}`].data.handlingUnitModel.name;
         }
