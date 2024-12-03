@@ -23,6 +23,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
+import dayjs from 'dayjs';
 import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import {
     GetThirdPartiesQuery,
@@ -485,7 +486,12 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         ))}
                     </Select>
                 </Form.Item>
-                <CalendarForm label={expectedDeliveryDateLabel} name="expectedDeliveryDate" />
+                <CalendarForm
+                    label={expectedDeliveryDateLabel}
+                    name="expectedDeliveryDate"
+                    format="YYYY-MM-DD"
+                    defaultValue={dayjs()}
+                />
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
                     <Select
                         showSearch

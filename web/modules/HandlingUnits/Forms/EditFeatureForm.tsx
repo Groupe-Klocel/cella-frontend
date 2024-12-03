@@ -387,6 +387,8 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                             name="value"
                             hidden={false}
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
+                            format={localeDateTimeFormat}
+                            defaultValue={dayjs()}
                         />
                     ) : (
                         <Form.Item

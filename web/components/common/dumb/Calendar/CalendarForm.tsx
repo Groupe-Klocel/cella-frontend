@@ -30,12 +30,19 @@ export interface ICalendarFormProps {
     label: string;
     name: string;
     hidden?: boolean;
+    format?: any;
     key?: any;
+    defaultValue: any;
     rules?:
         | any
         | {
               required: boolean;
               message: string;
+          };
+    showTime?:
+        | any
+        | {
+              defaultValue: any;
           };
 }
 const locales: any = {
@@ -49,7 +56,15 @@ const locales: any = {
     }
 };
 
-const CalendarForm: FC<ICalendarFormProps> = ({ label, name, rules }) => {
+const CalendarForm: FC<ICalendarFormProps> = ({
+    label,
+    name,
+    rules,
+    defaultValue,
+    format,
+    showTime,
+    hidden
+}) => {
     const [languageDate, setLanguageDate] = useState('en');
 
     const changeLanguage = (lang: 'en' | 'fr') => {
@@ -70,8 +85,19 @@ const CalendarForm: FC<ICalendarFormProps> = ({ label, name, rules }) => {
 
     return (
         <ConfigProvider locale={locales[languageDate].antdLocale}>
-            <Form.Item label={label} name={name} rules={rules} initialValue={dayjs()}>
-                <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
+            <Form.Item
+                label={label}
+                name={name}
+                rules={rules}
+                initialValue={dayjs()}
+                hidden={hidden}
+            >
+                <DatePicker
+                    allowClear
+                    format={format}
+                    defaultValue={defaultValue}
+                    showTime={showTime}
+                />
             </Form.Item>
         </ConfigProvider>
     );

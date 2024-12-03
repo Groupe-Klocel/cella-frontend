@@ -17,13 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Form, Input, InputNumber, Checkbox, Select, DatePicker } from 'antd';
-import { debounce } from 'lodash';
+import { Form, Input, InputNumber, Checkbox, Select } from 'antd';
 import moment from 'moment';
 import dayjs from 'dayjs';
-import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
-import { FC, useState, useEffect } from 'react';
+import { FC } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/Models';
 import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';
 import { DraggerInput } from 'components/common/smart/Form/DraggerInput';
@@ -161,27 +159,10 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
                             rules={item.rules!}
                             key={item.name}
+                            format="YYYY-MM-DD"
+                            showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                            defaultValue={item.initialValue ? item.initialValue : undefined}
                         />
-
-                        // <Form.Item
-                        //     name={item.name}
-                        //     label={item.displayName ? item.displayName : t(`d:${item.name}`)}
-                        //     key={item.name}
-                        //     rules={item.rules!}
-                        // >
-                        //     {item.initialValue ? (
-                        //         <DatePicker
-                        //             format={localeDateTimeFormat}
-                        //             showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-                        //             defaultValue={item.initialValue}
-                        //         />
-                        //     ) : (
-                        //         <DatePicker
-                        //             format={localeDateTimeFormat}
-                        //             showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-                        //         />
-                        //     )}
-                        // </Form.Item>
                     );
                 } else if (item.type == FormDataType.AutoComplete) {
                     return <AutoComplete item={item} key={item.name} />;

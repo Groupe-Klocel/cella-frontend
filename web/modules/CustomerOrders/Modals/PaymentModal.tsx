@@ -27,6 +27,7 @@ import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { FormOptionType } from 'models/ModelsV2';
 import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -183,6 +184,29 @@ const PaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalProps) =>
         }
     };
 
+    //createPayment on click
+    const createPayment = async (
+        paymentInputs: any
+    ): Promise<{ [key: string]: any } | undefined> => {
+        const createPaymentMutation = gql`
+            mutation createPayment($input: CreatePaymentInput!) {
+                createPayment(input: $input) {
+                    id
+                }
+            }
+        `;
+        const createPaymentVariables = {
+            input: {
+                paymentInputs
+            }
+        };
+        const result = await graphqlRequestClient.request(
+            createPaymentMutation,
+            createPaymentVariables
+        );
+        return result;
+    };
+
     const handleCancel = () => {
         setIsCreationLoading(false);
         showModal.setShowPaymentModal(false);
@@ -250,6 +274,7 @@ const PaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalProps) =>
                 showModal.setShowPaymentModal(false);
             });
     };
+
     return (
         <Modal
             title={t('actions:enter-payment-information')}
@@ -281,6 +306,8 @@ const PaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalProps) =>
                     label={t('d:paymentDate')}
                     name="paymentDate"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
+                    format="YYYY-MM-DD"
+                    defaultValue={dayjs()}
                 />
                 <Form.Item
                     label={t('d:amount')}
