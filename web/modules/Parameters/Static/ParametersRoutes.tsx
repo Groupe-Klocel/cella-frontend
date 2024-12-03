@@ -30,7 +30,6 @@ export const parametersRoutes = [
 export const addParametersRoutes = [
     ...parametersRoutes,
     {
-        path: '/add-parameter',
         breadcrumbName: 'actions:add-parameter'
     }
 ];

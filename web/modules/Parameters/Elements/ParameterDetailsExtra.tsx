@@ -17,16 +17,48 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Typography } from 'antd';
-
-const { Title } = Typography;
+import { AppHead } from '@components';
+import { META_DEFAULTS } from '@helpers';
+import useTranslation from 'next-translate/useTranslation';
+import { Divider } from 'antd';
+import { useState } from 'react';
+import { ParameterListComponent } from 'modules/Parameters/Elements/ParameterListComponent';
+import { ParameterModelV2 as model } from 'models/ParameterModelV2';
+import { ParameterExtrasModelV2 as extras } from 'models/ParameterExtrasModelV2';
 
 export interface IItemDetailsProps {
-    parameterId?: string | any;
+    Id?: string | any;
+    details: any;
+    url?: string;
 }
 
-const ParameterDetailsExtra = ({ parameterId }: IItemDetailsProps) => {
-    return <></>;
+const ParameterDetailsExtra = ({ Id, details, url }: IItemDetailsProps) => {
+    const { t } = useTranslation();
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+
+    // #region extract data from modelV2
+    const listFields = Object.keys(model.fieldsInfo).filter(
+        (key) => model.fieldsInfo[key].isListRequested
+    );
+    return (
+        <>
+            <Divider />
+            <AppHead title={META_DEFAULTS.title} />
+            <ParameterListComponent
+                searchCriteria={{ Id: Id }}
+                details={details}
+                parameterId={Id}
+                dataModel={extras}
+                parameterFields={listFields}
+                triggerDelete={{ idToDelete, setIdToDelete }}
+                triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                searchable={false}
+                refresh={true}
+                url={url}
+            />
+        </>
+    );
 };
 
 export { ParameterDetailsExtra };

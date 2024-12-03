@@ -29,6 +29,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { parametersRoutes as itemRoutes } from 'modules/Parameters/Static/ParametersRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
+import { ParameterDetailsExtra } from 'modules/Parameters/Elements/ParameterDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -113,6 +114,7 @@ const ParameterPage: PageComponent = () => {
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
+                extraDataComponent={<ParameterDetailsExtra Id={id} details={data} />}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
