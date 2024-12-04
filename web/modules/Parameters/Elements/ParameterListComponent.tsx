@@ -582,7 +582,7 @@ const ParameterListComponent = (props: IListProps) => {
             tmp_array.length = 0;
         }
 
-        await setSort(tmp_array);
+        setSort(tmp_array);
         if (tmp_array.length > 0) {
             cookie.set(`${props.dataModel.resolverName}SavedSorters`, JSON.stringify(tmp_array));
         }
