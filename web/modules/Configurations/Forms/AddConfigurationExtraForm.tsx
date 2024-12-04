@@ -32,11 +32,18 @@ export interface ISingleItemProps {
 
 export const AddConfigurationExtraForm: FC<ISingleItemProps> = ({ urlBack }: ISingleItemProps) => {
     const { t } = useTranslation('common');
-    const router = useRouter();
+    const router: any = useRouter();
     const id = router.query.id;
     const detailsFields = Object.keys(model.fieldsInfo).filter(
         (key) => model.fieldsInfo[key].isDetailRequested
     );
+
+    // split on = and , to check if key already exists and keep only the odd values
+    const keyAlreadyExists = router?.query?.parameterExtra
+        ?.split('=')
+        .join(',')
+        .split(',')
+        .filter((el: any, index: number) => index % 2 === 0 && el !== '');
 
     const keyLbl = t('d:key');
     const valueLbl = t('d:value');
@@ -68,6 +75,10 @@ export const AddConfigurationExtraForm: FC<ISingleItemProps> = ({ urlBack }: ISi
     const onFinish = () => {
         form.validateFields()
             .then(() => {
+                if (keyAlreadyExists.includes(form.getFieldValue('key'))) {
+                    showError(t('errors:key-exists'));
+                    return;
+                }
                 const formData = form.getFieldsValue(true);
                 const new_element: any = {};
                 new_element[formData.key] = formData.value;
@@ -108,10 +119,18 @@ export const AddConfigurationExtraForm: FC<ISingleItemProps> = ({ urlBack }: ISi
                     setUnsavedChanges(true);
                 }}
             >
-                <Form.Item label={keyLbl} name="key">
+                <Form.Item
+                    label={keyLbl}
+                    name="key"
+                    rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
+                >
                     <Input />
                 </Form.Item>
-                <Form.Item label={valueLbl} name="value">
+                <Form.Item
+                    label={valueLbl}
+                    name="value"
+                    rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
+                >
                     <Input />
                 </Form.Item>
             </Form>
