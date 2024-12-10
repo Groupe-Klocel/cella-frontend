@@ -207,6 +207,11 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     setScannedInfo(undefined);
                 } else {
                     const articleResponse = response.executeFunction.output.response;
+                    const featureType =
+                        articleResponse.resType === 'serialNumber'
+                            ? articleResponse.article.featureType
+                            : articleResponse.articleLuBarcodes[0].article.featureType;
+
                     const fetchContents = async () => {
                         const query = gql`
                             query huCs($filters: HandlingUnitContentSearchFilters) {
@@ -290,7 +295,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     };
                     fetchContents();
                     // this to retrieve features when creating new couple HU/HUC
-                    if (isHuToCreate) {
+                    if (isHuToCreate && featureType) {
                         const fetchFeatures = async () => {
                             const query = gql`
                                 query featureCodes($filters: FeatureCodeSearchFilters) {

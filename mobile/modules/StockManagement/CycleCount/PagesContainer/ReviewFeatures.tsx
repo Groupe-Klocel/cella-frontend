@@ -64,7 +64,7 @@ export const ReviewFeatures = ({
     //Pre-requisite: initialize current step
     useEffect(() => {
         //check workflow direction and assign current step accordingly
-        if (expectedFeatures === null || expectedFeatures.length <= 0) {
+        if (!expectedFeatures || expectedFeatures === null || expectedFeatures.length <= 0) {
             // N.B.: in this case previous step is kept at its previous value
             const data: { [label: string]: any } = {};
             data['reviewedFeatures'] = undefined;
@@ -89,7 +89,7 @@ export const ReviewFeatures = ({
     }, [isHuToCreate]);
 
     useEffect(() => {
-        const initialValues = expectedFeatures.reduce((acc: any, feature: any) => {
+        const initialValues = expectedFeatures?.reduce((acc: any, feature: any) => {
             acc[feature.featureCode.name] = feature?.featureCode.dateType
                 ? dayjs(feature.value)
                 : feature.value;
@@ -173,7 +173,7 @@ export const ReviewFeatures = ({
                         </Space>
                     </div>
                 )}
-                {expectedFeatures.map((feature: any) => {
+                {expectedFeatures?.map((feature: any) => {
                     return !feature?.featureCode.dateType ? (
                         <StyledFeaturesFormItem
                             label={feature.featureCode.name}
