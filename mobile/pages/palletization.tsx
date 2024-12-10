@@ -79,16 +79,18 @@ const PalletizationInfo: PageComponent = () => {
                         `step${workflow.expectedSteps[0]}`
                     ].data.handlingUnit?.handlingUnitOutbounds[0]?.carrier?.name;
             }
+            if (palletizationInfos[`step${workflow.expectedSteps[1]}`]?.data) {
+                object[t('common:handling-unit-model')] =
+                    palletizationInfos[
+                        `step${workflow.expectedSteps[1]}`
+                    ].data.handlingUnitModel.name;
+            }
             object[t('common:number-of-boxes')] = palletizationInfos[
                 `step${workflow.expectedSteps[0]}`
             ].data.handlingUnit.childrenHandlingUnits
                 ? palletizationInfos[`step${workflow.expectedSteps[0]}`].data.handlingUnit
                       .childrenHandlingUnits?.length
                 : '0';
-        }
-        if (palletizationInfos[`step${workflow.expectedSteps[1]}`]?.data) {
-            object[t('common:handling-unit-model')] =
-                palletizationInfos[`step${workflow.expectedSteps[1]}`].data.handlingUnitModel.name;
         }
         setOriginDisplay(object);
     }, [triggerRender]);
@@ -163,7 +165,6 @@ const PalletizationInfo: PageComponent = () => {
                         submitButton: true,
                         backButton: true
                     }}
-                    defaultValue={isHuToCreate ? 'huModelExist' : undefined}
                 ></SelectHuModelFormPalletization>
             ) : (
                 <></>
