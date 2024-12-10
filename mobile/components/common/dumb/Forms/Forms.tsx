@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Button, Form } from 'antd';
+import { Button, DatePicker, Form, Input, Switch } from 'antd';
 import styled from 'styled-components';
 
 const StyledForm = styled(Form)`
@@ -55,4 +55,72 @@ const NavButton = styled(Button)`
     border: 1px solid #f5c73d !important;
 `;
 
-export { StyledForm, StyledFormItem, StyledButton, NavButton };
+const WrapperFeature = styled.div`
+    padding: 2px 5px 2px 5px;
+    margin: 2px;
+    border: 1px solid;
+    border-radius: 5px;
+`;
+
+const StyledFeaturesInput = styled(Input)<{ isEditable: boolean }>`
+    &:disabled {
+        color: black !important;
+        background-color: transparent !important;
+        border: none !important;
+    }
+`;
+
+const StyledFeaturesDatePicker = styled(DatePicker)`
+    &.ant-picker-disabled {
+        background-color: transparent !important;
+        border: none !important;
+    }
+
+    &.ant-picker-disabled .ant-picker-input > input {
+        color: rgba(0, 0, 0, 0.88) !important;
+    }
+
+    &.ant-picker-disabled .ant-picker-suffix {
+        display: none !important;
+    }
+`;
+
+const StyledFeaturesFormItem = styled(StyledFormItem)`
+    .ant-form-item-label > label {
+        font-weight: bold;
+    }
+`;
+
+const StyledRadioSwitch = styled(Switch)`
+    &.ant-switch {
+        width: 36px;
+        height: 20px;
+        min-width: 36px;
+    }
+
+    &.ant-switch .ant-switch-handle {
+        width: 16px;
+        height: 16px;
+        top: 2px;
+    }
+
+    &.ant-switch-checked {
+        background: radial-gradient(circle, #f5c73d 10%, #fef5e1 100%) !important;
+    }
+
+    &.ant-switch-checked .ant-switch-handle {
+        left: calc(100% - 18px);
+    }
+`;
+
+export {
+    StyledForm,
+    StyledFormItem,
+    StyledButton,
+    NavButton,
+    WrapperFeature,
+    StyledFeaturesInput,
+    StyledFeaturesDatePicker,
+    StyledFeaturesFormItem,
+    StyledRadioSwitch
+};

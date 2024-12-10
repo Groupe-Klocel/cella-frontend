@@ -21,7 +21,7 @@ import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import { createCycleCountError } from 'helpers/utils/crudFunctions/cycleCount';
 import useTranslation from 'next-translate/useTranslation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 export interface ILocationChecksProps {
     dataToCheck: any;
@@ -44,7 +44,6 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
 
     // TYPED SAFE ALL
     //retrieve necessary values for CC specifc checks
-    const currentCycleCount = storedObject.step10?.data?.cycleCount;
     const currentCycleCountId: string = storedObject.step10?.data?.cycleCount?.id;
     const locationIdToCheck: string = storedObject.step10?.data?.currentCycleCountLine?.locationId;
 

@@ -32,8 +32,7 @@ export const CycleCountMovementModelV2: ModelType = {
         list: 'cycleCountMovements',
         create: 'createCycleCountMovement',
         update: 'updateCycleCountMovement',
-        delete: 'deleteCycleCountMovement',
-        export: true
+        delete: 'deleteCycleCountMovement'
     },
 
     fieldsInfo: {
@@ -78,7 +77,7 @@ export const CycleCountMovementModelV2: ModelType = {
             param: null,
             optionTable: '{"table": "StockOwner", "fieldToDisplay": "name"}'
         },
-        'stockOwner{name}': {
+        stockOwnerNameStr: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
@@ -91,7 +90,7 @@ export const CycleCountMovementModelV2: ModelType = {
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
-            displayName: null,
+            displayName: 'stockOwner',
             isMandatory: false,
             minRule: null,
             maxRule: null,
@@ -158,7 +157,7 @@ export const CycleCountMovementModelV2: ModelType = {
             config: null,
             param: null
         },
-        'location{name}': {
+        locationNameStr: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
@@ -171,7 +170,7 @@ export const CycleCountMovementModelV2: ModelType = {
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
-            displayName: null,
+            displayName: 'location',
             isMandatory: false,
             minRule: null,
             maxRule: null,
@@ -198,7 +197,7 @@ export const CycleCountMovementModelV2: ModelType = {
             config: null,
             param: null
         },
-        'article{name}': {
+        articleNameStr: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
@@ -211,7 +210,7 @@ export const CycleCountMovementModelV2: ModelType = {
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
-            displayName: null,
+            displayName: 'article',
             isMandatory: false,
             minRule: null,
             maxRule: null,
@@ -232,6 +231,26 @@ export const CycleCountMovementModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        handlingUnitNameStr: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: 'handling-unit-contents/handlingUnitContentId',
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'handlingUnit',
             isMandatory: false,
             minRule: null,
             maxRule: null,
@@ -513,6 +532,46 @@ export const CycleCountMovementModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        createdByCycleCount: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        features: {
+            isListRequested: false,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'featureCodeId',
             isMandatory: false,
             minRule: null,
             maxRule: null,

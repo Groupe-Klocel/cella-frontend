@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import { CycleCountMovementModelV2 as model } from 'models/CycleCountMovementModelV2';
+import { CycleCountErrorModelV2 as model } from 'models/CycleCountErrorModelV2';
 import { cycleCountsRoutes as itemRoutes } from 'modules/CycleCounts/Static/cycleCountsRoutes';
 import { useAppState } from 'context/AppContext';
 import useTranslation from 'next-translate/useTranslation';
@@ -32,7 +32,7 @@ import { Button, Modal, Space } from 'antd';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const CycleCountMovementPage: PageComponent = () => {
+const CycleCountErrorPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -53,11 +53,11 @@ const CycleCountMovementPage: PageComponent = () => {
     const breadCrumb = [
         ...cycleCountDetailBreadCrumb,
         {
-            breadcrumbName: `${t('common:cycle-count-movement')}`
+            breadcrumbName: `${t('common:cycle-count-error')}`
         }
     ];
 
-    const pageTitle = `${t('common:cycle-count-movement')}`;
+    const pageTitle = `${t('common:cycle-count-error')}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -116,6 +116,6 @@ const CycleCountMovementPage: PageComponent = () => {
     );
 };
 
-CycleCountMovementPage.layout = MainLayout;
+CycleCountErrorPage.layout = MainLayout;
 
-export default CycleCountMovementPage;
+export default CycleCountErrorPage;

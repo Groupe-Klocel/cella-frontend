@@ -19,7 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useBoxes } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 
@@ -66,7 +65,9 @@ export const ScanArticleOrFeature = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-        alternativeSubmitInput1: storedObject?.step30?.data?.handlingUnit ?? undefined,
+        alternativeSubmitInput1:
+            (storedObject?.step30?.data?.handlingUnit || storedObject?.step30?.data?.huToCreate) ??
+            undefined,
         setResetForm
     };
 

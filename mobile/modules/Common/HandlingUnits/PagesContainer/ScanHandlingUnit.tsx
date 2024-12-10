@@ -22,7 +22,6 @@ import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
-import parameters from '../../../../../common/parameters.json';
 
 export interface IScanHandlingUnitProps {
     process: string;
@@ -49,8 +48,6 @@ export const ScanHandlingUnit = ({
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [handlingUnitInfos, setHandlingUnitInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
-
-    //TO BE ADDED : button to finish reception (reset LS)
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -233,7 +230,11 @@ export const ScanHandlingUnit = ({
     useEffect(() => {
         async function fetchData() {
             const result = await getHU(scannedInfo);
-            if (result) setHandlingUnitInfos(result);
+            if (result) {
+                setHandlingUnitInfos(result);
+            } else {
+                setHandlingUnitInfos(undefined);
+            }
         }
         fetchData();
     }, [scannedInfo]);
