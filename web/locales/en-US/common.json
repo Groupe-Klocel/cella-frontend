@@ -382,5 +382,7 @@
     "scheduler-config": "Scheduler Config",
     "argument": "Argument",
     "crontab": "Cron",
-    "documents": "Documents"
+    "documents": "Documents",
+    "cycle-count-errors": "Cycle count errors",
+    "cycle-count-error": "Cycle count error"
 }

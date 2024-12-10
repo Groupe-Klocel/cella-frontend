@@ -776,6 +776,8 @@
     "createdByCycleCount": "Created by inventory",
     "reservationPattern_name": "Reservation pattern",
     "reservationPattern": "Reservation pattern",
-    "mail-subject" : "Subject",
-    "mail-body" : "Body"
+    "mail-subject": "Subject",
+    "mail-body": "Body",
+    "lastCycleCountDate": "Last cycle count date",
+    "message": "Message"
 }

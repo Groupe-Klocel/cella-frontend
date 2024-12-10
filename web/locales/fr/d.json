@@ -784,6 +784,8 @@
     "createdByCycleCount": "Créé par inventaire",
     "reservationPattern_name": "Profil de reservation",
     "reservationPattern": "Profil de reservation",
-    "mail-subject" : "Objet",
-    "mail-body" : "Corps"
+    "mail-subject": "Objet",
+    "mail-body": "Corps",
+    "lastCycleCountDate": "Date dernier inventaire",
+    "message": "Message"
 }
