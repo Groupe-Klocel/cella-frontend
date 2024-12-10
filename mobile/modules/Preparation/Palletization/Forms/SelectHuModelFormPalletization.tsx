@@ -52,10 +52,18 @@ export const SelectHuModelFormPalletization = ({
     const { locale } = router;
     // TYPED SAFE ALL
     const [huModels, setHuModels] = useState<Array<any>>();
-
     //camera scanner section
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
+
+    let huoId: any;
+    let huModelFind: any;
+    if (storedObject?.step10?.data?.handlingUnit?.handlingUnitOutbounds) {
+        huoId =
+            storedObject?.step10?.data?.handlingUnit?.handlingUnitOutbounds[0]?.handlingUnitModelId;
+
+        huModelFind = huModels?.find((element) => element.key === huoId);
+    }
 
     useEffect(() => {
         if (camData) {
@@ -76,10 +84,12 @@ export const SelectHuModelFormPalletization = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        if (defaultValue) {
-            // N.B.: in this case previous step is kept at its previous value
+        if (huoId && huModels) {
             const data: { [label: string]: any } = {};
-            data['handlingUnitModel'] = defaultValue;
+            data['handlingUnitModel'] = {
+                id: huModelFind.key,
+                name: huModelFind.text.split('-')[0]
+            };
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
         } else if (storedObject.currentStep < stepNumber) {
@@ -88,7 +98,7 @@ export const SelectHuModelFormPalletization = ({
             storedObject.currentStep = stepNumber;
         }
         storage.set(process, JSON.stringify(storedObject));
-    }, []);
+    }, [huModels]);
 
     //SelectHuModel: retrieve huModel choices for select
     const huModelList = useGetHandlingUnitModelsQuery<Partial<GetHandlingUnitModelsQuery>, Error>(
