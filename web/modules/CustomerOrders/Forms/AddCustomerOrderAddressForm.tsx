@@ -328,12 +328,16 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
     }, []);
     const [civilities, setCivilities] = useState([]);
     const civilityList = civilities.map((item: any) => ({ value: item.text }));
-    const [options, setOptions] = useState<{ value: string }[]>([]);
-    useEffect(() => {
-        setOptions(civilityList);
-    }, [civilities]);
+    const [options, setOptions] = useState<{ value: string }[]>(civilityList);
+
     const handleSearch = (value: string) => {
-        setOptions(!value ? [] : civilities.map((item: any) => ({ value: item.text })));
+        setOptions(
+            value
+                ? civilities
+                      .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
+                      .map((item: any) => ({ value: item.text }))
+                : civilityList
+        );
     };
 
     const submit = t('actions:submit');
@@ -714,6 +718,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                         <AutoComplete
                             options={options}
                             onSearch={handleSearch}
+                            onFocus={() => setOptions(civilityList)}
                             placeholder={`${t('messages:please-select-a', {
                                 name: t('d:contactCivility')
                             })}`}

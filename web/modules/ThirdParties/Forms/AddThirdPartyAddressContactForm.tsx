@@ -94,14 +94,16 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
 
     const civilityList = civilities.map((item: any) => ({ value: item.text }));
 
-    const [options, setOptions] = useState<{ value: string }[]>([]);
-
-    useEffect(() => {
-        setOptions(civilityList);
-    }, [civilities]);
+    const [options, setOptions] = useState<{ value: string }[]>(civilityList);
 
     const handleSearch = (value: string) => {
-        setOptions(!value ? [] : civilities.map((item: any) => ({ value: item.text })));
+        setOptions(
+            value
+                ? civilities
+                      .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
+                      .map((item: any) => ({ value: item.text }))
+                : civilityList
+        );
     };
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
@@ -249,6 +251,7 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
                     <AutoComplete
                         options={options}
                         onSearch={handleSearch}
+                        onFocus={() => setOptions(civilityList)}
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:contactCivility')
                         })}`}

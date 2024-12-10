@@ -18,10 +18,10 @@ import { ContentSpin } from '@components';
 import { Alert, Layout } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import {
-    GetThirdAddressContactByIdQuery,
+    GetPurchaseOrderByIdQuery,
     ModeEnum,
     Table,
-    useGetThirdAddressContactByIdQuery
+    useGetPurchaseOrderByIdQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { FC, useEffect } from 'react';
@@ -30,66 +30,37 @@ import styled from 'styled-components';
 import { HeaderContent } from '@components';
 import { getModesFromPermissions, showError } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import { thirdPartiesRoutes as itemRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
-import { EditThirdPartyAddressContactForm } from '../Forms/EditThirdPartyAddressContactForm';
+import { purchaseOrdersRoutes } from '../Static/purchaseOrdersRoutes';
+import { EditPurchaseOrderForm } from '../Forms/EditPurchaseOrderForm';
 
 const StyledPageContent = styled(Layout.Content)`
     margin: 0px 30px 50px 30px;
     padding: 0px 20px;
 `;
 
-export interface EditThirdPartyProps {
+export interface EditPurchaseOrderProps {
     id: string | any;
     router: NextRouter;
 }
 
-const EditThirdPartyAddressContact: FC<EditThirdPartyProps> = ({
-    id,
-    router
-}: EditThirdPartyProps) => {
+const EditPurchaseOrder: FC<EditPurchaseOrderProps> = ({ id, router }: EditPurchaseOrderProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
-    const { thirdPartyId, thirdPartyName } = router.query;
-
-    const { isLoading, data, error } = useGetThirdAddressContactByIdQuery<
-        GetThirdAddressContactByIdQuery,
+    const { isLoading, data, error } = useGetPurchaseOrderByIdQuery<
+        GetPurchaseOrderByIdQuery,
         Error
     >(graphqlRequestClient, {
         id: id
     });
 
-    const grandParentBreadcrumb = [
-        ...itemRoutes,
+    const breadCrumb = [
+        ...purchaseOrdersRoutes,
         {
-            breadcrumbName: `${thirdPartyName}`,
-            path: '/third-parties/' + thirdPartyId
-        }
-    ];
-    const parentBreadcrumb = [
-        ...grandParentBreadcrumb,
-        {
-            breadcrumbName: `${
-                data?.thirdPartyAddressContact?.thirdPartyAddress?.entityName !== null
-                    ? data?.thirdPartyAddressContact?.thirdPartyAddress?.entityName
-                    : data?.thirdPartyAddressContact?.thirdPartyAddressId
-            }`,
-            path: '/third-parties/address/' + data?.thirdPartyAddressContact?.thirdPartyAddressId
-        }
-    ];
-    const breadcrumb = [
-        ...parentBreadcrumb,
-        {
-            breadcrumbName: `${data?.thirdPartyAddressContact?.contactName !== null ? data?.thirdPartyAddressContact?.contactName : id}`
+            breadcrumbName: `${data?.purchaseOrder?.name}`
         }
     ];
 
-    const title = `${thirdPartyName} / ${
-        data?.thirdPartyAddressContact?.thirdPartyAddress?.entityName !== null
-            ? data?.thirdPartyAddressContact?.thirdPartyAddress?.entityName
-            : data?.thirdPartyAddressContact?.thirdPartyAddressId
-    }  / ${data?.thirdPartyAddressContact?.contactName !== null ? data?.thirdPartyAddressContact?.contactName : id}`;
-
-    const pageTitle = `${t('common:third-party-address-contact')} ${title}`;
+    const pageTitle = `${t('common:purchase-order')} ${data?.purchaseOrder?.name}`;
 
     useEffect(() => {
         if (error) {
@@ -116,14 +87,14 @@ const EditThirdPartyAddressContact: FC<EditThirdPartyProps> = ({
                     <>
                         <HeaderContent
                             title={`${pageTitle}`}
-                            routes={breadcrumb}
+                            routes={breadCrumb}
                             onBack={() => router.back()}
                         />
                         <StyledPageContent>
                             {data ? (
-                                <EditThirdPartyAddressContactForm
-                                    thirdPartyAdressContactId={id}
-                                    details={data?.thirdPartyAddressContact}
+                                <EditPurchaseOrderForm
+                                    purchaseOrderId={id}
+                                    details={data?.purchaseOrder}
                                 />
                             ) : (
                                 <ContentSpin />
@@ -138,6 +109,6 @@ const EditThirdPartyAddressContact: FC<EditThirdPartyProps> = ({
     );
 };
 
-EditThirdPartyAddressContact.displayName = 'EditThirdPartyAddressContact';
+EditPurchaseOrder.displayName = 'EditPurchaseOrder';
 
-export { EditThirdPartyAddressContact };
+export { EditPurchaseOrder };

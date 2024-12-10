@@ -3,54 +3,46 @@ CELLA Frontend
 Website and Mobile templates that can be used to communicate
 with CELLA WMS APIs.
 Copyright (C) 2023 KLOCEL <contact@klocel.com>
-
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
-
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
-
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, Space, AutoComplete, Modal } from 'antd';
+import { Button, Input, Form, Space, Modal, AutoComplete, Checkbox } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import {
-    UpdateDeliveryAddressMutation,
-    UpdateDeliveryAddressMutationVariables,
-    useUpdateDeliveryAddressMutation
+    UpdateCarrierMutation,
+    UpdateCarrierMutationVariables,
+    useUpdateCarrierMutation
 } from 'generated/graphql';
 import { gql } from 'graphql-request';
 
-export type EditDeliveryAddressFormProps = {
-    deliveryId: string;
+export type EditCarrierFormProps = {
+    carrierId: string;
     details: any;
 };
 
-export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
-    deliveryId,
+export const EditCarrierForm: FC<EditCarrierFormProps> = ({
+    carrierId,
     details
-}: EditDeliveryAddressFormProps) => {
+}: EditCarrierFormProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
-    const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [unsavedChanges, setUnsavedChanges] = useState(false);
     // TYPED SAFE ALL
     const [form] = Form.useForm();
-
-    form.setFieldsValue({
-        delivery_Name: details?.delivery?.name,
-        categoryText: details.categoryText
-    });
 
     // Get all civility
     useEffect(() => {
@@ -95,6 +87,7 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
                 : civilityList
         );
     };
+
     const onSelect = (value: string) => {
         form.setFieldsValue({ contactCivility: value });
     };
@@ -120,15 +113,15 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
         };
     }, [unsavedChanges]);
 
-    const { mutate, isPending: updateLoading } = useUpdateDeliveryAddressMutation<Error>(
+    const { mutate, isPending: updateLoading } = useUpdateCarrierMutation<Error>(
         graphqlRequestClient,
         {
             onSuccess: (
-                data: UpdateDeliveryAddressMutation,
-                _variables: UpdateDeliveryAddressMutationVariables,
+                data: UpdateCarrierMutation,
+                _variables: UpdateCarrierMutationVariables,
                 _context: any
             ) => {
-                router.push(`/deliveries/address/${deliveryId}`);
+                router.push(`/carriers/${carrierId}`);
             },
             onError: () => {
                 showError(t('messages:error-update-data'));
@@ -136,7 +129,7 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
         }
     );
 
-    const updateDeliveryAddress = ({ id, input }: UpdateDeliveryAddressMutationVariables) => {
+    const updateCarrier = ({ id, input }: UpdateCarrierMutationVariables) => {
         mutate({ id, input });
     };
 
@@ -148,11 +141,11 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
                 //end part to update priorities on foreigners
-                delete formData['delivery'];
-                delete formData['delivery_Name'];
-                delete formData['categoryText'];
-
-                updateDeliveryAddress({ id: deliveryId, input: formData });
+                delete formData['id'];
+                delete formData['carrierShippingModes'];
+                delete formData['parentCarrier'];
+                delete formData['statusText'];
+                updateCarrier({ id: carrierId, input: formData });
                 setUnsavedChanges(false);
             })
             .catch((err) => {
@@ -164,12 +157,12 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
             ...details,
             contactCivility: details.contactCivility
         };
-        delete tmp_details['id'];
         delete tmp_details['created'];
         delete tmp_details['createdBy'];
         delete tmp_details['modified'];
         delete tmp_details['modifiedBy'];
         form.setFieldsValue(tmp_details);
+
         if (updateLoading) {
             showInfo(t('messages:info-create-wip'));
             showSuccess(t('messages:success-updated'));
@@ -191,14 +184,31 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
-                <Form.Item label={t('d:deliveryName')} name="delivery_Name">
+                <Form.Item label={t('d:code')} name="code">
                     <Input disabled />
                 </Form.Item>
-                <Form.Item label={t('d:categoryText')} name="categoryText">
-                    <Input disabled />
+                <Form.Item
+                    label={t('d:name')}
+                    name="name"
+                    rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
+                >
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:parentCarrier')} name="parentCarrier">
+                    <Input />
+                </Form.Item>
+                <Form.Item name="available">
+                    <Checkbox checked={details.available} disabled>
+                        {t('d:available')}
+                    </Checkbox>
+                </Form.Item>
+                <Form.Item name="toBeLoaded">
+                    <Checkbox checked={details.toBeLoaded} disabled>
+                        {t('d:toBeLoaded')}
+                    </Checkbox>
                 </Form.Item>
                 <Form.Item label={t('d:contactName')} name="contactName">
-                    <Input />
+                    <Input maxLength={100} />
                 </Form.Item>
                 <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
                     <AutoComplete
@@ -213,38 +223,41 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
                     ></AutoComplete>
                 </Form.Item>
                 <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
-                    <Input />
+                    <Input maxLength={50} />
                 </Form.Item>
+
                 <Form.Item label={t('d:contactLastName')} name="contactLastName">
-                    <Input />
+                    <Input maxLength={50} />
                 </Form.Item>
+
                 <Form.Item label={t('d:contactPhone')} name="contactPhone">
-                    <Input />
+                    <Input maxLength={50} />
                 </Form.Item>
+
                 <Form.Item label={t('d:contactMobile')} name="contactMobile">
-                    <Input />
+                    <Input maxLength={50} />
                 </Form.Item>
                 <Form.Item
                     label={t('d:contactEmail')}
                     name="contactEmail"
                     normalize={(value) => (value ? value : undefined)}
                 >
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:contactLanguage')} name="contactLanguage">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:entityName')} name="entityName">
                     <Input maxLength={50} />
                 </Form.Item>
-                <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
+                <Form.Item label={t('d:contactLanguage')} name="contactLanguage">
+                    <Input maxLength={15} />
+                </Form.Item>
+                <Form.Item label={t('d:thirdParty_name')} name="entityName">
                     <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
+                    <Input maxLength={50} />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress2')} name="entityAddress2">
-                    <Input />
+                    <Input maxLength={50} />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress3')} name="entityAddress3">
-                    <Input />
+                    <Input maxLength={50} />
                 </Form.Item>
                 <Form.Item label={t('d:entityStreetNumber')} name="entityStreetNumber">
                     <Input />
@@ -268,23 +281,37 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
                 >
                     <Input />
                 </Form.Item>
+                <Form.Item label={t('d:entityCountryCode')} name="entityCountryCode">
+                    <Input />
+                </Form.Item>
+
+                <Form.Item label={t('d:entityVatCode')} name="entityVatCode">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityEoriCode')} name="entityEoriCode">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityAccountingCode')} name="entityAccountingCode">
+                    <Input />
+                </Form.Item>
                 <Form.Item
-                    label={t('d:entityCountryCode')}
-                    name="entityCountryCode"
-                    initialValue={'FR'}
+                    label={t('d:entityIdentificationNumber')}
+                    name="entityIdentificationNumber"
                 >
                     <Input />
                 </Form.Item>
-                <Form.Item label={t('d:reference1')} name="reference1">
-                    <Input />
+
+                <Form.Item label={t('d:entityLanguage')} name="entityLanguage">
+                    <Input maxLength={15} />
                 </Form.Item>
-                <Form.Item label={t('d:reference2')} name="reference2">
-                    <Input />
-                </Form.Item>
-                <Form.Item label={t('d:reference3')} name="reference3">
-                    <Input />
+                <Form.Item
+                    label={t('d:entityDeliveryPointNumber')}
+                    name="entityDeliveryPointNumber"
+                >
+                    <Input maxLength={15} />
                 </Form.Item>
             </Form>
+
             <div style={{ textAlign: 'center' }}>
                 <Space>
                     <Button type="primary" loading={updateLoading} onClick={onFinish}>
