@@ -162,5 +162,8 @@
     "expected-quantity_abbr": "Expected qty",
     "change-location": "Change location",
     "total-picked-quantity": "Total picked quantity",
-    "available-quantity": "Available quantity"
+    "available-quantity": "Available quantity",
+    "from": "from",
+    "to": "to",
+    "for": "for"
 }
