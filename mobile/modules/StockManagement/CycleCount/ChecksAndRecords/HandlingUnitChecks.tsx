@@ -48,7 +48,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
         setResetForm
     } = dataToCheck;
 
-    const modalRef = useRef<boolean | null>(null);
+    const [isHuCreateModalVisible, setIsHuCreateModalVisible] = useState(false);
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
 
@@ -59,8 +59,86 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
     const expectedHu: string =
         storedObject.step10?.data?.currentCycleCountLine?.handlingUnitNameStr;
     const expectedLocationId: string = storedObject.step10?.data?.currentCycleCountLine?.locationId;
-    const currentCCMovements: any[] =
-        storedObject.step10?.data?.currentCycleCountLine?.cycleCountMovements;
+
+    const getCCMs = async (
+        scannedInfo: any,
+        cycleCountLineId?: any,
+        locationId?: any,
+        createdByCycleCount?: boolean
+    ): Promise<{ [key: string]: any } | undefined> => {
+        if (scannedInfo) {
+            const query = gql`
+                query cycleCountMovements(
+                    $filters: CycleCountMovementSearchFilters
+                    $advancedFilters: [CycleCountMovementAdvancedSearchFilters!]
+                    $itemsPerPage: Int
+                ) {
+                    cycleCountMovements(
+                        filters: $filters
+                        itemsPerPage: $itemsPerPage
+                        advancedFilters: $advancedFilters
+                    ) {
+                        count
+                        itemsPerPage
+                        totalPages
+                        results {
+                            id
+                            type
+                            status
+                            statusText
+                            cycleCountId
+                            cycleCountLineId
+                            originalQuantity
+                            originalQuantityPass1
+                            quantityPass1
+                            gapPass1
+                            operatorPass1
+                            originalQuantityPass2
+                            quantityPass2
+                            gapPass2
+                            operatorPass2
+                            originalQuantityPass3
+                            quantityPass3
+                            gapPass3
+                            operatorPass3
+                            articleId
+                            articleNameStr
+                            stockOwnerId
+                            stockOwnerNameStr
+                            locationId
+                            locationNameStr
+                            handlingUnitId
+                            handlingUnitNameStr
+                            parentHandlingUnitNameStr
+                            handlingUnitContentId
+                            contentStatus
+                            handlingUnitContentFeatureId
+                            createdByCycleCount
+                            features
+                        }
+                    }
+                }
+            `;
+
+            const variables = {
+                filters: {
+                    handlingUnitNameStr: `${scannedInfo}`,
+                    cycleCountLineId,
+                    cycleCountId: currentCycleCountId,
+                    createdByCycleCount
+                },
+                advancedFilters: locationId
+                    ? {
+                          filter: { field: { locationId }, searchType: 'DIFFERENT' }
+                      }
+                    : undefined,
+                itemsPerPage: 1000
+            };
+            const ccMovementsInfos = await graphqlRequestClient.request(query, variables);
+            return ccMovementsInfos;
+        }
+    };
+
     // manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && handlingUnitInfos.data) {
@@ -77,92 +155,135 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                     setScannedInfo(undefined);
                 }
             }
-            //HU does not exist and if exists is not in the location
-            if (
-                handlingUnitInfos.data.handlingUnits?.count !== 0 &&
-                (handlingUnitInfos?.data?.handlingUnits?.results[0]?.locationId ?? null) ===
-                    expectedLocationId
-            ) {
-                const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
-                storage.set(process, JSON.stringify(storedObject));
-            } else {
-                const matchingCCM = currentCCMovements?.find((e: any) => {
-                    return e.handlingUnitNameStr === scannedInfo;
-                });
-                //HU exists in another location or in the CC's movements
-                if (handlingUnitInfos.data.handlingUnits?.count !== 0 || matchingCCM) {
-                    const foundLocation =
-                        handlingUnitInfos.data?.handlingUnits?.results[0].location.name ??
-                        matchingCCM.location;
-                    createCycleCountError(
-                        currentCycleCountId,
-                        `Step ${stepNumber} - ${t('messages:hu-exists-other-location', {
-                            locationName: foundLocation
-                        })} - ${scannedInfo}`
-                    );
-                    showError(
-                        t('messages:hu-exists-other-location', {
-                            locationName: foundLocation
-                        })
-                    );
-                    setResetForm(true);
-                    setScannedInfo(undefined);
+            const existingCCMInLocation = async () => {
+                const currentHuCcm = await getCCMs(
+                    scannedInfo,
+                    currentCycleCountLineId,
+                    undefined,
+                    true
+                );
+                return currentHuCcm;
+            };
+
+            existingCCMInLocation().then((ccmInLocation) => {
+                let foundCcmsInLocation;
+                if (ccmInLocation?.cycleCountMovements?.count != 0) {
+                    foundCcmsInLocation = ccmInLocation?.cycleCountMovements?.results;
+                }
+                //HU does not exist and if exists is not in the location (comes from previous pass)
+                if (
+                    foundCcmsInLocation?.length > 0 ||
+                    (handlingUnitInfos.data.handlingUnits?.count !== 0 &&
+                        (handlingUnitInfos?.data?.handlingUnits?.results[0]?.locationId ?? null) ===
+                            expectedLocationId)
+                ) {
+                    //handl if HU comes from stock or from previous CCM
+                    let hu: any;
+                    let isHuFromCCM = false;
+                    if (handlingUnitInfos.data?.handlingUnits?.results.length > 0) {
+                        hu = handlingUnitInfos.data?.handlingUnits?.results[0];
+                    } else if (foundCcmsInLocation?.length > 0) {
+                        hu = {
+                            name: foundCcmsInLocation[0].handlingUnitNameStr
+                        };
+                        isHuFromCCM = true;
+                    }
+
+                    const data: { [label: string]: any } = {};
+                    data['handlingUnit'] = hu;
+                    data['isHuFromCCM'] = isHuFromCCM;
+                    setTriggerRender(!triggerRender);
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
+                    storage.set(process, JSON.stringify(storedObject));
                 } else {
-                    Modal.confirm({
-                        title: (
-                            <span style={{ fontSize: '14px' }}>
-                                {t('messages:hu-creation-confirm')}
-                            </span>
-                        ),
-                        onOk: () => {
-                            //check whether the modal is already visible before opening it again and avoid useEffect re-rendering
-                            if (modalRef.current !== null) {
-                                return;
-                            }
-                            modalRef.current = true;
-                            const type =
-                                scannedInfo[0] == '0' || scannedInfo[0] == 'P'
-                                    ? parameters.HANDLING_UNIT_TYPE_PALLET
-                                    : parameters.HANDLING_UNIT_TYPE_BOX;
-
-                            const huToCreate = {
-                                name: scannedInfo
-                            };
-
-                            const data: { [label: string]: any } = {};
-                            data['isHuToCreate'] = true;
-                            data['huToCreate'] = huToCreate;
-                            setTriggerRender(!triggerRender);
-                            storedObject[`step${stepNumber}`] = {
-                                ...storedObject[`step${stepNumber}`],
-                                data
-                            };
-                            storage.set(process, JSON.stringify(storedObject));
-                        },
-                        onCancel: () => {
-                            console.log('Reset');
+                    const huOtherCCMLocation = async () => {
+                        const allCCmsExceptCurrentOne = await getCCMs(
+                            scannedInfo,
+                            undefined,
+                            expectedLocationId
+                        );
+                        return allCCmsExceptCurrentOne;
+                    };
+                    huOtherCCMLocation().then((result) => {
+                        let ccmInOtherLocation: any;
+                        if (result?.cycleCountMovements?.results.count != 0) {
+                            ccmInOtherLocation = result?.cycleCountMovements?.results[0];
+                        }
+                        //HU exists in another location or in the CC's movements
+                        if (
+                            handlingUnitInfos.data.handlingUnits?.count !== 0 ||
+                            ccmInOtherLocation
+                        ) {
+                            const foundLocation =
+                                handlingUnitInfos.data?.handlingUnits?.results[0].location.name ??
+                                ccmInOtherLocation?.location;
+                            createCycleCountError(
+                                currentCycleCountId,
+                                `Step ${stepNumber} - ${t('messages:hu-exists-other-location', {
+                                    locationName: foundLocation
+                                })} - ${scannedInfo}`
+                            );
+                            showError(
+                                t('messages:hu-exists-other-location', {
+                                    locationName: foundLocation
+                                })
+                            );
                             setResetForm(true);
                             setScannedInfo(undefined);
-                            modalRef.current = null;
-                        },
-                        okText: t('messages:confirm'),
-                        cancelText: t('messages:cancel'),
-                        bodyStyle: { fontSize: '2px' }
+                        } else {
+                            if (!isHuCreateModalVisible) {
+                                setIsHuCreateModalVisible(true);
+                                Modal.confirm({
+                                    title: (
+                                        <span style={{ fontSize: '14px' }}>
+                                            {t('messages:hu-creation-confirm')}
+                                        </span>
+                                    ),
+                                    onOk: () => {
+                                        const type =
+                                            scannedInfo[0] == '0' || scannedInfo[0] == 'P'
+                                                ? parameters.HANDLING_UNIT_TYPE_PALLET
+                                                : parameters.HANDLING_UNIT_TYPE_BOX;
+
+                                        const huToCreate = {
+                                            name: scannedInfo
+                                        };
+
+                                        const data: { [label: string]: any } = {};
+                                        data['isHuToCreate'] = true;
+                                        data['huToCreate'] = huToCreate;
+                                        setTriggerRender(!triggerRender);
+                                        storedObject[`step${stepNumber}`] = {
+                                            ...storedObject[`step${stepNumber}`],
+                                            data
+                                        };
+                                        storage.set(process, JSON.stringify(storedObject));
+                                        setIsHuCreateModalVisible(false);
+                                    },
+                                    onCancel: () => {
+                                        console.log('Reset');
+                                        setResetForm(true);
+                                        setScannedInfo(undefined);
+                                        setIsHuCreateModalVisible(false);
+                                    },
+                                    okText: t('messages:confirm'),
+                                    cancelText: t('messages:cancel'),
+                                    bodyStyle: { fontSize: '2px' }
+                                });
+                            }
+                        }
                     });
                 }
-            }
+            });
         }
     }, [handlingUnitInfos]);
 
     // Location closure function
     const [isLocationClosureLoading, setIsLocationClosureLoading] = useState(false);
-    async function closeLocation(CclInputs: any) {
+    async function closeLocation(cycleCountLineIds: any) {
         setIsLocationClosureLoading(true);
         const query = gql`
             mutation executeFunction($functionName: String!, $event: JSON!) {
@@ -176,7 +297,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
         const variables = {
             functionName: 'K_updateCycleCountLines',
             event: {
-                input: CclInputs
+                input: { cycleCountLineIds }
             }
         };
 
@@ -191,52 +312,91 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 showError(t(`errors:${cc_result.executeFunction.output.output.code}`));
                 console.log('Backend_message', cc_result.executeFunction.output.output);
             } else {
-                const query = gql`
-                    query CC($id: String!) {
-                        cycleCount(id: $id) {
-                            id
-                            name
-                            status
-                            statusText
-                            cycleCountLines {
-                                id
-                                order
-                                status
-                                statusText
-                            }
-                        }
-                    }
-                `;
+                storage.remove(process);
+                const newStoredObject = JSON.parse(storage.get(process) || '{}');
 
-                const variables = {
-                    id: currentCycleCountId
-                };
-                const updatedCycleCount = await graphqlRequestClient.request(query, variables);
-                if (updatedCycleCount.cycleCount) {
-                    let areAllCCLinesValidated = false;
-                    const ccLines = updatedCycleCount.cycleCount?.cycleCountLines;
-                    const ccStatus = updatedCycleCount.cycleCount?.status;
-                    areAllCCLinesValidated = ccLines.every(
+                const cc_output = cc_result.executeFunction.output;
+                const updatedCycleCount = cc_output.cycleCount;
+                const updatedCurrentCycleCountLines = cc_output.cycleCountLines;
+
+                let isCurrentCCLineValidated = false;
+                let nextCycleCountLine: any;
+                if (
+                    updatedCycleCount?.status === configs.CYCLE_COUNT_STATUS_PASS_1_VALIDATED ||
+                    updatedCycleCount?.status === configs.CYCLE_COUNT_STATUS_PASS_2_VALIDATED ||
+                    updatedCycleCount?.status === configs.CYCLE_COUNT_STATUS_VALIDATED
+                ) {
+                    storage.remove(process);
+                    showSuccess(t('messages:cycle-count-finished'));
+                } else {
+                    isCurrentCCLineValidated = updatedCurrentCycleCountLines.every(
                         (item: any) =>
-                            item.status >= ccStatus &&
+                            item.status >= updatedCycleCount?.status &&
                             [
                                 configs.CYCLE_COUNT_STATUS_PASS_1_VALIDATED,
                                 configs.CYCLE_COUNT_STATUS_PASS_2_VALIDATED,
                                 configs.CYCLE_COUNT_STATUS_VALIDATED
                             ].includes(item.status)
                     );
-                    if (areAllCCLinesValidated) {
-                        storage.remove(process);
-                        showSuccess(t('messages:cycle-count-finished'));
-                        setTriggerRender(!triggerRender);
+                    if (isCurrentCCLineValidated) {
+                        showSuccess(t('messages:cycle-count-line-finished'));
+                        //handle CClines to return the relevant one.
+                        const updatedCycleCountLines = updatedCycleCount?.cycleCountLines.filter(
+                            (ccl: any) => ccl.status <= updatedCycleCount.status
+                        );
+                        if (updatedCycleCountLines[0].status != updatedCycleCount.status) {
+                            // Begin Update CCL status
+                            const updateCycleCountLineMutation = gql`
+                                mutation updateCycleCountLine(
+                                    $id: String!
+                                    $input: UpdateCycleCountLineInput!
+                                ) {
+                                    updateCycleCountLine(id: $id, input: $input) {
+                                        id
+                                        status
+                                        statusText
+                                        order
+                                        articleId
+                                        articleNameStr
+                                        stockOwnerId
+                                        stockOwnerNameStr
+                                        locationId
+                                        locationNameStr
+                                        handlingUnitId
+                                        handlingUnitNameStr
+                                        parentHandlingUnitNameStr
+                                        handlingUnitContentId
+                                        cycleCountId
+                                    }
+                                }
+                            `;
+                            const updateCycleCountLineVariables = {
+                                id: updatedCycleCountLines[0].id,
+                                input: {
+                                    status: updatedCycleCount.status
+                                }
+                            };
+                            const updateCycleCountLineResponse = await graphqlRequestClient.request(
+                                updateCycleCountLineMutation,
+                                updateCycleCountLineVariables
+                            );
+                            nextCycleCountLine = updateCycleCountLineResponse.updateCycleCountLine;
+                        } else {
+                            nextCycleCountLine = updatedCycleCountLines[0];
+                        }
+                    } else {
+                        nextCycleCountLine = updatedCurrentCycleCountLines;
+                    }
+                    if (nextCycleCountLine) {
+                        newStoredObject['currentStep'] = 20;
+                        const step10Data: { [label: string]: any } = {};
+                        step10Data['cycleCount'] = updatedCycleCount;
+                        step10Data['currentCycleCountLine'] = nextCycleCountLine;
+                        newStoredObject[`step10`] = { previousStep: 0, data: step10Data };
+
+                        storage.set(process, JSON.stringify(newStoredObject));
                     }
                 }
-                const storedObject = JSON.parse(storage.get(process) || '{}');
-                storage.remove(process);
-                const newStoredObject = JSON.parse(storage.get(process) || '{}');
-                newStoredObject['currentStep'] = 10;
-                newStoredObject[`step10`] = storedObject[`step10`];
-                storage.set(process, JSON.stringify(newStoredObject));
                 setTriggerRender(!triggerRender);
             }
             setIsLocationClosureLoading(false);

@@ -90,7 +90,7 @@ export const SelectCycleCountForm = ({
     //SelectCycleCount-2: retrieve purchase orders choices for select
     const configsToFilterOn = extractGivenConfigsParams(configs, 'cycle_count_status', {
         min: 0,
-        max: configs.CYCLE_COUNT_STATUS_PASS_3_IN_PROGRESS
+        max: configs.CYCLE_COUNT_STATUS_VALIDATED
     });
     const cycleCountsList = useSimpleGetCycleCountsQuery<Partial<SimpleGetCycleCountsQuery>, Error>(
         graphqlRequestClient,
@@ -100,7 +100,7 @@ export const SelectCycleCountForm = ({
             },
             orderBy: null,
             page: 1,
-            itemsPerPage: 100,
+            itemsPerPage: 200,
             language: router.locale
         }
     );
@@ -133,6 +133,24 @@ export const SelectCycleCountForm = ({
                     name
                     status
                     statusText
+                    type
+                    cycleCountLines(orderBy: { fieldName: "order", ascending: true }) {
+                        id
+                        status
+                        statusText
+                        order
+                        articleId
+                        articleNameStr
+                        stockOwnerId
+                        stockOwnerNameStr
+                        locationId
+                        locationNameStr
+                        handlingUnitId
+                        handlingUnitNameStr
+                        parentHandlingUnitNameStr
+                        handlingUnitContentId
+                        cycleCountId
+                    }
                 }
             }
         `;
@@ -192,16 +210,70 @@ export const SelectCycleCountForm = ({
                         break;
                 }
 
-                // Begin Update CC status
-                const updateCycleCountMutation = gql`
-                    mutation updateCycleCount($id: String!, $input: UpdateCycleCountInput!) {
-                        updateCycleCount(id: $id, input: $input) {
-                            id
-                            name
-                            status
-                            statusText
-                            type
-                            cycleCountLines(orderBy: { fieldName: "order", ascending: true }) {
+                let processedCycleCount: any;
+
+                if (selectedCycleCount.cycleCount.status != newCCStatus) {
+                    // Begin Update CC status
+                    const updateCycleCountMutation = gql`
+                        mutation updateCycleCount($id: String!, $input: UpdateCycleCountInput!) {
+                            updateCycleCount(id: $id, input: $input) {
+                                id
+                                name
+                                status
+                                statusText
+                                type
+                                cycleCountLines(orderBy: { fieldName: "order", ascending: true }) {
+                                    id
+                                    status
+                                    statusText
+                                    order
+                                    articleId
+                                    articleNameStr
+                                    stockOwnerId
+                                    stockOwnerNameStr
+                                    locationId
+                                    locationNameStr
+                                    handlingUnitId
+                                    handlingUnitNameStr
+                                    parentHandlingUnitNameStr
+                                    handlingUnitContentId
+                                    cycleCountId
+                                }
+                            }
+                        }
+                    `;
+                    const updateCycleCountVariables = {
+                        id: selectedCycleCount?.cycleCount.id,
+                        input: {
+                            status: newCCStatus,
+                            lastTransactionId
+                        }
+                    };
+                    const updateCycleCountResponse = await graphqlRequestClient.request(
+                        updateCycleCountMutation,
+                        updateCycleCountVariables
+                    );
+                    // End Update CC status
+                    processedCycleCount = updateCycleCountResponse.updateCycleCount;
+                } else {
+                    processedCycleCount = selectedCycleCount.cycleCount;
+                }
+
+                // Keep only CCL with status <= newCCStatus
+                processedCycleCount.cycleCountLines = processedCycleCount.cycleCountLines.filter(
+                    (ccl: any) => ccl.status <= newCCStatus
+                );
+
+                let processedCycleCountLine: any;
+
+                if (processedCycleCount.cycleCountLines[0].status != newCCStatus) {
+                    // Begin Update CCL status
+                    const updateCycleCountLineMutation = gql`
+                        mutation updateCycleCountLine(
+                            $id: String!
+                            $input: UpdateCycleCountLineInput!
+                        ) {
+                            updateCycleCountLine(id: $id, input: $input) {
                                 id
                                 status
                                 statusText
@@ -217,250 +289,29 @@ export const SelectCycleCountForm = ({
                                 parentHandlingUnitNameStr
                                 handlingUnitContentId
                                 cycleCountId
-                                cycleCountMovements {
-                                    id
-                                    status
-                                    statusText
-                                    cycleCountId
-                                    cycleCountLineId
-                                    originalQuantityPass1
-                                    quantityPass1
-                                    gapPass1
-                                    operatorPass1
-                                    originalQuantityPass2
-                                    quantityPass2
-                                    gapPass2
-                                    operatorPass2
-                                    originalQuantityPass3
-                                    quantityPass3
-                                    gapPass3
-                                    operatorPass3
-                                    articleId
-                                    articleNameStr
-                                    stockOwnerId
-                                    stockOwnerNameStr
-                                    locationId
-                                    locationNameStr
-                                    handlingUnitId
-                                    handlingUnitNameStr
-                                    parentHandlingUnitNameStr
-                                    handlingUnitContentId
-                                    contentStatus
-                                    handlingUnitContentFeatureId
-                                    features
-                                }
-                            }
-                        }
-                    }
-                `;
-                const updateCycleCountVariables = {
-                    id: selectedCycleCount?.cycleCount.id,
-                    input: {
-                        status: newCCStatus,
-                        lastTransactionId
-                    }
-                };
-                const updateCycleCountResponse = await graphqlRequestClient.request(
-                    updateCycleCountMutation,
-                    updateCycleCountVariables
-                );
-                // End Update CC status
-
-                // Keep only CCL with status <= newCCStatus
-                updateCycleCountResponse.updateCycleCount.cycleCountLines =
-                    updateCycleCountResponse.updateCycleCount.cycleCountLines.filter(
-                        (ccl: any) => ccl.status <= newCCStatus
-                    );
-
-                // Begin Update CCL status
-                const updateCycleCountLineMutation = gql`
-                    mutation updateCycleCountLine(
-                        $id: String!
-                        $input: UpdateCycleCountLineInput!
-                    ) {
-                        updateCycleCountLine(id: $id, input: $input) {
-                            id
-                            status
-                            statusText
-                            order
-                            articleId
-                            articleNameStr
-                            stockOwnerId
-                            stockOwnerNameStr
-                            locationId
-                            locationNameStr
-                            handlingUnitId
-                            handlingUnitNameStr
-                            parentHandlingUnitNameStr
-                            handlingUnitContentId
-                            cycleCountId
-                            cycleCountMovements {
-                                id
-                                status
-                                statusText
-                                cycleCountId
-                                cycleCountLineId
-                                originalQuantityPass1
-                                quantityPass1
-                                gapPass1
-                                operatorPass1
-                                originalQuantityPass2
-                                quantityPass2
-                                gapPass2
-                                operatorPass2
-                                originalQuantityPass3
-                                quantityPass3
-                                gapPass3
-                                operatorPass3
-                                articleId
-                                articleNameStr
-                                stockOwnerId
-                                stockOwnerNameStr
-                                locationId
-                                locationNameStr
-                                handlingUnitId
-                                handlingUnitNameStr
-                                parentHandlingUnitNameStr
-                                handlingUnitContentId
-                                contentStatus
-                                handlingUnitContentFeatureId
-                                features
-                            }
-                        }
-                    }
-                `;
-                const updateCycleCountLineVariables = {
-                    id: updateCycleCountResponse.updateCycleCount.cycleCountLines[0].id,
-                    input: {
-                        status: newCCStatus,
-                        lastTransactionId
-                    }
-                };
-                const updateCycleCountLineResponse = await graphqlRequestClient.request(
-                    updateCycleCountLineMutation,
-                    updateCycleCountLineVariables
-                );
-                // End Update CCL status
-
-                // Begin Create CCM
-                let cCLinewithCCMs = updateCycleCountLineResponse.updateCycleCountLine;
-                if (
-                    updateCycleCountLineResponse.updateCycleCountLine?.cycleCountMovements
-                        ?.length <= 0
-                ) {
-                    const query = gql`
-                        mutation executeFunction($functionName: String!, $event: JSON!) {
-                            executeFunction(functionName: $functionName, event: $event) {
-                                status
-                                output
                             }
                         }
                     `;
-
-                    const variables = {
-                        functionName: 'K_createCycleCountMovements',
-                        event: {
-                            input: {
-                                cycleCountLineId:
-                                    updateCycleCountLineResponse.updateCycleCountLine.id,
-                                cycleCountId: updateCycleCountResponse.updateCycleCount.id,
-                                locationId:
-                                    updateCycleCountLineResponse.updateCycleCountLine.locationId,
-                                cycleCountType: updateCycleCountResponse.updateCycleCount.type
-                            }
+                    const updateCycleCountLineVariables = {
+                        id: processedCycleCount.cycleCountLines[0].id,
+                        input: {
+                            status: newCCStatus,
+                            lastTransactionId
                         }
                     };
-
-                    try {
-                        const cc_result = await graphqlRequestClient.request(query, variables);
-                        if (cc_result.executeFunction.status === 'ERROR') {
-                            showError(cc_result.executeFunction.output);
-                        } else if (
-                            cc_result.executeFunction.status === 'OK' &&
-                            cc_result.executeFunction.output.status === 'KO'
-                        ) {
-                            showError(t(`errors:${cc_result.executeFunction.output.output.code}`));
-                            console.log('Backend_message', cc_result.executeFunction.output.output);
-                        } else {
-                            showSuccess(t('messages:success-cycle-count-movements-creation'));
-                            // Query currentCCL with its created CCM
-                            const queryCurrentCCL = gql`
-                                query CCLine($id: String!) {
-                                    cycleCountLine(id: $id) {
-                                        id
-                                        status
-                                        statusText
-                                        order
-                                        articleId
-                                        articleNameStr
-                                        stockOwnerId
-                                        stockOwnerNameStr
-                                        locationId
-                                        locationNameStr
-                                        handlingUnitId
-                                        handlingUnitNameStr
-                                        parentHandlingUnitNameStr
-                                        handlingUnitContentId
-                                        cycleCountId
-                                        cycleCountMovements {
-                                            id
-                                            status
-                                            statusText
-                                            cycleCountId
-                                            cycleCountLineId
-                                            originalQuantityPass1
-                                            quantityPass1
-                                            gapPass1
-                                            operatorPass1
-                                            originalQuantityPass2
-                                            quantityPass2
-                                            gapPass2
-                                            operatorPass2
-                                            originalQuantityPass3
-                                            quantityPass3
-                                            gapPass3
-                                            operatorPass3
-                                            articleId
-                                            articleNameStr
-                                            stockOwnerId
-                                            stockOwnerNameStr
-                                            locationId
-                                            locationNameStr
-                                            handlingUnitId
-                                            handlingUnitNameStr
-                                            parentHandlingUnitNameStr
-                                            handlingUnitContentId
-                                            contentStatus
-                                            handlingUnitContentFeatureId
-                                            features
-                                        }
-                                    }
-                                }
-                            `;
-                            const variables = {
-                                id: updateCycleCountLineResponse.updateCycleCountLine.id
-                            };
-                            const cycleCountLineWithCCMsResponse =
-                                await graphqlRequestClient.request(queryCurrentCCL, variables);
-                            if (
-                                cycleCountLineWithCCMsResponse.cycleCountLine.cycleCountMovements
-                                    .length > 0
-                            ) {
-                                cCLinewithCCMs = cycleCountLineWithCCMsResponse.cycleCountLine;
-                            }
-                            //End currentCCL query
-                        }
-                    } catch (error) {
-                        showError(t('messages:error-executing-function'));
-                        console.log('executeFunctionError', error);
-                        setCCIsLoading(false);
-                    }
+                    const updateCycleCountLineResponse = await graphqlRequestClient.request(
+                        updateCycleCountLineMutation,
+                        updateCycleCountLineVariables
+                    );
+                    // End Update CCL status
+                    processedCycleCountLine = updateCycleCountLineResponse.updateCycleCountLine;
+                } else {
+                    processedCycleCountLine = processedCycleCount.cycleCountLines[0];
                 }
-                // End Create CCM
 
                 // Store data in LS
-                data['cycleCount'] = updateCycleCountResponse.updateCycleCount;
-                data['currentCycleCountLine'] = cCLinewithCCMs;
+                data['cycleCount'] = processedCycleCount;
+                data['currentCycleCountLine'] = processedCycleCountLine;
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
                     data

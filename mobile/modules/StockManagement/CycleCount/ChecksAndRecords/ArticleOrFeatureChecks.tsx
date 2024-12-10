@@ -18,13 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured, showSuccess } from '@helpers';
+import { showError, LsIsSecured } from '@helpers';
 import { Modal } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { createCycleCountError, searchByIdInCCMs } from 'helpers/utils/crudFunctions/cycleCount';
 import useTranslation from 'next-translate/useTranslation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface IArticleOrFeatureChecksProps {
     dataToCheck: any;
@@ -53,195 +53,330 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     const currentCycleCountLineId: string = storedObject.step10?.data?.currentCycleCountLine?.id;
     const expectedArticleId: string =
         storedObject.step10?.data?.currentCycleCountLine?.articleNameId;
-    const currentCCMovements: any[] =
-        storedObject.step10?.data?.currentCycleCountLine?.cycleCountMovements;
+    const isHuToCreate: boolean = storedObject.step30?.data?.isHuToCreate;
+    const isHuFromCCM: boolean = storedObject.step30?.data?.isHuFromCCM;
+    const huToCreate: any = storedObject.step30?.data?.huToCreate?.name;
     const choosenHu = storedObject.step30?.data?.handlingUnit;
-    // retrieve features from CCM
-    const currentCcmsWithFeatures = currentCCMovements.filter(
-        (item) => item.features && Object.keys(item.features).length > 0
-    );
 
-    //call and process frontAPIResponse
+    // #region: retrieve ccms
+    const [currentCCMovements, setCurrentCCMovements] = useState<any>();
+    const [currentCcmsCreatedByCc, setCurrentCcmsCreatedByCc] = useState<any>();
+
+    const [isOverwrittingModalVisible, setIsOverwrittingModalVisible] = useState(false);
+
+    const getCCMs = async (): Promise<{ [key: string]: any } | undefined> => {
+        if (scannedInfo) {
+            const query = gql`
+                query cycleCountMovements(
+                    $filters: CycleCountMovementSearchFilters
+                    $advancedFilters: [CycleCountMovementAdvancedSearchFilters!]
+                    $itemsPerPage: Int
+                ) {
+                    cycleCountMovements(
+                        filters: $filters
+                        itemsPerPage: $itemsPerPage
+                        advancedFilters: $advancedFilters
+                    ) {
+                        count
+                        itemsPerPage
+                        totalPages
+                        results {
+                            id
+                            type
+                            status
+                            statusText
+                            cycleCountId
+                            cycleCountLineId
+                            originalQuantity
+                            originalQuantityPass1
+                            quantityPass1
+                            gapPass1
+                            operatorPass1
+                            originalQuantityPass2
+                            quantityPass2
+                            gapPass2
+                            operatorPass2
+                            originalQuantityPass3
+                            quantityPass3
+                            gapPass3
+                            operatorPass3
+                            articleId
+                            articleNameStr
+                            stockOwnerId
+                            stockOwnerNameStr
+                            locationId
+                            locationNameStr
+                            handlingUnitId
+                            handlingUnitNameStr
+                            parentHandlingUnitNameStr
+                            handlingUnitContentId
+                            contentStatus
+                            handlingUnitContentFeatureId
+                            createdByCycleCount
+                            features
+                        }
+                    }
+                }
+            `;
+
+            const variables = {
+                filters: {
+                    handlingUnitNameStr: huToCreate ? huToCreate.name : choosenHu.name,
+                    cycleCountLineId: currentCycleCountLineId,
+                    cycleCountId: currentCycleCountId
+                },
+                itemsPerPage: 1000
+            };
+            const ccMovementsInfos = await graphqlRequestClient.request(query, variables);
+            return ccMovementsInfos;
+        }
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const result = await getCCMs();
+            if (result) {
+                setCurrentCCMovements(result.cycleCountMovements.results);
+                setCurrentCcmsCreatedByCc(
+                    result.cycleCountMovements.results?.filter(
+                        (item: any) => item.createdByCycleCount
+                    )
+                );
+            }
+        }
+        fetchData();
+    }, [scannedInfo]);
+    //#endregion
+
+    //#region: search article barcode or identifiable feature
     const [fetchResult, setFetchResult] = useState<any>();
+    const [contents, setContents] = useState<any>();
+    const [newHUCFeatures, setNewHUCFeatures] = useState<any>();
+
+    async function scanArticleOrFeatures(scannedItem: any) {
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'K_RF_scanArticleOrFeature',
+            event: {
+                input: { scannedItem }
+            }
+        };
+
+        try {
+            const cc_result = await graphqlRequestClient.request(query, variables);
+            return cc_result;
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+        }
+    }
+
     useEffect(() => {
         if (scannedInfo) {
             setIsLoading(true);
             const fetchData = async () => {
-                const res = await fetch(`/api/stock-management/scanArticleOrFeature`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        scannedInfo
-                    })
-                });
-                const response = await res.json();
-                setFetchResult(response.response);
-                if (!res.ok) {
-                    if (response.error.is_error) {
-                        // TODO: Modal to confirm article creation ???
-                        if (
-                            response.error.code === 'FAPI_000001' &&
-                            !searchByIdInCCMs(currentCcmsWithFeatures, scannedInfo)
-                        ) {
-                            Modal.confirm({
-                                title: (
-                                    <span style={{ fontSize: '14px' }}>
-                                        {t('messages:article-creation-confirm')}
-                                    </span>
-                                ),
-                                onOk: () => {
-                                    console.log('CreateFeature:');
-                                    const data: { [label: string]: any } = {};
-                                    data['resType'] = 'serialNumber';
-                                    data['feature'] = { value: scannedInfo };
-                                    data['defaultQuantity'] = 1;
-                                    setTriggerRender(!triggerRender);
-                                    storedObject[`step${stepNumber}`] = {
-                                        ...storedObject[`step${stepNumber}`],
-                                        data
-                                    };
-                                    storage.set(process, JSON.stringify(storedObject));
-                                },
-                                onCancel: () => {
-                                    console.log('Reset');
-                                    setResetForm(true);
-                                    setIsLoading(false);
-                                    setScannedInfo(undefined);
-                                },
-                                okText: t('messages:confirm'),
-                                cancelText: t('messages:cancel'),
-                                bodyStyle: { fontSize: '2px' }
-                            });
-                        } else {
-                            showError(t(`errors:${response.error.code}`));
-                        }
+                const response = await scanArticleOrFeatures(scannedInfo);
+                setFetchResult(response.executeFunction.output.response);
+                if (response.executeFunction.status === 'ERROR') {
+                    showError(response.executeFunction.output);
+                } else if (
+                    response.executeFunction.status === 'OK' &&
+                    response.executeFunction.output.status === 'KO'
+                ) {
+                    if (response.executeFunction.output.output.code === 'FAPI_000001') {
+                        createCycleCountError(
+                            currentCycleCountId,
+                            `Step ${stepNumber} - ${t('messages:no-article')} - ${scannedInfo}`
+                        );
+                        showError(t('messages:no-article'));
                     } else {
-                        // generic error
-                        showError(t('messages:check-failed'));
+                        showError(t(`errors:${response.executeFunction.output.output.code}`));
+                        console.log('Backend_message', response.executeFunction.output.output);
                     }
                     // setTriggerOnBack(true);
                     setResetForm(true);
                     setIsLoading(false);
                     setScannedInfo(undefined);
+                } else {
+                    const articleResponse = response.executeFunction.output.response;
+                    const fetchContents = async () => {
+                        const query = gql`
+                            query huCs($filters: HandlingUnitContentSearchFilters) {
+                                handlingUnitContents(filters: $filters) {
+                                    results {
+                                        id
+                                        stockOwnerId
+                                        stockOwner {
+                                            id
+                                            name
+                                        }
+                                        article {
+                                            description
+                                            name
+                                            featureTypeText
+                                            baseUnitWeight
+                                        }
+                                        quantity
+                                        stockStatus
+                                        stockStatusText
+                                        handlingUnitId
+                                        handlingUnit {
+                                            name
+                                            code
+                                            type
+                                            typeText
+                                            category
+                                            categoryText
+                                            locationId
+                                            location {
+                                                name
+                                                replenish
+                                                category
+                                                categoryText
+                                            }
+                                            parentHandlingUnit {
+                                                name
+                                            }
+                                            stockOwner {
+                                                name
+                                            }
+                                        }
+                                        articleLuBarcodeId
+                                        articleLuBarcode {
+                                            barcodeId
+                                            barcode {
+                                                name
+                                            }
+                                        }
+                                        handlingUnitContentFeatures {
+                                            id
+                                            featureCode {
+                                                id
+                                                name
+                                                identifiable
+                                                unique
+                                                dateType
+                                            }
+                                            value
+                                        }
+                                    }
+                                }
+                            }
+                        `;
+
+                        const variables = {
+                            filters: {
+                                handlingUnitId: !huToCreate ? choosenHu.id : undefined,
+                                articleId:
+                                    articleResponse.resType === 'serialNumber'
+                                        ? articleResponse.article.articleId
+                                        : articleResponse.articleLuBarcodes[0].article.id
+                            }
+                        };
+
+                        const contentsResults = await graphqlRequestClient.request(
+                            query,
+                            variables
+                        );
+                        setContents(contentsResults.handlingUnitContents.results);
+                    };
+                    fetchContents();
+                    // this to retrieve features when creating new couple HU/HUC
+                    if (isHuToCreate) {
+                        const fetchFeatures = async () => {
+                            const query = gql`
+                                query featureCodes($filters: FeatureCodeSearchFilters) {
+                                    featureCodes(filters: $filters) {
+                                        results {
+                                            id
+                                            name
+                                            identifiable
+                                            unique
+                                            dateType
+                                        }
+                                    }
+                                }
+                            `;
+
+                            const variables = {
+                                filters: {
+                                    featureTypeDetail_FeatureType:
+                                        articleResponse.articleLuBarcodes[0].article.featureType
+                                }
+                            };
+
+                            const featureCodes = await graphqlRequestClient.request(
+                                query,
+                                variables
+                            );
+                            const formattedFeatures: any[] = [];
+                            featureCodes.featureCodes.results.forEach((item: any) => {
+                                formattedFeatures.push({ featureCode: item, value: undefined });
+                            });
+                            setNewHUCFeatures(formattedFeatures);
+                        };
+                        fetchFeatures();
+                    }
                 }
             };
             fetchData();
         }
     }, [scannedInfo]);
 
-    const [contents, setContents] = useState<any>();
-    useEffect(() => {
-        if (scannedInfo && fetchResult) {
-            // fetch contents
-            const fetchContents = async () => {
-                const query = gql`
-                    query huCs($filters: HandlingUnitContentSearchFilters) {
-                        handlingUnitContents(filters: $filters) {
-                            results {
-                                id
-                                stockOwnerId
-                                stockOwner {
-                                    id
-                                    name
-                                }
-                                article {
-                                    description
-                                    name
-                                    featureTypeText
-                                    baseUnitWeight
-                                }
-                                quantity
-                                stockStatus
-                                stockStatusText
-                                handlingUnitId
-                                handlingUnit {
-                                    name
-                                    code
-                                    type
-                                    typeText
-                                    category
-                                    categoryText
-                                    locationId
-                                    location {
-                                        name
-                                        replenish
-                                        category
-                                        categoryText
-                                    }
-                                    parentHandlingUnit {
-                                        name
-                                    }
-                                    stockOwner {
-                                        name
-                                    }
-                                }
-                                articleLuBarcodeId
-                                articleLuBarcode {
-                                    barcodeId
-                                    barcode {
-                                        name
-                                    }
-                                }
-                                handlingUnitContentFeatures {
-                                    featureCode {
-                                        id
-                                        name
-                                    }
-                                    value
-                                }
-                            }
-                        }
-                    }
-                `;
-
-                const variables = {
-                    filters: {
-                        handlingUnitId: choosenHu.id,
-                        articleId:
-                            fetchResult.resType === 'serialNumber'
-                                ? fetchResult?.article?.articleId
-                                : fetchResult.articleLuBarcodes[0].article.id
-                    }
-                };
-
-                const contents = await graphqlRequestClient.request(query, variables);
-
-                setContents(contents.handlingUnitContents.results);
-            };
-            fetchContents();
-        }
-    }, [fetchResult]);
-
     // perform checks and manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && fetchResult && contents) {
+            //set ExpectedFeatures depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
+            const expectedFeatures = isHuToCreate
+                ? newHUCFeatures
+                : isHuFromCCM
+                  ? currentCCMovements[0].features
+                  : contents
+                    ? contents[0].handlingUnitContentFeatures.filter(
+                          (feature: any) => !feature.featureCode.identifiable
+                      )
+                    : undefined;
+            //set content depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
+            const content = isHuToCreate || isHuFromCCM ? undefined : contents?.[0];
+            // define what will be sent to storage
             let workingObject: { [label: string]: any } = {};
             fetchResult.resType === 'serialNumber'
                 ? (workingObject = {
                       resType: fetchResult.resType,
                       article: { ...fetchResult.article, id: fetchResult.article.articleId },
                       feature: fetchResult.handlingUnitContentFeature,
-                      handlingUnitContent:
-                          fetchResult.handlingUnitContentFeature.handlingUnitContent,
+                      handlingUnitContent: content,
+                      expectedFeatures,
                       defaultQuantity: 1
                   })
                 : (workingObject = {
                       resType: fetchResult.resType,
                       article: fetchResult.articleLuBarcodes[0].article,
-                      handlingUnitContent: contents ? contents[0] : undefined
+                      handlingUnitContent: content,
+                      expectedFeatures
                   });
 
-            // retrieve cycleCount movement if any
             const currentCCMovement =
                 workingObject.resType == 'serialNumber'
-                    ? searchByIdInCCMs(currentCcmsWithFeatures, scannedInfo)
+                    ? searchByIdInCCMs(currentCcmsCreatedByCc, scannedInfo)
                     : currentCCMovements.find(
                           (item: any) =>
                               item.articleId === workingObject.article.id &&
-                              item.handlingUnitId === choosenHu.id
+                              item.handlingUnitNameStr === choosenHu?.name // name because if from CCM, there is no id
                       );
+            //Used as reference to check if item scanned passX+n is the same as previous passes
+            const ccmFromPreviousPass = currentCCMovements.find(
+                (item: any) =>
+                    item.createdByCycleCount && item.handlingUnitNameStr === choosenHu?.name
+            );
 
             if (expectedArticleId) {
                 if (expectedArticleId !== workingObject.article.id) {
@@ -257,6 +392,19 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     setIsLoading(false);
                     setContents(undefined);
                 }
+            } else if (
+                ccmFromPreviousPass &&
+                ccmFromPreviousPass.articleId !== workingObject.article.id
+            ) {
+                createCycleCountError(
+                    currentCycleCountId,
+                    `Step ${stepNumber} - ${t('messages:unexpected-scanned-item')} - ${scannedInfo}`
+                );
+                showError(t('messages:unexpected-scanned-item'));
+                setResetForm(true);
+                setScannedInfo(undefined);
+                setIsLoading(false);
+                setContents(undefined);
             } else if (
                 contents?.length === 0 ||
                 (fetchResult.resType === 'serialNumber' &&
@@ -288,37 +436,42 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                         (currentCCMovement.status === 190 && currentCCMovement.quantityPass2) ||
                         (currentCCMovement.status === 290 && currentCCMovement.quantityPass3)
                     ) {
-                        Modal.confirm({
-                            title: (
-                                <span style={{ fontSize: '14px' }}>
-                                    {t('messages:quantity-overwritting-confirm')}
-                                </span>
-                            ),
-                            onOk: () => {
-                                console.log('ConfirmQuantityOverwritting');
-                                const data = { ...workingObject, currentCCMovement };
-                                setTriggerRender(!triggerRender);
-                                storedObject[`step${stepNumber}`] = {
-                                    ...storedObject[`step${stepNumber}`],
-                                    data
-                                };
-                                if (
-                                    storedObject[`step${stepNumber}`] &&
-                                    Object.keys(storedObject[`step${stepNumber}`]).length != 0
-                                ) {
-                                    storage.set(process, JSON.stringify(storedObject));
-                                }
-                            },
-                            onCancel: () => {
-                                console.log('CancelQuantityOverwritting');
-                                setResetForm(true);
-                                setIsLoading(false);
-                                setScannedInfo(undefined);
-                            },
-                            okText: t('messages:confirm'),
-                            cancelText: t('messages:cancel'),
-                            bodyStyle: { fontSize: '2px' }
-                        });
+                        if (!isOverwrittingModalVisible) {
+                            setIsOverwrittingModalVisible(true);
+                            Modal.confirm({
+                                title: (
+                                    <span style={{ fontSize: '14px' }}>
+                                        {t('messages:quantity-overwritting-confirm')}
+                                    </span>
+                                ),
+                                onOk: () => {
+                                    console.log('ConfirmQuantityOverwritting');
+                                    const data = { ...workingObject, currentCCMovement };
+                                    setTriggerRender(!triggerRender);
+                                    storedObject[`step${stepNumber}`] = {
+                                        ...storedObject[`step${stepNumber}`],
+                                        data
+                                    };
+                                    if (
+                                        storedObject[`step${stepNumber}`] &&
+                                        Object.keys(storedObject[`step${stepNumber}`]).length != 0
+                                    ) {
+                                        storage.set(process, JSON.stringify(storedObject));
+                                    }
+                                    setIsOverwrittingModalVisible(false);
+                                },
+                                onCancel: () => {
+                                    console.log('CancelQuantityOverwritting');
+                                    setResetForm(true);
+                                    setIsLoading(false);
+                                    setScannedInfo(undefined);
+                                    setIsOverwrittingModalVisible(false);
+                                },
+                                okText: t('messages:confirm'),
+                                cancelText: t('messages:cancel'),
+                                bodyStyle: { fontSize: '2px' }
+                            });
+                        }
                     } else {
                         const data = { ...workingObject, currentCCMovement };
                         setTriggerRender(!triggerRender);
@@ -419,6 +572,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     }
                     storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
                     storage.set(process, JSON.stringify(storedObject));
+                    triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
                     setTriggerRender(!triggerRender);
                 }
             }

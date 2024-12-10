@@ -71,22 +71,6 @@ export const SelectStockOwnerForm = ({
         setCamData(undefined);
     };
     // end camera scanner section
-    //Pre-requisite: initialize current step
-    useEffect(() => {
-        //automatically set returnDate when defaultValue is provided
-        if (defaultValue) {
-            // N.B.: in this case previous step is kept at its previous value
-            const data: { [label: string]: any } = {};
-            data['stockOwner'] = defaultValue;
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            setTriggerRender(!triggerRender);
-        } else if (storedObject.currentStep < stepNumber) {
-            //check workflow direction and assign current step accordingly
-            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-            storedObject.currentStep = stepNumber;
-        }
-        storage.set(process, JSON.stringify(storedObject));
-    }, []);
 
     //SelectStockOwner-1: retrieve stockOwners
     const stockOwnersList = useGetAllStockOwnersQuery<Partial<GetAllStockOwnersQuery>, Error>(
@@ -110,6 +94,29 @@ export const SelectStockOwnerForm = ({
                 setStockOwners(newStockOwnerTexts);
             }
         }
+    }, [stockOwnersList.data]);
+
+    //Pre-requisite: initialize current step
+    useEffect(() => {
+        //automatically set returnDate when defaultValue is provided
+        if (defaultValue) {
+            // N.B.: in this case previous step is kept at its previous value
+            const data: { [label: string]: any } = {};
+            data['stockOwner'] = defaultValue;
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            setTriggerRender(!triggerRender);
+        } else if (stockOwnersList?.data?.stockOwners?.results.length === 1) {
+            const data: { [label: string]: any } = {};
+            data['stockOwner'] = stockOwnersList?.data?.stockOwners?.results[0];
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            storage.set(process, JSON.stringify(storedObject));
+            setTriggerRender(!triggerRender);
+        } else if (storedObject.currentStep < stepNumber) {
+            //check workflow direction and assign current step accordingly
+            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
+            storedObject.currentStep = stepNumber;
+        }
+        storage.set(process, JSON.stringify(storedObject));
     }, [stockOwnersList.data]);
 
     //SelectStockOwner-2a: retrieve chosen stockOwner from select and set information
