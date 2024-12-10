@@ -171,13 +171,16 @@ export const EditCustomerOrderAddressForm: FC<EditCustomerOrderAddressFormProps>
         tmp_civilities.push({ value: details.contactCivility });
     }
 
-    const [options, setOptions] = useState<{ value: string }[]>(tmp_civilities);
-    useEffect(() => {
-        setOptions(civilityList);
-    }, [civilities]);
+    const [options, setOptions] = useState<{ value: string }[]>(civilityList);
 
     const handleSearch = (value: string) => {
-        setOptions(!value ? [] : civilities.map((item: any) => ({ value: item.text })));
+        setOptions(
+            value
+                ? civilities
+                      .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
+                      .map((item: any) => ({ value: item.text }))
+                : civilityList
+        );
     };
 
     const onSelect = (value: string) => {
@@ -503,6 +506,7 @@ export const EditCustomerOrderAddressForm: FC<EditCustomerOrderAddressFormProps>
                             options={options}
                             onSelect={onSelect}
                             onSearch={handleSearch}
+                            onFocus={() => setOptions(civilityList)}
                             placeholder={`${t('messages:please-select-a', {
                                 name: t('d:contactCivility')
                             })}`}
@@ -524,7 +528,11 @@ export const EditCustomerOrderAddressForm: FC<EditCustomerOrderAddressFormProps>
                     <Form.Item label={t('d:contactMobile')} name="contactMobile">
                         <Input />
                     </Form.Item>
-                    <Form.Item label={t('d:contactEmail')} name="contactEmail">
+                    <Form.Item
+                        label={t('d:contactEmail')}
+                        name="contactEmail"
+                        normalize={(value) => (value ? value : undefined)}
+                    >
                         <Input />
                     </Form.Item>
                     <Form.Item label={t('d:contactLanguage')} name="contactLanguage">

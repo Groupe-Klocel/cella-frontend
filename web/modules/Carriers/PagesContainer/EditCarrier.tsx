@@ -17,12 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ContentSpin } from '@components';
 import { Alert, Layout } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
-import {
-    GetThirdAddressContactByIdQuery,
-    ModeEnum,
-    Table,
-    useGetThirdAddressContactByIdQuery
-} from 'generated/graphql';
+import { GetCarrierByIdQuery, ModeEnum, Table, useGetCarrierByIdQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { FC, useEffect } from 'react';
 import { NextRouter } from 'next/router';
@@ -30,66 +25,37 @@ import styled from 'styled-components';
 import { HeaderContent } from '@components';
 import { getModesFromPermissions, showError } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import { thirdPartiesRoutes as itemRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
-import { EditThirdPartyAddressContactForm } from '../Forms/EditThirdPartyAddressContactForm';
+import { carriersRoutes } from '../Static/carriersRoutes';
+import { EditCarrierForm } from '../Forms/EditCarrierForm';
 
 const StyledPageContent = styled(Layout.Content)`
     margin: 0px 30px 50px 30px;
     padding: 0px 20px;
 `;
 
-export interface EditThirdPartyProps {
+export interface EditCarrierProps {
     id: string | any;
     router: NextRouter;
 }
 
-const EditThirdPartyAddressContact: FC<EditThirdPartyProps> = ({
-    id,
-    router
-}: EditThirdPartyProps) => {
+const EditCarrier: FC<EditCarrierProps> = ({ id, router }: EditCarrierProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
-    const { thirdPartyId, thirdPartyName } = router.query;
-
-    const { isLoading, data, error } = useGetThirdAddressContactByIdQuery<
-        GetThirdAddressContactByIdQuery,
-        Error
-    >(graphqlRequestClient, {
-        id: id
-    });
-
-    const grandParentBreadcrumb = [
-        ...itemRoutes,
+    const { isPending, data, error } = useGetCarrierByIdQuery<GetCarrierByIdQuery, Error>(
+        graphqlRequestClient,
         {
-            breadcrumbName: `${thirdPartyName}`,
-            path: '/third-parties/' + thirdPartyId
+            id: id
         }
-    ];
-    const parentBreadcrumb = [
-        ...grandParentBreadcrumb,
+    );
+
+    const breadCrumb = [
+        ...carriersRoutes,
         {
-            breadcrumbName: `${
-                data?.thirdPartyAddressContact?.thirdPartyAddress?.entityName !== null
-                    ? data?.thirdPartyAddressContact?.thirdPartyAddress?.entityName
-                    : data?.thirdPartyAddressContact?.thirdPartyAddressId
-            }`,
-            path: '/third-parties/address/' + data?.thirdPartyAddressContact?.thirdPartyAddressId
-        }
-    ];
-    const breadcrumb = [
-        ...parentBreadcrumb,
-        {
-            breadcrumbName: `${data?.thirdPartyAddressContact?.contactName !== null ? data?.thirdPartyAddressContact?.contactName : id}`
+            breadcrumbName: `${data?.carrier?.name}`
         }
     ];
 
-    const title = `${thirdPartyName} / ${
-        data?.thirdPartyAddressContact?.thirdPartyAddress?.entityName !== null
-            ? data?.thirdPartyAddressContact?.thirdPartyAddress?.entityName
-            : data?.thirdPartyAddressContact?.thirdPartyAddressId
-    }  / ${data?.thirdPartyAddressContact?.contactName !== null ? data?.thirdPartyAddressContact?.contactName : id}`;
-
-    const pageTitle = `${t('common:third-party-address-contact')} ${title}`;
+    const pageTitle = `${t('common:carrier')} ${data?.carrier?.name}`;
 
     useEffect(() => {
         if (error) {
@@ -116,15 +82,12 @@ const EditThirdPartyAddressContact: FC<EditThirdPartyProps> = ({
                     <>
                         <HeaderContent
                             title={`${pageTitle}`}
-                            routes={breadcrumb}
+                            routes={breadCrumb}
                             onBack={() => router.back()}
                         />
                         <StyledPageContent>
                             {data ? (
-                                <EditThirdPartyAddressContactForm
-                                    thirdPartyAdressContactId={id}
-                                    details={data?.thirdPartyAddressContact}
-                                />
+                                <EditCarrierForm carrierId={id} details={data?.carrier} />
                             ) : (
                                 <ContentSpin />
                             )}
@@ -138,6 +101,6 @@ const EditThirdPartyAddressContact: FC<EditThirdPartyProps> = ({
     );
 };
 
-EditThirdPartyAddressContact.displayName = 'EditThirdPartyAddressContact';
+EditCarrier.displayName = 'EditCarrier';
 
-export { EditThirdPartyAddressContact };
+export { EditCarrier };

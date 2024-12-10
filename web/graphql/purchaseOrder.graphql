@@ -90,8 +90,37 @@ query GetPurchaseOrderById($id: String!, $language: String = "en") {
         expectedGoodsInDate
         comment
         stockOwnerId
+        stockOwner {
+            name
+        }
         statusText
         typeText
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        contactLanguage
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactEmail
+        contactLanguage
     }
 }
 
@@ -143,7 +172,36 @@ mutation UpdatePurchaseOrder($id: String!, $input: UpdatePurchaseOrderInput!) {
         expectedGoodsInDate
         comment
         stockOwnerId
+        stockOwner {
+            name
+        }
         statusText
         typeText
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        contactLanguage
+        contactName
+        contactCivility
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactEmail
+        contactLanguage
     }
 }
