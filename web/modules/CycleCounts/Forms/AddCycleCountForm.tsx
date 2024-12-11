@@ -210,6 +210,14 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
 
     const [locations, setLocations] = useState<DataQueryType>();
 
+    //useStates to take the values to search at each choice
+    const [originAisleToSearch, setOriginAisleToSearch] = useState<string | undefined>(undefined);
+    const [finalAisleToSearch, setFinalAisleToSearch] = useState<string | undefined>(undefined);
+    const [originColumnToSearch, setOriginColumnToSearch] = useState<string | undefined>(undefined);
+    const [finalColumnToSearch, setFinalColumnToSearch] = useState<string | undefined>(undefined);
+    const [originLevelToSearch, setOriginLevelToSearch] = useState<string | undefined>(undefined);
+    const [finalLevelToSearch, setFinalLevelToSearch] = useState<string | undefined>(undefined);
+
     //set reference Locations list
     useEffect(() => {
         if (locationsData && blockToSearch) {
@@ -237,6 +245,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                     finalLevel: lastLocation.level,
                     finalPosition: lastLocation.position
                 });
+                setOriginAisleToSearch(firstLocation.aisle);
+                setFinalAisleToSearch(lastLocation.aisle);
+                setOriginColumnToSearch(firstLocation.column);
+                setFinalColumnToSearch(lastLocation.column);
+                setOriginLevelToSearch(firstLocation.level);
+                setFinalLevelToSearch(lastLocation.level);
             }
         }
     }, [locationsData, blockToSearch]);
@@ -254,13 +268,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 console.log(`No source provided.`);
         }
     };
-    //useStates to take the values to search at each choice
-    const [originAisleToSearch, setOriginAisleToSearch] = useState<string | undefined>(undefined);
-    const [finalAisleToSearch, setFinalAisleToSearch] = useState<string | undefined>(undefined);
-    const [originColumnToSearch, setOriginColumnToSearch] = useState<string | undefined>(undefined);
-    const [finalColumnToSearch, setFinalColumnToSearch] = useState<string | undefined>(undefined);
-    const [originLevelToSearch, setOriginLevelToSearch] = useState<string | undefined>(undefined);
-    const [finalLevelToSearch, setFinalLevelToSearch] = useState<string | undefined>(undefined);
 
     //generic filter function to generate list of values provided in select options
     function filterAndMap(locations: any, setOptions: any, filters: any, returnedData: string) {
@@ -288,8 +295,8 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 return aisle!;
             });
             setAisleValueOptions(removeDuplicatesAndSort(newOpts));
-            setOriginAisleToSearch(newOpts[0]);
-            setFinalAisleToSearch(newOpts[newOpts.length - 1]);
+            // setOriginAisleToSearch(newOpts[0]);
+            // setFinalAisleToSearch(newOpts[newOpts.length - 1]);
         }
     }, [locations]);
 
@@ -313,8 +320,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 'column'
             );
         }
-        setOriginColumnToSearch(originColumnValueOptions?.[0]);
-        setFinalColumnToSearch(finalColumnValueOptions?.[finalColumnValueOptions?.length - 1]);
     }, [originAisleToSearch, finalAisleToSearch]);
 
     //List levels
@@ -340,8 +345,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 'level'
             );
         }
-        setOriginLevelToSearch(originLevelValueOptions?.[0]);
-        setFinalLevelToSearch(finalLevelValueOptions?.[finalLevelValueOptions?.length - 1]);
     }, [originAisleToSearch, finalAisleToSearch, originColumnToSearch, finalColumnToSearch]);
 
     //List positions
