@@ -154,11 +154,13 @@ export const ReviewFeatures = ({
     };
 
     //Sort only for display purposes
-    const sortedFeatures = [...expectedFeatures].sort((a, b) => {
-        if (a.featureCode.name < b.featureCode.name) return 1;
-        if (a.featureCode.name > b.featureCode.name) return -1;
-        return 0;
-    });
+    const sortedFeatures = expectedFeatures
+        ? [...expectedFeatures].sort((a, b) => {
+              if (a.featureCode.name < b.featureCode.name) return 1;
+              if (a.featureCode.name > b.featureCode.name) return -1;
+              return 0;
+          })
+        : undefined;
 
     return (
         <WrapperFeature>
