@@ -137,5 +137,6 @@
     "file-drag": "Click or drag a file to this area to upload",
     "priority-overflow": "Minimum priority raised",
     "no-huc-quantity": "This article is no longer in stock",
-    "please-enter-address-to-search": "Please enter an address to search"
+    "please-enter-address-to-search": "Please enter an address to search",
+    "cycle-count-line-finished": "Cycle count line finished"
 }
