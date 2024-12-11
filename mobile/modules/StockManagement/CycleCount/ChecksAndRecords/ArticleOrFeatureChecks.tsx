@@ -345,7 +345,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 : isHuFromCCM
                   ? currentCCMovements[0].features
                   : contents
-                    ? contents[0].handlingUnitContentFeatures.filter(
+                    ? contents?.[0]?.handlingUnitContentFeatures.filter(
                           (feature: any) => !feature.featureCode.identifiable
                       )
                     : undefined;
