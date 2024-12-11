@@ -153,6 +153,13 @@ export const ReviewFeatures = ({
         setIsEditable(checked);
     };
 
+    //Sort only for display purposes
+    const sortedFeatures = [...expectedFeatures].sort((a, b) => {
+        if (a.featureCode.name < b.featureCode.name) return 1;
+        if (a.featureCode.name > b.featureCode.name) return -1;
+        return 0;
+    });
+
     return (
         <WrapperFeature>
             <StyledTitle level={5}>{t('common:feature-codes-entry')}</StyledTitle>
@@ -173,7 +180,7 @@ export const ReviewFeatures = ({
                         </Space>
                     </div>
                 )}
-                {expectedFeatures?.map((feature: any) => {
+                {sortedFeatures?.map((feature: any) => {
                     return !feature?.featureCode.dateType ? (
                         <StyledFeaturesFormItem
                             label={feature.featureCode.name}
