@@ -218,19 +218,18 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                             ccmInOtherLocation
                         ) {
                             const foundLocation =
-                                handlingUnitInfos.data?.handlingUnits?.results[0].location.name ??
-                                ccmInOtherLocation?.location;
+                                handlingUnitInfos.data?.handlingUnits?.results?.[0]?.location
+                                    ?.name ?? ccmInOtherLocation?.locationNameStr;
+                            const message = foundLocation
+                                ? t('messages:hu-exists-other-location', {
+                                      locationName: foundLocation
+                                  })
+                                : t('messages:hu-already-used');
                             createCycleCountError(
                                 currentCycleCountId,
-                                `Step ${stepNumber} - ${t('messages:hu-exists-other-location', {
-                                    locationName: foundLocation
-                                })} - ${scannedInfo}`
+                                `Step ${stepNumber} - ${message} - ${scannedInfo}`
                             );
-                            showError(
-                                t('messages:hu-exists-other-location', {
-                                    locationName: foundLocation
-                                })
-                            );
+                            showError(message);
                             setResetForm(true);
                             setScannedInfo(undefined);
                         } else {
