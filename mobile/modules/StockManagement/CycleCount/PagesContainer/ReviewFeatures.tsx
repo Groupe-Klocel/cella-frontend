@@ -32,6 +32,7 @@ import {
     RadioButtons
 } from '@components';
 import dayjs from 'dayjs';
+import { useRouter } from 'next/router';
 
 export interface IReviewFeaturesProps {
     process: string;
@@ -60,6 +61,8 @@ export const ReviewFeatures = ({
     const [form] = Form.useForm();
     const [isEditable, setIsEditable] = useState(false);
     const isHuToCreate: boolean = storedObject.step30?.data?.isHuToCreate;
+    const router = useRouter();
+    const locale = router.locale;
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -206,7 +209,7 @@ export const ReviewFeatures = ({
                             ]}
                         >
                             <StyledFeaturesDatePicker
-                                format="YYYY-MM-DD"
+                                format={locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
                                 picker="date"
                                 disabled={!isEditable}
                             />
