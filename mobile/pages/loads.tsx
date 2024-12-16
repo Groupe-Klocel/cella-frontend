@@ -144,27 +144,37 @@ const LoadsPage: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject[`step${workflow.expectedSteps[1]}`]?.nextStep == 30 ? (
-                // ---------------- For automatic validation ---------------- //
-                <CheckFinalStepLoadForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[3]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    box={
-                        storedObject[`step${workflow.expectedSteps[1]}`].data?.handlingUnitOutbound
-                    }
-                    load={storedObject[`step${workflow.expectedSteps[0]}`].data.load}
-                    headerContent={{ setHeaderContent }}
-                ></CheckFinalStepLoadForm>
+            {storedObject[`step${workflow.expectedSteps[1]}`]?.data &&
+            !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
+                storedObject[`step${workflow.expectedSteps[1]}`]?.nextStep === 30 ? (
+                    <CheckFinalStepLoadForm
+                        process={workflow.processName}
+                        stepNumber={workflow.expectedSteps[3]}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        box={
+                            storedObject[`step${workflow.expectedSteps[1]}`].data
+                                ?.handlingUnitOutbound
+                        }
+                        load={storedObject[`step${workflow.expectedSteps[0]}`].data.load}
+                        headerContent={{ setHeaderContent }}
+                    ></CheckFinalStepLoadForm>
+                ) : (
+                    // ---------------- For manual validation ---------------- //
+                    // <ValidateLoadForm
+                    //     process={workflow.processName}
+                    //     stepNumber={workflow.expectedSteps[3]}
+                    //     buttons={{ submitButton: true, backButton: true }}
+                    //     trigger={{ triggerRender, setTriggerRender }}
+                    //     headerContent={{ setHeaderContent }}
+                    // ></ValidateLoadForm>
+                    (() => {
+                        storedObject.currentStep = workflow.expectedSteps[1];
+                        storage.set(workflow.processName, JSON.stringify(storedObject));
+                        setTriggerRender(!triggerRender);
+                        return null;
+                    })()
+                )
             ) : (
-                // ---------------- For manual validation ---------------- //
-                // <ValidateLoadForm
-                //     process={workflow.processName}
-                //     stepNumber={workflow.expectedSteps[3]}
-                //     buttons={{ submitButton: true, backButton: true }}
-                //     trigger={{ triggerRender, setTriggerRender }}
-                //     headerContent={{ setHeaderContent }}
-                // ></ValidateLoadForm>
                 <></>
             )}
         </PageContentWrapper>

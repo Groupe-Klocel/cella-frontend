@@ -84,6 +84,8 @@ export const CheckFinalStepLoadForm = ({
             if (!res.ok) {
                 if (response.error.is_error) {
                     showError(t(`errors:${response.error.code}`));
+                } else if (response.error.response.errors[0].extensions.code) {
+                    showError(t(`errors:${response.error.response.errors[0].extensions.code}`));
                 } else {
                     showError(t('messages:check-failed'));
                 }

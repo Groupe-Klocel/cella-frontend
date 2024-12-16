@@ -98,12 +98,6 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
             if (!alternativeSubmitInput1) {
                 showError(t('messages:no-pallet-to-close'));
                 triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
-            }
-
-            if (formData && Object.keys(formData).length > 0) {
-                showError(t('messages:scan-not-validated'));
-                setIsClosureLoading(false);
-                triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
             } else {
                 setIsClosureLoading(true);
                 const fetchData = async () => {
