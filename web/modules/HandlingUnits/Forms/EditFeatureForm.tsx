@@ -131,7 +131,9 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                             handlingUnitContentId: relatedHUC?.id,
                             feature: {
                                 code: props.details?.featureCode?.name,
-                                value: props.details?.value
+                                value: props.details?.value,
+                                id: props.id,
+                                extraText2: props.details?.extraText2
                             }
                         },
                         destinationData: {
@@ -148,7 +150,9 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                             handlingUnitContentId: relatedHUC?.id,
                             feature: {
                                 code: updatedFeature.featureCode.name,
-                                value: updatedFeature.value
+                                value: updatedFeature.value,
+                                id: props.id,
+                                extraText2: updatedFeature.extraText2
                             }
                         }
                     })

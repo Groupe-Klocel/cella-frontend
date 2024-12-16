@@ -137,5 +137,6 @@
     "file-drag": "Cliquer ou faire glisser un fichier dans cette zône pour télécharger",
     "priority-overflow": "Priorité minimum atteinte",
     "no-huc-quantity": "Cet article n'est plus en stock",
-    "please-enter-address-to-search": "Veuillez saisir une adresse à rechercher"
+    "please-enter-address-to-search": "Veuillez saisir une adresse à rechercher",
+    "cycle-count-line-finished": "Ligne d'inventaire terminée"
 }

@@ -571,8 +571,8 @@
     "motive": "Motif",
     "motiveText": "Motif",
     "originalAisle": "Allée origine",
-    "originalLevel": "Colonne origine",
-    "originalColumn": "Original Column",
+    "originalLevel": "Niveau origine",
+    "originalColumn": "Colonne origine",
     "originalPosition": "Position origine",
     "numberOfDays": "Nombre de jours",
     "gapPass1": "Ecart passe 1",
@@ -783,5 +783,9 @@
     "addressToSearch": "Adresse à rechercher (France Uniquement)",
     "createdByCycleCount": "Créé par inventaire",
     "reservationPattern_name": "Profil de reservation",
-    "reservationPattern": "Profil de reservation"
+    "reservationPattern": "Profil de reservation",
+    "mail-subject": "Objet",
+    "mail-body": "Corps",
+    "lastCycleCountDate": "Date dernier inventaire",
+    "message": "Message"
 }

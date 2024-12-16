@@ -152,7 +152,9 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                             handlingUnitContentId: relatedHUC?.id,
                             feature: {
                                 code: createdFeature.featureCode.name,
-                                value: createdFeature.value
+                                value: createdFeature.value,
+                                id: createdFeature.id,
+                                extraText2: createdFeature.extraText2
                             }
                         }
                     })
