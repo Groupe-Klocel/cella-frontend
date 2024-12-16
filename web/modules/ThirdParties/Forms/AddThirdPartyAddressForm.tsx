@@ -18,7 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, Select, Modal, Space, InputNumber, Checkbox } from 'antd';
+import {
+    Button,
+    Input,
+    Form,
+    Select,
+    Modal,
+    Space,
+    InputNumber,
+    Checkbox,
+    AutoComplete
+} from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -33,6 +43,8 @@ import {
 import { showError, showSuccess, showInfo } from '@helpers';
 import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
+import { gql, GraphQLClient } from 'graphql-request';
+import { debounce } from 'lodash';
 
 const { Option } = Select;
 
@@ -41,11 +53,21 @@ export interface ISingleItemProps {
     thirdPartyName: string | any;
 }
 
+interface MappedAdresses {
+    address1: string;
+    city: string;
+    postalCode: string;
+}
+
 export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+
+    const [dataLocations, setDataLocations] = useState<any>();
+    const [aIdOptions, setAIdOptions] = useState<Array<any>>([]);
+    const [addressInput, setAddressInput] = useState<string>('');
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -233,6 +255,128 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
             });
     };
 
+    //GQL REQUEST
+    async function getKloship() {
+        //GET PARAMETER
+        const queryParameter = gql`
+            query getParameter {
+                listParametersForAScope(scope: "kloship") {
+                    code
+                    value
+                }
+            }
+        `;
+
+        try {
+            const queryParameterResult = await graphqlRequestClient.request(queryParameter);
+
+            if (queryParameterResult) {
+                const ksApiEndpoint = queryParameterResult.listParametersForAScope.find(
+                    (e: any) => e.code == 'KS_API_ENDPOINT'
+                ).value;
+
+                //GET KLOSHIP
+                const clientKloship = new GraphQLClient(ksApiEndpoint, {
+                    signal: AbortSignal.timeout(600000),
+                    headers: {}
+                });
+
+                const queryKloship = gql`
+                    query checkAddressV1($auth: AuthInput!, $input: AdressInput!) {
+                        checkAddressV1(
+                            auth: $auth
+                            input: $input
+                            limit: 50
+                            mapWithoutPostalCode: true
+                        ) {
+                            valid
+                            message
+                            mappedAdresses {
+                                name
+                                address1
+                                countryCode
+                                postalCode
+                                cityCode
+                                city
+                            }
+                        }
+                    }
+                `;
+
+                const auth = {
+                    accountId: queryParameterResult.listParametersForAScope.find(
+                        (e: any) => e.code == 'KS_ACCOUNT_ID'
+                    ).value,
+                    accessKey: queryParameterResult.listParametersForAScope.find(
+                        (e: any) => e.code == 'KS_ACCESS_KEY'
+                    ).value
+                };
+
+                const input = {
+                    name: '',
+                    address1: addressInput,
+                    city: '',
+                    countryCode: 'FR' //default value
+                };
+
+                try {
+                    const queryKloshipResult: any = await clientKloship.request(queryKloship, {
+                        auth,
+                        input
+                    });
+                    if (queryKloshipResult.checkAddressV1.mappedAdresses) {
+                        console.log(queryKloshipResult.checkAddressV1.mappedAdresses);
+                        const newIdOpts: Array<any> = [];
+                        (
+                            queryKloshipResult.checkAddressV1.mappedAdresses as MappedAdresses[]
+                        ).forEach(({ address1, city, postalCode }) => {
+                            if (input.address1 === `${address1} - ${city}`) {
+                                form.setFieldsValue({
+                                    entityAddress1: address1,
+                                    entityStreetNumber: (address1.match(/^\d+/)?.[0] || '') + '',
+                                    entityPostCode: postalCode,
+                                    entityCity: city
+                                });
+                            }
+                            newIdOpts.push({
+                                value: `${address1} - ${city}`,
+                                label: `${address1} - ${city}`
+                            });
+                        });
+                        console.log(newIdOpts);
+                        setAIdOptions(newIdOpts);
+                    }
+                    return queryKloshipResult.checkAddressV1;
+                } catch (error) {
+                    console.log('qKS_error', error);
+                }
+            }
+        } catch (error) {
+            console.error;
+        }
+    }
+
+    useEffect(() => {
+        async function fetchData() {
+            const queryKloshipResult = await getKloship();
+            if (queryKloshipResult) setDataLocations(queryKloshipResult);
+        }
+        fetchData();
+    }, [addressInput]);
+
+    const onChange = (data: string) => {
+        setAddressInput(data);
+        // if we clear the select, we clear the form
+        if (data === null || data === undefined) {
+            form.setFieldsValue({
+                entityAddress1: '',
+                entityStreetNumber: '',
+                entityPostCode: '',
+                entityCity: ''
+            });
+        }
+    };
+
     const onCancel = () => {
         setUnsavedChanges(false);
         Modal.confirm({
@@ -262,7 +406,6 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                 <Form.Item label={t('d:thirdParty')} name="thirdPartyName">
                     <Input disabled />
                 </Form.Item>
-
                 <Form.Item label={t('d:category')} name="category">
                     <Select
                         allowClear
@@ -277,7 +420,6 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                         ))}
                     </Select>
                 </Form.Item>
-
                 <Form.Item
                     label={t('d:entityName')}
                     name="entityName"
@@ -290,76 +432,100 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                     <Input maxLength={30} />
                 </Form.Item>
 
-                <Form.Item label={t('d:entityStreetNumber')} name="entityStreetNumber">
-                    <Input maxLength={100} />
+                <Form.Item
+                    label={t('d:addressToSearch')}
+                    style={{
+                        backgroundColor: '#a8a8a8',
+                        border: '#d9d9d9',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        marginBottom: '16px'
+                    }}
+                >
+                    <AutoComplete
+                        style={{ width: '100%' }}
+                        options={aIdOptions}
+                        value={addressInput}
+                        onKeyUp={(e: any) => {
+                            debounce(() => {
+                                setAddressInput(e.target.value);
+                            }, 3000);
+                        }}
+                        onSelect={(value, option) => {
+                            setAddressInput(value);
+                            const AddressInfo = dataLocations.mappedAdresses.find(
+                                (e: { id: any }) => e.id === option.id
+                            );
+                        }}
+                        allowClear
+                        onChange={onChange}
+                        placeholder={`${t('messages:please-enter-address-to-search')}`}
+                    />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
                     <Input maxLength={100} />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityAddress2')} name="entityAddress2">
                     <Input maxLength={100} />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityAddress3')} name="entityAddress3">
                     <Input maxLength={100} />
                 </Form.Item>
-
+                <Form.Item label={t('d:entityStreetNumber')} name="entityStreetNumber">
+                    <Input maxLength={100} />
+                </Form.Item>
                 <Form.Item label={t('d:entityPostCode')} name="entityPostCode">
                     <Input maxLength={20} />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityCity')} name="entityCity">
                     <Input maxLength={100} />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityState')} name="entityState">
                     <Input maxLength={100} />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityDistrict')} name="entityDistrict">
                     <Input maxLength={100} />
                 </Form.Item>
-
-                <Form.Item label={t('d:entityCountry')} name="entityCountry">
+                <Form.Item
+                    label={t('d:entityCountry')}
+                    name="entityCountry"
+                    initialValue={'France'}
+                >
                     <Input maxLength={100} />
                 </Form.Item>
 
-                <Form.Item label={t('d:entityCountryCode')} name="entityCountryCode">
+                <Form.Item
+                    label={t('d:entityCountryCode')}
+                    name="entityCountryCode"
+                    initialValue={'FR'}
+                >
                     <Input maxLength={3} />
                 </Form.Item>
 
                 <Form.Item label={t('d:entityVatCode')} name="entityVatCode">
                     <Input maxLength={20} />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityEoriCode')} name="entityEoriCode">
                     <Input maxLength={20} />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityAccountingCode')} name="entityAccountingCode">
                     <Input maxLength={20} />
                 </Form.Item>
-
                 <Form.Item
                     label={t('d:entityIdentificationNumber')}
                     name="entityIdentificationNumber"
                 >
                     <Input maxLength={30} />
                 </Form.Item>
-
                 <Form.Item label={t('d:entityLanguage')} name="entityLanguage">
                     <Input maxLength={15} />
                 </Form.Item>
-
                 <Form.Item
                     label={t('d:entityDeliveryPointNumber')}
                     name="entityDeliveryPointNumber"
                 >
                     <Input maxLength={20} />
                 </Form.Item>
-
                 <Form.Item label={t('d:defaultCurrency')} name="defaultCurrency">
                     <Select
                         allowClear
@@ -374,11 +540,9 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                         ))}
                     </Select>
                 </Form.Item>
-
                 <Form.Item label={t('d:defaultDiscount')} name="defaultDiscount">
                     <InputNumber min={0} max={100} />
                 </Form.Item>
-
                 <Form.Item label={t('d:defaultPaymentTerms')} name="defaultPaymentTerms">
                     <Select
                         allowClear
@@ -393,7 +557,6 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                         ))}
                     </Select>
                 </Form.Item>
-
                 <Form.Item label={t('d:defaultPaymentMethod')} name="defaultPaymentMethod">
                     <Select
                         allowClear

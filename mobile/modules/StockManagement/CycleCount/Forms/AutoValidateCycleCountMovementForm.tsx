@@ -21,33 +21,34 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: retrieve information from local storage and validate them for database updates
 
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
-import { showError, showSuccess, LsIsSecured } from '@helpers';
+import { showError, LsIsSecured } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
-import configs from '../../../../../common/configs.json';
-import { useListParametersForAScopeQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
+import autoprefixer from 'autoprefixer';
+import { createCycleCountError } from 'helpers/utils/crudFunctions/cycleCount';
 
-export interface IValidateCycleCountMovementProps {
+export interface IAutoValidateCycleCountMovementProps {
     process: string;
     stepNumber: number;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     headerContent: { [label: string]: any };
+    autoValidateLoading: { [label: string]: any };
 }
 
-export const ValidateCycleCountMovementForm = ({
+export const AutoValidateCycleCountMovementForm = ({
     process,
     stepNumber,
     trigger: { triggerRender, setTriggerRender },
-    buttons,
-    headerContent: { setHeaderContent }
-}: IValidateCycleCountMovementProps) => {
+    headerContent: {},
+    autoValidateLoading: { isAutoValidateLoading, setIsAutoValidateLoading }
+}: IAutoValidateCycleCountMovementProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
-    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -76,7 +77,7 @@ export const ValidateCycleCountMovementForm = ({
         const { id, name } = storedObject.step20.data.location;
         location = { id, name };
     }
-    let handlingUnit: { [k: string]: any } = {};
+    let handlingUnit: any;
     if (storedObject.step30.data.handlingUnit) {
         const { id, name, parentHandlingUnit } = storedObject.step30.data.handlingUnit;
         handlingUnit = { id, name, parentHandlingUnit: { name: parentHandlingUnit?.name } };
@@ -97,6 +98,11 @@ export const ValidateCycleCountMovementForm = ({
     if (storedObject.step40.data.currentCCMovement) {
         const { id, status } = storedObject.step40.data.currentCCMovement;
         cycleCountMovement = { id, status };
+    }
+    let chosenArticle: { [k: string]: any } = {};
+    if (storedObject.step40.data.currentCCMovement) {
+        const { id, name } = storedObject.step40.data.article;
+        chosenArticle = { id, name };
     }
     let feature: { [k: string]: any } = {};
     if (storedObject.step40.data.feature) {
@@ -152,20 +158,15 @@ export const ValidateCycleCountMovementForm = ({
         return differences.length > 0 ? differences : undefined;
     };
 
-    let modifiedFeatures: any;
+    let featuresToUpdateOrCreate: any;
     if (expectedFeatures && reviewedFeatures && reviewedFeatures != 'none') {
-        modifiedFeatures = identifyModifiedFeatures(expectedFeatures, reviewedFeatures);
+        featuresToUpdateOrCreate = identifyModifiedFeatures(expectedFeatures, reviewedFeatures);
     }
 
-    //ValidateCycleCountMovement-1a: fetch front API
-    const onFinish = async () => {
-        setIsLoading(true);
-        const res = await fetch(`/api/stock-management/validateCycleCountMovement/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
+    //AutoValidateCycleCountMovement-1a: fetch front API
+    useEffect(() => {
+        const onFinish = async () => {
+            const input = {
                 cycleCount,
                 currentCycleCountLine,
                 cycleCountMovement,
@@ -180,46 +181,92 @@ export const ValidateCycleCountMovementForm = ({
                 featureCode,
                 resType,
                 quantity,
-                modifiedFeatures
-            })
-        });
-        if (res.ok) {
-            const response = await res.json();
-            const storedObject = JSON.parse(storage.get(process) || '{}');
+                featuresToUpdateOrCreate
+            };
+            setIsAutoValidateLoading(true);
+            const query = gql`
+                mutation executeFunction($functionName: String!, $event: JSON!) {
+                    executeFunction(functionName: $functionName, event: $event) {
+                        status
+                        output
+                    }
+                }
+            `;
 
-            storage.remove(process);
-            const newStoredObject = JSON.parse(storage.get(process) || '{}');
-            console.log('storedObjectAfterRemove', storedObject);
+            const variables = {
+                functionName: 'K_RF_cycleCount_validate',
+                event: {
+                    input
+                }
+            };
 
-            if (response.response.updatedCycleCountLine) {
-                const updatedCCLine = response.response.updatedCycleCountLine;
-                const updatedCCMovements =
-                    response.response.updatedCycleCountLine?.cycleCountMovements;
-
-                const step10Data = {
-                    cycleCount: cycleCount,
-                    currentCycleCountLine: updatedCCLine
-                };
-                newStoredObject['currentStep'] = 40;
-                newStoredObject[`step10`] = { previousStep: 0, data: step10Data };
-                newStoredObject[`step20`] = storedObject[`step20`];
-                newStoredObject[`step25`] = storedObject[`step25`];
-                newStoredObject[`step30`] = storedObject[`step30`];
-                newStoredObject[`step40`] = {
-                    previousStep: storedObject[`step40`].previousStep
-                };
-                storage.set(process, JSON.stringify(newStoredObject));
+            try {
+                const response = await graphqlRequestClient.request(query, variables);
+                console.log('executeFunctionResponse', response);
+                if (response.executeFunction.status === 'ERROR') {
+                    showError(response.executeFunction.output);
+                    onBack();
+                    setIsAutoValidateLoading(false);
+                } else if (
+                    response.executeFunction.status === 'OK' &&
+                    response.executeFunction.output.status === 'KO'
+                ) {
+                    showError(t(`errors:${response.executeFunction.output.output.code}`));
+                    console.log('Backend_message', response.executeFunction.output.output);
+                    onBack();
+                    setIsAutoValidateLoading(false);
+                } else {
+                    //log if features have been modified
+                    if (reviewedFeatures && reviewedFeatures !== 'none') {
+                        featuresToUpdateOrCreate.forEach((feature: any) => {
+                            createCycleCountError(
+                                cycleCount.id,
+                                `Step ${stepNumber} - ${t('messages:feature-changed', {
+                                    name: `${feature.featureCode.name}`
+                                })} ${t('common:from')} ${
+                                    expectedFeatures.find(
+                                        (e: any) => e.featureCode.name === feature.featureCode.name
+                                    ).value
+                                } ${t('common:to')} ${feature.value} ${t('common:for')} ${
+                                    handlingUnit.name
+                                }-${chosenArticle.name}`
+                            );
+                        });
+                    }
+                    const storedObject = JSON.parse(storage.get(process) || '{}');
+                    const updatedCCLine = response.executeFunction.output.updatedCycleCountLine;
+                    storage.remove(process);
+                    const newStoredObject = JSON.parse(storage.get(process) || '{}');
+                    console.log('storedObjectAfterRemove', storedObject);
+                    if (updatedCCLine) {
+                        const step10Data = {
+                            cycleCount: storedObject.step10.data.cycleCount,
+                            currentCycleCountLine: updatedCCLine
+                        };
+                        newStoredObject['currentStep'] = 40;
+                        newStoredObject[`step10`] = { previousStep: 0, data: step10Data };
+                        newStoredObject[`step20`] = storedObject[`step20`];
+                        newStoredObject[`step25`] = storedObject[`step25`];
+                        newStoredObject[`step30`] = storedObject[`step30`];
+                        newStoredObject[`step40`] = {
+                            previousStep: storedObject[`step40`].previousStep
+                        };
+                        storage.set(process, JSON.stringify(newStoredObject));
+                    }
+                    setTriggerRender(!triggerRender);
+                    setIsAutoValidateLoading(false);
+                }
+            } catch (error) {
+                showError(t('messages:cycleCountMovement-validation-failed'));
+                console.log('executeFunctionError', error);
+                onBack();
+                setIsAutoValidateLoading(false);
             }
-            setTriggerRender(!triggerRender);
-        } else {
-            showError(t('messages:cycleCountMovement-validation-failed'));
-        }
-        if (res) {
-            setIsLoading(false);
-        }
-    };
+        };
+        onFinish();
+    }, []);
 
-    //ValidateCycleCountMovement-1b: handle back to previous - previous step settings (specific since check is automatic)
+    //AutoValidateCycleCountMovement-1b: handle back to previous - previous step settings (specific since check is automatic)
     const onBack = () => {
         setTriggerRender(!triggerRender);
         for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
@@ -229,22 +276,5 @@ export const ValidateCycleCountMovementForm = ({
         storage.set(process, JSON.stringify(storedObject));
     };
 
-    return (
-        <WrapperForm>
-            {!isLoading ? (
-                <StyledForm
-                    name="basic"
-                    layout="vertical"
-                    onFinish={onFinish}
-                    autoComplete="off"
-                    scrollToFirstError
-                    size="small"
-                >
-                    <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
-                </StyledForm>
-            ) : (
-                <ContentSpin />
-            )}
-        </WrapperForm>
-    );
+    return <WrapperForm>{isAutoValidateLoading ? <ContentSpin /> : <></>}</WrapperForm>;
 };

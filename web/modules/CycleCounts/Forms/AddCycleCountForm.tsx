@@ -46,7 +46,7 @@ import {
     useListConfigsForAScopeQuery,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
-import { debounce } from 'lodash';
+import { debounce, set } from 'lodash';
 import _ from 'lodash';
 import {
     showError,
@@ -97,6 +97,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const [stockMiniDisplayGroup, setStockMiniDisplayGroup] = useState<boolean>(false);
     const [reasonsTexts, setReasonsTexts] = useState<any>();
     const [motivesTexts, setMotivesTexts] = useState<any>();
+    const [form] = Form.useForm();
 
     // Retrieve all necessary information
     const cycleCountModelsList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -203,17 +204,54 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const [blockToSearch, setBlockToSearch] = useState<any>(null);
     const onBlockChange = (id: string, options: any) => {
         setBlockToSearch(id);
-        // form.setFieldsValue({ blockName: options?.title });
     };
     const search = blockToSearch ? { blockId: blockToSearch! } : undefined;
     const { data: locationsData } = useLocationIds(search, 1, 1000, null);
 
     const [locations, setLocations] = useState<DataQueryType>();
 
+    //useStates to take the values to search at each choice
+    const [originAisleToSearch, setOriginAisleToSearch] = useState<string | undefined>(undefined);
+    const [finalAisleToSearch, setFinalAisleToSearch] = useState<string | undefined>(undefined);
+    const [originColumnToSearch, setOriginColumnToSearch] = useState<string | undefined>(undefined);
+    const [finalColumnToSearch, setFinalColumnToSearch] = useState<string | undefined>(undefined);
+    const [originLevelToSearch, setOriginLevelToSearch] = useState<string | undefined>(undefined);
+    const [finalLevelToSearch, setFinalLevelToSearch] = useState<string | undefined>(undefined);
+
     //set reference Locations list
     useEffect(() => {
         if (locationsData && blockToSearch) {
             setLocations(locationsData?.locations);
+            if (locationsData?.locations && locationsData?.locations?.results.length > 0) {
+                const locations = locationsData.locations.results.sort((a: any, b: any) => {
+                    const aisleComparison = a.aisle.localeCompare(b.aisle);
+                    if (aisleComparison !== 0) return aisleComparison;
+                    const columnComparison = Number(a.column) - Number(b.column);
+                    if (columnComparison !== 0) return columnComparison;
+                    const levelComparison = Number(a.level) - Number(b.level);
+                    if (levelComparison !== 0) return levelComparison;
+                    return Number(a.position) - Number(b.position);
+                });
+                const firstLocation = locations[0];
+                const lastLocation = locations[locations.length - 1];
+
+                form.setFieldsValue({
+                    originalAisle: firstLocation.aisle,
+                    originalColumn: firstLocation.column,
+                    originalLevel: firstLocation.level,
+                    originalPosition: firstLocation.position,
+                    finalAisle: lastLocation.aisle,
+                    finalColumn: lastLocation.column,
+                    finalLevel: lastLocation.level,
+                    finalPosition: lastLocation.position
+                });
+                setOriginAisleToSearch(firstLocation.aisle);
+                setFinalAisleToSearch(lastLocation.aisle);
+                setOriginColumnToSearch(firstLocation.column);
+                setFinalColumnToSearch(lastLocation.column);
+                setOriginLevelToSearch(firstLocation.level);
+                setFinalLevelToSearch(lastLocation.level);
+            }
         }
     }, [locationsData, blockToSearch]);
 
@@ -230,13 +268,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 console.log(`No source provided.`);
         }
     };
-    //useStates to take the values to search at each choice
-    const [originAisleToSearch, setOriginAisleToSearch] = useState<string | undefined>(undefined);
-    const [finalAisleToSearch, setFinalAisleToSearch] = useState<string | undefined>(undefined);
-    const [originColumnToSearch, setOriginColumnToSearch] = useState<string | undefined>(undefined);
-    const [finalColumnToSearch, setFinalColumnToSearch] = useState<string | undefined>(undefined);
-    const [originLevelToSearch, setOriginLevelToSearch] = useState<string | undefined>(undefined);
-    const [finalLevelToSearch, setFinalLevelToSearch] = useState<string | undefined>(undefined);
 
     //generic filter function to generate list of values provided in select options
     function filterAndMap(locations: any, setOptions: any, filters: any, returnedData: string) {
@@ -264,6 +295,8 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 return aisle!;
             });
             setAisleValueOptions(removeDuplicatesAndSort(newOpts));
+            // setOriginAisleToSearch(newOpts[0]);
+            // setFinalAisleToSearch(newOpts[newOpts.length - 1]);
         }
     }, [locations]);
 
@@ -376,8 +409,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     }, [motivesTextList.data]);
 
     // TYPED SAFE ALL
-    const [form] = Form.useForm();
-
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
         const handleWindowClose = (e: BeforeUnloadEvent) => {
@@ -677,6 +708,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             placeholder={`${t('messages:please-select-an', {
                                                 name: t('d:aisle')
                                             })}`}
+                                            showSearch
+                                            filterOption={(inputValue, option) =>
+                                                option!.props.children
+                                                    .toUpperCase()
+                                                    .indexOf(inputValue.toUpperCase()) !== -1
+                                            }
                                             onChange={(value: string) => {
                                                 onInputChange(
                                                     value,
@@ -685,7 +722,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 );
                                             }}
                                             allowClear
-                                            disabled={blockToSearch ? false : true}
                                         >
                                             {aisleValueOptions?.map((aisle: any) => (
                                                 <Option key={aisle} value={aisle}>
@@ -710,6 +746,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             placeholder={`${t('messages:please-select-a', {
                                                 name: t('d:column')
                                             })}`}
+                                            showSearch
+                                            filterOption={(inputValue, option) =>
+                                                option!.props.children
+                                                    .toUpperCase()
+                                                    .indexOf(inputValue.toUpperCase()) !== -1
+                                            }
                                             onChange={(value: string) => {
                                                 onInputChange(
                                                     value,
@@ -718,9 +760,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 );
                                             }}
                                             allowClear
-                                            disabled={
-                                                blockToSearch && originAisleToSearch ? false : true
-                                            }
                                         >
                                             {originColumnValueOptions?.map((column: any) => (
                                                 <Option key={column} value={column}>
@@ -745,6 +784,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             placeholder={`${t('messages:please-select-a', {
                                                 name: t('d:level')
                                             })}`}
+                                            showSearch
+                                            filterOption={(inputValue, option) =>
+                                                option!.props.children
+                                                    .toUpperCase()
+                                                    .indexOf(inputValue.toUpperCase()) !== -1
+                                            }
                                             onChange={(value: string) => {
                                                 onInputChange(
                                                     value,
@@ -753,13 +798,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 );
                                             }}
                                             allowClear
-                                            disabled={
-                                                blockToSearch &&
-                                                originAisleToSearch &&
-                                                originColumnToSearch
-                                                    ? false
-                                                    : true
-                                            }
                                         >
                                             {originLevelValueOptions?.map((level: any) => (
                                                 <Option key={level} value={level}>
@@ -784,15 +822,13 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             placeholder={`${t('messages:please-select-a', {
                                                 name: t('d:position')
                                             })}`}
-                                            allowClear
-                                            disabled={
-                                                blockToSearch &&
-                                                originAisleToSearch &&
-                                                originColumnToSearch &&
-                                                originLevelToSearch
-                                                    ? false
-                                                    : true
+                                            showSearch
+                                            filterOption={(inputValue, option) =>
+                                                option!.props.children
+                                                    .toUpperCase()
+                                                    .indexOf(inputValue.toUpperCase()) !== -1
                                             }
+                                            allowClear
                                         >
                                             {originPositionValueOptions?.map((position: any) => (
                                                 <Option key={position} value={position}>
@@ -821,6 +857,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             placeholder={`${t('messages:please-select-an', {
                                                 name: t('d:aisle')
                                             })}`}
+                                            showSearch
+                                            filterOption={(inputValue, option) =>
+                                                option!.props.children
+                                                    .toUpperCase()
+                                                    .indexOf(inputValue.toUpperCase()) !== -1
+                                            }
                                             onChange={(value: string) => {
                                                 onInputChange(
                                                     value,
@@ -854,6 +896,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             placeholder={`${t('messages:please-select-a', {
                                                 name: t('d:column')
                                             })}`}
+                                            showSearch
+                                            filterOption={(inputValue, option) =>
+                                                option!.props.children
+                                                    .toUpperCase()
+                                                    .indexOf(inputValue.toUpperCase()) !== -1
+                                            }
                                             onChange={(value: string) => {
                                                 onInputChange(
                                                     value,
@@ -889,6 +937,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             placeholder={`${t('messages:please-select-a', {
                                                 name: t('d:level')
                                             })}`}
+                                            showSearch
+                                            filterOption={(inputValue, option) =>
+                                                option!.props.children
+                                                    .toUpperCase()
+                                                    .indexOf(inputValue.toUpperCase()) !== -1
+                                            }
                                             onChange={(value: string) => {
                                                 onInputChange(
                                                     value,
@@ -928,6 +982,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             placeholder={`${t('messages:please-select-a', {
                                                 name: t('d:position')
                                             })}`}
+                                            showSearch
+                                            filterOption={(inputValue, option) =>
+                                                option!.props.children
+                                                    .toUpperCase()
+                                                    .indexOf(inputValue.toUpperCase()) !== -1
+                                            }
                                             allowClear
                                             disabled={
                                                 blockToSearch &&

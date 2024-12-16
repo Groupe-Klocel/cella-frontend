@@ -4,7 +4,7 @@ import nextTranslate from 'next-translate-plugin';
 
 const config = withAntdLess(
     nextTranslate({
-        reactStrictMode: true,
+        reactStrictMode: false,
         transpilePackages: [
             'antd',
             '@ant-design/icons',

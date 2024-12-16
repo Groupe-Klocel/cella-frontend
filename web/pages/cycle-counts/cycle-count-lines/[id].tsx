@@ -72,8 +72,8 @@ const CycleCountLinePage: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {
@@ -84,6 +84,8 @@ const CycleCountLinePage: PageComponent = () => {
             });
         };
     };
+
+    //RESTART HERE: Regenerate model, + page title = CC name + location name
 
     const headerData: HeaderData = {
         title: pageTitle,
