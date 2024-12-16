@@ -44,7 +44,8 @@ import { SelectFeatureCodeForm } from 'modules/StockManagement/CycleCount/Forms/
 import { ValidateCycleCountMovementForm } from 'modules/StockManagement/CycleCount/Forms/ValidateCycleCountMovementForm';
 import { ScanLocation } from 'modules/StockManagement/CycleCount/PagesContainer/ScanLocation';
 import { ScanCCHandlingUnit } from 'modules/StockManagement/CycleCount/PagesContainer/ScanHandlingUnit';
-import configs from '../../common/configs.json';
+import { ReviewFeatures } from 'modules/StockManagement/CycleCount/PagesContainer/ReviewFeatures';
+import { AutoValidateCycleCountMovementForm } from 'modules/StockManagement/CycleCount/Forms/AutoValidateCycleCountMovementForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -59,10 +60,11 @@ const CycleCounts: PageComponent = () => {
     const [displayed, setDisplayed] = useState<any>({});
     const [triggerLocationClose, setTriggerLocationClose] = useState<boolean>(false);
     const [triggerHUClose, setTriggerHuClose] = useState<boolean>(false);
+    const [isAutoValidateLoading, setIsAutoValidateLoading] = useState<boolean>(false);
     //define workflow parameters
     const workflow = {
         processName: 'cycleCounts',
-        expectedSteps: [10, 20, 25, 30, 40, 50, 55, 60, 65, 70, 80]
+        expectedSteps: [10, 20, 25, 30, 40, 50, 55, 60, 65, 70, 80, 90]
     };
     // [0] : 10-> SelectCycleCountForm
     // [1] : 20 -> Scan location
@@ -73,8 +75,9 @@ const CycleCounts: PageComponent = () => {
     // [6] : 55 -> Select Article
     // [7] : 60 -> Select Stock Status
     // [8] : 65 -> Select feature Code
-    // [9] : 70 -> Enter quantity
-    // [10] : 80 -> Count CCMovement
+    // [9] : 70 -> Review features
+    // [10] : 80 -> Enter quantity
+    // [11] : 90 -> Count CCMovement
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
     console.log('cycleCounts', storedObject);
@@ -111,7 +114,7 @@ const CycleCounts: PageComponent = () => {
             const handlingUnit =
                 storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit ??
                 storedObject[`step${workflow.expectedSteps[3]}`]?.data?.huToCreate;
-            object[t('common:handling-unit')] = handlingUnit.name;
+            object[t('common:handling-unit_abbr')] = handlingUnit.name;
         }
         if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article) {
             const article = storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article;
@@ -164,7 +167,7 @@ const CycleCounts: PageComponent = () => {
         }
 
         setOriginDisplay(object);
-    }, [triggerRender]);
+    }, [triggerRender, isAutoValidateLoading]);
 
     useEffect(() => {
         headerContent ? setDisplayed(originDisplay) : setDisplayed(originDisplay);
@@ -284,10 +287,11 @@ const CycleCounts: PageComponent = () => {
                     buttons={{
                         submitButton: true,
                         backButton: true,
-                        alternativeSubmitButton1: storedObject[`step${workflow.expectedSteps[3]}`]
-                            ?.data?.handlingUnit
-                            ? true
-                            : false
+                        alternativeSubmitButton1:
+                            storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit ||
+                            storedObject[`step${workflow.expectedSteps[3]}`]?.data?.huToCreate
+                                ? true
+                                : false
                     }}
                     trigger={{ triggerRender, setTriggerRender }}
                     triggerAlternativeSubmit1={{
@@ -364,8 +368,8 @@ const CycleCounts: PageComponent = () => {
                         storedObject[`step${workflow.expectedSteps[4]}`]?.data?.resType !==
                         'serialNumber'
                             ? 'N/A'
-                            : storedObject[`step${workflow.expectedSteps[4]}`]?.data.feature
-                                  ?.featureCode ?? undefined
+                            : (storedObject[`step${workflow.expectedSteps[4]}`]?.data.feature
+                                  ?.featureCode ?? undefined)
                     }
                 ></SelectFeatureCodeForm>
             ) : (
@@ -373,9 +377,26 @@ const CycleCounts: PageComponent = () => {
             )}
             {storedObject[`step${workflow.expectedSteps[8]}`]?.data &&
             !storedObject[`step${workflow.expectedSteps[9]}`]?.data ? (
-                <EnterQuantity
+                <ReviewFeatures
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[9]}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    buttons={{
+                        submitButton: true,
+                        backButton: true
+                    }}
+                    expectedFeatures={
+                        storedObject[`step${workflow.expectedSteps[4]}`].data.expectedFeatures
+                    }
+                ></ReviewFeatures>
+            ) : (
+                <></>
+            )}
+            {storedObject[`step${workflow.expectedSteps[9]}`]?.data &&
+            !storedObject[`step${workflow.expectedSteps[10]}`]?.data ? (
+                <EnterQuantity
+                    process={workflow.processName}
+                    stepNumber={workflow.expectedSteps[10]}
                     label={t('common:observed-quantity')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{
@@ -391,14 +412,26 @@ const CycleCounts: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject[`step${workflow.expectedSteps[9]}`]?.data ? (
+            {/* {storedObject[`step${workflow.expectedSteps[10]}`]?.data ? (
                 <ValidateCycleCountMovementForm
                     process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[10]}
+                    stepNumber={workflow.expectedSteps[11]}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}
                 ></ValidateCycleCountMovementForm>
+            ) : (
+                <></>
+            )} */}
+            {storedObject[`step${workflow.expectedSteps[10]}`]?.data || isAutoValidateLoading ? (
+                <AutoValidateCycleCountMovementForm
+                    process={workflow.processName}
+                    stepNumber={workflow.expectedSteps[11]}
+                    buttons={{ submitButton: true, backButton: true }}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    headerContent={{ setHeaderContent }}
+                    autoValidateLoading={{ isAutoValidateLoading, setIsAutoValidateLoading }}
+                ></AutoValidateCycleCountMovementForm>
             ) : (
                 <></>
             )}
