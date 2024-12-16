@@ -16970,12 +16970,9 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
     > .ant-menu-submenu
     > .ant-menu-submenu-title,
 .ant-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title {
+    left: 0;
+    padding: 0 calc(50% - 16px / 2);
     text-overflow: clip;
-    padding-left: 24px;
-    padding-top: 5px;
-}
-.ant-menu-submenu:hover {
-    background-color: #003b5c;
 }
 .ant-menu.ant-menu-inline-collapsed > .ant-menu-item .ant-menu-submenu-arrow,
 .ant-menu.ant-menu-inline-collapsed

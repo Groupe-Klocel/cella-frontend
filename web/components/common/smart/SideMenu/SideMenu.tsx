@@ -26,6 +26,17 @@ import { useAppState } from 'context/AppContext';
 import { Table, ModeEnum } from 'generated/graphql';
 import { cookie, getModesFromPermissions } from '@helpers';
 import styled from 'styled-components';
+import {
+    ApartmentOutlined,
+    AppstoreAddOutlined,
+    AuditOutlined,
+    DeploymentUnitOutlined,
+    ExportOutlined,
+    HourglassOutlined,
+    QuestionCircleOutlined,
+    SettingOutlined,
+    SlidersOutlined
+} from '@ant-design/icons';
 
 const { SubMenu } = Menu;
 
@@ -68,11 +79,7 @@ const SideMenu: FC = () => {
 
     return (
         <StyledMenu mode="inline" className="menu">
-            <SubMenu
-                icon={<img src="/images/Administration.svg" alt="Icon Administration" />}
-                key="administration"
-                title={t('administration')}
-            >
+            <SubMenu icon={<AuditOutlined />} key="administration" title={t('administration')}>
                 {getModesFromPermissions(permissions, Table.Config).includes(ModeEnum.Read) ? (
                     <Menu.Item key="administration-configurations">
                         <Link href="/configurations">{t('configurations')}</Link>
@@ -125,11 +132,7 @@ const SideMenu: FC = () => {
                     <></>
                 )}
             </SubMenu>
-            <SubMenu
-                key="configuration"
-                icon={<img src="/images/Configuration.svg" alt="Icon Configuration" />}
-                title={t('configuration')}
-            >
+            <SubMenu key="configuration" icon={<SettingOutlined />} title={t('configuration')}>
                 <SubMenu key="configuration-cartography" title={t('cartography')}>
                     {getModesFromPermissions(permissions, Table.Building).includes(
                         ModeEnum.Read
@@ -278,11 +281,7 @@ const SideMenu: FC = () => {
                     <></>
                 )}
             </SubMenu>
-            <SubMenu
-                icon={<img src="/images/Article.svg" alt="Icon Article" />}
-                key="articles"
-                title={t('articles')}
-            >
+            <SubMenu icon={<AppstoreAddOutlined />} key="articles" title={t('articles')}>
                 {getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) ? (
                     <Menu.Item key="articles-articles">
                         {' '}
@@ -375,7 +374,7 @@ const SideMenu: FC = () => {
                 </SubMenu>
             </SubMenu>
             <SubMenu
-                icon={<img src="/images/Stock.svg" alt="Icon Stock" />}
+                icon={<ApartmentOutlined />}
                 key="stock-management"
                 title={t('stock-management')}
             >
@@ -444,11 +443,7 @@ const SideMenu: FC = () => {
                     <></>
                 )}
             </SubMenu>
-            <SubMenu
-                icon={<img src="/images/Business_management.svg" alt="Icon Business_management" />}
-                key="business-management"
-                title={t('business-management')}
-            >
+            <SubMenu icon={<DeploymentUnitOutlined />} title={t('business-management')}>
                 {getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) ? (
                     <Menu.Item key="business-management-credits">
                         <Link href="/credits">{t('credits')}</Link>
@@ -472,7 +467,7 @@ const SideMenu: FC = () => {
                 )}
             </SubMenu>
             <SubMenu
-                icon={<img src="/images/Preparation.svg" alt="Icon preparation-management" />}
+                icon={<HourglassOutlined />}
                 key="preparation-management"
                 title={t('preparation-management')}
             >
@@ -534,11 +529,7 @@ const SideMenu: FC = () => {
                     <></>
                 )} */}
             </SubMenu>
-            <SubMenu
-                icon={<img src="/images/Monitoring.svg" alt="Icon Monitoring" />}
-                key="monitoring"
-                title={t('monitoring')}
-            >
+            <SubMenu icon={<SlidersOutlined />} key="monitoring" title={t('monitoring')}>
                 {getModesFromPermissions(permissions, Table.RecordHistory).includes(
                     ModeEnum.Read
                 ) ? (
@@ -576,23 +567,13 @@ const SideMenu: FC = () => {
                     <Link href="/dashboard">{t('dashboard')}</Link>
                 </Menu.Item>
             </SubMenu>
-            <Menu.Item icon={<img src="/images/About.svg" alt="Icon About" />} key="about">
+            <Menu.Item icon={<QuestionCircleOutlined />} key="about">
                 <Link href="/about">{t('about')}</Link>
             </Menu.Item>
-            <Menu.Item
-                icon={<img src="/images/Logout.svg" alt="Icon logout" />}
-                key="logout"
-                onClick={() => logout()}
-            >
+            <Menu.Item icon={<ExportOutlined />} key="logout" onClick={() => logout()}>
                 {t('logout')}
             </Menu.Item>
-            <Menu.Item
-                key="end"
-                style={{
-                    backgroundColor: 'transparent',
-                    cursor: 'default'
-                }}
-            />
+            <Menu.Item key="end" />
             {/* Need an empty item for scroll behavior */}
         </StyledMenu>
     );
