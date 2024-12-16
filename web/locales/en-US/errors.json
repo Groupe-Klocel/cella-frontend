@@ -50,5 +50,6 @@
     "CARRIERSHIPPINGMODE-000130": "Delete impossible: at least one carrier associated with this item",
     "FEATURECODE-000200": "Content Feature already exists",
     "RULE-000787": "Invalid version number",
-    "FAPI_000003":"This barcode already exists for this stock owner"
+    "FAPI_000003":"This barcode already exists for this stock owner",
+    "key-exists": "This key already exists"
 }

@@ -152,5 +152,6 @@
     "with-closed-cancel-items": "With closed and cancelled items",
     "without-closed-cancel-items": "Without closed and cancelled items",
     "add-scheduler-config": "Add Scheduler Config",
-    "edit-crontab": "Edit Cron"
+    "edit-crontab": "Edit Cron",
+    "add-extra-infos": "Add extra infos"
 }

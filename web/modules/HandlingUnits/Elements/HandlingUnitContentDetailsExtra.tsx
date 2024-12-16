@@ -161,6 +161,7 @@ const HandlingUnitContentDetailsExtra = ({
                             handlingUnitContent_stockOwner_name: string;
                             featureCode_name: string;
                             value: any;
+                            extraText2: string;
                         }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
@@ -236,7 +237,9 @@ const HandlingUnitContentDetailsExtra = ({
                                                         record.handlingUnitContentId,
                                                     feature: {
                                                         code: record.featureCode_name,
-                                                        value: record.value
+                                                        value: record.value,
+                                                        id: record.id,
+                                                        extraText2: record.extraText2
                                                     }
                                                 },
                                                 {
