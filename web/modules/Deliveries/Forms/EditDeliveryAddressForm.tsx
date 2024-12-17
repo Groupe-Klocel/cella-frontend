@@ -84,10 +84,10 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
         tmp_civilities.push({ value: details.contactCivility });
     }
 
-    const [options, setOptions] = useState<{ value: string }[]>(civilityList);
+    const [civilityOptions, setCivilityOptions] = useState<{ value: string }[]>(civilityList);
 
     const handleSearch = (value: string) => {
-        setOptions(
+        setCivilityOptions(
             value
                 ? civilities
                       .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
@@ -202,10 +202,10 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
                 </Form.Item>
                 <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
                     <AutoComplete
-                        options={options}
+                        options={civilityOptions}
                         onSelect={onSelect}
                         onSearch={handleSearch}
-                        onFocus={() => setOptions(civilityList)}
+                        onFocus={() => setCivilityOptions(civilityList)}
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:contactCivility')
                         })}`}

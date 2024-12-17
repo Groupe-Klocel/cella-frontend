@@ -15,15 +15,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, Space, Modal, AutoComplete, Checkbox } from 'antd';
+import { Button, Input, Form, Space, Modal, AutoComplete, Checkbox, Select } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import {
+    GetAllCarriersQuery,
     UpdateCarrierMutation,
     UpdateCarrierMutationVariables,
+    useGetAllCarriersQuery,
     useUpdateCarrierMutation
 } from 'generated/graphql';
 import { gql } from 'graphql-request';
@@ -43,7 +45,11 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     // TYPED SAFE ALL
     const [form] = Form.useForm();
+    const { Option } = Select;
 
+    form.setFieldsValue({
+        parentCarrier: details?.parentCarrier?.name
+    });
     // Get all civility
     useEffect(() => {
         const query = gql`
@@ -76,10 +82,10 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
         tmp_civilities.push({ value: details.contactCivility });
     }
 
-    const [options, setOptions] = useState<{ value: string }[]>(civilityList);
+    const [civilityOptions, setCivilityOptions] = useState<{ value: string }[]>(civilityList);
 
     const handleSearch = (value: string) => {
-        setOptions(
+        setCivilityOptions(
             value
                 ? civilities
                       .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
@@ -92,6 +98,15 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
         form.setFieldsValue({ contactCivility: value });
     };
 
+    // Get all carriers
+    const carrierParents = useGetAllCarriersQuery<Partial<GetAllCarriersQuery>, Error>(
+        graphqlRequestClient,
+        {
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 100
+        }
+    );
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
         const handleWindowClose = (e: BeforeUnloadEvent) => {
@@ -194,8 +209,19 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
                 >
                     <Input />
                 </Form.Item>
-                <Form.Item label={t('d:parentCarrier')} name="parentCarrier">
-                    <Input />
+                <Form.Item label={t('d:parentCarrierId')} name="parentCarrierId">
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:parentCarrier')
+                        })}`}
+                    >
+                        {carrierParents?.data?.carriers?.results.map((carrierParent: any) => (
+                            <Option key={carrierParent.id} value={carrierParent.id}>
+                                {carrierParent.name}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
                 <Form.Item name="available">
                     <Checkbox checked={details.available} disabled>
@@ -212,10 +238,10 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
                 </Form.Item>
                 <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
                     <AutoComplete
-                        options={options}
+                        options={civilityOptions}
                         onSelect={onSelect}
                         onSearch={handleSearch}
-                        onFocus={() => setOptions(civilityList)}
+                        onFocus={() => setCivilityOptions(civilityList)}
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:contactCivility')
                         })}`}

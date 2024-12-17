@@ -94,10 +94,10 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
 
     const civilityList = civilities.map((item: any) => ({ value: item.text }));
 
-    const [options, setOptions] = useState<{ value: string }[]>(civilityList);
+    const [civilityOptions, setCivilityOptions] = useState<{ value: string }[]>(civilityList);
 
     const handleSearch = (value: string) => {
-        setOptions(
+        setCivilityOptions(
             value
                 ? civilities
                       .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
@@ -249,9 +249,9 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
 
                 <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
                     <AutoComplete
-                        options={options}
+                        options={civilityOptions}
                         onSearch={handleSearch}
-                        onFocus={() => setOptions(civilityList)}
+                        onFocus={() => setCivilityOptions(civilityList)}
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:contactCivility')
                         })}`}
