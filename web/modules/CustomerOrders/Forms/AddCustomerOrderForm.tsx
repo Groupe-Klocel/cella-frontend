@@ -18,7 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, InputNumber, Select, Modal, AutoComplete, Checkbox } from 'antd';
+import {
+    Button,
+    Input,
+    Form,
+    InputNumber,
+    Select,
+    Modal,
+    AutoComplete,
+    Checkbox,
+    DatePicker
+} from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -41,7 +51,8 @@ import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import TextArea from 'antd/lib/input/TextArea';
-import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
 
 interface IOption {
     value: string;
@@ -626,13 +637,14 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                 >
                     <InputNumber />
                 </Form.Item>
-                <CalendarForm
-                    label={expectedDeliveryDateLabel}
-                    name="expectedDeliveryDate"
-                    format="YYYY-MM-DD"
-                    defaultValue={dayjs()}
-                />
-
+                <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
+                    <DatePicker
+                        allowClear
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        defaultValue={dayjs()}
+                    />
+                </Form.Item>
                 <Form.Item
                     label={deliveryTypeLabel}
                     name="deliveryPoType"
