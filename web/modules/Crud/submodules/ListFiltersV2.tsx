@@ -33,17 +33,17 @@ import moment from 'moment';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import 'dayjs/locale/en';
-import enUS from 'antd/es/locale/en_US';
-import frFR from 'antd/es/locale/fr_FR';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/ModelsV2';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { isNumeric, pluralize, useList } from '@helpers';
+import { isNumeric, pluralize } from '@helpers';
 import { gql } from 'graphql-request';
 import { ContentSpin } from '@components';
-import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
+import 'moment/locale/fr';
 
 export interface IGeneralSearchProps {
     form: any;
@@ -70,32 +70,11 @@ const ListFilters: FC<IGeneralSearchProps> = ({
     const [optionsList, setOptionsList] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
-    // #region Language Calendar
-    const locales: any = {
-        en: {
-            antdLocale: enUS,
-            dayjsLocale: 'en'
-        },
-        fr: {
-            antdLocale: frFR,
-            dayjsLocale: 'fr'
-        }
-    };
-    const [languageDate, setLanguageDate] = useState('en');
-    const changeLanguage = (lang: 'en' | 'fr') => {
-        setLanguageDate(lang);
-        dayjs.locale(locales[lang].dayjsLocale);
-    };
-    const languageCalendar = () => {
-        if (router.locale === 'en-US' || router.locale === 'en') {
-            changeLanguage('en');
-        } else if (router.locale === 'fr-FR' || router.locale === 'fr') {
-            changeLanguage('fr');
-        }
-    };
-    useEffect(() => {
-        languageCalendar();
-    }, [router.locale]);
+    moment.locale(router.locale);
+
+    const localeData = moment.localeData();
+    const localeDateTimeFormat =
+        localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
 
     const onChange = (value: RangePickerProps['value'], dateString: [string, string] | string) => {
         console.log('Selected Time: ', value);
@@ -469,30 +448,25 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                             );
                         else if (item.type == FormDataType.Calendar)
                             return (
-                                <ConfigProvider locale={locales[languageDate].antdLocale}>
-                                    <Form.Item
-                                        name={item.name}
-                                        label={
-                                            item.displayName
-                                                ? item.displayName
-                                                : t(`d:${item.name}`)
-                                        }
-                                        key={item.name}
-                                        rules={item.rules!}
-                                        normalize={(value) => (value ? value : undefined)}
-                                        initialValue={
-                                            item?.initialValue ? item?.initialValue : undefined
-                                        }
-                                    >
-                                        <DatePicker
-                                            format="YYYY-MM-DD HH:mm:ss"
-                                            showTime={{
-                                                defaultValue: dayjs('00:00:00', 'HH:mm:ss')
-                                            }}
-                                            allowClear
-                                        />
-                                    </Form.Item>
-                                </ConfigProvider>
+                                <Form.Item
+                                    name={item.name}
+                                    label={
+                                        item.displayName ? item.displayName : t(`d:${item.name}`)
+                                    }
+                                    key={item.name}
+                                    rules={item.rules!}
+                                    normalize={(value) => (value ? value : undefined)}
+                                    initialValue={
+                                        item?.initialValue ? dayjs(item?.initialValue) : undefined
+                                    }
+                                >
+                                    <DatePicker
+                                        format={localeDateTimeFormat}
+                                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                                        showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                                        allowClear
+                                    />
+                                </Form.Item>
                             );
                         else if (item.type == FormDataType.CalendarRange) {
                             let startDate = null;
@@ -503,34 +477,28 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                 endDate = dayjs(moment(item.initialValue[1]).toDate());
 
                             return (
-                                <ConfigProvider locale={locales[languageDate].antdLocale}>
-                                    <Form.Item
-                                        name={item.name}
-                                        label={
-                                            item.displayName
-                                                ? item.displayName
-                                                : t(`d:${item.name}`)
-                                        }
-                                        key={item.name}
-                                        rules={item.rules!}
-                                        normalize={(value) => (value ? value : undefined)}
-                                    >
-                                        <RangePicker
-                                            showTime={{ format: 'HH:mm' }}
-                                            format="YYYY-MM-DD HH:mm"
-                                            value={[null, null]}
-                                            allowEmpty={[true, true]}
-                                            onChange={onChange}
-                                            onOk={onOk}
-                                            placeholder={[
-                                                t('common:start-date'),
-                                                t('common:end-date')
-                                            ]}
-                                            allowClear
-                                            defaultValue={[startDate, endDate]}
-                                        />
-                                    </Form.Item>
-                                </ConfigProvider>
+                                <Form.Item
+                                    name={item.name}
+                                    label={
+                                        item.displayName ? item.displayName : t(`d:${item.name}`)
+                                    }
+                                    key={item.name}
+                                    rules={item.rules!}
+                                    normalize={(value) => (value ? value : undefined)}
+                                >
+                                    <RangePicker
+                                        showTime={{ format: 'HH:mm' }}
+                                        format={localeDateTimeFormat}
+                                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                                        value={[null, null]}
+                                        allowEmpty={[true, true]}
+                                        onChange={onChange}
+                                        onOk={onOk}
+                                        placeholder={[t('common:start-date'), t('common:end-date')]}
+                                        allowClear
+                                        defaultValue={[startDate, endDate]}
+                                    />
+                                </Form.Item>
                             );
                         } else if (item.type == FormDataType.AutoComplete)
                             return (

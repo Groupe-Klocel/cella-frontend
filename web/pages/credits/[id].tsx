@@ -34,7 +34,6 @@ import { CreditPaymentModal } from 'modules/Credits/Modals/CreditPaymentModal';
 import configs from '../../../common/configs.json';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
-import { triggerAsyncId } from 'async_hooks';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

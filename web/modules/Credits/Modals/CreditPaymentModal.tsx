@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import useTranslation from 'next-translate/useTranslation';
-import { Button, Form, InputNumber, Modal, Select, Typography } from 'antd';
+import { Button, DatePicker, Form, InputNumber, Modal, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess } from '@helpers';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
@@ -26,8 +26,9 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { FormOptionType } from 'models/ModelsV2';
-import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
 import dayjs from 'dayjs';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -275,13 +276,19 @@ const CreditPaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalPro
                     {t('d:thirdParty')}: {orderData?.thirdParty?.name} -{' '}
                     {orderData?.thirdParty?.description}
                 </Text>
-                <CalendarForm
+                <Form.Item
                     label={t('d:paymentDate')}
                     name="paymentDate"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
-                    format="YYYY-MM-DD"
-                    defaultValue={dayjs()}
-                />
+                    initialValue={dayjs()}
+                >
+                    <DatePicker
+                        allowClear
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        defaultValue={dayjs()}
+                    />
+                </Form.Item>
                 <Form.Item
                     label={t('d:amount')}
                     name="amount"

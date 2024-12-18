@@ -38,7 +38,8 @@ import {
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
 import { FormOptionType } from 'models/ModelsV2';
-import { CalendarForm } from 'components/common/dumb/Calendar/CalendarForm';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
 
 export type EditCustomerOrderFormProps = {
     orderId: string;
@@ -486,12 +487,14 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         ))}
                     </Select>
                 </Form.Item>
-                <CalendarForm
-                    label={expectedDeliveryDateLabel}
-                    name="expectedDeliveryDate"
-                    format="YYYY-MM-DD"
-                    defaultValue={dayjs()}
-                />
+                <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
+                    <DatePicker
+                        allowClear
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        defaultValue={dayjs()}
+                    />
+                </Form.Item>
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
                     <Select
                         showSearch
