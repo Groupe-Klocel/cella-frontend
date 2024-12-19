@@ -24,6 +24,11 @@ import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import configs from '../../../common/configs.json';
 import CameraScanner from './CameraScanner';
+import { useRouter } from 'next/router';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
+import 'dayjs/locale/fr';
+import dayjs from 'dayjs';
 
 export interface IDatePickerProps {
     process: string;
@@ -71,12 +76,15 @@ export const DatePickerForm = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
+    const router = useRouter();
 
     // TYPED SAFE ALL
     //Scan-1a: retrieve value from input and set values for display
     const onFinish = (values: any) => {
         setScannedInfo(values.scannedItem);
     };
+
+    dayjs.locale(router.locale === 'fr' ? 'fr' : 'en');
 
     // Scan-2: manage form reset in case of error
     useEffect(() => {
@@ -139,7 +147,14 @@ export const DatePickerForm = ({
                     rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
                     initialValue={initValue ? initValue : undefined}
                 >
-                    <DatePicker format="YYYY-MM-DD" picker="date" />
+                    <DatePicker
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        picker="date"
+                        popupStyle={{
+                            maxHeight: '200px' // avoid the calendar to be hidden
+                        }}
+                    />
                 </StyledFormItem>
                 {configs.SCAN_CAMERA_ACTIVATED === 1 ? (
                     <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
