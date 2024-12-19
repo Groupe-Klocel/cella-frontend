@@ -54,6 +54,7 @@ const CreditPages: PageComponent = () => {
     const [commonStatus, setCommonStatus] = useState<number | undefined>();
     const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
     const [orderId, setOrderId] = useState<any>();
+    const [refetchCreditPayment, setRefetchCreditPayment] = useState<boolean>(false);
 
     const headerData: HeaderData = {
         title: t('common:credits'),
@@ -178,6 +179,7 @@ const CreditPages: PageComponent = () => {
                     showCreditPaymentModal,
                     setShowCreditPaymentModal
                 }}
+                setRefetch={setRefetchCreditPayment}
                 orderId={orderId}
             />
         </>

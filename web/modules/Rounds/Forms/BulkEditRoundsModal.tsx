@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
-import { DatePicker, Form, Modal, Select } from 'antd';
+import { Form, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
     BulkUpdateRoundsMutation,
@@ -27,11 +27,10 @@ import {
     useBulkUpdateRoundsMutation,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, useRoundIds } from '@helpers';
+import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { FormOptionType } from 'models/Models';
-import { PropertySafetyFilled } from '@ant-design/icons';
 
 export interface IBulkEditRoundsRenderModalProps {
     visible: boolean;

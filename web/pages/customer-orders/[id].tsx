@@ -43,6 +43,7 @@ const CustomerOrderPage: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
+    const [dataPayment, setDataPayment] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const { id } = router.query;
@@ -53,6 +54,7 @@ const CustomerOrderPage: PageComponent = () => {
     const [idToPrint, setIdToPrint] = useState<string>();
     const [documentToPrint, setDocumentToPrint] = useState<string>();
     const [invoiceAddress, setInvoiceAddress] = useState<any>();
+    const [refetchPaymentLine, setRefetchPaymentLine] = useState<boolean>(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -324,6 +326,7 @@ const CustomerOrderPage: PageComponent = () => {
         }
         return result;
     };
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -502,6 +505,7 @@ const CustomerOrderPage: PageComponent = () => {
                         status={data?.status}
                         setInvoiceAddress={setInvoiceAddress}
                         deliveriesIds={deliveriesToDisplay}
+                        refetchPaymentLine={refetchPaymentLine}
                     />
                 }
                 headerData={headerData}
@@ -516,6 +520,7 @@ const CustomerOrderPage: PageComponent = () => {
                     showPaymentModal,
                     setShowPaymentModal
                 }}
+                setRefetch={setRefetchPaymentLine}
                 orderId={id as string}
             />
         </>

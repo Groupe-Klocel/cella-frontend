@@ -50,6 +50,7 @@ export interface IItemDetailsProps {
     status?: string | any;
     setInvoiceAddress?: any;
     deliveriesIds?: any[];
+    refetchPaymentLine?: boolean;
 }
 
 const CustomerOrderDetailsExtra = ({
@@ -61,7 +62,8 @@ const CustomerOrderDetailsExtra = ({
     priceType,
     status,
     setInvoiceAddress,
-    deliveriesIds
+    deliveriesIds,
+    refetchPaymentLine
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
@@ -422,6 +424,7 @@ const CustomerOrderDetailsExtra = ({
                 triggerDelete={undefined}
                 triggerSoftDelete={undefined}
                 columnFilter={false}
+                refetch={refetchPaymentLine}
                 actionColumns={[
                     {
                         title: 'actions:actions',

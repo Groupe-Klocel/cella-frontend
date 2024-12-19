@@ -25,20 +25,25 @@ import {
     Select,
     DatePicker,
     AutoComplete,
-    Dropdown
+    ConfigProvider
 } from 'antd';
 import { RangePickerProps } from 'antd/lib/date-picker';
 import { debounce } from 'lodash';
 import moment from 'moment';
 import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+import 'dayjs/locale/en';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/ModelsV2';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { isNumeric, pluralize, useList } from '@helpers';
+import { isNumeric, pluralize } from '@helpers';
 import { gql } from 'graphql-request';
 import { ContentSpin } from '@components';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
+import 'moment/locale/fr';
 
 export interface IGeneralSearchProps {
     form: any;
@@ -64,6 +69,12 @@ const ListFilters: FC<IGeneralSearchProps> = ({
     const [configParamOptionsList, setConfigParamOptionsList] = useState<any>();
     const [optionsList, setOptionsList] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
+
+    moment.locale(router.locale);
+
+    const localeData = moment.localeData();
+    const localeDateTimeFormat =
+        localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
 
     const onChange = (value: RangePickerProps['value'], dateString: [string, string] | string) => {
         console.log('Selected Time: ', value);
@@ -446,11 +457,12 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     rules={item.rules!}
                                     normalize={(value) => (value ? value : undefined)}
                                     initialValue={
-                                        item?.initialValue ? item?.initialValue : undefined
+                                        item?.initialValue ? dayjs(item?.initialValue) : undefined
                                     }
                                 >
                                     <DatePicker
-                                        format="YYYY-MM-DD HH:mm:ss"
+                                        format={localeDateTimeFormat}
+                                        locale={router.locale === 'fr' ? fr_FR : en_US}
                                         showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
                                         allowClear
                                     />
@@ -476,7 +488,8 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                 >
                                     <RangePicker
                                         showTime={{ format: 'HH:mm' }}
-                                        format="YYYY-MM-DD HH:mm"
+                                        format={localeDateTimeFormat}
+                                        locale={router.locale === 'fr' ? fr_FR : en_US}
                                         value={[null, null]}
                                         allowEmpty={[true, true]}
                                         onChange={onChange}
