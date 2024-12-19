@@ -27,6 +27,8 @@ import CameraScanner from './CameraScanner';
 import { useRouter } from 'next/router';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
+import 'dayjs/locale/fr';
+import dayjs from 'dayjs';
 
 export interface IDatePickerProps {
     process: string;
@@ -81,6 +83,8 @@ export const DatePickerForm = ({
     const onFinish = (values: any) => {
         setScannedInfo(values.scannedItem);
     };
+
+    dayjs.locale(router.locale === 'fr' ? 'fr' : 'en');
 
     // Scan-2: manage form reset in case of error
     useEffect(() => {
