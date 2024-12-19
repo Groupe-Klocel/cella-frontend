@@ -34,7 +34,6 @@ import { CreditPaymentModal } from 'modules/Credits/Modals/CreditPaymentModal';
 import configs from '../../../common/configs.json';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
-import { triggerAsyncId } from 'async_hooks';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -49,6 +48,7 @@ const CreditPage: PageComponent = () => {
     const { graphqlRequestClient } = useAuth();
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
+    const [refetchCreditPayment, setRefetchCreditPayment] = useState<boolean>(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -174,6 +174,7 @@ const CreditPage: PageComponent = () => {
                         thirdPartyId={data?.thirdPartyId}
                         priceType={data?.priceType}
                         status={data?.status}
+                        refetchCreditPayment={refetchCreditPayment}
                     />
                 }
                 headerData={headerData}
@@ -189,6 +190,7 @@ const CreditPage: PageComponent = () => {
                     setShowCreditPaymentModal
                 }}
                 orderId={id as string}
+                setRefetch={setRefetchCreditPayment}
             />
         </>
     );
