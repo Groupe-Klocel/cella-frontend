@@ -20,9 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
-import { useEffect, useState } from 'react';
-import configs from '../../../../../common/configs.json';
-import moment from 'moment';
+import { useEffect } from 'react';
+import dayjs from 'dayjs';
 
 //TO BE REWORKED
 
@@ -57,19 +56,21 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                 const featureToUpdate = featuresToProcess.find((item: any) => {
                     return item.featureCode.id === currentFeatureCode.id;
                 });
+
                 //this to record only date when scannedInfo is a valid date
                 let shortDate;
-                if (moment(scannedInfo).isValid() && currentFeatureCode.dateType) {
-                    shortDate = moment(scannedInfo).format('YYYY-MM-DD');
+                if (dayjs(scannedInfo).isValid() && currentFeatureCode.dateType) {
+                    shortDate = dayjs(scannedInfo).format('YYYY-MM-DD');
                 }
                 if (!currentFeatureCode.unique) {
                     const updatedFeature = {
                         ...featureToUpdate,
                         value:
-                            moment(scannedInfo).isValid() && currentFeatureCode.dateType
+                            dayjs(scannedInfo).isValid() && currentFeatureCode.dateType
                                 ? shortDate
                                 : scannedInfo
                     };
+
                     tmp_processedFeatures.push(updatedFeature);
 
                     if (!storedObject[`step${stepNumber}`]?.data?.remainingFeatures) {

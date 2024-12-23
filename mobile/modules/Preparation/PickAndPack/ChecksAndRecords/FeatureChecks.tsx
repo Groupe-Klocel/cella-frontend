@@ -20,8 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
-import { useEffect, useState } from 'react';
-import moment from 'moment';
+import { useEffect } from 'react';
+import dayjs from 'dayjs';
 
 export interface IFeatureChecksProps {
     dataToCheck: any;
@@ -56,13 +56,16 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                 });
                 //this to record only date when scannedInfo is a valid date
                 let shortDate;
-                if (moment(scannedInfo).isValid() && currentFeatureCode.dateType) {
-                    shortDate = moment(scannedInfo).format('YYYY-MM-DD');
+                if (dayjs(scannedInfo).isValid() && currentFeatureCode.dateType) {
+                    shortDate = dayjs(scannedInfo).format('YYYY-MM-DD');
                 }
                 if (!currentFeatureCode.unique) {
                     const updatedFeature = {
                         ...featureToUpdate,
-                        value: moment(scannedInfo).isValid() && currentFeatureCode.dateType ? shortDate : scannedInfo
+                        value:
+                            dayjs(scannedInfo).isValid() && currentFeatureCode.dateType
+                                ? shortDate
+                                : scannedInfo
                     };
                     tmp_processedFeatures.push(updatedFeature);
 
