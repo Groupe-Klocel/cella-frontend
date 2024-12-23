@@ -154,7 +154,7 @@ export const LocationModelV2: ModelType = {
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
-            displayName: null,
+            displayName: 'location_name',
             isMandatory: false,
             minRule: null,
             maxRule: null,

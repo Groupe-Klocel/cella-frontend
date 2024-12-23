@@ -32,7 +32,7 @@ import { ModeEnum } from 'generated/graphql';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const PaymentMethodPage: PageComponent = () => {
+const PaymentMethodsPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -122,6 +122,6 @@ const PaymentMethodPage: PageComponent = () => {
     );
 };
 
-PaymentMethodPage.layout = MainLayout;
+PaymentMethodsPage.layout = MainLayout;
 
-export default PaymentMethodPage;
+export default PaymentMethodsPage;

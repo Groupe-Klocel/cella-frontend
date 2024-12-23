@@ -252,7 +252,7 @@ const RoundPages: PageComponent = () => {
                 rowSelection={rowSelection}
                 refetch={refetch}
                 checkbox={true}
-                searchCriteria={{ category: configs.ROUND_CATEGORY_PREPARATION }}
+                searchCriteria={{ category: configs.ROUND_CATEGORY_OUTBOUND }}
                 actionColumns={[
                     {
                         title: 'actions:actions',

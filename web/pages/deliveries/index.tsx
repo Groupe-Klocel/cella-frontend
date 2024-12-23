@@ -55,28 +55,14 @@ const DeliveryPages: PageComponent = () => {
     const headerData: HeaderData = {
         title: t('common:deliveries'),
         routes: itemRoutes,
-        actionsComponent: (
-            <Space>
-                {modes.length > 0 && modes.includes(ModeEnum.Create) ? (
-                    <LinkButton
-                        title={t('actions:add2', { name: t('common:delivery') })}
-                        path={`${rootPath}/add`}
-                        type="primary"
-                    />
-                ) : (
-                    <></>
-                )}
-                {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
-                    <LinkButton
-                        title={t('actions:view-deliveries-without-orders')}
-                        path={`/deliveries/without-orders`}
-                        type="primary"
-                    />
-                ) : (
-                    <></>
-                )}
-            </Space>
-        )
+        actionsComponent:
+            modes.length > 0 && modes.includes(ModeEnum.Create) ? (
+                <LinkButton
+                    title={t('actions:add2', { name: t('common:delivery') })}
+                    path={`${rootPath}/add`}
+                    type="primary"
+                />
+            ) : null
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -97,6 +83,7 @@ const DeliveryPages: PageComponent = () => {
 
     // CUBING
     const [isCubingLoading, setIsCubingLoading] = useState(false);
+    //RESTART HERE: adapt to multi deliverylines
     const cubingDelivery = () => {
         Modal.confirm({
             title: t('messages:cubing-confirm'),
