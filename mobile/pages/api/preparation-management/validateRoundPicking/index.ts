@@ -81,6 +81,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     let canRollbackTransaction = false;
 
+    const originalFeatures: any = {};
+    const finalFeatures: any = {};
+
     try {
         // get DEFAULT_ROUND_LOCATION
         const defaultRoundParameterQuery = gql`
@@ -99,7 +102,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             filters: { scope: 'outbound', code: 'DEFAULT_ROUND_LOCATION' }
         };
 
-        const defaultRoundParameterResult = await graphqlRequestClient.request(
+        const defaultRoundParameterResult: GraphQLResponseType = await graphqlRequestClient.request(
             defaultRoundParameterQuery,
             defaultRoundParameterVariables,
             requestHeader
@@ -117,7 +120,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         `;
 
         const defaultRoundLocationVariables = {
-            filters: { scope: 'vat_rate', code: '20' }
+            filters: { name: defaultRoundParameterResult.parameters.results[0].value }
         };
 
         const defaultRoundLocationResult: GraphQLResponseType = await graphqlRequestClient.request(
@@ -134,15 +137,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     results {
                         id
                         name
-                        handlingUnitContents {
-                            id
-                            articleId
-                            quantity
-                            handlingUnitContentFeatures {
-                                id
-                                value
-                            }
-                        }
                     }
                 }
             }
@@ -276,8 +270,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 mutation updateHandlingUnitContent(
                     $id: String!
                     $input: UpdateHandlingUnitContentInput!
+                    $advancedInput: JSON
                 ) {
-                    updateHandlingUnitContent(id: $id, input: $input) {
+                    updateHandlingUnitContent(
+                        id: $id
+                        input: $input
+                        advancedInput: $advancedInput
+                    ) {
                         id
                         quantity
                         lastTransactionId
@@ -290,6 +289,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 input: {
                     quantity: hucToUpdate.quantity + movingQuantity,
                     lastTransactionId
+                },
+                advancedInput: {
+                    quantity: `quantity+${movingQuantity}`
                 }
             };
 
@@ -314,6 +316,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     updateHandlingUnitContentFeature(id: $id, input: $input) {
                         id
                         lastTransactionId
+                        value
+                        featureCode {
+                            name
+                        }
                     }
                 }
             `;
@@ -327,11 +333,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             };
 
-            const updatedHUCF = await graphqlRequestClient.request(
+            const updatedHUCF: GraphQLResponseType = await graphqlRequestClient.request(
                 updateHUCFMutation,
                 updateHUCFvariable
             );
-
+            originalFeatures[updatedHUCF.updateHandlingUnitContentFeature.featureCode.name] = {
+                value: updatedHUCF.updateHandlingUnitContentFeature.value
+            };
+            finalFeatures[updatedHUCF.updateHandlingUnitContentFeature.featureCode.name] = {
+                value: updatedHUCF.updateHandlingUnitContentFeature.value
+            };
             console.log('resType', resType);
         }
 
@@ -352,10 +363,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             mutation updateHandlingUnitContent(
                 $id: String!
                 $input: UpdateHandlingUnitContentInput!
+                $advancedInput: JSON
             ) {
-                updateHandlingUnitContent(id: $id, input: $input) {
+                updateHandlingUnitContent(id: $id, input: $input, advancedInput: $advancedInput) {
                     id
                     lastTransactionId
+                    stockOwnerId
+                    stockOwner {
+                        id
+                        name
+                    }
+                    articleId
+                    article {
+                        id
+                        name
+                    }
                 }
             }
         `;
@@ -369,10 +391,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             input: {
                 quantity: stockQuantity,
                 lastTransactionId
+            },
+            advancedInput: {
+                quantity: `quantity-${movingQuantity}`
             }
         };
 
-        const updatedHUC = await graphqlRequestClient.request(updateHUCMutation, updateHUCvariable);
+        const updatedHUC: GraphQLResponseType = await graphqlRequestClient.request(
+            updateHUCMutation,
+            updateHUCvariable
+        );
 
         console.log('updatedOriginHUC', updatedHUC);
 
@@ -383,8 +411,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             mutation updateRoundAdvisedAddress(
                 $id: String!
                 $input: UpdateRoundAdvisedAddressInput!
+                $advancedInput: JSON
             ) {
-                updateRoundAdvisedAddress(id: $id, input: $input) {
+                updateRoundAdvisedAddress(id: $id, input: $input, advancedInput: $advancedInput) {
                     id
                     roundOrderId
                     quantity
@@ -466,6 +495,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     status: configs.ROUND_ADVISED_ADDRESS_STATUS_TO_BE_VERIFIED,
                     quantity: newQuantity,
                     lastTransactionId
+                },
+                advancedInput: {
+                    quantity: `quantity-${movingQuantity}`
                 }
             };
         } else {
@@ -474,6 +506,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 input: {
                     quantity: newQuantity,
                     lastTransactionId
+                },
+                advancedInput: {
+                    quantity: `quantity-${movingQuantity}`
                 }
             };
         }
@@ -486,8 +521,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
         // 6- Update RoundLineDetail processed quantity (To be verified - 457) (RLD + RL + R statuses will be updated if needed)
         const updateRoundLineDetailMutation = gql`
-            mutation updateRoundLineDetail($id: String!, $input: UpdateRoundLineDetailInput!) {
-                updateRoundLineDetail(id: $id, input: $input) {
+            mutation updateRoundLineDetail(
+                $id: String!
+                $input: UpdateRoundLineDetailInput!
+                $advancedInput: JSON
+            ) {
+                updateRoundLineDetail(id: $id, input: $input, advancedInput: $advancedInput) {
                     id
                     processedQuantity
                     quantityToBeProcessed
@@ -599,6 +638,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 processedQuantity: newProcessedQuantity,
                 extraNumber1: movingQuantity,
                 lastTransactionId
+            },
+            advancedInput: {
+                processedQuantity: `processedQuantity+${movingQuantity}`
             }
         };
         const updateRoundLineDetailResponse = await graphqlRequestClient.request(
@@ -627,10 +669,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         };
         const movementVariables = {
             input: {
-                articleIdStr: articleInfos.articleId,
-                articleNameStr: articleInfos.articleName,
-                stockOwnerIdStr: articleInfos.stockOwnerId,
-                stockOwnerNameStr: articleInfos.stockOwnerName,
+                articleIdStr: updatedHUC.updateHandlingUnitContent.article.id,
+                articleNameStr: updatedHUC.updateHandlingUnitContent.article.name,
+                stockOwnerIdStr: updatedHUC.updateHandlingUnitContent.stockOwner.id,
+                stockOwnerNameStr: updatedHUC.updateHandlingUnitContent.stockOwner.name,
                 quantity: movingQuantity,
                 ...movementCodes,
                 originalLocationIdStr: proposedRoundAdvisedAddress.locationId,
@@ -644,6 +686,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 finalHandlingUnitIdStr: finalHandlingUnitId,
                 finalHandlingUnitNameStr: round.name,
                 finalContentIdStr: finalHandlingUnitContentId,
+                originalFeatures,
+                finalFeatures,
                 lastTransactionId
             }
         };

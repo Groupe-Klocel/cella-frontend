@@ -23,6 +23,8 @@ import { isoLangs } from './constant';
 import { message } from 'antd';
 import SecureLS from 'secure-ls';
 import { IS_LS_SECURED } from '@helpers';
+import moment from 'moment';
+import { difference } from 'lodash';
 
 export const cookie = Cookies.withAttributes({ path: '/', secure: true, sameSite: 'strict' });
 
@@ -148,9 +150,9 @@ function isEmpty(object: Object) {
 }
 
 function decodeJWT(token: String) {
-    var base64Url = token.split('.')[1];
-    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
         atob(base64)
             .split('')
             .map(function (c) {
@@ -235,6 +237,94 @@ function extractGivenConfigsParams(
     return values;
 }
 
+function formatLocaleDateTime(date: any, locale: any) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return date.toLocaleString(locale, {
+        dateStyle: 'short',
+        timeStyle: 'medium',
+        timeZone: timezone
+    });
+}
+
+function setUTCDateTime(date: string) {
+    const dateValue = new Date(date);
+    return moment(
+        new Date(
+            Date.UTC(
+                dateValue.getFullYear(),
+                dateValue.getMonth(),
+                dateValue.getDate(),
+                dateValue.getHours(),
+                dateValue.getMinutes(),
+                dateValue.getSeconds()
+            )
+        )
+    ).format();
+}
+
+function formatUTCLocaleDateTime(date: any, locale: any) {
+    date = new Date(date);
+    const dateUTC = new Date(setUTCDateTime(date));
+    return formatLocaleDateTime(dateUTC, locale);
+}
+
+const isStringDate = (dateString: string) => {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) return false;
+
+    if (isNaN(Date.parse(dateString))) return false;
+
+    if (!moment(dateString, moment.ISO_8601).isValid()) return false;
+
+    return true;
+};
+
+const isStringDateTime = (dateString: string) => {
+    const dateTimeZuluRegex =
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})?$/;
+    const dateTimeTRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}$/;
+    const dateTimeRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3}$/;
+    const dateTimeOffsetRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
+    if (
+        !dateTimeZuluRegex.test(dateString) &&
+        !dateTimeTRegex.test(dateString) &&
+        !dateTimeRegex.test(dateString) &&
+        !dateTimeOffsetRegex.test(dateString)
+    )
+        return false;
+
+    if (isNaN(Date.parse(dateString))) return false;
+
+    if (!moment(dateString, moment.ISO_8601).isValid()) return false;
+    return true;
+};
+
+function setUTCDate(date: string) {
+    const dateValue = new Date(date);
+    return moment(
+        new Date(Date.UTC(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate()))
+    ).format();
+}
+
+function formatLocaleDate(date: any, locale: any) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return date.toLocaleString(locale, {
+        dateStyle: 'short',
+        timeZone: timezone
+    });
+}
+
+function formatUTCLocaleDate(date: any, locale: any) {
+    date = new Date(date);
+    const dateUTC = new Date(setUTCDate(date));
+    return formatLocaleDate(dateUTC, locale);
+}
+
+function getDatesDifference(date1: any, date2: any, type: any = 'months') {
+    const diff = moment(date1).diff(date2, type, true);
+    return diff;
+}
+
 function isNonUniqueAndMatches(feature: any, features: any) {
     const matchingFeature = features.find(
         (ft: any) =>
@@ -271,5 +361,14 @@ export {
     LsIsSecured,
     removeDuplicatesAndSort,
     extractGivenConfigsParams,
-    isNonUniqueAndMatches
+    isNonUniqueAndMatches,
+    isStringDate,
+    setUTCDateTime,
+    formatLocaleDateTime,
+    formatUTCLocaleDateTime,
+    isStringDateTime,
+    setUTCDate,
+    formatLocaleDate,
+    formatUTCLocaleDate,
+    getDatesDifference
 };

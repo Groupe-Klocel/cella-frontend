@@ -66,7 +66,6 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
 
     const [handlingUnitModelId, setStatusHandlingUnitModel] = useState<Array<FormOptionType>>();
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
-    const [carrierShippingModes, setCarrierShippingModes] = useState<any>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
     const [carrierShippingModeIds, setcarrierShippingMode] = useState<Array<FormOptionType>>();
     const carrierShippingModeData = useGetCarrierShippingModes({}, 1, 100, null, router.locale);
@@ -74,13 +73,6 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
         language: router.locale,
         scope: 'preparation_mode'
-    });
-
-    const { isLoading, data, error } = useGetEquipmentDetailByIdQuery<
-        GetEquipmentDetailByIdQuery,
-        Error
-    >(graphqlRequestClient, {
-        id: props.details.id
     });
 
     useEffect(() => {

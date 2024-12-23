@@ -173,7 +173,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     `;
 
     const goodsInFilter = {
-        filters: { name: scannedInfo, category: configs['ROUND_CATEGORY_RECEPTION'] }
+        filters: { name: scannedInfo, category: configs['ROUND_CATEGORY_INBOUND'] }
     };
 
     const goodsInQuery = gql`

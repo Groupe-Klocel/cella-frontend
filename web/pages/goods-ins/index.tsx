@@ -75,7 +75,7 @@ const GoodsInsPages: PageComponent = () => {
                 actionButtons={actionButtons}
                 refetch={refetch}
                 checkbox={true}
-                searchCriteria={{ category: configs.ROUND_CATEGORY_RECEPTION }}
+                searchCriteria={{ category: configs.ROUND_CATEGORY_INBOUND }}
                 actionColumns={[
                     {
                         title: 'actions:actions',
