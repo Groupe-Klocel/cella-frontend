@@ -126,6 +126,41 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
         setChosenThirdParty(value);
     };
 
+    // Get all civility
+    useEffect(() => {
+        const query = gql`
+            query ListParametersForAScope($scope: String!, $code: String, $language: String) {
+                listParametersForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    text
+                    scope
+                    code
+                }
+            }
+        `;
+        const queryVariables = {
+            language: router.locale,
+            scope: 'civility'
+        };
+
+        graphqlRequestClient.request(query, queryVariables).then((data: any) => {
+            setCivilities(data?.listParametersForAScope);
+        });
+    }, []);
+    const [civilities, setCivilities] = useState([]);
+    const civilityList = civilities.map((item: any) => ({ value: item.text }));
+    const [civilityOptions, setCivilityOptions] = useState<{ value: string }[]>(civilityList);
+
+    const handleSearch = (value: string) => {
+        setCivilityOptions(
+            value
+                ? civilities
+                      .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
+                      .map((item: any) => ({ value: item.text }))
+                : civilityList
+        );
+    };
+
     // PARAMETER : category
     const categoryList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         language: router.locale,
@@ -678,8 +713,16 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                 <Form.Item label={t('d:contactName')} name="contactName">
                     <Input />
                 </Form.Item>
-                <Form.Item label={t('d:contactCivility')} name="contactCivility">
-                    <Input />
+                <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
+                    <AutoComplete
+                        options={civilityOptions}
+                        onSearch={handleSearch}
+                        onFocus={() => setCivilityOptions(civilityList)}
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:contactCivility')
+                        })}`}
+                        className="custom"
+                    ></AutoComplete>
                 </Form.Item>
                 <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
                     <Input />
