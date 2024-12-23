@@ -21,6 +21,8 @@ import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 export interface IArticleOrFeatureChecksProps {
     dataToCheck: any;
@@ -30,7 +32,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
+    const [scannedIDs, setScannedIDs] = useState<any>();
     const {
         process,
         stepNumber,
@@ -43,6 +45,8 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     // TYPED SAFE ALL
     //ScanArticleOrFeature-2: call and process frontAPIResponse
     const [fetchResult, setFetchResult] = useState<any>();
+    const { graphqlRequestClient } = useAuth();
+
     useEffect(() => {
         if (scannedInfo) {
             setIsLoading(true);
@@ -76,19 +80,61 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         }
     }, [scannedInfo]);
 
+    //start block
+    const getHUCF = async (roundName: any) => {
+        const handlingUnitQuery = gql`
+            query handlingUnits($filters: HandlingUnitSearchFilters) {
+                handlingUnits(filters: $filters) {
+                    count
+                    results {
+                        id
+                        name
+                        handlingUnitContents {
+                            id
+                            articleId
+                            quantity
+                            handlingUnitContentFeatures {
+                                id
+                                value
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const handlingUnitVariables = {
+            filters: { name: roundName }
+        };
+
+        const handlingUnitResult = await graphqlRequestClient.request(
+            handlingUnitQuery,
+            handlingUnitVariables
+        );
+        return handlingUnitResult;
+    };
+    useEffect(() => {
+        async function fetchData() {
+            const result = await getHUCF(storedObject['step10'].data.round.name);
+            if (result) setScannedIDs(result);
+        }
+        fetchData();
+    }, [scannedInfo]);
+    //end block
+
     // ScanBox-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && fetchResult) {
             let found = false;
             const handlingUnitContent =
-                storedObject['step10'].data.proposedRoundAdvisedAddress.handlingUnitContent;
+                storedObject['step10'].data.proposedRoundAdvisedAddress?.handlingUnitContent;
             const deliveryLine =
-                storedObject['step10'].data.proposedRoundAdvisedAddress.roundLineDetail
+                storedObject['step10'].data.proposedRoundAdvisedAddress?.roundLineDetail
                     .deliveryLine;
             if (fetchResult.resType === 'serialNumber') {
                 // HUCF scanned
                 if (
-                    storedObject['step10'].data.proposedRoundAdvisedAddress.locationId ==
+                    storedObject['step10'].data.proposedRoundAdvisedAddress?.locationId ==
                         fetchResult.handlingUnit.locationId &&
                     handlingUnitContent?.articleId ===
                         fetchResult.handlingUnitContentFeature?.handlingUnitContent?.article?.id &&
@@ -134,11 +180,22 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     };
                 }
             }
+
             if (!found) {
-                showError(t('messages:unexpected-scanned-item'));
-                setResetForm(true);
-                setScannedInfo(undefined);
-                setIsLoading(false);
+                const listScannedIds =
+                    scannedIDs.handlingUnits.results[0]?.handlingUnitContents[0]
+                        ?.handlingUnitContentFeatures;
+                if (listScannedIds?.some((scannedId: any) => scannedId.value === scannedInfo)) {
+                    showError(t('messages:already-scanned'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    setIsLoading(false);
+                } else {
+                    showError(t('messages:unexpected-scanned-item'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    setIsLoading(false);
+                }
             }
         }
         if (
