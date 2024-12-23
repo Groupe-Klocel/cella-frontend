@@ -787,5 +787,6 @@
     "mail-subject": "Objet",
     "mail-body": "Corps",
     "lastCycleCountDate": "Date dernier inventaire",
-    "message": "Message"
+    "message": "Message",
+    "parentCarrier": "Transporteur parent"
 }
