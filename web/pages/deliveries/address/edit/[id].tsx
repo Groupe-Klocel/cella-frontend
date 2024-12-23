@@ -17,57 +17,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, HeaderContent } from '@components';
+import { AppHead } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
-import { DeliveryAddressModelV2 } from 'models/DeliveryAddressModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
-import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { META_DEFAULTS } from '@helpers';
+import { EditDeliveryAddress } from 'modules/Deliveries/PageContainer/EditDeliveryAddress';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditDeliveryPage: PageComponent = () => {
-    const { t } = useTranslation();
-
     const router = useRouter();
-    const [data, setData] = useState<any>();
     const { id } = router.query;
-
-    const deliveryDetailBreadCrumb = [
-        ...itemRoutes,
-        {
-            breadcrumbName: `${data?.delivery_name}`,
-            path: '/deliveries/' + data?.deliveryId
-        }
-    ];
-
-    const breadCrumb = [
-        ...deliveryDetailBreadCrumb,
-        {
-            breadcrumbName: `${t('common:delivery-address')} ${data?.categoryText}`
-        }
-    ];
-    const pageTitle = `${t('common:delivery-address')} ${data?.categoryText}`;
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <EditItemComponent
-                id={id!}
-                setData={setData}
-                dataModel={DeliveryAddressModelV2}
-                headerComponent={
-                    <HeaderContent
-                        title={pageTitle}
-                        routes={breadCrumb}
-                        onBack={() => router.push(`/deliveries/address/${id}`)}
-                    />
-                }
-                routeAfterSuccess={`/deliveries/address/:id`}
-            />
+            <EditDeliveryAddress router={router} id={id} />
         </>
     );
 };

@@ -18,26 +18,44 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { useState, useEffect, FC } from 'react';
-import { Form, Button, Space, Modal, Collapse, Select } from 'antd';
+import {
+    Form,
+    Button,
+    Space,
+    Modal,
+    Collapse,
+    Select,
+    Input,
+    AutoComplete,
+    DatePicker
+} from 'antd';
 import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
-
 import { showError, showSuccess, showInfo, useCreate } from '@helpers';
 import { FilterFieldType, FormOptionType, ModelType } from 'models/ModelsV2';
 import { FormGroup } from 'modules/Crud/submodules/FormGroup';
 import configs from '../../../../common/configs.json';
 import {
-    GetThirdPartiesQuery,
+    CreatePurchaseOrderMutation,
+    CreatePurchaseOrderMutationVariables,
+    GetAllStockOwnersQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
     SimpleGetThirdPartiesQuery,
-    useGetThirdPartiesQuery,
+    useCreatePurchaseOrderMutation,
+    useGetAllStockOwnersQuery,
     useGetThirdPartyAddressContactsQuery,
     useGetThirdPartyAddressesQuery,
+    useListConfigsForAScopeQuery,
     useSimpleGetThirdPartiesQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+import TextArea from 'antd/es/input/TextArea';
+import dayjs from 'dayjs';
+import { gql } from 'graphql-request';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -66,12 +84,63 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
 
     const [current, setCurrent] = useState(0);
     const [form] = Form.useForm();
+    const errorMessageEmptyInput = t('messages:error-message-empty-input');
+    const submit = t('actions:submit');
 
-    // #region extract data from modelV2
-    const detailFields = Object.keys(props.dataModel.fieldsInfo).filter(
-        (key) => props.dataModel.fieldsInfo[key].isDetailRequested
+    // Get all stockOwners
+    const stockOwnerList = useGetAllStockOwnersQuery<Partial<GetAllStockOwnersQuery>, Error>(
+        graphqlRequestClient,
+        {
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 100
+        }
     );
-    // #endregion
+
+    // Get all civility
+    useEffect(() => {
+        const query = gql`
+            query ListParametersForAScope($scope: String!, $code: String, $language: String) {
+                listParametersForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    text
+                    scope
+                    code
+                }
+            }
+        `;
+        const queryVariables = {
+            language: router.locale,
+            scope: 'civility'
+        };
+
+        graphqlRequestClient.request(query, queryVariables).then((data: any) => {
+            setCivilities(data?.listParametersForAScope);
+        });
+    }, []);
+    const [civilities, setCivilities] = useState([]);
+    const civilityList = civilities.map((item: any) => ({ value: item.text }));
+    const [civilityOptions, setCivilityOptions] = useState<{ value: string }[]>(civilityList);
+
+    const handleSearch = (value: string) => {
+        setCivilityOptions(
+            value
+                ? civilities
+                      .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
+                      .map((item: any) => ({ value: item.text }))
+                : civilityList
+        );
+    };
+
+    // Get all type
+    const typeList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'purchase_order_type'
+    });
+    const excludedCodes = ['10100', '10104'];
+    const filteredConfigs = typeList.data?.listConfigsForAScope.filter(
+        (config: any) => !excludedCodes.includes(config.code)
+    );
 
     //ThirdParties
     const supplierThirdPartiesList = useSimpleGetThirdPartiesQuery<
@@ -288,76 +357,51 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
         };
     }, [unsavedChanges]);
 
-    const handleClickNext = () => {
-        form.validateFields()
-            .then(() => {
-                // Here make api call of something else
-                setCurrent(current + 1);
-            })
-            .catch((err) => console.log(err));
-    };
-
-    const handleClickBack = () => {
-        setCurrent(current - 1);
-    };
-
-    const {
-        isLoading: createLoading,
-        result: createResult,
-        mutate
-    } = useCreate(props.dataModel.resolverName, props.dataModel.endpoints.create, detailFields);
-
-    useEffect(() => {
-        if (!(createResult && createResult.data)) return;
-
-        if (createResult.success) {
-            setUnsavedChanges(false);
-            router.push(
-                props.routeAfterSuccess.replace(
-                    ':id',
-                    createResult.data[props.dataModel.endpoints.create]?.id
-                )
-            );
-            showSuccess(t('messages:success-created'));
-        } else {
-            showError(t('messages:error-creating-data'));
+    //CREATE PURCHASE ORDER
+    const { mutate, isPending: createLoading } = useCreatePurchaseOrderMutation<Error>(
+        graphqlRequestClient,
+        {
+            onSuccess: (
+                data: CreatePurchaseOrderMutation,
+                _variables: CreatePurchaseOrderMutationVariables,
+                _context: any
+            ) => {
+                setUnsavedChanges(false);
+                router.push(`/purchase-orders/${data.createPurchaseOrder.id}`);
+                showSuccess(t('messages:success-created'));
+            },
+            onError: (err) => {
+                console.log(err);
+                showError(t('messages:error-creating-data'));
+            }
         }
-    }, [createResult]);
-
-    // function to reset data in case of fields dependencies
-    const [changedFormValues, setChangedFormValues] = useState<any>({});
-    useEffect(() => {
-        if (
-            form.getFieldsValue(true) &&
-            props.dependentFields &&
-            props.dependentFields.length > 0
-        ) {
-            props.dependentFields.forEach((obj: any) => {
-                if (changedFormValues[obj.triggerField]) {
-                    delete form.getFieldsValue(true)[obj.changingField];
-                }
-            });
-        }
-    }, [props.dependentFields, changedFormValues]);
+    );
+    const createPurchaseOrder = ({ input }: CreatePurchaseOrderMutationVariables) => {
+        mutate({ input });
+    };
 
     const onFinish = () => {
         Modal.confirm({
             title: t('messages:create-confirm'),
             onOk: () => {
+                const nowDate = dayjs();
                 form.validateFields()
                     .then(() => {
+                        form.setFieldsValue({
+                            status: configs.PURCHASE_ORDER_STATUS_IN_PROGRESS,
+                            orderDate: nowDate
+                        });
                         const formData = form.getFieldsValue(true);
 
                         delete formData.thirdPartyId;
                         delete formData.thirdPartyAddressId;
                         delete formData.thirdPartyAddressContactId;
-                        mutate({
-                            input: { ...formData, ...props.extraData }
-                        });
+
+                        createPurchaseOrder({ input: formData });
                         setUnsavedChanges(false);
                     })
                     .catch((err) => {
-                        showError(t('errors:DB-000111'));
+                        showError(t('messages:error-creating-data'));
                     });
             },
             okText: t('messages:confirm'),
@@ -377,115 +421,231 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
         });
     };
 
-    const steps = props.addSteps.map((element, index) => {
-        return {
-            title: `${t('common:step')} ` + (index + 1).toString(),
-            key: index
-        };
-    });
-
-    useEffect(() => {
-        if (createLoading) {
-            showInfo(t('messages:info-create-wip'));
-        }
-    }, [createLoading]);
-
     return (
         <WrapperForm>
-            {steps.length > 1 && <StepsPanel currentStep={current} steps={steps} />}
-            <WrapperStepContent>
-                <Form
-                    form={form}
-                    layout="vertical"
-                    scrollToFirstError
-                    onValuesChange={(changedValues, values) => {
-                        setChangedFormValues(changedValues);
-                        props.setFormInfos(values);
-                        setUnsavedChanges(true);
-                    }}
+            <Form
+                form={form}
+                layout="vertical"
+                scrollToFirstError
+                onValuesChange={() => {
+                    setUnsavedChanges(true);
+                }}
+            >
+                <Collapse style={{ marginBottom: 10 }}>
+                    <Panel header={t('actions:open-prepopulate-section')} key="1">
+                        <Form.Item label={t('d:supplier')} name="thirdPartyId">
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:supplier')
+                                })}`}
+                                onChange={handleThirdPartyChange}
+                            >
+                                {thirdParties?.map((item: any) => (
+                                    <Option key={item.key} value={item.key}>
+                                        {item.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            label={t('d:third-party-address-model')}
+                            name="thirdPartyAddressId"
+                        >
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:third-party-address-model')
+                                })}`}
+                                onChange={handleAddressChange}
+                            >
+                                {thirdPartyAddresses?.map((item: any) => (
+                                    <Option key={item.key} value={item.key}>
+                                        {item.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            label={t('d:third-party-address-contact-model')}
+                            name="thirdPartyAddressContactId"
+                        >
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:third-party-address-contact-model')
+                                })}`}
+                                onChange={handleContactChange}
+                            >
+                                {thirdPartyAddressContacts?.map((item: any) => (
+                                    <Option key={item.key} value={item.key}>
+                                        {item.text}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Panel>
+                </Collapse>
+                <Form.Item
+                    label={t('d:stockOwner_name')}
+                    name="stockOwnerId"
+                    rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
-                    <Collapse style={{ marginBottom: 10 }}>
-                        <Panel header={t('actions:open-prepopulate-section')} key="1">
-                            <Form.Item label={t('d:supplier')} name="thirdPartyId">
-                                <Select
-                                    allowClear
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:supplier')
-                                    })}`}
-                                    onChange={handleThirdPartyChange}
-                                >
-                                    {thirdParties?.map((item: any) => (
-                                        <Option key={item.key} value={item.key}>
-                                            {item.text}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                            <Form.Item
-                                label={t('d:third-party-address-model')}
-                                name="thirdPartyAddressId"
-                            >
-                                <Select
-                                    allowClear
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:third-party-address-model')
-                                    })}`}
-                                    onChange={handleAddressChange}
-                                >
-                                    {thirdPartyAddresses?.map((item: any) => (
-                                        <Option key={item.key} value={item.key}>
-                                            {item.text}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                            <Form.Item
-                                label={t('d:third-party-address-contact-model')}
-                                name="thirdPartyAddressContactId"
-                            >
-                                <Select
-                                    allowClear
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:third-party-address-contact-model')
-                                    })}`}
-                                    onChange={handleContactChange}
-                                >
-                                    {thirdPartyAddressContacts?.map((item: any) => (
-                                        <Option key={item.key} value={item.key}>
-                                            {item.text}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                        </Panel>
-                    </Collapse>
-                    <FormGroup inputs={props.addSteps[current]} setValues={form.setFieldsValue} />
-                </Form>
-            </WrapperStepContent>
-            {current === 0 && steps.length > 1 ? (
-                <div style={{ textAlign: 'center' }}>
-                    <Button onClick={handleClickNext}>{t('actions:next-step')}</Button>
-                </div>
-            ) : current > 0 && current < steps.length - 1 ? (
-                <div style={{ textAlign: 'center' }}>
-                    <Space>
-                        <Button onClick={handleClickBack}>{t('actions:back-step')}</Button>
-                        <Button onClick={handleClickNext}>{t('actions:next-step')}</Button>
-                    </Space>
-                </div>
-            ) : (
-                <div style={{ textAlign: 'center' }}>
-                    <Space>
-                        {steps.length > 1 && (
-                            <Button onClick={handleClickBack}>{t('actions:back-step')}</Button>
-                        )}
-                        <Button type="primary" loading={createLoading} onClick={onFinish}>
-                            {t('actions:submit')}
-                        </Button>
-                        <Button onClick={onCancel}>{t('actions:cancel')}</Button>
-                    </Space>
-                </div>
-            )}
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:stockOwner')
+                        })}`}
+                    >
+                        {stockOwnerList?.data?.stockOwners?.results.map((stockOwner: any) => (
+                            <Option key={stockOwner.id} value={stockOwner.id}>
+                                {stockOwner.name}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:purchaseOrder_name')} name="name">
+                    <Input />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:entityName')}
+                    name="entityName"
+                    rules={[{ required: true, message: errorMessageEmptyInput }]}
+                >
+                    <Input maxLength={50} />
+                </Form.Item>
+                <Form.Item label={t('d:entityCode')} name="entityCode">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:expectedGoodsInDate')} name={'expectedGoodsInDate'}>
+                    <DatePicker
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                    />
+                </Form.Item>
+                <Form.Item label={t('d:comment')} name="comment">
+                    <TextArea />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:type')}
+                    name="type"
+                    rules={[{ required: true, message: errorMessageEmptyInput }]}
+                >
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:type')
+                        })}`}
+                    >
+                        {filteredConfigs?.map((type: any) => (
+                            <Option key={type.id} value={parseInt(type.code)}>
+                                {type.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
+                    <Input maxLength={50} />
+                </Form.Item>
+                <Form.Item label={t('d:entityAddress2')} name="entityAddress2">
+                    <Input maxLength={50} />
+                </Form.Item>
+                <Form.Item label={t('d:entityAddress3')} name="entityAddress3">
+                    <Input maxLength={50} />
+                </Form.Item>
+                <Form.Item label={t('d:entityStreetNumber')} name="entityStreetNumber">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityPostCode')} name="entityPostCode">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityCity')} name="entityCity">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityState')} name="entityState">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityDistrict')} name="entityDistrict">
+                    <Input />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:entityCountry')}
+                    name="entityCountry"
+                    initialValue={'France'}
+                >
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityVatCode')} name="entityVatCode">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityEoriCode')} name="entityEoriCode">
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:entityAccountingCode')} name="entityAccountingCode">
+                    <Input />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:entityIdentificationNumber')}
+                    name="entityIdentificationNumber"
+                >
+                    <Input />
+                </Form.Item>
+                <Form.Item label={t('d:contactLanguage')} name="contactLanguage">
+                    <Input maxLength={15} />
+                </Form.Item>
+                <Form.Item label={t('d:entityLanguage')} name="entityLanguage">
+                    <Input maxLength={15} />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:entityDeliveryPointNumber')}
+                    name="entityDeliveryPointNumber"
+                >
+                    <Input maxLength={15} />
+                </Form.Item>
+                <Form.Item label={t('d:contactName')} name="contactName">
+                    <Input maxLength={100} />
+                </Form.Item>
+                <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
+                    <AutoComplete
+                        options={civilityOptions}
+                        onSearch={handleSearch}
+                        onFocus={() => setCivilityOptions(civilityList)}
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:contactCivility')
+                        })}`}
+                        className="custom"
+                    ></AutoComplete>
+                </Form.Item>
+                <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
+                    <Input maxLength={50} />
+                </Form.Item>
+
+                <Form.Item label={t('d:contactLastName')} name="contactLastName">
+                    <Input maxLength={50} />
+                </Form.Item>
+
+                <Form.Item label={t('d:contactPhone')} name="contactPhone">
+                    <Input maxLength={50} />
+                </Form.Item>
+
+                <Form.Item label={t('d:contactMobile')} name="contactMobile">
+                    <Input maxLength={50} />
+                </Form.Item>
+
+                <Form.Item
+                    label={t('d:contactEmail')}
+                    name="contactEmail"
+                    normalize={(value) => (value ? value : undefined)}
+                >
+                    <Input />
+                </Form.Item>
+            </Form>
+            <div style={{ textAlign: 'center' }}>
+                <Button type="primary" onClick={onFinish}>
+                    {submit}
+                </Button>
+                <Button onClick={onCancel}>{t('actions:cancel')}</Button>
+            </div>
         </WrapperForm>
     );
 };
