@@ -25,11 +25,12 @@ import { Button, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CreditLineModelV2 } from 'models/CreditLineModelV2';
 import { PaymentLineModelV2 } from 'models/PaymentLineModelV2';
 import { CreditAddressModelV2 } from 'models/CreditAddressModelV2';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import configs from '../../../../common/configs.json';
 
 export interface IItemDetailsProps {
     orderId?: string | any;
@@ -40,16 +41,13 @@ export interface IItemDetailsProps {
     priceType?: number | any;
     status?: string | any;
     refetchCreditPayment?: boolean;
+    setCreditInvoiceAddress?: any;
 }
 
 const CreditDetailsExtra = ({
     orderId,
     orderName,
-    stockOwnerId,
-    stockOwnerName,
-    thirdPartyId,
-    priceType,
-    status,
+    setCreditInvoiceAddress,
     refetchCreditPayment
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
@@ -58,7 +56,7 @@ const CreditDetailsExtra = ({
     const [idToDisableLine, setIdToDisableLine] = useState<string | undefined>();
     const creditLineModes = getModesFromPermissions(permissions, Table.OrderLine);
     const creditAddressModes = getModesFromPermissions(permissions, Table.OrderAddress);
-
+    const [creditAddressesData, setCreditAddressesData] = useState<any>();
     const paymentLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:payment-lines') }),
         routes: [],
@@ -80,6 +78,16 @@ const CreditDetailsExtra = ({
                 />
             ) : null
     };
+
+    useEffect(() => {
+        if (creditAddressesData) {
+            setCreditInvoiceAddress(
+                creditAddressesData.find(
+                    (e: any) => e.category == configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE
+                )
+            );
+        }
+    }, [creditAddressesData]);
 
     const creditLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:credit-lines') }),
@@ -168,6 +176,7 @@ const CreditDetailsExtra = ({
                                 )
                             }
                         ]}
+                        setData={setCreditAddressesData}
                         searchable={false}
                         sortDefault={[{ field: 'created', ascending: true }]}
                         triggerDelete={undefined}
