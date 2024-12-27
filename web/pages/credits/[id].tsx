@@ -17,8 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton } from '@components';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { AppHead, LinkButton, SinglePrintModal } from '@components';
+import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
@@ -45,9 +45,13 @@ const CreditPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, model.tableName);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const { id } = router.query;
-    const { graphqlRequestClient } = useAuth();
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
+    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
+    const [documentToPrint, setDocumentToPrint] = useState<string>();
+    const [creditInvoiceAddress, setCreditInvoiceAddress] = useState<any>();
+    const { graphqlRequestClient } = useAuth();
     const [refetchCreditPayment, setRefetchCreditPayment] = useState<boolean>(false);
 
     // #region to customize information
@@ -60,8 +64,6 @@ const CreditPage: PageComponent = () => {
 
     const pageTitle = `${t('common:credit')} ${data?.name}`;
     // #endregion
-
-    //#endregion
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
@@ -88,7 +90,6 @@ const CreditPage: PageComponent = () => {
             });
         };
     };
-
     const closeStatus = async (id: string) => {
         const newStatus = configs.ORDER_STATUS_CLOSED;
         const updateVariables = {
@@ -112,7 +113,6 @@ const CreditPage: PageComponent = () => {
         }
         return result;
     };
-
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -143,6 +143,28 @@ const CreditPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Read) &&
+                data?.status >= configs.ORDER_STATUS_TO_INVOICE ? (
+                    <>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                if (creditInvoiceAddress) {
+                                    setShowSinglePrintModal(true);
+                                    setIdToPrint(creditInvoiceAddress.id);
+                                    setDocumentToPrint('CGP_Credit');
+                                } else {
+                                    showError(t('messages:no-invoice-address'));
+                                }
+                            }}
+                        >
+                            {t('actions:print-credit')}
+                        </Button>
+                    </>
+                ) : (
+                    <></>
+                )}
                 {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
                     <Button onClick={() => confirmAction(data.id, setIdToDelete, 'delete')()}>
                         {t('actions:delete')}
@@ -157,6 +179,16 @@ const CreditPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                <SinglePrintModal
+                    showModal={{
+                        showSinglePrintModal,
+                        setShowSinglePrintModal
+                    }}
+                    dataToPrint={{ id: idToPrint }}
+                    documentName={documentToPrint!}
+                    documentReference={data?.name}
+                    customLanguage={data?.printLanguage ?? undefined}
+                />
             </Space>
         )
     };
@@ -175,6 +207,7 @@ const CreditPage: PageComponent = () => {
                         priceType={data?.priceType}
                         status={data?.status}
                         refetchCreditPayment={refetchCreditPayment}
+                        setCreditInvoiceAddress={setCreditInvoiceAddress}
                     />
                 }
                 headerData={headerData}
