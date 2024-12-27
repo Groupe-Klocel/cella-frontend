@@ -141,6 +141,7 @@
     "generate-credit": "Générer Avoir",
     "print-invoice": "Imprimer facture",
     "print-quote": "Imprimer devis",
+    "print-credit": "Imprimer avoir",
     "print-order-form": "Imprimer bon de commande",
     "print-receipt": "Imprimer bordereau de réception",
     "create-delivery": "Créér livraison",
