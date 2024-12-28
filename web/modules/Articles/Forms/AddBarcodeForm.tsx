@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Col, Input, Row, Form, Select, Checkbox } from 'antd';
+import { Button, Col, Input, Row, Form, Select, Checkbox, AutoComplete } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -35,7 +35,13 @@ import {
     getRulesWithNoSpacesValidator
 } from '@helpers';
 
+import { debounce } from 'lodash';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+
+interface IOption {
+    value: string;
+    id: string;
+}
 
 const { Option } = Select;
 
@@ -64,6 +70,12 @@ export const AddBarcodeForm = () => {
     const [articles, setArticles] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [choosenStockOwner, setChoosenStockOwner] = useState<string>();
+    const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
+    const [articleName, setArticleName] = useState<string>('');
+    const [aId, setAId] = useState<string>();
+    const onChange = (data: string) => {
+        setArticleName(data);
+    };
 
     // to render article_lu list and thus Lu related to selected article
     const articleLuData = useArticleLus(null, 1, 100, null);
@@ -91,37 +103,37 @@ export const AddBarcodeForm = () => {
     };
 
     //To render all articles
-    const articleFilter = choosenStockOwner ? { stockOwnerId: `${choosenStockOwner}` } : null;
+    // const articleFilter = choosenStockOwner ? { stockOwnerId: `${choosenStockOwner}` } : null;
 
-    const articleData = useArticleIds(articleFilter, 1, 100, null);
-
-    useEffect(() => {
-        if (articleData.data) {
-            setArticles(articleData?.data?.articles?.results);
-        }
-    }, [articleData]);
-
-    // to render autocompleted articles list
-    //const articleData = useArticleIds({ name: `${articleName}%` }, 1, 100, null);
-
-    // useEffect(() => {
-    //     const formValue = form.getFieldsValue(true);
-    //     form.setFieldsValue({ ...formValue, articleId: aId, articleName: articleName });
-    // }, [aId]);
+    // const articleData = useArticleIds(articleFilter, 1, 100, null);
 
     // useEffect(() => {
     //     if (articleData.data) {
-    //         const newIdOpts: Array<IOption> = [];
-    //         articleData.data.articles?.results.forEach(({ id, name }) => {
-    //             if (form.getFieldsValue(true).articleId === id) {
-    //                 setArticleName(name!);
-    //                 setAId(id!);
-    //             }
-    //             newIdOpts.push({ value: name!, id: id! });
-    //         });
-    //         setAIdOptions(newIdOpts);
+    //         setArticles(articleData?.data?.articles?.results);
     //     }
-    // }, [articleName, articleData.data]);
+    // }, [articleData]);
+
+    //to render autocompleted articles list
+    const articleData = useArticleIds({ name: `${articleName}%` }, 1, 100, null);
+
+    useEffect(() => {
+        const formValue = form.getFieldsValue(true);
+        form.setFieldsValue({ ...formValue, articleId: aId, articleName: articleName });
+    }, [aId]);
+
+    useEffect(() => {
+        if (articleData.data) {
+            const newIdOpts: Array<IOption> = [];
+            articleData.data.articles?.results.forEach(({ id, name }) => {
+                if (form.getFieldsValue(true).articleId === id) {
+                    setArticleName(name!);
+                    setAId(id!);
+                }
+                newIdOpts.push({ value: name!, id: id! });
+            });
+            setAIdOptions(newIdOpts);
+        }
+    }, [articleData.data]);
 
     const onFinish = () => {
         form.validateFields()
@@ -147,12 +159,9 @@ export const AddBarcodeForm = () => {
                     }
                     if (!res.ok) {
                         const errorResponse = await res.json();
-                        if (errorResponse.error.response.errors[0].extensions) {
-                            showError(
-                                t(
-                                    `errors:${errorResponse.error.response.errors[0].extensions.code}`
-                                )
-                            );
+                        if (errorResponse.error) {
+                            console.log(res);
+                            showError(t(`errors:${errorResponse.error.code}`));
                         } else {
                             showError(t('messages:error-creating-data'));
                         }
@@ -160,6 +169,8 @@ export const AddBarcodeForm = () => {
                     if (res) {
                         setIsLoading(false);
                         form.resetFields();
+                        setAId(undefined);
+                        setArticleName('');
                     }
                 };
                 fetchData();
@@ -215,27 +226,33 @@ export const AddBarcodeForm = () => {
                     <Col xs={8} xl={12}>
                         <Form.Item
                             label={article}
-                            name="articleId"
+                            name="articleName"
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
                         >
-                            <Select
-                                allowClear
-                                showSearch
+                            <AutoComplete
                                 placeholder={`${t('messages:please-fill-letter-your', {
-                                    name: t('d:article')
+                                    name: t('d:articleName')
                                 })}`}
-                                filterOption={(input, option) =>
-                                    option?.props.children
-                                        .toLowerCase()
-                                        .indexOf(input.toLowerCase()) >= 0
+                                style={{ width: '100%' }}
+                                options={aIdOptions}
+                                value={articleName}
+                                filterOption={(inputValue, option) =>
+                                    option!.value
+                                        .toUpperCase()
+                                        .indexOf(inputValue.toUpperCase()) !== -1
                                 }
-                            >
-                                {articles?.map((article: any) => (
-                                    <Option key={article.id} value={article.id}>
-                                        {article.name}
-                                    </Option>
-                                ))}
-                            </Select>
+                                onKeyUp={(e: any) => {
+                                    debounce(() => {
+                                        setArticleName(e.target.value);
+                                    }, 3000);
+                                }}
+                                onSelect={(value, option) => {
+                                    setAId(option.id);
+                                    setArticleName(value);
+                                }}
+                                allowClear
+                                onChange={onChange}
+                            />
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>

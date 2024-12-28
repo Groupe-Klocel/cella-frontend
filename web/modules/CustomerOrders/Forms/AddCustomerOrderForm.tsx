@@ -26,8 +26,8 @@ import {
     Select,
     Modal,
     AutoComplete,
-    DatePicker,
-    Checkbox
+    Checkbox,
+    DatePicker
 } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useAuth } from 'context/AuthContext';
@@ -51,6 +51,8 @@ import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import TextArea from 'antd/lib/input/TextArea';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
 
 interface IOption {
     value: string;
@@ -636,7 +638,12 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     <InputNumber />
                 </Form.Item>
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
-                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
+                    <DatePicker
+                        allowClear
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        defaultValue={dayjs()}
+                    />
                 </Form.Item>
                 <Form.Item
                     label={deliveryTypeLabel}

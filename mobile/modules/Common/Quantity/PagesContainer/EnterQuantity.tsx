@@ -48,8 +48,6 @@ export const EnterQuantity = ({
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const [enteredInfo, setEnteredInfo] = useState<number>();
 
-    console.log('availableQuantity', availableQuantity);
-
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
     useEffect(() => {

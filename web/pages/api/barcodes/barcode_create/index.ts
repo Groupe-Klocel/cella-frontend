@@ -138,20 +138,31 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         });
     } catch (error: any) {
         await graphqlRequestClient.request(rollbackTransaction, rollbackVariable, requestHeader);
-        res.status(500).json({ error });
+        // res.status(500).json({ error });
         if (error.response.errors[0].extensions) {
-            res.status(500).json({
-                error: {
-                    is_error: error.response.errors[0].extensions.is_error,
-                    code: error.response.errors[0].extensions.code,
-                    message: error.response.errors[0].message,
-                    variables: error.response.errors[0].extensions.variables,
-                    exception: error.response.errors[0].extensions.exception
-                }
-            });
+            if (error.response.errors[0].extensions.code == '23505') {
+                res.status(500).json({
+                    error: {
+                        is_error: error.response.errors[0].extensions.is_error,
+                        code: 'FAPI_000003',
+                        message: 'barcode already exists for this stock owner',
+                        exception: error.response.errors[0].extensions.exception
+                    }
+                });
+            } else {
+                res.status(500).json({
+                    error: {
+                        is_error: error.response.errors[0].extensions.is_error,
+                        code: error.response.errors[0].extensions.code,
+                        message: error.response.errors[0].message,
+                        variables: error.response.errors[0].extensions.variables,
+                        exception: error.response.errors[0].extensions.exception
+                    }
+                });
+            }
         } else {
             res.status(500).json({
-                error: error
+                error
             });
         }
     }

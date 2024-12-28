@@ -200,10 +200,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             movementInputs.push({ ...changingStatusReservation });
         }
     } else if (trigger == 'addContentFeature') {
-        const finalFeatures: any = {};
-        finalFeatures[destinationData.feature.code] = {
-            value: destinationData.feature.value
+        const finalFeatures: any = [];
+        const finalFeatureElt: any = {};
+        finalFeatureElt[destinationData.feature.code] = {
+            id: destinationData.feature.id,
+            value: destinationData.feature.value,
+            extraText2: destinationData.feature.extraText2
         };
+        finalFeatures.push(finalFeatureElt);
         movementInputs.push({
             articleIdStr: destinationData?.articleId,
             articleNameStr: destinationData?.articleName,
@@ -215,14 +219,18 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             code: parameters.MOVEMENT_CODE_POSITIVE_STOCK_ADJUSTEMENT,
             ...originCommonInfos,
             ...destinationCommonInfos,
-            finalFeatures,
+            finalFeatures: JSON.stringify(finalFeatures),
             lastTransactionId
         });
     } else if (trigger == 'deleteContentFeature') {
-        const originalFeatures: any = {};
-        originalFeatures[originData.feature.code] = {
-            value: originData.feature.value
+        const originalFeatures: any = [];
+        const originalFeatureElt: any = {};
+        originalFeatureElt[originData.feature.code] = {
+            id: originData.feature.id,
+            value: originData.feature.value,
+            extraText2: originData.feature.extraText2
         };
+        originalFeatures.push(originalFeatureElt);
         movementInputs.push({
             articleIdStr: originData?.articleId,
             articleNameStr: originData?.articleName,
@@ -234,18 +242,26 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             code: parameters.MOVEMENT_CODE_NEGATIVE_STOCK_ADJUSTEMENT,
             ...originCommonInfos,
             ...destinationCommonInfos,
-            originalFeatures,
+            originalFeatures: JSON.stringify(originalFeatures),
             lastTransactionId
         });
     } else if (trigger == 'updateContentFeature') {
-        const originalFeatures: any = {};
-        originalFeatures[originData.feature.code] = {
-            value: originData.feature.value
+        const originalFeatures: any = [];
+        const originalFeatureElt: any = {};
+        originalFeatureElt[originData.feature.code] = {
+            id: originData.feature.id,
+            value: originData.feature.value,
+            extraText2: originData.feature.extraText2
         };
-        const finalFeatures: any = {};
-        finalFeatures[destinationData.feature.code] = {
-            value: destinationData.feature.value
+        originalFeatures.push(originalFeatureElt);
+        const finalFeatures: any = [];
+        const finalFeatureElt: any = {};
+        finalFeatureElt[destinationData.feature.code] = {
+            id: destinationData.feature.id,
+            value: destinationData.feature.value,
+            extraText2: destinationData.feature.extraText2
         };
+        finalFeatures.push(finalFeatureElt);
         movementInputs.push({
             articleIdStr: destinationData?.articleId,
             articleNameStr: destinationData?.articleName,
@@ -257,8 +273,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             code: parameters['MOVEMENT_CODE_STATUS/RESERVATION_CHANGE'],
             ...originCommonInfos,
             ...destinationCommonInfos,
-            originalFeatures,
-            finalFeatures,
+            originalFeatures: JSON.stringify(originalFeatures),
+            finalFeatures: JSON.stringify(finalFeatures),
             lastTransactionId
         });
     }

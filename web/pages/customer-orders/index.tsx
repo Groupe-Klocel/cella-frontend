@@ -71,6 +71,7 @@ const CustomerOrderPages: PageComponent = () => {
     const [orderId, setOrderId] = useState<any>();
     const [isCreateDeliveryAllowed, setIsCreateDeliveryAllowed] = useState<boolean>(false);
     const router = useRouter();
+    const [refetchPaymentLine, setRefetchPaymentLine] = useState<boolean>(false);
 
     const MagentoImport = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'global',
@@ -487,6 +488,7 @@ const CustomerOrderPages: PageComponent = () => {
                     showPaymentModal,
                     setShowPaymentModal
                 }}
+                setRefetch={setRefetchPaymentLine}
                 orderId={orderId}
             />
         </>

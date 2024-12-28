@@ -63,42 +63,53 @@ export const ValidateCycleCountMovementForm = ({
 
     let cycleCount: { [k: string]: any } = {};
     if (storedObject.step10.data.cycleCount) {
-        cycleCount = storedObject.step10.data.cycleCount;
+        const { id, type } = storedObject.step10.data.cycleCount;
+        cycleCount = { id, type };
     }
     let currentCycleCountLine: { [k: string]: any } = {};
     if (storedObject.step10.data.currentCycleCountLine) {
-        currentCycleCountLine = storedObject.step10.data.currentCycleCountLine;
+        const { id, status } = storedObject.step10.data.currentCycleCountLine;
+        currentCycleCountLine = { id, status };
     }
     let location: { [k: string]: any } = {};
     if (storedObject.step20.data.location) {
-        location = storedObject.step20.data.location;
+        const { id, name } = storedObject.step20.data.location;
+        location = { id, name };
     }
     let handlingUnit: { [k: string]: any } = {};
     if (storedObject.step30.data.handlingUnit) {
-        handlingUnit = storedObject.step30.data.handlingUnit;
+        const { id, name, parentHandlingUnit } = storedObject.step30.data.handlingUnit;
+        handlingUnit = { id, name, parentHandlingUnit: { name: parentHandlingUnit?.name } };
     }
-    let huToCreate: { [k: string]: any } = {};
-    if (storedObject.step30.data.huToCreate) {
-        huToCreate = storedObject.step30.data.handlingUnit;
+    let isHuToCreate: boolean;
+    if (storedObject.step30.data.isHuToCreate) {
+        isHuToCreate = storedObject.step30.data.isHuToCreate;
     }
     if (storedObject.step30.data.huToCreate) {
         handlingUnit = storedObject.step30.data.huToCreate;
     }
     let handlingUnitContent: { [k: string]: any } = {};
     if (storedObject.step40.data.handlingUnitContent) {
-        handlingUnitContent = storedObject.step40.data.handlingUnitContent;
+        const { quantity } = storedObject.step40.data.handlingUnitContent;
+        handlingUnitContent = { quantity };
     }
     let cycleCountMovement: { [k: string]: any } = {};
     if (storedObject.step40.data.currentCCMovement) {
-        cycleCountMovement = storedObject.step40.data.currentCCMovement;
+        const { id, status } = storedObject.step40.data.currentCCMovement;
+        cycleCountMovement = { id, status };
     }
     let feature: { [k: string]: any } = {};
     if (storedObject.step40.data.feature) {
-        feature = storedObject.step40.data.feature;
+        const { id, value } = storedObject.step40.data.feature;
+        feature = { id, value };
     }
     let resType: string;
     if (storedObject.step40.data.resType) {
         resType = storedObject.step40.data.resType;
+    }
+    let expectedFeatures: any;
+    if (storedObject.step40.data.expectedFeatures) {
+        expectedFeatures = storedObject.step40.data.expectedFeatures;
     }
     let stockOwner: { [k: string]: any } = {};
     if (storedObject.step50.data.stockOwner) {
@@ -106,19 +117,44 @@ export const ValidateCycleCountMovementForm = ({
     }
     let article: { [k: string]: any } = {};
     if (storedObject.step55.data.article) {
-        article = storedObject.step55.data.article;
+        const { id, name } = storedObject.step55.data.article;
+        article = { id, name };
     }
-    let stockStatus: number;
+    let stockStatus: { [k: string]: any } = {};
     if (storedObject.step60.data.stockStatus) {
-        stockStatus = storedObject.step60.data.stockStatus;
+        const { key } = storedObject.step60.data.stockStatus;
+        stockStatus = { key };
     }
     let featureCode: { [k: string]: any } = {};
     if (storedObject.step65.data.featureCode) {
         featureCode = storedObject.step65.data.featureCode;
     }
+    let reviewedFeatures: any;
+    if (storedObject.step70.data.reviewedFeatures) {
+        reviewedFeatures = storedObject.step70.data.reviewedFeatures;
+    }
     let quantity: number;
-    if (storedObject.step70.data.movingQuantity) {
-        quantity = storedObject.step70.data.movingQuantity;
+    if (storedObject.step80.data.movingQuantity) {
+        quantity = storedObject.step80.data.movingQuantity;
+    }
+
+    //this handles the features modification
+    const identifyModifiedFeatures = (expectedFeatures: any[], reviewedFeatures: any[]) => {
+        const differences: { [key: string]: any }[] = [];
+
+        expectedFeatures.forEach((expectedFeature, index) => {
+            const modifiedFeature = reviewedFeatures[index];
+            if (expectedFeature.value !== modifiedFeature.value) {
+                differences.push(modifiedFeature);
+            }
+        });
+
+        return differences.length > 0 ? differences : undefined;
+    };
+
+    let modifiedFeatures: any;
+    if (expectedFeatures && reviewedFeatures && reviewedFeatures != 'none') {
+        modifiedFeatures = identifyModifiedFeatures(expectedFeatures, reviewedFeatures);
     }
 
     //ValidateCycleCountMovement-1a: fetch front API
@@ -135,7 +171,7 @@ export const ValidateCycleCountMovementForm = ({
                 cycleCountMovement,
                 location,
                 handlingUnit,
-                huToCreate,
+                isHuToCreate,
                 handlingUnitContent,
                 article,
                 stockOwner,
@@ -143,7 +179,8 @@ export const ValidateCycleCountMovementForm = ({
                 feature,
                 featureCode,
                 resType,
-                quantity
+                quantity,
+                modifiedFeatures
             })
         });
         if (res.ok) {

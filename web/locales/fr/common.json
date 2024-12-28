@@ -45,7 +45,7 @@
     "forgot": "Vous avez oublié votre mot de passe ?",
     "company": "Entreprise",
     "contact-details": "Coordonnées du contact",
-    "cartography": "Cartography",
+    "cartography": "Cartographie",
     "date": "Dates",
     "country": "Pays",
     "custom-value": "Valeur personnalisée",
@@ -291,6 +291,7 @@
     "bank-account": "Compte bancaire",
     "bank-accounts": "Comptes bancaires",
     "vat-rates": "Taux de TVA",
+    "vat-rate": "Taux de TVA",
     "goods-in-line-detail": "Détail de ligne d'arrivage",
     "goods-in-line-details": "Détails de ligne d'arrivage",
     "inbound-box": "Colis entrant",
@@ -347,5 +348,7 @@
     "scheduler-config": "Ordonnanceur",
     "argument": "Argument",
     "crontab": "Cron",
-    "documents": "Documents"
+    "documents": "Documents",
+    "cycle-count-errors": "Erreurs d'inventaire",
+    "cycle-count-error": "Erreur d'inventaire"
 }

@@ -31,6 +31,7 @@ import { ScanHandlingUnit } from 'modules/Preparation/Palletization/PagesContain
 import { HandlingUnitChecks } from 'modules/Preparation/Palletization/ChecksAndRecords/HandlingUnitChecks';
 import { PalletChecks } from 'modules/Preparation/Palletization/ChecksAndRecords/PalletChecks';
 import { ValidateHandlingUnitPalletizationForm } from 'modules/Preparation/Palletization/Forms/validateHandlingUnitPalletizationForm';
+import { SelectHuModelFormPalletization } from 'modules/Preparation/Palletization/Forms/SelectHuModelFormPalletization';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const PalletizationInfo: PageComponent = () => {
@@ -39,13 +40,15 @@ const PalletizationInfo: PageComponent = () => {
     const router = useRouter();
     const [triggerRender, setTriggerRender] = useState<boolean>(true);
     const [originDisplay, setOriginDisplay] = useState<any>({});
-    const [finalDisplay, setFinalDisplay] = useState<any>({});
-    const [headerContent, setHeaderContent] = useState<boolean>(false);
-    const [displayed, setDisplayed] = useState<any>({});
+    const [isHuToCreate, setIsHuToCreate] = useState<boolean>(false);
     const workflow = {
         processName: 'palletization',
-        expectedSteps: [10, 20, 30]
+        expectedSteps: [10, 20, 25, 30]
     };
+    // [0] : 10 -> Scan Pallet
+    // [1] : 20 -> Select HUModel
+    // [2] : 25 -> Scan HU
+    // [3] : 30 -> Validate
     const palletizationInfos = JSON.parse(storage.get(workflow.processName) || '{}');
     const [triggerAlternativeSubmit1, setTriggerAlternativeSubmit1] = useState<boolean>(false);
 
@@ -62,8 +65,6 @@ const PalletizationInfo: PageComponent = () => {
     useEffect(() => {
         const object: { [k: string]: any } = {};
 
-        setHeaderContent(false);
-
         if (palletizationInfos[`step${workflow.expectedSteps[0]}`].data) {
             object[t('common:pallet')] =
                 palletizationInfos[`step${workflow.expectedSteps[0]}`].data.handlingUnit.name;
@@ -78,6 +79,12 @@ const PalletizationInfo: PageComponent = () => {
                         `step${workflow.expectedSteps[0]}`
                     ].data.handlingUnit?.handlingUnitOutbounds[0]?.carrier?.name;
             }
+            if (palletizationInfos[`step${workflow.expectedSteps[1]}`]?.data) {
+                object[t('common:handling-unit-model')] =
+                    palletizationInfos[
+                        `step${workflow.expectedSteps[1]}`
+                    ].data.handlingUnitModel.name;
+            }
             object[t('common:number-of-boxes')] = palletizationInfos[
                 `step${workflow.expectedSteps[0]}`
             ].data.handlingUnit.childrenHandlingUnits
@@ -88,21 +95,22 @@ const PalletizationInfo: PageComponent = () => {
         setOriginDisplay(object);
     }, [triggerRender]);
 
-    useEffect(() => {
-        headerContent ? setDisplayed(finalDisplay) : setDisplayed(originDisplay);
-    }, [originDisplay, finalDisplay, headerContent]);
-
     const onReset = () => {
         storage.removeAll();
-        setHeaderContent(false);
         setTriggerRender(!triggerRender);
     };
 
     const previousPage = () => {
         router.back();
         storage.removeAll();
-        setHeaderContent(false);
     };
+    useEffect(() => {
+        const isHuToCreate = palletizationInfos[`step${workflow.expectedSteps[0]}`]?.data
+            ?.handlingUnit.childrenHandlingUnits?.length
+            ? true
+            : false;
+        setIsHuToCreate(isHuToCreate);
+    }, [isHuToCreate]);
 
     return (
         <PageContentWrapper>
@@ -119,36 +127,54 @@ const PalletizationInfo: PageComponent = () => {
                     </Space>
                 }
             />
-            {Object.keys(originDisplay).length === 0 && Object.keys(finalDisplay).length === 0 ? (
+            {Object.keys(originDisplay).length === 0 ? (
                 <></>
             ) : (
                 <RadioInfosHeader
                     input={{
-                        displayed: displayed
+                        displayed: originDisplay
                     }}
                 ></RadioInfosHeader>
             )}
             {!palletizationInfos[`step${workflow.expectedSteps[0]}`]?.data ? (
-                <ScanHandlingUnit
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[0]}
-                    label={t('common:pallet')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true }}
-                    triggerAlternativeSubmit1={{
-                        triggerAlternativeSubmit1,
-                        setTriggerAlternativeSubmit1
-                    }}
-                    checkComponent={(data: any) => <PalletChecks dataToCheck={data} />}
-                ></ScanHandlingUnit>
+                <>
+                    <ScanHandlingUnit
+                        process={workflow.processName}
+                        stepNumber={workflow.expectedSteps[0]}
+                        label={t('common:pallet')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: true }}
+                        triggerAlternativeSubmit1={{
+                            triggerAlternativeSubmit1,
+                            setTriggerAlternativeSubmit1
+                        }}
+                        checkComponent={(data: any) => <PalletChecks dataToCheck={data} />}
+                    ></ScanHandlingUnit>
+                </>
             ) : (
                 <></>
             )}
             {palletizationInfos[`step${workflow.expectedSteps[0]}`]?.data &&
             !palletizationInfos[`step${workflow.expectedSteps[1]}`]?.data ? (
-                <ScanHandlingUnit
+                <SelectHuModelFormPalletization
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[1]}
+                    label={t('common:handling-unit-model')}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    buttons={{
+                        submitButton: true,
+                        backButton: true
+                    }}
+                ></SelectHuModelFormPalletization>
+            ) : (
+                <></>
+            )}
+
+            {palletizationInfos[`step${workflow.expectedSteps[1]}`]?.data &&
+            !palletizationInfos[`step${workflow.expectedSteps[2]}`]?.data ? (
+                <ScanHandlingUnit
+                    process={workflow.processName}
+                    stepNumber={workflow.expectedSteps[2]}
                     label={t('common:box')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{
@@ -169,17 +195,20 @@ const PalletizationInfo: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {palletizationInfos[`step${workflow.expectedSteps[0]}`]?.data &&
-            palletizationInfos[`step${workflow.expectedSteps[1]}`]?.data ? (
+            {palletizationInfos[`step${workflow.expectedSteps[1]}`]?.data &&
+            palletizationInfos[`step${workflow.expectedSteps[2]}`]?.data ? (
                 <ValidateHandlingUnitPalletizationForm
                     process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[1]}
+                    stepNumber={workflow.expectedSteps[2]}
                     trigger={{ triggerRender, setTriggerRender }}
                     handlingUnit={
                         palletizationInfos[`step${workflow.expectedSteps[0]}`].data?.handlingUnit
                     }
-                    box={palletizationInfos[`step${workflow.expectedSteps[1]}`].data?.handlingUnit}
-                    headerContent={{ setHeaderContent }}
+                    hUModel={
+                        palletizationInfos[`step${workflow.expectedSteps[1]}`].data
+                            ?.handlingUnitModel
+                    }
+                    box={palletizationInfos[`step${workflow.expectedSteps[2]}`].data?.handlingUnit}
                 ></ValidateHandlingUnitPalletizationForm>
             ) : (
                 <></>

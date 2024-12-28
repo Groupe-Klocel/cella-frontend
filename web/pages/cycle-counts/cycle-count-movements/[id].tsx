@@ -53,11 +53,11 @@ const CycleCountMovementPage: PageComponent = () => {
     const breadCrumb = [
         ...cycleCountDetailBreadCrumb,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${t('common:cycle-count-movement')}`
         }
     ];
 
-    const pageTitle = `${t('common:cycle-count-movement')} ${data?.name}`;
+    const pageTitle = `${t('common:cycle-count-movement')}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)

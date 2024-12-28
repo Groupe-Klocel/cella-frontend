@@ -33,7 +33,6 @@ import { ModeEnum } from 'generated/graphql';
 import { DeliveryModelV2 as model } from 'models/DeliveryModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
-import { BulkEditDeliveriesRenderModal } from 'modules/Deliveries/Forms/BulkEditDeliveriesModal';
 import { FC, useState } from 'react';
 import configs from '../../../common/configs.json';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
@@ -52,7 +51,6 @@ const DeliveryPages: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [loading, setLoading] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const [showModal, setShowModal] = useState(false);
     const [refetch, setRefetch] = useState<boolean>(false);
     const headerData: HeaderData = {
         title: t('common:deliveries'),
@@ -177,25 +175,6 @@ const DeliveryPages: PageComponent = () => {
                             {t('actions:cubing')}
                         </Button>
                     </span>
-                    <span style={{ marginLeft: 16 }}>
-                        <Button
-                            type="primary"
-                            onClick={() => {
-                                setShowModal(true);
-                            }}
-                            disabled={!hasSelected}
-                            loading={loading}
-                        >
-                            {t('actions:edit')}
-                        </Button>
-                    </span>
-                    <BulkEditDeliveriesRenderModal
-                        visible={showModal}
-                        rows={rowSelection}
-                        showhideModal={() => {
-                            setShowModal(!showModal);
-                        }}
-                    />
                 </>
             ) : null
     };

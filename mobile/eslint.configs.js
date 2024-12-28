@@ -39,6 +39,7 @@ export default [
             '@typescript-eslint': '@typescript-eslint/eslint-plugin',
             react: 'eslint-plugin-react'
         },
+        ignores: ['node_modules/', '.next/'],
         rules: {
             'no-fallthrough': 'off',
             'prefer-const': 'off',

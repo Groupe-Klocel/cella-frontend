@@ -294,7 +294,8 @@
     "payment-methods": "Payment Methods",
     "bank-account": "Bank Account",
     "bank-accounts": "Bank Accounts",
-    "vat-rates": "Vat Rate",
+    "vat-rates": "Vat Rates",
+    "vat-rate": "Vat Rate",
     "goods-in-line-detail": "Goods-in Line Detail",
     "goods-in-line-details": "Goods-in Line Details",
     "inbound-box": "Inbound Box",
@@ -382,5 +383,7 @@
     "scheduler-config": "Scheduler Config",
     "argument": "Argument",
     "crontab": "Cron",
-    "documents": "Documents"
+    "documents": "Documents",
+    "cycle-count-errors": "Cycle count errors",
+    "cycle-count-error": "Cycle count error"
 }

@@ -18,31 +18,30 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, Select, Collapse } from 'antd';
+import { Button, Input, Form, Select, Collapse, AutoComplete } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo } from '@helpers';
+import { showError, showSuccess, showInfo, GraphQLResponseType } from '@helpers';
 import { FormOptionType } from 'models/Models';
 import {
     CreateDeliveryAddressMutation,
     CreateDeliveryAddressMutationVariables,
     GetDeliveryByIdQuery,
-    GetThirdPartiesQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
     SimpleGetThirdPartiesQuery,
     useCreateDeliveryAddressMutation,
     useGetDeliveryByIdQuery,
-    useGetThirdPartiesQuery,
     useGetThirdPartyAddressContactsQuery,
     useGetThirdPartyAddressesQuery,
     useListConfigsForAScopeQuery,
     useSimpleGetThirdPartiesQuery
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
-import { gql } from 'graphql-request';
+import { gql, GraphQLClient } from 'graphql-request';
+import { debounce } from 'lodash';
 
 interface IOption {
     value: string;
@@ -55,6 +54,11 @@ export interface ISingleItemProps {
     deliveryId: string | any;
     deliveryName: string | any;
 }
+interface MappedAdresses {
+    address1: string;
+    city: string;
+    postalCode: string;
+}
 
 export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
     const { t } = useTranslation();
@@ -65,7 +69,9 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
     const [thirdPartyAddresses, setThirdPartyAddresses] = useState<Array<FormOptionType>>();
     const [thirdPartyAddressContacts, setThirdPartyAddressContacts] =
         useState<Array<FormOptionType>>();
-
+    const [dataLocations, setDataLocations] = useState<any>();
+    const [aIdOptions, setAIdOptions] = useState<Array<any>>([]);
+    const [addressInput, setAddressInput] = useState<string>('');
     //ThirdParties
     const delivery = useGetDeliveryByIdQuery<GetDeliveryByIdQuery, Error>(graphqlRequestClient, {
         id: props.deliveryId
@@ -118,6 +124,41 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
     // handle call back on thirdparty change
     const handleThirdPartyChange = async (value: any) => {
         setChosenThirdParty(value);
+    };
+
+    // Get all civility
+    useEffect(() => {
+        const query = gql`
+            query ListParametersForAScope($scope: String!, $code: String, $language: String) {
+                listParametersForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    text
+                    scope
+                    code
+                }
+            }
+        `;
+        const queryVariables = {
+            language: router.locale,
+            scope: 'civility'
+        };
+
+        graphqlRequestClient.request(query, queryVariables).then((data: any) => {
+            setCivilities(data?.listParametersForAScope);
+        });
+    }, []);
+    const [civilities, setCivilities] = useState([]);
+    const civilityList = civilities.map((item: any) => ({ value: item.text }));
+    const [civilityOptions, setCivilityOptions] = useState<{ value: string }[]>(civilityList);
+
+    const handleSearch = (value: string) => {
+        setCivilityOptions(
+            value
+                ? civilities
+                      .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
+                      .map((item: any) => ({ value: item.text }))
+                : civilityList
+        );
     };
 
     // PARAMETER : category
@@ -355,6 +396,130 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
         }
     }, [createLoading]);
 
+    //GQL REQUEST
+    async function getKloship() {
+        //GET PARAMETER
+        const queryParameter = gql`
+            query getParameter {
+                listParametersForAScope(scope: "kloship") {
+                    code
+                    value
+                }
+            }
+        `;
+
+        try {
+            const queryParameterResult = await graphqlRequestClient.request(queryParameter);
+
+            if (queryParameterResult) {
+                const ksApiEndpoint = queryParameterResult.listParametersForAScope.find(
+                    (e: any) => e.code == 'KS_API_ENDPOINT'
+                ).value;
+
+                //GET KLOSHIP
+                const clientKloship = new GraphQLClient(ksApiEndpoint, {
+                    signal: AbortSignal.timeout(600000),
+                    headers: {}
+                });
+
+                const queryKloship = gql`
+                    query checkAddressV1($auth: AuthInput!, $input: AdressInput!) {
+                        checkAddressV1(
+                            auth: $auth
+                            input: $input
+                            limit: 50
+                            mapWithoutPostalCode: true
+                        ) {
+                            valid
+                            message
+                            mappedAdresses {
+                                name
+                                address1
+                                countryCode
+                                postalCode
+                                cityCode
+                                city
+                            }
+                        }
+                    }
+                `;
+
+                const auth = {
+                    accountId: queryParameterResult.listParametersForAScope.find(
+                        (e: any) => e.code == 'KS_ACCOUNT_ID'
+                    ).value,
+                    accessKey: queryParameterResult.listParametersForAScope.find(
+                        (e: any) => e.code == 'KS_ACCESS_KEY'
+                    ).value
+                };
+
+                const input = {
+                    name: '',
+                    address1: addressInput,
+                    city: '',
+                    countryCode: 'FR' //default value
+                };
+
+                try {
+                    const queryKloshipResult: GraphQLResponseType = await clientKloship.request(
+                        queryKloship,
+                        {
+                            auth,
+                            input
+                        }
+                    );
+                    if (queryKloshipResult.checkAddressV1.mappedAdresses) {
+                        console.log(queryKloshipResult.checkAddressV1.mappedAdresses);
+                        const newIdOpts: Array<any> = [];
+                        (
+                            queryKloshipResult.checkAddressV1.mappedAdresses as MappedAdresses[]
+                        ).forEach(({ address1, city, postalCode }) => {
+                            if (input.address1 === `${address1} - ${city}`) {
+                                form.setFieldsValue({
+                                    entityAddress1: address1,
+                                    entityStreetNumber: (address1.match(/^\d+/)?.[0] || '') + '',
+                                    entityPostCode: postalCode,
+                                    entityCity: city
+                                });
+                            }
+                            newIdOpts.push({
+                                value: `${address1} - ${city}`,
+                                label: `${address1} - ${city}`
+                            });
+                        });
+                        console.log(newIdOpts);
+                        setAIdOptions(newIdOpts);
+                    }
+                    return queryKloshipResult.checkAddressV1;
+                } catch (error) {
+                    console.log('qKS_error', error);
+                }
+            }
+        } catch (error) {
+            console.error;
+        }
+    }
+
+    useEffect(() => {
+        async function fetchData() {
+            const queryKloshipResult = await getKloship();
+            if (queryKloshipResult) setDataLocations(queryKloshipResult);
+        }
+        fetchData();
+    }, [addressInput]);
+
+    const onChange = (data: string) => {
+        setAddressInput(data);
+        // if we clear the select, we clear the form
+        if (data === null || data === undefined) {
+            form.setFieldsValue({
+                entityAddress1: '',
+                entityStreetNumber: '',
+                entityPostCode: '',
+                entityCity: ''
+            });
+        }
+    };
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
@@ -461,6 +626,36 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                 <Form.Item label={t('d:entityName')} name="entityName">
                     <Input />
                 </Form.Item>
+                <Form.Item
+                    label={t('d:addressToSearch')}
+                    style={{
+                        backgroundColor: '#a8a8a8',
+                        border: '#d9d9d9',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        marginBottom: '16px'
+                    }}
+                >
+                    <AutoComplete
+                        style={{ width: '100%' }}
+                        options={aIdOptions}
+                        value={addressInput}
+                        onKeyUp={(e: any) => {
+                            debounce(() => {
+                                setAddressInput(e.target.value);
+                            }, 3000);
+                        }}
+                        onSelect={(value, option) => {
+                            setAddressInput(value);
+                            const AddressInfo = dataLocations.mappedAdresses.find(
+                                (e: { id: any }) => e.id === option.id
+                            );
+                        }}
+                        allowClear
+                        onChange={onChange}
+                        placeholder={`${t('messages:please-enter-address-to-search')}`}
+                    />
+                </Form.Item>
                 <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
                     <Input />
                 </Form.Item>
@@ -518,8 +713,16 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                 <Form.Item label={t('d:contactName')} name="contactName">
                     <Input />
                 </Form.Item>
-                <Form.Item label={t('d:contactCivility')} name="contactCivility">
-                    <Input />
+                <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
+                    <AutoComplete
+                        options={civilityOptions}
+                        onSearch={handleSearch}
+                        onFocus={() => setCivilityOptions(civilityList)}
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:contactCivility')
+                        })}`}
+                        className="custom"
+                    ></AutoComplete>
                 </Form.Item>
                 <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
                     <Input />
