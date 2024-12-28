@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { useState, useEffect, FC } from 'react';
-import { Form, Button, Space, Modal, DatePicker, Input, Select } from 'antd';
+import { Form, Button, Space, Modal, Input, Select, DatePicker } from 'antd';
 import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
 import useTranslation from 'next-translate/useTranslation';
 import { useRouter } from 'next/router';
@@ -31,8 +31,9 @@ import {
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import dayjs from 'dayjs';
-
-require('moment/locale/fr'); // French
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
+import 'moment/locale/fr'; // French
 
 export interface IAddItemFormProps {
     dataModel: ModelType;
@@ -152,7 +153,9 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                             handlingUnitContentId: relatedHUC?.id,
                             feature: {
                                 code: createdFeature.featureCode.name,
-                                value: createdFeature.value
+                                value: createdFeature.value,
+                                id: createdFeature.id,
+                                extraText2: createdFeature.extraText2
                             }
                         }
                     })
@@ -316,7 +319,10 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
                             initialValue={dayjs()}
                         >
-                            <DatePicker format={localeDateTimeFormat} />
+                            <DatePicker
+                                format={localeDateTimeFormat}
+                                locale={router.locale === 'fr' ? fr_FR : en_US}
+                            />
                         </Form.Item>
                     ) : (
                         <Form.Item

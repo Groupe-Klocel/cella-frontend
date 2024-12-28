@@ -28,6 +28,7 @@ import { CycleCountMovementModelV2 } from 'models/CycleCountMovementModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import configs from '../../../../common/configs.json';
+import { CycleCountErrorModelV2 } from 'models/CycleCountErrorModelV2';
 
 export interface IItemDetailsProps {
     cycleCountId?: string | any;
@@ -50,6 +51,10 @@ const CycleCountDetailsExtra = ({
         permissions,
         CycleCountMovementModelV2.tableName
     );
+    const cycleCountErrorModes = getModesFromPermissions(
+        permissions,
+        CycleCountErrorModelV2.tableName
+    );
 
     const CycleCountLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:cycle-count-lines') }),
@@ -59,6 +64,12 @@ const CycleCountDetailsExtra = ({
 
     const CycleCountMovementHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:cycle-count-movements') }),
+        routes: [],
+        actionsComponent: null
+    };
+
+    const CycleCountErrorHeaderData: HeaderData = {
+        title: t('common:associated', { name: t('common:cycle-count-errors') }),
         routes: [],
         actionsComponent: null
     };
@@ -129,6 +140,44 @@ const CycleCountDetailsExtra = ({
                                                 icon={<EyeTwoTone />}
                                                 path={pathParams(
                                                     '/cycle-counts/cycle-count-movements/[id]',
+                                                    record.id
+                                                )}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
+            {cycleCountErrorModes.length > 0 && cycleCountErrorModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{
+                            cycleCountId: cycleCountId
+                        }}
+                        headerData={CycleCountErrorHeaderData}
+                        dataModel={CycleCountErrorModelV2}
+                        triggerDelete={{}}
+                        triggerSoftDelete={{}}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string }) => (
+                                    <Space>
+                                        {cycleCountErrorModes.length > 0 &&
+                                        cycleCountErrorModes.includes(ModeEnum.Read) ? (
+                                            <LinkButton
+                                                icon={<EyeTwoTone />}
+                                                path={pathParams(
+                                                    '/cycle-counts/cycle-count-errors/[id]',
                                                     record.id
                                                 )}
                                             />

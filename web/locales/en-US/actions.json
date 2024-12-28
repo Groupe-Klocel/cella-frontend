@@ -143,6 +143,7 @@
     "generate-credit": "Generate Credit Note",
     "print-invoice": "Print Invoice",
     "print-quote": "Print Quote",
+    "print-credit": "Print Credit",
     "print-order-form": "Print Order Form",
     "print-receipt": "Print Receipt",
     "create-delivery": "Create delivery",
@@ -152,5 +153,6 @@
     "with-closed-cancel-items": "With closed and cancelled items",
     "without-closed-cancel-items": "Without closed and cancelled items",
     "add-scheduler-config": "Add Scheduler Config",
-    "edit-crontab": "Edit Cron"
+    "edit-crontab": "Edit Cron",
+    "add-extra-infos": "Add extra infos"
 }

@@ -26,8 +26,9 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { FormOptionType } from 'models/ModelsV2';
-import moment from 'moment';
 import dayjs from 'dayjs';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -35,9 +36,10 @@ const { Text } = Typography;
 export interface IPaymentModalProps {
     orderId: string;
     showModal: any;
+    setRefetch?: any;
 }
 
-const CreditPaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
+const CreditPaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
@@ -109,7 +111,7 @@ const CreditPaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
         }
     }, [orderId]);
 
-    useEffect(() => {
+    const setFieldsValue = () => {
         form.setFieldsValue({
             paymentMethodText: orderData?.paymentMethodText,
             paymentMethod: orderData?.paymentMethod,
@@ -119,6 +121,10 @@ const CreditPaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
             orderType: orderData?.orderType,
             stockOwnerId: orderData?.stockOwnerId
         });
+    };
+
+    useEffect(() => {
+        setFieldsValue();
     }, [orderData]);
 
     // Retrieve Payment methods list
@@ -181,6 +187,8 @@ const CreditPaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
     const handleCancel = () => {
         setIsCreationLoading(false);
         showModal.setShowCreditPaymentModal(false);
+        form.resetFields();
+        setFieldsValue();
     };
 
     const onClickOk = () => {
@@ -213,9 +221,10 @@ const CreditPaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
                         })
                     });
                     if (res.ok) {
-                        showSuccess(t('messages:success-creating-data'));
+                        showSuccess(t('messages:success-created'));
                         setIsCreationLoading(false);
                         showModal.setShowCreditPaymentModal(false);
+                        setRefetch((refetchCredit: boolean) => !refetchCredit);
                     }
                     if (!res.ok) {
                         const errorResponse = await res.json();
@@ -235,7 +244,7 @@ const CreditPaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
                 fetchData();
             })
             .catch((err) => {
-                showError(t('messages:error-input-validation'));
+                showError(t('messages:error-creating-data'));
                 setIsCreationLoading(false);
                 showModal.setShowCreditPaymentModal(false);
             });
@@ -246,7 +255,13 @@ const CreditPaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
             title={t('actions:enter-payment-information')}
             open={showModal.showCreditPaymentModal}
             width={800}
-            bodyStyle={{ maxHeight: '70vh', overflowY: 'auto', padding: '0px 24px' }}
+            styles={{
+                body: {
+                    maxHeight: '70vh',
+                    overflowY: 'auto',
+                    padding: '0px 24px'
+                }
+            }}
             footer={[
                 <Button key="back" onClick={handleCancel}>
                     {t('messages:cancel')}
@@ -265,9 +280,14 @@ const CreditPaymentModal = ({ showModal, orderId }: IPaymentModalProps) => {
                     label={t('d:paymentDate')}
                     name="paymentDate"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
-                    initialValue={moment()}
+                    initialValue={dayjs()}
                 >
-                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
+                    <DatePicker
+                        allowClear
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        defaultValue={dayjs()}
+                    />
                 </Form.Item>
                 <Form.Item
                     label={t('d:amount')}

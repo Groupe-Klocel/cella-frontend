@@ -70,6 +70,32 @@ query GetCarrierById($id: String!) {
         code
         created
         createdBy
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        contactLanguage
+        contactName
+        contactCivility
+        contactEmail
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactLanguage
         modified
         modifiedBy
         status
@@ -111,6 +137,7 @@ mutation CreateCarrier($input: CreateCarrierInput!) {
         id
         name
         code
+        entityName
         created
         createdBy
         modified
@@ -150,6 +177,32 @@ mutation UpdateCarrier($id: String!, $input: UpdateCarrierInput!) {
         parentCarrierId
         created
         createdBy
+        entityName
+        entityAddress1
+        entityAddress2
+        entityAddress3
+        entityStreetNumber
+        entityPostCode
+        entityCity
+        entityState
+        entityDistrict
+        entityCountry
+        entityCountryCode
+        entityVatCode
+        entityEoriCode
+        entityAccountingCode
+        entityIdentificationNumber
+        entityLanguage
+        entityDeliveryPointNumber
+        contactLanguage
+        contactName
+        contactCivility
+        contactEmail
+        contactFirstName
+        contactLastName
+        contactPhone
+        contactMobile
+        contactLanguage
         modified
         modifiedBy
         status

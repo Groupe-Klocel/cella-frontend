@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { HeaderContent, WrapperForm } from '@components';
-import { Button, Input, Form, Select, Space, Modal, Collapse } from 'antd';
+import { Button, Input, Form, Select, Space, Modal, Collapse, AutoComplete } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -35,6 +35,7 @@ import {
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
 import { FormOptionType } from 'models/ModelsV2';
+import { gql } from 'graphql-request';
 
 export type EditCreditAddressFormProps = {
     orderAddressId: string;
@@ -137,6 +138,53 @@ export const EditCreditAddressForm: FC<EditCreditAddressFormProps> = ({
             }
         }
     }, [contactsList.data]);
+
+    // Get all civility
+    useEffect(() => {
+        const query = gql`
+            query ListParametersForAScope($scope: String!, $code: String, $language: String) {
+                listParametersForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    text
+                    scope
+                    code
+                }
+            }
+        `;
+        const queryVariables = {
+            language: router.locale,
+            scope: 'civility'
+        };
+
+        graphqlRequestClient.request(query, queryVariables).then((data: any) => {
+            setCivilities(data?.listParametersForAScope);
+        });
+    }, []);
+
+    const [civilities, setCivilities] = useState([]);
+    const civilityList = civilities.map((item: any) => ({ value: item.text }));
+    const tmp_civilities = civilities.map((item: any) => ({ value: item.text }));
+
+    if (
+        tmp_civilities.find((civility) => civility.value === details.contactCivility) === undefined
+    ) {
+        tmp_civilities.push({ value: details.contactCivility });
+    }
+    const [civilityOptions, setCivilityOptions] = useState<{ value: string }[]>(civilityList);
+
+    const handleSearch = (value: string) => {
+        setCivilityOptions(
+            value
+                ? civilities
+                      .filter((item: any) => item.text.toLowerCase().includes(value.toLowerCase()))
+                      .map((item: any) => ({ value: item.text }))
+                : civilityList
+        );
+    };
+
+    const onSelect = (value: string) => {
+        form.setFieldsValue({ contactCivility: value });
+    };
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -454,8 +502,17 @@ export const EditCreditAddressForm: FC<EditCreditAddressFormProps> = ({
                     <Form.Item label={t('d:contactName')} name="contactName">
                         <Input />
                     </Form.Item>
-                    <Form.Item label={t('d:contactCivility')} name="contactCivility">
-                        <Input />
+                    <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
+                        <AutoComplete
+                            options={civilityOptions}
+                            onSelect={onSelect}
+                            onSearch={handleSearch}
+                            onFocus={() => setCivilityOptions(civilityList)}
+                            placeholder={`${t('messages:please-select-a', {
+                                name: t('d:contactCivility')
+                            })}`}
+                            className="custom"
+                        ></AutoComplete>
                     </Form.Item>
                     <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
                         <Input />
@@ -469,7 +526,11 @@ export const EditCreditAddressForm: FC<EditCreditAddressFormProps> = ({
                     <Form.Item label={t('d:contactMobile')} name="contactMobile">
                         <Input />
                     </Form.Item>
-                    <Form.Item label={t('d:contactEmail')} name="contactEmail">
+                    <Form.Item
+                        label={t('d:contactEmail')}
+                        name="contactEmail"
+                        normalize={(value) => (value ? value : undefined)}
+                    >
                         <Input />
                     </Form.Item>
                     <Form.Item label={t('d:contactLanguage')} name="contactLanguage">

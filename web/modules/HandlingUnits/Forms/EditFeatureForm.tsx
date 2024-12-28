@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { FC, useEffect, useState } from 'react';
-import { Button, Form, Modal, Space, DatePicker, Input, Select } from 'antd';
+import { Button, Form, Modal, Space, Input, Select, DatePicker } from 'antd';
 import { StepsPanel, WrapperForm, WrapperStepContent } from '@components';
 import useTranslation from 'next-translate/useTranslation';
 import dayjs from 'dayjs';
@@ -35,8 +35,9 @@ import {
     useGetHandlingUnitContentByIdQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
-
-require('moment/locale/fr'); // French
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
+import 'moment/locale/fr';
 
 export interface IEditItemFormProps {
     id: string;
@@ -131,7 +132,9 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                             handlingUnitContentId: relatedHUC?.id,
                             feature: {
                                 code: props.details?.featureCode?.name,
-                                value: props.details?.value
+                                value: props.details?.value,
+                                id: props.id,
+                                extraText2: props.details?.extraText2
                             }
                         },
                         destinationData: {
@@ -148,7 +151,9 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                             handlingUnitContentId: relatedHUC?.id,
                             feature: {
                                 code: updatedFeature.featureCode.name,
-                                value: updatedFeature.value
+                                value: updatedFeature.value,
+                                id: props.id,
+                                extraText2: updatedFeature.extraText2
                             }
                         }
                     })
@@ -388,7 +393,10 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
                             initialValue={dayjs()}
                         >
-                            <DatePicker format={localeDateTimeFormat} />
+                            <DatePicker
+                                format={localeDateTimeFormat}
+                                locale={router.locale === 'fr' ? fr_FR : en_US}
+                            />
                         </Form.Item>
                     ) : (
                         <Form.Item

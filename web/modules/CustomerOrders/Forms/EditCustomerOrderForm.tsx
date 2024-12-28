@@ -23,6 +23,7 @@ import useTranslation from 'next-translate/useTranslation';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
+import dayjs from 'dayjs';
 import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import {
     GetThirdPartiesQuery,
@@ -37,7 +38,8 @@ import {
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
 import { FormOptionType } from 'models/ModelsV2';
-import dayjs from 'dayjs';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
 
 export type EditCustomerOrderFormProps = {
     orderId: string;
@@ -486,7 +488,12 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                     </Select>
                 </Form.Item>
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
-                    <DatePicker allowClear format="YYYY-MM-DD" defaultValue={dayjs()} />
+                    <DatePicker
+                        allowClear
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        defaultValue={dayjs()}
+                    />
                 </Form.Item>
                 <Form.Item label={thirdPartyLabel} name="thirdPartyId">
                     <Select
