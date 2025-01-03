@@ -330,8 +330,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 createHUOvariables
             );
 
-            console.log('createdHuo', createdHuo);
-
             finalHandlingUnitOutbound = createdHuo.createHandlingUnitOutbound;
             canRollbackTransaction = true;
         } else {
