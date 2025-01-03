@@ -52,11 +52,6 @@ const CreditPage: PageComponent = () => {
     const [creditInvoiceAddress, setCreditInvoiceAddress] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
-    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
-    const [idToPrint, setIdToPrint] = useState<string>();
-    const [documentToPrint, setDocumentToPrint] = useState<string>();
-    const [creditInvoiceAddress, setCreditInvoiceAddress] = useState<any>();
-    const { graphqlRequestClient } = useAuth();
     const [refetchCreditPayment, setRefetchCreditPayment] = useState<boolean>(false);
 
     // #region to customize information
@@ -95,6 +90,7 @@ const CreditPage: PageComponent = () => {
             });
         };
     };
+
     const closeStatus = async (id: string) => {
         const newStatus = configs.ORDER_STATUS_CLOSED;
         const updateVariables = {
@@ -118,6 +114,7 @@ const CreditPage: PageComponent = () => {
         }
         return result;
     };
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -212,7 +209,6 @@ const CreditPage: PageComponent = () => {
                         priceType={data?.priceType}
                         status={data?.status}
                         refetchCreditPayment={refetchCreditPayment}
-                        setCreditInvoiceAddress={setCreditInvoiceAddress}
                     />
                 }
                 headerData={headerData}
