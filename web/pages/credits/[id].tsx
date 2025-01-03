@@ -46,6 +46,11 @@ const CreditPage: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const { id } = router.query;
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
+    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [idToPrint, setIdToPrint] = useState<string>();
+    const [documentToPrint, setDocumentToPrint] = useState<string>();
+    const [creditInvoiceAddress, setCreditInvoiceAddress] = useState<any>();
+    const { graphqlRequestClient } = useAuth();
     const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();

@@ -395,27 +395,6 @@ export const HandlingUnitContentFeatureModelV2: ModelType = {
             param: null,
             optionTable: null
         },
-        extraText2: {
-            isListRequested: true,
-            isDefaultHiddenList: true,
-            isExcludedFromList: false,
-            isSortable: false,
-            searchingFormat: null,
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
-            detailGroup: null,
-            link: null,
-            addEditFormat: null,
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: false,
-            minRule: null,
-            maxRule: null,
-            config: null,
-            param: null,
-            optionTable: null
-        },
         created: {
             isListRequested: true,
             isDefaultHiddenList: true,

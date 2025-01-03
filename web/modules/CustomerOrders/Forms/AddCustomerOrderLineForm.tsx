@@ -76,6 +76,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const vatRate = t('d:vatRate');
     const customerOrder = t('common:customer-order');
     const orderedQuantity = t('d:orderedQuantity');
+    const stockStatus = t('d:stockStatus');
     const comment = t('d:comment');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const errorMessageNegativeNumberInput = t('messages:select-number-min', { min: 0 });
@@ -92,11 +93,10 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const [vatRates, setVatRates] = useState<any>();
     const [thirdPartyData, setThirdPartyData] = useState<any>();
     const [enteredQuantity, setEnteredQuantity] = useState<number | null>();
-    const [articleVatRate, setArticleVatRate] = useState<number | undefined>();
+    const [articleVatRate, setArticleVatRate] = useState<number | null | undefined>();
     const [articleLus, setArticleLus] = useState<any>();
     const [articleCubingType, setArticleCubingType] = useState<any>();
-    const [articleDescription, setArticleDescription] = useState<string>('');
-
+    const [stockStatuses, setStockStatuses] = useState<Array<FormOptionType>>();
     const customerOrderLines = useOrderLineIds({ orderId: `${props.orderId}%` }, 1, 100, null);
 
     // prompt the user if they try and leave with unsaved changes
@@ -119,6 +119,24 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
             router.events.off('routeChangeStart', handleBrowseAway);
         };
     }, [unsavedChanges]);
+    // PARAMETER : stock_status
+    const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        language: router.locale,
+        scope: 'stock_statuses'
+    });
+    useEffect(() => {
+        if (stockStatusList) {
+            const newStockStatus: Array<FormOptionType> = [];
+
+            const parameters = stockStatusList?.data?.listParametersForAScope;
+            if (parameters) {
+                parameters.forEach((item) => {
+                    newStockStatus.push({ key: parseInt(item.code), text: item.text });
+                });
+                setStockStatuses(newStockStatus);
+            }
+        }
+    }, [stockStatusList.data]);
 
     //LineNumber assignement
     useEffect(() => {
@@ -153,7 +171,6 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                         setAId(id!);
                         setArticleVatRate(vatRateCode!);
                         setArticleCubingType(cubingType!);
-                        setArticleDescription(description!);
                     }
                     if (status != configs.ARTICLE_STATUS_CLOSED) {
                         newIdOpts.push({ value: name!, id: id! });
@@ -368,6 +385,8 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                 setUnsavedChanges(false);
             })
             .catch((err) => {
+                console.log(err);
+
                 showError(t('messages:error-creating-data'));
             });
     };
@@ -445,6 +464,11 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                         onSelect={(value, option) => {
                             setAId(option.id);
                             setArticleName(value);
+                            const articleInfos = articleData.data?.articles?.results.find(
+                                (e) => e.id === option.id
+                            );
+                            setArticleVatRate(articleInfos?.vatRateCode);
+                            setArticleCubingType(articleInfos?.cubingType);
                         }}
                         allowClear
                         onChange={onChange}
@@ -503,6 +527,21 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                         </Form.Item>
                         <Form.Item label={t('d:discount_percent')} name="discount" initialValue={0}>
                             <InputNumber min={0} max={100} precision={1} />
+                        </Form.Item>
+                        <Form.Item name="stockStatus" label={stockStatus}>
+                            <Select
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:stockStatus')
+                                })}`}
+                                allowClear
+                            >
+                                <Option value=""> </Option>
+                                {stockStatuses?.map((stockStatus: any) => (
+                                    <Option key={stockStatus.key} value={stockStatus.key}>
+                                        {stockStatus.text}
+                                    </Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                         <Form.Item label={comment} name="comment">
                             <Input />

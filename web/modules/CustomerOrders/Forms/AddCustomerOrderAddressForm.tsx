@@ -21,11 +21,11 @@ import { HeaderContent, WrapperForm } from '@components';
 import { gql, GraphQLClient } from 'graphql-request';
 import { Button, AutoComplete, Input, Form, Select, Collapse, Modal } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
-import { SetStateAction, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, GraphQLResponseType } from '@helpers';
-import { debounce, result, set } from 'lodash';
+import { debounce } from 'lodash';
 import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
 import {
@@ -38,8 +38,7 @@ import {
     CreateOrderAddressMutation,
     CreateOrderAddressMutationVariables,
     useGetOrderByIdQuery,
-    GetOrderByIdQuery,
-    GetParameterByIdDocument
+    GetOrderByIdQuery
 } from 'generated/graphql';
 
 const { Option } = Select;
@@ -222,8 +221,8 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                         entityCity: address.entityCity,
                         entityState: address.entityState,
                         entityDistrict: address.entityDistrict,
-                        entityCountry: address.entityCountry,
-                        entityCountryCode: address.entityCountryCode,
+                        entityCountry: address.entityCountry ?? 'France',
+                        entityCountryCode: address.entityCountryCode ?? 'FR',
                         entityVatCode: address.entityVatCode,
                         entityEoriCode: address.entityEoriCode,
                         entityAccountingCode: address.entityAccountingCode,
@@ -485,7 +484,6 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
                                 label: `${address1} - ${city}`
                             });
                         });
-                        console.log(newIdOpts);
                         setAIdOptions(newIdOpts);
                     }
                     return queryKloshipResult.checkAddressV1;

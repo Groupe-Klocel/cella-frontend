@@ -17,16 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
 import { Checkbox, Col, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
     BulkUpdateArticlesMutation,
     BulkUpdateArticlesMutationVariables,
-    GetArticleCubingTypeConfigsQuery,
     useBulkUpdateArticlesMutation,
-    useGetArticleCubingTypeConfigsQuery,
     useListConfigsForAScopeQuery,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
@@ -34,7 +31,6 @@ import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import { FormOptionType } from 'models/ModelsV2';
 
 export interface IBulkEditArticlesRenderModalProps {
     visible: boolean;
@@ -167,7 +163,7 @@ const BulkEditArticlesRenderModal = ({
     return (
         <Modal
             title={t('actions:edit-articles')}
-            open={visible}
+            open={isModalVisible}
             onOk={onClickOk}
             onCancel={handleCancel}
             width="auto"

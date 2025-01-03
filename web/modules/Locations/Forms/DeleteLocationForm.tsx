@@ -243,6 +243,7 @@ export const DeleteLocationForm = () => {
             .then(() => {
                 // Here make api call of something else
                 setCurrent(current + 1);
+                setUnsavedChanges(false);
             })
             .catch((err) => console.log(err));
     };

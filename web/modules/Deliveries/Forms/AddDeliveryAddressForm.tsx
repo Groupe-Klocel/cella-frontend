@@ -43,10 +43,6 @@ import configs from '../../../../common/configs.json';
 import { gql, GraphQLClient } from 'graphql-request';
 import { debounce } from 'lodash';
 
-interface IOption {
-    value: string;
-    id: string;
-}
 const { Option } = Select;
 const { Panel } = Collapse;
 
@@ -261,8 +257,8 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
                         entityCity: address.entityCity,
                         entityState: address.entityState,
                         entityDistrict: address.entityDistrict,
-                        entityCountry: address.entityCountry,
-                        entityCountryCode: address.entityCountryCode,
+                        entityCountry: address.entityCountry ?? 'France',
+                        entityCountryCode: address.entityCountryCode ?? 'FR',
                         entityVatCode: address.entityVatCode,
                         entityEoriCode: address.entityEoriCode,
                         entityAccountingCode: address.entityAccountingCode,
