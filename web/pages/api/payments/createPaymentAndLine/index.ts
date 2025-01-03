@@ -127,8 +127,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         res.status(200).json({
             response: {
-                createdBarcode: createdPayment.createPayment ?? undefined,
-                createdArticleLuBarcode: createdPaymentLineResponse?.createPaymentLine ?? undefined
+                createdPayment: createdPayment.createPayment ?? undefined,
+                createdPaymentLine: createdPaymentLineResponse?.createPaymentLine ?? undefined
             }
         });
     } catch (error: any) {

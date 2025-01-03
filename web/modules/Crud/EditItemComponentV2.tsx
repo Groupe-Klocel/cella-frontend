@@ -305,7 +305,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
     }, [router.locale]);
 
     useEffect(() => {
-        if (detail.data[props.dataModel.endpoints.detail]) {
+        if (detail?.data?.[props.dataModel.endpoints.detail]) {
             const flattenedData = flatten(detail.data[props.dataModel.endpoints.detail]);
             if (props.setData) props.setData(flattenedData);
         }
@@ -462,8 +462,8 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                 if (Object.keys(item).length > 0) {
                     if (
                         detail &&
-                        detail.data[props.dataModel.endpoints.detail] !== undefined &&
-                        detail.data[props.dataModel.endpoints.detail] !== null
+                        detail.data?.[props.dataModel.endpoints.detail] !== undefined &&
+                        detail.data?.[props.dataModel.endpoints.detail] !== null
                     ) {
                         const itemId = detail.data[props.dataModel.endpoints.detail].id;
                         //remove id from option object if present

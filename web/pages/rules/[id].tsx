@@ -85,13 +85,11 @@ const RulePage: PageComponent = () => {
                 _variables: CancelRuleMutationVariables,
                 _context: any
             ) => {
-                if (!cancelLoading) {
-                    if (data.deleteRule) {
-                        showSuccess(t('messages:success-canceled'));
-                        router.reload();
-                    } else {
-                        showError(t('messages:error-canceling-data'));
-                    }
+                if (data.deleteRule) {
+                    showSuccess(t('messages:success-canceled'));
+                    router.reload();
+                } else {
+                    showError(t('messages:error-canceling-data'));
                 }
             },
             onError: (err) => {

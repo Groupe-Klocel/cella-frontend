@@ -203,9 +203,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const finalFeatures: any = [];
         const finalFeatureElt: any = {};
         finalFeatureElt[destinationData.feature.code] = {
-            id: destinationData.feature.id,
-            value: destinationData.feature.value,
-            extraText2: destinationData.feature.extraText2
+            value: destinationData.feature.value
         };
         finalFeatures.push(finalFeatureElt);
         movementInputs.push({
@@ -226,9 +224,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const originalFeatures: any = [];
         const originalFeatureElt: any = {};
         originalFeatureElt[originData.feature.code] = {
-            id: originData.feature.id,
-            value: originData.feature.value,
-            extraText2: originData.feature.extraText2
+            value: originData.feature.value
         };
         originalFeatures.push(originalFeatureElt);
         movementInputs.push({
@@ -249,17 +245,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const originalFeatures: any = [];
         const originalFeatureElt: any = {};
         originalFeatureElt[originData.feature.code] = {
-            id: originData.feature.id,
-            value: originData.feature.value,
-            extraText2: originData.feature.extraText2
+            value: originData.feature.value
         };
         originalFeatures.push(originalFeatureElt);
         const finalFeatures: any = [];
         const finalFeatureElt: any = {};
         finalFeatureElt[destinationData.feature.code] = {
-            id: destinationData.feature.id,
-            value: destinationData.feature.value,
-            extraText2: destinationData.feature.extraText2
+            value: destinationData.feature.value
         };
         finalFeatures.push(finalFeatureElt);
         movementInputs.push({

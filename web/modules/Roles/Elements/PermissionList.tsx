@@ -18,9 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppTable, ContentSpin } from '@components';
-import { Button, Col, Row, Switch } from 'antd';
+import { Button, Switch } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import {
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
@@ -33,8 +33,6 @@ import useTranslation from 'next-translate/useTranslation';
 import { ModeEnum, Table } from 'generated/graphql';
 import { ColumnType } from 'antd/lib/table';
 import { useAppState } from 'context/AppContext';
-import Checkbox from 'antd/lib/checkbox/Checkbox';
-import { useRouter } from 'next/router';
 
 import styled from 'styled-components';
 
@@ -67,7 +65,6 @@ const PermissionList = ({
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.Permission);
     const { t } = useTranslation();
-    const router = useRouter();
 
     const [rolePermissions, setRolePermissions] = useState<DataQueryType>();
 
