@@ -33,7 +33,7 @@ import { useAuth } from 'context/AuthContext';
 import { FormDataType } from 'models/ModelsV2';
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const CurrenciesPage: PageComponent = () => {
+const PaymentTermsPage: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -156,8 +156,8 @@ const CurrenciesPage: PageComponent = () => {
     );
 };
 
-CurrenciesPage.layout = MainLayout;
+PaymentTermsPage.layout = MainLayout;
 
-export default CurrenciesPage;
+export default PaymentTermsPage;
 
 // {record.system == false ? (

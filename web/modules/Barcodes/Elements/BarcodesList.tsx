@@ -25,7 +25,6 @@ import {
 } from '@ant-design/icons';
 import { AppTable, ContentSpin, LinkButton, NumberOfPrintsModal } from '@components';
 import {
-    DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
     orderByFormater,
@@ -119,8 +118,8 @@ const BarcodesList = ({ searchCriteria }: BarcodesListTypeProps) => {
         }
     }, [data]);
 
-    const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
-        await setSort(orderByFormater(sorter));
+    const handleTableChange = async (_pagination: number, _filter: number, sorter: number) => {
+        setSort(orderByFormater(sorter));
     };
 
     const columns = [

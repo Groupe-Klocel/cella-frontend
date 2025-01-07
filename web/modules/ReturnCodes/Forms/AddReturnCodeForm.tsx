@@ -69,8 +69,15 @@ export const AddReturnCodeForm = () => {
             .then(() => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
-                const translation = { en: formData.en, fr: formData.fr };
-                formData['translation'] = translation;
+                let translation: any = { en: formData.en, fr: formData.fr };
+                if (Object.keys(translation).length === 0) {
+                    translation = null;
+                }
+                const emptyTranslation = Object.fromEntries(
+                    Object.entries(translation).filter(([_, value]) => value !== undefined)
+                );
+                formData['translation'] =
+                    Object.keys(emptyTranslation).length === 0 ? null : translation;
                 formData['scope'] = 'return_code';
                 formData.code = String(formData.code);
                 delete formData['en'];
@@ -78,7 +85,7 @@ export const AddReturnCodeForm = () => {
                 createReturnCode({ input: formData });
             })
             .catch((err) => {
-                showError(t('error-creating-data'));
+                showError(t('messages:error-creating-data'));
             });
     };
 
@@ -98,7 +105,10 @@ export const AddReturnCodeForm = () => {
                             name="code"
                             initialValue={30001}
                             rules={[
-                                { required: true, message: `${t('error-message-empty-input')}` }
+                                {
+                                    required: true,
+                                    message: `${t('messages:error-message-empty-input')}`
+                                }
                             ]}
                         >
                             <InputNumber min={30000} max={39999} />
@@ -109,7 +119,10 @@ export const AddReturnCodeForm = () => {
                             label={t('d:value')}
                             name="value"
                             rules={[
-                                { required: true, message: `${t('error-message-empty-input')}` }
+                                {
+                                    required: true,
+                                    message: `${t('messages:error-message-empty-input')}`
+                                }
                             ]}
                         >
                             <Input />
@@ -121,14 +134,18 @@ export const AddReturnCodeForm = () => {
                 <Form.Item
                     label={t('EN')}
                     name="en"
-                    rules={[{ required: true, message: `${t('error-message-empty-input')}` }]}
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
                 >
                     <Input />
                 </Form.Item>
                 <Form.Item
                     label={t('FR')}
                     name="fr"
-                    rules={[{ required: true, message: `${t('error-message-empty-input')}` }]}
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
                 >
                     <Input />
                 </Form.Item>

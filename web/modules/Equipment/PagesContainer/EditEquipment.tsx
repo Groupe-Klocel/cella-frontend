@@ -65,10 +65,6 @@ const EditEquipment: FC<EditEquipmentProps> = ({ id, router }: EditEquipmentProp
         }
     ];
 
-    // useEffect(() => {
-    //     refetch();
-    // }, []);
-
     useEffect(() => {
         if (error) {
             showError(t('messages:error-getting-data'));

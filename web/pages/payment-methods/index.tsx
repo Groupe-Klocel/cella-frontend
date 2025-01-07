@@ -43,7 +43,7 @@ const PaymentMethodsPage: PageComponent = () => {
     const { graphqlRequestClient } = useAuth();
 
     const headerData: HeaderData = {
-        title: t('common:payment-method'),
+        title: t('common:payment-methods'),
         routes: itemRoutes,
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (

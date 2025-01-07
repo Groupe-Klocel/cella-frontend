@@ -50,7 +50,7 @@ const VatRatePage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:vat-rates')} ${data?.value}`;
+    const pageTitle = `${t('common:vat-rate')} ${data?.value}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)

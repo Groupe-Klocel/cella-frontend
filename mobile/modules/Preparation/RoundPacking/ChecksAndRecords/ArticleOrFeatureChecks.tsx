@@ -19,6 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured, showSuccess } from '@helpers';
+import { gql } from 'graphql-request';
+import graphqlRequestClient from 'graphql/graphqlRequestClient';
 import useTranslation from 'next-translate/useTranslation';
 import { useEffect, useState } from 'react';
 
@@ -31,7 +33,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     const storage = LsIsSecured();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isClosureLoading, setIsClosureLoading] = useState<boolean>(false);
-
+    const [scannedIDs, setScannedIDs] = useState<any>();
     const {
         process,
         stepNumber,
@@ -79,12 +81,75 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         }
     }, [scannedInfo]);
 
+    function getCurrentDeliveryLine(articleId: string) {
+        const currentDeliveryLine = storedObject['step10'].data.round.roundAdvisedAddresses
+            .filter((raa: any) => {
+                // Check if handlingUnitContent.articleId is equal to the given value
+                return raa.handlingUnitContent?.articleId === articleId;
+            })
+            .find((raa: any) => {
+                if (!raa.roundLineDetail.extraNumber2) raa.roundLineDetail.extraNumber2 = 0;
+                return (
+                    raa.roundLineDetail.quantityToBeProcessed - raa.roundLineDetail.extraNumber2 > 0
+                );
+            })?.roundLineDetail.deliveryLine;
+        return currentDeliveryLine;
+    }
+    //start block
+    const getHUCF = async (roundName: any) => {
+        const handlingUnitQuery = gql`
+            query handlingUnits($filters: HandlingUnitSearchFilters) {
+                handlingUnits(filters: $filters) {
+                    count
+                    results {
+                        id
+                        name
+                        handlingUnitContents {
+                            id
+                            articleId
+                            quantity
+                            handlingUnitContentFeatures {
+                                id
+                                value
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const handlingUnitVariables = {
+            filters: { id: roundName }
+        };
+
+        const handlingUnitResult = await graphqlRequestClient.request(
+            handlingUnitQuery,
+            handlingUnitVariables
+        );
+        return handlingUnitResult;
+    };
+    useEffect(() => {
+        async function fetchData() {
+            const result = await getHUCF(
+                storedObject['step10'].data.existingFinalHUO?.handlingUnit.id
+            );
+            if (result) setScannedIDs(result);
+        }
+        fetchData();
+    }, [scannedInfo]);
+    //end block
     // ScanBox-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && fetchResult) {
             let found = false;
             const data: { [label: string]: any } = {};
             const handlingUnitContents = storedObject['step10'].data.roundHU.handlingUnitContents;
+            const deliveryLine = getCurrentDeliveryLine(
+                fetchResult.resType === 'serialNumber'
+                    ? fetchResult.article.articleId
+                    : fetchResult.articleLuBarcodes[0].articleId
+            );
+
             if (fetchResult.resType === 'serialNumber') {
                 // HUCF scanned
                 const huCToCheck = fetchResult?.handlingUnitContentFeature.handlingUnitContentId;
@@ -132,11 +197,28 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 //create HU or HUO
             }
             if (!found) {
-                showError(t('messages:unexpected-scanned-item'));
-                setResetForm(true);
-                setScannedInfo(undefined);
-                setIsLoading(false);
+                const listScannedIds =
+                    scannedIDs.handlingUnits.results[0].handlingUnitContents[0]
+                        ?.handlingUnitContentFeatures;
+                if (listScannedIds?.some((scannedId: any) => scannedId.value === scannedInfo)) {
+                    showError(t('messages:already-scanned'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    setIsLoading(false);
+                } else {
+                    showError(t('messages:unexpected-scanned-item'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    setIsLoading(false);
+                }
             }
+
+            data['reference2'] = deliveryLine?.reference2;
+            storedObject[`step${stepNumber}`] = {
+                ...storedObject[`step${stepNumber}`],
+                data
+            };
+
             if (
                 storedObject[`step${stepNumber}`] &&
                 Object.keys(storedObject[`step${stepNumber}`]).length != 0

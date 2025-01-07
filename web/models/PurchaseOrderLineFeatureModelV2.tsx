@@ -250,11 +250,11 @@ export const PurchaseOrderLineFeatureModelV2: ModelType = {
         documentAttached: {
             isListRequested: true,
             isDefaultHiddenList: true,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: true,
             searchingFormat: 'String',
             isDetailRequested: true,
-            isExcludedFromDetail: false,
+            isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
             addEditFormat: null,

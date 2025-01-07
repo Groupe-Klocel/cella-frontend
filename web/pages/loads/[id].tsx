@@ -165,19 +165,17 @@ const LoadsPage: PageComponent = () => {
                 _variables: UpdateLoadMutationVariables,
                 _context: any
             ) => {
-                if (!dispatch) {
-                    showSuccess(t('messages:success-dispatched'));
-                    if (data?.updateLoad?.id) {
-                        printLoad(
-                            {
-                                id: data.updateLoad.id,
-                                statusDispatched
-                            },
-                            defaultPrinterLaser
-                        );
-                    }
-                    setTriggerRefresh(!triggerRefresh);
+                showSuccess(t('messages:success-dispatched'));
+                if (data?.updateLoad?.id) {
+                    printLoad(
+                        {
+                            id: data.updateLoad.id,
+                            statusDispatched
+                        },
+                        defaultPrinterLaser
+                    );
                 }
+                setTriggerRefresh(!triggerRefresh);
             },
             onError: () => {
                 showError(t('messages:error-dispatching-data'));

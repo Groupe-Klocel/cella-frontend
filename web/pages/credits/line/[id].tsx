@@ -46,11 +46,11 @@ const CreditLinePage: PageComponent = () => {
     const breadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${data?.article_name}`
         }
     ];
 
-    const pageTitle = `${t('common:credit')} ${data?.name} - ${t('common:line')} ${
+    const pageTitle = `${t('common:credit')} ${data?.article_name} - ${t('common:line')} ${
         data?.lineNumber
     }`;
     // #endregions

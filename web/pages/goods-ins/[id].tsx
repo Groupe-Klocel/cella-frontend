@@ -34,7 +34,7 @@ import { GoodsInDetailsExtra } from 'modules/GoodsIns/Elements/GoodsInDetailsExt
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const GoodsInPage: PageComponent = () => {
+const GoodsInsPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -130,8 +130,6 @@ const GoodsInPage: PageComponent = () => {
     );
 };
 
-GoodsInPage.layout = MainLayout;
+GoodsInsPage.layout = MainLayout;
 
-export default GoodsInPage;
-
-//
+export default GoodsInsPage;

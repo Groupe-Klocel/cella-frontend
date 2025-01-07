@@ -23,7 +23,7 @@ import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@componen
 import { LsIsSecured, showError } from '@helpers';
 import { Select, Form, Modal } from 'antd';
 import useTranslation from 'next-translate/useTranslation';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';

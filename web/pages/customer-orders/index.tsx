@@ -45,11 +45,9 @@ import { FC, useEffect, useState } from 'react';
 import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
 import configs from '../../../common/configs.json';
 import parameters from '../../../common/parameters.json';
-import { MagentoImportModal } from 'modules/Orders/MagentoImportModal';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { PaymentModal } from 'modules/CustomerOrders/Modals/PaymentModal';
-import { useRouter } from 'next/router';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -60,8 +58,6 @@ const CustomerOrderPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
-    const [loading, setLoading] = useState(false);
-    const [showMagentoModal, setShowMagentoModal] = useState(false);
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -70,21 +66,6 @@ const CustomerOrderPages: PageComponent = () => {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [orderId, setOrderId] = useState<any>();
     const [isCreateDeliveryAllowed, setIsCreateDeliveryAllowed] = useState<boolean>(false);
-    const router = useRouter();
-    const [refetchPaymentLine, setRefetchPaymentLine] = useState<boolean>(false);
-
-    const MagentoImport = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'global',
-        code: 'magento_import_on'
-    });
-    const [isMagentoImportOn, setIsMagentoImportOn] = useState<boolean>(false);
-    useEffect(() => {
-        if (MagentoImport) {
-            setIsMagentoImportOn(MagentoImport.data?.listParametersForAScope[0].text === '1');
-        }
-    }, [MagentoImport.data]);
-
-    console.log('MagentoImport', isMagentoImportOn);
 
     const headerData: HeaderData = {
         title: t('common:customer-orders'),
@@ -98,29 +79,6 @@ const CustomerOrderPages: PageComponent = () => {
                         type="primary"
                     />
                 ) : null}
-                {isMagentoImportOn && (
-                    <span style={{ marginLeft: 16 }}>
-                        <Button
-                            type="primary"
-                            onClick={() => {
-                                setShowMagentoModal(true);
-                            }}
-                            loading={loading}
-                        >
-                            {t('actions:mangento-get-orders')}
-                        </Button>
-                    </span>
-                )}
-                <MagentoImportModal
-                    showModal={{
-                        showMagentoModal,
-                        setShowMagentoModal
-                    }}
-                    triggerRefresh={triggerRefresh}
-                    setTriggerRefresh={() => {
-                        setTriggerRefresh(!triggerRefresh);
-                    }}
-                />
             </Space>
         )
     };
@@ -488,7 +446,6 @@ const CustomerOrderPages: PageComponent = () => {
                     showPaymentModal,
                     setShowPaymentModal
                 }}
-                setRefetch={setRefetchPaymentLine}
                 orderId={orderId}
             />
         </>

@@ -65,6 +65,27 @@ export const EditSchedulerConfigArgumentForm: FC<ISingleItemProps> = ({
     const [form] = Form.useForm();
     const [unsavedChanges, setUnsavedChanges] = useState(false);
 
+    // prompt the user if they try and leave with unsaved changes
+    useEffect(() => {
+        const handleWindowClose = (e: BeforeUnloadEvent) => {
+            if (!unsavedChanges) return;
+            e.preventDefault();
+            return (e.returnValue = t('messages:confirm-leaving-page'));
+        };
+        const handleBrowseAway = () => {
+            if (!unsavedChanges) return;
+            if (window.confirm(t('messages:confirm-leaving-page'))) return;
+            router.events.emit('routeChangeError');
+            throw 'routeChange aborted.';
+        };
+        window.addEventListener('beforeunload', handleWindowClose);
+        router.events.on('routeChangeStart', handleBrowseAway);
+        return () => {
+            window.removeEventListener('beforeunload', handleWindowClose);
+            router.events.off('routeChangeStart', handleBrowseAway);
+        };
+    }, [unsavedChanges]);
+
     //UPDATE schedulerConfig argument
     const {
         isLoading: updateLoading,
@@ -96,6 +117,7 @@ export const EditSchedulerConfigArgumentForm: FC<ISingleItemProps> = ({
                     id: id,
                     input: { ...input_tmp }
                 });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));
