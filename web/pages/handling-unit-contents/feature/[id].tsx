@@ -112,9 +112,7 @@ const HandlingUnitContentPage: PageComponent = () => {
                                     handlingUnitContentId: data.handlingUnitContentId,
                                     feature: {
                                         code: data.featureCode_name,
-                                        value: data.value,
-                                        id: id,
-                                        extraText2: data.extraText2
+                                        value: data.value
                                     }
                                 },
                                 destinationData: {

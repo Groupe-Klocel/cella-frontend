@@ -258,15 +258,15 @@ export const DeliveryLineModelV2: ModelType = {
             isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
-            addEditFormat: null,
+            addEditFormat: 'Dropdown',
             addEditStep: null,
             maxLength: null,
             displayName: null,
             isMandatory: false,
             minRule: null,
             maxRule: null,
-            config: 'stock_statuses',
-            param: null
+            config: null,
+            param: 'stock_statuses'
         },
         stockStatusText: {
             isListRequested: true,

@@ -28,14 +28,14 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import {
     GetAllPatternsQuery,
     GetListOfPrioritiesQuery,
-    SimpleGetAllStockOwnersQuery,
+    SimpleGetInProgressStockOwnersQuery,
     UpdateEquipmentMutation,
     UpdateEquipmentMutationVariables,
     useGetAllPatternsQuery,
     useGetListOfPrioritiesQuery,
     useListConfigsForAScopeQuery,
     useListParametersForAScopeQuery,
-    useSimpleGetAllStockOwnersQuery,
+    useSimpleGetInProgressStockOwnersQuery,
     useUpdateEquipmentMutation
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
@@ -131,9 +131,9 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
         };
     }, [unsavedChanges]);
 
-    //To render Simple stockOwners list
-    const stockOwnerList = useSimpleGetAllStockOwnersQuery<
-        Partial<SimpleGetAllStockOwnersQuery>,
+    //To render Simple In progress stock owners list
+    const stockOwnerList = useSimpleGetInProgressStockOwnersQuery<
+        Partial<SimpleGetInProgressStockOwnersQuery>,
         Error
     >(graphqlRequestClient);
 

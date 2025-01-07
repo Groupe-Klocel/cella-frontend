@@ -48,7 +48,7 @@ const VatRatesPage: PageComponent = () => {
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (
                 <LinkButton
-                    title={t('actions:add2', { name: t('common:vat-rates') })}
+                    title={t('actions:add2', { name: t('common:vat-rate') })}
                     path={`${rootPath}/add`}
                     type="primary"
                 />

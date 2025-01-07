@@ -692,7 +692,7 @@ const ListComponent = (props: IListProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage: any, itemsPerPage: any) => {
+        (currentPage: number, itemsPerPage: number) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: rows?.count,
@@ -780,7 +780,7 @@ const ListComponent = (props: IListProps) => {
     //     reloadData(); //children function of interest
     // }, [props.refresh]);
 
-    const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
+    const handleTableChange = async (_pagination: number, _filter: number, sorter: number) => {
         const newSorter = orderByFormater(sorter);
 
         let tmp_array: any[] = [];

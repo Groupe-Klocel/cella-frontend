@@ -472,9 +472,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                             let startDate = null;
                             let endDate = null;
                             if (item.initialValue && item.initialValue[0])
-                                startDate = dayjs(moment(item.initialValue[0]).toDate());
+                                startDate = dayjs(item.initialValue[0]);
                             if (item.initialValue && item.initialValue[1])
-                                endDate = dayjs(moment(item.initialValue[1]).toDate());
+                                endDate = dayjs(item.initialValue[1]);
 
                             return (
                                 <Form.Item

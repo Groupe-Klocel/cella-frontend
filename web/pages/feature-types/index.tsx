@@ -165,5 +165,3 @@ const FeatureTypesPage: PageComponent = () => {
 FeatureTypesPage.layout = MainLayout;
 
 export default FeatureTypesPage;
-
-// {record.system == false ? (

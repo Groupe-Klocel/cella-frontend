@@ -30,7 +30,7 @@ import { hookConfigsRoutes as itemRoutes } from 'modules/HookConfigs/Static/hook
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
-import { HookConfigDetailsExtra } from 'modules/HookConfigs/Elements/HookConfigDetailExtra';
+import { HookConfigDetailsExtra } from 'modules/HookConfigs/Elements/HookConfigDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

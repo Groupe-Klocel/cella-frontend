@@ -306,7 +306,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                     <Input disabled={true} />
                 </Form.Item>
                 <Form.Item
-                    label={t('d:name')}
+                    label={t('d:location_name')}
                     name="name"
                     rules={[
                         { required: true, message: `${t('messages:error-message-empty-input')}` }

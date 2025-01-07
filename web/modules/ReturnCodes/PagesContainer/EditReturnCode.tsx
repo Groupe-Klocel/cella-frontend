@@ -49,9 +49,6 @@ export interface EditReturnCodeProps {
 const EditReturnCode: FC<EditReturnCodeProps> = ({ id, router }: EditReturnCodeProps) => {
     const { t } = useTranslation();
 
-    const { globalLocale } = useAppState();
-    const searchedLanguage = globalLocale == 'en-US' ? 'en' : globalLocale;
-
     const { graphqlRequestClient } = useAuth();
 
     const { isLoading, data, error } = useGetParameterByIdQuery<GetParameterByIdQuery, Error>(
@@ -60,10 +57,6 @@ const EditReturnCode: FC<EditReturnCodeProps> = ({ id, router }: EditReturnCodeP
             id: id
         }
     );
-
-    // if (globalLocale && data && data.parameter) {
-    //     data.parameter.value = data?.parameter?.translation[searchedLanguage];
-    // }
 
     const breadsCrumb = [
         ...returnCodeRoutes,

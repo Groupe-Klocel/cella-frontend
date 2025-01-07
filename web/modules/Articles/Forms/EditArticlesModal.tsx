@@ -17,26 +17,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { WrapperForm } from '@components';
 import useTranslation from 'next-translate/useTranslation';
 import { Checkbox, Col, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
-    BulkUpdateArticlesMutation,
-    BulkUpdateArticlesMutationVariables,
-    GetArticleCubingTypeConfigsQuery,
-    useBulkUpdateArticlesMutation,
-    useGetArticleCubingTypeConfigsQuery,
+    SimpleGetInProgressStockOwnersQuery,
+    UpdateArticlesMutation,
+    UpdateArticlesMutationVariables,
     useListConfigsForAScopeQuery,
-    useListParametersForAScopeQuery
+    useListParametersForAScopeQuery,
+    useSimpleGetInProgressStockOwnersQuery,
+    useUpdateArticlesMutation
 } from 'generated/graphql';
 import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import { FormOptionType } from 'models/ModelsV2';
 
-export interface IBulkEditArticlesRenderModalProps {
+export interface IEditArticlesRenderModalProps {
     visible: boolean;
     rows: any;
     showhideModal: () => void;
@@ -44,13 +42,13 @@ export interface IBulkEditArticlesRenderModalProps {
     setRefetch: () => void;
 }
 
-const BulkEditArticlesRenderModal = ({
+const EditArticlesRenderModal = ({
     visible,
     showhideModal,
     rows,
     refetch,
     setRefetch
-}: IBulkEditArticlesRenderModalProps) => {
+}: IEditArticlesRenderModalProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
@@ -62,6 +60,21 @@ const BulkEditArticlesRenderModal = ({
     const [featureTypes, setFeatureTypes] = useState<any>();
     const [rotations, setRotations] = useState<any>();
     const [statuses, setStatuses] = useState<any>();
+    const [familyArticle, setFamilyArticle] = useState<any>();
+    const [subFamilyArticle, setSubFamilyArticle] = useState<any>();
+    const [stockOwners, setStockOwners] = useState<any>();
+
+    //To render Simple In progress stock owners list
+    const stockOwnersList = useSimpleGetInProgressStockOwnersQuery<
+        Partial<SimpleGetInProgressStockOwnersQuery>,
+        Error
+    >(graphqlRequestClient);
+
+    useEffect(() => {
+        if (stockOwnersList) {
+            setStockOwners(stockOwnersList?.data?.stockOwners?.results);
+        }
+    }, [stockOwnersList]);
 
     //To render cubing_types from configs
     const cubingTypesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -84,6 +97,28 @@ const BulkEditArticlesRenderModal = ({
             setFeatureTypes(featureTypesTextList?.data?.listParametersForAScope);
         }
     }, [featureTypesTextList.data]);
+
+    //To render article_family from parameters
+    const familyArticleList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'article_family',
+        language: router.locale
+    });
+    useEffect(() => {
+        if (familyArticleList) {
+            setFamilyArticle(familyArticleList?.data?.listParametersForAScope);
+        }
+    }, [familyArticleList.data]);
+
+    //To render article_subfamily from parameters
+    const subFamilyArticleList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'article_subfamily',
+        language: router.locale
+    });
+    useEffect(() => {
+        if (subFamilyArticleList) {
+            setSubFamilyArticle(subFamilyArticleList?.data?.listParametersForAScope);
+        }
+    }, [subFamilyArticleList.data]);
 
     //To render rotations from parameters
     const rotationsTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
@@ -122,15 +157,15 @@ const BulkEditArticlesRenderModal = ({
         form.setFieldsValue({ permanentProduct: e.target.checked });
     };
 
-    // UPDATE Delivery Line
+    // UPDATE Articles
     const {
         mutate,
         isPending: updateLoading,
         data
-    } = useBulkUpdateArticlesMutation<Error>(graphqlRequestClient, {
+    } = useUpdateArticlesMutation<Error>(graphqlRequestClient, {
         onSuccess: (
-            data: BulkUpdateArticlesMutation,
-            _variables: BulkUpdateArticlesMutationVariables,
+            data: UpdateArticlesMutation,
+            _variables: UpdateArticlesMutationVariables,
             _context: any
         ) => {
             showSuccess(successMessageUpdateData);
@@ -142,8 +177,8 @@ const BulkEditArticlesRenderModal = ({
         }
     });
 
-    const bulkUpdateArticles = ({ inputs, articlesId }: BulkUpdateArticlesMutationVariables) => {
-        mutate({ inputs, articlesId });
+    const updateArticles = ({ input, ids }: UpdateArticlesMutationVariables) => {
+        mutate({ input, ids });
     };
 
     const handleCancel = () => {
@@ -155,7 +190,7 @@ const BulkEditArticlesRenderModal = ({
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);
-                bulkUpdateArticles({ inputs: formData, articlesId: rows.selectedRowKeys });
+                updateArticles({ input: formData, ids: rows.selectedRowKeys });
             })
             .catch((err) => {
                 showError(errorMessageUpdateData);
@@ -167,7 +202,7 @@ const BulkEditArticlesRenderModal = ({
     return (
         <Modal
             title={t('actions:edit-articles')}
-            open={visible}
+            open={isModalVisible}
             onOk={onClickOk}
             onCancel={handleCancel}
             width="auto"
@@ -189,11 +224,56 @@ const BulkEditArticlesRenderModal = ({
                         </Form.Item>
                     </Col>
                     <Col xs={3} xl={6}>
+                        <Form.Item name="stockOwnerId" label={t('d:stockOwner')}>
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:stockOwner')
+                                })}`}
+                            >
+                                <Select.Option value={null}> </Select.Option>
+                                {stockOwners?.map((stockOwner: any) => (
+                                    <Select.Option key={stockOwner.id} value={stockOwner.id}>
+                                        {stockOwner.name}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
                         <Form.Item label={t('d:family')} name="family">
-                            <Input />
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:family')
+                                })}`}
+                            >
+                                <Select.Option value={null}> </Select.Option>
+                                {familyArticle?.map((familyArticle: any) => (
+                                    <Select.Option
+                                        key={parseInt(familyArticle.code)}
+                                        value={familyArticle.code}
+                                    >
+                                        {familyArticle.text}
+                                    </Select.Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                         <Form.Item label={t('d:subfamily')} name="subfamily">
-                            <Input />
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:subfamily')
+                                })}`}
+                            >
+                                <Select.Option value={null}> </Select.Option>
+                                {subFamilyArticle?.map((subFamilyArticle: any) => (
+                                    <Select.Option
+                                        key={parseInt(subFamilyArticle.code)}
+                                        value={subFamilyArticle.code}
+                                    >
+                                        {subFamilyArticle.text}
+                                    </Select.Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                         <Form.Item label={t('d:cubingType')} name="cubingType">
                             <Select
@@ -213,10 +293,12 @@ const BulkEditArticlesRenderModal = ({
                         </Form.Item>
                         <Form.Item label={t('d:featureType')} name="featureType">
                             <Select
+                                allowClear
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:featureType')
                                 })}`}
                             >
+                                <Select.Option value={null}> </Select.Option>
                                 {featureTypes?.map((featureTypes: any) => (
                                     <Select.Option
                                         key={parseInt(featureTypes.code)}
@@ -237,10 +319,12 @@ const BulkEditArticlesRenderModal = ({
                         </Form.Item>
                         <Form.Item label={t('d:baseUnitRotation')} name="baseUnitRotation">
                             <Select
+                                allowClear
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:baseUnitRotation')
                                 })}`}
                             >
+                                <Select.Option value={null}> </Select.Option>
                                 {rotations?.map((rotations: any) => (
                                     <Select.Option
                                         key={parseInt(rotations.code)}
@@ -288,4 +372,4 @@ const BulkEditArticlesRenderModal = ({
     );
 };
 
-export { BulkEditArticlesRenderModal };
+export { EditArticlesRenderModal };

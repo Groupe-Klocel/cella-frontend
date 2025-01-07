@@ -100,10 +100,8 @@ const WarehouseWorkerPage: PageComponent = () => {
                 _variables: ResetWarehouseWorkerPasswordMutationVariables,
                 _context: any
             ) => {
-                if (!ResetPasswordLoading) {
-                    router.push(`/warehouse-workers`);
-                    showSuccess(t('messages:success-password-reset'));
-                }
+                router.push(`/warehouse-workers`);
+                showSuccess(t('messages:success-password-reset'));
             },
             onError: (err) => {
                 showError(t('messages:error-password-reset'));

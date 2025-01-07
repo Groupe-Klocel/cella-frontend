@@ -156,13 +156,11 @@ const DeliveryPage: PageComponent = () => {
                 _variables: CancelDeliveryMutationVariables,
                 _context: any
             ) => {
-                if (!cancelLoading) {
-                    if (data.softDeleteDelivery) {
-                        showSuccess(t('messages:success-canceled'));
-                        router.reload();
-                    } else {
-                        showError(t('messages:error-canceling-data'));
-                    }
+                if (data.softDeleteDelivery) {
+                    showSuccess(t('messages:success-canceled'));
+                    router.reload();
+                } else {
+                    showError(t('messages:error-canceling-data'));
                 }
             },
             onError: (err) => {
