@@ -179,7 +179,7 @@ const HuMovement: PageComponent = () => {
                 ></RadioInfosHeader>
             )}
             {showSimilarLocations &&
-            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit.handlingUnitContents
+            storedObject[`step${workflow.expectedSteps[2]}`]?.data.handlingUnit.handlingUnitContents
                 .length > 0 &&
             storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
                 .handlingUnitContents[0].articleId ? (

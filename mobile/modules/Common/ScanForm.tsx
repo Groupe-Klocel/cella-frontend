@@ -77,7 +77,6 @@ export const ScanForm = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
-    const [buttonsState, setButtonsState] = useState<any>({ ...buttons });
 
     // TYPED SAFE ALL
     //Scan-1a: retrieve value from input and set values for display
@@ -133,10 +132,6 @@ export const ScanForm = ({
         setCamData(undefined);
     };
 
-    useEffect(() => {
-        setButtonsState(buttons);
-    }, [buttons]);
-
     const onChange = (e: any) => {
         if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
         if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
@@ -175,7 +170,7 @@ export const ScanForm = ({
                 )}
                 <RadioButtons
                     input={{
-                        ...buttonsState,
+                        ...buttons,
                         showSimilarLocations: showSimilarLocations?.showSimilarLocations,
                         showEmptyLocations: showEmptyLocations?.showEmptyLocations,
                         triggerAlternativeSubmit:
