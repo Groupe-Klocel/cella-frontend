@@ -52,11 +52,6 @@ const CreditPage: PageComponent = () => {
     const [creditInvoiceAddress, setCreditInvoiceAddress] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
-    const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
-    const [idToPrint, setIdToPrint] = useState<string>();
-    const [documentToPrint, setDocumentToPrint] = useState<string>();
-    const [creditInvoiceAddress, setCreditInvoiceAddress] = useState<any>();
-    const { graphqlRequestClient } = useAuth();
     const [refetchCreditPayment, setRefetchCreditPayment] = useState<boolean>(false);
 
     // #region to customize information
