@@ -27,13 +27,13 @@ import dayjs from 'dayjs';
 import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
 import {
     GetThirdPartiesQuery,
-    SimpleGetAllStockOwnersQuery,
+    SimpleGetInProgressStockOwnersQuery,
     UpdateOrderMutation,
     UpdateOrderMutationVariables,
     useGetThirdPartiesQuery,
     useListConfigsForAScopeQuery,
     useListParametersForAScopeQuery,
-    useSimpleGetAllStockOwnersQuery,
+    useSimpleGetInProgressStockOwnersQuery,
     useUpdateOrderMutation
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
@@ -106,9 +106,9 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
         };
     }, [unsavedChanges]);
 
-    //To render Simple stockOwners list
-    const stockOwnerList = useSimpleGetAllStockOwnersQuery<
-        Partial<SimpleGetAllStockOwnersQuery>,
+    //To render Simple In progress stock owners list
+    const stockOwnerList = useSimpleGetInProgressStockOwnersQuery<
+        Partial<SimpleGetInProgressStockOwnersQuery>,
         Error
     >(graphqlRequestClient);
 
@@ -476,13 +476,13 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 </Form.Item>
                 <Form.Item
                     label={stockOwnerNameLabel}
-                    name="stockOwnerName"
+                    name="stockOwnerId"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
                     <Select>
                         {stockOwners?.map((stockOwner: any) => (
-                            <Option key={stockOwner.key} value={stockOwner.key}>
-                                {stockOwner.text}
+                            <Option key={stockOwner.id} value={stockOwner.id}>
+                                {stockOwner.name}
                             </Option>
                         ))}
                     </Select>

@@ -526,6 +526,26 @@ export const DeliveryModelV2: ModelType = {
             config: null,
             param: null
         },
+        genericDeliveryComment: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: 'TextArea',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         extendDeliveryInformations: {
             isListRequested: true,
             isDefaultHiddenList: true,

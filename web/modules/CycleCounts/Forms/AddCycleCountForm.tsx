@@ -39,12 +39,12 @@ import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import {
-    useSimpleGetAllStockOwnersQuery,
-    SimpleGetAllStockOwnersQuery,
     SimpleGetAllBLocksQuery,
     useSimpleGetAllBLocksQuery,
     useListConfigsForAScopeQuery,
-    useListParametersForAScopeQuery
+    useListParametersForAScopeQuery,
+    useSimpleGetInProgressStockOwnersQuery,
+    SimpleGetInProgressStockOwnersQuery
 } from 'generated/graphql';
 import { debounce, set } from 'lodash';
 import _ from 'lodash';
@@ -136,9 +136,9 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         }
     }, [cycleCountTypesList]);
 
-    // Stock owner
-    const stockOwnerList = useSimpleGetAllStockOwnersQuery<
-        Partial<SimpleGetAllStockOwnersQuery>,
+    //To render Simple In progress stock owners list
+    const stockOwnerList = useSimpleGetInProgressStockOwnersQuery<
+        Partial<SimpleGetInProgressStockOwnersQuery>,
         Error
     >(graphqlRequestClient);
 

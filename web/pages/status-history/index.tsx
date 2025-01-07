@@ -120,7 +120,7 @@ const StatusHistoryPages: PageComponent = () => {
                     }
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
-                sortDefault={[{ field: 'statusDate', descending: true }]}
+                sortDefault={[{ field: 'statusDate', ascending: false }]}
             />
         </>
     );
