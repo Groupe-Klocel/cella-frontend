@@ -35,7 +35,7 @@ import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListCompo
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import { articlesRoutes as itemRoutes } from 'modules/Articles/Static/articlesRoutes';
-import { BulkEditArticlesRenderModal } from 'modules/Articles/Forms/BulkEditArticlesModal';
+import { EditArticlesRenderModal } from 'modules/Articles/Forms/EditArticlesModal';
 import configs from '../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -126,7 +126,7 @@ const ArticlePages: PageComponent = () => {
                                 {t('actions:edit')}
                             </Button>
                         </span>
-                        <BulkEditArticlesRenderModal
+                        <EditArticlesRenderModal
                             visible={showModal}
                             rows={rowSelection}
                             showhideModal={() => {

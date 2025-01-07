@@ -27,8 +27,8 @@ import {
     useCreateEquipmentMutation,
     CreateEquipmentMutation,
     CreateEquipmentMutationVariables,
-    useSimpleGetAllStockOwnersQuery,
-    SimpleGetAllStockOwnersQuery,
+    useSimpleGetInProgressStockOwnersQuery,
+    SimpleGetInProgressStockOwnersQuery,
     useGetListOfPrioritiesQuery,
     GetListOfPrioritiesQuery,
     useUpdateEquipmentMutation,
@@ -92,9 +92,9 @@ export const AddEquipmentForm = () => {
         };
     }, [unsavedChanges]);
 
-    //To render Simple stock owners list
-    const stockOwnerList = useSimpleGetAllStockOwnersQuery<
-        Partial<SimpleGetAllStockOwnersQuery>,
+    //To render Simple In progress stock owners list
+    const stockOwnerList = useSimpleGetInProgressStockOwnersQuery<
+        Partial<SimpleGetInProgressStockOwnersQuery>,
         Error
     >(graphqlRequestClient);
 

@@ -17,7 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
+import {
+    DeleteOutlined,
+    EditTwoTone,
+    EyeTwoTone,
+    LockTwoTone,
+    UnlockTwoTone
+} from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
@@ -29,6 +35,7 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { FC, useState } from 'react';
 import { stockOwnerRoutes as itemRoutes } from 'modules/StockOwners/Static/stockOwnersRoutes';
+import configs from '../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -39,6 +46,7 @@ const StockOwnerPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [reopenInfo, setReopenInfo] = useState<string | undefined>();
 
     const headerData: HeaderData = {
         title: t('common:stock-owners'),
@@ -54,8 +62,8 @@ const StockOwnerPages: PageComponent = () => {
     };
 
     const confirmAction = (
-        id: string | undefined,
-        setId: any,
+        info: any | undefined,
+        setInfo: any,
         action: 'delete' | 'disable' | 'enable'
     ) => {
         return () => {
@@ -63,12 +71,12 @@ const StockOwnerPages: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -84,6 +92,7 @@ const StockOwnerPages: PageComponent = () => {
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerReopen={{ reopenInfo, setReopenInfo }}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -100,7 +109,8 @@ const StockOwnerPages: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
-                                model.isEditable ? (
+                                model.isEditable &&
+                                record.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -110,7 +120,8 @@ const StockOwnerPages: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isSoftDeletable ? (
+                                model.isSoftDeletable &&
+                                record.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
@@ -128,6 +139,23 @@ const StockOwnerPages: PageComponent = () => {
                                         danger
                                         onClick={() =>
                                             confirmAction(record.id, setIdToDelete, 'delete')()
+                                        }
+                                    ></Button>
+                                ) : (
+                                    <></>
+                                )}
+                                {record.status == configs.STOCK_OWNER_STATUS_CLOSED ? (
+                                    <Button
+                                        icon={<UnlockTwoTone twoToneColor="#b3cad6" />}
+                                        onClick={() =>
+                                            confirmAction(
+                                                {
+                                                    id: record.id,
+                                                    status: configs.STOCK_OWNER_STATUS_IN_PROGRESS
+                                                },
+                                                setReopenInfo,
+                                                'enable'
+                                            )()
                                         }
                                     ></Button>
                                 ) : (
