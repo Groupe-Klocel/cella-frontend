@@ -46,14 +46,12 @@ const EditArticlesRenderModal = ({
     visible,
     showhideModal,
     rows,
-    refetch,
     setRefetch
 }: IEditArticlesRenderModalProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const [form] = Form.useForm();
-    const [isModalVisible, setIsModalVisible] = useState(visible);
     const errorMessageUpdateData = t('messages:error-update-data');
     const successMessageUpdateData = t('messages:success-updated');
     const [cubingTypes, setCubingTypes] = useState<any>();
@@ -169,8 +167,8 @@ const EditArticlesRenderModal = ({
             _context: any
         ) => {
             showSuccess(successMessageUpdateData);
-            //router.reload();
             setRefetch();
+            form.resetFields();
         },
         onError: (err) => {
             showError(errorMessageUpdateData);
@@ -182,8 +180,8 @@ const EditArticlesRenderModal = ({
     };
 
     const handleCancel = () => {
-        setIsModalVisible(false);
         showhideModal();
+        form.resetFields();
     };
 
     const onClickOk = () => {
@@ -202,13 +200,13 @@ const EditArticlesRenderModal = ({
     return (
         <Modal
             title={t('actions:edit-articles')}
-            open={isModalVisible}
+            open={visible}
             onOk={onClickOk}
             onCancel={handleCancel}
-            width="auto"
+            width="80vw"
         >
             <Form form={form} layout="vertical" scrollToFirstError>
-                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
+                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }} justify="center">
                     <Col xs={2} xl={3}>
                         <Form.Item label={t('d:length')} name="length">
                             <InputNumber min={0} />
