@@ -193,7 +193,6 @@ const EditArticlesRenderModal = ({
             .catch((err) => {
                 showError(errorMessageUpdateData);
             });
-        form.resetFields();
         showhideModal();
     };
 
