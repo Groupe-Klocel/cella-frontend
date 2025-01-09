@@ -44,7 +44,10 @@ export const getStaticProps: GetStaticProps = async () => {
         'LICENSE.md',
         'README.md',
         'package.json',
-        'vercel.json'
+        'vercel.json',
+        'configs.json',
+        'configOverloads.json',
+        'parameters.json'
     ];
     const ignoredFolders = [
         'node_modules',
@@ -57,7 +60,7 @@ export const getStaticProps: GetStaticProps = async () => {
         'pagesModels',
         'locales'
     ];
-    const ignoredRoutes = ['/common'];
+    const ignoredRoutes: any = [];
 
     const getAllFiles = (dirPath: string, arrayOfFiles: any[] = []) => {
         const files = fs.readdirSync(dirPath);
