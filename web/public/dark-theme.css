@@ -16976,12 +16976,6 @@ table tr th.ant-table-selection-column .ant-radio-wrapper {
 }
 .ant-menu.ant-menu-inline-collapsed > .ant-menu-item .ant-menu-submenu-arrow,
 .ant-menu.ant-menu-inline-collapsed
-    > .ant-menu-submenu
-    > .ant-menu-submenu-title
-    .ant-menu.ant-menu-inline-collapsed
-    > .ant-menu-item
-    .ant-menu-submenu-arrow,
-.ant-menu.ant-menu-inline-collapsed
     > .ant-menu-item-group
     > .ant-menu-item-group-list
     > .ant-menu-item

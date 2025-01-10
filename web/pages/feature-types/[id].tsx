@@ -30,7 +30,6 @@ import { featureTypesRoutes as itemRoutes } from 'modules/FeatureTypes/Static/fe
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import { FeatureTypeDetailsExtra } from 'modules/FeatureTypes/Elements/FeatureTypeDetailsExtra';
-import { ParameterDetailsExtra } from 'modules/Parameters/Elements/ParameterDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -114,13 +113,7 @@ const FeatureTypePage: PageComponent = () => {
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
                 extraDataComponent={
-                    <>
-                        <FeatureTypeDetailsExtra
-                            parameterId={id!}
-                            featureType={Number(data?.code)}
-                        />
-                        <ParameterDetailsExtra Id={id} details={data} url={'feature-types'} />
-                    </>
+                    <FeatureTypeDetailsExtra parameterId={id!} featureType={Number(data?.code)} />
                 }
                 id={id!}
                 headerData={headerData}

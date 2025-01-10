@@ -17,15 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { useAuth } from 'context/AuthContext';
-import { Menu } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
-import Link from 'next/link';
-import React, { FC } from 'react';
-import { useAppState } from 'context/AppContext';
-import { Table, ModeEnum } from 'generated/graphql';
-import { cookie, getModesFromPermissions } from '@helpers';
-import styled from 'styled-components';
 import {
     ApartmentOutlined,
     AppstoreAddOutlined,
@@ -37,6 +28,15 @@ import {
     SettingOutlined,
     SlidersOutlined
 } from '@ant-design/icons';
+import { useAuth } from 'context/AuthContext';
+import { Menu } from 'antd';
+import useTranslation from 'next-translate/useTranslation';
+import Link from 'next/link';
+import React, { FC } from 'react';
+import { useAppState } from 'context/AppContext';
+import { Table, ModeEnum } from 'generated/graphql';
+import { cookie, getModesFromPermissions } from '@helpers';
+import styled from 'styled-components';
 
 const { SubMenu } = Menu;
 
@@ -443,7 +443,11 @@ const SideMenu: FC = () => {
                     <></>
                 )}
             </SubMenu>
-            <SubMenu icon={<DeploymentUnitOutlined />} title={t('business-management')}>
+            <SubMenu
+                icon={<DeploymentUnitOutlined />}
+                key="business-management"
+                title={t('business-management')}
+            >
                 {getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) ? (
                     <Menu.Item key="business-management-credits">
                         <Link href="/credits">{t('credits')}</Link>
@@ -573,8 +577,7 @@ const SideMenu: FC = () => {
             <Menu.Item icon={<ExportOutlined />} key="logout" onClick={() => logout()}>
                 {t('logout')}
             </Menu.Item>
-            <Menu.Item key="end" />
-            {/* Need an empty item for scroll behavior */}
+            <Menu.Item key="end" /> {/* Need an empty item for scroll behavior */}
         </StyledMenu>
     );
 };

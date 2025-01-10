@@ -17,48 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
-import { Divider } from 'antd';
-import { useState } from 'react';
-import { ConfigurationListComponent } from 'modules/Configurations/Elements/ConfigurationListComponent';
-import { ConfigModelV2 as model } from 'models/ConfigModelV2';
-import { ConfigExtrasModelV2 as extras } from 'models/ConfigExtrasModelV2';
+import { Typography } from 'antd';
+
+const { Title } = Typography;
 
 export interface IItemDetailsProps {
-    Id?: string | any;
-    details: any;
-    url?: string;
+    configId?: string | any;
 }
 
-const ConfigurationDetailsExtra = ({ Id, details, url }: IItemDetailsProps) => {
-    const { t } = useTranslation();
-    const [idToDelete, setIdToDelete] = useState<string | undefined>();
-    const [idToDisable, setIdToDisable] = useState<string | undefined>();
-
-    // #region extract data from modelV2
-    const listFields = Object.keys(model.fieldsInfo).filter(
-        (key) => model.fieldsInfo[key].isListRequested
-    );
-    return (
-        <>
-            <Divider />
-            <AppHead title={META_DEFAULTS.title} />
-            <ConfigurationListComponent
-                searchCriteria={{ Id: Id }}
-                details={details}
-                parameterId={Id}
-                dataModel={extras}
-                parameterFields={listFields}
-                triggerDelete={{ idToDelete, setIdToDelete }}
-                triggerSoftDelete={{ idToDisable, setIdToDisable }}
-                searchable={false}
-                refresh={true}
-                url={url}
-            />
-        </>
-    );
+const ConfigurationDetailsExtra = ({ configId }: IItemDetailsProps) => {
+    return <></>;
 };
 
 export { ConfigurationDetailsExtra };

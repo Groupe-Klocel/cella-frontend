@@ -32,7 +32,8 @@ export const ParameterModelV2: ModelType = {
         list: 'parameters',
         create: 'createParameter',
         update: 'updateParameter',
-        delete: 'deleteParameter'
+        delete: 'deleteParameter',
+        export: true
     },
 
     fieldsInfo: {
@@ -76,8 +77,8 @@ export const ParameterModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: null,
             defaultSort: 'ascending',
+            optionTable: null,
             isEditDisabled: true
         },
         code: {
@@ -150,6 +151,27 @@ export const ParameterModelV2: ModelType = {
             isExcludedFromList: false,
             isSortable: false,
             searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: 'String',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: null
+        },
+        extras: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,

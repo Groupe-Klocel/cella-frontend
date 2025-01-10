@@ -29,7 +29,6 @@ import useTranslation from 'next-translate/useTranslation';
 import { shippingModesRoutes as itemRoutes } from 'modules/ShippingModes/Static/shippingModesRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import { ParameterDetailsExtra } from 'modules/Parameters/Elements/ParameterDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -115,9 +114,6 @@ const ShippingModePage: PageComponent = () => {
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
-                extraDataComponent={
-                    <ParameterDetailsExtra Id={id} details={data} url={'shipping-modes'} />
-                }
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
