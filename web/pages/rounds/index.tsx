@@ -69,7 +69,7 @@ const RoundPages: PageComponent = () => {
                         }
                     `;
                     const variables = {
-                        functionName: 'K_estimateRounds',
+                        functionName: 'estimate_rounds',
                         event: {}
                     };
                     try {
