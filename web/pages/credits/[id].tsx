@@ -90,7 +90,6 @@ const CreditPage: PageComponent = () => {
             });
         };
     };
-
     const closeStatus = async (id: string) => {
         const newStatus = configs.ORDER_STATUS_CLOSED;
         const updateVariables = {
@@ -114,7 +113,6 @@ const CreditPage: PageComponent = () => {
         }
         return result;
     };
-
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -209,6 +207,7 @@ const CreditPage: PageComponent = () => {
                         priceType={data?.priceType}
                         status={data?.status}
                         refetchCreditPayment={refetchCreditPayment}
+                        setCreditInvoiceAddress={setCreditInvoiceAddress}
                     />
                 }
                 headerData={headerData}
