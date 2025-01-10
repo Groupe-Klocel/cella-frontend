@@ -1,5 +1,6 @@
 import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
@@ -21,6 +22,7 @@ type AppLayoutProps = {
 
 const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) => {
     const { userSettings, user } = useAppState();
+    const { isAuthenticated } = useAuth();
     const router = useRouter();
     const dispatchUser = useAppDispatch();
     const [userSettingsLoading, setUserSettingsLoading] = useState<boolean>(true);
@@ -72,7 +74,11 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [dispatchUser]);
 
     useEffect(() => {
-        getUserSettings();
+        if (isAuthenticated) {
+            getUserSettings();
+        } else {
+            setUserSettingsLoading(false);
+        }
     }, []);
 
     useEffect(() => {
