@@ -18,10 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { cookie, isoLangs, LanguageType } from '@helpers';
+import { useAppState, useAppDispatch } from 'context/AppContext';
 import { Select } from 'antd';
 import { useRouter } from 'next/router';
-import { FC } from 'react';
+import React, { FC, useCallback, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 const { Option } = Select;
 
@@ -47,17 +50,104 @@ const StyledSelect = styled(Select)`
     }
 `;
 const LanguageSelector: FC = () => {
+    const { graphqlRequestClient } = useAuth();
     const router = useRouter();
-    const { locale } = router;
+
+    const { userSettings, user: userInfo } = useAppState();
+
+    const dispatchUserSettings = useAppDispatch();
+
+    const generalUserSettingsRef = useRef<any>(
+        userSettings?.find((item: any) => {
+            return 'globalParametersMobile' === item.code;
+        })
+    );
+
+    useEffect(() => {
+        generalUserSettingsRef.current = userSettings?.find((item: any) => {
+            return 'globalParametersMobile' === item.code;
+        });
+    }, [userSettings]);
+
+    const createUsersSettings = useCallback(
+        async (lang: any) => {
+            const newsSettings = {
+                code: 'globalParametersMobile',
+                warehouseWorkerId: userInfo.id,
+                valueJson: {
+                    lang: lang,
+                    theme: generalUserSettingsRef.current?.valueJson?.theme
+                }
+            };
+            const createQuery = gql`
+                mutation ($input: CreateWarehouseWorkerSettingInput!) {
+                    createWarehouseWorkerSetting(input: $input) {
+                        id
+                        code
+                        valueJson
+                    }
+                }
+            `;
+            await graphqlRequestClient.request(createQuery, {
+                input: newsSettings
+            });
+        },
+        [graphqlRequestClient, userInfo]
+    );
+    const updateUsersSettings = useCallback(
+        async (lang: any) => {
+            const newsSettings = {
+                ...generalUserSettingsRef.current,
+                valueJson: {
+                    ...generalUserSettingsRef.current?.valueJson,
+                    lang: lang
+                }
+            };
+            const updateQuery = gql`
+                mutation ($id: String!, $input: UpdateWarehouseWorkerSettingInput!) {
+                    updateWarehouseWorkerSetting(id: $id, input: $input) {
+                        id
+                        code
+                        valueJson
+                    }
+                }
+            `;
+            await graphqlRequestClient.request(updateQuery, {
+                id: generalUserSettingsRef.current?.id,
+                input: { valueJson: newsSettings.valueJson }
+            });
+        },
+        [graphqlRequestClient]
+    );
+
+    const saveSettings = useCallback(
+        (lang: any) => {
+            if (generalUserSettingsRef.current?.id) {
+                updateUsersSettings(lang);
+            } else {
+                createUsersSettings(lang);
+            }
+        },
+        [updateUsersSettings, createUsersSettings]
+    );
 
     const changeLanguage = (value: any) => {
-        const newLocale: string = value;
-        cookie.set('NEXT_LOCALE', newLocale);
-        router.push(router.asPath, router.asPath, { locale: newLocale });
+        dispatchUserSettings({
+            type: 'SWITCH_USER_SETTINGS',
+            userSettings: [
+                ...userSettings,
+                { code: 'globalParametersMobile', valueJson: { lang: value, theme: 'light' } }
+            ]
+        });
+        saveSettings(value);
+        router.push(router.asPath, router.asPath, { locale: value });
     };
 
     return (
-        <StyledSelect defaultValue={locale} onChange={changeLanguage}>
+        <StyledSelect
+            defaultValue={generalUserSettingsRef.current?.valueJson?.lang ?? 'en-US'}
+            onChange={changeLanguage}
+        >
             {isoLangs.map((language: LanguageType) => (
                 <Option key={language.code} value={language.code}>
                     <img src={language.flag} width={15} />
