@@ -124,7 +124,10 @@ async function fetchData() {
               itemPath + "/" + item.fileName,
               "utf8"
             );
-            if (dataFile.includes("//$$$$$SPE$$$$$//")) {
+            if (
+              dataFile.includes("//$$$$$SPE$$$$$//") &&
+              item.fileName !== "getOverloads.js"
+            ) {
               return;
             }
           } catch (err) {
