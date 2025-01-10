@@ -701,7 +701,7 @@ const SchedulerConfigListComponent = (props: IListProps) => {
                             rows?.results && rows?.results.length > 0 ? (
                                 <>
                                     <AppTableV2
-                                        type={props.dataModel.endpoints.list}
+                                        dataModel={props.dataModel}
                                         columns={props.actionColumns.concat(columns)}
                                         data={newRows}
                                         pagination={pagination}
@@ -727,7 +727,7 @@ const SchedulerConfigListComponent = (props: IListProps) => {
                                         }
                                     />
                                     <AppTableV2
-                                        type={props.dataModel.endpoints.list}
+                                        dataModel={props.dataModel}
                                         columns={crontabColumns}
                                         data={crontabRows}
                                         pagination={pagination}

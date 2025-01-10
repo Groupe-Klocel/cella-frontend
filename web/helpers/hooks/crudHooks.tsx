@@ -108,6 +108,11 @@ const useList = (
             language: language
         };
 
+        console.log('AST', variables.filters);
+        console.log('AST', variables.orderBy);
+        console.log('AST', variables.page);
+        console.log('AST', variables.itemsPerPage);
+
         graphqlRequestClient
             .request(query, variables)
             .then((result: any) => {
@@ -129,6 +134,8 @@ const useList = (
                 setIsLoading(false);
             })
             .catch((error: any) => {
+                console.log('AST',error);
+
                 if (error.response && error.response.errors[0].extensions) {
                     showError(t(`errors:${error.response.errors[0].extensions.code}`));
                 } else {

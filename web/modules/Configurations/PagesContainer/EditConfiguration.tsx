@@ -44,9 +44,6 @@ export interface EditConfigurationProps {
 const EditConfiguration: FC<EditConfigurationProps> = ({ id, router }: EditConfigurationProps) => {
     const { t } = useTranslation();
 
-    const { globalLocale } = useAppState();
-    const searchedLanguage = globalLocale == 'en-US' ? 'en' : globalLocale;
-
     const { graphqlRequestClient } = useAuth();
 
     const { isLoading, data, error } = useGetConfigByIdQuery<GetConfigByIdQuery, Error>(

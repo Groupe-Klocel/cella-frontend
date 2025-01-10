@@ -59,22 +59,6 @@ const SideMenu: FC = () => {
     const { logout } = useAuth();
     const { permissions } = useAppState();
 
-    const checkPermissionExistance = (tableName: string) => {
-        if (!permissions) {
-            return false;
-        }
-        const permission = permissions.find((p: any) => {
-            return p.table.toUpperCase() == tableName;
-        });
-
-        if (permission) {
-            return true;
-        } else {
-            return false;
-        }
-    };
-
-    const token = cookie.get('token') || '';
     const bi_link = process.env.NEXT_PUBLIC_BI_URL || 'https://bi.cella.cloud';
 
     return (

@@ -62,12 +62,14 @@ export const getStaticProps: GetStaticProps = async () => {
     ];
     const ignoredRoutes: any = [];
 
+    const splitString = process.cwd().split('/')[1] === 'vercel' ? '/path0' : '/cella-frontend';
+
     const getAllFiles = (dirPath: string, arrayOfFiles: any[] = []) => {
         const files = fs.readdirSync(dirPath);
 
         files.forEach((file) => {
             const filePath = path.join(dirPath, file);
-            if (ignoredRoutes.includes(filePath.split('/path0')[1])) {
+            if (ignoredRoutes.includes(filePath.split(splitString)[1])) {
                 return;
             }
             if (fs.statSync(filePath).isDirectory()) {
@@ -88,7 +90,7 @@ export const getStaticProps: GetStaticProps = async () => {
         const content = fs.readFileSync(filePath, 'utf8');
         return {
             content,
-            path: filePath.split('/path0')[1].split('/').slice(0, -1).join('/'),
+            path: filePath.split(splitString)[1].split('/').slice(0, -1).join('/'),
             fileName: filePath.split('/').pop()
         };
     });

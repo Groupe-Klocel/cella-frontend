@@ -45,8 +45,14 @@ const StyledBreadcrumb = styled(Breadcrumb)<{ isDarkTheme: boolean }>`
 `;
 
 const GlobalBreadcrumb: FC<IBreadcrumbProps> = ({ routes }: IBreadcrumbProps) => {
-    const { theme } = useAppState();
+    const { userSettings, tempTheme } = useAppState();
     const { t } = useTranslation();
+
+    const generalUserSettings = userSettings?.find((item: any) => {
+        return 'globalParameters' === item.code;
+    });
+
+    const theme = tempTheme ?? generalUserSettings?.valueJson?.theme;
 
     const breadcrumbItems =
         routes?.map((item) => ({

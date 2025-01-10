@@ -21,7 +21,7 @@ import { AppContent, DrawerItems, Header, ProtectRoute, ScreenSpin, SideMenu } f
 import { Layout } from 'antd';
 import { useAppState, useAppDispatch } from 'context/AppContext';
 import { DrawerProvider } from 'context/DrawerContext';
-import { FC, ReactNode, useCallback } from 'react';
+import { FC, ReactNode, useCallback, useEffect } from 'react';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
 import styled from 'styled-components';
 
@@ -35,22 +35,34 @@ export interface IMainLayoutProps {
 
 const MainLayout: FC<IMainLayoutProps> = ({ children }: IMainLayoutProps) => {
     // get from app context
-    const { isSessionMenuCollapsed } = useAppState();
+    const { userSettings } = useAppState();
     const { status } = useThemeSwitcher();
+    const dispatchUserSettings = useAppDispatch();
 
-    const dispatchMenu = useAppDispatch();
-    const switchMenuSession = useCallback(
-        () =>
-            dispatchMenu({
-                type: 'SWITCH_MENU_SESSION',
-                isSessionMenuCollapsed: !isSessionMenuCollapsed
+    const isSettingMenuCollapsed = userSettings?.find((item: any) => {
+        return 'globalParameters' === item.code;
+    })?.valueJson?.isSettingMenuCollapsed;
+
+    const switchMenuSetting = useCallback(
+        (newMenuSetting: boolean) =>
+            dispatchUserSettings({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: userSettings.map((item: any) => {
+                    if ('globalParameters' === item.code) {
+                        return {
+                            ...item,
+                            valueJson: {
+                                ...item.valueJson,
+                                isSettingMenuCollapsed: newMenuSetting
+                            }
+                        };
+                    }
+                    return item;
+                })
             }),
-        [dispatchMenu, isSessionMenuCollapsed]
+        [dispatchUserSettings, userSettings]
     );
 
-    const onCollapseMenu = () => {
-        switchMenuSession();
-    };
 
     if (status !== 'loaded') {
         return <ScreenSpin />;
@@ -65,8 +77,8 @@ const MainLayout: FC<IMainLayoutProps> = ({ children }: IMainLayoutProps) => {
                         <Layout.Sider
                             width={250}
                             collapsible
-                            collapsed={isSessionMenuCollapsed}
-                            onCollapse={onCollapseMenu}
+                            collapsed={isSettingMenuCollapsed}
+                            onCollapse={() => switchMenuSetting(!isSettingMenuCollapsed)}
                             className="scrollbar"
                         >
                             <SideMenu />

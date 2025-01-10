@@ -737,7 +737,7 @@ const NotificationListComponent = (props: IListProps) => {
                                                     <></>
                                                 )}
                                                 <AppTableV2
-                                                    type={props.dataModel.endpoints.list}
+                                                    dataModel={props.dataModel}
                                                     columns={props.actionColumns
                                                         .concat(props.extraColumns)
                                                         .concat(columns)}
@@ -755,7 +755,7 @@ const NotificationListComponent = (props: IListProps) => {
                                         ) : (
                                             <>
                                                 <AppTableV2
-                                                    type={props.dataModel.endpoints.list}
+                                                    dataModel={props.dataModel}
                                                     columns={props.actionColumns
                                                         .concat(props.extraColumns)
                                                         .concat(columns)}
