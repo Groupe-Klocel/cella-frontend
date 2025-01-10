@@ -28,9 +28,7 @@ function addLicence(dir_path, templateName, extFile) {
     if (file.endsWith(extFile)) {
       const content = fs.readFileSync(file_path, "utf8");
 
-      if (content.includes(templateName)) {
-        console.log(`🟠 Header already exists in file : ${file_path}`);
-      } else {
+      if (!content.includes(templateName)) {
         fs.writeFileSync(file_path, `${templateName}\n${content}`);
         console.log(`✅ Header added to the file : ${file_path} `);
       }
@@ -93,39 +91,3 @@ for (const extension of extensions) {
 addLicence(templatePath, TemplateGraph, graphqlExtension);
 
 console.log(`Done`);
-
-// command prompt example made by AST if needed
-// // input question
-// const readline = require('readline').createInterface({
-//     input: process.stdin,
-//     output: process.stdout
-// });
-// // prompt inoput
-// readline.question('Veuillez entrer votre chemin (ex:./template) >', (templatePath) => {
-//     // Vérifier si le dossier existe
-//     if (!fs.existsSync(templatePath) || !fs.lstatSync({ templatePath }).isDirectory()) {
-//         console.log(`❌ Le dossier "${templatePath}" n'existe pas ...`);
-//         return readline.close();
-//     }
-//     // function Demander l'extension du fichier à traiter recuperer 'templatePath'
-//     function PromptQuestionExtension() {
-//         readline.question('Veuillez entrer une extension parmi la liste >', (choiceLanguage) => {
-//             if (extLangage.includes(choiceLanguage)) {
-//                 if (choiceLanguage === extLangage[3]) {
-//                     console.log(`Template ${extLangage[3]} choisis`);
-//                     addLicence({ templatePath }, TemplateGraph, choiceLanguage);
-//                 } else {
-//                     console.log(`Template ${extLangage[0]},${extLangage[1]}`);
-//                     addLicence({ templatePath }, TemplateJS, choiceLanguage);
-//                 }
-//                 readline.close();
-//             } else {
-//                 console.log('Veuillez entrer une extension valide ❌');
-//                 // Rappel notre fonction si ses faux.
-//                 PromptQuestionExtension();
-//             }
-//         });
-//     }
-
-//     PromptQuestionExtension();
-// });
