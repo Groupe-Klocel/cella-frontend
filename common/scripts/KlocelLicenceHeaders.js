@@ -85,7 +85,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 const extensions = [".ts", ".tsx"];
 const graphqlExtension = ".graphql";
-const templatePath = "../../";
+const templatePath = "../";
 
 for (const extension of extensions) {
   addLicence(templatePath, TemplateJS, extension);
