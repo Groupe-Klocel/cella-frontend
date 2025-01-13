@@ -22,7 +22,6 @@ type AppLayoutProps = {
 
 const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) => {
     const { userSettings, user } = useAppState();
-    const { isAuthenticated } = useAuth();
     const router = useRouter();
     const dispatchUser = useAppDispatch();
     const [userSettingsLoading, setUserSettingsLoading] = useState<boolean>(true);
@@ -71,15 +70,15 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             userSettings: newSettings
         });
         setUserSettingsLoading(false);
-    }, [dispatchUser]);
+    }, [dispatchUser, user]);
 
     useEffect(() => {
-        if (isAuthenticated) {
+        if (user?.id) {
             getUserSettings();
         } else {
             setUserSettingsLoading(false);
         }
-    }, []);
+    }, [user]);
 
     useEffect(() => {
         if (lang) {

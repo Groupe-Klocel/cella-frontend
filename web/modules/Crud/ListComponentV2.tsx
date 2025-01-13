@@ -191,6 +191,7 @@ const ListComponent = (props: IListProps) => {
                 });
                 setSwitchReloadData((prev: boolean) => !prev);
             } catch (error) {
+                console.log('queryInfo update listComponent error', error);
                 showWarning(t('messages:config-save-error'));
             }
         },
@@ -237,6 +238,7 @@ const ListComponent = (props: IListProps) => {
                 });
                 setSwitchReloadData((prev: boolean) => !prev);
             } catch (error) {
+                console.log('queryInfo create listComponent error', error);
                 showWarning(t('messages:config-save-error'));
             }
         },
