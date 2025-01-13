@@ -195,6 +195,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                 })
             });
         } catch (error) {
+            console.log('queryInfo update appTableV2 error', error);
             showWarning(t('messages:config-save-error'));
         }
     }, [visibleColumnKeys, fixedColumns, filteredColumns, tableColumns]);
@@ -230,6 +231,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                 userSettings: [...state.userSettings, queryInfo.createWarehouseWorkerSetting]
             });
         } catch (error) {
+            console.log('queryInfo create appTableV2 error', error);
             showWarning(t('messages:config-save-error'));
         }
     }, [visibleColumnKeys, fixedColumns, filteredColumns, tableColumns]);
