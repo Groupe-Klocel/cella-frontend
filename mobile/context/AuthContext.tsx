@@ -95,6 +95,10 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
                 const user = decodeJWT(data.warehouseLogin.accessToken);
                 setUser(user);
                 cookie.set('user', JSON.stringify(user));
+                dispatchUser({
+                    type: 'SET_USER_INFO',
+                    user: user
+                });
                 router.push('/');
                 showSuccess(t('messages:login-success'));
             } else {
@@ -132,6 +136,7 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
 
     const logout = () => {
         cookie.remove('token');
+        cookie.remove('user');
         setUser(null);
         // Remove Bearer JWT token from header
         setHeader('NOP');
