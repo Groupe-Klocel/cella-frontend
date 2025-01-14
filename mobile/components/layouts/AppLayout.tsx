@@ -56,7 +56,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             }
         `;
         const variables = {
-            warehouseWorkerId: user.id
+            warehouseWorkerId: user.user_id
         };
         const queryInfo: any = await graphqlRequestClient.request(query, variables);
         const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
@@ -76,7 +76,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         if (lang) {
             router.push(router.asPath, router.asPath, { locale: lang });
         }
-        if (user.id) {
+        if (user.user_id) {
             getUserSettings();
         } else {
             setUserSettingsLoading(false);

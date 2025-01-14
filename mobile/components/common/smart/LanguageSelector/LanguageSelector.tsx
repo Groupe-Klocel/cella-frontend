@@ -73,7 +73,7 @@ const LanguageSelector: FC = () => {
         async (lang: any) => {
             const newsSettings = {
                 code: 'globalParametersMobile',
-                warehouseWorkerId: userInfo.id,
+                warehouseWorkerId: userInfo.user_id,
                 valueJson: {
                     lang: lang,
                     theme: generalUserSettingsRef.current?.valueJson?.theme

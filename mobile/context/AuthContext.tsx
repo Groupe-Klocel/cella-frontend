@@ -26,7 +26,12 @@ import {
     IS_FAKE,
     IS_SAME_SEED
 } from '@helpers';
-import { WarehouseLoginMutation, WarehouseLoginMutationVariables, useWarehouseLoginMutation } from 'generated/graphql';
+import { useAppDispatch } from 'context/AppContext';
+import {
+    WarehouseLoginMutation,
+    WarehouseLoginMutationVariables,
+    useWarehouseLoginMutation
+} from 'generated/graphql';
 import { GraphQLClient } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { createContext, FC, useContext, useEffect, useState } from 'react';
@@ -48,6 +53,7 @@ const AuthContext = createContext<IAuthContext>(undefined!);
 
 export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenType) => {
     const { t } = useTranslation();
+    const dispatchUser = useAppDispatch();
 
     const graphqlClient = new GraphQLClient(process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT as string);
 
@@ -61,23 +67,34 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
         async function loadUserFromCookie() {
             const token = cookie.get('token');
             if (token) {
-                await setHeader(token);
+                setHeader(token);
                 const user = decodeJWT(token);
-                if (user) setUser(user);
+                if (user) {
+                    setUser(user);
+                    dispatchUser({
+                        type: 'SET_USER_INFO',
+                        user: user
+                    });
+                }
             }
             setLoading(false);
         }
         loadUserFromCookie();
-    },[]);
+    }, []);
 
     const { mutate } = useWarehouseLoginMutation<Error>(graphqlRequestClient, {
-        onSuccess: (data: WarehouseLoginMutation, _variables: WarehouseLoginMutationVariables, _context: unknown) => {
+        onSuccess: (
+            data: WarehouseLoginMutation,
+            _variables: WarehouseLoginMutationVariables,
+            _context: unknown
+        ) => {
             if (data?.warehouseLogin?.accessToken) {
                 cookie.set('token', data.warehouseLogin.accessToken);
                 // Set Bearer JWT token to the header for future request
                 setHeader(data.warehouseLogin.accessToken);
                 const user = decodeJWT(data.warehouseLogin.accessToken);
                 setUser(user);
+                cookie.set('user', JSON.stringify(user));
                 router.push('/');
                 showSuccess(t('messages:login-success'));
             } else {

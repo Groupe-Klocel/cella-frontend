@@ -67,11 +67,6 @@ function reducer(state: State, action: Action) {
     }
 }
 
-const saveUserSettings = (menu: boolean, theme: string) => {
-    cookie.set('isSettingMenuCollapsed', menu.toString());
-    cookie.set('mobile_theme', theme);
-};
-
 const [useAppState, useAppDispatch, AppProvider] = createCtx(initialState, reducer);
 
 export { useAppState, useAppDispatch, AppProvider };
