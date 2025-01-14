@@ -71,7 +71,10 @@ export const UserSettings: FC = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
 
     const ResetUserConfigs = useCallback(async () => {
-        const arrayOfIds = userSettings.map((item: any) => item.id).filter(Boolean);
+        const arrayOfIds = userSettings
+            .map((item: any) => item.id)
+            .filter(Boolean)
+            .filter((id: any, index: number, self: any) => self.indexOf(id) === index);
         if (arrayOfIds.length === 0) {
             return setIsModalVisible(false);
         }

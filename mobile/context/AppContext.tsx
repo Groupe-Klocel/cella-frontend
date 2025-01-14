@@ -30,7 +30,7 @@ const initialState = {
     userSettings: [
         {
             code: 'globalParametersMobile',
-            valueJson: { lang: 'fr', theme: 'light' }
+            valueJson: { theme: 'light' }
         }
     ],
     user: userInitData

@@ -71,10 +71,6 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
                 const user = decodeJWT(token);
                 if (user) {
                     setUser(user);
-                    dispatchUser({
-                        type: 'SET_USER_INFO',
-                        user: user
-                    });
                 }
             }
             setLoading(false);
@@ -95,12 +91,6 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
                 const user = decodeJWT(data.warehouseLogin.accessToken);
                 setUser(user);
                 cookie.set('user', JSON.stringify(user));
-                dispatchUser({
-                    type: 'SET_USER_INFO',
-                    user: user
-                });
-                router.push('/');
-                showSuccess(t('messages:login-success'));
             } else {
                 showError(t('messages:error-login'));
             }
