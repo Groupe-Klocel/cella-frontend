@@ -48,7 +48,7 @@ const initialState: State = {
     userSettings: [
         {
             code: 'globalParameters',
-            valueJson: { lang: 'fr', isSettingMenuCollapsed: true, theme: 'light' }
+            valueJson: { isSettingMenuCollapsed: true, theme: 'light' }
         }
     ],
     tempTheme: undefined

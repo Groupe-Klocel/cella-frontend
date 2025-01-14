@@ -41,7 +41,9 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     });
 
     const theme = generalUserSettings?.valueJson?.theme ?? 'light';
-    const lang = generalUserSettings?.valueJson?.lang ?? '';
+    const lang = generalUserSettings?.valueJson?.lang
+        ? generalUserSettings?.valueJson?.lang
+        : router.locale;
 
     const getUserSettings = useCallback(async () => {
         const query = gql`
