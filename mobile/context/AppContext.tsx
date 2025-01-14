@@ -62,6 +62,11 @@ function reducer(state: State, action: Action) {
                 isSettingMenuCollapsed: action.isSettingMenuCollapsed,
                 isSessionMenuCollapsed: action.isSettingMenuCollapsed
             };
+        case 'SET_USER_INFO':
+            return {
+                ...state,
+                user: action.user
+            };
         default:
             return state;
     }
