@@ -70,14 +70,18 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             userSettings: newSettings
         });
         setUserSettingsLoading(false);
-    }, [dispatchUser]);
+    }, [dispatchUser, user]);
 
     useEffect(() => {
         if (lang) {
             router.push(router.asPath, router.asPath, { locale: lang });
         }
-        getUserSettings();
-    }, [lang]);
+        if (user.id) {
+            getUserSettings();
+        } else {
+            setUserSettingsLoading(false);
+        }
+    }, [lang, user]);
 
     if (userSettingsLoading) {
         return <ScreenSpin />;
