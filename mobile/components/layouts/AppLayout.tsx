@@ -41,7 +41,9 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     });
 
     const theme = generalUserSettings?.valueJson?.theme ?? 'light';
-    const lang = generalUserSettings?.valueJson?.lang ?? '';
+    const lang = generalUserSettings?.valueJson?.lang
+        ? generalUserSettings?.valueJson?.lang
+        : router.locale;
 
     const getUserSettings = useCallback(async () => {
         const query = gql`
@@ -56,7 +58,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             }
         `;
         const variables = {
-            warehouseWorkerId: user.user_id
+            warehouseWorkerId: user.id
         };
         const queryInfo: any = await graphqlRequestClient.request(query, variables);
         const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
@@ -73,15 +75,18 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [dispatchUser, user]);
 
     useEffect(() => {
-        if (lang) {
-            router.push(router.asPath, router.asPath, { locale: lang });
-        }
-        if (user.user_id) {
+        if (user.id) {
             getUserSettings();
         } else {
             setUserSettingsLoading(false);
         }
-    }, [lang, user]);
+    }, [user]);
+
+    useEffect(() => {
+        if (lang) {
+            router.push(router.asPath, router.asPath, { locale: lang });
+        }
+    }, [lang]);
 
     if (userSettingsLoading) {
         return <ScreenSpin />;
