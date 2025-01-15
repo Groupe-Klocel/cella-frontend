@@ -40,10 +40,14 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         return 'globalParametersMobile' === item.code;
     });
 
+    const [lang, setLang] = useState(
+        generalUserSettings?.valueJson?.lang ? generalUserSettings?.valueJson?.lang : router.locale
+    );
+
+    console.log('generalUserSettings', generalUserSettings);
+    console.log('user', user);
+
     const theme = generalUserSettings?.valueJson?.theme ?? 'light';
-    const lang = generalUserSettings?.valueJson?.lang
-        ? generalUserSettings?.valueJson?.lang
-        : router.locale;
 
     const getUserSettings = useCallback(async () => {
         const query = gql`
@@ -67,6 +71,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         const newSettings = containsTestCode
             ? queryInfo.warehouseWorkerSettings.results
             : [...queryInfo.warehouseWorkerSettings.results, ...userSettings];
+        setLang(newSettings[0].valueJson.lang);
         dispatchUser({
             type: 'SWITCH_USER_SETTINGS',
             userSettings: newSettings
