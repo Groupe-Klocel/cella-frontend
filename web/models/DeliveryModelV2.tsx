@@ -510,7 +510,7 @@ export const DeliveryModelV2: ModelType = {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: true,
+            isSortable: false,
             searchingFormat: 'String',
             isDetailRequested: false,
             isExcludedFromDetail: false,

@@ -20,14 +20,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { SettingOutlined } from '@ant-design/icons';
 import { Logo, ProfileMenu, UserSettings } from '@components';
 import { Col, Layout, Row } from 'antd';
-import { useAppState, useAppDispatch } from 'context/AppContext';
+import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import useTranslation from 'next-translate/useTranslation';
-import { FC, useCallback, useState, useEffect } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
 import Link from 'next/link';
+import { gql } from 'graphql-request';
 
 const StyledHeader = styled(Layout.Header)`
     padding: 0px 10px 0px 10px;
@@ -45,40 +46,92 @@ const Header: FC = () => {
     const { user } = useAuth();
     const { switcher } = useThemeSwitcher();
 
-    const [finishSaving, setFinishSaving] = useState(false);
+    const { graphqlRequestClient } = useAuth();
 
     const dispatchDrawer = useDrawerDispatch();
-    const dispatchSettings = useAppDispatch();
 
     const closeDrawer = useCallback(
         () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
         [dispatchDrawer]
     );
-    const { theme } = useAppState();
+    const { userSettings, user: userInfo, tempTheme } = useAppState();
 
-    const saveSettings = useCallback(
-        () =>
-            dispatchSettings({
-                type: 'SAVE_SETTINGS'
-            }),
-        [dispatchSettings]
-    );
+    const generalUserSettingsRef = useRef<any>(null);
+    const tempThemeRef = useRef<any>(null);
+
+    useEffect(() => {
+        generalUserSettingsRef.current = userSettings?.find((item: any) => {
+            return 'globalParameters' === item.code;
+        });
+        tempThemeRef.current = tempTheme;
+    }, [userSettings, tempTheme]);
+
+    const createUsersSettings = useCallback(async () => {
+        const newsSettings = {
+            code: 'globalParameters',
+            warehouseWorkerId: userInfo.id,
+            valueJson: {
+                lang: generalUserSettingsRef.current?.valueJson?.lang,
+                isSettingMenuCollapsed:
+                    generalUserSettingsRef.current?.valueJson?.isSettingMenuCollapsed,
+                theme: tempThemeRef.current ?? generalUserSettingsRef.current?.valueJson?.theme
+            }
+        };
+        const createQuery = gql`
+            mutation ($input: CreateWarehouseWorkerSettingInput!) {
+                createWarehouseWorkerSetting(input: $input) {
+                    id
+                    code
+                    valueJson
+                }
+            }
+        `;
+        await graphqlRequestClient.request(createQuery, {
+            input: newsSettings
+        });
+    }, [graphqlRequestClient, userInfo]);
+
+    const updateUsersSettings = useCallback(async () => {
+        const newsSettings = {
+            ...generalUserSettingsRef.current,
+            valueJson: {
+                ...generalUserSettingsRef.current?.valueJson,
+                lang: generalUserSettingsRef.current?.valueJson?.lang,
+                isSettingMenuCollapsed:
+                    generalUserSettingsRef.current?.valueJson?.isSettingMenuCollapsed,
+                theme: tempThemeRef.current ?? generalUserSettingsRef.current?.valueJson?.theme
+            }
+        };
+        const updateQuery = gql`
+            mutation ($id: String!, $input: UpdateWarehouseWorkerSettingInput!) {
+                updateWarehouseWorkerSetting(id: $id, input: $input) {
+                    id
+                    code
+                    valueJson
+                }
+            }
+        `;
+        await graphqlRequestClient.request(updateQuery, {
+            id: generalUserSettingsRef.current?.id,
+            input: { valueJson: newsSettings.valueJson }
+        });
+    }, [graphqlRequestClient]);
+
+    const saveSettings = useCallback(() => {
+        if (generalUserSettingsRef.current?.id) {
+            updateUsersSettings();
+        } else {
+            createUsersSettings();
+        }
+    }, [updateUsersSettings, createUsersSettings]);
 
     const saveUserSettings = async () => {
         saveSettings();
         closeDrawer();
-        await setFinishSaving(true);
+        switcher({
+            theme: tempThemeRef.current ?? generalUserSettingsRef.current?.valueJson?.theme!
+        });
     };
-
-    useEffect(() => {
-        const onfinish = async () => {
-            if (finishSaving) {
-                switcher({ theme: theme! });
-                await setFinishSaving(false);
-            }
-        };
-        onfinish();
-    }, [finishSaving]);
 
     const openUserSettingsDrawer = useCallback(
         () =>
@@ -91,7 +144,7 @@ const Header: FC = () => {
                 content: <UserSettings />,
                 onComfirm: () => saveUserSettings()
             }),
-        [dispatchDrawer]
+        [dispatchDrawer, saveUserSettings]
     );
 
     const profileMenuList = [
