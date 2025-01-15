@@ -26,10 +26,15 @@ import {
     IS_FAKE,
     IS_SAME_SEED
 } from '@helpers';
-import { WarehouseLoginMutation, WarehouseLoginMutationVariables, useWarehouseLoginMutation } from 'generated/graphql';
+import { useAppDispatch } from 'context/AppContext';
+import {
+    WarehouseLoginMutation,
+    WarehouseLoginMutationVariables,
+    useWarehouseLoginMutation
+} from 'generated/graphql';
 import { GraphQLClient } from 'graphql-request';
 import { useRouter } from 'next/router';
-import { createContext, FC, useContext, useEffect, useState } from 'react';
+import { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
 import useTranslation from 'next-translate/useTranslation';
 
 interface IAuthContext {
@@ -48,6 +53,7 @@ const AuthContext = createContext<IAuthContext>(undefined!);
 
 export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenType) => {
     const { t } = useTranslation();
+    const dispatchUser = useAppDispatch();
 
     const graphqlClient = new GraphQLClient(process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT as string);
 
@@ -61,25 +67,36 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
         async function loadUserFromCookie() {
             const token = cookie.get('token');
             if (token) {
-                await setHeader(token);
-                const user = decodeJWT(token);
-                if (user) setUser(user);
+                setHeader(token);
+                if (token) {
+                    setHeader(token);
+                    const user = decodeJWT(token);
+                    if (user) setUser(user);
+                }
             }
             setLoading(false);
         }
         loadUserFromCookie();
-    },[]);
+    }, []);
 
     const { mutate } = useWarehouseLoginMutation<Error>(graphqlRequestClient, {
-        onSuccess: (data: WarehouseLoginMutation, _variables: WarehouseLoginMutationVariables, _context: unknown) => {
+        onSuccess: (
+            data: WarehouseLoginMutation,
+            _variables: WarehouseLoginMutationVariables,
+            _context: unknown
+        ) => {
             if (data?.warehouseLogin?.accessToken) {
                 cookie.set('token', data.warehouseLogin.accessToken);
                 // Set Bearer JWT token to the header for future request
                 setHeader(data.warehouseLogin.accessToken);
                 const user = decodeJWT(data.warehouseLogin.accessToken);
                 setUser(user);
-                router.push('/');
-                showSuccess(t('messages:login-success'));
+                const userForReducer = {
+                    id: user.user_id,
+                    username: user.username,
+                    warehouseId: user.warehouseId
+                };
+                cookie.set('user', JSON.stringify(userForReducer));
             } else {
                 showError(t('messages:error-login'));
             }
@@ -115,6 +132,7 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
 
     const logout = () => {
         cookie.remove('token');
+        cookie.remove('user');
         setUser(null);
         // Remove Bearer JWT token from header
         setHeader('NOP');

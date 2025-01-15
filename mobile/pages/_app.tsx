@@ -30,6 +30,7 @@ import { Fragment, useEffect } from 'react';
 import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../styles/globals.css';
+import AppLayout from 'components/layouts/AppLayout';
 
 const themes = {
     dark: `/dark-theme.css`,
@@ -50,22 +51,8 @@ type AppLayoutProps = AppProps & {
 };
 
 const App = ({ Component, pageProps }: AppLayoutProps) => {
-    const router = useRouter();
-    const { locale } = router;
-
-    let insertPoint;
-
     const getLayout = Component.getLayout ?? ((page) => page);
     const Layout = Component.layout ?? Fragment;
-
-    useEffect(() => {
-        if (locale) {
-            cookie.set('NEXT_LOCALE', locale);
-            router.push(router.asPath, router.asPath, { locale: locale });
-        }
-        if (typeof window !== 'undefined')
-            insertPoint = document.getElementById('inject-styles-here');
-    }, []);
 
     return (
         <>
@@ -78,15 +65,14 @@ const App = ({ Component, pageProps }: AppLayoutProps) => {
             </Head>
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
-                    <ThemeSwitcherProvider
-                        defaultTheme={getDefaultTheme()}
-                        themeMap={themes}
-                        insertionPoint={insertPoint}
-                    >
-                        <AppProvider>
-                            <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
-                        </AppProvider>
-                    </ThemeSwitcherProvider>
+                    <AppProvider>
+                        <AppLayout
+                            Component={Component}
+                            pageProps={pageProps}
+                            getLayout={getLayout}
+                            Layout={Layout}
+                        />
+                    </AppProvider>
                 </AuthProvider>
             </QueryClientProvider>
         </>
