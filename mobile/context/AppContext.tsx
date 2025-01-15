@@ -63,6 +63,7 @@ function reducer(state: State, action: Action) {
                 isSessionMenuCollapsed: action.isSettingMenuCollapsed
             };
         case 'SET_USER_INFO':
+            cookie.set('user', JSON.stringify(action.user));
             return {
                 ...state,
                 user: action.user

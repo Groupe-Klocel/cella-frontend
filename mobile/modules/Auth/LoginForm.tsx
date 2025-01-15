@@ -120,8 +120,11 @@ export const LoginForm = () => {
 
                     graphqlRequestClient.request(query).then((data: any) => {
                         if (data.me) {
-                            setUserInfo(data.me);
-                            if (data.me.resetPassword === true) {
+                            const user = data.me;
+                            delete user.__typename;
+                            delete user.password;
+                            setUserInfo(user);
+                            if (user.resetPassword === true) {
                                 router.push('/reset-password');
                                 showWarning(t('messages:please-reset-password'));
                             } else {

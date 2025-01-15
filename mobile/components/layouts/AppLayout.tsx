@@ -20,12 +20,13 @@ type AppLayoutProps = {
 };
 
 const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) => {
-    const { userSettings, user } = useAppState();
+    const { userSettings, user: userFromState } = useAppState();
     const router = useRouter();
     const dispatchUser = useAppDispatch();
     const [userSettingsLoading, setUserSettingsLoading] = useState<boolean>(true);
 
     const token = cookie.get('token');
+    const user = userFromState ?? (cookie.get('user') ? JSON.parse(cookie.get('user')!) : {});
     const requestHeader = {
         authorization: `Bearer ${token}`
     };
@@ -43,9 +44,6 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     const [lang, setLang] = useState(
         generalUserSettings?.valueJson?.lang ? generalUserSettings?.valueJson?.lang : router.locale
     );
-
-    console.log('generalUserSettings', generalUserSettings);
-    console.log('user', user);
 
     const theme = generalUserSettings?.valueJson?.theme ?? 'light';
 
@@ -77,7 +75,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             userSettings: newSettings
         });
         setUserSettingsLoading(false);
-    }, [dispatchUser, user]);
+    }, [dispatchUser, userFromState]);
 
     useEffect(() => {
         if (user.id) {
