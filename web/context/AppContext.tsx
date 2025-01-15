@@ -25,39 +25,48 @@ import { createCtx } from './create-context';
 const menuInitialState = cookie.get('isSettingMenuCollapsed')
     ? stringToBoolean(cookie.get('isSettingMenuCollapsed'))
     : true;
-const themeInitialState = cookie.get('mobile_theme') ? cookie.get('mobile_theme') : 'light';
 
 const userInfoStr = cookie.get('user') !== undefined ? cookie.get('user') : '{}';
 const userInitData = JSON.parse(userInfoStr!);
 
 type State = {
-    theme: string | undefined;
-    isSettingMenuCollapsed: boolean;
+    firstLoad: boolean;
     isSessionMenuCollapsed: boolean;
-    globalLocale: string;
     finish: boolean;
     user: any;
     permissions: Array<PermissionType> | undefined;
+    userSettings: any;
+    tempTheme: string | undefined;
 };
 
 const initialState: State = {
-    theme: themeInitialState,
-    isSettingMenuCollapsed: menuInitialState,
+    firstLoad: true,
     isSessionMenuCollapsed: menuInitialState,
-    globalLocale: 'fr',
     finish: false,
     user: userInitData,
-    permissions: undefined
+    permissions: undefined,
+    userSettings: [
+        {
+            code: 'globalParameters',
+            valueJson: { isSettingMenuCollapsed: true, theme: 'light' }
+        }
+    ],
+    tempTheme: undefined
 };
 
 type Action = any;
 
 function reducer(state: State, action: Action) {
     switch (action.type) {
-        case 'SWITCH_THEME':
+        case 'SWITCH_USER_SETTINGS':
             return {
                 ...state,
-                theme: action.theme
+                userSettings: action.userSettings
+            };
+        case 'SWITCH_TEMP_THEME':
+            return {
+                ...state,
+                tempTheme: action.tempTheme
             };
         case 'SWITCH_LOCALE':
             return {
@@ -74,11 +83,6 @@ function reducer(state: State, action: Action) {
                 ...state,
                 isSettingMenuCollapsed: action.isSettingMenuCollapsed,
                 isSessionMenuCollapsed: action.isSettingMenuCollapsed
-            };
-        case 'SAVE_SETTINGS':
-            saveUserSettings(state.isSettingMenuCollapsed, state.theme!, state.globalLocale);
-            return {
-                ...state
             };
         case 'SET_USER_INFO': {
             saveUserInfo(action.user);
@@ -103,12 +107,6 @@ function reducer(state: State, action: Action) {
             return state;
     }
 }
-
-const saveUserSettings = (menu: boolean, theme: string, locale: string) => {
-    cookie.set('isSettingMenuCollapsed', menu.toString());
-    cookie.set('theme', theme);
-    cookie.set('NEXT_LOCALE', locale);
-};
 
 const saveUserInfo = (user: any) => {
     const tmpUser = JSON.parse(JSON.stringify(user));

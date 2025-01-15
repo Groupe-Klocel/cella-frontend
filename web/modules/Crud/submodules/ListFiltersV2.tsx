@@ -278,6 +278,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
 
     // #region add information to columns once available
     useEffect(() => {
+        form.resetFields();
         const tmp_columns = columns.map((e) => {
             if (optionsList) {
                 if (e.optionTable) {

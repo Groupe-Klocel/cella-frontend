@@ -162,7 +162,7 @@ export const CreditModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: 'Dropdown',
+            searchingFormat: null,
             isDetailRequested: false,
             isExcludedFromDetail: true,
             detailGroup: null,

@@ -639,7 +639,7 @@ const HookConfigListComponent = (props: IListProps) => {
                             rows?.results && rows?.results.length > 0 ? (
                                 <>
                                     <AppTableV2
-                                        type={props.dataModel.endpoints.list}
+                                        dataModel={props.dataModel}
                                         columns={props.actionColumns.concat(columns)}
                                         data={newRows}
                                         pagination={pagination}
