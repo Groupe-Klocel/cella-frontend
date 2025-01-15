@@ -57,17 +57,9 @@ const LanguageSelector: FC = () => {
 
     const dispatchUserSettings = useAppDispatch();
 
-    const generalUserSettingsRef = useRef<any>(
-        userSettings?.find((item: any) => {
-            return 'globalParametersMobile' === item.code;
-        })
-    );
-
-    useEffect(() => {
-        generalUserSettingsRef.current = userSettings?.find((item: any) => {
-            return 'globalParametersMobile' === item.code;
-        });
-    }, [userSettings]);
+    const generalUserSettings = userSettings?.find((item: any) => {
+        return 'globalParametersMobile' === item.code;
+    });
 
     const createUsersSettings = useCallback(
         async (lang: any) => {
@@ -76,7 +68,7 @@ const LanguageSelector: FC = () => {
                 warehouseWorkerId: userInfo.id,
                 valueJson: {
                     lang: lang,
-                    theme: generalUserSettingsRef.current?.valueJson?.theme
+                    theme: generalUserSettings?.valueJson?.theme
                 }
             };
             const createQuery = gql`
@@ -88,65 +80,62 @@ const LanguageSelector: FC = () => {
                     }
                 }
             `;
-            await graphqlRequestClient.request(createQuery, {
+            const userSettingsQuery = await graphqlRequestClient.request(createQuery, {
                 input: newsSettings
             });
+            dispatchUserSettings({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: [...userSettings, userSettingsQuery.createWarehouseWorkerSetting]
+            });
+            router.push(router.asPath, router.asPath, { locale: lang });
         },
         [graphqlRequestClient, userInfo]
     );
-    const updateUsersSettings = useCallback(
-        async (lang: any) => {
-            const newsSettings = {
-                ...generalUserSettingsRef.current,
-                valueJson: {
-                    ...generalUserSettingsRef.current?.valueJson,
-                    lang: lang
-                }
-            };
-            const updateQuery = gql`
-                mutation ($id: String!, $input: UpdateWarehouseWorkerSettingInput!) {
-                    updateWarehouseWorkerSetting(id: $id, input: $input) {
-                        id
-                        code
-                        valueJson
-                    }
-                }
-            `;
-            await graphqlRequestClient.request(updateQuery, {
-                id: generalUserSettingsRef.current?.id,
-                input: { valueJson: newsSettings.valueJson }
-            });
-        },
-        [graphqlRequestClient]
-    );
-
-    const saveSettings = useCallback(
-        (lang: any) => {
-            if (generalUserSettingsRef.current?.id) {
-                updateUsersSettings(lang);
-            } else {
-                createUsersSettings(lang);
+    const updateUsersSettings = async (lang: any) => {
+        const newsSettings = {
+            ...generalUserSettings,
+            valueJson: {
+                lang: lang,
+                theme: generalUserSettings?.valueJson?.theme
             }
-        },
-        [updateUsersSettings, createUsersSettings]
-    );
-
-    const changeLanguage = (value: any) => {
+        };
+        const updateQuery = gql`
+            mutation ($id: String!, $input: UpdateWarehouseWorkerSettingInput!) {
+                updateWarehouseWorkerSetting(id: $id, input: $input) {
+                    id
+                    code
+                    valueJson
+                }
+            }
+        `;
+        const userSettingsQuery = await graphqlRequestClient.request(updateQuery, {
+            id: generalUserSettings?.id,
+            input: { valueJson: newsSettings.valueJson }
+        });
         dispatchUserSettings({
             type: 'SWITCH_USER_SETTINGS',
-            userSettings: [
-                ...userSettings,
-                { code: 'globalParametersMobile', valueJson: { lang: value, theme: 'light' } }
-            ]
+            userSettings: userSettings.map((item: any) =>
+                item.code === 'globalParametersMobile'
+                    ? userSettingsQuery.updateWarehouseWorkerSetting
+                    : item
+            )
         });
-        saveSettings(value);
-        router.push(router.asPath, router.asPath, { locale: value });
+        router.push(router.asPath, router.asPath, { locale: lang });
+    };
+
+    const saveSettings = (lang: any) => {
+        if (generalUserSettings?.id) {
+            updateUsersSettings(lang);
+        } else {
+            createUsersSettings(lang);
+        }
     };
 
     return (
         <StyledSelect
-            defaultValue={generalUserSettingsRef.current?.valueJson?.lang ?? 'en-US'}
-            onChange={changeLanguage}
+            value={generalUserSettings?.valueJson?.lang}
+            // defaultValue={generalUserSettingsRef.current?.valueJson?.lang ?? router.locale}
+            onChange={saveSettings}
         >
             {isoLangs.map((language: LanguageType) => (
                 <Option key={language.code} value={language.code}>

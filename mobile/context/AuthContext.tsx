@@ -34,7 +34,7 @@ import {
 } from 'generated/graphql';
 import { GraphQLClient } from 'graphql-request';
 import { useRouter } from 'next/router';
-import { createContext, FC, useContext, useEffect, useState } from 'react';
+import { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
 import useTranslation from 'next-translate/useTranslation';
 
 interface IAuthContext {
@@ -68,9 +68,10 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
             const token = cookie.get('token');
             if (token) {
                 setHeader(token);
-                const user = decodeJWT(token);
-                if (user) {
-                    setUser(user);
+                if (token) {
+                    setHeader(token);
+                    const user = decodeJWT(token);
+                    if (user) setUser(user);
                 }
             }
             setLoading(false);
@@ -90,7 +91,12 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
                 setHeader(data.warehouseLogin.accessToken);
                 const user = decodeJWT(data.warehouseLogin.accessToken);
                 setUser(user);
-                cookie.set('user', JSON.stringify(user));
+                const userForReducer = {
+                    id: user.user_id,
+                    username: user.username,
+                    warehouseId: user.warehouseId
+                };
+                cookie.set('user', JSON.stringify(userForReducer));
             } else {
                 showError(t('messages:error-login'));
             }
