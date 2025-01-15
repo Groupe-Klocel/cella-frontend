@@ -124,13 +124,8 @@ export const LoginForm = () => {
                             delete user.__typename;
                             delete user.password;
                             setUserInfo(user);
-                            if (user.resetPassword === true) {
-                                router.push('/reset-password');
-                                showWarning(t('messages:please-reset-password'));
-                            } else {
-                                router.push('/');
-                                showSuccess(t('messages:login-success'));
-                            }
+                            router.push('/');
+                            showSuccess(t('messages:login-success'));
                         }
                     });
                 } catch (error) {
