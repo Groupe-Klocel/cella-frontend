@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 import { useBoxes, useLocationIds } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export interface IScanLocationProps {
     process: string;

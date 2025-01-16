@@ -22,7 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
 import { showError, showSuccess, LsIsSecured } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 
@@ -104,10 +104,10 @@ export const ValidateBoxPreparationForm = ({
                             return a.pickedQuantity === null && b.pickedQuantity === null
                                 ? a.lineNumber - b.lineNumber
                                 : a.pickedQuantity === null
-                                ? -1
-                                : b.pickedQuantity === null
-                                ? 1
-                                : a.pickedQuantity - b.pickedQuantity;
+                                  ? -1
+                                  : b.pickedQuantity === null
+                                    ? 1
+                                    : a.pickedQuantity - b.pickedQuantity;
                         });
                     const data = { box, proposedBoxLine: boxLines[0] };
                     storedObject['currentStep'] = 20;

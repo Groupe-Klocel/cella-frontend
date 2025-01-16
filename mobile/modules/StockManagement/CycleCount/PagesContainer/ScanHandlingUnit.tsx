@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
 import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export interface IScanHandlingUnitProps {
     process: string;

@@ -33,7 +33,8 @@ const initialState = {
             valueJson: { theme: 'light' }
         }
     ],
-    user: userInitData
+    user: userInitData,
+    translations: []
 };
 
 type State = typeof initialState;
@@ -67,6 +68,11 @@ function reducer(state: State, action: Action) {
             return {
                 ...state,
                 user: action.user
+            };
+        case 'SET_TRANSLATIONS':
+            return {
+                ...state,
+                translations: action.translations
             };
         default:
             return state;
