@@ -23,7 +23,7 @@ import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { RuleModelV2 } from 'models/RuleModelV2';
 import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addRulesRoutes } from 'modules/Rules/Static/rulesRoutes';
 import { META_DEFAULTS } from '@helpers';
 

@@ -23,7 +23,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { EditHookConfigArgumentForm } from 'modules/HookConfigs/Forms/EditHookConfigArgumentForm';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { HookConfigModelV2 as model } from 'models/HookConfigModelV2';
 import { hookConfigsRoutes } from 'modules/HookConfigs/Static/hookConfigsRoutes';
 

@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured, showSuccess } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useRef, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';

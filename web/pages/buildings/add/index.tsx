@@ -23,7 +23,7 @@ import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { BuildingModelV2 } from 'models/BuildingModelV2';
 import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addBuildingRoutes } from 'modules/Buildings/Static/buildingsRoutes';
 import { META_DEFAULTS } from '@helpers';
 import configs from '../../../../common/configs.json';

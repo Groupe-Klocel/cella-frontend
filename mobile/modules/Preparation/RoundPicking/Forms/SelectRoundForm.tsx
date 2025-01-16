@@ -24,7 +24,7 @@ import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useSimpleGetRoundsQuery, SimpleGetRoundsQuery } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';

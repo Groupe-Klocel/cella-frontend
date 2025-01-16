@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Checkbox, Col, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {

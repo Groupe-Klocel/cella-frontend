@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton, WrapperSimple } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured, showError } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';

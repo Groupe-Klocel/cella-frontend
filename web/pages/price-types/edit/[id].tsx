@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { SingleParameterModelV2 } from 'models/SingleParameterModelV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     priceTypesRoutes as itemRoutes,
     priceTypesRoutes

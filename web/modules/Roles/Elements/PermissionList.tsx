@@ -29,7 +29,7 @@ import {
     useGetPermissions,
     getModesFromPermissions
 } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { ModeEnum, Table } from 'generated/graphql';
 import { ColumnType } from 'antd/lib/table';
 import { useAppState } from 'context/AppContext';

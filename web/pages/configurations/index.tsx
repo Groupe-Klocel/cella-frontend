@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, useGetConfigScopesQuery } from 'generated/graphql';
 import { ConfigModelV2 as model } from 'models/ConfigModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { configurationsRoutes as itemRoutes } from 'modules/Configurations/Static/configurationRoutes';
 import { FormDataType } from 'models/ModelsV2';

@@ -23,7 +23,7 @@ import { useFeatureTypeDetails } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
 import { Typography } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
 
 export interface IScanFeatureProps {

@@ -24,7 +24,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { rulesRoutes as itemRoutes } from 'modules/Rules/Static/rulesRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';

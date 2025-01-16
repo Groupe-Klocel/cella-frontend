@@ -24,7 +24,7 @@ import { useAuth } from 'context/AuthContext';
 import { GetMyInfoQuery, useGetMyInfoQuery } from 'generated/graphql';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { GraphQLClient } from 'graphql-request';
 import { gql } from 'graphql-request';
 

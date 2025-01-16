@@ -33,7 +33,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { LocationModelV2 as model } from 'models/LocationModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { locationsRoutes as itemRoutes } from 'modules/Locations/Static/locationsRoutes';
 import { PrintLocationsModalForm } from 'modules/Locations/Forms/PrintLocationsModalForm';

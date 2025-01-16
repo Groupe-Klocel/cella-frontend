@@ -4,7 +4,7 @@ import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
-import { cookie } from '@helpers';
+import { cookie, showError } from '@helpers';
 import { gql, GraphQLClient } from 'graphql-request';
 import { ScreenSpin } from '@components';
 
@@ -24,7 +24,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     const { userSettings, user } = useAppState();
     const router = useRouter();
     const dispatchUser = useAppDispatch();
-    const [userSettingsLoading, setUserSettingsLoading] = useState<boolean>(true);
+    const [userSettingsLoading, setUserSettingsLoading] = useState<number>(0);
 
     const token = cookie.get('token');
     const requestHeader = {
@@ -71,14 +71,44 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             type: 'SWITCH_USER_SETTINGS',
             userSettings: newSettings
         });
-        setUserSettingsLoading(false);
+        setUserSettingsLoading((prev) => prev + 1);
+    }, [dispatchUser, user]);
+
+    const getTranslations = useCallback(async () => {
+        const query = gql`
+            query {
+                translations(filters: { type: "wm" }, itemsPerPage: 999999999) {
+                    count
+                    results {
+                        type
+                        category
+                        language
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(query);
+            dispatchUser({
+                type: 'SET_TRANSLATIONS',
+                translations: queryInfo.translations.results
+            });
+            setUserSettingsLoading((prev) => prev + 1);
+        } catch (error) {
+            console.log('error', error);
+            showError('Error while fetching translations');
+            setUserSettingsLoading((prev) => prev + 1);
+        }
     }, [dispatchUser, user]);
 
     useEffect(() => {
         if (user?.id) {
             getUserSettings();
+            getTranslations();
         } else {
-            setUserSettingsLoading(false);
+            setUserSettingsLoading(2);
         }
     }, [user]);
 
@@ -88,7 +118,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         }
     }, [lang]);
 
-    if (userSettingsLoading) {
+    if (userSettingsLoading < 2) {
         return <ScreenSpin />;
     }
 

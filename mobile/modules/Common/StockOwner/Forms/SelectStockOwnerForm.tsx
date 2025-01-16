@@ -25,7 +25,7 @@ import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { GetAllStockOwnersQuery, useGetAllStockOwnersQuery } from 'generated/graphql';
 import CameraScanner from 'modules/Common/CameraScanner';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 
 export interface ISelectStockOwnerProps {

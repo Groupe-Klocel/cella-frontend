@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ContentSpin } from '@components';
 import { Alert, Breadcrumb, Layout } from 'antd';
 import { barcodesRoutes } from 'modules/Barcodes/Static/barcodesRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     GetArticleLuBarcodeByIdQuery,
     ModeEnum,

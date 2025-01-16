@@ -53,9 +53,11 @@ const LanguageSelector: FC = () => {
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
 
-    const { userSettings, user: userInfo } = useAppState();
+    const { userSettings, user: userInfo, translations } = useAppState();
 
     const dispatchUserSettings = useAppDispatch();
+
+    console.log('translations', translations);
 
     const generalUserSettings = userSettings?.find((item: any) => {
         return 'globalParametersMobile' === item.code;

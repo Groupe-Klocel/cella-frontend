@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useCallback, useState, useEffect } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
 import { gql } from 'graphql-request';
 

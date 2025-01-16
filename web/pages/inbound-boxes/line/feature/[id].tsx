@@ -24,7 +24,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 // import { BoxLineFeatureDetailsExtra } from 'modules/Boxes/Elements/BoxLineFeatureDetailsExtra';
 

@@ -1,4 +1,4 @@
-import { cookie } from '@helpers';
+import { cookie, showError } from '@helpers';
 import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useRouter } from 'next/router';
@@ -23,7 +23,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     const { userSettings, user: userFromState } = useAppState();
     const router = useRouter();
     const dispatchUser = useAppDispatch();
-    const [userSettingsLoading, setUserSettingsLoading] = useState<boolean>(true);
+    const [userSettingsLoading, setUserSettingsLoading] = useState<number>(0);
 
     const token = cookie.get('token');
     const user = userFromState ?? (cookie.get('user') ? JSON.parse(cookie.get('user')!) : {});
@@ -74,14 +74,44 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             type: 'SWITCH_USER_SETTINGS',
             userSettings: newSettings
         });
-        setUserSettingsLoading(false);
+        setUserSettingsLoading((prev) => prev + 1);
+    }, [dispatchUser, userFromState]);
+
+    const getTranslations = useCallback(async () => {
+        const query = gql`
+            query {
+                translations(filters: { type: "mobile" }, itemsPerPage: 999999999) {
+                    count
+                    results {
+                        type
+                        category
+                        language
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(query);
+            dispatchUser({
+                type: 'SET_TRANSLATIONS',
+                translations: queryInfo.translations.results
+            });
+            setUserSettingsLoading((prev) => prev + 1);
+        } catch (error) {
+            console.log('error', error);
+            showError('Error while fetching translations');
+            setUserSettingsLoading((prev) => prev + 1);
+        }
     }, [dispatchUser, userFromState]);
 
     useEffect(() => {
         if (user.id) {
             getUserSettings();
+            getTranslations();
         } else {
-            setUserSettingsLoading(false);
+            setUserSettingsLoading(2);
         }
     }, [user]);
 
@@ -91,7 +121,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         }
     }, [lang]);
 
-    if (userSettingsLoading) {
+    if (userSettingsLoading < 2) {
         return <ScreenSpin />;
     }
     return (

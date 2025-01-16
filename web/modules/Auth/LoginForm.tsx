@@ -29,15 +29,15 @@ import router from 'next/router';
 import { useCallback, useEffect } from 'react';
 
 export const LoginForm = () => {
-    const { t } = useTranslation('common');
+    const { t } = useTranslation('global');
     const { login, graphqlRequestClient, isAuthenticated } = useAuth();
     // TEXTS TRANSLATION
 
     const welcome = t('welcome');
     const username = t('username');
     const password = t('password');
-    const loginButton = t('actions:login');
-    const errorEmptyMessage = t('messages:error-message-empty-input');
+    const loginButton = t('login');
+    const errorEmptyMessage = t('error-message-empty-input');
     const { user } = useAppState();
 
     const dispatchUser = useAppDispatch();
@@ -118,10 +118,10 @@ export const LoginForm = () => {
                             setUserInfo(data.me);
                             if (data.me.resetPassword === true) {
                                 router.push('/reset-password');
-                                showWarning(t('messages:please-reset-password'));
+                                showWarning(t('please-reset-password'));
                             } else {
                                 router.push('/');
-                                showSuccess(t('messages:login-success'));
+                                showSuccess(t('login-success'));
                             }
                         }
                     });

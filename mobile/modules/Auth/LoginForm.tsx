@@ -31,18 +31,16 @@ import { useCallback, useEffect } from 'react';
 export interface ILoginFormProps {}
 
 export const LoginForm = () => {
-    const { t } = useTranslation('common');
+    const { t } = useTranslation('global');
     const { login, graphqlRequestClient, isAuthenticated } = useAuth();
     // TEXTS TRANSLATION
 
     const welcome = t('welcome');
     const username = t('username');
     const password = t('password');
-    const workspace = t('workspace');
-    const forgotPassword = t('forgot-password');
-    const loginButton = t('actions:login');
-    const errorMessageUsername = t('messages:error-message-empty-input');
-    const errorMessagePassword = t('messages:error-message-empty-input');
+    const loginButton = t('login');
+    const errorMessageUsername = t('error-message-empty-input');
+    const errorMessagePassword = t('error-message-empty-input');
     const { user } = useAppState();
 
     const dispatchUser = useAppDispatch();
@@ -125,7 +123,7 @@ export const LoginForm = () => {
                             delete user.password;
                             setUserInfo(user);
                             router.push('/');
-                            showSuccess(t('messages:login-success'));
+                            showSuccess(t('login-success'));
                         }
                     });
                 } catch (error) {

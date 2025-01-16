@@ -24,7 +24,7 @@ import { WrapperForm, WrapperSlide, RadioButtons, HandlingUnitSpin } from '@comp
 import { LsIsSecured, useHandlingUnits } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 

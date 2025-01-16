@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LsIsSecured } from '@helpers';
 import { EnterNumberForm } from 'modules/Common/EnterNumberForm';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 
 export interface IEnterQuantityProps {

@@ -35,7 +35,7 @@ import {
 import { GraphQLClient } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 interface IAuthContext {
     isAuthenticated: boolean;

@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ParameterModelV2 } from 'models/ParameterModelV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { featureTypesRoutes } from 'modules/FeatureTypes/Static/featureTypesRoutes';
 import { META_DEFAULTS } from '@helpers';
 import { EditConfigParamComponent } from 'modules/Crud/EditConfigParamComponentV2';

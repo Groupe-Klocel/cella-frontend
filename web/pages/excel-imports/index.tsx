@@ -22,7 +22,7 @@ import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { NotificationModelV2 as model } from 'models/NotificationModelV2';
 import { HeaderData } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC } from 'react';
 import { excelImportsRoutes as itemRoutes } from 'modules/ExcelImports/Static/excelImportsRoutes';
 import { ExcelImportComponent } from 'modules/ExcelImports/Elements/ExcelImportComponent';
