@@ -30,14 +30,23 @@ export function useTranslationWithFallback(keyInfo?: string): TranslationRespons
     const { translations } = useAppState();
 
     const translationFiltered = (key: any) => {
-        return (
-            translations.find(
+        if (key.split(':').length === 1) {
+            return translations.find(
+                (translation: any) =>
+                    translation.language === (lang === 'fr' ? 'fr-FR' : lang) &&
+                    translation.category === keyInfo &&
+                    translation.code === key
+            )?.value;
+        } else if (key.split(':').length === 2) {
+            return translations.find(
                 (translation: any) =>
                     translation.language === (lang === 'fr' ? 'fr-FR' : lang) &&
                     translation.category === key.split(':')[0] &&
                     translation.code === key.split(':')[1]
-            )?.value ?? key
-        );
+            )?.value;
+        } else {
+            return key;
+        }
     };
 
     return {
