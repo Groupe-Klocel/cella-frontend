@@ -32,7 +32,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { ArticleModelV2 as model } from 'models/ArticleModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { articlesRoutes as itemRoutes } from 'modules/Articles/Static/articlesRoutes';
 import { EditArticlesRenderModal } from 'modules/Articles/Forms/EditArticlesModal';

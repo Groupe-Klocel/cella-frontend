@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS, useBuildings } from '@helpers';
 import { FormDataType, FormOptionType } from 'models/Models';
 import { useListParametersForAScopeQuery } from 'generated/graphql';

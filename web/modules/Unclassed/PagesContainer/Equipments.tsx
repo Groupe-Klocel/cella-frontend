@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { HeaderContent } from '@components';
 import { equipmentsRoutes } from 'modules/Unclassed/Static/routes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { EquipmentsList } from 'modules/Unclassed/Elements/EquipmentsList';
 
 export const Equipments = () => {

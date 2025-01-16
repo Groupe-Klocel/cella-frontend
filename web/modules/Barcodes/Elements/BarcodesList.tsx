@@ -34,7 +34,7 @@ import {
 } from '@helpers';
 import { Button, Space } from 'antd';
 
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useCallback, useEffect, useState } from 'react';
 
 export type BarcodesListTypeProps = {

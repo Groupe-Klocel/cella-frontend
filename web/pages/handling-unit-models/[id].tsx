@@ -27,7 +27,7 @@ import { ModeEnum } from 'generated/graphql';
 import { FC, useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { handlingUnitModelsRoutes as itemRoutes } from 'modules/HandlingUnitModels/Static/handlingUnitModelsRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSuccess } from '@helpers';
 import configs from '../../../common/configs.json';
@@ -72,8 +72,8 @@ const HandlingUnitModelPage: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {

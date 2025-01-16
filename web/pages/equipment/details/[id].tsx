@@ -24,7 +24,7 @@ import { FC, useState } from 'react';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { EquipmentDetailModelV2 as model } from 'models/EquipmentDetailModelV2';
 import MainLayout from 'components/layouts/MainLayout';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { equipmentRoutes as itemRoutes } from '../../../modules/Equipment/Static/equipmentRoutes';
 import { Button, Modal, Space } from 'antd';

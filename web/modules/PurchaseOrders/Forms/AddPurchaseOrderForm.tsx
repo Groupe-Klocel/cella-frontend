@@ -30,7 +30,7 @@ import {
     DatePicker
 } from 'antd';
 import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, useCreate } from '@helpers';
 import { FilterFieldType, FormOptionType, ModelType } from 'models/ModelsV2';

@@ -38,7 +38,7 @@ import {
 import { Space, Button, Table, Typography } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { isString } from 'lodash';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useCallback, useEffect, useState, useRef, Key } from 'react';
 import styled from 'styled-components';

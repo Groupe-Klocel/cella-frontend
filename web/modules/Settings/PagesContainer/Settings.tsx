@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { HeaderContent } from '@components';
 import { settingsRoutes } from 'modules/Settings/Static/settingsRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { SettingsList } from 'modules/Settings/Elements/SettingsList';
 
 export const Settings = () => {

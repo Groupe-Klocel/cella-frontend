@@ -26,7 +26,7 @@ import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { CycleCountErrorModelV2 as model } from 'models/CycleCountErrorModelV2';
 import { cycleCountsRoutes as itemRoutes } from 'modules/CycleCounts/Static/cycleCountsRoutes';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
 import { Button, Modal, Space } from 'antd';
 

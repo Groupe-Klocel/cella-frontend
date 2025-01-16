@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Form, Select } from 'antd';
 import { debounce } from 'lodash';
 import { gql } from 'graphql-request';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState, useEffect, useCallback } from 'react';
 import { FilterFieldType } from '../../../models/Models';
 import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';

@@ -31,7 +31,7 @@ import {
     useDeliveryLineIds
 } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { Button, Modal, Space } from 'antd';
 import {

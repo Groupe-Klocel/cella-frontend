@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { StatusHistoryModelV2 as model } from 'models/StatusHistoryModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { statusHistoryRoutes as itemRoutes } from 'modules/StatusHistory/Static/statusHistoryRoutes';
 type PageComponent = FC & { layout: typeof MainLayout };

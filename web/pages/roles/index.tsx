@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { RoleModelV2 as model } from 'models/RoleModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { rolesRoutes as itemRoutes } from 'modules/Roles/Static/rolesRoutes';
 type PageComponent = FC & { layout: typeof MainLayout };

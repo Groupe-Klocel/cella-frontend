@@ -32,7 +32,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { CycleCountModelV2 as model } from 'models/CycleCountModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { cycleCountsRoutes as itemRoutes } from 'modules/CycleCounts/Static/cycleCountsRoutes';
 import configs from '../../../common/configs.json';
@@ -71,8 +71,8 @@ const CycleCountPages: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {

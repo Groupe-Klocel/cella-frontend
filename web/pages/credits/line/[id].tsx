@@ -22,7 +22,7 @@ import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { CreditLineModelV2 as model } from 'models/CreditLineModelV2';
 import { Button, Modal, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';

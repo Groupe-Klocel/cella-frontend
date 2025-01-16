@@ -40,7 +40,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, useListParametersForAScopeQuery } from 'generated/graphql';
 import { CustomerOrderModelV2 as model } from 'models/CustomerOrderModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
 import configs from '../../../common/configs.json';

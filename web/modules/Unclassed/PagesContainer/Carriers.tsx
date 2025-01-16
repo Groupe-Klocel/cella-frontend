@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { HeaderContent } from '@components';
 import { carriersRoutes } from 'modules/Unclassed/Static/routes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { CarriersList } from 'modules/Unclassed/Elements/CarriersList';
 
 export const Carriers = () => {

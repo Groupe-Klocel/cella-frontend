@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { LinkButton } from '@components';
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, StopOutlined } from '@ant-design/icons';
 import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space } from 'antd';
 import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';

@@ -26,7 +26,7 @@ import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { ArticleSetModelV2 as model } from 'models/ArticleSetModelV2';
 import { ArticleSetDetailsExtra } from 'modules/ArticleSets/Elements/ArticleSetDetailsExtra';
 import { articleSetsRoutes as itemRoutes } from 'modules/ArticleSets/Static/articleSetRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';

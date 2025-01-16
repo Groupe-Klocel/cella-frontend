@@ -23,7 +23,7 @@ import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { LogisticUnitModelV2 as model } from 'models/LogisticUnitModelV2';
 import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addLogisticUnitRoutes } from 'modules/LogisticUnits/Static/logisticUnitsRoutes';
 import { META_DEFAULTS } from '@helpers';
 import configs from '../../../../common/configs.json';

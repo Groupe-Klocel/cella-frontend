@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FeatureTypeDetailModelV2 as model } from 'models/FeatureTypeDetailModelV2';
 import { useAppState } from 'context/AppContext';
 import { featureTypesRoutes as itemRoutes } from 'modules/FeatureTypes/Static/featureTypesRoutes';

@@ -24,7 +24,7 @@ import { Divider, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponent';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import configs from '../../../../common/configs.json';
 
 const { Title } = Typography;

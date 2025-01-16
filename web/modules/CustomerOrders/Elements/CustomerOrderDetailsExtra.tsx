@@ -27,7 +27,7 @@ import {
     CaretUpOutlined
 } from '@ant-design/icons';
 import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';

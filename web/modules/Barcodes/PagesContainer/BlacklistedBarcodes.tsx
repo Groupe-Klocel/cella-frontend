@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ContentSpin, HeaderContent } from '@components';
 import { blacklistedBarcodesRoutes } from 'modules/Barcodes/Static/barcodesRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { BlacklistedBarcodesList } from 'modules/Barcodes/Elements/BlacklistedBarcodesList';
 import { useAppState } from 'context/AppContext';
 import { getModesFromPermissions } from '@helpers';

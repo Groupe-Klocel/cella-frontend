@@ -23,7 +23,7 @@ import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { CarrierShippingModeModelV2 as model } from 'models/CarrierShippingModeModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { carriersRoutes as itemRoutes } from 'modules/Carriers/Static/carriersRoutes';
 import { META_DEFAULTS } from '@helpers';
 import { FormDataType, FormOptionType } from 'models/Models';

@@ -27,7 +27,7 @@ import {
     useUpdateDeliveryLineMutation
 } from 'generated/graphql';
 import { debounce } from 'lodash';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';

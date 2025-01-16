@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { useCallback, useEffect, useState } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import { ContentSpin, HeaderContent, LinkButton } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Space, Form, Button, Alert, Modal } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { getModesFromPermissions, showError, showSuccess, useGetRoles } from '@helpers';

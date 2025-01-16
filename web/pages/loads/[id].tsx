@@ -24,7 +24,7 @@ import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LoadModelV2 as model } from 'models/LoadModelV2';
 import { loadsRoutes as itemRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { Button, Modal, Space } from 'antd';
