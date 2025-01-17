@@ -31,19 +31,23 @@ export function useTranslationWithFallback(keyInfo?: string): TranslationRespons
 
     const translationFiltered = (key: any) => {
         if (key.split(':').length === 1) {
-            return translations.find(
-                (translation: any) =>
-                    translation.language === (lang === 'fr' ? 'fr-FR' : lang) &&
-                    translation.category === keyInfo &&
-                    translation.code === key
-            )?.value;
+            return (
+                translations.find(
+                    (translation: any) =>
+                        translation.language === (lang === 'fr' ? 'fr-FR' : lang) &&
+                        translation.category === keyInfo &&
+                        translation.code === key
+                )?.value ?? key
+            );
         } else if (key.split(':').length === 2) {
-            return translations.find(
-                (translation: any) =>
-                    translation.language === (lang === 'fr' ? 'fr-FR' : lang) &&
-                    translation.category === key.split(':')[0] &&
-                    translation.code === key.split(':')[1]
-            )?.value;
+            return (
+                translations.find(
+                    (translation: any) =>
+                        translation.language === (lang === 'fr' ? 'fr-FR' : lang) &&
+                        translation.category === key.split(':')[0] &&
+                        translation.code === key.split(':')[1]
+                )?.value ?? key
+            );
         } else {
             return key;
         }
