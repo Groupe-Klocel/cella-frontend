@@ -197,7 +197,7 @@ export const UserSettings: FC = () => {
             </Row>
             <Modal
                 title={t('common:confirm-reset')}
-                visible={isModalVisible}
+                open={isModalVisible}
                 onOk={ResetUserConfigs}
                 onCancel={() => setIsModalVisible(false)}
                 okText={t('actions:confirm')}
