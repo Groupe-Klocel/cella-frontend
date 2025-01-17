@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Form, Input, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { SimpleGetAllStockOwnersQuery, useSimpleGetAllStockOwnersQuery } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 
 export type BarcodesSearchTypeProps = {

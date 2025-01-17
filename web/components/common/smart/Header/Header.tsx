@@ -23,7 +23,7 @@ import { Col, Layout, Row } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useThemeSwitcher } from 'react-css-theme-switcher';

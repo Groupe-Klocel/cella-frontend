@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { DeleteOutlined, EditTwoTone } from '@ant-design/icons';
 import { AppTableV2, ContentSpin, HeaderContent, LinkButton, CrontabModalV2 } from '@components';
 import { Space, Button, Empty, Alert, Modal, Divider } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,

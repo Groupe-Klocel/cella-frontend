@@ -23,7 +23,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { SchedulerConfigModelV2 } from 'models/SchedulerConfigModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { schedulerConfigsRoutes } from 'modules/SchedulerConfigs/Static/schedulerConfigsRoutes';
 import { META_DEFAULTS } from '@helpers';
 

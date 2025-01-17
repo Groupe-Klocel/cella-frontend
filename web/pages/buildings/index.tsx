@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { BuildingModelV2 as model } from 'models/BuildingModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import configs from '../../../common/configs.json';
 import { buildingsRoutes as itemRoutes } from 'modules/Buildings/Static/buildingsRoutes';

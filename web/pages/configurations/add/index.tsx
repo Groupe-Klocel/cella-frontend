@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { META_DEFAULTS } from '@helpers';
 import { ConfigModelV2 } from 'models/ConfigModelV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addConfigurationsRoutes } from 'modules/Configurations/Static/configurationRoutes';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';

@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, useGetParameterScopesQuery } from 'generated/graphql';
 import { ParameterModelV2 as model } from 'models/ParameterModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { actionCodeRoutes as itemRoutes } from 'modules/ActionCodes/Static/ActionCodeRoutes';
 import { useAuth } from 'context/AuthContext';

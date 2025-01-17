@@ -21,7 +21,7 @@ import { AppHead } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS } from '@helpers';
 import { EditCustomerOrderAddress } from 'modules/CustomerOrders/PageContainer/EditCustomerOrderAdress';
 

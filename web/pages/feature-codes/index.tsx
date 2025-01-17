@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { FeatureCodeModelV2 as model } from 'models/FeatureCodeModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { featureCodesRoutes as itemRoutes } from 'modules/FeatureCodes/Static/featureCodesRoutes';
 type PageComponent = FC & { layout: typeof MainLayout };

@@ -22,7 +22,7 @@ import { META_DEFAULTS } from '@helpers';
 import { EditConfiguration } from 'modules/Configurations/PagesContainer/EditConfiguration';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { configurationsRoutes } from 'modules/Configurations/Static/configurationRoutes';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { EditConfigParamComponent } from 'modules/Crud/EditConfigParamComponentV2';

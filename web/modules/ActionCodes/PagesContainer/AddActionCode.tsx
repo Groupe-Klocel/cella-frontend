@@ -22,7 +22,7 @@ import { getModesFromPermissions } from '@helpers';
 import { Alert } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { AddActionCodeForm } from '../Forms/AddActionCodeForm';
 import { addActionCodeRoutes } from '../Static/ActionCodeRoutes';
 

@@ -1,0 +1,9 @@
+{
+    "welcome": "Bienvenue sur",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "login": "Connexion",
+    "error-message-empty-input": "Le champ ne doit pas être vide",
+    "login-success": "Vous êtes maintenant connecté",
+    "please-reset-password": "Veuillez réinitialiser votre mot de passe"
+}

@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { LinkButton } from '@components';
 import { EyeTwoTone } from '@ant-design/icons';
 import { pathParams } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider } from 'antd';
 import { ListComponent, HeaderData } from 'modules/Crud/ListComponentV2';
 import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';

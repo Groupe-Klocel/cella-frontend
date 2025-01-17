@@ -37,6 +37,7 @@ type State = {
     permissions: Array<PermissionType> | undefined;
     userSettings: any;
     tempTheme: string | undefined;
+    translations: any;
 };
 
 const initialState: State = {
@@ -51,7 +52,8 @@ const initialState: State = {
             valueJson: { isSettingMenuCollapsed: true, theme: 'light' }
         }
     ],
-    tempTheme: undefined
+    tempTheme: undefined,
+    translations: []
 };
 
 type Action = any;
@@ -103,6 +105,11 @@ function reducer(state: State, action: Action) {
                 permissions: allPermissions.flat()
             };
         }
+        case 'SET_TRANSLATIONS':
+            return {
+                ...state,
+                translations: action.translations
+            };
         default:
             return state;
     }

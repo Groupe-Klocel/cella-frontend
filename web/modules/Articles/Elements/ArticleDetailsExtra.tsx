@@ -27,7 +27,7 @@ import {
     LockTwoTone
 } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { useAppState } from 'context/AppContext';

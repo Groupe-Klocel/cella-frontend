@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { LinkButton } from '@components';
 import { EyeTwoTone, PrinterOutlined } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { BarcodeRenderModal } from 'modules/Barcodes/Elements/BarcodeRenderModal';

@@ -22,7 +22,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { META_DEFAULTS, usePatternIds, usePatternPaths, useStockOwnerIds } from '@helpers';
 import { AddItemComponent } from 'modules/Crud/AddItemComponent';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { PatternPathModel } from 'models/PatternPathModel';
 import { FormDataType, FormOptionType } from 'models/Models';
 import { useListConfigsForAScopeQuery } from 'generated/graphql';

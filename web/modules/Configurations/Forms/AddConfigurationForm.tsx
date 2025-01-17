@@ -29,7 +29,7 @@ import {
 } from 'generated/graphql';
 
 import { useAuth } from 'context/AuthContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { FormOptionType } from 'models/Models';

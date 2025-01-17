@@ -21,7 +21,7 @@ import { LinkButton } from '@components';
 import { Space, Button, Modal } from 'antd';
 import { loadsRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { ModeEnum } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import moment from 'moment';
 import 'moment/min/locales';
 import { FC } from 'react';
@@ -99,7 +99,6 @@ const LoadDetailsHeader: FC<ISingleItemProps> = (props: ISingleItemProps) => {
             showError(t('messages:error-print-data'));
         }
     };
-
 
     return (
         <HeaderContent

@@ -27,7 +27,7 @@ import { ModeEnum } from 'generated/graphql';
 import { RuleModelV2 as model } from 'models/RuleModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { rulesRoutes } from 'modules/Rules/Static/rulesRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 type PageComponent = FC & { layout: typeof MainLayout };
 

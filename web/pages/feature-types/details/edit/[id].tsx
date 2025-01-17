@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS, useFeatureCodes } from '@helpers';
 import { FormDataType, FormOptionType } from 'models/Models';
 import { useListParametersForAScopeQuery } from 'generated/graphql';

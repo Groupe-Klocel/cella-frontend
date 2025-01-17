@@ -22,7 +22,7 @@ import { Form, Input, InputNumber, Checkbox, Select, DatePicker, AutoComplete } 
 import { RangePickerProps } from 'antd/lib/date-picker';
 import { debounce } from 'lodash';
 import dayjs from 'dayjs';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/Models';
 

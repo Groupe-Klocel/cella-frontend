@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Alert, Layout } from 'antd';
 import { ContentSpin, HeaderContent } from '@components';
 import { AddCycleCountForm } from '../Forms/AddCycleCountForm';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';

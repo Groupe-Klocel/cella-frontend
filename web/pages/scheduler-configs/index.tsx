@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { SchedulerConfigModelV2 as model } from 'models/SchedulerConfigModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { schedulerConfigsRoutes as itemRoutes } from 'modules/SchedulerConfigs/Static/schedulerConfigsRoutes';
 import configs from '../../../common/configs.json';

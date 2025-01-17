@@ -22,7 +22,7 @@ import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components'
 import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { EyeTwoTone } from '@ant-design/icons';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,

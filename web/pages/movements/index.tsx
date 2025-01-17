@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { MovementModelV2 as model } from 'models/MovementModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { movementsRoutes as itemRoutes } from 'modules/Movements/Static/MovementRoutes';
 type PageComponent = FC & { layout: typeof MainLayout };
