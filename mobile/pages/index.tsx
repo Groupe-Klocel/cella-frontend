@@ -22,8 +22,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { Row, Col } from 'antd';
 import { HeaderContent, MenuCard } from '@components';
-import useTranslation from 'next-translate/useTranslation';
-import { TagOutlined } from '@ant-design/icons';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

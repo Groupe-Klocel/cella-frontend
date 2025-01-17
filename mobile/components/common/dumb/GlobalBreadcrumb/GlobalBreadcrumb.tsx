@@ -19,33 +19,32 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { BreadcrumbType } from '@helpers';
 import { Breadcrumb } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
 import { FC } from 'react';
 
 export interface IBreadcrumbProps {
-	routes: Array<BreadcrumbType>
+    routes: Array<BreadcrumbType>;
 }
 
 const GlobalBreadcrumb: FC<IBreadcrumbProps> = ({ routes }: IBreadcrumbProps) => {
-	const { t } = useTranslation()
+    const { t } = useTranslation();
 
-	return (
-		<Breadcrumb>
-			{routes.map((item, index) => {
-				return item.path ?
-					(<Breadcrumb.Item key={index}>
-						<Link href={item.path}>{t(item.breadcrumbName)}</Link>
-					</Breadcrumb.Item>)
-					:
-					(<Breadcrumb.Item key={index}>{t(item.breadcrumbName)}</Breadcrumb.Item>)
-			})}
+    return (
+        <Breadcrumb>
+            {routes.map((item, index) => {
+                return item.path ? (
+                    <Breadcrumb.Item key={index}>
+                        <Link href={item.path}>{t(item.breadcrumbName)}</Link>
+                    </Breadcrumb.Item>
+                ) : (
+                    <Breadcrumb.Item key={index}>{t(item.breadcrumbName)}</Breadcrumb.Item>
+                );
+            })}
+        </Breadcrumb>
+    );
+};
 
-		</Breadcrumb>
-	);
-}
-
-GlobalBreadcrumb.displayName = 'GlobalBreadcrumb'
+GlobalBreadcrumb.displayName = 'GlobalBreadcrumb';
 
 export { GlobalBreadcrumb };
-

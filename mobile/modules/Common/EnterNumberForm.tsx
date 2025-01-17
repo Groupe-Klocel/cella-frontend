@@ -21,7 +21,7 @@ import { WrapperForm, StyledForm, StyledFormItem } from '@components';
 import { LsIsSecured } from '@helpers';
 import { Form, InputNumber } from 'antd';
 import { RadioButtons } from 'components/common/dumb/Buttons/RadioButtons';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export interface IEnterNumberFormProps {
     process: string;

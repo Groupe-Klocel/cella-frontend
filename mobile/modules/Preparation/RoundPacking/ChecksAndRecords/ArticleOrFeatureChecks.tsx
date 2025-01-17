@@ -21,7 +21,7 @@ import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured, showSuccess } from '@helpers';
 import { gql } from 'graphql-request';
 import graphqlRequestClient from 'graphql/graphqlRequestClient';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 
 export interface IArticleOrFeatureChecksProps {

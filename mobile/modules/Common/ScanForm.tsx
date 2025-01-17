@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured } from '@helpers';
 import { Form, Input } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../common/configs.json';
 import CameraScanner from './CameraScanner';

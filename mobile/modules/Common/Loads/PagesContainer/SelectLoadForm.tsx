@@ -24,7 +24,7 @@ import { LsIsSecured } from '@helpers';
 import { RadioButtons, StyledForm, StyledFormItem, WrapperForm } from '@components';
 import { Form, Select } from 'antd';
 import CameraScanner from 'modules/Common/CameraScanner';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../../../common/configs.json';

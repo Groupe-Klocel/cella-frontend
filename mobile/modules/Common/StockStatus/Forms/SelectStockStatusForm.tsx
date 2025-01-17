@@ -24,7 +24,7 @@ import { LsIsSecured, showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';

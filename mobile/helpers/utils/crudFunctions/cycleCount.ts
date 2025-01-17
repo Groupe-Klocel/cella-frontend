@@ -23,7 +23,7 @@ import { useAuth } from 'context/AuthContext';
 import { isString } from 'lodash';
 import moment from 'moment';
 import { useRouter } from 'next/router';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import graphqlRequestClient from 'graphql/graphqlRequestClient';
 
 async function createCycleCountError(
