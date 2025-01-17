@@ -21,7 +21,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { AppTableV2HighLimit, ContentSpin, HeaderContent } from '@components';
 import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,

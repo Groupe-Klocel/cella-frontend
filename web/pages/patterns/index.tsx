@@ -33,7 +33,7 @@ import { ModeEnum } from 'generated/graphql';
 import { PatternModelV2 as model } from 'models/PatternModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { patternsSubRoutes as itemRoutes } from 'modules/Patterns/Static/patternsRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import configs from '../../../common/configs.json';
 
@@ -71,8 +71,8 @@ const PatternsPage: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {

@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { LinkButton } from '@components';
 import { EyeTwoTone } from '@ant-design/icons';
 import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';

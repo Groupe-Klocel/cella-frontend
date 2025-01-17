@@ -23,7 +23,7 @@ import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { ThirdPartyAddressModelV2 as model } from 'models/ThirdPartyAddressModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { thirdPartiesRoutes as itemRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
 import { META_DEFAULTS } from '@helpers';
 import { FormDataType, FormOptionType } from 'models/Models';

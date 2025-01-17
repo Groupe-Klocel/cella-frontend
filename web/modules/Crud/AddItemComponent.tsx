@@ -25,7 +25,7 @@ import { AddItemForm } from './submodules/AddItemForm';
 import { FilterFieldType, ModelType } from 'models/Models';
 import { getModesFromPermissions } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { ContentSpin } from '@components';
 

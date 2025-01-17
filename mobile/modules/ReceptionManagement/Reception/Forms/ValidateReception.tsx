@@ -24,7 +24,7 @@ import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components'
 import { showError, showSuccess, LsIsSecured } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';
 

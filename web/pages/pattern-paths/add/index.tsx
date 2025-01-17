@@ -23,7 +23,7 @@ import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { PatternPathModelV2 } from 'models/PatternPathModelV2';
 import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addPatternPathRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
 import { META_DEFAULTS, usePatternPaths } from '@helpers';
 import configs from '../../../../common/configs.json';

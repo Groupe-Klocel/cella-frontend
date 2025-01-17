@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { SingleParameterModelV2 as model } from 'models/SingleParameterModelV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { vatRatesRoutes as itemRoutes } from 'modules/VatRates/Static/vatRatesRoutes';
 import { META_DEFAULTS } from '@helpers';
 import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';

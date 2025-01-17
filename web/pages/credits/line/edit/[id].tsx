@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
 import { CreditLineModelV2 } from 'models/CreditLineModelV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS } from '@helpers';
 import { creditsRoutes } from 'modules/Credits/Static/creditsRoutes';
 import MainLayout from 'components/layouts/MainLayout';

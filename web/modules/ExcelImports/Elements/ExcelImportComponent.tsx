@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ContentSpin, HeaderContent } from '@components';
 import { Space, Alert, Divider, Layout } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { getModesFromPermissions } from '@helpers';
 import { ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';

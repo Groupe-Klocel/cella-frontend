@@ -25,7 +25,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { carriersRoutes as itemRoutes } from 'modules/Carriers/Static/carriersRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
@@ -70,8 +70,8 @@ const CarrierPage: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {

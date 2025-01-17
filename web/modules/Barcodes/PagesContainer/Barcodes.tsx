@@ -24,7 +24,7 @@ import { Alert, Button, Form, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useCallback, useState } from 'react';
 import { BarcodesList } from '../Elements/BarcodesList';
 import { BarcodesSearch } from '../Forms/BarcodesSearch';

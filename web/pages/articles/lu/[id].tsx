@@ -26,7 +26,7 @@ import MainLayout from '../../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { articlesRoutes as itemRoutes } from 'modules/Articles/Static/articlesRoutes';
 import { Button, Modal, Space } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 

@@ -28,7 +28,7 @@ import { ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { FormOptionType } from 'models/Models';
 import { PatternPathModelV2 } from 'models/PatternPathModelV2';
 import { patternPathsRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { gql } from 'graphql-request';

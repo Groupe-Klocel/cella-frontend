@@ -21,7 +21,7 @@ import { EyeInvisibleTwoTone, EyeTwoTone } from '@ant-design/icons';
 import { isVisible, MyColumnType, setCustomColumnsProps, showWarning } from '@helpers';
 import { Button, Space, Table } from 'antd';
 import Text from 'antd/lib/typography/Text';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     FC,
     Key,

@@ -1,0 +1,9 @@
+{
+    "welcome": "Welcome on",
+    "username": "Username",
+    "password": "Password",
+    "login": "Log in",
+    "error-message-empty-input": "Field must not be empty",
+    "login-success": "You are now logged in",
+    "please-reset-password": "Please reset your password"
+}

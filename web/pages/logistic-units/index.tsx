@@ -33,7 +33,7 @@ import { ModeEnum } from 'generated/graphql';
 import { LogisticUnitModelV2 as model } from 'models/LogisticUnitModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { logisticUnitsRoutes as itemRoutes } from 'modules/LogisticUnits/Static/logisticUnitsRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import configs from '../../../common/configs.json';
 
@@ -70,8 +70,8 @@ const LogisticUnitsPage: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {

@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { HeaderContent } from '@components';
 import { stocksRoutes } from 'modules/Stocks/Static/stocksRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { StockStatusesList } from 'modules/Stocks/Elements/StockStatusesList';
 import { LinkButton } from 'components/common/dumb/Buttons/LinkButton';
 

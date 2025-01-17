@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { NotificationModelV2 as model } from 'models/NotificationModelV2';
 import { HeaderData } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { notificationsRoutes as itemRoutes } from 'modules/Notifications/Static/notificationsRoutes';
 import { NotificationListComponent } from 'modules/Notifications/Elements/NotificationListComponent';

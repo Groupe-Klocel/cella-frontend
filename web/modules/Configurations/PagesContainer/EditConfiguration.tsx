@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ContentSpin } from '@components';
 import { Alert, Layout } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { GetConfigByIdQuery, ModeEnum, Table, useGetConfigByIdQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { FC, useEffect } from 'react';

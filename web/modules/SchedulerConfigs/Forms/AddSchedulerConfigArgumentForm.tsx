@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Input, Form, Select, Modal, Space } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState, FC } from 'react';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, useUpdate } from '@helpers';

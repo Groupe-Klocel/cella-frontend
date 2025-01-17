@@ -25,7 +25,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { currenciesRoutes as itemRoutes } from 'modules/Currencies/Static/currenciesRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';

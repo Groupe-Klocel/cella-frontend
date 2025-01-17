@@ -23,10 +23,9 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { DeliveryModelV2 } from 'models/DeliveryModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { deliveriesRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { META_DEFAULTS } from '@helpers';
-
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

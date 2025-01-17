@@ -26,7 +26,7 @@ import {
     pathParamsFromDictionary,
     showError
 } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space } from 'antd';
 import { useState } from 'react';
 import { ModeEnum } from 'generated/graphql';

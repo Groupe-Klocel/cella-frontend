@@ -33,7 +33,7 @@ import moment from 'moment';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import 'dayjs/locale/en';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/ModelsV2';
 import { useRouter } from 'next/router';

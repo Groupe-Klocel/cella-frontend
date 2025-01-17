@@ -32,7 +32,7 @@ import {
     showSuccess
 } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { patternPathsRoutes as itemRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum, Table } from 'generated/graphql';

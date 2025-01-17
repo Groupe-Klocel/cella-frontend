@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { LinkButton } from '@components';
 import { Space, Button, Modal } from 'antd';
 import { roundsRoutes } from 'modules/Rounds/Static/roundsRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import configs from '../../../../common/configs.json';
 
 import { FC, useState } from 'react';

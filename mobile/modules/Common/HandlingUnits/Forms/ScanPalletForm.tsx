@@ -22,7 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { showError, LsIsSecured, useHandlingUnits } from '@helpers';
 import { Form, Input } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';
 
@@ -66,7 +66,6 @@ export const ScanPalletForm = ({
 
     // ScanPallet-2: launch query
     const handlingUnitInfos = useHandlingUnits({ name: `${handlingUnitBarcode}` }, 1, 100, null);
-    
 
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {

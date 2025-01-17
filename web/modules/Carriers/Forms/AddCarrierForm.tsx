@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { useState, useEffect, FC } from 'react';
 import { Form, Button, Modal, Collapse, Select, Input, AutoComplete, Checkbox } from 'antd';
 import { WrapperForm } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { showError, showSuccess } from '@helpers';
 import { FilterFieldType, FormOptionType, ModelType } from 'models/ModelsV2';

@@ -23,7 +23,7 @@ import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@componen
 import { showError, LsIsSecured, useBoxes } from '@helpers';
 import { Form, Input } from 'antd';
 import CameraScanner from 'modules/Common/CameraScanner';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 

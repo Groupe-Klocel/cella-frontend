@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { useState, useEffect, FC } from 'react';
 import { Form, Button, Space, Modal, Input, Select, DatePicker } from 'antd';
 import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import moment from 'moment';
 import { showError, showSuccess, showInfo, useCreate } from '@helpers';

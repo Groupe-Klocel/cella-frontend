@@ -24,7 +24,7 @@ import MainLayout from '../../../components/layouts/MainLayout';
 import configs from '../../../../common/configs.json';
 import { ConversionModelV2 } from 'models/ConversionModelV2';
 import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addConversionRoutes } from 'modules/Conversions/Static/conversionsRoutes';
 import { META_DEFAULTS } from '@helpers';
 

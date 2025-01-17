@@ -24,7 +24,7 @@ import { LsIsSecured, showError } from '@helpers';
 import { Select, Form } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { GetAllArticlesQuery, useGetAllArticlesQuery } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';
 import CameraScanner from 'modules/Common/CameraScanner';

@@ -24,7 +24,7 @@ import { Button, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC } from 'react';
 import { EquipmentModelV2 } from 'models/EquipmentModelV2';
 import { equipmentRoutes } from 'modules/Equipment/Static/equipmentRoutes';
