@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -33,8 +33,8 @@ import { SelectRoundForm } from 'modules/Preparation/RoundPacking/Forms/SelectRo
 import { SelectHuModelForm } from 'modules/Preparation/RoundPacking/Forms/SelectHuModelForm';
 import { ArticleOrFeatureChecks } from 'modules/Preparation/RoundPacking/ChecksAndRecords/ArticleOrFeatureChecks';
 import { SelectArticleForm } from 'modules/Preparation/RoundPacking/Forms/SelectArticleForm';
-import { ValidateRoundPackingForm } from 'modules/Preparation/RoundPacking/Forms/ValidateRoundPackingForm';
 import { ScanArticleOrFeature } from 'modules/Preparation/RoundPacking/PagesContainer/ScanArticleOrFeature';
+import { AutoValidateRoundPackingForm } from 'modules/Preparation/RoundPacking/Forms/AutoValidateRoundPackingForm';
 // import { HandlingUnitChecks } from 'modules/Preparation/RoundPicking/ChecksAndRecords/HandlingUnitChecks';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -77,6 +77,16 @@ const RoundPacking: PageComponent = () => {
             const packaging =
                 storedObject[`step${workflow.expectedSteps[1]}`]?.data?.handlingUnitModel;
             object[t('common:handling-unit-model')] = packaging.name;
+            object[t('common:handling-unit-model-description')] = packaging.description;
+        }
+        if (storedObject[`step${workflow.expectedSteps[0]}`]?.data?.existingFinalHUO) {
+            const currentBox =
+                storedObject[`step${workflow.expectedSteps[0]}`]?.data?.existingFinalHUO;
+            let currentPickedQuantity = 0;
+            currentBox.handlingUnitContentOutbounds.forEach((item: any) => {
+                currentPickedQuantity += item.pickedQuantity;
+            });
+            object[t('common:current-box-quantity')] = currentPickedQuantity;
         }
         if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.article) {
             const article = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.article;
@@ -85,6 +95,10 @@ const RoundPacking: PageComponent = () => {
             object[t('common:article')] = serialNumber
                 ? '1 x ' + article.name + ' / ' + serialNumber
                 : article.name;
+        }
+        if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.reference2) {
+            object[t('common:order-type')] =
+                storedObject[`step${workflow.expectedSteps[2]}`]?.data?.reference2 ?? undefined;
         }
         if (storedObject[`step${workflow.expectedSteps[3]}`]?.data?.movingQuantity) {
             const article = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.article;
@@ -217,7 +231,7 @@ const RoundPacking: PageComponent = () => {
                     label={t('common:quantity-var', {
                         number: `${
                             storedObject[`step${workflow.expectedSteps[2]}`].data
-                                .handlingUnitContent.quantity
+                                .handlingUnitContent?.quantity
                         }`
                     })}
                     trigger={{ triggerRender, setTriggerRender }}
@@ -227,7 +241,7 @@ const RoundPacking: PageComponent = () => {
                     }}
                     availableQuantity={
                         storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnitContent
-                            .quantity
+                            ?.quantity
                     }
                     checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                     defaultValue={
@@ -239,13 +253,13 @@ const RoundPacking: PageComponent = () => {
                 <></>
             )}
             {storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
-                <ValidateRoundPackingForm
+                <AutoValidateRoundPackingForm
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[4]}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}
-                ></ValidateRoundPackingForm>
+                ></AutoValidateRoundPackingForm>
             ) : (
                 <></>
             )}

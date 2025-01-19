@@ -28,7 +28,7 @@ import configs from '../../../../../common/configs.json';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 
-export interface IValidateRoundPickingProps {
+export interface IAutoValidateRoundPickingProps {
     process: string;
     stepNumber: number;
     trigger: { [label: string]: any };
@@ -36,13 +36,13 @@ export interface IValidateRoundPickingProps {
     headerContent: { [label: string]: any };
 }
 
-export const ValidateRoundPickingForm = ({
+export const AutoValidateRoundPickingForm = ({
     process,
     stepNumber,
     trigger: { triggerRender, setTriggerRender },
     buttons,
     headerContent: { setHeaderContent }
-}: IValidateRoundPickingProps) => {
+}: IAutoValidateRoundPickingProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const storage = LsIsSecured();
@@ -90,58 +90,71 @@ export const ValidateRoundPickingForm = ({
         resType = storedObject.step20.data.resType;
     }
 
-    //ValidateRoundPicking-1a: fetch front API
-    const onFinish = async () => {
-        setIsLoading(true);
-        const res = await fetch(`/api/preparation-management/validateRoundPicking/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                proposedRoundAdvisedAddress,
-                round,
-                articleInfos,
-                feature,
-                handlingUnit,
-                movingQuantity,
-                resType
-            })
-        });
-        if (res.ok) {
-            const response = await res.json();
+    //ValidateRoundPicking-1a: handle back to previous - previous step settings (specific since check is automatic)
+    const onBack = () => {
+        setTriggerRender(!triggerRender);
+        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
+            delete storedObject[`step${i}`]?.data;
+        }
+        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+        storage.set(process, JSON.stringify(storedObject));
+    };
 
+    //ValidateRoundPicking-1b: fetch front API
+    const [fetchResult, setFetchResult] = useState<any>();
+    useEffect(() => {
+        const fetchData = async () => {
+            const res = await fetch(`/api/preparation-management/validateRoundPicking/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    proposedRoundAdvisedAddress,
+                    round,
+                    articleInfos,
+                    feature,
+                    handlingUnit,
+                    movingQuantity,
+                    resType
+                })
+            });
+            const response = await res.json();
+            setFetchResult(response.response);
+            if (!res.ok) {
+                showError(t('messages:round-preparation-failed'));
+                onBack();
+                setHeaderContent(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    //ValidateRoundPicking-2: record values in securedLS once validated
+    useEffect(() => {
+        if (fetchResult) {
             storage.remove(process);
             const storedObject = JSON.parse(storage.get(process) || '{}');
-            console.log('storedObjectAfterRemove', storedObject);
 
-            if (response.response.updatedRoundAdvisedAddress) {
+            if (fetchResult.updatedRoundAdvisedAddress) {
                 const currentRoundAdvisedAddress =
-                    response.response.updatedRoundAdvisedAddress.updateRoundAdvisedAddress;
-
-                console.log('currentRoundAdvisedAddress', currentRoundAdvisedAddress);
-                console.log('currentRoundAdvisedAddress.status', currentRoundAdvisedAddress.status);
-
+                    fetchResult.updatedRoundAdvisedAddress.updateRoundAdvisedAddress;
                 if (
                     currentRoundAdvisedAddress.status ==
                     configs.ROUND_ADVISED_ADDRESS_STATUS_TO_BE_VERIFIED
                 ) {
                     const roundAdvisedAddresses =
-                        response.response.updatedRoundLineDetail.updateRoundLineDetail.roundLine.round.roundAdvisedAddresses
+                        fetchResult.updatedRoundLineDetail.updateRoundLineDetail.roundLine.round.roundAdvisedAddresses
                             .filter((raa: any) => raa.quantity != 0)
                             .sort((a: any, b: any) => {
                                 return a.roundOrderId - b.roundOrderId;
                             });
-
-                    console.log('roundAdvisedAddresses', roundAdvisedAddresses);
-
                     if (roundAdvisedAddresses.length > 0) {
                         const data = {
                             proposedRoundAdvisedAddress: roundAdvisedAddresses[0],
-                            round: response.response.updatedRoundLineDetail.updateRoundLineDetail
+                            round: fetchResult.updatedRoundLineDetail.updateRoundLineDetail
                                 .roundLine.round
                         };
-                        console.log('data', data);
                         storedObject['currentStep'] = 20;
                         storedObject[`step10`] = { previousStep: 0, data };
                         storedObject[`step20`] = { previousStep: 10 };
@@ -152,10 +165,9 @@ export const ValidateRoundPickingForm = ({
                 } else {
                     const data = {
                         proposedRoundAdvisedAddress: currentRoundAdvisedAddress,
-                        round: response.response.updatedRoundLineDetail.updateRoundLineDetail
-                            .roundLine.round
+                        round: fetchResult.updatedRoundLineDetail.updateRoundLineDetail.roundLine
+                            .round
                     };
-                    console.log('data1', data);
                     storedObject['currentStep'] = 20;
                     storedObject[`step10`] = { previousStep: 0, data };
                     storedObject[`step20`] = { previousStep: 10 };
@@ -163,40 +175,8 @@ export const ValidateRoundPickingForm = ({
                 }
             }
             setTriggerRender(!triggerRender);
-        } else {
-            showError(t('messages:round-preparation-failed'));
         }
-        if (res) {
-            setIsLoading(false);
-        }
-    };
+    }, [fetchResult]);
 
-    //ValidateRoundPicking-1b: handle back to previous - previous step settings (specific since check is automatic)
-    const onBack = () => {
-        setTriggerRender(!triggerRender);
-        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
-            delete storedObject[`step${i}`]?.data;
-        }
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
-    };
-
-    return (
-        <WrapperForm>
-            {!isLoading ? (
-                <StyledForm
-                    name="basic"
-                    layout="vertical"
-                    onFinish={onFinish}
-                    autoComplete="off"
-                    scrollToFirstError
-                    size="small"
-                >
-                    <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
-                </StyledForm>
-            ) : (
-                <ContentSpin />
-            )}
-        </WrapperForm>
-    );
+    return <WrapperForm>{!fetchResult ? <ContentSpin /> : <></>}</WrapperForm>;
 };

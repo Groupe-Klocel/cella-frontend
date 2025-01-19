@@ -22,17 +22,19 @@ import { cookie } from 'helpers/utils/utils';
 import { createCtx } from './create-context';
 
 // init from cookies
-const menuInitialState = cookie.get('isSettingMenuCollapsed')
-    ? stringToBoolean(cookie.get('isSettingMenuCollapsed'))
-    : true;
-const themeInitialState = cookie.get('mobile_theme') ? cookie.get('mobile_theme') : 'light';
+const userInfoStr = cookie.get('user') !== undefined ? cookie.get('user') : '{}';
+const userInitData = JSON.parse(userInfoStr!);
 
 const initialState = {
-    theme: themeInitialState,
-    isSettingMenuCollapsed: menuInitialState,
-    isSessionMenuCollapsed: menuInitialState,
-    locale: 'fr',
-    finish: false
+    finish: false,
+    userSettings: [
+        {
+            code: 'globalParametersMobile',
+            valueJson: { theme: 'light' }
+        }
+    ],
+    user: userInitData,
+    translations: []
 };
 
 type State = typeof initialState;
@@ -40,6 +42,11 @@ type Action = any;
 
 function reducer(state: State, action: Action) {
     switch (action.type) {
+        case 'SWITCH_USER_SETTINGS':
+            return {
+                ...state,
+                userSettings: action.userSettings
+            };
         case 'SWITCH_THEME':
             return {
                 ...state,
@@ -56,17 +63,21 @@ function reducer(state: State, action: Action) {
                 isSettingMenuCollapsed: action.isSettingMenuCollapsed,
                 isSessionMenuCollapsed: action.isSettingMenuCollapsed
             };
-        case 'SAVE_SETTINGS':
-            saveUserSettings(state.isSettingMenuCollapsed, state.theme!);
+        case 'SET_USER_INFO':
+            cookie.set('user', JSON.stringify(action.user));
+            return {
+                ...state,
+                user: action.user
+            };
+        case 'SET_TRANSLATIONS':
+            return {
+                ...state,
+                translations: action.translations
+            };
         default:
             return state;
     }
 }
-
-const saveUserSettings = (menu: boolean, theme: string) => {
-    cookie.set('isSettingMenuCollapsed', menu.toString());
-    cookie.set('mobile_theme', theme);
-};
 
 const [useAppState, useAppDispatch, AppProvider] = createCtx(initialState, reducer);
 

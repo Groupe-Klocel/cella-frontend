@@ -24,7 +24,7 @@ import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useSimpleGetRoundsQuery, SimpleGetRoundsQuery } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';
@@ -91,7 +91,7 @@ export const SelectRoundForm = ({
     const roundsList = useSimpleGetRoundsQuery<Partial<SimpleGetRoundsQuery>, Error>(
         graphqlRequestClient,
         {
-            filters: { status: configsToFilterOn, category: [configs.ROUND_CATEGORY_PREPARATION] },
+            filters: { status: configsToFilterOn, category: [configs.ROUND_CATEGORY_OUTBOUND] },
             orderBy: null,
             page: 1,
             itemsPerPage: 100

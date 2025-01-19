@@ -17,18 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { SettingOutlined } from '@ant-design/icons';
-import { Logo, UserSettings } from '@components';
-import { Button, Col, Divider, Layout, Row } from 'antd';
-import { useAppState, useAppDispatch } from 'context/AppContext';
+import { Logo } from '@components';
+import { Button, Col, Layout, Row } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import { useDrawerDispatch } from 'context/DrawerContext';
-import useTranslation from 'next-translate/useTranslation';
-import React, { FC, useCallback, useState, useEffect } from 'react';
+import React, { FC } from 'react';
 import styled from 'styled-components';
 import { cookie, LsIsSecured, META_DEFAULTS } from '@helpers';
-import { useThemeSwitcher } from 'react-css-theme-switcher';
-import Typography from 'antd/lib/typography/Typography';
 import { LogoutOutlined, MenuOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import Text from 'antd/lib/typography/Text';
@@ -52,68 +46,8 @@ const StyledCol = styled(Col)`
 `;
 
 const Header: FC = () => {
-    const { t } = useTranslation();
-    const { user, logout } = useAuth();
-    const { switcher } = useThemeSwitcher();
+    const { logout } = useAuth();
     const storage = LsIsSecured();
-
-    const [finishSaving, setFinishSaving] = useState(false);
-
-    const dispatchDrawer = useDrawerDispatch();
-    const dispatchSettings = useAppDispatch();
-
-    const closeDrawer = useCallback(
-        () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
-        [dispatchDrawer]
-    );
-    const { theme } = useAppState();
-
-    const saveSettings = useCallback(
-        () =>
-            dispatchSettings({
-                type: 'SAVE_SETTINGS'
-            }),
-        [dispatchSettings]
-    );
-
-    const saveUserSettings = async () => {
-        saveSettings();
-        closeDrawer();
-        await setFinishSaving(true);
-    };
-
-    useEffect(() => {
-        const onfinish = async () => {
-            if (finishSaving) {
-                switcher({ theme: theme! });
-                await setFinishSaving(false);
-            }
-        };
-        onfinish();
-    }, [finishSaving]);
-
-    const openUserSettingsDrawer = useCallback(
-        () =>
-            dispatchDrawer({
-                type: 'OPEN_DRAWER',
-                title: t('menu:user-settings'),
-                cancelButton: false,
-                comfirmButton: true,
-                comfirmButtonTitle: t('actions:save'),
-                content: <UserSettings />,
-                onComfirm: () => saveUserSettings()
-            }),
-        [dispatchDrawer]
-    );
-
-    const profileMenuList = [
-        {
-            key: 'settings',
-            title: t('menu:settings'),
-            icon: <SettingOutlined />,
-            onClick: () => openUserSettingsDrawer()
-        }
-    ];
 
     const handleHomeClick = () => {
         storage.removeAll();

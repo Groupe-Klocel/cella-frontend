@@ -25,7 +25,7 @@ import { showError, showSuccess, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 
-export interface IValidateRoundPackingProps {
+export interface IAutoValidateRoundPackingProps {
     process: string;
     stepNumber: number;
     trigger: { [label: string]: any };
@@ -33,13 +33,13 @@ export interface IValidateRoundPackingProps {
     headerContent: { [label: string]: any };
 }
 
-export const ValidateRoundPackingForm = ({
+export const AutoValidateRoundPackingForm = ({
     process,
     stepNumber,
     trigger: { triggerRender, setTriggerRender },
     buttons,
     headerContent: { setHeaderContent }
-}: IValidateRoundPackingProps) => {
+}: IAutoValidateRoundPackingProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -94,35 +94,58 @@ export const ValidateRoundPackingForm = ({
         resType = storedObject.step30.data.resType;
     }
 
-    //ValidateRoundPacking-1a: fetch front API
-    const onFinish = async () => {
-        setIsLoading(true);
-        const res = await fetch(`/api/preparation-management/validateRoundPacking/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                existingFinalHUO,
-                round,
-                roundHU,
-                articleInfos,
-                handlingUnitModel,
-                feature,
-                movingQuantity,
-                resType,
-                roundContentInfos
-            })
-        });
-        if (res.ok) {
-            const response = await res.json();
+    //AutoValidateRoundPacking-1a: handle back to previous - previous step settings (specific since check is automatic)
+    const onBack = () => {
+        setTriggerRender(!triggerRender);
+        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
+            delete storedObject[`step${i}`]?.data;
+        }
+        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+        storage.set(process, JSON.stringify(storedObject));
+    };
 
+    //AutoValidateRoundPacking-1b: fetch front API
+    const [fetchResult, setFetchResult] = useState<any>();
+    useEffect(() => {
+        //checking via front API
+        const fetchData = async () => {
+            const res = await fetch(`/api/preparation-management/validateRoundPacking/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    existingFinalHUO,
+                    round,
+                    roundHU,
+                    articleInfos,
+                    handlingUnitModel,
+                    feature,
+                    movingQuantity,
+                    resType,
+                    roundContentInfos
+                })
+            });
+            const response = await res.json();
+            setFetchResult(response.response);
+            if (!res.ok) {
+                showError(t('messages:round-packing-failed'));
+                onBack();
+                setHeaderContent(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    //AutoValidateRoundPacking-2a: record values in securedLS once validated or launch closeBox API
+    useEffect(() => {
+        if (fetchResult) {
             storage.remove(process);
             const storedObject = JSON.parse(storage.get(process) || '{}');
 
-            if (response.response.updatedRoundHU) {
-                console.log('Validate.response', response.response);
-                const roundHU = response.response.updatedRoundHU;
+            if (fetchResult.updatedRoundHU) {
+                console.log('Validate.response', fetchResult);
+                const roundHU = fetchResult.updatedRoundHU;
 
                 // Filter handlingUnitContents with quantity > 0
 
@@ -137,35 +160,43 @@ export const ValidateRoundPackingForm = ({
                 };
 
                 if (roundHUWithFilteredContents.handlingUnitContents.length <= 0) {
-                    const res = await fetch(`/api/preparation-management/closeBox/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            deleteDeclarativeHUO: true,
-                            handlingUnitOutbound: response.response.finalHandlingUnitOutbound,
-                            roundHU: roundHUWithFilteredContents
-                        })
-                    });
-                    if (res.ok) {
-                        const response = await res.json();
-                        console.log('CloseBox.response', response);
-                        if (response.response.printResult == 'RenderedDocument') {
-                            showSuccess(t('messages:success-print-data'));
+                    const fetchCloseBoxData = async () => {
+                        const res = await fetch(`/api/preparation-management/closeBox/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                deleteDeclarativeHUO: true,
+                                handlingUnitOutbound: fetchResult.finalHandlingUnitOutbound,
+                                roundHU: roundHUWithFilteredContents
+                            })
+                        });
+                        if (res.ok) {
+                            const response = await res.json();
+                            console.log('CloseBox.response', response);
+                            if (response.response.printResult == 'RenderedDocument') {
+                                showSuccess(t('messages:success-print-data'));
+                            } else {
+                                showError(t('messages:error-print-data'));
+                            }
+                            showSuccess(t('messages:round-packing-success'));
                         } else {
-                            showError(t('messages:error-print-data'));
+                            showError(t('messages:round-packing-finalization-failed'));
                         }
-                        showSuccess(t('messages:round-packing-success'));
-                    } else {
-                        showError(t('messages:round-packing-finalization-failed'));
-                    }
+                        if (!res.ok) {
+                            showError(t('messages:round-packing-finalization-failed'));
+                            onBack();
+                            setHeaderContent(false);
+                        }
+                    };
+                    fetchCloseBoxData();
                 } else {
                     // We still have quantities to pack
                     const step10data = {
                         roundHU: roundHUWithFilteredContents,
                         round: round,
-                        existingFinalHUO: response.response.finalHandlingUnitOutbound
+                        existingFinalHUO: fetchResult.finalHandlingUnitOutbound
                     };
                     const step20data = {
                         handlingUnitModel: handlingUnitModel
@@ -178,40 +209,8 @@ export const ValidateRoundPackingForm = ({
                 }
             }
             setTriggerRender(!triggerRender);
-        } else {
-            showError(t('messages:round-packing-failed'));
         }
-        if (res) {
-            setIsLoading(false);
-        }
-    };
+    }, [fetchResult]);
 
-    //ValidateRoundPacking-1b: handle back to previous - previous step settings (specific since check is automatic)
-    const onBack = () => {
-        setTriggerRender(!triggerRender);
-        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
-            delete storedObject[`step${i}`]?.data;
-        }
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
-    };
-
-    return (
-        <WrapperForm>
-            {!isLoading ? (
-                <StyledForm
-                    name="basic"
-                    layout="vertical"
-                    onFinish={onFinish}
-                    autoComplete="off"
-                    scrollToFirstError
-                    size="small"
-                >
-                    <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
-                </StyledForm>
-            ) : (
-                <ContentSpin />
-            )}
-        </WrapperForm>
-    );
+    return <WrapperForm>{!fetchResult ? <ContentSpin /> : <></>}</WrapperForm>;
 };

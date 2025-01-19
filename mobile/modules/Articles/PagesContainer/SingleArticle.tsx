@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { LinkButton, ScreenSpin, DetailsList, Page } from '@components';
 import { Layout, Space } from 'antd';
 import { articlesSubRoutes } from 'modules/Articles/Static/articlesRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { GetArticleByIdQuery, useGetArticleByIdQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { FC } from 'react';
@@ -34,34 +34,35 @@ import { HeaderContent } from '@components';
 // `
 
 export interface ISingleArticleProps {
-	aId: string | any;
-	router: NextRouter;
+    aId: string | any;
+    router: NextRouter;
 }
 
 const SingleArticle: FC<ISingleArticleProps> = ({ aId, router }: ISingleArticleProps) => {
-	const { t } = useTranslation()
+    const { t } = useTranslation();
 
-	const { graphqlRequestClient } = useAuth()
+    const { graphqlRequestClient } = useAuth();
 
-	const { isLoading, data, error } = useGetArticleByIdQuery<GetArticleByIdQuery, Error>(graphqlRequestClient, {
-		id: aId,
-	})
-	
-	return (
-		<>
-			<HeaderContent
-				title={`${t('common:article')} ${aId}`}
-			/>
-			<Page>
-				{data?.article && !isLoading ?
-					<DetailsList details={data?.article} />
-					:
-					<ScreenSpin />
-				}
-			</Page>
-		</>
-	);
-}
+    const { isLoading, data, error } = useGetArticleByIdQuery<GetArticleByIdQuery, Error>(
+        graphqlRequestClient,
+        {
+            id: aId
+        }
+    );
+
+    return (
+        <>
+            <HeaderContent title={`${t('common:article')} ${aId}`} />
+            <Page>
+                {data?.article && !isLoading ? (
+                    <DetailsList details={data?.article} />
+                ) : (
+                    <ScreenSpin />
+                )}
+            </Page>
+        </>
+    );
+};
 
 SingleArticle.displayName = 'SingleArticle';
 

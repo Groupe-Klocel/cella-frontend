@@ -22,7 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
 import { showError, showSuccess, LsIsSecured } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 
 export interface IValidateQuantityMoveProps {
@@ -87,7 +87,8 @@ export const ValidateQuantityMoveForm = ({
                 quantity: storedObject.step40.data.chosenContent.quantity,
                 stockStatus: storedObject.step40.data.chosenContent.stockStatus,
                 stockOwnerId: storedObject.step30.data.feature.handlingUnitContent.stockOwnerId,
-                stockOwnerName: storedObject.step30.data.feature.handlingUnitContent.stockOwner.name
+                stockOwnerName:
+                    storedObject.step30.data.feature.handlingUnitContent.stockOwner?.name
             };
         } else {
             originalContent = {
@@ -95,7 +96,7 @@ export const ValidateQuantityMoveForm = ({
                 quantity: storedObject.step40.data.chosenContent.quantity,
                 stockStatus: storedObject.step40.data.chosenContent.stockStatus,
                 stockOwnerId: storedObject.step40.data.chosenContent.stockOwnerId,
-                stockOwnerName: storedObject.step40.data.chosenContent.stockOwner.name,
+                stockOwnerName: storedObject.step40.data.chosenContent.stockOwner?.name,
                 handlingUnitContentFeatures:
                     storedObject.step40.data.chosenContent.handlingUnitContentFeatures
             };

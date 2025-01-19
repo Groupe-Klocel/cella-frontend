@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { BreadcrumbType } from '@helpers';
-// import { PageHeader } from 'antd';
 import CustomPageHeader from 'components/common/dumb/PageHeader/CustomPageHeader';
 import { FC, ReactNode } from 'react';
 
@@ -39,13 +38,7 @@ const HeaderContent: FC<IHeaderContentProps> = ({
     onBack
 }: IHeaderContentProps) => {
     return (
-        <CustomPageHeader
-            title={title}
-            onBack={onBack}
-            subTitle={actionsLeft}
-            extra={actionsRight}
-            // style={{ background: 'white', padding: '0px 12px 0px 12px', textAlign: 'center' }}
-        >
+        <CustomPageHeader title={title} onBack={onBack} subTitle={actionsLeft} extra={actionsRight}>
             {children}
         </CustomPageHeader>
     );

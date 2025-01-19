@@ -22,8 +22,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured, showError } from '@helpers';
 import { Select, Form, Modal } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
-import { use, useEffect, useState } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useEffect, useState } from 'react';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';

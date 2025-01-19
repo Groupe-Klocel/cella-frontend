@@ -22,7 +22,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { Form, Input, Button } from 'antd';
 import { HeaderContent } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 
 type PageComponent = FC & { layout: typeof MainLayout };

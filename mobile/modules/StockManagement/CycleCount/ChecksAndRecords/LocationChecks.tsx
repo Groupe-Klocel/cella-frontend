@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import { createCycleCountError } from 'helpers/utils/crudFunctions/cycleCount';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 
 export interface ILocationChecksProps {
