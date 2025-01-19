@@ -148,15 +148,6 @@ function isCookieSet(cookieName: string) {
     }
 }
 
-function getDefaultTheme() {
-    switch (cookie.get('theme')) {
-        case 'dark':
-            return 'dark';
-        default:
-            return 'light';
-    }
-}
-
 // handle mismatch when menu is open by the user but not set as default and user settings menu is set to true
 function getMenuState(isSettingMenuCollapsed: boolean) {
     let menuState;
@@ -604,7 +595,6 @@ export {
     showError,
     decodeJWT,
     getMenuState,
-    getDefaultTheme,
     isCookieSet,
     stringToBoolean,
     isVisible,

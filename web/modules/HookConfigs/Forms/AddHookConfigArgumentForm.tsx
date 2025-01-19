@@ -18,17 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, Select, Modal, Space } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { Button, Input, Form, Modal, Space } from 'antd';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState, FC } from 'react';
-import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import {
-    InputMaybe,
-    Scalars,
-    SimpleGetAllStockOwnersQuery,
-    useSimpleGetAllStockOwnersQuery
-} from 'generated/graphql';
 import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
 import { HookConfigModelV2 as model } from 'models/HookConfigModelV2';
 export interface ISingleItemProps {
@@ -39,10 +32,8 @@ export const AddHookConfigArgumentForm: FC<ISingleItemProps> = ({
     detailFields
 }: ISingleItemProps) => {
     const { t } = useTranslation('common');
-    const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const id = router.query.id;
-    const hookConfigName = router.query.hookConfigName;
     const hookConfigArgument: any = router.query.hookConfigArgument;
     const keyLbl = t('d:key');
     const valueLbl = t('d:value');
@@ -53,6 +44,27 @@ export const AddHookConfigArgumentForm: FC<ISingleItemProps> = ({
     const [form] = Form.useForm();
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [inputArgument, setinputArgument] = useState<any>();
+
+    // prompt the user if they try and leave with unsaved changes
+    useEffect(() => {
+        const handleWindowClose = (e: BeforeUnloadEvent) => {
+            if (!unsavedChanges) return;
+            e.preventDefault();
+            return (e.returnValue = t('messages:confirm-leaving-page'));
+        };
+        const handleBrowseAway = () => {
+            if (!unsavedChanges) return;
+            if (window.confirm(t('messages:confirm-leaving-page'))) return;
+            router.events.emit('routeChangeError');
+            throw 'routeChange aborted.';
+        };
+        window.addEventListener('beforeunload', handleWindowClose);
+        router.events.on('routeChangeStart', handleBrowseAway);
+        return () => {
+            window.removeEventListener('beforeunload', handleWindowClose);
+            router.events.off('routeChangeStart', handleBrowseAway);
+        };
+    }, [unsavedChanges]);
 
     useEffect(() => {
         const jsonData: any = {};
@@ -99,6 +111,7 @@ export const AddHookConfigArgumentForm: FC<ISingleItemProps> = ({
                     id: id,
                     input: { ...input_tmp }
                 });
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));

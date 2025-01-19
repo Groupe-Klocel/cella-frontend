@@ -25,7 +25,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { goodsInsRoutes as itemRoutes } from 'modules/GoodsIns/Static/goodsInsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
@@ -34,7 +34,7 @@ import { GoodsInDetailsExtra } from 'modules/GoodsIns/Elements/GoodsInDetailsExt
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const GoodsInPage: PageComponent = () => {
+const GoodsInsPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -130,8 +130,6 @@ const GoodsInPage: PageComponent = () => {
     );
 };
 
-GoodsInPage.layout = MainLayout;
+GoodsInsPage.layout = MainLayout;
 
-export default GoodsInPage;
-
-//
+export default GoodsInsPage;

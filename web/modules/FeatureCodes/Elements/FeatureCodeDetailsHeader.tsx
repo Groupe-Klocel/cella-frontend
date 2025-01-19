@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { LinkButton } from '@components';
 import { Space, Button, Modal } from 'antd';
 import { featureCodesRoutes } from 'modules/FeatureCodes/Static/featureCodesRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 import { FC, useEffect } from 'react';
 import { useRouter } from 'next/router';

@@ -25,14 +25,14 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { paymentMethodsRoutes as itemRoutes } from 'modules/PaymentMethods/Static/paymentMethodsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const PaymentMethodPage: PageComponent = () => {
+const PaymentMethodsPage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -122,6 +122,6 @@ const PaymentMethodPage: PageComponent = () => {
     );
 };
 
-PaymentMethodPage.layout = MainLayout;
+PaymentMethodsPage.layout = MainLayout;
 
-export default PaymentMethodPage;
+export default PaymentMethodsPage;

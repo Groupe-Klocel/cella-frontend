@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Layout } from 'antd';
 import { HeaderContent } from '@components';
 import { addStockStatusRoutes } from 'modules/Stocks/Static/stocksRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { AddStockStatusForm } from 'modules/Stocks/Elements/AddStockStatusForm';
 import styled from 'styled-components';
 

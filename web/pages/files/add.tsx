@@ -29,7 +29,7 @@ import {
     useUploadFileMutation
 } from 'generated/graphql';
 
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
 import { FC, useState } from 'react';
 import styled from 'styled-components';

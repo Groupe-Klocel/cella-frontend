@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Col, Input, InputNumber, Row, Form, Checkbox, Select, Modal, Space } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -27,8 +27,8 @@ import {
     useCreateEquipmentMutation,
     CreateEquipmentMutation,
     CreateEquipmentMutationVariables,
-    useSimpleGetAllStockOwnersQuery,
-    SimpleGetAllStockOwnersQuery,
+    useSimpleGetInProgressStockOwnersQuery,
+    SimpleGetInProgressStockOwnersQuery,
     useGetListOfPrioritiesQuery,
     GetListOfPrioritiesQuery,
     useUpdateEquipmentMutation,
@@ -92,9 +92,9 @@ export const AddEquipmentForm = () => {
         };
     }, [unsavedChanges]);
 
-    //To render Simple stock owners list
-    const stockOwnerList = useSimpleGetAllStockOwnersQuery<
-        Partial<SimpleGetAllStockOwnersQuery>,
+    //To render Simple In progress stock owners list
+    const stockOwnerList = useSimpleGetInProgressStockOwnersQuery<
+        Partial<SimpleGetInProgressStockOwnersQuery>,
         Error
     >(graphqlRequestClient);
 

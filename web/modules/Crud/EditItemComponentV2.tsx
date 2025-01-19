@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ContentSpin } from '@components';
 import { Alert, Layout } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
@@ -305,7 +305,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
     }, [router.locale]);
 
     useEffect(() => {
-        if (detail.data[props.dataModel.endpoints.detail]) {
+        if (detail?.data?.[props.dataModel.endpoints.detail]) {
             const flattenedData = flatten(detail.data[props.dataModel.endpoints.detail]);
             if (props.setData) props.setData(flattenedData);
         }
@@ -462,8 +462,8 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                 if (Object.keys(item).length > 0) {
                     if (
                         detail &&
-                        detail.data[props.dataModel.endpoints.detail] !== undefined &&
-                        detail.data[props.dataModel.endpoints.detail] !== null
+                        detail.data?.[props.dataModel.endpoints.detail] !== undefined &&
+                        detail.data?.[props.dataModel.endpoints.detail] !== null
                     ) {
                         const itemId = detail.data[props.dataModel.endpoints.detail].id;
                         //remove id from option object if present

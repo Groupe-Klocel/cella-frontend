@@ -23,7 +23,7 @@ import { FC } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { ThirdPartyDocumentModelV2 } from 'models/ThirdPartyDocumentModelV2';
 import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addThirdPartyRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
 import { META_DEFAULTS } from '@helpers';
 import parameters from '../../../../../common/parameters.json';

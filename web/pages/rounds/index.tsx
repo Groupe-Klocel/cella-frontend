@@ -32,7 +32,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { RoundModelV2 as model } from 'models/RoundModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
 // import { BulkEditRoundsRenderModal } from 'modules/Rounds/Forms/BulkEditRoundsModal';
@@ -69,7 +69,7 @@ const RoundPages: PageComponent = () => {
                         }
                     `;
                     const variables = {
-                        functionName: 'K_estimateRounds',
+                        functionName: 'estimate_rounds',
                         event: {}
                     };
                     try {
@@ -252,7 +252,7 @@ const RoundPages: PageComponent = () => {
                 rowSelection={rowSelection}
                 refetch={refetch}
                 checkbox={true}
-                searchCriteria={{ category: configs.ROUND_CATEGORY_PREPARATION }}
+                searchCriteria={{ category: configs.ROUND_CATEGORY_OUTBOUND }}
                 actionColumns={[
                     {
                         title: 'actions:actions',

@@ -22,7 +22,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { META_DEFAULTS } from '@helpers';
 import { useRouter } from 'next/router';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
 import { addPatternRoutes } from 'modules/Patterns/Static/patternsRoutes';
 import { PatternModelV2 as model } from 'models/PatternModelV2';

@@ -20,24 +20,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { LinkButton } from '@components';
 import { EyeTwoTone } from '@ant-design/icons';
 import { pathParams } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
-import { Divider, Typography } from 'antd';
-import { useState } from 'react';
-import { BarcodeRenderModal } from 'modules/Barcodes/Elements/BarcodeRenderModal';
-import { useAppState } from 'context/AppContext';
-import { ModeEnum, Table } from 'generated/graphql';
-import { ListComponent, HeaderData } from 'modules/Crud/ListComponent';
-import {
-    ListComponent as ListComponentV2,
-    HeaderData as HeaderDataV2
-} from 'modules/Crud/ListComponentV2';
-import { LoadsBoxesModel } from 'models/LoadsBoxesModel';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { Divider } from 'antd';
+import { ListComponent, HeaderData } from 'modules/Crud/ListComponentV2';
+import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
-import configs from '../../../../common/configs.json';
+
 export interface IItemDetailsProps {
     loadId?: string | any;
 }
-const { Title } = Typography;
 const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
@@ -49,7 +40,7 @@ const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
     };
 
     // header RELATED to StatusHistory
-    const statusHistoryHeaderData: HeaderDataV2 = {
+    const statusHistoryHeaderData: HeaderData = {
         title: `${t('common:status-history')}`,
         routes: [],
         actionsComponent: null
@@ -58,7 +49,7 @@ const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
     return (
         <>
             <Divider />
-            <ListComponentV2
+            <ListComponent
                 searchCriteria={{ objectId: loadId }}
                 dataModel={StatusHistoryDetailExtraModelV2}
                 headerData={statusHistoryHeaderData}
@@ -70,7 +61,7 @@ const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
             <Divider />
             <ListComponent
                 searchCriteria={{ loadId: loadId }}
-                dataModel={LoadsBoxesModel}
+                dataModel={HandlingUnitOutboundModelV2}
                 headerData={loadBoxesHeaderData}
                 actionColumns={[
                     {
@@ -85,6 +76,8 @@ const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
                     }
                 ]}
                 searchable={false}
+                triggerDelete={undefined}
+                triggerSoftDelete={undefined}
             />
         </>
     );

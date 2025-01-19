@@ -27,7 +27,7 @@ import { BlockModelV2 as model } from 'models/BlockModelV2';
 import { BlockDetailsExtra } from 'modules/Blocks/Elements/BlockDetailsExtra';
 import { blocksRoutes as itemRoutes } from 'modules/Blocks/Static/blocksRoutes';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
 import { Button, Modal, Space } from 'antd';
 

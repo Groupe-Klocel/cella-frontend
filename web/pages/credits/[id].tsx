@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { CreditModelV2 as model } from 'models/CreditModelV2';
 import { Button, Modal, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
@@ -46,12 +46,12 @@ const CreditPage: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const { id } = router.query;
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
-    const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [documentToPrint, setDocumentToPrint] = useState<string>();
     const [creditInvoiceAddress, setCreditInvoiceAddress] = useState<any>();
     const { graphqlRequestClient } = useAuth();
+    const [showCreditPaymentModal, setShowCreditPaymentModal] = useState(false);
     const [refetchCreditPayment, setRefetchCreditPayment] = useState<boolean>(false);
 
     // #region to customize information

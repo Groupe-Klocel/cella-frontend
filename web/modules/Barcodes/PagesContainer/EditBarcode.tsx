@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ContentSpin } from '@components';
 import { Alert, Layout } from 'antd';
 import { barcodesSubRoutes } from 'modules/Articles/Static/articlesRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { GetBarcodeByIdQuery, ModeEnum, Table, useGetBarcodeByIdQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { FC, useEffect } from 'react';

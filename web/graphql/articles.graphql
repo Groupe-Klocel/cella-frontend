@@ -532,6 +532,6 @@ mutation UpdateArticleLuBarcode($id: String!, $input: UpdateArticleLuBarcodeInpu
     }
 }
 
-mutation bulkUpdateArticles($inputs: UpdateArticleInput!, $articlesId: [String!]!) {
-    bulkUpdateArticles(inputs: $inputs, articlesId: $articlesId)
+mutation updateArticles($input: UpdateArticleInput!, $ids: [String!]!) {
+    updateArticles(ids: $ids, input: $input)
 }

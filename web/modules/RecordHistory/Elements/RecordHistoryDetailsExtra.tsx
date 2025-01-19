@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
 import { META_DEFAULTS } from '@helpers';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider } from 'antd';
 import { useState } from 'react';
 import {

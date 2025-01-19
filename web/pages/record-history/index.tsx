@@ -25,11 +25,10 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { RecordHistoryModelV2 as model } from 'models/RecordHistoryModelV2';
-import { HeaderData } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { recordHistoryRoutes as itemRoutes } from 'modules/RecordHistory/Static/recordHistoryRoutes';
-import { RecordHistoryListComponent } from 'modules/RecordHistory/Elements/RecordHistoryListComponent';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const RecordHistoryPages: PageComponent = () => {
@@ -62,7 +61,7 @@ const RecordHistoryPages: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <RecordHistoryListComponent
+            <ListComponent
                 headerData={headerData}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
@@ -132,7 +131,7 @@ const RecordHistoryPages: PageComponent = () => {
                     }
                 ]}
                 routeDetailPage={`${rootPath}/:sequenceId`}
-                sortDefault={[{ field: 'sequenceId', descending: true }]}
+                sortDefault={[{ field: 'sequenceId', ascending: false }]}
             />
         </>
     );

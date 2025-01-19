@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, useGetParameterScopesQuery } from 'generated/graphql';
 import { SingleParameterModelV2 as model } from 'models/SingleParameterModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { vatRatesRoutes as itemRoutes } from 'modules/VatRates/Static/vatRatesRoutes';
 import { useAuth } from 'context/AuthContext';
@@ -48,7 +48,7 @@ const VatRatesPage: PageComponent = () => {
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (
                 <LinkButton
-                    title={t('actions:add2', { name: t('common:vat-rates') })}
+                    title={t('actions:add2', { name: t('common:vat-rate') })}
                     path={`${rootPath}/add`}
                     type="primary"
                 />

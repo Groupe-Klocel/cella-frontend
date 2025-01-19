@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import configs from '../../../../common/configs.json';
 import { Button, Input, Form, Checkbox, Select, Space, Modal } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -306,7 +306,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                     <Input disabled={true} />
                 </Form.Item>
                 <Form.Item
-                    label={t('d:name')}
+                    label={t('d:location_name')}
                     name="name"
                     rules={[
                         { required: true, message: `${t('messages:error-message-empty-input')}` }

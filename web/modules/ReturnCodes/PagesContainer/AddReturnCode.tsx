@@ -24,7 +24,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { AddReturnCodeForm } from 'modules/ReturnCodes/Forms/AddReturnCodeForm';
 import { addReturnCodeRoutes } from 'modules/ReturnCodes/Static/ReturnCodeRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export const AddReturnCode = () => {
     const { t } = useTranslation('actions');

@@ -23,7 +23,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ConversionModelV2 } from 'models/ConversionModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { conversionsRoutes } from 'modules/Conversions/Static/conversionsRoutes';
 import { META_DEFAULTS } from '@helpers';
 

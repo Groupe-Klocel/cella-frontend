@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { cookie, META_DEFAULTS, showError } from '@helpers';
 import { Empty } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';

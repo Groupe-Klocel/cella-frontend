@@ -28,7 +28,7 @@ import {
     setUTCDate,
     showError
 } from 'helpers/utils/utils';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 /**
  * Getting list of items from CRUD API.

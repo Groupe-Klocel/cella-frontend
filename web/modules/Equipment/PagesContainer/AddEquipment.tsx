@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Alert, Layout } from 'antd';
 import { ContentSpin, HeaderContent } from '@components';
 import { AddEquipmentForm } from '../Forms/AddEquipmentForm';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
 import { equipmentRoutes } from '../Static/equipmentRoutes';

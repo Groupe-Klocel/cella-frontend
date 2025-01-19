@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { DeleteOutlined, EditTwoTone } from '@ant-design/icons';
 import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components';
 import { Space, Button, Empty, Alert, Modal, Divider } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
@@ -420,7 +420,7 @@ const HookConfigListComponent = (props: IListProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage: any, itemsPerPage: any) => {
+        (currentPage: number, itemsPerPage: number) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: rows?.count,
@@ -539,7 +539,7 @@ const HookConfigListComponent = (props: IListProps) => {
         setNewRows(jsonData);
     }, [data, router, sort]);
 
-    const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
+    const handleTableChange = async (_pagination: number, _filter: number, sorter: number) => {
         const newSorter = orderByFormater(sorter);
 
         let tmp_array: any[] = [];
@@ -639,7 +639,7 @@ const HookConfigListComponent = (props: IListProps) => {
                             rows?.results && rows?.results.length > 0 ? (
                                 <>
                                     <AppTableV2
-                                        type={props.dataModel.endpoints.list}
+                                        dataModel={props.dataModel}
                                         columns={props.actionColumns.concat(columns)}
                                         data={newRows}
                                         pagination={pagination}

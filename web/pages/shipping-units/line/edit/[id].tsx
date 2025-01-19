@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 import { META_DEFAULTS } from '@helpers';
 import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';

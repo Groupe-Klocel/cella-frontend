@@ -21,7 +21,7 @@ import { EyeInvisibleTwoTone, EyeTwoTone } from '@ant-design/icons';
 import { isVisible, MyColumnType, setCustomColumnsProps, showWarning } from '@helpers';
 import { Button, Space, Table } from 'antd';
 import Text from 'antd/lib/typography/Text';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     FC,
     Key,
@@ -81,6 +81,15 @@ const TableFilter = forwardRef<TableFilterRef, ITableFilterProps>(
         const [showKeys, setShowKeys] = useState(visibleKeys);
         const [fixedKeys, setFixedKeys] = useState<Key[]>(fixKeys);
         const [currentFilteredColumns, setCurrentFilteredColumns] = useState(columnsToFilter);
+
+        console.log(
+            'columnsToFilter',
+            columnsToFilter,
+            'visibleKeys',
+            visibleKeys,
+            'fixKeys',
+            fixKeys
+        );
 
         useImperativeHandle(ref, () => ({
             reset(keys: any, columns: any) {

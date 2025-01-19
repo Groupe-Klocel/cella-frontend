@@ -21,7 +21,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { AppTableV2, ContentSpin, HeaderContent } from '@components';
 import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
@@ -30,6 +30,7 @@ import {
     orderByFormater,
     PaginationType,
     showError,
+    showWarning,
     showInfo,
     showSuccess,
     useDelete,
@@ -48,12 +49,12 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
-import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { initial, isString } from 'lodash';
+import _, { debounce, initial, isString, set } from 'lodash';
 import { gql } from 'graphql-request';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export type HeaderData = {
     title: string;
@@ -87,6 +88,12 @@ export interface IListProps {
     mode?: string;
     refetch?: boolean;
     columnFilter?: boolean;
+    itemperpage?: number;
+}
+
+export interface newPaginationType {
+    current: number;
+    itemsPerPage: number;
 }
 
 const ListComponent = (props: IListProps) => {
@@ -95,6 +102,191 @@ const ListComponent = (props: IListProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
+
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const [switchReloadData, setSwitchReloadData] = useState<boolean>(false);
+
+    let userSettings = state?.userSettings?.find((item: any) => {
+        return `${props.dataModel.resolverName}${router.pathname}` === item.code;
+    });
+
+    // #region sorter / filter from userSettings
+
+    const savedSorters = userSettings?.valueJson?.sorter
+        ? userSettings?.valueJson?.sorter
+        : userSettings?.valueJson?.sorter === null
+          ? null
+          : undefined;
+
+    const sortParameter = Object.entries(props.dataModel.fieldsInfo)
+        .filter(([, value]) => value.defaultSort)
+        .map(([key, value]) => ({
+            field: key.replace(/{/g, '_').replace(/}/g, ''),
+            ascending: value.defaultSort === 'ascending'
+        }));
+
+    const [sort, setSort] = useState<any>(
+        savedSorters === null ? null : (savedSorters ?? props.sortDefault ?? sortParameter)
+    );
+
+    // only methode found to get the userSettings from the state inside the function
+    const userSettingsRef = useRef(userSettings);
+    const stateUserSettingsRef = useRef(state.userSettings);
+
+    useEffect(() => {
+        userSettingsRef.current = userSettings;
+    }, [userSettings]);
+
+    useEffect(() => {
+        stateUserSettingsRef.current = state.userSettings;
+    }, [state.userSettings]);
+
+    const updateUserSettings = useCallback(
+        //newpagination = {current: number, itemsPerPage: number}
+        async (newFilter: any, newSorting: any, newPagination?: newPaginationType) => {
+            const currentUserSettings = userSettingsRef.current;
+            const currentStateUserSettings = stateUserSettingsRef.current;
+
+            if (newSorting === 'default') {
+                newSorting = currentUserSettings?.valueJson?.sorter ?? null;
+            }
+            const newsSettings = {
+                ...currentUserSettings,
+                valueJson: {
+                    ...currentUserSettings?.valueJson,
+                    filter: newFilter ?? currentUserSettings?.valueJson?.filter,
+                    sorter: newSorting ?? null,
+                    pagination: newPagination ?? currentUserSettings?.valueJson?.pagination
+                }
+            };
+            const updateQuery = gql`
+                mutation (
+                    $warehouseWorkerSettingsId: String!
+                    $input: UpdateWarehouseWorkerSettingInput!
+                ) {
+                    updateWarehouseWorkerSetting(id: $warehouseWorkerSettingsId, input: $input) {
+                        id
+                        code
+                        valueJson
+                    }
+                }
+            `;
+            const updateVariables = {
+                warehouseWorkerSettingsId: currentUserSettings.id,
+                input: { valueJson: newsSettings.valueJson }
+            };
+            try {
+                const queryInfo: any = await graphqlRequestClient.request(
+                    updateQuery,
+                    updateVariables
+                );
+                dispatch({
+                    type: 'SWITCH_USER_SETTINGS',
+                    userSettings: currentStateUserSettings.map((item: any) => {
+                        return item.id === queryInfo?.updateWarehouseWorkerSetting?.id
+                            ? queryInfo.updateWarehouseWorkerSetting
+                            : item;
+                    })
+                });
+                setSwitchReloadData((prev: boolean) => !prev);
+            } catch (error) {
+                console.log('queryInfo update listComponent error', error);
+                showWarning(t('messages:config-save-error'));
+            }
+        },
+        [graphqlRequestClient, dispatch, sortParameter]
+    );
+
+    const createUsersSettings = useCallback(
+        async (newFilter: any, newSorting: any, newPagination?: newPaginationType) => {
+            const currentUserSettings = userSettingsRef.current;
+            const currentStateUserSettings = stateUserSettingsRef.current;
+
+            if (newSorting === 'default') {
+                newSorting = currentUserSettings?.valueJson?.sorter ?? null;
+            }
+
+            const newsSettings = {
+                code: `${props.dataModel.resolverName}${router.pathname}`,
+                warehouseWorkerId: state.user.id,
+                valueJson: {
+                    filter: newFilter,
+                    sorter: newSorting,
+                    pagination: newPagination
+                }
+            };
+            const createQuery = gql`
+                mutation ($input: CreateWarehouseWorkerSettingInput!) {
+                    createWarehouseWorkerSetting(input: $input) {
+                        id
+                        code
+                        valueJson
+                    }
+                }
+            `;
+            try {
+                const queryInfo: any = await graphqlRequestClient.request(createQuery, {
+                    input: newsSettings
+                });
+                dispatch({
+                    type: 'SWITCH_USER_SETTINGS',
+                    userSettings: [
+                        ...currentStateUserSettings,
+                        queryInfo.createWarehouseWorkerSetting
+                    ]
+                });
+                setSwitchReloadData((prev: boolean) => !prev);
+            } catch (error) {
+                console.log('queryInfo create listComponent error', error);
+                showWarning(t('messages:config-save-error'));
+            }
+        },
+        [
+            props.dataModel.resolverName,
+            router.pathname,
+            state.user.id,
+            graphqlRequestClient,
+            dispatch
+        ]
+    );
+
+    const deleteUserSettings = useCallback(async () => {
+        if (!userSettings) {
+            return;
+        }
+        const deleteQuery = gql`
+            mutation ($id: String!) {
+                deleteWarehouseWorkerSetting(id: $id)
+            }
+        `;
+        const deleteVariables = {
+            id: userSettings.id
+        };
+        await graphqlRequestClient.request(deleteQuery, deleteVariables);
+        showWarning(
+            t(
+                'messages:vos filtres, tri et pagination vont être réinitialisés car une erreur est survenue'
+            )
+        );
+        setTimeout(() => {
+            router.reload();
+        }, 3000);
+    }, [userSettings, graphqlRequestClient, dispatch, state.userSettings]);
+
+    const changeFilter = useCallback(
+        (filter: any, sorter: any, pagination?: newPaginationType) => {
+            const currentUserSettings = userSettingsRef.current;
+            if (currentUserSettings) {
+                updateUserSettings(filter, sorter, pagination);
+            } else {
+                createUsersSettings(filter, sorter, pagination);
+            }
+        },
+        [updateUserSettings, createUsersSettings]
+    );
+
+    // #endregion
 
     const requestHeader = {
         // 'X-API-fake': 'fake',
@@ -132,226 +324,150 @@ const ListComponent = (props: IListProps) => {
         (key) => props.dataModel.fieldsInfo[key].isListRequested
     );
 
-    const sortableFields =
-        Object.keys(props.dataModel.fieldsInfo)
-            .filter((key) => props.dataModel.fieldsInfo[key].isSortable)
-            .map((obj) => {
-                if (obj.includes('{')) {
-                    obj = obj.replaceAll('{', '_').replaceAll('}', '');
-                }
-                return obj;
-            }) || [];
+    const displayedLabels = Object.fromEntries(
+        Object.entries(props.dataModel.fieldsInfo)
+            .filter(([, value]) => value.displayName !== null)
+            .map(([key, value]) => [key.replace(/{/g, '_').replace(/}/g, ''), value.displayName])
+    );
 
-    const displayedLabels = Object.keys(props.dataModel.fieldsInfo)
-        .filter((key) => props.dataModel.fieldsInfo[key].displayName !== null)
-        .reduce((obj: any, key) => {
-            let newKey = key;
-            if (key.includes('{')) {
-                newKey = key.replaceAll('{', '_').replaceAll('}', '');
-            }
-            obj[newKey] = props.dataModel.fieldsInfo[key].displayName;
-            return obj;
-        }, {});
+    const formatFieldNames = (keys: string[], condition: (key: string) => boolean) =>
+        keys.filter(condition).map((key) => key.replace(/{/g, '_').replace(/}/g, ''));
 
-    const excludedListFields = Object.keys(props.dataModel.fieldsInfo)
-        .filter((key) => props.dataModel.fieldsInfo[key].isExcludedFromList)
-        .map((obj) => {
-            if (obj.includes('{')) {
-                obj = obj.replaceAll('{', '_').replaceAll('}', '');
-            }
-            return obj;
-        });
+    const sortableFields = formatFieldNames(
+        Object.keys(props.dataModel.fieldsInfo),
+        (key) => props.dataModel.fieldsInfo[key].isSortable
+    );
 
-    const hiddenListFields = Object.keys(props.dataModel.fieldsInfo)
-        .filter((key) => props.dataModel.fieldsInfo[key].isDefaultHiddenList)
-        .map((obj) => {
-            if (obj.includes('{')) {
-                obj = obj.replaceAll('{', '_').replaceAll('}', '');
-            }
-            return obj;
-        });
+    const excludedListFields = formatFieldNames(
+        Object.keys(props.dataModel.fieldsInfo),
+        (key) => props.dataModel.fieldsInfo[key].isExcludedFromList
+    );
 
-    let filterFields = Object.keys(props.dataModel.fieldsInfo)
-        .filter((key) => props.dataModel.fieldsInfo[key].searchingFormat !== null)
-        .map((key) => {
-            // handle uppercase for fields with {}
-            let name = key;
-            if (name.includes('{')) {
-                name = name
-                    .replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`)
-                    .replaceAll('}', '');
-            }
-            return {
-                displayName: t(
-                    `d:${(props.dataModel.fieldsInfo[key].displayName ?? key)
-                        .replaceAll('{', '_')
-                        .replaceAll('}', '')}`
-                ),
-                name: name,
-                type: FormDataType[
-                    props.dataModel.fieldsInfo[key].searchingFormat as keyof typeof FormDataType
-                ],
-                maxLength: props.dataModel.fieldsInfo[key].maxLength ?? undefined,
-                config: props.dataModel.fieldsInfo[key].config ?? undefined,
-                param: props.dataModel.fieldsInfo[key].param ?? undefined,
-                optionTable: props.dataModel.fieldsInfo[key].optionTable ?? undefined,
-                isMultipleSearch: props.dataModel.fieldsInfo[key].isMultipleSearch ?? undefined,
-                initialValue: undefined
-            };
-        });
+    const hiddenListFields = formatFieldNames(
+        Object.keys(props.dataModel.fieldsInfo),
+        (key) => props.dataModel.fieldsInfo[key].isDefaultHiddenList
+    );
+
+    let filterFields = Object.entries(props.dataModel.fieldsInfo)
+        .filter(([, value]) => value.searchingFormat !== null)
+        .map(([key, value]) => ({
+            displayName: t(`d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`),
+            name: key.replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`).replace(/}/g, ''),
+            type: FormDataType[value.searchingFormat as keyof typeof FormDataType],
+            maxLength: value.maxLength ?? undefined,
+            config: value.config ?? undefined,
+            param: value.param ?? undefined,
+            optionTable: value.optionTable ?? undefined,
+            isMultipleSearch: value.isMultipleSearch ?? undefined,
+            initialValue: undefined
+        }));
 
     // handle cancelled or closed item
-    const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>(false);
-    const previousIsWithoutClosed = useRef(isWithoutClosed);
-    useEffect(() => {
-        previousIsWithoutClosed.current = isWithoutClosed;
-    }, [isWithoutClosed]);
-    function getStatusConfig(objects: any) {
-        const statusObj = objects.find((obj: any) => obj.name === 'status');
-        return statusObj ? statusObj.config : null;
-    }
-    const statusScope = getStatusConfig(filterFields);
-
     const [retrievedStatuses, setRetrievedStatuses] = useState<any>();
+    const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>();
+
+    const statusScope = filterFields.find((obj: any) => obj.name === 'status')?.config ?? null;
     //#region handle scopes list (specific to config and param)
-    async function getStatusesList(scope: string): Promise<{ [key: string]: any } | undefined> {
+    async function getStatusesList(scope: string) {
         const query = gql`
-            query ListConfigsForAScope($scope: String!, $code: String, $language: String = "en") {
-                listConfigsForAScope(scope: $scope, code: $code, language: $language) {
-                    id
-                    scope
-                    code
-                    text
+            query configs(
+                $filters: ConfigSearchFilters!
+                $advancedFilters: [ConfigAdvancedSearchFilters!]
+            ) {
+                configs(filters: $filters, advancedFilters: $advancedFilters) {
+                    results {
+                        value
+                        code
+                        translation
+                    }
                 }
             }
         `;
-        //let result: any = {};
+        const variables = {
+            filters: { scope: scope },
+            advancedFilters: [
+                { filter: [{ searchType: 'DIFFERENT', field: { code: 2000 } }] },
+                { filter: [{ searchType: 'DIFFERENT', field: { code: 1005 } }] }
+            ]
+        };
+
         try {
-            const result = await graphqlRequestClient.request(query, { scope: scope });
-            return result;
+            const result = await graphqlRequestClient.request(query, variables);
+            setRetrievedStatuses(result.configs.results);
+            const statusField = filterFields.find((obj: any) => obj.name === 'status');
+            if (
+                statusField &&
+                JSON.stringify(statusField.initialValue) ===
+                    JSON.stringify(
+                        result.configs.results.map((status: any) => parseInt(status.code))
+                    )
+            ) {
+                setIsWithoutClosed(true);
+            }
         } catch (error) {
-            return {};
+            console.log('error in retrieving statuses', error);
         }
     }
-    async function getStatuses() {
-        const promise = getStatusesList(statusScope);
-        const statuses = await promise;
-        if (statuses) {
-            setRetrievedStatuses(statuses);
-        }
-    }
+
     useEffect(() => {
         if (statusScope) {
-            getStatuses();
+            getStatusesList(statusScope);
         }
     }, []);
-    //#end region
+    //#endregion
+
+    function addForcedFilter(addFilter: boolean) {
+        const currentSavedFilters = userSettings?.valueJson?.filter ?? {};
+        const newFilter = { ...currentSavedFilters };
+        const initialValues = { ...newFilter, ...props.searchCriteria };
+
+        if (addFilter && retrievedStatuses) {
+            newFilter.status = retrievedStatuses.map((status: any) => parseInt(status.code));
+            setPagination({
+                total: undefined,
+                current: DEFAULT_PAGE_NUMBER,
+                itemsPerPage: DEFAULT_ITEMS_PER_PAGE
+            });
+        } else {
+            delete newFilter.status;
+            filterFields = filterFields.map((item) => {
+                if (item.name in initialValues) {
+                    return {
+                        ...item,
+                        initialValue: initialValues[item.name]
+                    };
+                } else {
+                    return item;
+                }
+            });
+        }
+        changeFilter(newFilter, 'default', {
+            current: DEFAULT_PAGE_NUMBER,
+            itemsPerPage: DEFAULT_ITEMS_PER_PAGE
+        });
+        showBadge = true;
+        setSwitchReloadData((prev: boolean) => !prev);
+    }
 
     const btnName = isWithoutClosed
         ? t('actions:with-closed-cancel-items')
         : t('actions:without-closed-cancel-items');
-
-    if (retrievedStatuses?.listConfigsForAScope?.length > 0) {
-        const statuses = retrievedStatuses.listConfigsForAScope.map((status: any) =>
-            parseInt(status.code)
-        );
-
-        const filteredStatuses = statuses.filter(
-            (status: any) => status !== 2000 && status !== 1005
-        );
-
-        let currentSavedFilters = cookie.get(
-            `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`
-        )
-            ? JSON.parse(
-                  cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)!
-              )
-            : undefined;
-
-        if (isWithoutClosed) {
-            let statusesToUpdate = filteredStatuses;
-            if (currentSavedFilters && currentSavedFilters.status) {
-                statusesToUpdate = currentSavedFilters.status.filter(
-                    (status: any) => status !== 2000 && status !== 1005
-                );
-            }
-
-            searchCriterias = { ...searchCriterias, status: statusesToUpdate };
-            filterFields = filterFields.map((field: any) => {
-                if (field.name === 'status') {
-                    return { ...field, initialValue: statusesToUpdate };
-                }
-                return field;
-            });
-            currentSavedFilters = { ...currentSavedFilters, status: statusesToUpdate };
-            cookie.set(
-                `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
-                JSON.stringify(currentSavedFilters)
-            );
-            showBadge = true;
-        } else {
-            if (previousIsWithoutClosed.current) {
-                if (currentSavedFilters && currentSavedFilters.status) {
-                    if (currentSavedFilters.status.length !== statuses.length) {
-                        if (
-                            statuses.some(
-                                (status: any) =>
-                                    status === 1005 && !currentSavedFilters.status.includes(1005)
-                            )
-                        ) {
-                            currentSavedFilters.status.push(1005);
-                        }
-                        if (
-                            statuses.some(
-                                (status: any) =>
-                                    status === 2000 && !currentSavedFilters.status.includes(2000)
-                            )
-                        ) {
-                            currentSavedFilters.status.push(2000);
-                        }
-                    } else {
-                        currentSavedFilters.status = undefined;
-                    }
-                    cookie.set(
-                        `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
-                        JSON.stringify(currentSavedFilters)
-                    );
-                }
-            }
-        }
-    }
-
-    //retrieve saved sorters from cookies if any
-    const savedSorters = cookie.get(
-        `${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`
-    )
-        ? JSON.parse(cookie.get(`${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`)!)
-        : undefined;
 
     // extract id, name and link from props.dataModel.fieldsInfo where link is not null
     const linkFields = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].link !== null)
         .map((key) => ({
             link: props.dataModel.fieldsInfo[key].link,
-            name: key.replaceAll('{', '_').replaceAll('}', '')
-        }));
-
-    const sortParameter = Object.keys(props.dataModel.fieldsInfo)
-        .filter((key) => props.dataModel.fieldsInfo[key].defaultSort)
-        .map((key) => ({
-            field: key.includes('{') ? key.replaceAll('{', '_').replaceAll('}', '') : key,
-            ascending: props.dataModel.fieldsInfo[key].defaultSort === 'ascending' ? true : false
+            name: key.replace(/{/g, '_').replace(/}/g, '')
         }));
 
     // #endregion
 
     //check if there is something in props.filterFields and if yes, overwrite it in filterFields
     if (props.filterFields) {
-        props.filterFields.forEach((item: any) => {
-            const index = filterFields.findIndex((x) => x.name === item.name);
-            if (index !== -1) {
-                filterFields[index] = item;
-            }
+        filterFields = filterFields.map((field) => {
+            const matchedField = props.filterFields!.find((item) => item.name === field.name);
+            return matchedField ? { ...field, ...matchedField } : field;
         });
     }
 
@@ -631,16 +747,14 @@ const ListComponent = (props: IListProps) => {
             showError(t('messages:error-enabling-element'));
         }
     }, [enableResult]);
-    // #end region
+    // #endregion
 
     // #region SEARCH OPERATIONS
 
     if (props.searchable) {
-        if (cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)) {
-            const savedFilters = JSON.parse(
-                cookie.get(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`)!
-            );
+        const savedFilters = userSettings?.valueJson?.filter ?? undefined;
 
+        if (savedFilters) {
             searchCriterias = { ...savedFilters, ...props.searchCriteria };
             const initialValues = searchCriterias;
 
@@ -671,31 +785,29 @@ const ListComponent = (props: IListProps) => {
 
     const dispatchDrawer = useDrawerDispatch();
 
-    const openSearchDrawer = useCallback(
-        (filterFields: Array<FilterFieldType>) =>
-            dispatchDrawer({
-                size: 450,
-                type: 'OPEN_DRAWER',
-                title: 'actions:search',
-                comfirmButtonTitle: 'actions:search',
-                comfirmButton: true,
-                cancelButtonTitle: 'actions:reset',
-                cancelButton: true,
-                submit: true,
-                content: (
-                    <ListFilters
-                        form={formSearch}
-                        columns={filterFields}
-                        handleSubmit={handleSubmit}
-                        resetForm={resetForm}
-                        allFieldsInitialValue={allFieldsInitialValue ?? undefined}
-                    />
-                ),
-                onCancel: () => handleReset(),
-                onComfirm: () => handleSubmit()
-            }),
-        [dispatchDrawer]
-    );
+    const openSearchDrawer = useCallback(() => {
+        return dispatchDrawer({
+            size: 450,
+            type: 'OPEN_DRAWER',
+            title: 'actions:search',
+            comfirmButtonTitle: 'actions:search',
+            comfirmButton: true,
+            cancelButtonTitle: 'actions:reset',
+            cancelButton: true,
+            submit: true,
+            content: (
+                <ListFilters
+                    form={formSearch}
+                    columns={filterFields}
+                    handleSubmit={handleSubmit}
+                    resetForm={resetForm}
+                    allFieldsInitialValue={allFieldsInitialValue ?? undefined}
+                />
+            ),
+            onCancel: () => handleReset(),
+            onComfirm: () => handleSubmit()
+        });
+    }, [dispatchDrawer, filterFields]);
 
     const closeDrawer = useCallback(
         () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
@@ -703,7 +815,10 @@ const ListComponent = (props: IListProps) => {
     );
 
     const handleReset = () => {
-        cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
+        changeFilter({}, 'default', {
+            current: DEFAULT_PAGE_NUMBER,
+            itemsPerPage: DEFAULT_ITEMS_PER_PAGE
+        });
         !props.searchCriteria ? setSearch({}) : setSearch({ ...props.searchCriteria });
         setIsWithoutClosed(false);
         allFieldsInitialValue = undefined;
@@ -728,7 +843,6 @@ const ListComponent = (props: IListProps) => {
                     ...props.searchCriteria
                 };
 
-                cookie.remove(`${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`);
                 showBadge = false;
                 const savedFilters: any = {};
                 if (newSearchValues) {
@@ -746,11 +860,17 @@ const ListComponent = (props: IListProps) => {
                         allFieldsInitialValue = savedFilters.allFields;
                     }
 
+                    setPagination({
+                        total: undefined,
+                        current: DEFAULT_PAGE_NUMBER,
+                        itemsPerPage: DEFAULT_ITEMS_PER_PAGE
+                    });
+                    changeFilter(savedFilters, 'default', {
+                        current: DEFAULT_PAGE_NUMBER,
+                        itemsPerPage: DEFAULT_ITEMS_PER_PAGE
+                    });
+
                     if (Object.keys(savedFilters).length > 0) {
-                        cookie.set(
-                            `${props.dataModel.resolverName}SavedFilters${mandatory_Filter}`,
-                            JSON.stringify(savedFilters)
-                        );
                         showBadge = true;
                     }
 
@@ -769,7 +889,7 @@ const ListComponent = (props: IListProps) => {
                 setSearch(savedFilters);
                 closeDrawer();
             })
-            .catch((err) => showError(t('errors:DB-000111')));
+            .catch((err: any) => showError(t('errors:DB-000111')));
     };
 
     // #endregion
@@ -783,19 +903,22 @@ const ListComponent = (props: IListProps) => {
     for (const key in props.dataModel.fieldsInfo) {
         if (props.dataModel.fieldsInfo[key].hasOwnProperty('defaultSort')) {
             defaultModelSort = {
-                field: key,
+                field: key.replace(/{/g, '_').replace(/}/g, ''),
                 ascending: props.dataModel.fieldsInfo[key].defaultSort == 'ascending' ? true : false
             };
         }
     }
 
-    const [sort, setSort] = useState<any>(savedSorters || props.sortDefault || sortParameter);
-
     const [pagination, setPagination] = useState<PaginationType>({
         total: undefined,
-        current: DEFAULT_PAGE_NUMBER,
-        itemsPerPage: DEFAULT_ITEMS_PER_PAGE
+        current: userSettings?.valueJson?.pagination?.current ?? DEFAULT_PAGE_NUMBER,
+        itemsPerPage:
+            userSettings?.valueJson?.pagination?.itemsPerPage ??
+            props.itemperpage ??
+            DEFAULT_ITEMS_PER_PAGE
     });
+
+    // #region USELIST
 
     const {
         isLoading,
@@ -813,23 +936,23 @@ const ListComponent = (props: IListProps) => {
         defaultModelSort
     );
 
+    // #endregion
+
     useEffect(() => {
-        //Time delay is to avoid reload before backend has finished (100ms does not work, 200ms seems to be fine)
-        const delay = 200;
-        const timer = setTimeout(() => {
+        // Time delay before reloading data
+        const delay = 1000;
+        const debouncedReload = debounce(() => {
+            console.log('debouncedReload');
             reloadData();
         }, delay);
 
-        return () => clearTimeout(timer);
-    }, [
-        search,
-        props.refetch,
-        pagination.current,
-        pagination.itemsPerPage,
-        sort,
-        router.locale,
-        isWithoutClosed
-    ]);
+        debouncedReload();
+
+        // Cleanup function to cancel the debounce on unmount or dependency change
+        return () => {
+            debouncedReload.cancel();
+        };
+    }, [search, props.refetch, router.locale, switchReloadData]);
 
     // #endregion
 
@@ -911,13 +1034,15 @@ const ListComponent = (props: IListProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage: any, itemsPerPage: any) => {
+        (currentPage: number, itemsPerPage: number) => {
             // Re fetch data for new current page or items per page
+            changeFilter(null, 'default', { current: currentPage, itemsPerPage: itemsPerPage });
             setPagination({
                 total: rows?.count,
                 current: currentPage,
                 itemsPerPage: itemsPerPage
             });
+            setSwitchReloadData((prev: boolean) => !prev);
         },
         [setPagination, rows]
     );
@@ -991,13 +1116,10 @@ const ListComponent = (props: IListProps) => {
                     total: listData['count']
                 });
             }
+        } else {
+            deleteUserSettings();
         }
-    }, [data, router, sort]);
-
-    //TODO: Usage to be checked
-    // useEffect(() => {
-    //     reloadData(); //children function of interest
-    // }, [props.refresh]);
+    }, [data, router]);
 
     const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
         const newSorter = orderByFormater(sorter);
@@ -1028,15 +1150,17 @@ const ListComponent = (props: IListProps) => {
             tmp_array.length = 0;
         }
 
-        await setSort(tmp_array);
-        if (tmp_array.length > 0) {
-            cookie.set(
-                `${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`,
-                JSON.stringify(tmp_array)
-            );
-        }
-        if (orderByFormater(sorter) === null) {
-            cookie.remove(`${props.dataModel.resolverName}SavedSorters${mandatory_Filter}`);
+        if (
+            _pagination.current === pagination.current &&
+            _pagination.pageSize === pagination.itemsPerPage
+        ) {
+            setSort(tmp_array);
+            if (tmp_array.length > 0) {
+                changeFilter(null, tmp_array);
+            }
+            if (orderByFormater(sorter) === null) {
+                changeFilter(null, null);
+            }
         }
     };
 
@@ -1069,6 +1193,7 @@ const ListComponent = (props: IListProps) => {
             });
         });
     }
+    const mergedColumns = [...props.actionColumns, ...props.extraColumns, ...columns];
 
     // #endregion
     return (
@@ -1098,7 +1223,10 @@ const ListComponent = (props: IListProps) => {
                                     <Space>
                                         {statusScope ? (
                                             <Button
-                                                onClick={() => setIsWithoutClosed(!isWithoutClosed)}
+                                                onClick={() => {
+                                                    addForcedFilter(!isWithoutClosed);
+                                                    setIsWithoutClosed(!isWithoutClosed);
+                                                }}
                                                 style={
                                                     isWithoutClosed
                                                         ? {
@@ -1127,17 +1255,13 @@ const ListComponent = (props: IListProps) => {
                                                     >
                                                         <Button
                                                             icon={<SearchOutlined />}
-                                                            onClick={() =>
-                                                                openSearchDrawer(filterFields || [])
-                                                            }
+                                                            onClick={() => openSearchDrawer()}
                                                         />
                                                     </Badge>
                                                 ) : (
                                                     <Button
                                                         icon={<SearchOutlined />}
-                                                        onClick={() =>
-                                                            openSearchDrawer(filterFields || [])
-                                                        }
+                                                        onClick={() => openSearchDrawer()}
                                                     />
                                                 )}
                                             </>
@@ -1166,10 +1290,8 @@ const ListComponent = (props: IListProps) => {
                                                 <></>
                                             )}
                                             <AppTableV2
-                                                type={props.dataModel.endpoints.list}
-                                                columns={props.actionColumns
-                                                    .concat(props.extraColumns)
-                                                    .concat(columns)}
+                                                dataModel={props.dataModel}
+                                                columns={mergedColumns}
                                                 data={rows!.results}
                                                 pagination={pagination}
                                                 isLoading={isLoading}
@@ -1185,10 +1307,8 @@ const ListComponent = (props: IListProps) => {
                                     ) : (
                                         <>
                                             <AppTableV2
-                                                type={props.dataModel.endpoints.list}
-                                                columns={props.actionColumns
-                                                    .concat(props.extraColumns)
-                                                    .concat(columns)}
+                                                dataModel={props.dataModel}
+                                                columns={mergedColumns}
                                                 data={rows!.results}
                                                 pagination={pagination}
                                                 isLoading={isLoading}

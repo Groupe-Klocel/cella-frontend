@@ -33,7 +33,7 @@ import moment from 'moment';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import 'dayjs/locale/en';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/ModelsV2';
 import { useRouter } from 'next/router';
@@ -278,6 +278,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
 
     // #region add information to columns once available
     useEffect(() => {
+        form.resetFields();
         const tmp_columns = columns.map((e) => {
             if (optionsList) {
                 if (e.optionTable) {
@@ -472,9 +473,9 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                             let startDate = null;
                             let endDate = null;
                             if (item.initialValue && item.initialValue[0])
-                                startDate = dayjs(moment(item.initialValue[0]).toDate());
+                                startDate = dayjs(item.initialValue[0]);
                             if (item.initialValue && item.initialValue[1])
-                                endDate = dayjs(moment(item.initialValue[1]).toDate());
+                                endDate = dayjs(item.initialValue[1]);
 
                             return (
                                 <Form.Item

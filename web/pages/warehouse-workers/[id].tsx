@@ -25,7 +25,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { warehouseWorkersRoutes as itemRoutes } from 'modules/WarehouseWorkers/Static/warehouseWorkersRoutes';
 import { Button, Modal, Space } from 'antd';
 import {
@@ -100,10 +100,8 @@ const WarehouseWorkerPage: PageComponent = () => {
                 _variables: ResetWarehouseWorkerPasswordMutationVariables,
                 _context: any
             ) => {
-                if (!ResetPasswordLoading) {
-                    router.push(`/warehouse-workers`);
-                    showSuccess(t('messages:success-password-reset'));
-                }
+                router.push(`/warehouse-workers`);
+                showSuccess(t('messages:success-password-reset'));
             },
             onError: (err) => {
                 showError(t('messages:error-password-reset'));

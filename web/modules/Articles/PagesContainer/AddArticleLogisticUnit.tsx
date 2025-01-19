@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ContentSpin, HeaderContent } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
 import { Alert, Form, Layout } from 'antd';
 import { useRouter } from 'next/router';

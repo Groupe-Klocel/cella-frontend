@@ -23,7 +23,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { HandlingUnitModelModelV2 as model } from 'models/HandlingUnitModelModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS } from '@helpers';
 import { handlingUnitModelsRoutes } from 'modules/HandlingUnitModels/Static/handlingUnitModelsRoutes';
 

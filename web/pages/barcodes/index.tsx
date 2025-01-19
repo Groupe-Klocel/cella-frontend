@@ -38,7 +38,7 @@ import { ModeEnum } from 'generated/graphql';
 import { BarcodeModelV2 as model } from 'models/BarcodeModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { barcodesRoutes as itemRoutes } from 'modules/Barcodes/Static/barcodesRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import configs from '../../../common/configs.json';
 type PageComponent = FC & { layout: typeof MainLayout };

@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { FC, useEffect, useState } from 'react';
 import { Button, Form, Modal, Space, Input, Select, DatePicker } from 'antd';
 import { StepsPanel, WrapperForm, WrapperStepContent } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 

@@ -30,7 +30,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from 'context/AuthContext';
 import { Menu } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
 import React, { FC } from 'react';
 import { useAppState } from 'context/AppContext';
@@ -59,22 +59,6 @@ const SideMenu: FC = () => {
     const { logout } = useAuth();
     const { permissions } = useAppState();
 
-    const checkPermissionExistance = (tableName: string) => {
-        if (!permissions) {
-            return false;
-        }
-        const permission = permissions.find((p: any) => {
-            return p.table.toUpperCase() == tableName;
-        });
-
-        if (permission) {
-            return true;
-        } else {
-            return false;
-        }
-    };
-
-    const token = cookie.get('token') || '';
     const bi_link = process.env.NEXT_PUBLIC_BI_URL || 'https://bi.cella.cloud';
 
     return (
