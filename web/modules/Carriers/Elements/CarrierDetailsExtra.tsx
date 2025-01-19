@@ -23,7 +23,7 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { CarrierShippingModeModelV2 as model } from 'models/CarrierShippingModeModelV2';
 import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useState } from 'react';
 import configs from '../../../../common/configs.json';
 import { LinkButton } from '@components';

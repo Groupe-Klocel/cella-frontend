@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { BreadcrumbType, isNumeric } from '@helpers';
 import { Breadcrumb } from 'antd';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
 import { FC } from 'react';
 import styled, { css } from 'styled-components';
@@ -45,8 +45,14 @@ const StyledBreadcrumb = styled(Breadcrumb)<{ isDarkTheme: boolean }>`
 `;
 
 const GlobalBreadcrumb: FC<IBreadcrumbProps> = ({ routes }: IBreadcrumbProps) => {
-    const { theme } = useAppState();
+    const { userSettings, tempTheme } = useAppState();
     const { t } = useTranslation();
+
+    const generalUserSettings = userSettings?.find((item: any) => {
+        return 'globalParameters' === item.code;
+    });
+
+    const theme = tempTheme ?? generalUserSettings?.valueJson?.theme;
 
     const breadcrumbItems =
         routes?.map((item) => ({

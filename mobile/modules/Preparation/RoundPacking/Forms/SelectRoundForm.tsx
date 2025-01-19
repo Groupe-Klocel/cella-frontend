@@ -21,7 +21,7 @@ import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@componen
 import { LsIsSecured, extractGivenConfigsParams, showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import {
@@ -98,7 +98,7 @@ export const SelectRoundForm = ({
     const roundsList = useSimpleGetRoundsQuery<Partial<SimpleGetRoundsQuery>, Error>(
         graphqlRequestClient,
         {
-            filters: { status: configsToFilterOn, category: [configs.ROUND_CATEGORY_PREPARATION] },
+            filters: { status: configsToFilterOn, category: [configs.ROUND_CATEGORY_OUTBOUND] },
             orderBy: null,
             page: 1,
             itemsPerPage: 100

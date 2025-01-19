@@ -23,7 +23,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { CustomerOrderLineModelV2 } from 'models/CustomerOrderLineModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
 import { META_DEFAULTS } from '@helpers';
 

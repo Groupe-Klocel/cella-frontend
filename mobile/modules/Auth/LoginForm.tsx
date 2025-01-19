@@ -19,82 +19,167 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Logo, StyledForm, WelcomeText, WrapperLogin } from '@components';
-import { META_DEFAULTS } from '@helpers';
+import { cookie, META_DEFAULTS, showSuccess, showWarning } from '@helpers';
 import { Button, Form, Input } from 'antd';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
-import { FC } from 'react';
+import router from 'next/router';
+import { useCallback, useEffect } from 'react';
 
-export interface ILoginFormProps {
+export interface ILoginFormProps {}
 
-}
+export const LoginForm = () => {
+    const { t } = useTranslation('global');
+    const { login, graphqlRequestClient, isAuthenticated } = useAuth();
+    // TEXTS TRANSLATION
 
-export const LoginForm: FC<ILoginFormProps> = ({ }: ILoginFormProps) => {
-	const { t } = useTranslation('common')
-	const { login } = useAuth()
-	// TEXTS TRANSLATION
+    const welcome = t('welcome');
+    const username = t('username');
+    const password = t('password');
+    const loginButton = t('login');
+    const errorMessageUsername = t('error-message-empty-input');
+    const errorMessagePassword = t('error-message-empty-input');
+    const { user } = useAppState();
 
-	const welcome = t('welcome')
-	const username = t('username')
-	const password = t('password')
-	const workspace = t('workspace')
-	const forgotPassword = t('forgot-password')
-	const loginButton = t('actions:login')
-	const errorMessageUsername = t('messages:error-message-empty-input')
-	const errorMessagePassword = t('messages:error-message-empty-input')
+    const dispatchUser = useAppDispatch();
+    const setUserInfo = useCallback(
+        (newUser: any) =>
+            dispatchUser({
+                type: 'SET_USER_INFO',
+                user: newUser
+            }),
+        [dispatchUser, user]
+    );
 
-	// END TEXTS TRANSLATION
+    // END TEXTS TRANSLATION
 
-	const [form] = Form.useForm();
+    const [form] = Form.useForm();
+    useEffect(() => {
+        if (isAuthenticated) {
+            const token = cookie.get('token');
+            if (token) {
+                try {
+                    const query = gql`
+                        query GetMyInfo {
+                            me {
+                                __typename
+                                ... on WarehouseWorker {
+                                    id
+                                    password
+                                    username
+                                    warehouseId
+                                    resetPassword
+                                    userRoles {
+                                        roleId
+                                        role {
+                                            id
+                                            name
+                                            permissions {
+                                                id
+                                                table
+                                                mode
+                                                roleId
+                                            }
+                                        }
+                                    }
+                                }
 
-	const onFinish = (values: any) => {
-		login({ username: values.username, password: values.password })
-	};
+                                ... on IntegratorUser {
+                                    id
+                                    password
+                                    email
+                                    integratorId
+                                    integrator {
+                                        id
+                                        name
+                                        awsAccessKeyId
+                                        awsSecretAccessKey
+                                    }
+                                    userRoles {
+                                        roleId
+                                        role {
+                                            id
+                                            name
+                                            permissions {
+                                                id
+                                                table
+                                                mode
+                                                roleId
+                                            }
+                                        }
+                                    }
+                                    isAdmin
+                                }
+                            }
+                        }
+                    `;
 
+                    graphqlRequestClient.request(query).then((data: any) => {
+                        if (data.me) {
+                            const user = data.me;
+                            delete user.__typename;
+                            delete user.password;
+                            setUserInfo(user);
+                            router.push('/');
+                            showSuccess(t('login-success'));
+                        }
+                    });
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+        }
+    }, [isAuthenticated]);
 
-	return (
-		<WrapperLogin>
-			<Logo title={META_DEFAULTS.title} />
-			<WelcomeText>
-				{welcome}
-			</WelcomeText>
-			<StyledForm
-				form={form}
-				name="login"
-				onFinish={onFinish}
-				autoComplete="off"
-				scrollToFirstError
-			>
-				<Form.Item
-					name="username"
-					rules={[{ required: true, message: errorMessageUsername }]}
-				>
-					<Input
-						prefix={<UserOutlined />}
-						style={{ height: '50px', fontSize: '16px' }}
-						placeholder={username} />
-				</Form.Item>
-				<Form.Item
-					name="password"
-					rules={[{ required: true, message: errorMessagePassword }]}
-				>
-					<Input
-						prefix={<LockOutlined />}
-						type="password"
-						placeholder={password}
-						style={{ height: '50px', fontSize: '16px' }} />
-				</Form.Item>
-				<Form.Item>
-					<Button
-						type="primary"
-						htmlType="submit"
-						block
-						style={{ height: '50px', fontSize: '16px' }}
-					>
-						{loginButton}
-					</Button>
-				</Form.Item>
-			</StyledForm>
-		</WrapperLogin>
-	);
-}
+    const onFinish = (values: any) => {
+        login({ username: values.username, password: values.password });
+    };
+
+    return (
+        <WrapperLogin>
+            <Logo title={META_DEFAULTS.title} />
+            <WelcomeText>{welcome}</WelcomeText>
+            <StyledForm
+                form={form}
+                name="login"
+                onFinish={onFinish}
+                autoComplete="off"
+                scrollToFirstError
+            >
+                <Form.Item
+                    name="username"
+                    rules={[{ required: true, message: errorMessageUsername }]}
+                >
+                    <Input
+                        prefix={<UserOutlined />}
+                        style={{ height: '50px', fontSize: '16px' }}
+                        placeholder={username}
+                    />
+                </Form.Item>
+                <Form.Item
+                    name="password"
+                    rules={[{ required: true, message: errorMessagePassword }]}
+                >
+                    <Input
+                        prefix={<LockOutlined />}
+                        type="password"
+                        placeholder={password}
+                        style={{ height: '50px', fontSize: '16px' }}
+                    />
+                </Form.Item>
+                <Form.Item>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        block
+                        style={{ height: '50px', fontSize: '16px' }}
+                    >
+                        {loginButton}
+                    </Button>
+                </Form.Item>
+            </StyledForm>
+        </WrapperLogin>
+    );
+};

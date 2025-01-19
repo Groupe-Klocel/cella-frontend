@@ -25,18 +25,26 @@ import {
 } from '@ant-design/icons';
 import { TableFilter, WrapperStickyActions, PageTableContentWrapper } from '@components';
 import {
+    showWarning,
     getKeys,
     setCustomColumnsProps,
     checkKeyPresenceInArray,
-    formatDigitsForData
+    formatDigitsForData,
+    formatUTCLocaleDateTime,
+    isStringDateTime,
+    formatUTCLocaleDate,
+    isStringDate
 } from '@helpers';
 import { Space, Button, Table, Typography } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { isString } from 'lodash';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useCallback, useEffect, useState, useRef, Key } from 'react';
 import styled from 'styled-components';
+import { useAppDispatch, useAppState } from 'context/AppContext';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 const { Column } = Table;
 const { Link } = Typography;
@@ -60,7 +68,7 @@ const StyledTable = styled(Table)`
 
 export interface IAppTableV2Props {
     // Refactory to strong type
-    type: string;
+    dataModel: any;
     data: Array<any> | undefined;
     isLoading?: boolean;
     columns: any[]; //need to find what is wrong with this MyColumnType[],
@@ -91,7 +99,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     isLoading,
     pagination,
     setPagination,
-    type,
+    dataModel,
     hiddenColumns,
     rowSelection,
     linkFields
@@ -101,27 +109,20 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     // get filter from cookies if exist
     const filterDrawerRef = useRef() as any | undefined;
     const allColumnKeys = getKeys(columns);
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const { graphqlRequestClient } = useAuth();
 
-    let initialState;
-
-    if (data) {
-        formatDigitsForData(data);
-    }
-    if (!hiddenColumns) {
-        hiddenColumns = [];
-    }
-
-    if (typeof window !== 'undefined') {
-        initialState = localStorage.getItem(`${type}-filter-table`)
-            ? JSON.parse(localStorage.getItem(`${type}-filter-table`)!)
-            : null;
-    }
+    const userSettings = state?.userSettings?.find((item: any) => {
+        return `${dataModel.resolverName}${router.pathname}` === item.code;
+    });
+    const initialState = userSettings?.valueJson?.visibleCollumns;
 
     if (initialState) {
         const storedArray = initialState.filteredColumns;
         const inputArray = checkKeyPresenceInArray('render', columns);
         const titleCheck = checkKeyPresenceInArray('title', columns);
-        const updatedStoredArr = storedArray.map((a: any) => {
+        storedArray.map((a: any) => {
             const exists = inputArray.find((b) => a.key == b.key);
             const titles = titleCheck.find((b) => a.key == b.key);
             if (exists) {
@@ -134,24 +135,118 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         });
     }
 
-    const [onSave, setOnSave] = useState<boolean>(false);
-
     const [visibleColumnKeys, setVisibleColumnKeys] = useState<Key[]>(
-        initialState !== null
+        initialState
             ? initialState.visibleColumnKeys
             : allColumnKeys.filter((x) => {
                   return !hiddenColumns.includes(x);
               })
     );
-    const [fixedColumns, setFixedColumns] = useState<Key[]>(
-        initialState !== null ? initialState.fixedColumns : []
-    );
+    const [fixedColumns, setFixedColumns] = useState<Key[]>(initialState?.fixedColumns ?? []);
     const [filteredColumns, setFilteredColumns] = useState<any[]>(
-        initialState !== null ? initialState.filteredColumns : setCustomColumnsProps(columns)
+        initialState?.filteredColumns ?? setCustomColumnsProps(columns)
     );
-    const [tableColumns, setTableColumns] = useState<any[]>(
-        initialState !== null ? initialState.tableColumns : setCustomColumnsProps(columns)
-    );
+
+    const [tableColumns, setTableColumns] = useState<any[]>(setCustomColumnsProps(columns));
+
+    if (data) {
+        formatDigitsForData(data);
+    }
+
+    const [onSave, setOnSave] = useState<boolean>(false);
+
+    const updateUserSettings = useCallback(async () => {
+        const newsSettings = {
+            ...userSettings,
+            valueJson: {
+                ...userSettings?.valueJson,
+                visibleCollumns: {
+                    filteredColumns: filteredColumns,
+                    tableColumns: tableColumns,
+                    visibleColumnKeys: visibleColumnKeys,
+                    fixedColumns: fixedColumns
+                }
+            }
+        };
+        const updateQuery = gql`
+            mutation (
+                $warehouseWorkerSettingsId: String!
+                $input: UpdateWarehouseWorkerSettingInput!
+            ) {
+                updateWarehouseWorkerSetting(id: $warehouseWorkerSettingsId, input: $input) {
+                    id
+                    code
+                    valueJson
+                }
+            }
+        `;
+        const updateVariables = {
+            warehouseWorkerSettingsId: userSettings.id,
+            input: { valueJson: newsSettings.valueJson }
+        };
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(updateQuery, updateVariables);
+            dispatch({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: state.userSettings.map((item: any) => {
+                    return item.id === queryInfo?.updateWarehouseWorkerSetting?.id
+                        ? queryInfo.updateWarehouseWorkerSetting
+                        : item;
+                })
+            });
+        } catch (error) {
+            console.log('queryInfo update appTableV2 error', error);
+            showWarning(t('messages:config-save-error'));
+        }
+    }, [visibleColumnKeys, fixedColumns, filteredColumns, tableColumns]);
+
+    const createUsersSettings = useCallback(async () => {
+        const newsSettings = {
+            valueJson: {
+                visibleCollumns: {
+                    filteredColumns: filteredColumns,
+                    tableColumns: tableColumns,
+                    visibleColumnKeys: visibleColumnKeys,
+                    fixedColumns: fixedColumns
+                }
+            },
+            code: `${dataModel.resolverName}${router.pathname}`,
+            warehouseWorkerId: state.user.id
+        };
+        const createQuery = gql`
+            mutation ($input: CreateWarehouseWorkerSettingInput!) {
+                createWarehouseWorkerSetting(input: $input) {
+                    id
+                    code
+                    valueJson
+                }
+            }
+        `;
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(createQuery, {
+                input: newsSettings
+            });
+            dispatch({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: [...state.userSettings, queryInfo.createWarehouseWorkerSetting]
+            });
+        } catch (error) {
+            console.log('queryInfo create appTableV2 error', error);
+            showWarning(t('messages:config-save-error'));
+        }
+    }, [visibleColumnKeys, fixedColumns, filteredColumns, tableColumns]);
+
+    useEffect(() => {
+        if (onSave) {
+            if (userSettings) {
+                updateUserSettings();
+            } else {
+                createUsersSettings();
+            }
+        }
+        setOnSave(false);
+        return () => {};
+    }, [onSave]);
 
     // #region links generation
     const renderLink = (text: string, record: any, dataIndex: string) => {
@@ -189,33 +284,16 @@ const AppTableV2: FC<IAppTableV2Props> = ({
             <CheckCircleOutlined style={{ color: 'green' }} />
         ) : text === false ? (
             <CloseSquareOutlined style={{ color: 'red' }} />
+        ) : isString(text) && isStringDateTime(text) ? (
+            formatUTCLocaleDateTime(text, router.locale)
+        ) : isString(text) && isStringDate(text) ? (
+            formatUTCLocaleDate(text, router.locale)
         ) : (
             text
         );
     const newTableColumns = columnWithLinks.map((e: any) =>
         e.render ? e : (e = { ...e, render: render })
     );
-
-    // Make each row checkable
-
-    // const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
-
-    // const rowSelection = {
-    //     selectedRowKeys,
-    //     onChange: (selectedRowKeys: Key[], record: any) => {
-    //         setSelectedRowKeys(selectedRowKeys);
-    //     }
-    // };
-
-    // give a deleteMutation to app table to know what data type should be deleted
-    // const deleteRecords = () => {
-    //     if (Array.isArray(selectedRowKeys) && selectedRowKeys.length) {
-    //         // trigger delete mutation
-    //         alert(`delete articles ${JSON.stringify(selectedRowKeys)}`);
-    //     } else {
-    //         showError(t('messages:action-impossible', { name: t('actions:delete') }));
-    //     }
-    // };
 
     // make wrapper function to give child
 
@@ -312,20 +390,6 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         return () => {};
     }, [visibleColumnKeys, filteredColumns]);
 
-    useEffect(() => {
-        if (onSave) {
-            const news = JSON.stringify({
-                filteredColumns: filteredColumns,
-                tableColumns: tableColumns,
-                visibleColumnKeys: visibleColumnKeys,
-                fixedColumns: fixedColumns
-            });
-            localStorage.setItem(`${type}-filter-table`, news);
-        }
-        setOnSave(false);
-        return () => {};
-    }, [onSave]);
-
     return (
         <PageTableContentWrapper>
             <WrapperStickyActions>
@@ -374,19 +438,21 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                 }
                 rowSelection={rowSelection}
             >
-                {newTableColumns.map((c) => (
-                    <Column
-                        title={typeof c.title === 'string' ? t(c.title) : c.title}
-                        dataIndex={c.dataIndex}
-                        key={c.key}
-                        fixed={c.fixed}
-                        width={c.width}
-                        sorter={c.sorter}
-                        showSorterTooltip={c.showSorterTooltip}
-                        render={c.render}
-                        defaultSortOrder={c.defaultSortOrder}
-                    />
-                ))}
+                {newTableColumns.map((c) => {
+                    return (
+                        <Column
+                            title={typeof c.title === 'string' ? t(c.title) : c.title}
+                            dataIndex={c.dataIndex}
+                            key={c.key}
+                            fixed={c.fixed}
+                            width={c.width}
+                            sorter={c.sorter}
+                            showSorterTooltip={c.showSorterTooltip}
+                            render={c.render}
+                            defaultSortOrder={c.defaultSortOrder}
+                        />
+                    );
+                })}
             </StyledTable>
         </PageTableContentWrapper>
     );

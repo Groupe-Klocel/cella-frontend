@@ -25,7 +25,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions, pathParams } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { stockOwnerRoutes as itemRoutes } from 'modules/StockOwners/Static/stockOwnersRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum, Table } from 'generated/graphql';
@@ -42,6 +42,7 @@ const StockOwnerPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [reopenInfo, setReopenInfo] = useState<any | undefined>();
 
     // #region to customize information
     const breadCrumb = [
@@ -58,8 +59,8 @@ const StockOwnerPage: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
     const confirmAction = (
-        id: string | undefined,
-        setId: any,
+        info: any | undefined,
+        setInfo: any,
         action: 'delete' | 'disable' | 'enable'
     ) => {
         return () => {
@@ -67,12 +68,12 @@ const StockOwnerPage: PageComponent = () => {
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -84,43 +85,58 @@ const StockOwnerPage: PageComponent = () => {
         title: pageTitle,
         routes: breadCrumb,
         onBackRoute: rootPath,
-        actionsComponent:
-            data?.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
-                <Space>
-                    {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
-                        <LinkButton
-                            title={t('actions:edit')}
-                            path={`${rootPath}/edit/${id}`}
-                            type="primary"
-                        />
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 &&
-                    modes.includes(ModeEnum.Delete) &&
-                    model.isSoftDeletable ? (
-                        <Button
-                            onClick={() => confirmAction(id as string, setIdToDisable, 'disable')()}
-                            type="primary"
-                        >
-                            {t('actions:disable')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button
-                            onClick={() => confirmAction(id as string, setIdToDelete, 'delete')()}
-                        >
-                            {t('actions:delete')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                </Space>
-            ) : (
-                <></>
-            )
+        actionsComponent: (
+            <Space>
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                model.isEditable &&
+                data?.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
+                    <LinkButton
+                        title={t('actions:edit')}
+                        path={`${rootPath}/edit/${id}`}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isSoftDeletable &&
+                data?.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
+                    <Button
+                        onClick={() => confirmAction(id as string, setIdToDisable, 'disable')()}
+                        type="primary"
+                    >
+                        {t('actions:disable')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
+                    <Button onClick={() => confirmAction(id as string, setIdToDelete, 'delete')()}>
+                        {t('actions:delete')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {data?.status == configs.STOCK_OWNER_STATUS_CLOSED ? (
+                    <Button
+                        onClick={() =>
+                            confirmAction(
+                                { id, status: configs.STOCK_OWNER_STATUS_IN_PROGRESS },
+                                setReopenInfo,
+                                'enable'
+                            )()
+                        }
+                        type="primary"
+                    >
+                        {t('actions:enable')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+            </Space>
+        )
     };
     // #endregion
 
@@ -134,6 +150,7 @@ const StockOwnerPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerReopen={{ reopenInfo, setReopenInfo }}
             />
         </>
     );

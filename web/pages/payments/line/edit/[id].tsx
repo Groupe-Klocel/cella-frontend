@@ -23,7 +23,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { PaymentLineModelV2 } from 'models/PaymentLineModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { paymentsRoutes as itemRoutes } from 'modules/Payments/Static/paymentsRoutes';
 import { META_DEFAULTS } from '@helpers';
 

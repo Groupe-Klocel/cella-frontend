@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, useGetParameterScopesQuery } from 'generated/graphql';
 import { SingleParameterModelV2 as model } from 'models/SingleParameterModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { paymentMethodsRoutes as itemRoutes } from 'modules/PaymentMethods/Static/paymentMethodsRoutes';
 import { useAuth } from 'context/AuthContext';
@@ -43,7 +43,7 @@ const PaymentMethodsPage: PageComponent = () => {
     const { graphqlRequestClient } = useAuth();
 
     const headerData: HeaderData = {
-        title: t('common:payment-method'),
+        title: t('common:payment-methods'),
         routes: itemRoutes,
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (

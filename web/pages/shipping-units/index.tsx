@@ -32,7 +32,7 @@ import { ModeEnum } from 'generated/graphql';
 import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { shippingUnitsRoutes as itemRoutes } from 'modules/ShippingUnits/Static/shippingUnitsRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';

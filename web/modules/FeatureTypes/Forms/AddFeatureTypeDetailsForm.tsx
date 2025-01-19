@@ -34,7 +34,7 @@ import {
     useSimpleGetAllFeatureCodesQuery
 } from 'generated/graphql';
 import { FormOptionType } from 'models/ModelsV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
@@ -45,7 +45,11 @@ export const AddFeatureTypeDetailsForm = () => {
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const { parameterId } = router.query;
-    const { globalLocale } = useAppState();
+    const { userSettings } = useAppState();
+    const generalUserSettings = userSettings?.find((item: any) => {
+        return 'globalParameters' === item.code;
+    });
+    const globalLocale = generalUserSettings?.valueJson?.lang;
     const searchedLanguage = globalLocale == 'en-us' ? 'en' : globalLocale;
     const [featureCodes, setFeatureCodes] = useState<any>();
     const [featureTypeObject, setFeatureTypeObject] = useState<any>();

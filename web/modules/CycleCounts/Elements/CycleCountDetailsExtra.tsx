@@ -26,7 +26,7 @@ import { ModeEnum } from 'generated/graphql';
 import { CycleCountLineModelV2 } from 'models/CycleCountLineModelV2';
 import { CycleCountMovementModelV2 } from 'models/CycleCountMovementModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { CycleCountErrorModelV2 } from 'models/CycleCountErrorModelV2';
 

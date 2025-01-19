@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured } from '@helpers';
 import { Form, Input } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../common/configs.json';
 import CameraScanner from './CameraScanner';
@@ -77,7 +77,6 @@ export const ScanForm = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
-    const [buttonsState, setButtonsState] = useState<any>({ ...buttons });
 
     // TYPED SAFE ALL
     //Scan-1a: retrieve value from input and set values for display
@@ -133,10 +132,6 @@ export const ScanForm = ({
         setCamData(undefined);
     };
 
-    useEffect(() => {
-        setButtonsState(buttons);
-    }, [buttons]);
-
     const onChange = (e: any) => {
         if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
         if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
@@ -175,7 +170,7 @@ export const ScanForm = ({
                 )}
                 <RadioButtons
                     input={{
-                        ...buttonsState,
+                        ...buttons,
                         showSimilarLocations: showSimilarLocations?.showSimilarLocations,
                         showEmptyLocations: showEmptyLocations?.showEmptyLocations,
                         triggerAlternativeSubmit:

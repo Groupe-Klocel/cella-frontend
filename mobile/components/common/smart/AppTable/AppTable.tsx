@@ -28,7 +28,7 @@ import {
 } from '@helpers';
 import { Space, Button, Table } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useCallback, useEffect, useState, useRef, Key } from 'react';
 
 export interface IAppTableProps {

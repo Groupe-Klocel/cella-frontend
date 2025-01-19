@@ -32,7 +32,7 @@ import {
     useParams
 } from '@helpers';
 import { ModeEnum, Table } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { ContentSpin } from '@components';
 import { useRouter } from 'next/router';
@@ -108,46 +108,49 @@ const AddConfigParamComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps
             props.comeFromFiltered && key === 'scope'
                 ? null
                 : key !== 'translation'
-                ? addSteps.push({
-                      displayName: t(`d:${props.dataModel.fieldsInfo[key].displayName ?? key}`),
-                      name: key,
-                      type: FormDataType[
-                          props.dataModel.fieldsInfo[key].addEditFormat as keyof typeof FormDataType
-                      ],
-                      maxLength: props.dataModel.fieldsInfo[key].maxLength ?? undefined,
-                      config: props.dataModel.fieldsInfo[key].config ?? undefined,
-                      param: props.dataModel.fieldsInfo[key].param ?? undefined,
-                      rules: rule.length > 0 ? rule : undefined,
-                      step: props.dataModel.fieldsInfo[key].addEditStep ?? undefined,
-                      numberPrecision: props.dataModel.fieldsInfo[key].numberPrecision ?? undefined,
-                      initialValue:
-                          props.dataModel.fieldsInfo[key].addEditInitialValue ?? undefined,
-                      optionTable: props.dataModel.fieldsInfo[key].optionTable ?? undefined
-                  })
-                : languages.forEach((e: any) =>
-                      addSteps.push({
-                          displayName: t(`d:${e}`),
-                          name: e,
-                          type: FormDataType[
-                              props.dataModel.fieldsInfo['translation']
-                                  .addEditFormat as keyof typeof FormDataType
-                          ],
-                          maxLength:
-                              props.dataModel.fieldsInfo['translation'].maxLength ?? undefined,
-                          config: props.dataModel.fieldsInfo['translation'].config ?? undefined,
-                          param: props.dataModel.fieldsInfo['translation'].param ?? undefined,
-                          rules: rule.length > 0 ? rule : undefined,
-                          step: props.dataModel.fieldsInfo['translation'].addEditStep ?? undefined,
-                          numberPrecision:
-                              props.dataModel.fieldsInfo['translation'].numberPrecision ??
-                              undefined,
-                          initialValue:
-                              props.dataModel.fieldsInfo['translation'].addEditInitialValue ??
-                              undefined,
-                          optionTable:
-                              props.dataModel.fieldsInfo['translation'].optionTable ?? undefined
-                      })
-                  ))
+                  ? addSteps.push({
+                        displayName: t(`d:${props.dataModel.fieldsInfo[key].displayName ?? key}`),
+                        name: key,
+                        type: FormDataType[
+                            props.dataModel.fieldsInfo[key]
+                                .addEditFormat as keyof typeof FormDataType
+                        ],
+                        maxLength: props.dataModel.fieldsInfo[key].maxLength ?? undefined,
+                        config: props.dataModel.fieldsInfo[key].config ?? undefined,
+                        param: props.dataModel.fieldsInfo[key].param ?? undefined,
+                        rules: rule.length > 0 ? rule : undefined,
+                        step: props.dataModel.fieldsInfo[key].addEditStep ?? undefined,
+                        numberPrecision:
+                            props.dataModel.fieldsInfo[key].numberPrecision ?? undefined,
+                        initialValue:
+                            props.dataModel.fieldsInfo[key].addEditInitialValue ?? undefined,
+                        optionTable: props.dataModel.fieldsInfo[key].optionTable ?? undefined
+                    })
+                  : languages.forEach((e: any) =>
+                        addSteps.push({
+                            displayName: t(`d:${e}`),
+                            name: e,
+                            type: FormDataType[
+                                props.dataModel.fieldsInfo['translation']
+                                    .addEditFormat as keyof typeof FormDataType
+                            ],
+                            maxLength:
+                                props.dataModel.fieldsInfo['translation'].maxLength ?? undefined,
+                            config: props.dataModel.fieldsInfo['translation'].config ?? undefined,
+                            param: props.dataModel.fieldsInfo['translation'].param ?? undefined,
+                            rules: rule.length > 0 ? rule : undefined,
+                            step:
+                                props.dataModel.fieldsInfo['translation'].addEditStep ?? undefined,
+                            numberPrecision:
+                                props.dataModel.fieldsInfo['translation'].numberPrecision ??
+                                undefined,
+                            initialValue:
+                                props.dataModel.fieldsInfo['translation'].addEditInitialValue ??
+                                undefined,
+                            optionTable:
+                                props.dataModel.fieldsInfo['translation'].optionTable ?? undefined
+                        })
+                    ))
         ) : (
             <></>
         );

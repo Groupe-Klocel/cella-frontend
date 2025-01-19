@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Layout } from 'antd';
 import { HeaderContent } from '@components';
 import { addCompanyRoutes } from 'modules/Companies/Static/companiesRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { AddCompanyForm } from 'modules/Companies/Elements/AddCompanyForm';
 import styled from 'styled-components';
 

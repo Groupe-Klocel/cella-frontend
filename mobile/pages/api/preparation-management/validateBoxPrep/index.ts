@@ -130,7 +130,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
         `;
 
-        const updateBoxLineResponse = await graphqlRequestClient.request(
+        const updateBoxLineResponse: GraphQLResponseType = await graphqlRequestClient.request(
             updateBoxLineMutation,
             boxLineUpdateInput,
             requestHeader

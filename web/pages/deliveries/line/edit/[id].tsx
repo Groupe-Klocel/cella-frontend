@@ -23,7 +23,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { DeliveryLineModelV2 } from 'models/DeliveryLineModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { META_DEFAULTS } from '@helpers';
 

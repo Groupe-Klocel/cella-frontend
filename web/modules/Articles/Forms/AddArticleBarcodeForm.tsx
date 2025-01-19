@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Col, Input, Row, Form, Select, Checkbox } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, useArticleLus, getRulesWithNoSpacesValidator } from '@helpers';
@@ -94,11 +94,7 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
                     if (!res.ok) {
                         const errorResponse = await res.json();
                         if (errorResponse.error.code) {
-                            showError(
-                                t(
-                                    `errors:${errorResponse.error.code}`
-                                )
-                            );
+                            showError(t(`errors:${errorResponse.error.code}`));
                         } else {
                             showError(t('messages:error-creating-data'));
                         }

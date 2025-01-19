@@ -24,7 +24,7 @@ import { FC, useState } from 'react';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { LocationModelV2 as model } from 'models/LocationModelV2';
 import MainLayout from 'components/layouts/MainLayout';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { blocksRoutes as itemRoutes } from '../../../modules/Blocks/Static/blocksRoutes';
 import { Button, Modal, Space } from 'antd';

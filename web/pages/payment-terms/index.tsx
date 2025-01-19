@@ -26,14 +26,14 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, useGetParameterScopesQuery } from 'generated/graphql';
 import { SingleParameterModelV2 as model } from 'models/SingleParameterModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { paymentTermsRoutes as itemRoutes } from 'modules/PaymentTerms/Static/paymentTermsRoutes';
 import { useAuth } from 'context/AuthContext';
 import { FormDataType } from 'models/ModelsV2';
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const CurrenciesPage: PageComponent = () => {
+const PaymentTermsPage: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -156,8 +156,8 @@ const CurrenciesPage: PageComponent = () => {
     );
 };
 
-CurrenciesPage.layout = MainLayout;
+PaymentTermsPage.layout = MainLayout;
 
-export default CurrenciesPage;
+export default PaymentTermsPage;
 
 // {record.system == false ? (

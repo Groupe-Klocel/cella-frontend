@@ -34,6 +34,8 @@ query GetHandlingUnits(
             category
             categoryText
             code
+            lastCycleCountDate
+            modified
             parentHandlingUnitId
             parentHandlingUnit {
                 id

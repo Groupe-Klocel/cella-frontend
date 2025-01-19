@@ -26,7 +26,7 @@ import {
     CreateParameterMutationVariables,
     useCreateParameterMutation
 } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
@@ -67,8 +67,17 @@ export const AddActionCodeForm = () => {
             .then(() => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
-                const translation = { en: formData.en, fr: formData.fr };
-                formData['translation'] = translation;
+                let translation: any = { en: formData.en, fr: formData.fr };
+
+                if (Object.keys(translation).length === 0) {
+                    translation = null;
+                }
+                const emptyTranslation = Object.fromEntries(
+                    Object.entries(translation).filter(([_, value]) => value !== undefined)
+                );
+
+                formData['translation'] =
+                    Object.keys(emptyTranslation).length === 0 ? null : translation;
                 formData['scope'] = 'action_code';
                 formData.code = String(formData.code);
                 delete formData['en'];
@@ -76,7 +85,7 @@ export const AddActionCodeForm = () => {
                 createActionCode({ input: formData });
             })
             .catch((err) => {
-                showError(t('error-creating-data'));
+                showError(t('messages:error-creating-data'));
             });
     };
 
@@ -96,7 +105,10 @@ export const AddActionCodeForm = () => {
                             name="code"
                             initialValue={40001}
                             rules={[
-                                { required: true, message: `${t('error-message-empty-input')}` }
+                                {
+                                    required: true,
+                                    message: `${t('messages:error-message-empty-input')}`
+                                }
                             ]}
                         >
                             <InputNumber min={40000} max={49999} />
@@ -107,7 +119,10 @@ export const AddActionCodeForm = () => {
                             label={t('d:value')}
                             name="value"
                             rules={[
-                                { required: true, message: `${t('error-message-empty-input')}` }
+                                {
+                                    required: true,
+                                    message: `${t('messages:error-message-empty-input')}`
+                                }
                             ]}
                         >
                             <Input />
@@ -116,10 +131,22 @@ export const AddActionCodeForm = () => {
                 </Row>
 
                 <Title level={5}>{t('common:translation')}</Title>
-                <Form.Item label={t('EN')} name="en">
+                <Form.Item
+                    label={t('EN')}
+                    name="en"
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
                     <Input />
                 </Form.Item>
-                <Form.Item label={t('FR')} name="fr">
+                <Form.Item
+                    label={t('FR')}
+                    name="fr"
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
                     <Input />
                 </Form.Item>
                 <Row>

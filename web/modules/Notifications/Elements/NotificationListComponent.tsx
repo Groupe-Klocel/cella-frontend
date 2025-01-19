@@ -22,7 +22,7 @@ import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components'
 import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { EyeTwoTone } from '@ant-design/icons';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
@@ -492,7 +492,7 @@ const NotificationListComponent = (props: IListProps) => {
 
     // make wrapper function to give child
     const onChangePagination = useCallback(
-        (currentPage: any, itemsPerPage: any) => {
+        (currentPage: number, itemsPerPage: number) => {
             // Re fetch data for new current page or items per page
             setPagination({
                 total: rows?.count,
@@ -737,7 +737,7 @@ const NotificationListComponent = (props: IListProps) => {
                                                     <></>
                                                 )}
                                                 <AppTableV2
-                                                    type={props.dataModel.endpoints.list}
+                                                    dataModel={props.dataModel}
                                                     columns={props.actionColumns
                                                         .concat(props.extraColumns)
                                                         .concat(columns)}
@@ -755,7 +755,7 @@ const NotificationListComponent = (props: IListProps) => {
                                         ) : (
                                             <>
                                                 <AppTableV2
-                                                    type={props.dataModel.endpoints.list}
+                                                    dataModel={props.dataModel}
                                                     columns={props.actionColumns
                                                         .concat(props.extraColumns)
                                                         .concat(columns)}

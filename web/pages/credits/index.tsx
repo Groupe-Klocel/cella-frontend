@@ -31,7 +31,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { CreditModelV2 as model } from 'models/CreditModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { creditsRoutes as itemRoutes } from 'modules/Credits/Static/creditsRoutes';
 import configs from '../../../common/configs.json';

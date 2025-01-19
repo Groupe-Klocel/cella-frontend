@@ -28,7 +28,7 @@ import {
     isFloat
 } from '@helpers';
 import { CheckCircleOutlined, CloseSquareOutlined } from '@ant-design/icons';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { isString } from 'lodash';
 import { useRouter } from 'next/router';
 

@@ -24,14 +24,15 @@ import { useAuth } from 'context/AuthContext';
 import { GetMyInfoQuery, useGetMyInfoQuery } from 'generated/graphql';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { GraphQLClient } from 'graphql-request';
+import { gql } from 'graphql-request';
 
 const ProtectRoute: any | null = ({ children }: OnlyChildrenType) => {
     const router = useRouter();
     const { t } = useTranslation();
     const { isAuthenticated, loading, logout } = useAuth();
-    const { user, permissions } = useAppState();
+    const { user, userSettings: initialUserSettings } = useAppState();
     const dispatchUser = useAppDispatch();
     const setUserInfo = useCallback(
         (newUser: any) =>

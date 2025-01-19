@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, DatePicker, Form, InputNumber, Modal, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess } from '@helpers';
@@ -183,29 +183,6 @@ const PaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalProps) =>
         } else {
             form.setFieldsValue({ paymentAccount: key });
         }
-    };
-
-    //createPayment on click
-    const createPayment = async (
-        paymentInputs: any
-    ): Promise<{ [key: string]: any } | undefined> => {
-        const createPaymentMutation = gql`
-            mutation createPayment($input: CreatePaymentInput!) {
-                createPayment(input: $input) {
-                    id
-                }
-            }
-        `;
-        const createPaymentVariables = {
-            input: {
-                paymentInputs
-            }
-        };
-        const result = await graphqlRequestClient.request(
-            createPaymentMutation,
-            createPaymentVariables
-        );
-        return result;
     };
 
     const handleCancel = () => {

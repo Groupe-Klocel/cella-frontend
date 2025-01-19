@@ -23,7 +23,7 @@ import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ThirdPartyModelV2 } from 'models/ThirdPartyModelV2';
 import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addThirdPartyRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
 import { META_DEFAULTS } from '@helpers';
 import configs from '../../../../common/configs.json';
@@ -55,14 +55,7 @@ const AddThirdPartyPage: PageComponent = () => {
                         ? defaultValues
                         : undefined
                 }
-                stringCodeScopes={[
-                    'currency',
-                    'payment_terms',
-                    'payment_method',
-                    'bank_account',
-                    'third_party_extra_status1',
-                    'third_party_extra_status2'
-                ]}
+                stringCodeScopes={['currency', 'payment_terms', 'payment_method', 'bank_account']}
             />
         </>
     );

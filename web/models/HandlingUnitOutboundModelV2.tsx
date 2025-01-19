@@ -132,7 +132,7 @@ export const HandlingUnitOutboundModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: 'stockOwner_name',
-            isMandatory: true,
+            isMandatory: false,
             minRule: null,
             maxRule: null,
             config: null,

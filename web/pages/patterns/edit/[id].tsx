@@ -22,7 +22,7 @@ import { META_DEFAULTS } from '@helpers';
 import { PatternModelV2 as model } from 'models/PatternModelV2';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
 import { patternsRoutes } from 'modules/Patterns/Static/patternsRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';

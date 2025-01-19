@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { LoadModelV2 } from 'models/LoadModelV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS } from '@helpers';
 import { loadsRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';

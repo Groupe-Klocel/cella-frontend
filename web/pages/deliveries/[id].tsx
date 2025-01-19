@@ -31,7 +31,7 @@ import {
     useDeliveryLineIds
 } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { Button, Modal, Space } from 'antd';
 import {
@@ -98,13 +98,11 @@ const DeliveryPage: PageComponent = () => {
                 _variables: CancelDeliveryMutationVariables,
                 _context: any
             ) => {
-                if (!cancelLoading) {
-                    if (data.softDeleteDelivery) {
-                        showSuccess(t('messages:success-canceled'));
-                        router.reload();
-                    } else {
-                        showError(t('messages:error-canceling-data'));
-                    }
+                if (data.softDeleteDelivery) {
+                    showSuccess(t('messages:success-canceled'));
+                    router.reload();
+                } else {
+                    showError(t('messages:error-canceling-data'));
                 }
             },
             onError: (err) => {

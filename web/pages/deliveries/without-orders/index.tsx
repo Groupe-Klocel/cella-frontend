@@ -32,8 +32,8 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { DeliveryModelV2 as model } from 'models/DeliveryModelV2';
-import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2HighLimit';
-import useTranslation from 'next-translate/useTranslation';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
@@ -270,6 +270,7 @@ const DeliveryPages: PageComponent = () => {
                 checkbox={true}
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}
+                itemperpage={100}
             />
         </>
     );

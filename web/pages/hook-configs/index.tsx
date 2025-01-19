@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { HookConfigModelV2 as model } from 'models/HookConfigModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { hookConfigsRoutes as itemRoutes } from 'modules/HookConfigs/Static/hookConfigsRoutes';
 import configs from '../../../common/configs.json';

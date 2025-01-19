@@ -19,16 +19,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Col, Input, Row, Form, Select, InputNumber, Modal, AutoComplete } from 'antd';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import {
-    useListParametersForAScopeQuery,
-    UpdateHandlingUnitContentMutationVariables,
-    UpdateHandlingUnitContentMutation,
-    useUpdateHandlingUnitContentMutation
-} from 'generated/graphql';
+import { useListParametersForAScopeQuery } from 'generated/graphql';
 import {
     showError,
     showSuccess,
@@ -60,8 +55,6 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
     const router = useRouter();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [form] = Form.useForm();
-    const [handlingUnitType, setHandlingUnitType] = useState<Array<FormOptionType>>();
-    const [handlingUnitCategory, setHandlingUnitCategory] = useState<Array<FormOptionType>>();
     const [stockStatus, setStockStatus] = useState<Array<FormOptionType>>();
     const [stockOwners, setStockOwners] = useState<any>();
     const stockOwnerData = useStockOwners({}, 1, 100, null);
@@ -94,44 +87,6 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
             router.events.off('routeChangeStart', handleBrowseAway);
         };
     }, [unsavedChanges]);
-
-    // PARAMETER : handling_unit_type
-    const handlingUnitTypeList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'handling_unit_type'
-    });
-    useEffect(() => {
-        if (handlingUnitTypeList) {
-            const newHandlingUnitType: Array<FormOptionType> = [];
-
-            const parameters = handlingUnitTypeList?.data?.listParametersForAScope;
-            if (parameters) {
-                parameters.forEach((item) => {
-                    newHandlingUnitType.push({ key: parseInt(item.code), text: item.text });
-                });
-                setHandlingUnitType(newHandlingUnitType);
-            }
-        }
-    }, [handlingUnitTypeList.data]);
-
-    // PARAMETER : handling_unit_category
-    const handlingUnitCategoryList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'handling_unit_category'
-    });
-    useEffect(() => {
-        if (handlingUnitCategoryList) {
-            const newHandlingUnitCategory: Array<FormOptionType> = [];
-
-            const parameters = handlingUnitCategoryList?.data?.listParametersForAScope;
-            if (parameters) {
-                parameters.forEach((item) => {
-                    newHandlingUnitCategory.push({ key: parseInt(item.code), text: item.text });
-                });
-                setHandlingUnitCategory(newHandlingUnitCategory);
-            }
-        }
-    }, [handlingUnitCategoryList.data]);
 
     // PARAMETER : stock_status
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
@@ -321,6 +276,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                     }
                 };
                 fetchData();
+                setUnsavedChanges(false);
             })
             .catch((err) => {
                 showError(t('messages:error-update-data'));

@@ -24,7 +24,7 @@ import { ThirdPartyAddressModelV2 as model } from 'models/ThirdPartyAddressModel
 import { ThirdPartyDocumentModelV2 } from 'models/ThirdPartyDocumentModelV2';
 import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useState } from 'react';
 import configs from '../../../../common/configs.json';
 import { LinkButton } from '@components';
@@ -105,8 +105,8 @@ const ThirdPartyDetailsExtra = ({
                 action == 'enable'
                     ? 'messages:enable-confirm'
                     : action == 'delete'
-                    ? 'messages:delete-confirm'
-                    : 'messages:disable-confirm';
+                      ? 'messages:delete-confirm'
+                      : 'messages:disable-confirm';
             Modal.confirm({
                 title: t(titre),
                 onOk: () => {

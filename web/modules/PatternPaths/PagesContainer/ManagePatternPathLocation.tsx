@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Alert, Button, Col, Divider, Input, Layout, List, Row } from 'antd';
 import { ContentSpin, DetailsList, HeaderContent, LinkButton } from '@components';
 import { patternPathsRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 import styled from 'styled-components';
 import { NextRouter } from 'next/router';

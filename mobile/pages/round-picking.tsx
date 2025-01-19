@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -31,8 +31,8 @@ import { QuantityChecks } from 'modules/Preparation/RoundPicking/ChecksAndRecord
 import { SelectRoundForm } from 'modules/Preparation/RoundPicking/Forms/SelectRoundForm';
 import { ArticleOrFeatureChecks } from 'modules/Preparation/RoundPicking/ChecksAndRecords/ArticleOrFeatureChecks';
 import { HandlingUnitChecks } from 'modules/Preparation/RoundPicking/ChecksAndRecords/HandlingUnitChecks';
-import { ValidateRoundPickingForm } from 'modules/Preparation/RoundPicking/Forms/ValidateRoundPickingForm';
 import { ScanArticleOrFeature } from 'modules/Preparation/RoundPicking/PagesContainer/ScanArticleOrFeature';
+import { AutoValidateRoundPickingForm } from 'modules/Preparation/RoundPicking/Forms/AutoValidateRoundPickingForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -226,13 +226,13 @@ const RoundPicking: PageComponent = () => {
                 <></>
             )}
             {storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
-                <ValidateRoundPickingForm
+                <AutoValidateRoundPickingForm
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[4]}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}
-                ></ValidateRoundPickingForm>
+                ></AutoValidateRoundPickingForm>
             ) : (
                 <></>
             )}

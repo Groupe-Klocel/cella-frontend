@@ -30,7 +30,7 @@ import {
     useSimpleGetAllStockOwnersQuery,
     useUpdateBarcodeMutation
 } from 'generated/graphql';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 

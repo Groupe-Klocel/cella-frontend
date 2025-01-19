@@ -25,7 +25,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { barcodesRoutes as itemRoutes } from 'modules/Barcodes/Static/barcodesRoutes';
 import { useRouter } from 'next/router';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { Button, Modal, Space } from 'antd';

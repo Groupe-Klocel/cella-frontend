@@ -25,7 +25,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { rulesRoutes as itemRoutes } from 'modules/Rules/Static/rulesRoutes';
 import { Button, Modal, Space } from 'antd';
 import {
@@ -85,13 +85,11 @@ const RulePage: PageComponent = () => {
                 _variables: CancelRuleMutationVariables,
                 _context: any
             ) => {
-                if (!cancelLoading) {
-                    if (data.deleteRule) {
-                        showSuccess(t('messages:success-canceled'));
-                        router.reload();
-                    } else {
-                        showError(t('messages:error-canceling-data'));
-                    }
+                if (data.deleteRule) {
+                    showSuccess(t('messages:success-canceled'));
+                    router.reload();
+                } else {
+                    showError(t('messages:error-canceling-data'));
                 }
             },
             onError: (err) => {

@@ -24,7 +24,7 @@ import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LoadModelV2 as model } from 'models/LoadModelV2';
 import { loadsRoutes as itemRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { Button, Modal, Space } from 'antd';
@@ -165,19 +165,17 @@ const LoadsPage: PageComponent = () => {
                 _variables: UpdateLoadMutationVariables,
                 _context: any
             ) => {
-                if (!dispatch) {
-                    showSuccess(t('messages:success-dispatched'));
-                    if (data?.updateLoad?.id) {
-                        printLoad(
-                            {
-                                id: data.updateLoad.id,
-                                statusDispatched
-                            },
-                            defaultPrinterLaser
-                        );
-                    }
-                    setTriggerRefresh(!triggerRefresh);
+                showSuccess(t('messages:success-dispatched'));
+                if (data?.updateLoad?.id) {
+                    printLoad(
+                        {
+                            id: data.updateLoad.id,
+                            statusDispatched
+                        },
+                        defaultPrinterLaser
+                    );
                 }
+                setTriggerRefresh(!triggerRefresh);
             },
             onError: () => {
                 showError(t('messages:error-dispatching-data'));

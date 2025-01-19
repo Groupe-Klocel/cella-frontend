@@ -25,7 +25,7 @@ export const StockOwnerModelV2: ModelType = {
     resolverName: 'StockOwner',
     isEditable: true,
     isDeletable: false,
-    isSoftDeletable: false,
+    isSoftDeletable: true,
 
     endpoints: {
         detail: 'stockOwner',
@@ -33,6 +33,7 @@ export const StockOwnerModelV2: ModelType = {
         create: 'createStockOwner',
         update: 'updateStockOwner',
         delete: 'deleteStockOwner',
+        softDelete: 'softDeleteStockOwner',
         export: true
     },
 
