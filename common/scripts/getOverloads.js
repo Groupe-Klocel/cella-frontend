@@ -36,20 +36,23 @@ const ignoredRoutes = [];
 async function fetchData() {
   try {
     console.log("PreBuild in progress...");
-    const response = await fetch(overloadConfig.url);
+    const response = await fetch(`${overloadConfig.overloadLink}/overloads`);
     const data = await response.text();
     let filesCreated = 0;
     if (data) {
-      const dataSplited = data.split("<pre>")[1].split("</pre>")[0].trim();
+      const splitData = data
+        .split('<script id="__NEXT_DATA__" type="application/json">')[1]
+        .split("</script>")[0]
+        .trim();
       const dataParsed = JSON.parse(
-        dataSplited
+        splitData
           .replace(/&quot;/g, '"')
           .replace(/&lt;/g, "<")
           .replace(/&gt;/g, ">")
           .replace(/&#x27;/g, "'")
           .replace(/&#x60;/g, "`")
           .replace(/&amp;/g, "&")
-      );
+      ).props.pageProps;
 
       // Read all files&
       const directoryPath =
