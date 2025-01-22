@@ -40,6 +40,7 @@ import {
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
+import { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -59,6 +60,8 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [selectedAvailable, setSelectedAvailable] = useState<any>();
+    const [selectedToBeLoaded, setSelectedToBeLoaded] = useState<any>();
     const [thirdParties, setThirdParties] = useState<Array<FormOptionType>>();
     const [thirdPartyAddresses, setThirdPartyAddresses] = useState<Array<FormOptionType>>();
     const [thirdPartyAddressContacts, setThirdPartyAddressContacts] =
@@ -133,6 +136,15 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
             }
         }
     }, [addressesList.data]);
+
+    const onAvailableChange = (e: CheckboxChangeEvent) => {
+        setSelectedAvailable(e.target.checked);
+        form.setFieldsValue({ available: e.target.checked });
+    };
+    const onToBeLoadedChange = (e: CheckboxChangeEvent) => {
+        setSelectedToBeLoaded(e.target.checked);
+        form.setFieldsValue({ toBeLoaded: e.target.checked });
+    };
 
     //manage call back on address change
     const [chosenAddress, setChosenAddress] = useState<string | undefined>();
@@ -475,10 +487,10 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
                     </Select>
                 </Form.Item>
                 <Form.Item name="available">
-                    <Checkbox>{t('d:available')}</Checkbox>
+                    <Checkbox onChange={onAvailableChange}>{t('d:available')}</Checkbox>
                 </Form.Item>
                 <Form.Item name="toBeLoaded">
-                    <Checkbox>{t('d:toBeLoaded')}</Checkbox>
+                    <Checkbox onChange={onToBeLoadedChange}>{t('d:toBeLoaded')}</Checkbox>
                 </Form.Item>
 
                 <Form.Item label={t('d:contactName')} name="contactName">

@@ -32,6 +32,8 @@ import {
     useUpdateCarrierMutation
 } from 'generated/graphql';
 import { gql } from 'graphql-request';
+import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import configs from '../../../../common/configs.json';
 
 export type EditCarrierFormProps = {
     carrierId: string;
@@ -46,6 +48,9 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const [unsavedChanges, setUnsavedChanges] = useState(false);
+    const [availableValue, setAvailableValue] = useState(details.available);
+    const [toBeLoadedValue, setToBeLoadedValue] = useState(details.toBeLoaded);
+    const [status, setStatus] = useState<any>();
     // TYPED SAFE ALL
     const [form] = Form.useForm();
     const { Option } = Select;
@@ -53,6 +58,49 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
     form.setFieldsValue({
         parentCarrier: details?.parentCarrier?.name
     });
+
+    useEffect(() => {
+        setAvailableValue(details.available);
+    }, [details.available]);
+    useEffect(() => {
+        setToBeLoadedValue(details.toBeLoaded);
+    }, [details.toBeLoaded]);
+
+    const onAvailableChange = (e: CheckboxChangeEvent) => {
+        setAvailableValue(!availableValue);
+        form.setFieldsValue({ available: e.target.checked });
+    };
+    const onToBeLoadedChange = (e: CheckboxChangeEvent) => {
+        setToBeLoadedValue(!toBeLoadedValue);
+        form.setFieldsValue({ toBeLoaded: e.target.checked });
+    };
+
+    // Get huo for checkBox isDisabled
+    useEffect(() => {
+        const query = gql`
+            query huo($filters: HandlingUnitOutboundSearchFilters) {
+                handlingUnitOutbounds(filters: $filters) {
+                    results {
+                        status
+                    }
+                }
+            }
+        `;
+        const queryVariables = {
+            filters: { carrierId: carrierId }
+        };
+
+        graphqlRequestClient.request(query, queryVariables).then((data: any) => {
+            setStatus(data?.handlingUnitOutbounds.results);
+        });
+    }, []);
+
+    const isCheckBoxIsDisabled = status?.some(
+        (objet: any) =>
+            objet.status >= configs.HANDLING_UNIT_OUTBOUND_STATUS_ESTIMATED &&
+            objet.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_DISPATCHED
+    );
+
     // Get all civility
     useEffect(() => {
         const query = gql`
@@ -198,7 +246,6 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
             cancelText: t('common:bool-no')
         });
     };
-
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
@@ -227,12 +274,20 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
                     </Select>
                 </Form.Item>
                 <Form.Item name="available">
-                    <Checkbox checked={details.available} disabled>
+                    <Checkbox
+                        checked={availableValue}
+                        onChange={onAvailableChange}
+                        disabled={isCheckBoxIsDisabled}
+                    >
                         {t('d:available')}
                     </Checkbox>
                 </Form.Item>
                 <Form.Item name="toBeLoaded">
-                    <Checkbox checked={details.toBeLoaded} disabled>
+                    <Checkbox
+                        checked={toBeLoadedValue}
+                        onChange={onToBeLoadedChange}
+                        disabled={isCheckBoxIsDisabled}
+                    >
                         {t('d:toBeLoaded')}
                     </Checkbox>
                 </Form.Item>
