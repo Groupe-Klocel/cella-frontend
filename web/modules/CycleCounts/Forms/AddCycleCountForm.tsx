@@ -695,7 +695,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                         </Form.Item>
                         <Row style={{ marginBottom: '8px' }}>
                             <Col span={12} style={{ paddingRight: '8px' }}>
-                                <Card type="inner" title={t('common:from:')}>
+                                <Card type="inner" title={t('common:from')}>
                                     <Form.Item
                                         label={t('d:originAisle')}
                                         name="originalAisle"
@@ -844,7 +844,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                 </Card>
                             </Col>
                             <Col span={12} style={{ paddingRight: '8px' }}>
-                                <Card type="inner" title={t('common:to:')}>
+                                <Card type="inner" title={t('common:to')}>
                                     <Form.Item
                                         label={t('d:finalAisle')}
                                         name="finalAisle"
