@@ -19925,7 +19925,7 @@ span.ant-radio + * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     display: inline-block;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.45) !important;
     font-weight: 700;
     font-size: 10px;
     line-height: inherit;
@@ -20317,6 +20317,9 @@ span.ant-radio + * {
 }
 .ant-select-item-option-disabled.ant-select-item-option-selected {
     background-color: #303030;
+}
+.ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background-color: rgb(41, 55, 57) !important;
 }
 .ant-select-item-option-grouped {
     padding-left: 24px;
