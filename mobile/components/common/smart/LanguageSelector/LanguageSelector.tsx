@@ -142,8 +142,7 @@ const LanguageSelector: FC = () => {
 
     return (
         <StyledSelect
-            value={generalUserSettings?.valueJson?.lang}
-            defaultValue={router.locale}
+            value={generalUserSettings?.valueJson?.lang ?? router.locale}
             onChange={saveSettings}
         >
             {isoLangs.map((language: LanguageType) => (
