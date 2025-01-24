@@ -85,9 +85,16 @@ const LanguageSelector: FC = () => {
             const userSettingsQuery = await graphqlRequestClient.request(createQuery, {
                 input: newsSettings
             });
+
+            const updatedSettings = userSettings.map((setting: any) =>
+                setting.code === userSettingsQuery.createWarehouseWorkerSetting.code
+                    ? userSettingsQuery.createWarehouseWorkerSetting
+                    : setting
+            );
+
             dispatchUserSettings({
                 type: 'SWITCH_USER_SETTINGS',
-                userSettings: [...userSettings, userSettingsQuery.createWarehouseWorkerSetting]
+                userSettings: [...updatedSettings]
             });
             router.push(router.asPath, router.asPath, { locale: lang });
         },
@@ -135,8 +142,8 @@ const LanguageSelector: FC = () => {
 
     return (
         <StyledSelect
-            value={generalUserSettings?.valueJson?.lang ?? router.locale}
-            // defaultValue={generalUserSettingsRef.current?.valueJson?.lang ?? router.locale}
+            value={generalUserSettings?.valueJson?.lang}
+            defaultValue={router.locale}
             onChange={saveSettings}
         >
             {isoLangs.map((language: LanguageType) => (
