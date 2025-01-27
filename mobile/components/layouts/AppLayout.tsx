@@ -41,9 +41,13 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         return 'globalParametersMobile' === item.code;
     });
 
-    const [lang, setLang] = useState(
-        generalUserSettings?.valueJson?.lang ? generalUserSettings?.valueJson?.lang : router.locale
-    );
+    const [lang, setLang] = useState(generalUserSettings?.valueJson?.lang ?? router.locale);
+
+    useEffect(() => {
+        if (generalUserSettings?.valueJson?.lang) {
+            setLang(generalUserSettings?.valueJson?.lang);
+        }
+    }, [generalUserSettings?.valueJson]);
 
     const theme = generalUserSettings?.valueJson?.theme ?? 'light';
 
