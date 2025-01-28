@@ -194,7 +194,7 @@ const RoundPages: PageComponent = () => {
             modes.length > 0 && modes.includes(ModeEnum.Update) ? (
                 <>
                     <>
-                        <span style={{ marginLeft: 16 }}>
+                        <span className="selected-items-span" style={{ marginLeft: 16 }}>
                             {hasSelected
                                 ? `${t('messages:selected-items-number', {
                                       number: selectedRowKeys.length
