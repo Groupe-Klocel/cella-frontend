@@ -153,7 +153,7 @@ const DeliveryDetailsExtra = ({
             boxesModes.length > 0 && boxesModes.includes(ModeEnum.Update) ? (
                 <>
                     <>
-                        <span style={{ marginLeft: 16 }}>
+                        <span className="selected-items-span" style={{ marginLeft: 16 }}>
                             {hasSelected
                                 ? `${t('messages:selected-items-number', {
                                       number: boxesSelectedRowKeys.length

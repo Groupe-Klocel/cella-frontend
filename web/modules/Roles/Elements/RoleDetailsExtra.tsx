@@ -27,7 +27,7 @@ import {
     showSuccess,
     useDelete
 } from '@helpers';
-import { Button, Divider, Modal, Space, Typography } from 'antd';
+import { Button, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { RoleUserRoleModelV2 } from 'models/RoleUserRoleModelV2';
@@ -35,8 +35,6 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-
-const { Title } = Typography;
 
 export interface IItemDetailsProps {
     roleId?: string | any;
@@ -51,6 +49,7 @@ const RoleDetailsExtra = ({ roleId, roleName }: IItemDetailsProps) => {
     const warehouseWorkerModes = getModesFromPermissions(permissions, Table.WarehouseWorker);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [refetch, setRefetch] = useState<boolean>(false);
 
     const UserRoleData: HeaderData = {
         title: t('common:associated-warehouse-workers'),
@@ -80,7 +79,7 @@ const RoleDetailsExtra = ({ roleId, roleName }: IItemDetailsProps) => {
 
         if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
-            router.reload();
+            setRefetch(!refetch);
         } else {
             showError(t('messages:error-deleting-data'));
         }
@@ -95,6 +94,7 @@ const RoleDetailsExtra = ({ roleId, roleName }: IItemDetailsProps) => {
                 headerData={UserRoleData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                refetch={refetch}
                 actionColumns={[
                     {
                         title: 'actions:actions',

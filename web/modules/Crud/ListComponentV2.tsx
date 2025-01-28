@@ -151,6 +151,11 @@ const ListComponent = (props: IListProps) => {
             if (newSorting === 'default') {
                 newSorting = currentUserSettings?.valueJson?.sorter ?? null;
             }
+
+            if (newPagination && newPagination.current) {
+                newPagination.current = 1;
+            }
+
             const newsSettings = {
                 ...currentUserSettings,
                 valueJson: {
@@ -205,6 +210,10 @@ const ListComponent = (props: IListProps) => {
 
             if (newSorting === 'default') {
                 newSorting = currentUserSettings?.valueJson?.sorter ?? null;
+            }
+
+            if (newPagination && newPagination.current) {
+                newPagination.current = 1;
             }
 
             const newsSettings = {

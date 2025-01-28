@@ -18,21 +18,36 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Spin } from 'antd';
+import { useAppState } from 'context/AppContext';
 import { FC } from 'react';
 import styled from 'styled-components';
 
-const StyledSpinWrapper = styled.div`
+interface StyledSpinWrapperProps {
+    isDarkTheme: boolean;
+}
+
+const StyledSpinWrapper = styled.div<StyledSpinWrapperProps>`
     display: flex;
     justify-content: center; // centers in the flex direction and the default flex-direction is row
     align-items: center; // centers perpendicular to the flex direction
     height: 100vh;
     width: 100vw;
     position: absolute; // so it goes behind the current content
+    background-color: ${({ isDarkTheme }) =>
+        isDarkTheme ? '#303030' : '#fff'}; // conditionally set background color
 `;
 
 const ScreenSpin: FC = () => {
+    const { userSettings, tempTheme } = useAppState();
+
+    const generalUserSettings = userSettings?.find((item: any) => {
+        return 'globalParameters' === item.code;
+    });
+
+    const theme = tempTheme ?? generalUserSettings?.valueJson?.theme;
+    const isDarkTheme = theme !== 'light';
     return (
-        <StyledSpinWrapper>
+        <StyledSpinWrapper isDarkTheme={isDarkTheme}>
             <Spin />
         </StyledSpinWrapper>
     );

@@ -346,22 +346,6 @@ const EditArticlesRenderModal = ({
                         <Form.Item label={t('d:permanentProduct')} name="permanentProduct">
                             <Checkbox onChange={onPermanentProductChange}></Checkbox>
                         </Form.Item>
-                        <Form.Item label={t('d:status')} name="status">
-                            <Select
-                                placeholder={`${t('messages:please-select-a', {
-                                    name: t('d:status')
-                                })}`}
-                            >
-                                {statuses?.map((statuses: any) => (
-                                    <Select.Option
-                                        key={parseInt(statuses.code)}
-                                        value={parseInt(statuses.code)}
-                                    >
-                                        {statuses.text}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
                     </Col>
                 </Row>
             </Form>

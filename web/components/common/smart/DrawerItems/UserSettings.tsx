@@ -75,9 +75,25 @@ export const UserSettings: FC = () => {
             .map((item: any) => item.id)
             .filter(Boolean)
             .filter((id: any, index: number, self: any) => self.indexOf(id) === index);
+        const globalParametersFound = userSettings.find(
+            (item: any) => 'globalParameters' === item.code
+        );
         if (arrayOfIds.length === 0) {
+            if (globalParametersFound) {
+                dispatchUserSettings({
+                    type: 'SWITCH_USER_SETTINGS',
+                    userSettings: [
+                        {
+                            code: 'globalParameters',
+                            valueJson: { isSettingMenuCollapsed: true, theme: 'light' }
+                        }
+                    ]
+                });
+                router.reload();
+            }
             return setIsModalVisible(false);
         }
+
         const deleteQuery = gql`
             mutation ($ids: [String!]!) {
                 deleteWarehouseWorkerSettings(ids: $ids)
