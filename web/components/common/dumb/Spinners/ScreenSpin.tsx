@@ -20,22 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Spin } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { FC } from 'react';
-import styled from 'styled-components';
-
-interface StyledSpinWrapperProps {
-    isDarkTheme: boolean;
-}
-
-const StyledSpinWrapper = styled.div<StyledSpinWrapperProps>`
-    display: flex;
-    justify-content: center; // centers in the flex direction and the default flex-direction is row
-    align-items: center; // centers perpendicular to the flex direction
-    height: 100vh;
-    width: 100vw;
-    position: absolute; // so it goes behind the current content
-    background-color: ${({ isDarkTheme }) =>
-        isDarkTheme ? '#303030' : '#fff'}; // conditionally set background color
-`;
 
 const ScreenSpin: FC = () => {
     const { userSettings, tempTheme } = useAppState();
@@ -47,9 +31,21 @@ const ScreenSpin: FC = () => {
     const theme = tempTheme ?? generalUserSettings?.valueJson?.theme;
     const isDarkTheme = theme !== 'light';
     return (
-        <StyledSpinWrapper isDarkTheme={isDarkTheme}>
+        <div
+            style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                width: '100vw',
+                position: 'absolute',
+                backgroundColor: isDarkTheme ? '#303030' : '#fff'
+            }}
+        >
+            {' '}
+            {/* Div because this component is render server side wich sends an error if we use styleDiv from ant design */}
             <Spin />
-        </StyledSpinWrapper>
+        </div>
     );
 };
 
