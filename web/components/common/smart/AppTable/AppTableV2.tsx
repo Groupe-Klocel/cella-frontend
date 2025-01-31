@@ -41,30 +41,12 @@ import { isString } from 'lodash';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useCallback, useEffect, useState, useRef, Key } from 'react';
-import styled from 'styled-components';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 
 const { Column } = Table;
 const { Link } = Typography;
-
-const StyledTable = styled(Table)`
-    &&& {
-        .ant-table-thead {
-            > tr {
-                > th:not(:last-child):not(.ant-table-selection-column):not(
-                        .ant-table-row-expand-icon-cell
-                    ):not([colspan])::before,
-                > td:not(:last-child):not(.ant-table-selection-column):not(
-                        .ant-table-row-expand-icon-cell
-                    ):not([colspan])::before {
-                    display: none !important;
-                }
-            }
-        }
-    }
-`;
 
 export interface IAppTableV2Props {
     // Refactory to strong type
@@ -417,7 +399,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                     )}
                 </Space>
             </WrapperStickyActions>
-            <StyledTable
+            <Table
                 rowKey="id"
                 dataSource={data}
                 scroll={scroll}
@@ -453,7 +435,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                         />
                     );
                 })}
-            </StyledTable>
+            </Table>
         </PageTableContentWrapper>
     );
 };
