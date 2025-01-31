@@ -29,9 +29,9 @@ export interface IBreadcrumbProps {
     routes?: Array<BreadcrumbType>;
 }
 
-const StyledBreadcrumb = styled(Breadcrumb)<{ isDarkTheme: boolean }>`
-    ${({ isDarkTheme }) =>
-        isDarkTheme &&
+const StyledBreadcrumb = styled(Breadcrumb)<{ $isDarkTheme: boolean }>`
+    ${({ $isDarkTheme }) =>
+        $isDarkTheme &&
         css`
             .ant-breadcrumb-separator {
                 color: rgba(255, 255, 255, 0.45);
@@ -69,7 +69,7 @@ const GlobalBreadcrumb: FC<IBreadcrumbProps> = ({ routes }: IBreadcrumbProps) =>
 
     const isDarkTheme = theme !== 'light';
 
-    return <StyledBreadcrumb items={breadcrumbItems} isDarkTheme={isDarkTheme} />;
+    return <StyledBreadcrumb items={breadcrumbItems} $isDarkTheme={isDarkTheme} />;
 };
 
 GlobalBreadcrumb.displayName = 'GlobalBreadcrumb';
