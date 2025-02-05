@@ -460,6 +460,7 @@ const Translation: PageComponent = () => {
                 _context: any
             ) => {
                 showSuccess('messages:success-deleted');
+                reloadData();
             },
             onError: () => {
                 showError('messages:error-delete-impossible');
@@ -468,7 +469,6 @@ const Translation: PageComponent = () => {
 
     const handleDelete = (id: string) => {
         DeleteTranslations({ id });
-        reloadData();
     };
 
     const columns = defaultColumns.map((col) => {
