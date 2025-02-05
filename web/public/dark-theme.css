@@ -18818,7 +18818,7 @@ textarea.ant-pagination-options-quick-jumper input {
     padding-right: 10px;
 }
 .ant-popover-inner {
-    background-color: #303030;
+    background-color: #303030 !important;
     background-clip: padding-box;
     border-radius: 4px;
     box-shadow:
@@ -26437,4 +26437,7 @@ div.ant-typography-edit-content.ant-typography-rtl {
 }
 .ant-table-wrapper .ant-table-tbody > tr.ant-table-placeholder {
     background-color: unset !important;
+}
+.ant-popconfirm .ant-popconfirm-message .ant-popconfirm-title {
+    color: rgba(255, 255, 255, 0.85) !important;
 }
