@@ -45,7 +45,7 @@ export const EditConfigurationExtraForm: FC<ISingleItemProps> = ({
 
     useEffect(() => {
         const jsonData: any = {};
-        extras.split(',').forEach((element: any) => {
+        extras.split('///').forEach((element: any) => {
             if (element !== '') {
                 const [key, value] = element.split('=');
                 if (key !== extras_key) {

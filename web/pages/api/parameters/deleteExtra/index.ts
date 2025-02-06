@@ -74,7 +74,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         const input_tmp: any = {};
         const jsonData: any = {};
 
-        extras.split(',').forEach((element: any) => {
+        extras.split('///').forEach((element: any) => {
             if (element !== '') {
                 const [key, value] = element.split('=');
                 if (key !== extKey) {
