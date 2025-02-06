@@ -454,9 +454,6 @@ const ParameterListComponent = (props: IListProps) => {
                 if (listData['results'].length > 0) {
                     let sort_index = 1;
 
-                    listData['results'] = listData['results'].map((item: any) => {
-                        return flatten(item);
-                    });
                     // Specific to record_history
                     // modelName property MUST BE existing in ParameterExtrasModelV2
                     let source = props.dataModel.fieldsInfo;
@@ -471,16 +468,6 @@ const ParameterListComponent = (props: IListProps) => {
                         let title = `d:${column_name}`;
                         if (displayedLabels && column_name in displayedLabels) {
                             title = `d:${displayedLabels[column_name]}`;
-                        }
-
-                        // Specific to parameter
-                        const prefixesToCheck = ['d:extra_'];
-                        // Check if the title starts with any of the prefixes
-                        for (const prefix of prefixesToCheck) {
-                            if (title.startsWith(prefix)) {
-                                title = title.slice(prefix.length);
-                                break;
-                            }
                         }
 
                         const row_data: any = {
@@ -534,13 +521,10 @@ const ParameterListComponent = (props: IListProps) => {
         if (Object.entries(rowsCopy).length !== 0) {
             let i = 0;
             let stringJsonData = '';
-            for (const [key, value] of Object.entries(rowsCopy[0])) {
-                const extra = key.replace('extras_', '');
-                if (key.includes('extras_')) {
-                    jsonData.push({ index: `${i}`, key: `${extra}`, value: `${value}` });
-                    stringJsonData += extra + '=' + value + ',';
-                    i++;
-                }
+            for (const [key, value] of Object.entries(rowsCopy[0]?.extras)) {
+                jsonData.push({ index: `${i}`, key: `${key}`, value: `${value}` });
+                stringJsonData += key + '=' + value + '///';
+                i++;
             }
             extraDataRef.current = stringJsonData;
         }
