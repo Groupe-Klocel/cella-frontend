@@ -80,7 +80,11 @@ export const AddConfigurationExtraForm: FC<ISingleItemProps> = ({ urlBack }: ISi
                 }
                 const formData = form.getFieldsValue(true);
                 const new_element: any = {};
-                new_element[formData.key] = formData.value;
+                if (formData.value.startsWith('[') && formData.value.endsWith(']')) {
+                    new_element[formData.key] = JSON.parse(formData.value);
+                } else {
+                    new_element[formData.key] = formData.value;
+                }
                 updateConfigurationExtra({
                     id: id,
                     input: { extras: new_element }

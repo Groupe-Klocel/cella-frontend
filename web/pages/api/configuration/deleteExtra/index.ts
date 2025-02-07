@@ -77,7 +77,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             if (element !== '') {
                 const [key, value] = element.split('=');
                 if (key !== extKey) {
-                    jsonData[key] = value;
+                    jsonData[key] = JSON.parse(value);
                 }
             }
         });

@@ -53,7 +53,7 @@ export const EditParameterExtraForm: FC<ISingleItemProps> = ({
             if (element !== '') {
                 const [key, value] = element.split('=');
                 if (key !== extras_key) {
-                    jsonData[key] = value;
+                    jsonData[key] = JSON.parse(value);
                 }
             }
         });
@@ -94,7 +94,11 @@ export const EditParameterExtraForm: FC<ISingleItemProps> = ({
                 };
 
                 const new_element: any = {};
-                new_element[formData.key] = formData.value;
+                if (formData.value.startsWith('[') && formData.value.endsWith(']')) {
+                    new_element[formData.key] = JSON.parse(formData.value);
+                } else {
+                    new_element[formData.key] = formData.value;
+                }
                 input_tmp['extras'] = Object.assign(new_element, inputExtra);
                 updateParameterExtra({
                     id: id,
