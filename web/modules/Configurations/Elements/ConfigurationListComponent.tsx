@@ -513,12 +513,12 @@ const ConfigurationListComponent = (props: IListProps) => {
         const jsonData: any = [];
         const rowsCopy = Object.assign({}, data?.[props.dataModel.endpoints.list]?.results);
 
-        if (Object.entries(rowsCopy).length !== 0) {
+        if (Object.entries(rowsCopy).length !== 0 && rowsCopy[0]?.extras) {
             let i = 0;
             let stringJsonData = '';
             for (const [key, value] of Object.entries(rowsCopy[0]?.extras)) {
-                jsonData.push({ index: `${i}`, key: `${key}`, value: `${value}` });
-                stringJsonData += key + '=' + value + '///';
+                jsonData.push({ index: `${i}`, key: `${key}`, value: `${JSON.stringify(value)}` });
+                stringJsonData += key + '=' + JSON.stringify(value) + '///';
                 i++;
             }
             extraDataRef.current = stringJsonData;
