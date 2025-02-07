@@ -22,13 +22,11 @@ const fs = require("fs");
 const path = require("path");
 const overloadConfig = require("../configOverloads.json");
 
-const SpeUpdate = overloadConfig.SpeUpdate;
-
-const SpeNew = overloadConfig.SpeNew;
-
-const SpeMaybe = overloadConfig.SpeMaybe;
-
-const SPE = [...SpeUpdate, ...SpeNew, ...SpeMaybe];
+const SPE = [
+  ...overloadConfig.SpeUpdate,
+  ...overloadConfig.SpeNew,
+  ...overloadConfig.SpeMaybe,
+];
 
 function addLicence(dir_path, SpeName, extFile) {
   fs.readdirSync(dir_path).forEach((file) => {
