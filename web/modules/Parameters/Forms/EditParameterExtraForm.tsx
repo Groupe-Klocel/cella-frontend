@@ -94,9 +94,9 @@ export const EditParameterExtraForm: FC<ISingleItemProps> = ({
                 };
 
                 const new_element: any = {};
-                if (formData.value.startsWith('[') && formData.value.endsWith(']')) {
+                try {
                     new_element[formData.key] = JSON.parse(formData.value);
-                } else {
+                } catch {
                     new_element[formData.key] = formData.value;
                 }
                 input_tmp['extras'] = Object.assign(new_element, inputExtra);
