@@ -32,6 +32,7 @@ import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { BoxDetailsExtra } from 'modules/Boxes/Elements/BoxDetailsExtra';
 import { BarcodeOutlined } from '@ant-design/icons';
+import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -43,7 +44,7 @@ const BoxPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
-    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [cancelInfo, setCancelInfo] = useState<any>();
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
 
@@ -61,12 +62,12 @@ const BoxPage: PageComponent = () => {
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
-    const confirmAction = (id: string | undefined, setId: any) => {
+    const confirmAction = (id: string | undefined, setInfo: any) => {
         return () => {
             Modal.confirm({
                 title: t('messages:action-confirm'),
                 onOk: () => {
-                    setId(id);
+                    setInfo({ id, status: configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED });
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -92,14 +93,17 @@ const BoxPage: PageComponent = () => {
                     <></>
                 )}
                 {modes.length > 0 &&
-                modes.includes(ModeEnum.Delete) &&
-                model.isSoftDeletable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
+                modes.includes(ModeEnum.Update) &&
+                model.isEditable &&
+                statusForCancelation.HUO.includes(data?.status) ? (
                     <Button
-                        onClick={() => confirmAction(id as string, setIdToDisable)()}
                         type="primary"
+                        danger
+                        onClick={() => {
+                            confirmAction(id as string, setCancelInfo)();
+                        }}
                     >
-                        {t('actions:disable')}
+                        {t('actions:cancel')}
                     </Button>
                 ) : (
                     <></>
@@ -147,7 +151,7 @@ const BoxPage: PageComponent = () => {
                 dataModel={model}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
-                triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerCancel={{ cancelInfo, setCancelInfo }}
             />
         </>
     );

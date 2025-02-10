@@ -44,6 +44,7 @@ import configs from '../../../common/configs.json';
 import { DeliveryDetailsExtra } from 'modules/Deliveries/Elements/DeliveryDetailsExtra';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
+import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -56,7 +57,7 @@ const DeliveryPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
-    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [cancelInfo, setCancelInfo] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
@@ -75,12 +76,25 @@ const DeliveryPage: PageComponent = () => {
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
-    const confirmAction = (id: string | undefined, setId: any) => {
+    const confirmDelete = (id: string | undefined, setId: any) => {
         return () => {
             Modal.confirm({
                 title: t('messages:delete-confirm'),
                 onOk: () => {
                     setId(id);
+                },
+                okText: t('messages:confirm'),
+                cancelText: t('messages:cancel')
+            });
+        };
+    };
+
+    const confirmAction = (id: string | undefined, setId: any) => {
+        return () => {
+            Modal.confirm({
+                title: t('messages:action-confirm'),
+                onOk: () => {
+                    setId({ id, status: configs.DELIVERY_STATUS_CANCELED });
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -313,20 +327,18 @@ const DeliveryPage: PageComponent = () => {
                                 <></>
                             )}
                             {modes.length > 0 &&
-                            modes.includes(ModeEnum.Delete) &&
-                            model.isSoftDeletable ? (
-                                data?.status < configs.DELIVERY_STATUS_PREPARED ? (
-                                    <Button
-                                        onClick={() =>
-                                            confirmAction(id as string, setIdToDisable)()
-                                        }
-                                        type="primary"
-                                    >
-                                        {t('actions:cancel')}
-                                    </Button>
-                                ) : (
-                                    <></>
-                                )
+                            modes.includes(ModeEnum.Update) &&
+                            model.isEditable &&
+                            statusForCancelation.delivery.includes(data?.status) ? (
+                                <Button
+                                    type="primary"
+                                    danger
+                                    onClick={() => {
+                                        confirmAction(id as string, setCancelInfo)();
+                                    }}
+                                >
+                                    {t('actions:cancel')}
+                                </Button>
                             ) : (
                                 <></>
                             )}
@@ -334,7 +346,7 @@ const DeliveryPage: PageComponent = () => {
                             modes.includes(ModeEnum.Delete) &&
                             model.isDeletable ? (
                                 <Button
-                                    onClick={() => confirmAction(id as string, setIdToDelete)()}
+                                    onClick={() => confirmDelete(id as string, setIdToDelete)()}
                                 >
                                     {t('actions:delete')}
                                 </Button>
@@ -405,7 +417,7 @@ const DeliveryPage: PageComponent = () => {
                 dataModel={model}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
-                triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                triggerCancel={{ cancelInfo, setCancelInfo }}
             />
         </>
     );
