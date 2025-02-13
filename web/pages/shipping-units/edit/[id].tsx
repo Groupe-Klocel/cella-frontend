@@ -17,54 +17,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, ContentSpin, HeaderContent } from '@components';
+import { AppHead } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-
-import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS } from '@helpers';
-import { shippingUnitsRoutes as itemRoutes } from 'modules/ShippingUnits/Static/shippingUnitsRoutes';
+import { EditShippingUnits } from 'modules/ShippingUnits/PagesContainer/EditShippingUnits';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditShippingUnitPage: PageComponent = () => {
-    const { t } = useTranslation();
-
     const router = useRouter();
     const { id } = router.query;
-    const [data, setData] = useState<any>();
-
-    const breadsCrumb = [
-        ...itemRoutes,
-        {
-            breadcrumbName: `${data?.name}`
-        }
-    ];
 
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <EditItemComponent
-                id={id!}
-                setData={setData}
-                dataModel={model}
-                headerComponent={
-                    data ? (
-                        <HeaderContent
-                            title={`${t('common:shipping-units')} ${data?.name}`}
-                            routes={breadsCrumb}
-                            onBack={() => router.push(`/shipping-units/${id}`)}
-                        />
-                    ) : (
-                        <ContentSpin />
-                    )
-                }
-                routeAfterSuccess={`/shipping-units/${id}`}
-                routeOnCancel={`/shipping-units/${id}`}
-            />
+            <EditShippingUnits router={router} id={id} />
         </>
     );
 };
