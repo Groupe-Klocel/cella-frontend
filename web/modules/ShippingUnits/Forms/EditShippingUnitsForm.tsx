@@ -63,6 +63,7 @@ export const EditShippingUnitsForm: FC<EditShippingUnitsFormProps> = ({
                         id
                         status
                         name
+                        weight
                     }
                 }
             }
