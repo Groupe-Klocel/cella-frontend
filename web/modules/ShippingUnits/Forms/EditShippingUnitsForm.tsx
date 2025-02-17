@@ -155,7 +155,7 @@ export const EditShippingUnitsForm: FC<EditShippingUnitsFormProps> = ({
             const newWeight = handlingUnitModel.find(
                 (obj: any) => obj.id === formData.handlingUnitModelId
             )?.weight;
-            if (oldWeight && newWeight) {
+            if ((oldWeight || oldWeight === 0) && (newWeight || newWeight === 0)) {
                 form.setFieldsValue({
                     theoriticalWeight: oldTheoriticalWeight - oldWeight + newWeight
                 });
