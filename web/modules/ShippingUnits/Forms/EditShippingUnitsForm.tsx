@@ -32,6 +32,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import TextArea from 'antd/es/input/TextArea';
+import { gql } from 'graphql-request';
 
 export type EditShippingUnitsFormProps = {
     shippingUnitId: string;
@@ -47,13 +48,45 @@ export const EditShippingUnitsForm: FC<EditShippingUnitsFormProps> = ({
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const [form] = Form.useForm();
+    const [handlingUnitModel, setHandlingUnitModel] = useState<any>([]);
     let oldTheoriticalWeight: number = details?.theoriticalWeight;
 
-    const handlingUnitModel =
-        useSimpleGetAllHandlingUnitModelsListQuery<
-            Partial<SimpleGetAllHandlingUnitModelsListQuery>,
-            Error
-        >(graphqlRequestClient)?.data?.handlingUnitModels?.results ?? [];
+    async function getHandlingUnitModelsWithoutFinished() {
+        const query = gql`
+            query handlingUnitModelsWithoutFinished(
+                $advancedFilters: [HandlingUnitModelAdvancedSearchFilters!]
+                $itemsPerPage: Int!
+            ) {
+                handlingUnitModels(advancedFilters: $advancedFilters, itemsPerPage: $itemsPerPage) {
+                    count
+                    results {
+                        id
+                        status
+                        name
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            advancedFilters: [
+                { filter: [{ searchType: 'DIFFERENT', field: { status: 2000 } }] },
+                { filter: [{ searchType: 'DIFFERENT', field: { status: 1005 } }] },
+                { filter: [{ searchType: 'DIFFERENT', field: { category: 71210 } }] },
+                { filter: [{ searchType: 'DIFFERENT', field: { category: 71205 } }] },
+                { filter: [{ searchType: 'DIFFERENT', field: { category: 71200 } }] }
+            ],
+            itemsPerPage: 100000
+        };
+
+        const result = await graphqlRequestClient.request(query, variables);
+
+        setHandlingUnitModel(result.handlingUnitModels.results);
+    }
+
+    useEffect(() => {
+        getHandlingUnitModelsWithoutFinished();
+    }, []);
 
     const { mutate, isPending: updateLoading } = useUpdateHandlingUnitOutboundByIdMutation<Error>(
         graphqlRequestClient,
