@@ -388,10 +388,10 @@ const Translation: PageComponent = () => {
             _context: any
         ) => {
             reloadData();
-            showSuccess('messages:success-created');
+            showSuccess(t('messages:success-created'));
         },
         onError: (err) => {
-            showError('messages:error-creating-data');
+            showError(t('messages:error-creating-data'));
             console.log(err);
         }
     });
@@ -410,7 +410,7 @@ const Translation: PageComponent = () => {
             })
             .catch((err) => {
                 console.log(err);
-                showError('messages:error-creating-data');
+                showError(t('messages:error-creating-data'));
             });
     };
 
@@ -427,10 +427,10 @@ const Translation: PageComponent = () => {
             _context: any
         ) => {
             reloadData();
-            showSuccess('messages:success-updated');
+            showSuccess(t('messages:success-updated'));
         },
         onError: (err: any) => {
-            showError('messages:error-update-data');
+            showError(t('messages:error-update-data'));
         }
     });
 
@@ -459,11 +459,11 @@ const Translation: PageComponent = () => {
                 _variables: DeleteTranslationMutationVariables,
                 _context: any
             ) => {
-                showSuccess('messages:success-deleted');
+                showSuccess(t('messages:success-deleted'));
                 reloadData();
             },
             onError: () => {
-                showError('messages:error-delete-impossible');
+                showError(t('messages:error-delete-impossible'));
             }
         });
 
