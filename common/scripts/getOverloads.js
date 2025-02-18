@@ -1,6 +1,12 @@
 const fs = require("fs");
 const path = require("path");
 const fetch = require("node-fetch");
+const unzipper = require("unzipper");
+const { pipeline } = require("stream");
+const { promisify } = require("util");
+
+const pipelineAsync = promisify(pipeline);
+
 const overloadConfig = require("../configOverloads.json");
 
 const ignoredFiles = [
@@ -31,44 +37,145 @@ const ignoredFolders = [
   "pagesModels",
   "locales",
 ];
+
 const ignoredRoutes = [];
 
+const includesRoutes = [
+  "/web/public/light-theme.css",
+  "/web/public/dark-theme.css",
+];
+
+const SPE = [
+  ...overloadConfig.SpeUpdate,
+  ...overloadConfig.SpeNew,
+  ...overloadConfig.SpeMaybe,
+];
+
+async function downloadReleaseZip(owner, repo, releaseTag) {
+  try {
+    const releaseResponse = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/releases/tags/${releaseTag}`
+    );
+    if (!releaseResponse.ok) {
+      throw new Error(
+        `Failed to get release: ${releaseResponse.status} ${releaseResponse.statusText}`
+      );
+    }
+    const releaseData = await releaseResponse.json();
+    const zipUrl = releaseData.zipball_url;
+
+    const zipResponse = await fetch(zipUrl);
+    if (!zipResponse.ok) {
+      throw new Error(
+        `Failed to download zip: ${zipResponse.status} ${zipResponse.statusText}`
+      );
+    }
+
+    const zipPath = path.join(__dirname, `${repo}-${releaseTag}.zip`);
+    const fileStream = fs.createWriteStream(zipPath);
+    await pipelineAsync(zipResponse.body, fileStream);
+
+    return zipPath;
+  } catch (error) {
+    console.error("Error:", error);
+    return null;
+  }
+}
+
+async function readZipContents(zipPath) {
+  try {
+    const directory = await unzipper.Open.file(zipPath);
+    const filesContent = [];
+
+    for (const file of directory.files) {
+      if (!file.path.endsWith("/")) {
+        // Skip directories
+        const content = await file.buffer();
+        filesContent.push({
+          fileName: path.basename(file.path),
+          filePath: "/" + file.path.split("/").slice(1, -1).join("/"),
+          content: content.toString("utf-8"),
+        });
+      }
+    }
+
+    return filesContent;
+  } catch (error) {
+    console.error("Error reading zip contents:", error);
+    return [];
+  }
+}
+
+function compareFiles(currentFiles, previousFiles) {
+  const updatedFiles = [];
+
+  currentFiles.forEach((currentFile) => {
+    const previousFile = previousFiles.find(
+      (file) =>
+        file.filePath === currentFile.filePath &&
+        file.fileName === currentFile.fileName
+    );
+
+    if (!previousFile || previousFile.content !== currentFile.content) {
+      if (SPE.includes(currentFile.filePath + "/" + currentFile.fileName)) {
+        console.log(
+          "🔴🔴🔴 SPE file updated since the last release: " +
+            currentFile.filePath +
+            "/" +
+            currentFile.fileName
+        );
+      }
+    }
+  });
+
+  return updatedFiles;
+}
+
 async function fetchData() {
+  const owner = "Groupe-Klocel";
+  const repo = "cella-frontend";
+  const releaseTag = overloadConfig.overloadReleaseTag;
+  const previousReleaseTag = overloadConfig.previousOverloadReleaseTag;
+
+  const currentZipPath = await downloadReleaseZip(owner, repo, releaseTag);
+  const previousZipPath = await downloadReleaseZip(
+    owner,
+    repo,
+    previousReleaseTag
+  );
+
+  if (!currentZipPath || !previousZipPath) {
+    return;
+  }
+
+  const currentFiles = await readZipContents(currentZipPath);
+  const previousFiles = await readZipContents(previousZipPath);
+
+  const updatedFiles = compareFiles(currentFiles, previousFiles);
+
   try {
     console.log("PreBuild in progress...");
-    const response = await fetch(`${overloadConfig.overloadLink}/overloads`);
-    const data = await response.text();
+    const data = await readZipContents(currentZipPath);
+
     let filesCreated = 0;
     if (data) {
-      const splitData = data
-        .split('<script id="__NEXT_DATA__" type="application/json">')[1]
-        .split("</script>")[0]
-        .trim();
-      const dataParsed = JSON.parse(
-        splitData
-          .replace(/&quot;/g, '"')
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&#x27;/g, "'")
-          .replace(/&#x60;/g, "`")
-          .replace(/&amp;/g, "&")
-      ).props.pageProps;
+      const dataFiltered = data.filter(
+        (item) =>
+          !ignoredFiles.includes(item.fileName) &&
+          !item.filePath
+            .split("/")
+            .some((folder) => ignoredFolders.includes(folder)) &&
+          (!ignoredRoutes.includes(item.filePath + "/" + item.fileName) ||
+            includesRoutes.includes(item.filePath + "/" + item.fileName))
+      );
 
       // Read all files&
-      const directoryPath =
-        process.cwd().split("/")[1] === "vercel"
-          ? process.cwd().split("/path0")[0] + "/path0"
-          : process.cwd().split(overloadConfig.clientFolder)[0] +
-            overloadConfig.clientFolder;
-      console.log("directoryPath:", directoryPath);
       const getAllFiles = (dirPath, arrayOfFiles = []) => {
         const files = fs.readdirSync(dirPath);
 
         files.forEach((file) => {
           const filePath = path.join(dirPath, file);
-          if (ignoredRoutes.includes(filePath.split(directoryPath).pop())) {
-            return;
-          }
+
           if (fs.statSync(filePath).isDirectory()) {
             if (!ignoredFolders.includes(file)) {
               arrayOfFiles = getAllFiles(filePath, arrayOfFiles);
@@ -80,6 +187,9 @@ async function fetchData() {
 
         return arrayOfFiles;
       };
+
+      const directoryPath = process.cwd().split("/").slice(0, -1).join("/");
+      console.log("directoryPath:", directoryPath);
       const allFiles = getAllFiles(directoryPath);
 
       const getAllFilesNotInData = () => {
@@ -92,9 +202,9 @@ async function fetchData() {
             filesSpe = filesSpe + 1;
             return; // Skip the file if it contains //$$$$$SPE$$$$$//
           }
-          const fileInData = dataParsed.filesContent.find(
+          const fileInData = dataFiltered.find(
             (item) =>
-              item.path.split(directoryPath).pop() + "/" + item.fileName ===
+              item.filePath + "/" + item.fileName ===
               file.split(directoryPath).pop()
           );
           if (!fileInData) {
@@ -120,8 +230,8 @@ async function fetchData() {
       );
 
       await Promise.all(
-        dataParsed.filesContent.map(async (item) => {
-          const itemPath = ".." + item.path;
+        dataFiltered.map(async (item) => {
+          const itemPath = ".." + item.filePath;
           try {
             const dataFile = fs.readFileSync(
               itemPath + "/" + item.fileName,
