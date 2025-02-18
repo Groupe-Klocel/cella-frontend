@@ -19,7 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent } from '@components';
 import { META_DEFAULTS } from '@helpers';
-import { EditConfiguration } from 'modules/Configurations/PagesContainer/EditConfiguration';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';

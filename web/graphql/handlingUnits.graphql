@@ -176,3 +176,29 @@ mutation UpdateHandlingUnitContent($id: String!, $input: UpdateHandlingUnitConte
         modifiedBy
     }
 }
+
+mutation UpdateHandlingUnitOutboundById($id: String!, $input: UpdateHandlingUnitOutboundInput!) {
+    updateHandlingUnitOutbound(id: $id, input: $input) {
+        name
+        stockOwnerId
+        handlingUnitModelId
+        handlingUnitId
+        carrierId
+        preparationMode
+        theoriticalWeight
+        intermediateWeight1
+        intermediateWeight2
+        finalWeight
+        toBeChecked
+        status
+        deliveryId
+        carrierService
+        carrierBox
+        loadId
+        comment
+        created
+        createdBy
+        modified
+        modifiedBy
+    }
+}
