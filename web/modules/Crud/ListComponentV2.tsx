@@ -52,7 +52,7 @@ import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, initial, isString, set } from 'lodash';
+import _, { debounce, filter, initial, isString, set } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
@@ -561,6 +561,23 @@ const ListComponent = (props: IListProps) => {
         return queryInfo;
     };
 
+    const getNextInfo = async (variables: any) => {
+        const filtersVariables = {
+            filters: variables
+        };
+        const resolverName = props.dataModel.resolverName;
+        const queryName = props.dataModel.endpoints.list;
+        const query = gql`
+            query ($filters: ${resolverName}SearchFilters) {
+                ${queryName}(filters: $filters) {
+                    results {${listFields.join('\n')}}
+                }
+            }
+        `;
+        const queryInfo = await graphqlRequestClient.request(query, filtersVariables);
+        return queryInfo[queryName].results[0];
+    };
+
     useEffect(() => {
         const getLastTransactionId = async () => {
             const generateTransactionId = gql`
@@ -649,74 +666,102 @@ const ListComponent = (props: IListProps) => {
             props.triggerPriorityChange.id &&
             data?.[props.dataModel.endpoints.list]?.results?.length > 0
         ) {
-            const dataToModifie = data[props.dataModel.endpoints.list].results.find(
-                (item: any) => item.id === props.triggerPriorityChange.id
-            );
-            const biggestLineNumber = data[props.dataModel.endpoints.list].results.reduce(
-                (biggest: any, item: any) =>
-                    item[props.triggerPriorityChange.orderingField] > biggest
-                        ? item[props.triggerPriorityChange.orderingField]
-                        : biggest,
-                0
-            );
-            if (
-                !dataToModifie ||
-                !dataToModifie[props.triggerPriorityChange.orderingField] ||
-                (dataToModifie[props.triggerPriorityChange.orderingField] <= 1 &&
-                    props.triggerPriorityChange.type === 'up') ||
-                (dataToModifie[props.triggerPriorityChange.orderingField] >= biggestLineNumber &&
-                    props.triggerPriorityChange.type === 'down')
-            ) {
-                return;
-            }
-            const dataToAdapt: any = data[props.dataModel.endpoints.list].results.find(
-                (item: any) =>
-                    item[props.triggerPriorityChange.orderingField] ===
-                    (props.triggerPriorityChange.type === 'up'
-                        ? dataToModifie[props.triggerPriorityChange.orderingField] - 1
-                        : dataToModifie[props.triggerPriorityChange.orderingField] + 1)
-            );
+            const startChangeOrdering = async () => {
+                const dataToModifie = data[props.dataModel.endpoints.list].results.find(
+                    (item: any) => item.id === props.triggerPriorityChange.id
+                );
+                const biggestLineNumber = data[props.dataModel.endpoints.list].count;
 
-            let dataToAdaptUpdated: any;
-            let setToMinusOne: any;
-            let SetDataToAdapt: any;
-            const dataToModifieUpdated: any = {
-                ...dataToModifie,
-                [props.triggerPriorityChange.orderingField]:
-                    props.triggerPriorityChange.type === 'up'
-                        ? dataToModifie[props.triggerPriorityChange.orderingField] - 1
-                        : dataToModifie[props.triggerPriorityChange.orderingField] + 1
-            };
-            if (dataToAdapt) {
-                dataToAdaptUpdated = {
-                    ...dataToAdapt,
+                let dataToAdapt: any = null;
+                if (
+                    !dataToModifie ||
+                    !dataToModifie[props.triggerPriorityChange.orderingField] ||
+                    (dataToModifie[props.triggerPriorityChange.orderingField] <= 1 &&
+                        props.triggerPriorityChange.type === 'up') ||
+                    (dataToModifie[props.triggerPriorityChange.orderingField] >=
+                        biggestLineNumber &&
+                        props.triggerPriorityChange.type === 'down')
+                ) {
+                    return;
+                }
+                if (
+                    props.triggerPriorityChange.type === 'up' &&
+                    (pagination.current - 1) * pagination.itemsPerPage + 1 ===
+                        dataToModifie[props.triggerPriorityChange.orderingField]
+                ) {
+                    const variables = {
+                        [props.triggerPriorityChange.orderingField]:
+                            (pagination.current - 1) * pagination.itemsPerPage
+                    };
+                    if (props.searchCriteria) {
+                        Object.assign(variables, props.searchCriteria);
+                    }
+                    dataToAdapt = await getNextInfo(variables);
+                } else if (
+                    props.triggerPriorityChange.type === 'down' &&
+                    pagination.current * pagination.itemsPerPage ===
+                        dataToModifie[props.triggerPriorityChange.orderingField]
+                ) {
+                    const variables = {
+                        [props.triggerPriorityChange.orderingField]:
+                            pagination.current * pagination.itemsPerPage + 1
+                    };
+                    if (props.searchCriteria) {
+                        Object.assign(variables, props.searchCriteria);
+                    }
+                    dataToAdapt = await getNextInfo(variables);
+                } else {
+                    dataToAdapt = data[props.dataModel.endpoints.list].results.find(
+                        (item: any) =>
+                            item[props.triggerPriorityChange.orderingField] ===
+                            (props.triggerPriorityChange.type === 'up'
+                                ? dataToModifie[props.triggerPriorityChange.orderingField] - 1
+                                : dataToModifie[props.triggerPriorityChange.orderingField] + 1)
+                    );
+                }
+
+                let dataToAdaptUpdated: any;
+                let setToMinusOne: any;
+                let SetDataToAdapt: any;
+                const dataToModifieUpdated: any = {
+                    ...dataToModifie,
                     [props.triggerPriorityChange.orderingField]:
                         props.triggerPriorityChange.type === 'up'
-                            ? dataToAdapt[props.triggerPriorityChange.orderingField] + 1
-                            : dataToAdapt[props.triggerPriorityChange.orderingField] - 1
+                            ? dataToModifie[props.triggerPriorityChange.orderingField] - 1
+                            : dataToModifie[props.triggerPriorityChange.orderingField] + 1
                 };
-                setToMinusOne = {
+                if (dataToAdapt) {
+                    dataToAdaptUpdated = {
+                        ...dataToAdapt,
+                        [props.triggerPriorityChange.orderingField]:
+                            props.triggerPriorityChange.type === 'up'
+                                ? dataToAdapt[props.triggerPriorityChange.orderingField] + 1
+                                : dataToAdapt[props.triggerPriorityChange.orderingField] - 1
+                    };
+                    setToMinusOne = {
+                        id: dataToModifie.id,
+                        input: {
+                            [props.triggerPriorityChange.orderingField]: -1
+                        }
+                    };
+                    SetDataToAdapt = {
+                        id: dataToAdapt.id,
+                        input: {
+                            [props.triggerPriorityChange.orderingField]:
+                                dataToAdaptUpdated[props.triggerPriorityChange.orderingField]
+                        }
+                    };
+                }
+                const setDataToUpdate = {
                     id: dataToModifie.id,
                     input: {
-                        [props.triggerPriorityChange.orderingField]: -1
-                    }
-                };
-                SetDataToAdapt = {
-                    id: dataToAdapt.id,
-                    input: {
                         [props.triggerPriorityChange.orderingField]:
-                            dataToAdaptUpdated[props.triggerPriorityChange.orderingField]
+                            dataToModifieUpdated[props.triggerPriorityChange.orderingField]
                     }
                 };
-            }
-            const setDataToUpdate = {
-                id: dataToModifie.id,
-                input: {
-                    [props.triggerPriorityChange.orderingField]:
-                        dataToModifieUpdated[props.triggerPriorityChange.orderingField]
-                }
+                priorityChangeFun(setToMinusOne, SetDataToAdapt, setDataToUpdate);
             };
-            priorityChangeFun(setToMinusOne, SetDataToAdapt, setDataToUpdate);
+            startChangeOrdering();
         }
     }, [props.triggerPriorityChange]);
 
@@ -1045,7 +1090,10 @@ const ListComponent = (props: IListProps) => {
     const onChangePagination = useCallback(
         (currentPage: number, itemsPerPage: number) => {
             // Re fetch data for new current page or items per page
-            changeFilter(null, 'default', { current: currentPage, itemsPerPage: itemsPerPage });
+            changeFilter(null, 'default', {
+                current: currentPage,
+                itemsPerPage: itemsPerPage
+            });
             setPagination({
                 total: rows?.count,
                 current: currentPage,

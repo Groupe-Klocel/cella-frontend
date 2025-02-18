@@ -145,7 +145,7 @@ query GetPatternPathLocations(
 
 mutation BulkCreatePatternPathLocations(
     $patternPathId: String!
-    $inputs: [CreatePatternPathLocationInput!]!
+    $inputs: [CreatePatternPathLocationsInput!]!
 ) {
     bulkCreatePatternPathLocations(patternPathId: $patternPathId, inputs: $inputs) {
         id

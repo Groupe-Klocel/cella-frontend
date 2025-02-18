@@ -30,6 +30,7 @@ import { configurationsRoutes as itemRoutes } from 'modules/Configurations/Stati
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
+import { ConfigurationDetailsExtra } from 'modules/Configurations/Elements/ConfigurationDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -122,6 +123,7 @@ const ConfigurationPage: PageComponent = () => {
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
+                extraDataComponent={<ConfigurationDetailsExtra Id={id} details={data} />}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}

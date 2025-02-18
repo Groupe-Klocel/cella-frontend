@@ -29,6 +29,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { stocksRoutes as itemRoutes } from 'modules/Stocks/Static/stocksRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
+import { ParameterDetailsExtra } from 'modules/Parameters/Elements/ParameterDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -114,6 +115,9 @@ const StockStatusPage: PageComponent = () => {
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
+                extraDataComponent={
+                    <ParameterDetailsExtra Id={id} details={data} url={'stock-statuses'} />
+                }
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
