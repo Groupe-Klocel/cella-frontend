@@ -143,7 +143,10 @@ const ShippingUnitsPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable &&
-                                record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                                (record.status ==
+                                    configs.HANDLING_UNIT_OUTBOUND_STATUS_TO_BE_PALLETIZED ||
+                                    record.status ==
+                                        configs.HANDLING_UNIT_OUTBOUND_STATUS_TO_BE_LOADED) ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
