@@ -118,6 +118,11 @@ export const EditShippingUnitsForm: FC<EditShippingUnitsFormProps> = ({
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
 
+                if (formData.theoriticalWeight < 100) {
+                    showError(t('messages:error-min-theoriticalWeight'));
+                    return;
+                }
+
                 //Delete CarrierBox if packaging or theoritical Weight is updated
                 if (
                     details.handlingUnitModel != formData.handlingUnitModel ||
@@ -218,7 +223,7 @@ export const EditShippingUnitsForm: FC<EditShippingUnitsFormProps> = ({
                     <Select disabled></Select>
                 </Form.Item>
                 <Form.Item label={t('d:theoriticalWeight')} name="theoriticalWeight">
-                    <InputNumber style={{ width: '100%' }} min={1} />
+                    <InputNumber style={{ width: '100%' }} min={100} />
                 </Form.Item>
                 <Form.Item name="intermediateWeight1" label={t('d:intermediateWeight1')}>
                     <InputNumber style={{ width: '100%' }} disabled />
