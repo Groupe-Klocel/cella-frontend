@@ -62,7 +62,7 @@ export const PatternPathModelV2: ModelType = {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: false,
+            isSortable: true,
             searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: false,

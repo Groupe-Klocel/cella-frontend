@@ -98,8 +98,7 @@ export const PatternModelV2: ModelType = {
             config: null,
             param: null,
             optionTable: '{"table": "StockOwner", "fieldToDisplay":"name" }',
-            defaultSort: 'ascending',
-            isEditDisabled: true
+            defaultSort: 'ascending'
         },
         'stockOwner{name}': {
             isListRequested: true,
