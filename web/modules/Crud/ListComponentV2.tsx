@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { SearchOutlined } from '@ant-design/icons';
-import { AppTableV2, ContentSpin, HeaderContent } from '@components';
+import { AppTableV2, ContentSpin, DraggableItem, HeaderContent } from '@components';
 import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -38,7 +38,6 @@ import {
     useList,
     flatten,
     useSoftDelete,
-    cookie,
     useUpdate,
     queryString,
     formatUTCLocaleDateTime,
@@ -49,10 +48,10 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
-import { ExportFormat, ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
+import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, filter, initial, isString, set } from 'lodash';
+import _, { debounce, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
@@ -89,6 +88,18 @@ export interface IListProps {
     refetch?: boolean;
     columnFilter?: boolean;
     itemperpage?: number;
+    advancedFilters?: any;
+    //from here : props used for drag and/or drop handling
+    items?: any;
+    isDragAndDroppable?: boolean;
+    isDragSource?: boolean;
+    addRow?: (item: any, index: number) => void;
+    moveRow?: (fromIndex: number, toIndex: number) => void;
+    removeRow?: (item: any) => void;
+    defaultEmptyList?: Array<any>;
+    setInitialData?: any;
+    setAppliedSort?: any;
+    isIndependentScrollable?: boolean;
 }
 
 export interface newPaginationType {
@@ -130,6 +141,13 @@ const ListComponent = (props: IListProps) => {
         savedSorters === null ? null : (savedSorters ?? props.sortDefault ?? sortParameter)
     );
 
+    //this is to retrieve sort applied any time (used by drag and drop component)
+    useEffect(() => {
+        if (props.setAppliedSort) {
+            props.setAppliedSort(sort);
+        }
+    }, [sort]);
+
     // only methode found to get the userSettings from the state inside the function
     const userSettingsRef = useRef(userSettings);
     const stateUserSettingsRef = useRef(state.userSettings);
@@ -150,6 +168,10 @@ const ListComponent = (props: IListProps) => {
 
             if (newSorting === 'default') {
                 newSorting = currentUserSettings?.valueJson?.sorter ?? null;
+            }
+
+            if (newSorting === 'mandatorySort') {
+                newSorting = currentUserSettings?.valueJson?.sorter ?? props.sortDefault;
             }
 
             if (newPagination && newPagination.current) {
@@ -210,6 +232,10 @@ const ListComponent = (props: IListProps) => {
 
             if (newSorting === 'default') {
                 newSorting = currentUserSettings?.valueJson?.sorter ?? null;
+            }
+
+            if (newSorting === 'mandatorySort') {
+                newSorting = currentUserSettings?.valueJson?.sorter ?? props.sortDefault;
             }
 
             if (newPagination && newPagination.current) {
@@ -972,6 +998,9 @@ const ListComponent = (props: IListProps) => {
             DEFAULT_ITEMS_PER_PAGE
     });
 
+    //first version of advancedFilters handling is for development purpose only
+    const advancedFilters = props.advancedFilters ?? null;
+
     // #region USELIST
 
     const {
@@ -987,7 +1016,8 @@ const ListComponent = (props: IListProps) => {
         pagination.itemsPerPage,
         sort,
         router.locale,
-        defaultModelSort
+        defaultModelSort,
+        advancedFilters
     );
 
     // #endregion
@@ -996,17 +1026,20 @@ const ListComponent = (props: IListProps) => {
         // Time delay before reloading data
         const delay = 1000;
         const debouncedReload = debounce(() => {
-            console.log('debouncedReload');
             reloadData();
         }, delay);
 
-        debouncedReload();
+        if (props.isDragAndDroppable) {
+            reloadData();
+        } else {
+            debouncedReload();
+        }
 
         // Cleanup function to cancel the debounce on unmount or dependency change
         return () => {
             debouncedReload.cancel();
         };
-    }, [search, props.refetch, router.locale, switchReloadData]);
+    }, [search, props.refetch, router.locale, switchReloadData, advancedFilters]);
 
     // #endregion
 
@@ -1090,7 +1123,7 @@ const ListComponent = (props: IListProps) => {
     const onChangePagination = useCallback(
         (currentPage: number, itemsPerPage: number) => {
             // Re fetch data for new current page or items per page
-            changeFilter(null, 'default', {
+            changeFilter(null, 'mandatorySort', {
                 current: currentPage,
                 itemsPerPage: itemsPerPage
             });
@@ -1104,11 +1137,19 @@ const ListComponent = (props: IListProps) => {
         [setPagination, rows]
     );
 
-    // For pagination
+    // #region arrange data for dynamic display
     useEffect(() => {
         if (data) {
             // if data is refreshed
-            const listData: any = data?.[props.dataModel.endpoints.list];
+            let listData: any = data?.[props.dataModel.endpoints.list];
+            if (props.isDragAndDroppable && listData && listData['results'].length === 0) {
+                listData = {
+                    count: 1,
+                    itemsPerPage: 10,
+                    totalPages: 1,
+                    results: props.defaultEmptyList
+                };
+            }
 
             if (listData && listData['results']) {
                 const result_list: Array<any> = [];
@@ -1118,7 +1159,13 @@ const ListComponent = (props: IListProps) => {
                     listData['results'] = listData['results'].map((item: any) => {
                         return flatten(item);
                     });
-
+                    if (props.isDragAndDroppable) {
+                        listData['results'] = listData['results'].map(
+                            (item: any, index: number) => {
+                                return { ...item, index };
+                            }
+                        );
+                    }
                     // iterate over the first result and get list of columns to define table structure
                     listFields.forEach((column_name: any, index: number) => {
                         if (column_name.includes('{')) {
@@ -1147,7 +1194,11 @@ const ListComponent = (props: IListProps) => {
                         //If default sort memorized or passed add defaultSortOrder
                         if (sort) {
                             sort.forEach((sorter: any) => {
-                                if (sorter.field === column_name) {
+                                if (props.isDragAndDroppable) {
+                                    if (column_name === 'index') {
+                                        row_data['defaultSortOrder'] = 'ascend';
+                                    }
+                                } else if (sorter.field === column_name) {
                                     row_data['defaultSortOrder'] = sorter.ascending
                                         ? 'ascend'
                                         : 'descend';
@@ -1168,6 +1219,8 @@ const ListComponent = (props: IListProps) => {
                 // set data for the table
                 setRows(listData);
                 if (props.setData) props.setData(listData.results);
+                //this is to initialize and keep data at a given time on parent component
+                if (props.setInitialData) props.setInitialData(listData.results);
                 setPagination({
                     ...pagination,
                     total: listData['count']
@@ -1221,7 +1274,7 @@ const ListComponent = (props: IListProps) => {
         }
     };
 
-    // date formatting
+    //#region Date formatting
     if (rows?.results && rows?.results.length > 0) {
         rows.results.forEach((row: any) => {
             Object.keys(row).forEach((key) => {
@@ -1252,6 +1305,32 @@ const ListComponent = (props: IListProps) => {
     }
     const mergedColumns = [...props.actionColumns, ...props.extraColumns, ...columns];
 
+    //#region Drag and Drop management
+    let draggableComponent;
+    if (props.isDragAndDroppable) {
+        draggableComponent = {
+            body: {
+                row: (rowprops: any) => {
+                    const { 'data-row-key': rowKey, children, ...restProps } = rowprops;
+                    const record = props.items?.find((item: any) => item.id === rowKey);
+                    if (!record) return <tr {...restProps}>{children}</tr>;
+                    return (
+                        <DraggableItem
+                            key={record.id}
+                            record={record}
+                            index={record.index}
+                            columns={mergedColumns}
+                            addRow={props.addRow}
+                            moveRow={props.moveRow}
+                            removeRow={props.removeRow}
+                            {...restProps}
+                            isDragSource={props.isDragSource}
+                        />
+                    );
+                }
+            }
+        };
+    }
     // #endregion
     return (
         <>
@@ -1359,6 +1438,12 @@ const ListComponent = (props: IListProps) => {
                                                 rowSelection={props.rowSelection}
                                                 linkFields={linkFields}
                                                 filter={props.columnFilter}
+                                                isDragAndDroppable={props.isDragAndDroppable}
+                                                components={draggableComponent}
+                                                items={props.items}
+                                                isIndependentScrollable={
+                                                    props.isIndependentScrollable
+                                                }
                                             />
                                         </>
                                     ) : (
@@ -1375,6 +1460,12 @@ const ListComponent = (props: IListProps) => {
                                                 hiddenColumns={hiddenListFields}
                                                 linkFields={linkFields}
                                                 filter={props.columnFilter}
+                                                isDragAndDroppable={props.isDragAndDroppable}
+                                                components={draggableComponent}
+                                                items={props.items}
+                                                isIndependentScrollable={
+                                                    props.isIndependentScrollable
+                                                }
                                             />
                                         </>
                                     )}

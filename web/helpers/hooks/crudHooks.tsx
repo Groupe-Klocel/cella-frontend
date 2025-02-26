@@ -50,7 +50,8 @@ const useList = (
     itemsPerPage: number,
     sort: any,
     language?: string,
-    defaultModelSort?: any
+    defaultModelSort?: any,
+    advancedFilters?: any
 ) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
@@ -65,6 +66,7 @@ const useList = (
     const query = gql`
         query CustomListQuery(
             $filters: ${resolverName}SearchFilters
+            $advancedFilters: [${resolverName}AdvancedSearchFilters!]
             $orderBy: [${resolverName}OrderByCriterion!]
             $page: Int!
             $itemsPerPage: Int!
@@ -72,6 +74,7 @@ const useList = (
         ) {
             ${queryName}(
                 filters: $filters
+                advancedFilters: $advancedFilters
                 orderBy: $orderBy
                 page: $page
                 itemsPerPage: $itemsPerPage
@@ -102,6 +105,7 @@ const useList = (
 
         const variables = {
             filters: search,
+            advancedFilters: advancedFilters,
             orderBy: newSort,
             page: page,
             itemsPerPage: itemsPerPage,
