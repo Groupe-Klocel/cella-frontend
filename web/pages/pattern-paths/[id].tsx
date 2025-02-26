@@ -28,7 +28,6 @@ import {
     getModesFromPermissions,
     pathParamsFromDictionary,
     showError,
-    showInfo,
     showSuccess
 } from '@helpers';
 import { useAppState } from 'context/AppContext';
@@ -92,11 +91,20 @@ const PatternPathPage: PageComponent = () => {
             });
         };
     };
-    const deletePatternPath = (patternPathId: string) => {
+
+    const deletePatternPath = (patternPathId: string, isAssociatedPattern: boolean) => {
         Modal.confirm({
-            title: t('messages:delete-confirm'),
+            title: isAssociatedPattern ? (
+                <>
+                    <span style={{ color: 'red' }}>{t('messages:associated-pattern-warning')}</span>
+                    <br />
+                    {t('messages:delete-confirm')}
+                </>
+            ) : (
+                t('messages:delete-confirm')
+            ),
             onOk: async () => {
-                console.log('Deleting pattern path with ID:', patternPathId);
+                console.log('Deleting pattern path ID:', patternPathId, 'with its locations');
 
                 const query = gql`
                     mutation executeFunction($functionName: String!, $event: JSON!) {
@@ -108,14 +116,13 @@ const PatternPathPage: PageComponent = () => {
                 `;
 
                 const variables = {
-                    functionName: 'K_deletePatternPath',
+                    functionName: 'pattern_path_delete',
                     event: {
                         input: {
                             patternPathId
                         }
                     }
                 };
-
                 try {
                     const patternResult = await graphqlRequestClient.request(query, variables);
                     if (patternResult.executeFunction.status === 'ERROR') {
@@ -185,7 +192,9 @@ const PatternPathPage: PageComponent = () => {
                         <></>
                     )}
                     {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                        <Button onClick={() => deletePatternPath(data.id)}>
+                        <Button
+                            onClick={() => deletePatternPath(data.id, !!data.patternPathLinks_id)}
+                        >
                             {t('actions:delete')}
                         </Button>
                     ) : (

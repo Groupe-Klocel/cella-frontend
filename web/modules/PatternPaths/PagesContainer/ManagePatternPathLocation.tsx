@@ -17,36 +17,29 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Alert, Button, Col, Divider, Input, Layout, List, Row } from 'antd';
-import { ContentSpin, DetailsList, HeaderContent, LinkButton } from '@components';
-import { patternPathsRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-
-import styled from 'styled-components';
 import { NextRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
-import { useAuth } from 'context/AuthContext';
 import {
-    BulkCreatePatternPathLocationsMutation,
-    BulkCreatePatternPathLocationsMutationVariables,
-    BulkDeletePatternPathLocationsMutation,
-    BulkDeletePatternPathLocationsMutationVariables,
+    GetAllBlocksQuery,
     ModeEnum,
     Table,
-    useBulkCreatePatternPathLocationsMutation,
-    useBulkDeletePatternPathLocationsMutation
+    useGetAllBlocksQuery,
+    useListConfigsForAScopeQuery
 } from 'generated/graphql';
-import {
-    showError,
-    usePatternPathLocations,
-    DEFAULT_ITEMS_PER_PAGE,
-    DEFAULT_PAGE_NUMBER,
-    showSuccess,
-    getModesFromPermissions
-} from '@helpers';
-import Title from 'antd/lib/typography/Title';
 import { useAppState } from 'context/AppContext';
+import { getModesFromPermissions, showError, showSuccess, useLocationIds } from '@helpers';
+import { Alert, Button, Card, Col, Divider, Layout, Row } from 'antd';
+import { ContentSpin, DetailsList, HeaderContent } from '@components';
+import { styled } from 'styled-components';
+import { patternPathsRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAuth } from 'context/AuthContext';
+import { PatternPathLocationInputModelV2 as inputModel } from 'models/PatternPathLocationInputModelV2';
+import { PatternPathLocationOutputModelV2 as outputModel } from 'models/PatternPathLocationOutputModelV2';
+import { ListComponent } from 'modules/Crud/ListComponentV2';
 import { gql } from 'graphql-request';
+import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
+import FiltersTable from 'components/common/smart/DragAndDrop/FiltersTable';
 
 const StyledPageContent = styled(Layout.Content)`
     margin: 15px 30px;
@@ -56,54 +49,247 @@ export interface IManagePatternPathLocationProps {
     id: string | any;
     name: string | any;
     patternName: string | any;
-    stockOwnerName: string | any;
     router: NextRouter;
 }
-
-interface LocationRow {
-    value: string;
-    id: string;
+interface Filters {
+    category: string | undefined | null;
+    blockId: string | undefined | null;
+    aisle: string | undefined | null;
+    column: string | undefined | null;
+    level: string | undefined | null;
+    position: string | undefined | null;
 }
-
 export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
     id,
     name,
     patternName,
-    stockOwnerName,
     router
 }: IManagePatternPathLocationProps) => {
     const { t } = useTranslation();
+    const { permissions } = useAppState();
+    const modes = getModesFromPermissions(permissions, Table.PatternPathLocation);
     const { graphqlRequestClient } = useAuth();
     const [patternPath, setPatternPath] = useState<any>();
+    const [locationsList, setLocationsList] = useState<any>();
+    const [patternPathLocationsList, setPatternPathLocationsList] = useState<any>();
+    const [initialPatternPathLocations, setInitialPatternPathLocations] = useState<any>(null);
+    const [refetchPatternPathLocations, setRefetchPatternPathLocations] = useState(false);
+    const [categoriesTexts, setCategoriesTexts] = useState<any>();
+    const [blockList, setBlockList] = useState<any>();
+    const [filters, setFilters] = useState<Filters>({
+        category: undefined,
+        blockId: undefined,
+        aisle: undefined,
+        column: undefined,
+        level: undefined,
+        position: undefined
+    });
+    const [appliedSort, setAppliedSort] = useState<any>();
+
+    const patternPathBreadCrumb = [
+        ...patternPathsRoutes,
+        {
+            breadcrumbName: `${name}`
+        }
+    ];
+    const breadCrumb = [
+        ...patternPathBreadCrumb,
+        {
+            breadcrumbName: `${t('d:manage-locations')} `
+        }
+    ];
 
     useEffect(() => {
         setPatternPath({
             name: name,
-            stockOwner: stockOwnerName,
             pattern: patternName
         });
-    }, [patternName, stockOwnerName]);
+    }, [patternName]);
 
-    const [selectedLocations, setSelectedLocations] = useState<Array<LocationRow>>([]);
-    const [otherLocations, setOtherLocations] = useState<Array<LocationRow>>([]);
-    const [locationFilter, setLocationFilter] = useState<string>('');
-    const [dataLocations, setDataLocations] = useState<any>();
+    //#region LIST For FILTER component
+    const categoriesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'location_category',
+        language: router.locale
+    });
+    useEffect(() => {
+        if (categoriesTextList) {
+            setCategoriesTexts(categoriesTextList?.data?.listConfigsForAScope);
+        }
+    }, [categoriesTextList.data]);
 
-    const { isLoading, data, error } = usePatternPathLocations(
-        { patternPathId: id },
-        DEFAULT_PAGE_NUMBER,
-        DEFAULT_ITEMS_PER_PAGE,
+    const blockListQuery = useGetAllBlocksQuery<Partial<GetAllBlocksQuery>, Error>(
+        graphqlRequestClient,
         {
-            field: 'order',
-            ascending: false
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 1000
         }
     );
+    useEffect(() => {
+        if (blockListQuery) {
+            setBlockList(blockListQuery?.data?.blocks?.results);
+        }
+    }, [blockListQuery.data]);
 
-    async function getLocations(
-        locationFilter: string
-    ): Promise<{ [key: string]: any } | undefined> {
+    //We need to separately query locations data to retrieve relevant aisles, columns,...
+    const search = filters.blockId ? { blockId: filters.blockId! } : undefined;
+    const { data: fullLocationsData } = useLocationIds(search, 1, 1000, null);
+    const aislesList = Array.from(
+        new Set(fullLocationsData?.locations?.results?.map((loc: any) => loc.aisle).filter(Boolean))
+    ).sort();
+
+    const columnsList = Array.from(
+        new Set(
+            fullLocationsData?.locations?.results?.map((loc: any) => loc.column).filter(Boolean)
+        )
+    ).sort();
+
+    const levelsList = Array.from(
+        new Set(fullLocationsData?.locations?.results?.map((loc: any) => loc.level).filter(Boolean))
+    ).sort();
+
+    const positionsList = Array.from(
+        new Set(
+            fullLocationsData?.locations?.results?.map((loc: any) => loc.position).filter(Boolean)
+        )
+    ).sort();
+
+    const handleClearFilter = (filterKey: any) => {
+        setFilters((prevFilters) => {
+            const newFilters = { ...prevFilters, [filterKey]: undefined };
+            if (filterKey === 'blockId') {
+                newFilters.aisle = undefined;
+                newFilters.column = undefined;
+                newFilters.level = undefined;
+                newFilters.position = undefined;
+            } else if (filterKey === 'aisle') {
+                newFilters.column = undefined;
+                newFilters.level = undefined;
+                newFilters.position = undefined;
+            } else if (filterKey === 'column') {
+                newFilters.level = undefined;
+                newFilters.position = undefined;
+            } else if (filterKey === 'level') {
+                newFilters.position = undefined;
+            }
+
+            return newFilters;
+        });
+    };
+
+    const filterConfig = [
+        { label: 'Catégorie', value: 'category', list: categoriesTexts, width: '25%' },
+        { label: 'Bloc', value: 'blockId', list: blockList, width: '25%' },
+        {
+            label: 'Allée',
+            value: 'aisle',
+            list: aislesList,
+            disabled: !filters.blockId
+        },
+        {
+            label: 'Colonne',
+            value: 'column',
+            list: columnsList,
+            disabled: !filters.blockId
+        },
+        {
+            label: 'Niveau',
+            value: 'level',
+            list: levelsList,
+            disabled: !filters.blockId
+        },
+        {
+            label: 'Position',
+            value: 'position',
+            list: positionsList,
+            disabled: !filters.blockId
+        }
+    ];
+
+    //"Drop here" object that is needed to be droppable when list is empty
+    const emptyPatternLocationsList = [
+        {
+            id: 'null',
+            locationId: 'null',
+            location_name: t('actions:drop_here'),
+            order: 1
+        }
+    ];
+
+    const emptyLocationsList = [
+        {
+            id: 'null',
+            name: t('actions:drop_here'),
+            index: 0
+        }
+    ];
+
+    //#region Handledrag and drop functions
+    const handleDropToTarget = (item: any, toIndex: number) => {
+        setPatternPathLocationsList((prev: any) => {
+            if (!prev.some((e: any) => e.locationId === item.id)) {
+                let counter = 1;
+                const tmpIds = prev
+                    .filter((e: any) => e.id.startsWith('tmp_id'))
+                    .map((e: any) => parseInt(e.id.slice(6)));
+
+                if (tmpIds.length > 0) {
+                    counter = Math.max(...tmpIds) + 1;
+                }
+
+                const newItem = {
+                    id: `tmp_id${counter}`,
+                    patternPathId: id,
+                    locationId: item.id,
+                    location_name: item.name
+                };
+                const updatedItems = [...prev];
+                updatedItems.splice(toIndex, 0, newItem);
+
+                return updatedItems
+                    .filter((e: any) => e.id !== 'null')
+                    .map((e, index) => ({
+                        ...e,
+                        order: index + 1,
+                        index
+                    }));
+            }
+            return prev;
+        });
+    };
+
+    const handleDropBack = (item: any) => {
+        setPatternPathLocationsList((prev: any) => {
+            const updated = prev.filter((e: any) => e.locationId !== item.locationId);
+            if (updated.length === 0) {
+                return emptyPatternLocationsList;
+            }
+            return updated.map((e: any, index: number) => ({
+                ...e,
+                index
+            }));
+        });
+    };
+
+    const moveRow = (fromIndex: number, toIndex: number) => {
+        const updatedItems = [...patternPathLocationsList];
+        const [movedItem] = updatedItems.splice(fromIndex, 1);
+
+        updatedItems.splice(toIndex, 0, movedItem);
+
+        const updatedItemsWithIndex = updatedItems.map((e, index) => ({
+            ...e,
+            order: index + 1,
+            index
+        }));
+        setPatternPathLocationsList(updatedItemsWithIndex);
+    };
+
+    //#region handle move all functions
+    const moveAllToTarget = async () => {
+        //retrieve all current displaed data first
         const query = gql`
-            query GetAllLocations(
+            query locations(
                 $filters: LocationSearchFilters
                 $orderBy: [LocationOrderByCriterion!]
                 $page: Int!
@@ -120,156 +306,150 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                     totalPages
                     results {
                         id
-                        name
-                        barcode
-                        aisle
-                        column
-                        level
-                        position
-                        replenish
+                        category
+                        categoryText
                         blockId
                         block {
                             name
                         }
-                        replenishType
-                        constraint
-                        comment
-                        baseUnitRotation
-                        allowCycleCountStockMin
+                        name
+                        aisle
+                        column
+                        level
+                        position
                     }
                 }
             }
         `;
         const variables = {
-            filters: { name: `${locationFilter}%` },
-            page: DEFAULT_PAGE_NUMBER,
-            itemsPerPage: DEFAULT_ITEMS_PER_PAGE,
-            orderBy: null
+            filters,
+            orderBy: appliedSort,
+            page: 1,
+            itemsPerPage: 20000
         };
-        const dataLocations = await graphqlRequestClient.request(query, variables);
+        const locationsFullList = await graphqlRequestClient.request(query, variables);
 
-        return dataLocations;
-    }
-
-    useEffect(() => {
-        async function fetchData() {
-            const dataLocations = await getLocations(locationFilter);
-            const result = await dataLocations;
-            if (result) setDataLocations(result);
-        }
-        fetchData();
-    }, [locationFilter]);
-
-    const createNameString = (item: any) => {
-        return `${item.name}`;
-    };
-
-    useEffect(() => {
-        const newLocations: Array<LocationRow> = [];
-        if (data && data?.patternPathLocations?.results) {
-            data.patternPathLocations.results.forEach((element) => {
-                newLocations.push({
-                    id: element.location?.id,
-                    value: createNameString(element.location)
-                });
+        if (locationsFullList.locations.results) {
+            locationsFullList.locations.results.forEach((item: any, index: number) => {
+                handleDropToTarget(item, patternPathLocationsList.length + index);
             });
-            setSelectedLocations(newLocations);
         }
-    }, [data]);
+    };
 
-    useEffect(() => {
-        const newLocations: Array<LocationRow> = [];
-        if (dataLocations && dataLocations?.locations?.results) {
-            dataLocations.locations.results.forEach((element: any) => {
-                newLocations.push({ id: element.id!, value: createNameString(element) });
+    const moveAllToBack = async () => {
+        if (patternPathLocationsList) {
+            patternPathLocationsList.forEach((item: any) => {
+                handleDropBack(item);
             });
-            setOtherLocations(newLocations);
-        }
-    }, [dataLocations]);
-
-    const selectLocation = (id: string) => {
-        const item = otherLocations.find((el) => {
-            return el.id == id;
-        });
-        if (item) {
-            setOtherLocations(otherLocations.filter((e) => e.id != id));
-            const newLocations = selectedLocations;
-            newLocations.push(item);
-            setSelectedLocations(newLocations);
-        }
-    };
-    const deselectLocation = (id: string) => {
-        const item = selectedLocations.find((el) => {
-            return el.id == id;
-        });
-        if (item) {
-            setSelectedLocations(selectedLocations.filter((e) => e.id != id));
-            if (!otherLocations.some((e) => e.id == id)) {
-                const newLocations = otherLocations;
-                newLocations.push(item);
-                setOtherLocations(newLocations);
-            }
         }
     };
 
-    const patternPathBreadCrumb = [
-        ...patternPathsRoutes,
-        {
-            breadcrumbName: `${name}`
-        }
-    ];
-    const breadCrumb = [
-        ...patternPathBreadCrumb,
-        {
-            breadcrumbName: `${t('d:manage-locations')} `
-        }
-    ];
-
+    //This is to relaunch locations query removing locations already selected in patttern_path_locations
+    const [idsToRemove, setIdsToRemove] = useState<any>();
     useEffect(() => {
-        if (error) {
-            showError(t('messages:error-getting-data'));
+        if (patternPathLocationsList) {
+            const ids = patternPathLocationsList.map((ppl: any) => ({
+                filter: {
+                    field: { id: ppl.locationId },
+                    searchType: 'DIFFERENT'
+                }
+            }));
+
+            if (ids.length > 0) {
+                setIdsToRemove(ids);
+            }
         }
-    }, [error]);
+    }, [patternPathLocationsList]);
 
-    const { mutate: createLocations, isPending: createLoading } =
-        useBulkCreatePatternPathLocationsMutation<Error>(graphqlRequestClient, {
-            onSuccess: (
-                data: BulkCreatePatternPathLocationsMutation,
-                _variables: BulkCreatePatternPathLocationsMutationVariables,
-                _context: any
-            ) => {
-                showSuccess(t('messages:success-updated'));
-            },
-            onError: () => {
-                showError(t('messages:error-update-data'));
+    //#region ON FINISH
+    const [isCreationLoading, setIsCreationLoading] = useState(false);
+    const onFinish = async () => {
+        setIsCreationLoading(true);
+        const generateTransactionId = gql`
+            mutation {
+                generateTransactionId
             }
-        });
-    const { mutate: deleteLocations, isPending: deleteLoading } =
-        useBulkDeletePatternPathLocationsMutation<Error>(graphqlRequestClient, {
-            onSuccess: (
-                data: BulkDeletePatternPathLocationsMutation,
-                _variables: BulkDeletePatternPathLocationsMutationVariables,
-                _context: unknown
-            ) => {
-                // Save new locations list.
-                const inputData = selectedLocations.map((item, i) => {
-                    return { locationId: item.id, extras: {}, order: selectedLocations.length - i };
-                });
-                createLocations({ patternPathId: id, inputs: inputData });
-            },
-            onError: () => {
-                showError(t('messages:error-update-data'));
-            }
-        });
+        `;
+        const transactionIdResponse = await graphqlRequestClient.request(generateTransactionId);
+        const lastTransactionId = transactionIdResponse.generateTransactionId;
 
-    const saveLocations = () => {
-        deleteLocations({ patternPathId: id });
-        router.back();
+        const rollbackTransaction = gql`
+            mutation rollback($transactionId: String!) {
+                rollbackTransaction(transactionId: $transactionId)
+            }
+        `;
+        const rollbackVariable = {
+            transactionId: lastTransactionId
+        };
+
+        try {
+            const deletePatternPathLocs = gql`
+                mutation deletePatternPathLocs($ids: [String!]!) {
+                    deletePatternPathLocations(ids: $ids)
+                }
+            `;
+
+            const patternPathLocsIds = {
+                ids: initialPatternPathLocations
+                    .map((e: any) => e.id)
+                    .filter((e: any) => e !== 'null'),
+                lastTransactionId
+            };
+
+            try {
+                const deletePatternPathLocationsResponse = await graphqlRequestClient.request(
+                    deletePatternPathLocs,
+                    patternPathLocsIds
+                );
+
+                if (patternPathLocationsList.filter((e: any) => e.id !== 'null').length > 0) {
+                    if (deletePatternPathLocationsResponse) {
+                        const inputs = patternPathLocationsList.map((e: any) => ({
+                            patternPathId: e.patternPathId,
+                            locationId: e.locationId,
+                            order: e.order,
+                            lastTransactionId: lastTransactionId
+                        }));
+
+                        const createPatternPathLocs = gql`
+                            mutation createPatternPathLocations(
+                                $inputs: [CreatePatternPathLocationInput!]!
+                            ) {
+                                createPatternPathLocations(inputs: $inputs)
+                            }
+                        `;
+
+                        const patternPathLocsVariables = {
+                            inputs
+                        };
+
+                        try {
+                            await graphqlRequestClient.request(
+                                createPatternPathLocs,
+                                patternPathLocsVariables
+                            );
+                        } catch (error) {
+                            console.log('Error on creation:', error);
+                        }
+                    }
+                }
+                setRefetchPatternPathLocations(!refetchPatternPathLocations);
+            } catch (error) {
+                console.log('Error on delete:', error);
+                throw error;
+            }
+
+            showSuccess(t('messages:success-updated'));
+            setIsCreationLoading(false);
+        } catch (error) {
+            showError(t('messages:error-update-data'));
+            console.log(error);
+            await graphqlRequestClient.request(rollbackTransaction, rollbackVariable);
+            setIsCreationLoading(false);
+        }
     };
 
-    const { permissions } = useAppState();
-    const modes = getModesFromPermissions(permissions, Table.PatternPathLocation);
-
+    //#region RETURN
     return (
         <>
             {permissions ? (
@@ -294,73 +474,103 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                         <StyledPageContent>
                             <DetailsList details={patternPath} />
                             <Divider />
+                            <Col span={12}>
+                                <FiltersTable
+                                    filters={filters}
+                                    setFilters={setFilters}
+                                    filterConfig={filterConfig}
+                                    handleClear={handleClearFilter}
+                                />
+                            </Col>
                             <Row gutter={19}>
                                 <Col span={12}>
-                                    <List
-                                        size="small"
-                                        header={
-                                            <Title level={5}>
-                                                {t('common:pattern-path-locations-set')}
-                                            </Title>
+                                    <Card
+                                        type="inner"
+                                        title={t('common:pattern-path-locations-free')}
+                                        extra={
+                                            <Button
+                                                type="primary"
+                                                onClick={moveAllToTarget}
+                                                disabled={
+                                                    locationsList?.filter(
+                                                        (e: any) => e.id !== 'null'
+                                                    ).length === 0
+                                                }
+                                            >
+                                                {t('actions:send-all')} <DoubleRightOutlined />
+                                            </Button>
                                         }
-                                        bordered
-                                        dataSource={selectedLocations}
-                                        renderItem={(item) => (
-                                            <List.Item>
-                                                <Button
-                                                    type="text"
-                                                    onClick={() => deselectLocation(item.id)}
-                                                >
-                                                    {item.value}
-                                                </Button>
-                                            </List.Item>
-                                        )}
-                                    />
+                                    >
+                                        <ListComponent
+                                            searchCriteria={filters}
+                                            itemperpage={10}
+                                            dataModel={inputModel}
+                                            triggerDelete={null}
+                                            triggerSoftDelete={null}
+                                            columnFilter={false}
+                                            items={locationsList}
+                                            isDragAndDroppable={true}
+                                            isDragSource={true}
+                                            removeRow={handleDropBack}
+                                            setData={setLocationsList}
+                                            advancedFilters={idsToRemove}
+                                            defaultEmptyList={emptyLocationsList}
+                                            setAppliedSort={setAppliedSort}
+                                        />
+                                    </Card>
                                 </Col>
                                 <Col span={12}>
-                                    <List
-                                        size="small"
-                                        header={
-                                            <>
-                                                <Title level={5}>
-                                                    {t('common:pattern-path-locations-free')}
-                                                </Title>
-                                                <Input
-                                                    onChange={(e: any) => {
-                                                        setLocationFilter(e.target.value);
-                                                    }}
-                                                    placeholder={t('common:filter')}
-                                                />
-                                            </>
+                                    <Card
+                                        type="inner"
+                                        title={t('common:pattern-path-locations-set')}
+                                        extra={
+                                            <Button
+                                                type="primary"
+                                                onClick={moveAllToBack}
+                                                disabled={
+                                                    patternPathLocationsList?.filter(
+                                                        (e: any) => e.id !== 'null'
+                                                    ).length === 0
+                                                }
+                                            >
+                                                <DoubleLeftOutlined /> {t('actions:remove-all')}
+                                            </Button>
                                         }
-                                        bordered
-                                        dataSource={otherLocations.filter((item) => {
-                                            return (
-                                                !selectedLocations.some((e) => e.id == item.id) &&
-                                                item.value.startsWith(locationFilter)
-                                            );
-                                        })}
-                                        renderItem={(item) => (
-                                            <List.Item>
-                                                <Button
-                                                    type="text"
-                                                    onClick={() => selectLocation(item.id)}
-                                                >
-                                                    {item.value}
-                                                </Button>
-                                            </List.Item>
-                                        )}
-                                    />
+                                    >
+                                        <div style={{ textAlign: 'center' }}>
+                                            <Button
+                                                type="primary"
+                                                loading={isCreationLoading}
+                                                onClick={onFinish}
+                                                disabled={
+                                                    patternPathLocationsList ===
+                                                    initialPatternPathLocations
+                                                }
+                                            >
+                                                {t('actions:submit')}
+                                            </Button>
+                                        </div>
+                                        <ListComponent
+                                            searchCriteria={{ patternPathId: id }}
+                                            sortDefault={[{ field: 'order', ascending: true }]}
+                                            itemperpage={1000000}
+                                            dataModel={outputModel}
+                                            triggerDelete={null}
+                                            triggerSoftDelete={null}
+                                            columnFilter={false}
+                                            refetch={refetchPatternPathLocations}
+                                            items={patternPathLocationsList}
+                                            isDragAndDroppable={true}
+                                            addRow={handleDropToTarget}
+                                            moveRow={moveRow}
+                                            setData={setPatternPathLocationsList}
+                                            setInitialData={setInitialPatternPathLocations}
+                                            defaultEmptyList={emptyPatternLocationsList}
+                                            isIndependentScrollable={true}
+                                        />
+                                    </Card>
                                 </Col>
                             </Row>
-
-                            <Button
-                                type="primary"
-                                loading={createLoading || deleteLoading}
-                                onClick={saveLocations}
-                            >
-                                {t('actions:submit')}
-                            </Button>
                         </StyledPageContent>
                     </>
                 )
