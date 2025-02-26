@@ -132,27 +132,88 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
     }, [blockListQuery.data]);
 
     //We need to separately query locations data to retrieve relevant aisles, columns,...
-    const search = filters.blockId ? { blockId: filters.blockId! } : undefined;
-    const { data: fullLocationsData } = useLocationIds(search, 1, 1000, null);
-    const aislesList = Array.from(
-        new Set(fullLocationsData?.locations?.results?.map((loc: any) => loc.aisle).filter(Boolean))
-    ).sort();
+    const [aislesList, setAislesList] = useState<any>([]);
+    const [columnsList, setColumnsList] = useState<any>([]);
+    const [levelsList, setLevelsList] = useState<any>([]);
+    const [positionsList, setPositionsList] = useState<any>([]);
+    // const { data: fullLocationsData } = useLocationIds(search, 1, 1000000, null);
+    useEffect(() => {
+        const fetchLocations = async () => {
+            const locationsQuery = gql`
+                query locations(
+                    $filters: LocationSearchFilters
+                    $orderBy: [LocationOrderByCriterion!]
+                    $page: Int!
+                    $itemsPerPage: Int!
+                ) {
+                    locations(
+                        filters: $filters
+                        orderBy: $orderBy
+                        page: $page
+                        itemsPerPage: $itemsPerPage
+                    ) {
+                        results {
+                            id
+                            aisle
+                            column
+                            level
+                            position
+                        }
+                    }
+                }
+            `;
+            const variables = {
+                filters: { blockId: filters.blockId! },
+                undefined,
+                page: 1,
+                itemsPerPage: 1000000
+            };
+            const locationsFullList = await graphqlRequestClient.request(locationsQuery, variables);
 
-    const columnsList = Array.from(
-        new Set(
-            fullLocationsData?.locations?.results?.map((loc: any) => loc.column).filter(Boolean)
-        )
-    ).sort();
+            setAislesList(
+                Array.from(
+                    new Set(
+                        locationsFullList?.locations?.results
+                            ?.map((loc: any) => loc.aisle)
+                            .filter(Boolean)
+                    )
+                ).sort()
+            );
 
-    const levelsList = Array.from(
-        new Set(fullLocationsData?.locations?.results?.map((loc: any) => loc.level).filter(Boolean))
-    ).sort();
+            setColumnsList(
+                Array.from(
+                    new Set(
+                        locationsFullList?.locations?.results
+                            ?.map((loc: any) => loc.column)
+                            .filter(Boolean)
+                    )
+                ).sort()
+            );
 
-    const positionsList = Array.from(
-        new Set(
-            fullLocationsData?.locations?.results?.map((loc: any) => loc.position).filter(Boolean)
-        )
-    ).sort();
+            setLevelsList(
+                Array.from(
+                    new Set(
+                        locationsFullList?.locations?.results
+                            ?.map((loc: any) => loc.level)
+                            .filter(Boolean)
+                    )
+                ).sort()
+            );
+
+            setPositionsList(
+                Array.from(
+                    new Set(
+                        locationsFullList?.locations?.results
+                            ?.map((loc: any) => loc.position)
+                            .filter(Boolean)
+                    )
+                ).sort()
+            );
+        };
+        if (filters.blockId) {
+            fetchLocations();
+        }
+    }, [filters.blockId]);
 
     const handleClearFilter = (filterKey: any) => {
         setFilters((prevFilters) => {
