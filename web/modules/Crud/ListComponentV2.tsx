@@ -96,7 +96,7 @@ export interface IListProps {
     addRow?: (item: any, index: number) => void;
     moveRow?: (fromIndex: number, toIndex: number) => void;
     removeRow?: (item: any) => void;
-    defaultEmptyList?: Array<any>;
+    defaultEmptyList?: any;
     setInitialData?: any;
     setAppliedSort?: any;
     isIndependentScrollable?: boolean;
@@ -1165,6 +1165,12 @@ const ListComponent = (props: IListProps) => {
                                 return { ...item, index };
                             }
                         );
+                        if (listData['results'].filter((e: any) => e.id !== 'null').length !== 0) {
+                            listData['results'] = [
+                                ...listData['results'],
+                                ...props.defaultEmptyList
+                            ];
+                        }
                     }
                     // iterate over the first result and get list of columns to define table structure
                     listFields.forEach((column_name: any, index: number) => {
