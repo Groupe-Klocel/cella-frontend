@@ -272,8 +272,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
         {
             id: 'null',
             locationId: 'null',
-            location_name: t('actions:drop_here'),
-            order: 1
+            location_name: t('actions:drop_here')
         }
     ];
 
@@ -291,8 +290,8 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
             if (!prev.some((e: any) => e.locationId === item.id)) {
                 let counter = 1;
                 const tmpIds = prev
-                    .filter((e: any) => e.id.startsWith('tmp_id'))
-                    .map((e: any) => parseInt(e.id.slice(6)));
+                    .filter((e: any) => e?.id?.startsWith('tmp_id'))
+                    .map((e: any) => parseInt(e.id?.slice(6)));
 
                 if (tmpIds.length > 0) {
                     counter = Math.max(...tmpIds) + 1;
@@ -305,34 +304,46 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                     location_name: item.name
                 };
                 const updatedItems = [...prev];
-                updatedItems.splice(toIndex, 0, newItem);
+                updatedItems.splice(toIndex ?? updatedItems.length - 1, 0, newItem);
 
-                return updatedItems
-                    .filter((e: any) => e.id !== 'null')
-                    .map((e, index) => ({
-                        ...e,
-                        order: index + 1,
-                        index
-                    }));
+                return (
+                    updatedItems
+                        // .filter((e: any) => e.id !== 'null')
+                        .map((e, index) => ({
+                            ...e,
+                            order: e.id === 'null' ? null : index + 1,
+                            index
+                        }))
+                );
             }
             return prev;
         });
     };
 
     const handleDropBack = (item: any) => {
+        if (item.id === 'null') return;
         setPatternPathLocationsList((prev: any) => {
             const updated = prev.filter((e: any) => e.locationId !== item.locationId);
             if (updated.length === 0) {
                 return emptyPatternLocationsList;
             }
+
             return updated.map((e: any, index: number) => ({
                 ...e,
-                index
+                order: e.id === 'null' ? null : index + 1
             }));
         });
     };
 
     const moveRow = (fromIndex: number, toIndex: number) => {
+        if (
+            fromIndex === undefined ||
+            fromIndex === null ||
+            toIndex === undefined ||
+            toIndex === null
+        )
+            return;
+
         const updatedItems = [...patternPathLocationsList];
         const [movedItem] = updatedItems.splice(fromIndex, 1);
 
@@ -340,8 +351,8 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
 
         const updatedItemsWithIndex = updatedItems.map((e, index) => ({
             ...e,
-            order: index + 1,
-            index
+            order: e.id === 'null' ? null : index + 1,
+            index: e.id === 'null' ? null : index
         }));
         setPatternPathLocationsList(updatedItemsWithIndex);
     };
@@ -392,7 +403,10 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
 
         if (locationsFullList.locations.results) {
             locationsFullList.locations.results.forEach((item: any, index: number) => {
-                handleDropToTarget(item, patternPathLocationsList.length + index);
+                handleDropToTarget(
+                    item,
+                    patternPathLocationsList.filter((e: any) => e.id !== 'null').length + index
+                );
             });
         }
     };
@@ -465,12 +479,14 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
 
                 if (patternPathLocationsList.filter((e: any) => e.id !== 'null').length > 0) {
                     if (deletePatternPathLocationsResponse) {
-                        const inputs = patternPathLocationsList.map((e: any) => ({
-                            patternPathId: e.patternPathId,
-                            locationId: e.locationId,
-                            order: e.order,
-                            lastTransactionId: lastTransactionId
-                        }));
+                        const inputs = patternPathLocationsList
+                            .filter((e: any) => e.id !== 'null')
+                            .map((e: any) => ({
+                                patternPathId: e.patternPathId,
+                                locationId: e.locationId,
+                                order: e.order,
+                                lastTransactionId: lastTransactionId
+                            }));
 
                         const createPatternPathLocs = gql`
                             mutation createPatternPathLocations(
