@@ -27,9 +27,9 @@ import {
     useListConfigsForAScopeQuery
 } from 'generated/graphql';
 import { useAppState } from 'context/AppContext';
-import { getModesFromPermissions, showError, showSuccess, useLocationIds } from '@helpers';
-import { Alert, Button, Card, Col, Divider, Layout, Row } from 'antd';
-import { ContentSpin, DetailsList, HeaderContent } from '@components';
+import { getModesFromPermissions, showError, showSuccess } from '@helpers';
+import { Alert, Button, Card, Col, Layout, Row } from 'antd';
+import { ContentSpin, HeaderContent } from '@components';
 import { styled } from 'styled-components';
 import { patternPathsRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -62,14 +62,12 @@ interface Filters {
 export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
     id,
     name,
-    patternName,
     router
 }: IManagePatternPathLocationProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.PatternPathLocation);
     const { graphqlRequestClient } = useAuth();
-    const [patternPath, setPatternPath] = useState<any>();
     const [locationsList, setLocationsList] = useState<any>();
     const [patternPathLocationsList, setPatternPathLocationsList] = useState<any>();
     const [initialPatternPathLocations, setInitialPatternPathLocations] = useState<any>(null);
@@ -98,13 +96,6 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
             breadcrumbName: `${t('d:manage-locations')} `
         }
     ];
-
-    useEffect(() => {
-        setPatternPath({
-            name: name,
-            pattern: patternName
-        });
-    }, [patternName]);
 
     //#region LIST For FILTER component
     const categoriesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -550,8 +541,6 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                             onBack={() => router.push(`/pattern-paths/${id}`)}
                         />
                         <StyledPageContent>
-                            <DetailsList details={patternPath} />
-                            <Divider />
                             <Col span={12}>
                                 <FiltersTable
                                     filters={filters}
