@@ -303,6 +303,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                     locationId: item.id,
                     location_name: item.name
                 };
+
                 const updatedItems = [...prev];
                 updatedItems.splice(toIndex ?? updatedItems.length - 1, 0, newItem);
 
@@ -312,7 +313,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                         .map((e, index) => ({
                             ...e,
                             order: e.id === 'null' ? null : index + 1,
-                            index
+                            index: e.id === 'null' ? null : index
                         }))
                 );
             }
