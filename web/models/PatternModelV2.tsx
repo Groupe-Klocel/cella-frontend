@@ -180,6 +180,26 @@ export const PatternModelV2: ModelType = {
             config: null,
             param: null
         },
+        isStrict: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'Boolean',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: 'Checkbox',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         status: {
             isListRequested: true,
             isDefaultHiddenList: false,
