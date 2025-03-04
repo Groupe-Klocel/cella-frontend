@@ -562,7 +562,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                         handlingUnitId: finalHandlingUnit.id,
                                         articleId: articleInfos.id,
                                         quantity: minQuantity,
-                                        stockOwnerId: roundContentInfos.stockOwnerId,
+                                        stockOwnerId: roundHU.stockOwnerId,
                                         stockStatus: parameters.STOCK_STATUSES_SALE, // 14000
                                         lastTransactionId
                                     }
