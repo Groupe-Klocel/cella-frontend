@@ -44,6 +44,20 @@ input::-webkit-input-placeholder {
     z-index: 2000;
 }
 
+.form-filter {
+    margin-bottom: 15px !important;
+    width: 100%;
+    padding-right: 15px;
+}
+.form-filter .ant-form-item {
+    margin-right: 0px !important;
+}
+.form-filter .ant-form-item-row {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgb(171, 171, 171);
+}
+
 .row-dragging td {
     padding: 16px;
 }

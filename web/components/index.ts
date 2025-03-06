@@ -49,3 +49,5 @@ export * from './common/smart/Modals/SinglePrintModal';
 export * from './common/smart/Page/Page';
 export * from './common/smart/SideMenu/SideMenu';
 export * from './common/smart/Modals/CrontabModalV2';
+export * from './common/smart/DragAndDrop/DraggableItem';
+export * from './common/smart/DragAndDrop/FiltersTable';

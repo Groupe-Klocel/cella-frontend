@@ -143,58 +143,19 @@ query GetPatternPathLocations(
     }
 }
 
-mutation BulkCreatePatternPathLocations(
-    $patternPathId: String!
-    $inputs: [CreatePatternPathLocationsInput!]!
-) {
-    bulkCreatePatternPathLocations(patternPathId: $patternPathId, inputs: $inputs) {
-        id
-        extras
-        created
-        createdBy
-        modified
-        modifiedBy
-        order
-        locationId
-        patternPathId
-        location {
-            id
-            name
-            position
-            column
-            level
-            aisle
-        }
-    }
+mutation CreatePatternPathLocations($inputs: [CreatePatternPathLocationInput!]!) {
+    createPatternPathLocations(inputs: $inputs)
 }
 
-mutation bulkUpdatePatternPathLocations(
-    $patternPathId: String!
-    $inputs: [UpdatePatternPathLocationsInput!]!
+mutation UpdatePatternPathLocations(
+    $ids: [String!]!
+    $input: UpdatePatternPathLocationInput!
+    $bulkUpdates: [BulkUpdatePatternPathLocationInput!]
 ) {
-    bulkUpdatePatternPathLocations(patternPathId: $patternPathId, inputs: $inputs) {
-        id
-        extras
-        created
-        createdBy
-        modified
-        modifiedBy
-        order
-        locationId
-        patternPathId
-        location {
-            id
-            name
-            position
-            column
-            level
-            aisle
-        }
-    }
+    updatePatternPathLocations(ids: $ids, input: $input, bulkUpdates: $bulkUpdates)
 }
-
-mutation BulkDeletePatternPathLocations($patternPathId: String!) {
-    bulkDeletePatternPathLocations(patternPathId: $patternPathId)
+mutation DeletePatternPathLocations($ids: [String!]!) {
+    deletePatternPathLocations(ids: $ids)
 }
 
 # DISABLE PATTERN PATH

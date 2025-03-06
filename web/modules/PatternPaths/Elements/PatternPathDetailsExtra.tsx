@@ -24,9 +24,10 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider, Typography } from 'antd';
 import { useState } from 'react';
 import { useAppState } from 'context/AppContext';
-import { Table } from 'generated/graphql';
+import { ModeEnum, Table } from 'generated/graphql';
 import { ListComponent } from 'modules/Crud/ListComponentV2';
 import { PatternPathLocationModelV2 } from 'models/PatternPathLocationModelV2';
+import { PatternPathLink_PatternPathModelV2 } from 'models/PatternPathLink_PatternPathModelV2';
 
 const { Title } = Typography;
 
@@ -40,31 +41,66 @@ const PatternPathDetailsExtra = ({ id }: IItemDetailsProps) => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     const { permissions } = useAppState();
-    const modes = getModesFromPermissions(permissions, Table.Barcode);
+    const patternsModes = getModesFromPermissions(permissions, Table.Pattern);
+    const locationsModes = getModesFromPermissions(permissions, Table.Location);
 
     return (
         <>
-            <Divider />
-            <Title level={4}>{t('common:associated-locations')}</Title>
-            <ListComponent
-                searchCriteria={{ patternPathId: id }}
-                dataModel={PatternPathLocationModelV2}
-                triggerDelete={{ idToDelete, setIdToDelete }}
-                triggerSoftDelete={{ idToDisable, setIdToDisable }}
-                actionColumns={[
-                    {
-                        title: 'actions:actions',
-                        key: 'actions',
-                        render: (record: { locationId: string }) => (
-                            <LinkButton
-                                icon={<EyeTwoTone />}
-                                path={pathParams('/locations/[id]', record.locationId)}
-                            />
-                        )
-                    }
-                ]}
-                searchable={false}
-            />
+            {patternsModes.length > 0 && patternsModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <Title level={4}>{t('common:associated-patterns')}</Title>
+                    <ListComponent
+                        searchCriteria={{ patternPathId: id }}
+                        dataModel={PatternPathLink_PatternPathModelV2}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { patternId: string }) => (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams('/patterns/[id]', record.patternId)}
+                                    />
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
+            {locationsModes.length > 0 && locationsModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <Title level={4}>{t('common:associated-locations')}</Title>
+                    <ListComponent
+                        searchCriteria={{ patternPathId: id }}
+                        dataModel={PatternPathLocationModelV2}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        sortDefault={[{ ascending: true, field: 'order' }]}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { locationId: string }) => (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams('/locations/[id]', record.locationId)}
+                                    />
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
         </>
     );
 };
