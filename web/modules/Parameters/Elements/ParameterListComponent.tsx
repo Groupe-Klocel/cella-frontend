@@ -340,7 +340,6 @@ const ParameterListComponent = (props: IListProps) => {
         router.locale,
         defaultModelSort
     );
-    console.log('LPI data', data);
 
     useEffect(() => {
         reloadData();
@@ -515,7 +514,6 @@ const ParameterListComponent = (props: IListProps) => {
         }
         //re-build rows
         const jsonData: any = [];
-        console.log('LPI jsonData', jsonData);
         const rowsCopy = Object.assign({}, data?.[props.dataModel.endpoints.list]?.results);
 
         if (Object.entries(rowsCopy).length !== 0 && rowsCopy[0]?.extras) {

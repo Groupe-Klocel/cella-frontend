@@ -32,7 +32,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { PatternModelV2 as model } from 'models/PatternModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { patternsSubRoutes as itemRoutes } from 'modules/Patterns/Static/patternsRoutes';
+import { patternsRoutes as itemRoutes } from 'modules/Patterns/Static/patternsRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import configs from '../../../common/configs.json';
@@ -99,7 +99,7 @@ const PatternsPage: PageComponent = () => {
                         key: 'actions',
                         render: (record: {
                             id: string;
-                            patternPaths_id: String;
+                            patternPathLinks_id: String;
                             status: Number;
                         }) => (
                             <Space>
@@ -125,7 +125,6 @@ const PatternsPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable &&
-                                !record.patternPaths_id &&
                                 record.status !== configs.PATTERN_STATUS_CLOSED ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
@@ -139,7 +138,7 @@ const PatternsPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isDeletable &&
-                                !record.patternPaths_id ? (
+                                !record.patternPathLinks_id ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger
