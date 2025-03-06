@@ -392,6 +392,12 @@ const SideMenu: FC = () => {
                     key: 'preparation-management-deliveries',
                     label: <Link href="/deliveries">{t('deliveries')}</Link>
                 },
+                getModesFromPermissions(permissions, Table.Delivery).includes(ModeEnum.Read) && {
+                    key: 'preparation-deliveries-manual-allocation',
+                    label: (
+                        <Link href="/deliveries/manual-allocation">{t('manual-allocation')}</Link>
+                    )
+                },
                 getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
                     ModeEnum.Read
                 ) && {
