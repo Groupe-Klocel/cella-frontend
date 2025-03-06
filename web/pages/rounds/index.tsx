@@ -24,7 +24,8 @@ import {
     META_DEFAULTS,
     pathParams,
     showError,
-    showSuccess
+    showSuccess,
+    showWarning
 } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
@@ -91,7 +92,16 @@ const RoundPages: PageComponent = () => {
                                 launchRoundsResult.executeFunction.output.output
                             );
                         } else {
-                            showSuccess(t('messages:success-round-calculation'));
+                            if (launchRoundsResult.executeFunction.output.output?.code == 200) {
+                                showSuccess(
+                                    t('messages:rounds-created', {
+                                        nb: launchRoundsResult.executeFunction.output.output
+                                            .variables.nbRoundsCreated
+                                    })
+                                );
+                            } else {
+                                showWarning(t('messages:no-round-created'));
+                            }
                             setRefetch(true);
                         }
                         setIsRoundCalculationLoading(false);
