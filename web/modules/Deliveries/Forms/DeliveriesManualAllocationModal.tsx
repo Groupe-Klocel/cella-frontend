@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { showWarning, useTranslationWithFallback as useTranslation } from '@helpers';
 import { Form, Modal, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { showError, showSuccess } from '@helpers';
@@ -212,7 +212,18 @@ const DeliveriesManualAllocationModal = ({
                 console.log('Backend_message', query_result.executeFunction.output.output);
             } else {
                 resetSelection();
-                showSuccess(t('messages:manual-allocation-success'));
+                if (
+                    query_result.executeFunction.output.output?.code == 200 &&
+                    query_result.executeFunction.output.output?.variables?.nbRoundsCreated > 0
+                ) {
+                    showSuccess(
+                        t('messages:rounds-created', {
+                            nb: query_result.executeFunction.output.output.variables.nbRoundsCreated
+                        })
+                    );
+                } else {
+                    showWarning(t('messages:no-round-created'));
+                }
             }
         } catch (error) {
             showError(t('messages:error-executing-function'));
