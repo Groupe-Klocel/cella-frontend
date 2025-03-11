@@ -45,13 +45,49 @@ export const SimilarLocations = ({
     const [similarLocations, setSimilarLocationsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
-
-    //ENHANCEMENT: nbMaxLocations will be used to change according to a parameter
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
     const defaultFilter = { articleId: `${articleId}` };
     const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
     const stockStatusFilter = stockStatus ? { stockStatus: stockStatus } : undefined;
     const filters = { ...defaultFilter, ...stockOwnerFilter, ...stockStatusFilter };
+
+    const getLocationsNumber = async (): Promise<string | undefined> => {
+        const query = gql`
+            query parameters($filters: ParameterSearchFilters) {
+                parameters(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        scope
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                scope: 'radio',
+                code: 'SIMILAR_LOCATIONS_NUMBER'
+            }
+        };
+        const locationsNumber = await graphqlRequestClient.request(query, variables);
+        return locationsNumber.parameters.results[0].value;
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const locationsNumber = await getLocationsNumber();
+
+            if (locationsNumber) {
+                setNbMaxLocations(parseInt(locationsNumber));
+            }
+        }
+        fetchData();
+    }, []);
 
     //bloc
     const getSimilarLocations = async (): Promise<{ [key: string]: any } | undefined> => {

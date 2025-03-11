@@ -51,8 +51,6 @@ export const ValidateReceptionForm = ({
     const { graphqlRequestClient } = useAuth();
     const [isHuToBeClosed, setIsHuToBeClosed] = useState<boolean>(false);
 
-    //TO BE ADDED : button to finish HU (change HU cat to "stock' and go to step 30)
-
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -65,12 +63,14 @@ export const ValidateReceptionForm = ({
         setTriggerRender(!triggerRender);
     }, []);
     // retrieve values for update locations/contents and create movement
-    const { step10, step20, step30, step50, step60, step70, step80, step100 } = storedObject;
+    const { step10, step20, step30, step50, step60, step70, step80, step100, step110 } =
+        storedObject;
 
     const purchaseOrder = step10?.data?.purchaseOrder;
     const goodsIn = step20?.data?.chosenGoodsIn;
-    const isHuToCreate = step30?.data?.isHuToCreate;
-    const handlingUnit = step30?.data?.receptionHandlingUnit;
+    const isHuToCreate =
+        (step30?.data?.isHuToCreate && step110?.data?.handlingUnit !== 'noHuManagement') ??
+        step110?.data?.isHuToCreate;
     let articleInfo: { [k: string]: any } = {};
     if (step50?.data?.chosenArticleLuBarcode) {
         articleInfo.articleId = step50?.data?.chosenArticleLuBarcode.articleId;
@@ -83,41 +83,11 @@ export const ValidateReceptionForm = ({
     const receptionLocation = step100?.data?.chosenLocation;
     const stockStatus = step70?.data?.stockStatus?.key;
 
-    //check if HUC needs to be created
-    let isHucToCreate = false;
-    let handlingUnitContent: any;
-    function isNonUniqueAndMatches(feature: any) {
-        const matchingFeature = features.find(
-            (ft: any) =>
-                ft.featureCode.name === feature.featureCode.name &&
-                ft.featureCode.unique === false &&
-                ft.value === feature.value
-        );
-        //Note: !!matchingFeature is to convert found object matchingFeature to a boolean format
-        return !!matchingFeature;
-    }
-    if (!isHuToCreate) {
-        const huc = step30?.data?.receptionHandlingUnit.handlingUnitContents.find(
-            (huc: any) =>
-                huc.articleId === articleInfo.articleId &&
-                huc.stockOwnerId === purchaseOrder.stockOwnerId &&
-                huc.stockStatus === stockStatus &&
-                (huc.handlingUnitContentFeatures.some((feature: any) =>
-                    isNonUniqueAndMatches(feature)
-                ) ||
-                    huc.handlingUnitContentFeatures.every(
-                        (feature: any) => feature.featureCode.unique === true
-                    ))
-        );
-
-        handlingUnitContent = huc;
-        isHucToCreate = false;
-        if (!huc) {
-            isHucToCreate = true;
-        }
-    } else {
-        isHucToCreate = true;
-    }
+    //determine which HU has to be taken
+    const handlingUnit =
+        step30?.data?.handlingUnit === 'huScannedAtEnd'
+            ? step110?.data?.handlingUnit
+            : step30?.data?.handlingUnit;
 
     //ValidateReception-1a: fetch front API
     const onFinish = async () => {
@@ -127,9 +97,7 @@ export const ValidateReceptionForm = ({
             isHuToCreate,
             handlingUnit,
             isHuToBeClosed,
-            isHucToCreate,
             stockStatus,
-            handlingUnitContent,
             articleInfo,
             poLine,
             receivedQuantity,
@@ -149,7 +117,7 @@ export const ValidateReceptionForm = ({
         `;
 
         const variables = {
-            functionName: 'K_RF_validateReception',
+            functionName: 'RF_reception_validate',
             event: {
                 input: inputToValidate
             }
@@ -182,7 +150,7 @@ export const ValidateReceptionForm = ({
                 };
                 const step20Data = { chosenGoodsIn: final_goodsIn };
                 const step30Data = {
-                    receptionHandlingUnit: final_handling_unit,
+                    handlingUnit: final_handling_unit,
                     isHuToCreate: false
                 };
 

@@ -68,7 +68,8 @@ const PurchaseOrderDetailsExtra = ({
         actionsComponent:
             poLineModes.length > 0 && poLineModes.includes(ModeEnum.Create) ? (
                 (type === configs.DELIVERY_PO_TYPE_L2 ||
-                    type === configs.DELIVERY_PO_TYPE_L2_DECLARATIVE) &&
+                    type === configs.DELIVERY_PO_TYPE_L2_DECLARATIVE ||
+                    type === configs.DELIVERY_PO_TYPE_L2_RETURN) &&
                 status <= configs.PURCHASE_ORDER_LINE_STATUS_IN_PROGRESS ? (
                     <LinkButton
                         title={t('actions:add2', { name: t('common:purchase-order-line') })}

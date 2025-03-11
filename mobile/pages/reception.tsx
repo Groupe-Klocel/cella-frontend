@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
-import { FC, useEffect, useState } from 'react';
+import { FC, use, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
@@ -31,13 +31,13 @@ import {
     SelectLocationByLevelForm,
     SelectStockStatusForm,
     EnterQuantity,
-    ScanHandlingUnit,
     ScanArticle,
     ScanLocation
 } from '@CommonRadio';
 import { ValidateReceptionForm } from 'modules/ReceptionManagement/Reception/Forms/ValidateReception';
 import { QuantityChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/QuantityChecks';
 import { SelectGoodsInForm } from 'modules/ReceptionManagement/Reception/Forms/SelectGoodsInForm';
+import { ScanHandlingUnit } from 'modules/ReceptionManagement/Reception/PagesContainer/ScanHandlingUnit';
 import { HandlingUnitChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/HandlingUnitChecks';
 import { ArticleChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/ArticleChecks';
 import { ScanFeature } from 'modules/Common/Features/PagesContainer/ScanFeature';
@@ -48,6 +48,8 @@ import { GoodsInOrPoChecks } from 'modules/ReceptionManagement/Reception/ChecksA
 import { SelectArticleForm } from 'modules/ReceptionManagement/Reception/Forms/SelectArticleForm';
 import moment from 'moment';
 import { SimilarLocations } from 'modules/ReceptionManagement/Reception/Elements/SimilarLocations';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -55,6 +57,8 @@ const Reception: PageComponent = () => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const router = useRouter();
+    const { graphqlRequestClient } = useAuth();
+
     const [triggerRender, setTriggerRender] = useState<boolean>(true);
     const [originDisplay, setOriginDisplay] = useState<any>({});
     const [finalDisplay, setFinalDisplay] = useState<any>({});
@@ -69,7 +73,7 @@ const Reception: PageComponent = () => {
     //define workflow parameters
     const workflow = {
         processName: 'reception',
-        expectedSteps: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110]
+        expectedSteps: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]
     };
     // [0] : 10-> Scan PO
     // [1] : 20 -> Select GoodsIn
@@ -81,10 +85,109 @@ const Reception: PageComponent = () => {
     // [7] : 80 -> Enter quantity
     // [8] : 90 -> Scan destination location
     // [9] : 100 -> Select location by level
-    // [9] : 110 -> Validate reception
+    // [10] : 110 -> ScanHU (if scanHUAtEnd)
+    // [11] : 120 -> Validate reception
     const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
     console.log('reception', storedObject);
+
+    //#region retrieve configuration
+    const getParameters = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query parameters($filters: ParameterSearchFilters) {
+                parameters(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        scope
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                scope: 'inbound',
+                code: ['DEFAULT_RECEPTION_LOCATION', 'RECEPTION_SCAN_HU']
+            }
+        };
+        const receptionParameters = await graphqlRequestClient.request(query, variables);
+        return receptionParameters;
+    };
+
+    const getLocations = async (name: string): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query locations($filters: LocationSearchFilters) {
+                locations(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        name
+                        barcode
+                        aisle
+                        column
+                        level
+                        position
+                        replenish
+                        blockId
+                        block {
+                            name
+                        }
+                        replenishType
+                        constraint
+                        comment
+                        baseUnitRotation
+                        allowCycleCountStockMin
+                        category
+                        categoryText
+                        stockStatus
+                        stockStatusText
+                        status
+                        statusText
+                        huManagement
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: { name }
+        };
+        const receptionParameters = await graphqlRequestClient.request(query, variables);
+        return receptionParameters;
+    };
+
+    const [isHuScannedAtEnd, setIsHuScannedAtEnd] = useState<boolean>(false);
+    const [defaultReceptionLocation, setDefaultReceptionLocation] = useState<any>(null);
+    useEffect(() => {
+        async function fetchData() {
+            const receptionParameters = await getParameters();
+            if (receptionParameters) {
+                const receptionParametersResults = receptionParameters.parameters.results;
+                const receptionScanHU = receptionParametersResults.find(
+                    (param: any) => param.code === 'RECEPTION_SCAN_HU'
+                )?.value;
+                if (receptionScanHU) {
+                    setIsHuScannedAtEnd(receptionScanHU === 'atEnd');
+                }
+                const defaultReceptionLocation = receptionParametersResults.find(
+                    (param: any) => param.code === 'DEFAULT_RECEPTION_LOCATION'
+                ).value;
+                if (defaultReceptionLocation) {
+                    const locations = await getLocations(defaultReceptionLocation);
+                    setDefaultReceptionLocation(locations?.locations.results[0]);
+                }
+            }
+        }
+        fetchData();
+    }, []);
+    //#endregion
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
@@ -106,9 +209,12 @@ const Reception: PageComponent = () => {
             const goodsIn = storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenGoodsIn;
             object[t('common:goods-in')] = goodsIn.name ? goodsIn.name : t('common:new');
         }
-        if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.receptionHandlingUnit) {
+        if (
+            !isHuScannedAtEnd &&
+            storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit
+        ) {
             const handlingUnit =
-                storedObject[`step${workflow.expectedSteps[2]}`]?.data?.receptionHandlingUnit;
+                storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
             object[t('common:hu')] = handlingUnit.barcode;
         }
         if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenArticleLuBarcode) {
@@ -141,6 +247,15 @@ const Reception: PageComponent = () => {
             const chosenLocation =
                 storedObject[`step${workflow.expectedSteps[9]}`]?.data?.chosenLocation;
             object[t('common:location-reception')] = chosenLocation.name;
+        }
+        if (
+            isHuScannedAtEnd &&
+            storedObject[`step${workflow.expectedSteps[9]}`]?.data?.chosenLocation.huManagement &&
+            storedObject[`step${workflow.expectedSteps[10]}`]?.data?.handlingUnit
+        ) {
+            const handlingUnit =
+                storedObject[`step${workflow.expectedSteps[10]}`]?.data?.handlingUnit;
+            object[t('common:hu')] = handlingUnit.barcode;
         }
         setOriginDisplay(object);
     }, [triggerRender]);
@@ -189,7 +304,8 @@ const Reception: PageComponent = () => {
             )}
             {showSimilarLocations &&
             storedObject[`step${workflow.expectedSteps[4]}`].data.currentPurchaseOrderLine &&
-            storedObject[`step${workflow.expectedSteps[5]}`].data.processedFeatures ? (
+            (storedObject[`step${workflow.expectedSteps[5]}`].data.processedFeatures ||
+                storedObject[`step${workflow.expectedSteps[5]}`].data.feature === null) ? (
                 <SimilarLocations
                     currentPurchaseOrderLine={
                         storedObject[`step${workflow.expectedSteps[4]}`].data
@@ -257,6 +373,7 @@ const Reception: PageComponent = () => {
                         submitButton: true,
                         backButton: true
                     }}
+                    defaultValue={isHuScannedAtEnd ? 'huScannedAtEnd' : undefined}
                     checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
                 ></ScanHandlingUnit>
             ) : (
@@ -386,7 +503,7 @@ const Reception: PageComponent = () => {
                     headerContent={{ headerContent, setHeaderContent }}
                     showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                     showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
-                    initValue="Reception"
+                    initValue={defaultReceptionLocation?.barcode}
                     checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
                 ></ScanLocation>
             ) : (
@@ -404,10 +521,34 @@ const Reception: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject[`step${workflow.expectedSteps[9]}`]?.data ? (
-                <ValidateReceptionForm
+            {storedObject[`step${workflow.expectedSteps[9]}`]?.data &&
+            !storedObject[`step${workflow.expectedSteps[10]}`]?.data ? (
+                <ScanHandlingUnit
                     process={workflow.processName}
                     stepNumber={workflow.expectedSteps[10]}
+                    label={t('common:handling-unit')}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    buttons={{
+                        submitButton: true,
+                        backButton: true
+                    }}
+                    defaultValue={
+                        !storedObject[`step${workflow.expectedSteps[9]}`]?.data?.chosenLocation
+                            .huManagement
+                            ? 'noHuManagement'
+                            : !isHuScannedAtEnd
+                              ? 'huScannedAtStart'
+                              : undefined
+                    }
+                    checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
+                ></ScanHandlingUnit>
+            ) : (
+                <></>
+            )}
+            {storedObject[`step${workflow.expectedSteps[10]}`]?.data ? (
+                <ValidateReceptionForm
+                    process={workflow.processName}
+                    stepNumber={workflow.expectedSteps[11]}
                     buttons={{
                         submitButton: true,
                         backButton: true,
