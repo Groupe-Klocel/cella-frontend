@@ -174,7 +174,7 @@ export const PurchaseOrderModelV2: ModelType = {
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
-            displayName: null,
+            displayName: 'purchaseOrderDate',
             isMandatory: false,
             minRule: null,
             maxRule: null,
