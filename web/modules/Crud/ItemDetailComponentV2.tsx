@@ -265,7 +265,6 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     useEffect(() => {
         if (props.triggerDelete && props.triggerDelete.idToDelete) {
             callDelete(props.triggerDelete.idToDelete);
-            props.triggerDelete.setIdToDelete(undefined);
         }
     }, [props.triggerDelete]);
 
@@ -276,6 +275,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     }, [deleteLoading]);
 
     useEffect(() => {
+        props.triggerDelete.setIdToDelete(undefined);
         if (!(deleteResult && deleteResult.data)) return;
 
         if (deleteResult.success) {

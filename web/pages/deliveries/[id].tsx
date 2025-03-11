@@ -61,6 +61,7 @@ const DeliveryPage: PageComponent = () => {
     const { graphqlRequestClient } = useAuth();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
+    const [refetchHUO, setRefetchHUO] = useState(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -93,7 +94,7 @@ const DeliveryPage: PageComponent = () => {
         return () => {
             Modal.confirm({
                 title: t('messages:action-confirm'),
-                onOk: () => {
+                onOk: async () => {
                     setId({ id, status: configs.DELIVERY_STATUS_CANCELED });
                 },
                 okText: t('messages:confirm'),
@@ -103,37 +104,6 @@ const DeliveryPage: PageComponent = () => {
     };
 
     const deliveryLines = useDeliveryLineIds({ deliveryId: `${data?.id}%` }, 1, 100, null);
-
-    // CANCEL DELIVERY
-    const { mutate: cancelDeliveryMutate, isPending: cancelLoading } =
-        useCancelDeliveryMutation<Error>(graphqlRequestClient, {
-            onSuccess: (
-                data: CancelDeliveryMutation,
-                _variables: CancelDeliveryMutationVariables,
-                _context: any
-            ) => {
-                if (data.softDeleteDelivery) {
-                    showSuccess(t('messages:success-canceled'));
-                    router.reload();
-                } else {
-                    showError(t('messages:error-canceling-data'));
-                }
-            },
-            onError: (err) => {
-                showError(t('messages:error-canceling-data'));
-            }
-        });
-
-    const cancelDelivery = ({ id }: CancelDeliveryMutationVariables) => {
-        Modal.confirm({
-            title: t('messages:cancel-confirm'),
-            onOk: () => {
-                cancelDeliveryMutate({ id });
-            },
-            okText: t('messages:confirm'),
-            cancelText: t('messages:cancel')
-        });
-    };
 
     // CUBING
     const [isCubingLoading, setIsCubingLoading] = useState(false);
@@ -173,7 +143,7 @@ const DeliveryPage: PageComponent = () => {
                         console.log('Backend_message', cubingResult.executeFunction.output.output);
                     } else {
                         showSuccess(t('messages:success-cubing'));
-                        router.reload();
+                        setRefetchHUO((prev) => !prev);
                     }
                     setIsCubingLoading(false);
                 } catch (error) {
@@ -333,6 +303,7 @@ const DeliveryPage: PageComponent = () => {
                                 <Button
                                     type="primary"
                                     danger
+                                    loading={cancelInfo ? true : false}
                                     onClick={() => {
                                         confirmAction(id as string, setCancelInfo)();
                                     }}
@@ -410,6 +381,7 @@ const DeliveryPage: PageComponent = () => {
                         stockOwnerName={data?.stockOwner_name}
                         stockOwnerId={data?.stockOwnerId}
                         setShippingAddress={setShippingAddress}
+                        refetchHUO={refetchHUO}
                     />
                 }
                 id={id!}

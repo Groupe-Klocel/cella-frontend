@@ -76,7 +76,14 @@ const DeliveryProgressBar = ({ id, status, done }: IDeliveryProgressBarProps) =>
         }
     }, [data]);
 
-    return <Progress type="dashboard" percent={value} width={80} />;
+    return (
+        <Progress
+            type="dashboard"
+            percent={value}
+            width={80}
+            status={status == configs.PURCHASE_ORDER_STATUS_CANCELED ? 'exception' : 'active'}
+        />
+    );
 };
 
 export { DeliveryProgressBar };
