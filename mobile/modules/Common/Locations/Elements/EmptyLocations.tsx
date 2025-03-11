@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageTableContentWrapper, ContentSpin, RadioSimpleTable } from '@components';
-import { useHandlingUnits, useLocationIds } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -38,6 +37,44 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
     const [emptyLocations, setEmptyLocationsInfos] = useState<any>();
     const [locationsData, setLocationsData] = useState<any>();
+
+    const getLocationsNumber = async (): Promise<string | undefined> => {
+        const query = gql`
+            query parameters($filters: ParameterSearchFilters) {
+                parameters(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        scope
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                scope: 'radio',
+                code: 'EMPTY_LOCATIONS_NUMBER'
+            }
+        };
+        const locationsNumber = await graphqlRequestClient.request(query, variables);
+        return locationsNumber.parameters.results[0].value;
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const locationNumber = await getLocationsNumber();
+
+            if (locationNumber) {
+                setNbMaxLocations(parseInt(locationNumber));
+            }
+        }
+        fetchData();
+    }, []);
 
     const getLocationIds = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`

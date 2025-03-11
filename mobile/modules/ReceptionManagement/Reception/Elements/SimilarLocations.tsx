@@ -24,6 +24,8 @@ import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useRouter } from 'next/router';
 import parameters from '../../../../../common/parameters.json';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 export interface ISimilarLocationsProps {
     currentPurchaseOrderLine: any;
@@ -37,9 +39,9 @@ export const SimilarLocations = ({
     const { t } = useTranslation();
     const router = useRouter();
     const [contentsToDisplay, setContentsToDisplay] = useState<Array<any>>();
+    const { graphqlRequestClient } = useAuth();
 
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
-    //ENHANCEMENT: nbMaxLocations will be used to change according to a parameter
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
     const defaultFilter = { articleId: `${currentPurchaseOrderLine.articleId}` };
     const stockOwnerFilter = { stockOwnerId: `${currentPurchaseOrderLine.stockOwnerId}` };
@@ -50,6 +52,44 @@ export const SimilarLocations = ({
         data: huContentData,
         error: huContentError
     } = useHandlingUnitContents(filters, 1, 100, null, router.locale);
+
+    const getLocationsNumber = async (): Promise<string | undefined> => {
+        const query = gql`
+            query parameters($filters: ParameterSearchFilters) {
+                parameters(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        scope
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                scope: 'radio',
+                code: 'SIMILAR_LOCATIONS_NUMBER'
+            }
+        };
+        const locationsNumber = await graphqlRequestClient.request(query, variables);
+        return locationsNumber.parameters.results[0].value;
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const locationsNumber = await getLocationsNumber();
+
+            if (locationsNumber) {
+                setNbMaxLocations(parseInt(locationsNumber));
+            }
+        }
+        fetchData();
+    }, []);
 
     //handle similar features if any
     useEffect(() => {

@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
-import parameters from '../../../../../common/parameters.json';
 import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
@@ -50,13 +49,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const { scannedInfo } = req.body;
 
     const purchaseOrderFilter = {
-        filters: { name: scannedInfo },
-        advancedFilters: {
-            filter: {
-                field: { type: 10104 },
-                searchType: 'INFERIOR'
-            }
-        }
+        filters: { name: scannedInfo }
     };
 
     // configs.PURCHASE_ORDER_TYPE_L3_RETURN
