@@ -437,7 +437,9 @@ const SideMenu: FC = () => {
                     key: 'monitoring-metabase',
                     label: <Link href={bi_link}>{t('bi-solution')}</Link>
                 },
-                {
+                getModesFromPermissions(permissions, Table.Notification).includes(
+                    ModeEnum.Read
+                ) && {
                     key: 'monitoring-notifications',
                     label: <Link href="/notifications">{t('notifications')}</Link>
                 },

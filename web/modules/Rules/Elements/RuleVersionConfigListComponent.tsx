@@ -48,16 +48,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { ListFilters } from '../../Crud/submodules/ListFiltersV2';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
-import {
-    ExportFormat,
-    ModeEnum,
-    UpdateRuleVersionConfigMutation,
-    UpdateRuleVersionConfigMutationVariables,
-    useUpdateRuleVersionConfigMutation
-} from 'generated/graphql';
+import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { isString } from 'lodash';
+import { gql } from 'graphql-request';
 
 export type HeaderData = {
     title: string;
@@ -72,6 +67,7 @@ export interface IListProps {
     dataModel: ModelType;
     triggerDelete: any;
     triggerSoftDelete: any;
+    triggerPriorityChange?: any;
     triggerReopen?: any;
     extraColumns?: any;
     actionColumns?: any;
@@ -90,8 +86,6 @@ export interface IListProps {
     mode?: string;
     refetch?: boolean;
     columnFilter?: boolean;
-    triggerOrderUp: any;
-    triggerOrderDown: any;
 }
 
 const RuleVersionConfigListComponent = (props: IListProps) => {
@@ -101,7 +95,11 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
     const router = useRouter();
 
     const { graphqlRequestClient } = useAuth();
-
+    const requestHeader = {
+        // 'X-API-fake': 'fake',
+        // "X-API-seed": "same",
+        authorization: graphqlRequestClient?.requestConfig?.headers?.authorization
+    };
     // #region DEFAULT PROPS
     const defaultProps = {
         searchable: true,
@@ -196,59 +194,6 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
         }
     }, [props.triggerDelete]);
 
-    //Order up and down management
-    const { mutate: ruleVersionConfigMutate, isPending: updatedLoading } =
-        useUpdateRuleVersionConfigMutation<Error>(graphqlRequestClient, {
-            onSuccess: (
-                data: UpdateRuleVersionConfigMutation,
-                _variables: UpdateRuleVersionConfigMutationVariables,
-                _context: any
-            ) => {
-                reloadData();
-                props.triggerOrderUp.setarrowClicked('false');
-            },
-            onError: () => {
-                showError(t('messages:error-update-data'));
-                props.triggerOrderUp.setarrowClicked('false');
-            }
-        });
-
-    const updateRuleVersionConfig = ({ id, input }: UpdateRuleVersionConfigMutationVariables) => {
-        ruleVersionConfigMutate({ id, input });
-    };
-
-    useEffect(() => {
-        if (props.triggerOrderUp && props.triggerOrderUp.idToOrderUp) {
-            const currentRuleVersionConfig = data?.ruleVersionConfigs?.results.find(
-                (e: any) => e.id == props.triggerOrderUp.idToOrderUp
-            );
-            const currentOrder = currentRuleVersionConfig?.order;
-            const minusOneOrder = currentOrder ? currentOrder - 1 : undefined;
-
-            if (minusOneOrder && minusOneOrder > 0) {
-                updateRuleVersionConfig({
-                    id: props.triggerOrderUp.idToOrderUp,
-                    input: { order: minusOneOrder as any }
-                });
-            }
-        }
-    }, [props.triggerOrderUp]);
-
-    useEffect(() => {
-        const currentRuleVersionConfig = data?.ruleVersionConfigs?.results.find(
-            (e: any) => e.id == props.triggerOrderDown.idToOrderDown
-        );
-        const currentOrder = currentRuleVersionConfig?.order;
-        const plusOneOrder = currentOrder ? currentOrder + 1 : undefined;
-
-        if (plusOneOrder) {
-            updateRuleVersionConfig({
-                id: props.triggerOrderDown.idToOrderDown,
-                input: { order: plusOneOrder }
-            });
-        }
-    }, [props.triggerOrderDown]);
-
     useEffect(() => {
         if (deleteLoading) {
             showInfo(t('messages:info-delete-wip'));
@@ -297,6 +242,237 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
             showError(t('messages:error-disabling-element'));
         }
     }, [softDeleteResult]);
+    // #endregion
+
+    // #region PRIORITY CHANGE MUTATION
+
+    const priorityChangeQuery = async (
+        queryName: string,
+        resolverName: string,
+        fields: any,
+        variables: any
+    ): Promise<any> => {
+        console.log('variables', variables);
+        const query = gql`mutation ${queryName}($id: String!, $input: Update${resolverName}Input!) {
+        ${queryName}(id: $id, input: $input) {
+            ${fields.join('\n')}
+        }
+    }`;
+        const queryInfo = await graphqlRequestClient.request(query, variables).catch((err: any) => {
+            console.log('err', err);
+            return err;
+        });
+        return queryInfo;
+    };
+
+    const getNextInfo = async (variables: any) => {
+        const filtersVariables = {
+            filters: variables
+        };
+        const resolverName = props.dataModel.resolverName;
+        const queryName = props.dataModel.endpoints.list;
+        const query = gql`
+        query ($filters: ${resolverName}SearchFilters) {
+            ${queryName}(filters: $filters) {
+                results {${listFields.join('\n')}}
+            }
+        }
+    `;
+        const queryInfo = await graphqlRequestClient.request(query, filtersVariables);
+        return queryInfo[queryName].results[0];
+    };
+
+    useEffect(() => {
+        const getLastTransactionId = async () => {
+            const generateTransactionId = gql`
+                mutation {
+                    generateTransactionId
+                }
+            `;
+            const transactionIdResponse = await graphqlRequestClient.request(
+                generateTransactionId,
+                requestHeader
+            );
+            return transactionIdResponse.generateTransactionId;
+        };
+        const priorityChangeFun = async (
+            setToMinusOne: any,
+            SetDataToAdapt: any,
+            setDataToUpdate: any
+        ) => {
+            console.log('setToMinusOne', setToMinusOne);
+            console.log('SetDataToAdapt', SetDataToAdapt);
+            console.log('setDataToUpdate', setDataToUpdate);
+
+            const transactionId = await getLastTransactionId();
+            const rollbackTransaction = gql`
+                mutation rollback($transactionId: String!) {
+                    rollbackTransaction(transactionId: $transactionId)
+                }
+            `;
+            const rollbackVariable = {
+                transactionId: transactionId
+            };
+            try {
+                if (SetDataToAdapt) {
+                    const minusOneWithTr = {
+                        ...setToMinusOne,
+                        input: {
+                            ...setToMinusOne.input,
+                            lastTransactionId: transactionId
+                        }
+                    };
+                    const dataToAdaptWithTr = {
+                        ...SetDataToAdapt,
+                        input: {
+                            ...SetDataToAdapt.input,
+                            lastTransactionId: transactionId
+                        }
+                    };
+                    await priorityChangeQuery(
+                        props.dataModel.endpoints.update,
+                        props.dataModel.resolverName,
+                        listFields,
+                        minusOneWithTr
+                    );
+                    await priorityChangeQuery(
+                        props.dataModel.endpoints.update,
+                        props.dataModel.resolverName,
+                        listFields,
+                        dataToAdaptWithTr
+                    );
+                }
+                const dataToUpdateWithTr = {
+                    ...setDataToUpdate,
+                    input: {
+                        ...setDataToUpdate.input,
+                        lastTransactionId: transactionId
+                    }
+                };
+                await priorityChangeQuery(
+                    props.dataModel.endpoints.update,
+                    props.dataModel.resolverName,
+                    listFields,
+                    dataToUpdateWithTr
+                );
+                props.triggerPriorityChange.setId({
+                    id: '',
+                    type: ''
+                });
+                reloadData();
+            } catch (error) {
+                console.error('Error during priority change:', error);
+                await graphqlRequestClient.request(
+                    rollbackTransaction,
+                    rollbackVariable,
+                    requestHeader
+                );
+            }
+        };
+        if (
+            props.triggerPriorityChange &&
+            props.triggerPriorityChange.id &&
+            data?.[props.dataModel.endpoints.list]?.results?.length > 0
+        ) {
+            const startChangeOrdering = async () => {
+                const dataToModifie = data[props.dataModel.endpoints.list].results.find(
+                    (item: any) => item.id === props.triggerPriorityChange.id
+                );
+                const biggestLineNumber = data[props.dataModel.endpoints.list].count;
+
+                let dataToAdapt: any = null;
+                if (
+                    !dataToModifie ||
+                    !dataToModifie[props.triggerPriorityChange.orderingField] ||
+                    (dataToModifie[props.triggerPriorityChange.orderingField] <= 1 &&
+                        props.triggerPriorityChange.type === 'up') ||
+                    (dataToModifie[props.triggerPriorityChange.orderingField] >=
+                        biggestLineNumber &&
+                        props.triggerPriorityChange.type === 'down')
+                ) {
+                    return;
+                }
+                if (
+                    props.triggerPriorityChange.type === 'up' &&
+                    (pagination.current - 1) * pagination.itemsPerPage + 1 ===
+                        dataToModifie[props.triggerPriorityChange.orderingField]
+                ) {
+                    const variables = {
+                        [props.triggerPriorityChange.orderingField]:
+                            (pagination.current - 1) * pagination.itemsPerPage
+                    };
+                    if (props.searchCriteria) {
+                        Object.assign(variables, props.searchCriteria);
+                    }
+                    dataToAdapt = await getNextInfo(variables);
+                } else if (
+                    props.triggerPriorityChange.type === 'down' &&
+                    pagination.current * pagination.itemsPerPage ===
+                        dataToModifie[props.triggerPriorityChange.orderingField]
+                ) {
+                    const variables = {
+                        [props.triggerPriorityChange.orderingField]:
+                            pagination.current * pagination.itemsPerPage + 1
+                    };
+                    if (props.searchCriteria) {
+                        Object.assign(variables, props.searchCriteria);
+                    }
+                    dataToAdapt = await getNextInfo(variables);
+                } else {
+                    dataToAdapt = data[props.dataModel.endpoints.list].results.find(
+                        (item: any) =>
+                            item[props.triggerPriorityChange.orderingField] ===
+                            (props.triggerPriorityChange.type === 'up'
+                                ? dataToModifie[props.triggerPriorityChange.orderingField] - 1
+                                : dataToModifie[props.triggerPriorityChange.orderingField] + 1)
+                    );
+                }
+
+                let dataToAdaptUpdated: any;
+                let setToMinusOne: any;
+                let SetDataToAdapt: any;
+                const dataToModifieUpdated: any = {
+                    ...dataToModifie,
+                    [props.triggerPriorityChange.orderingField]:
+                        props.triggerPriorityChange.type === 'up'
+                            ? dataToModifie[props.triggerPriorityChange.orderingField] - 1
+                            : dataToModifie[props.triggerPriorityChange.orderingField] + 1
+                };
+                if (dataToAdapt) {
+                    dataToAdaptUpdated = {
+                        ...dataToAdapt,
+                        [props.triggerPriorityChange.orderingField]:
+                            props.triggerPriorityChange.type === 'up'
+                                ? dataToAdapt[props.triggerPriorityChange.orderingField] + 1
+                                : dataToAdapt[props.triggerPriorityChange.orderingField] - 1
+                    };
+                    setToMinusOne = {
+                        id: dataToModifie.id,
+                        input: {
+                            [props.triggerPriorityChange.orderingField]: -1
+                        }
+                    };
+                    SetDataToAdapt = {
+                        id: dataToAdapt.id,
+                        input: {
+                            [props.triggerPriorityChange.orderingField]:
+                                dataToAdaptUpdated[props.triggerPriorityChange.orderingField]
+                        }
+                    };
+                }
+                const setDataToUpdate = {
+                    id: dataToModifie.id,
+                    input: {
+                        [props.triggerPriorityChange.orderingField]:
+                            dataToModifieUpdated[props.triggerPriorityChange.orderingField]
+                    }
+                };
+                priorityChangeFun(setToMinusOne, SetDataToAdapt, setDataToUpdate);
+            };
+            startChangeOrdering();
+        }
+    }, [props.triggerPriorityChange]);
+
     // #endregion
 
     // #region Enable (Re-Open)
