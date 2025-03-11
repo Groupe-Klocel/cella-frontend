@@ -58,10 +58,12 @@ const RuleVersionDetailsExtra = ({
     const { permissions } = useAppState();
     const [idToDeleteVersionConfig, setIdToDeleteVersionConfig] = useState<string | undefined>();
     const [idToDisableVersionConfig, setIdToDisableVersionConfig] = useState<string | undefined>();
-    const ruleVersionConfigModes = getModesFromPermissions(permissions, Table.RuleVersionConfig);
-    const [idToOrderUp, setIdToOrderUp] = useState<string | undefined>();
-    const [idToOrderDown, setIdToOrderDown] = useState<string | undefined>();
-    const [arrowClicked, setarrowClicked] = useState<String>();
+    const modes = getModesFromPermissions(permissions, Table.RuleVersionConfig);
+
+    const [priorityStatus, setPriorityStatus] = useState({
+        id: '',
+        type: ''
+    });
 
     const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
@@ -73,20 +75,6 @@ const RuleVersionDetailsExtra = ({
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
-        };
-    };
-
-    const orderUp = (id: string | undefined, setId: any) => {
-        return () => {
-            setarrowClicked('true');
-            setId(id);
-        };
-    };
-
-    const orderDown = (id: string | undefined, setId: any) => {
-        return () => {
-            setarrowClicked('true');
-            setId(id);
         };
     };
 
@@ -152,7 +140,7 @@ const RuleVersionDetailsExtra = ({
 
     return (
         <>
-            {ruleVersionConfigModes.length > 0 && ruleVersionConfigModes.includes(ModeEnum.Read) ? (
+            {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
                     <RuleVersionListComponent
@@ -185,58 +173,65 @@ const RuleVersionDetailsExtra = ({
                             idToDisableVersionConfig: idToDisableVersionConfig,
                             setIdToDisableVersionConfig: setIdToDisableVersionConfig
                         }}
-                        triggerOrderUp={{
-                            idToOrderUp: idToOrderUp,
-                            setIdToOrderUp: setIdToOrderUp,
-                            // setbuttonOrderUp: setbuttonOrderUp
-                            setarrowClicked: setarrowClicked
-                        }}
-                        triggerOrderDown={{
-                            idToOrderDown: idToOrderDown,
-                            setIdToOrderDown: setIdToOrderDown,
-                            // setbuttonOrderDown: setbuttonOrderDown
-                            setarrowClicked: setarrowClicked
+                        triggerPriorityChange={{
+                            id: priorityStatus.id,
+                            setId: setPriorityStatus,
+                            type: priorityStatus.type,
+                            orderingField: 'order'
                         }}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: { id: string }) => (
+                                render: (record: { id: string; order: number }) => (
                                     <Space>
-                                        {ruleVersionConfigModes.length == 0 ||
-                                        !ruleVersionConfigModes.includes(ModeEnum.Read) ? (
+                                        {modes.length == 0 || !modes.includes(ModeEnum.Read) ? (
                                             <></>
                                         ) : (
                                             <>
                                                 <LinkButton
                                                     icon={<EyeTwoTone />}
-                                                    path={pathParamsFromDictionary(
-                                                        '/rules/version/config/[id]',
-                                                        {
-                                                            id: record.id
-                                                        }
+                                                    path={'/rules/version/config/:id'.replace(
+                                                        ':id',
+                                                        record.id
                                                     )}
                                                 />
                                             </>
                                         )}
                                         {ruleVersion !== ruleActiveVersion ? (
                                             <>
-                                                {ruleVersionConfigModes.length > 0 &&
-                                                ruleVersionConfigModes.includes(ModeEnum.Update) ? (
+                                                <Button
+                                                    onClick={() =>
+                                                        setPriorityStatus({
+                                                            type: 'up',
+                                                            id: record.id
+                                                        })
+                                                    }
+                                                    icon={<CaretUpOutlined />}
+                                                />
+                                                <Button
+                                                    onClick={() =>
+                                                        setPriorityStatus({
+                                                            type: 'down',
+                                                            id: record.id
+                                                        })
+                                                    }
+                                                    icon={<CaretDownOutlined />}
+                                                />
+                                                {modes.length > 0 &&
+                                                modes.includes(ModeEnum.Update) ? (
                                                     <LinkButton
                                                         icon={<EditTwoTone />}
-                                                        path={pathParamsFromDictionary(
-                                                            '/rules/version/config/edit/[id]',
-                                                            {
-                                                                id: record.id
-                                                            }
+                                                        path={'/rules/version/config/edit/:id'.replace(
+                                                            ':id',
+                                                            record.id
                                                         )}
                                                     />
                                                 ) : (
                                                     <></>
                                                 )}
-                                                {ruleVersionConfigModes.length > 0 &&
-                                                ruleVersionConfigModes.includes(ModeEnum.Delete) ? (
+                                                {modes.length > 0 &&
+                                                modes.includes(ModeEnum.Delete) ? (
                                                     <Button
                                                         icon={<DeleteOutlined />}
                                                         danger
@@ -250,20 +245,6 @@ const RuleVersionDetailsExtra = ({
                                                 ) : (
                                                     <></>
                                                 )}
-                                                <Button
-                                                    onClick={() =>
-                                                        orderUp(record.id, setIdToOrderUp)()
-                                                    }
-                                                    icon={<CaretUpOutlined />}
-                                                    disabled={arrowClicked === 'true'}
-                                                />
-                                                <Button
-                                                    onClick={() =>
-                                                        orderDown(record.id, setIdToOrderDown)()
-                                                    }
-                                                    icon={<CaretDownOutlined />}
-                                                    disabled={arrowClicked === 'true'}
-                                                />
                                             </>
                                         ) : (
                                             <></>
