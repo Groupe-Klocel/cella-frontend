@@ -128,7 +128,7 @@ export const PatternPathLink_PatternModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
-            link: 'pattern-path/patternPathId',
+            link: 'pattern-paths/patternPathId',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
