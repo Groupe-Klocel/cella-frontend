@@ -278,6 +278,13 @@ export const AddLocationForm = () => {
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:block')
                                 })}`}
+                                showSearch
+                                allowClear
+                                filterOption={(input, option) =>
+                                    option?.props.children
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
                             >
                                 {blocks?.map((block: any) => (
                                     <Option key={block.id} value={block.id}>
