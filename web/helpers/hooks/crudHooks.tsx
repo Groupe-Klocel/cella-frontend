@@ -66,7 +66,7 @@ const useList = (
     const query = gql`
         query CustomListQuery(
             $filters: ${resolverName}SearchFilters
-            $advancedFilters: [${resolverName}AdvancedSearchFilters!]
+            ${advancedFilters ? `$advancedFilters: [${resolverName}AdvancedSearchFilters!]` : ''}
             $orderBy: [${resolverName}OrderByCriterion!]
             $page: Int!
             $itemsPerPage: Int!
@@ -74,7 +74,7 @@ const useList = (
         ) {
             ${queryName}(
                 filters: $filters
-                advancedFilters: $advancedFilters
+                ${advancedFilters ? 'advancedFilters: $advancedFilters' : ''}
                 orderBy: $orderBy
                 page: $page
                 itemsPerPage: $itemsPerPage
