@@ -231,7 +231,7 @@ export const SimilarLocations = ({
             locData.sort(compare);
             setDisplayedLocations(locData);
         }
-    }, [similarLocations]);
+    }, [similarLocations, nbMaxLocations]);
 
     const columns = [
         {

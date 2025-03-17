@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { PageContentWrapper, NavButton } from '@components';
+import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, use, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
@@ -71,10 +71,8 @@ const Reception: PageComponent = () => {
     const [triggerHUClose, setTriggerHUClose] = useState<boolean>(false);
 
     //define workflow parameters
-    const workflow = {
-        processName: 'reception',
-        expectedSteps: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]
-    };
+    const processName = 'reception';
+
     // [0] : 10-> Scan PO
     // [1] : 20 -> Select GoodsIn
     // [2] : 30 -> Scan HU
@@ -87,7 +85,7 @@ const Reception: PageComponent = () => {
     // [9] : 100 -> Select location by level
     // [10] : 110 -> ScanHU (if scanHUAtEnd)
     // [11] : 120 -> Validate reception
-    const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
+    const storedObject = JSON.parse(storage.get(processName) || '{}');
 
     console.log('reception', storedObject);
 
@@ -191,41 +189,34 @@ const Reception: PageComponent = () => {
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
-        storedObject[`step${workflow.expectedSteps[0]}`] = { previousStep: 0 };
-        storedObject['currentStep'] = workflow.expectedSteps[0];
-        storage.set(workflow.processName, JSON.stringify(storedObject));
+        storedObject['step10'] = { previousStep: 0 };
+        storedObject['currentStep'] = 10;
+        storage.set(processName, JSON.stringify(storedObject));
     }
 
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
         const object: { [k: string]: any } = {};
-        if (storedObject[`step${workflow.expectedSteps[0]}`]?.data?.purchaseOrder) {
-            const purchaseOrder =
-                storedObject[`step${workflow.expectedSteps[0]}`]?.data?.purchaseOrder;
+        if (storedObject['step10']?.data?.purchaseOrder) {
+            const purchaseOrder = storedObject['step10']?.data?.purchaseOrder;
             object[t('common:purchase-order_abbr')] = purchaseOrder.name;
             object[t('common:supplier_abbr')] = purchaseOrder.supplier;
         }
-        if (storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenGoodsIn) {
-            const goodsIn = storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenGoodsIn;
+        if (storedObject['step20']?.data?.chosenGoodsIn) {
+            const goodsIn = storedObject['step20']?.data?.chosenGoodsIn;
             object[t('common:goods-in')] = goodsIn.name ? goodsIn.name : t('common:new');
         }
-        if (
-            !isHuScannedAtEnd &&
-            storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit
-        ) {
-            const handlingUnit =
-                storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
+        if (!isHuScannedAtEnd && storedObject['step30']?.data?.handlingUnit) {
+            const handlingUnit = storedObject['step30']?.data?.handlingUnit;
             object[t('common:hu')] = handlingUnit.barcode;
         }
-        if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenArticleLuBarcode) {
-            const articleLuBarcode =
-                storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenArticleLuBarcode;
+        if (storedObject['step50']?.data?.chosenArticleLuBarcode) {
+            const articleLuBarcode = storedObject['step50']?.data?.chosenArticleLuBarcode;
             object[t('common:article_abbr')] =
                 articleLuBarcode.article.name + '-' + articleLuBarcode.article.description;
         }
-        if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures) {
-            const processedFeatures =
-                storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures;
+        if (storedObject['step60']?.data?.processedFeatures) {
+            const processedFeatures = storedObject['step60']?.data?.processedFeatures;
             processedFeatures.map((feature: any) => {
                 object[`${feature.featureCode.name}`] = !Array.isArray(feature.value)
                     ? feature.featureCode.dateType
@@ -234,27 +225,24 @@ const Reception: PageComponent = () => {
                     : feature.value.map((value: any) => value).join(' / ');
             });
         }
-        if (storedObject[`step${workflow.expectedSteps[6]}`]?.data?.stockStatus) {
-            const stockStatus = storedObject[`step${workflow.expectedSteps[6]}`]?.data?.stockStatus;
+        if (storedObject['step70']?.data?.stockStatus) {
+            const stockStatus = storedObject['step70']?.data?.stockStatus;
             object[t('common:stock-status')] = stockStatus.text;
         }
-        if (storedObject[`step${workflow.expectedSteps[7]}`]?.data?.movingQuantity) {
-            const movingQuantity =
-                storedObject[`step${workflow.expectedSteps[7]}`]?.data?.movingQuantity;
+        if (storedObject['step80']?.data?.movingQuantity) {
+            const movingQuantity = storedObject['step80']?.data?.movingQuantity;
             object[t('common:quantity')] = movingQuantity;
         }
-        if (storedObject[`step${workflow.expectedSteps[9]}`]?.data?.chosenLocation) {
-            const chosenLocation =
-                storedObject[`step${workflow.expectedSteps[9]}`]?.data?.chosenLocation;
+        if (storedObject['step100']?.data?.chosenLocation) {
+            const chosenLocation = storedObject['step100']?.data?.chosenLocation;
             object[t('common:location-reception')] = chosenLocation.name;
         }
         if (
             isHuScannedAtEnd &&
-            storedObject[`step${workflow.expectedSteps[9]}`]?.data?.chosenLocation.huManagement &&
-            storedObject[`step${workflow.expectedSteps[10]}`]?.data?.handlingUnit
+            storedObject['step100']?.data?.chosenLocation.huManagement &&
+            storedObject['step110']?.data?.handlingUnit
         ) {
-            const handlingUnit =
-                storedObject[`step${workflow.expectedSteps[10]}`]?.data?.handlingUnit;
+            const handlingUnit = storedObject['step110']?.data?.handlingUnit;
             object[t('common:hu')] = handlingUnit.barcode;
         }
         setOriginDisplay(object);
@@ -278,13 +266,30 @@ const Reception: PageComponent = () => {
         setShowEmptyLocations(false);
     };
 
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        switch (storedObject.currentStep) {
+            //this to define loading parameter for each given step according to conditions if needed,
+            //for example:
+            // case 20:
+            //     setIsLoading(
+            //         !storedObject['step10'].data.goodsIns &&
+            //             !storedObject['step10'].data.responseType
+            //     );
+            //     break;
+            default:
+                setIsLoading(false);
+        }
+    }, [storedObject.currentStep]);
+
     return (
         <PageContentWrapper>
             <HeaderContent
                 title={t('common:reception')}
                 actionsRight={
                     <Space>
-                        {storedObject.currentStep > workflow.expectedSteps[0] ? (
+                        {storedObject.currentStep > 10 ? (
                             <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
                         ) : (
                             <></>
@@ -302,268 +307,237 @@ const Reception: PageComponent = () => {
                     }}
                 ></RadioInfosHeader>
             )}
-            {showSimilarLocations &&
-            storedObject[`step${workflow.expectedSteps[4]}`].data.currentPurchaseOrderLine &&
-            (storedObject[`step${workflow.expectedSteps[5]}`].data.processedFeatures ||
-                storedObject[`step${workflow.expectedSteps[5]}`].data.feature === null) ? (
-                <SimilarLocations
-                    currentPurchaseOrderLine={
-                        storedObject[`step${workflow.expectedSteps[4]}`].data
-                            .currentPurchaseOrderLine
-                    }
-                    currentFeatures={
-                        storedObject[`step${workflow.expectedSteps[5]}`].data.processedFeatures ??
-                        undefined
-                    }
-                />
-            ) : (
-                <></>
-            )}
-            {showEmptyLocations && storedObject[`step${workflow.expectedSteps[4]}`].data ? (
-                <EmptyLocations />
-            ) : (
-                <></>
-            )}
-            {!storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
-                <ScanGoodsInOrPo
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[0]}
-                    label={t('common:goodsIn-po')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: false }}
-                    checkComponent={(data: any) => <GoodsInOrPoChecks dataToCheck={data} />}
-                ></ScanGoodsInOrPo>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[0]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[1]}`]?.data ? (
-                <SelectGoodsInForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[1]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true,
-                        alternativeSubmitButton1: true
-                    }}
-                    goodsIns={
-                        storedObject[`step${workflow.expectedSteps[0]}`].data.goodsIns ?? undefined
-                    }
-                    responseType={
-                        storedObject[`step${workflow.expectedSteps[0]}`].data.responseType ??
-                        undefined
-                    }
-                    triggerAlternativeSubmit1={{
-                        triggerAlternativeSubmit1: requestNewGoodsIn,
-                        setTriggerAlternativeSubmit1: setRequestNewGoodsIn
-                    }}
-                ></SelectGoodsInForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[1]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[2]}`]?.data ? (
-                <ScanHandlingUnit
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[2]}
-                    label={t('common:handling-unit')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    defaultValue={isHuScannedAtEnd ? 'huScannedAtEnd' : undefined}
-                    checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
-                ></ScanHandlingUnit>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[2]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
-                <ScanArticle
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[3]}
-                    label={t('common:article')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
-                ></ScanArticle>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[3]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[4]}`]?.data ? (
-                <SelectArticleForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[4]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true }}
-                    articleLuBarcodes={
-                        storedObject[`step${workflow.expectedSteps[3]}`].data.articleLuBarcodes
-                    }
-                ></SelectArticleForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[4]}`]?.data &&
-            !(
-                storedObject[`step${workflow.expectedSteps[5]}`]?.data?.remainingFeatures
-                    ?.length === 0
-            ) ? (
-                <ScanFeature
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[5]}
-                    label={t('common:feature-code')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    action1Trigger={{
-                        action1Trigger: finishUniqueFeatures,
-                        setAction1Trigger: setFinishUniqueFeatures
-                    }}
-                    featureType={
-                        storedObject[`step${workflow.expectedSteps[4]}`].data.chosenArticleLuBarcode
-                            .article.featureType
-                    }
-                    processedFeatures={
-                        storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures ??
-                        undefined
-                    }
-                    nextFeatureCode={
-                        storedObject[`step${workflow.expectedSteps[5]}`]?.data?.nextFeatureCode ??
-                        undefined
-                    }
-                    checkComponent={(data: any) => <FeatureChecks dataToCheck={data} />}
-                ></ScanFeature>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[5]}`]?.data?.remainingFeatures?.length ===
-                0 && !storedObject[`step${workflow.expectedSteps[6]}`]?.data ? (
-                <SelectStockStatusForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[6]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    initialValue={
-                        storedObject[`step${workflow.expectedSteps[4]}`].data
-                            .currentPurchaseOrderLine.blockingStatus
-                    }
-                ></SelectStockStatusForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[6]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[7]}`]?.data ? (
-                <EnterQuantity
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[7]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    defaultValue={
-                        storedObject[`step${workflow.expectedSteps[4]}`].data.chosenArticleLuBarcode
-                            .article.featureType
-                            ? storedObject[
-                                  `step${workflow.expectedSteps[5]}`
-                              ].data.processedFeatures.reduce(
-                                  (count: number, feature: any) =>
-                                      count +
-                                      ((feature.featureCode.unique && feature.value?.length) || 0),
-                                  0
-                              )
-                            : undefined
-                    }
-                    checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
-                ></EnterQuantity>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[7]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[8]}`]?.data ? (
-                <ScanLocation
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[8]}
-                    label={t('common:location-reception')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true,
-                        locationButton: true,
-                        emptyButton: true
-                    }}
-                    headerContent={{ headerContent, setHeaderContent }}
-                    showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
-                    showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
-                    initValue={defaultReceptionLocation?.barcode}
-                    checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
-                ></ScanLocation>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[8]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[9]}`]?.data ? (
-                <SelectLocationByLevelForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[9]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    locations={storedObject[`step${workflow.expectedSteps[8]}`].data.locations}
-                ></SelectLocationByLevelForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[9]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[10]}`]?.data ? (
-                <ScanHandlingUnit
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[10]}
-                    label={t('common:handling-unit')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    defaultValue={
-                        !storedObject[`step${workflow.expectedSteps[9]}`]?.data?.chosenLocation
-                            .huManagement
-                            ? 'noHuManagement'
-                            : !isHuScannedAtEnd
-                              ? 'huScannedAtStart'
-                              : undefined
-                    }
-                    checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
-                ></ScanHandlingUnit>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[10]}`]?.data ? (
-                <ValidateReceptionForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[11]}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true,
-                        alternativeSubmitButton1: true
-                    }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    triggerAlternativeSubmit1={{
-                        triggerAlternativeSubmit1: triggerHUClose,
-                        setTriggerAlternativeSubmit1: setTriggerHUClose
-                    }}
-                    headerContent={{ setHeaderContent }}
-                ></ValidateReceptionForm>
-            ) : (
-                <></>
-            )}
+            {isLoading ? <UpperMobileSpinner></UpperMobileSpinner> : <></>}
+            <div hidden={isLoading}>
+                {showSimilarLocations &&
+                storedObject['step50']?.data.currentPurchaseOrderLine &&
+                (storedObject['step60']?.data.processedFeatures ||
+                    storedObject['step60']?.data.feature === null) ? (
+                    <SimilarLocations
+                        currentPurchaseOrderLine={
+                            storedObject['step50'].data.currentPurchaseOrderLine
+                        }
+                        currentFeatures={storedObject['step60'].data.processedFeatures ?? undefined}
+                        locationIdToExclude={defaultReceptionLocation?.id ?? undefined}
+                    />
+                ) : (
+                    <></>
+                )}
+                {showEmptyLocations && storedObject['step50']?.data ? <EmptyLocations /> : <></>}
+                {!storedObject['step10']?.data ? (
+                    <ScanGoodsInOrPo
+                        process={processName}
+                        stepNumber={10}
+                        label={t('common:goodsIn-po')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: true, backButton: false }}
+                        checkComponent={(data: any) => <GoodsInOrPoChecks dataToCheck={data} />}
+                    ></ScanGoodsInOrPo>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step10']?.data && !storedObject['step20']?.data ? (
+                    <SelectGoodsInForm
+                        process={processName}
+                        stepNumber={20}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true,
+                            alternativeSubmitButton1: true
+                        }}
+                        goodsIns={storedObject['step10'].data.goodsIns ?? undefined}
+                        responseType={storedObject['step10'].data.responseType ?? undefined}
+                        triggerAlternativeSubmit1={{
+                            triggerAlternativeSubmit1: requestNewGoodsIn,
+                            setTriggerAlternativeSubmit1: setRequestNewGoodsIn
+                        }}
+                    ></SelectGoodsInForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step20']?.data && !storedObject['step30']?.data ? (
+                    <ScanHandlingUnit
+                        process={processName}
+                        stepNumber={30}
+                        label={t('common:handling-unit')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        defaultValue={isHuScannedAtEnd ? 'huScannedAtEnd' : undefined}
+                        checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
+                    ></ScanHandlingUnit>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step30']?.data && !storedObject['step40']?.data ? (
+                    <ScanArticle
+                        process={processName}
+                        stepNumber={40}
+                        label={t('common:article')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
+                    ></ScanArticle>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step40']?.data && !storedObject['step50']?.data ? (
+                    <SelectArticleForm
+                        process={processName}
+                        stepNumber={50}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: true, backButton: true }}
+                        articleLuBarcodes={storedObject['step40'].data.articleLuBarcodes}
+                    ></SelectArticleForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step50']?.data &&
+                !(storedObject['step60']?.data?.remainingFeatures?.length === 0) ? (
+                    <ScanFeature
+                        process={processName}
+                        stepNumber={60}
+                        label={t('common:feature-code')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        action1Trigger={{
+                            action1Trigger: finishUniqueFeatures,
+                            setAction1Trigger: setFinishUniqueFeatures
+                        }}
+                        featureType={
+                            storedObject['step50'].data.chosenArticleLuBarcode.article.featureType
+                        }
+                        processedFeatures={
+                            storedObject['step60']?.data?.processedFeatures ?? undefined
+                        }
+                        nextFeatureCode={storedObject['step60']?.data?.nextFeatureCode ?? undefined}
+                        checkComponent={(data: any) => <FeatureChecks dataToCheck={data} />}
+                    ></ScanFeature>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step60']?.data?.remainingFeatures?.length === 0 &&
+                !storedObject['step70']?.data ? (
+                    <SelectStockStatusForm
+                        process={processName}
+                        stepNumber={70}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        initialValue={
+                            storedObject['step50'].data.currentPurchaseOrderLine.blockingStatus
+                        }
+                    ></SelectStockStatusForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step70']?.data && !storedObject['step80']?.data ? (
+                    <EnterQuantity
+                        process={processName}
+                        stepNumber={80}
+                        buttons={{ submitButton: true, backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        defaultValue={
+                            storedObject['step50'].data.chosenArticleLuBarcode.article.featureType
+                                ? storedObject['step60'].data.processedFeatures.reduce(
+                                      (count: number, feature: any) =>
+                                          count +
+                                          ((feature.featureCode.unique && feature.value?.length) ||
+                                              0),
+                                      0
+                                  )
+                                : undefined
+                        }
+                        checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
+                    ></EnterQuantity>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step80']?.data && !storedObject['step90']?.data ? (
+                    <ScanLocation
+                        process={processName}
+                        stepNumber={90}
+                        label={t('common:location-reception')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true,
+                            locationButton: true,
+                            emptyButton: true
+                        }}
+                        headerContent={{ headerContent, setHeaderContent }}
+                        showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
+                        showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
+                        initValue={defaultReceptionLocation?.barcode}
+                        checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
+                    ></ScanLocation>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step90']?.data && !storedObject['step100']?.data ? (
+                    <SelectLocationByLevelForm
+                        process={processName}
+                        stepNumber={100}
+                        buttons={{ submitButton: true, backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        locations={storedObject['step90'].data.locations}
+                    ></SelectLocationByLevelForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step100']?.data && !storedObject['step110']?.data ? (
+                    <ScanHandlingUnit
+                        process={processName}
+                        stepNumber={110}
+                        label={t('common:handling-unit')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        defaultValue={
+                            !storedObject['step100']?.data?.chosenLocation.huManagement
+                                ? 'noHuManagement'
+                                : !isHuScannedAtEnd
+                                  ? 'huScannedAtStart'
+                                  : undefined
+                        }
+                        checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
+                    ></ScanHandlingUnit>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step110']?.data ? (
+                    <ValidateReceptionForm
+                        process={processName}
+                        stepNumber={120}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true,
+                            alternativeSubmitButton1: true
+                        }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        triggerAlternativeSubmit1={{
+                            triggerAlternativeSubmit1: triggerHUClose,
+                            setTriggerAlternativeSubmit1: setTriggerHUClose
+                        }}
+                        headerContent={{ setHeaderContent }}
+                    ></ValidateReceptionForm>
+                ) : (
+                    <></>
+                )}
+            </div>
         </PageContentWrapper>
     );
 };
