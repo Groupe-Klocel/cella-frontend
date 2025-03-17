@@ -63,6 +63,44 @@ export const SimilarPickingLocations = ({
     const [similarLocations, setSimilarLocationsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
 
+    const getLocationsNumber = async (): Promise<string | undefined> => {
+        const query = gql`
+            query parameters($filters: ParameterSearchFilters) {
+                parameters(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        scope
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                scope: 'radio',
+                code: 'SIMILAR_LOCATIONS_NUMBER'
+            }
+        };
+        const locationsNumber = await graphqlRequestClient.request(query, variables);
+        return locationsNumber.parameters.results[0].value;
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const locationsNumber = await getLocationsNumber();
+
+            if (locationsNumber) {
+                setNbMaxLocations(parseInt(locationsNumber));
+            }
+        }
+        fetchData();
+    }, []);
+
     const getSimilarLocations = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
             query handlingUnitContents(
@@ -183,7 +221,7 @@ export const SimilarPickingLocations = ({
 
             setDisplayedLocations(locData);
         }
-    }, [similarLocations]);
+    }, [similarLocations, nbMaxLocations]);
 
     const columns = [
         {

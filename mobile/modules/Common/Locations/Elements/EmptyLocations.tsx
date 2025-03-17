@@ -250,7 +250,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
             locData.sort(compare);
             setDisplayedLocations(locData);
         }
-    }, [locationsData]);
+    }, [locationsData, nbMaxLocations]);
 
     const columns = [
         {

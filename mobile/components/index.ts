@@ -47,3 +47,4 @@ export * from './common/smart/Page/Page';
 export * from './common/smart/SideMenu/SideMenu';
 export * from './common/smart/HeaderContent/HeaderContent';
 export * from './common/dumb/MenuItem/MenuItem';
+export * from './common/dumb/Spinners/UpperMobileSpinner';
