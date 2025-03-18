@@ -3,17 +3,14 @@ CELLA Frontend
 Website and Mobile templates that can be used to communicate
 with CELLA WMS APIs.
 Copyright (C) 2023 KLOCEL <contact@klocel.com>
-
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
-
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
-
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
@@ -46,35 +43,31 @@ const DeliveriesManualAllocationModal = ({
     const router = useRouter();
     const [orderData, setOrderData] = useState<any>();
     const [isCreationLoading, setIsCreationLoading] = useState<boolean>(false);
-    const [equipmentsTypes, setEquipmentsTypes] = useState<any[]>([]);
+    const [equipments, setEquipments] = useState<any[]>([]);
     const [deliveries, setDeliveries] = useState<any[]>([]);
 
-    const getEquipmentsTypes = async () => {
+    const getEquipments = async () => {
         const query = gql`
-            query configs($scope: String!) {
-                configs(filters: { scope: $scope }) {
+            query equipments {
+                equipments(filters: { available: true } itemsPerPage: 1000) {
                     results {
-                        value
-                        code
+                        name
+                        id
                     }
                 }
             }
         `;
 
-        const variables = {
-            scope: 'equipment_type'
-        };
-
-        const EquipmentsTypes = await graphqlRequestClient.request(query, variables);
-        return EquipmentsTypes.configs.results;
+        const Equipments = await graphqlRequestClient.request(query);
+        return Equipments.equipments.results;
     };
 
     useEffect(() => {
-        const fetchEquipmentsTypes = async () => {
-            const results = await getEquipmentsTypes();
-            setEquipmentsTypes(results);
+        const fetchEquipments = async () => {
+            const results = await getEquipments();
+            setEquipments(results);
         };
-        fetchEquipmentsTypes();
+        fetchEquipments();
     }, []);
 
     const getDeliveries = async () => {
@@ -147,35 +140,9 @@ const DeliveriesManualAllocationModal = ({
         setIsCreationLoading(true);
         setFieldsValue();
 
-        let allowedEquipments = undefined;
+        let allowedEquipments = form_value.equipments;
 
-        if (form_value?.equipmentsTypes?.length > 0) {
-            const equipmentQuery = gql`
-                query equipments($filters: EquipmentSearchFilters) {
-                    equipments(filters: $filters) {
-                        count
-                        results {
-                            id
-                        }
-                    }
-                }
-            `;
-
-            const equipmentVariables = {
-                filters: {
-                    type: form_value?.equipmentsTypes
-                }
-            };
-
-            const equipmentResults = await graphqlRequestClient.request(
-                equipmentQuery,
-                equipmentVariables
-            );
-
-            allowedEquipments = equipmentResults?.equipments?.results?.map(
-                (equipment: any) => equipment.id
-            );
-        }
+        console.log(form_value.equipments);
 
         const allowedDeliveries = deliveries.map((deliveries: any) => deliveries.id);
 
@@ -246,7 +213,7 @@ const DeliveriesManualAllocationModal = ({
             confirmLoading={isCreationLoading}
         >
             <Form form={form}>
-                <Form.Item name="equipmentsTypes">
+                <Form.Item name="equipments">
                     <Select
                         mode="multiple"
                         placeholder={`${t('messages:please-select-an', {
@@ -254,9 +221,9 @@ const DeliveriesManualAllocationModal = ({
                         })}`}
                         style={{ width: '100%' }}
                     >
-                        {equipmentsTypes.map((equipment) => (
-                            <Select.Option key={equipment.code} value={equipment.code}>
-                                {equipment.value}
+                        {equipments.map((equipment) => (
+                            <Select.Option key={equipment.id} value={equipment.id}>
+                                {equipment.name}
                             </Select.Option>
                         ))}
                     </Select>

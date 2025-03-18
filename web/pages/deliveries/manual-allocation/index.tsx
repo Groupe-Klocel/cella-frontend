@@ -3,29 +3,20 @@ CELLA Frontend
 Website and Mobile templates that can be used to communicate
 with CELLA WMS APIs.
 Copyright (C) 2023 KLOCEL <contact@klocel.com>
-
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
-
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
-
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
+import { EyeTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import {
-    getModesFromPermissions,
-    META_DEFAULTS,
-    pathParams,
-    showError,
-    showSuccess
-} from '@helpers';
+import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -37,7 +28,6 @@ import { FC, useState } from 'react';
 import configs from '../../../../common/configs.json';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { useAuth } from 'context/AuthContext';
-import { gql } from 'graphql-request';
 import { DeliveryProgressBar } from 'modules/Deliveries/Elements/DeliveryProgressBar';
 import { DeliveriesManualAllocationModal } from 'modules/Deliveries/Forms/DeliveriesManualAllocationModal';
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -45,14 +35,12 @@ type PageComponent = FC & { layout: typeof MainLayout };
 const DeliveriesManualAllocationPages: PageComponent = () => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
-    const { graphqlRequestClient } = useAuth();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [loading, setLoading] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const [refetch, setRefetch] = useState<boolean>(false);
     const [showDeliveriesManualAllocationModal, setShowDeliveriesManualAllocationModal] =
         useState(false);
     const headerData: HeaderData = {
@@ -61,18 +49,6 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
         actionsComponent: null
     };
 
-    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
-        return () => {
-            Modal.confirm({
-                title: t('messages:delete-confirm'),
-                onOk: () => {
-                    setId(id);
-                },
-                okText: t('messages:confirm'),
-                cancelText: t('messages:cancel')
-            });
-        };
-    };
     const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
         setSelectedRowKeys(newSelectedRowKeys);
     };
@@ -114,6 +90,10 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
             ) : null
     };
 
+    const autocountFilter = {
+        filter: { field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }
+    };
+
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
@@ -129,6 +109,7 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
                 headerData={headerData}
                 dataModel={model}
                 searchCriteria={{ status: configs.DELIVERY_STATUS_ESTIMATED }}
+                advancedFilters={autocountFilter}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 extraColumns={[
