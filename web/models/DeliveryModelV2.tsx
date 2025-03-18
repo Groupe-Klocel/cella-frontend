@@ -1269,6 +1269,26 @@ export const DeliveryModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null
+        },
+        autocountHandlingUnitOutbound: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: false,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
         }
     }
 };
