@@ -337,6 +337,7 @@ query GetArticleLuById($id: String!, $language: String = "en") {
         height
         baseUnitWeight
         quantity
+        description
         rotation
         rotationText
         preparationMode
@@ -405,6 +406,7 @@ mutation UpdateArticleLu($id: String!, $input: UpdateArticleLuInput!) {
         rotationText
         replenish
         quantity
+        description
     }
 }
 mutation CreateArticleLu($input: CreateArticleLuInput!) {
@@ -425,6 +427,7 @@ mutation CreateArticleLu($input: CreateArticleLuInput!) {
         rotationText
         replenish
         quantity
+        description
     }
 }
 
