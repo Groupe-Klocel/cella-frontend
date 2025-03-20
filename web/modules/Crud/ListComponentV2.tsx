@@ -121,7 +121,6 @@ const ListComponent = (props: IListProps) => {
     let userSettings = state?.userSettings?.find((item: any) => {
         return `${props.dataModel.resolverName}${router.pathname}` === item.code;
     });
-
     // #region sorter / filter from userSettings
 
     const savedSorters = userSettings?.valueJson?.sorter
@@ -138,7 +137,11 @@ const ListComponent = (props: IListProps) => {
         }));
 
     const [sort, setSort] = useState<any>(
-        savedSorters === null ? null : (savedSorters ?? props.sortDefault ?? sortParameter)
+        props.triggerPriorityChange
+            ? [{ field: props.triggerPriorityChange.orderingField, ascending: true }]
+            : savedSorters === null
+              ? null
+              : (savedSorters ?? props.sortDefault ?? sortParameter)
     );
 
     //this is to retrieve sort applied any time (used by drag and drop component)
@@ -586,6 +589,12 @@ const ListComponent = (props: IListProps) => {
         const queryInfo = await graphqlRequestClient.request(query, variables);
         return queryInfo;
     };
+
+    useEffect(() => {
+        if (props.triggerPriorityChange?.orderingField) {
+            setSort([{ field: props.triggerPriorityChange.orderingField, ascending: true }]);
+        }
+    }, [props.triggerPriorityChange]);
 
     const getNextInfo = async (variables: any) => {
         const filtersVariables = {
@@ -1191,7 +1200,11 @@ const ListComponent = (props: IListProps) => {
                         };
 
                         // if column is in sortable list add sorter property
-                        if (sortableFields.length > 0 && sortableFields.includes(column_name)) {
+                        if (
+                            sortableFields.length > 0 &&
+                            sortableFields.includes(column_name) &&
+                            !props.triggerPriorityChange
+                        ) {
                             row_data['sorter'] = { multiple: sort_index };
                             row_data['showSorterTooltip'] = false;
                             sort_index++;
