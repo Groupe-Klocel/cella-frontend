@@ -410,7 +410,6 @@ const CustomerOrderDetailsExtra = ({
                             }
                         ]}
                         searchable={false}
-                        sortDefault={[{ field: 'created', ascending: true }]}
                     />
                 </>
             ) : (
