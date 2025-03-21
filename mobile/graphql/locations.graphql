@@ -133,54 +133,45 @@ query GetLocationIds(
 
 mutation CreateLocation($input: CreateLocationInput!) {
     createLocation(input: $input) {
-        __typename
-        ... on LocationType {
-            id
+        id
+        name
+        barcode
+        aisle
+        column
+        level
+        position
+        replenish
+        blockId
+        block {
             name
-            barcode
-            aisle
-            column
-            level
-            position
-            replenish
-            blockId
-            block {
-                name
-            }
-            replenishType
-            constraint
-            comment
-            baseUnitRotation
-            allowCycleCountStockMin
         }
-        ... on ValidationError {
-            message
-        }
+        replenishType
+        constraint
+        comment
+        baseUnitRotation
+        allowCycleCountStockMin
     }
 }
 
 mutation BulkCreateLocations($input: BulkCreateLocationsInput!) {
     bulkCreateLocations(input: $input) {
-        __typename
-        ... on LocationType {
-            id
+        id
+        name
+        barcode
+        aisle
+        column
+        level
+        position
+        replenish
+        blockId
+        block {
             name
-            barcode
-            aisle
-            column
-            level
-            position
-            replenish
-            blockId
-            block {
-                name
-            }
-            replenishType
-            constraint
-            comment
-            baseUnitRotation
-            allowCycleCountStockMin
         }
+        replenishType
+        constraint
+        comment
+        baseUnitRotation
+        allowCycleCountStockMin
     }
 }
 

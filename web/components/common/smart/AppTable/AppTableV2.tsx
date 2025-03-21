@@ -69,6 +69,10 @@ export interface IAppTableV2Props {
     hiddenColumns?: any;
     rowSelection?: any;
     linkFields?: any;
+    components?: any;
+    isDragAndDroppable?: boolean;
+    items?: any;
+    isIndependentScrollable?: boolean;
 }
 
 const AppTableV2: FC<IAppTableV2Props> = ({
@@ -84,7 +88,11 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     dataModel,
     hiddenColumns,
     rowSelection,
-    linkFields
+    linkFields,
+    components,
+    isDragAndDroppable,
+    items,
+    isIndependentScrollable
 }: IAppTableV2Props) => {
     const { t } = useTranslation();
     const router = useRouter();
@@ -372,6 +380,17 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         return () => {};
     }, [visibleColumnKeys, filteredColumns]);
 
+    const dataSource = isDragAndDroppable
+        ? items!.map((item: any, index: number) => ({
+              ...item,
+              key: item.id,
+              index
+          }))
+        : data;
+
+    const insideScroll = { x: '100%', y: 400 };
+    const insideScrollPagination = { pageSize: dataSource.length, showSizeChanger: false };
+
     return (
         <PageTableContentWrapper>
             <WrapperStickyActions>
@@ -401,24 +420,27 @@ const AppTableV2: FC<IAppTableV2Props> = ({
             </WrapperStickyActions>
             <Table
                 rowKey="id"
-                dataSource={data}
-                scroll={scroll}
+                dataSource={dataSource}
+                scroll={isIndependentScrollable ? insideScroll : scroll}
                 size="small"
                 loading={isLoading}
                 onChange={onChange}
                 // rowSelection={rowSelection}
                 pagination={
-                    pagination && {
-                        position: ['bottomRight'],
-                        total: pagination.total,
-                        current: pagination.current,
-                        pageSize: pagination.itemsPerPage,
-                        onChange: (page, pageSize) => {
-                            handlePaginationChange(page, pageSize);
-                        }
-                    }
+                    isIndependentScrollable
+                        ? insideScrollPagination
+                        : pagination && {
+                              position: ['bottomRight'],
+                              total: pagination.total,
+                              current: pagination.current,
+                              pageSize: pagination.itemsPerPage,
+                              onChange: (page, pageSize) => {
+                                  handlePaginationChange(page, pageSize);
+                              }
+                          }
                 }
                 rowSelection={rowSelection}
+                components={components}
             >
                 {newTableColumns.map((c) => {
                     return (

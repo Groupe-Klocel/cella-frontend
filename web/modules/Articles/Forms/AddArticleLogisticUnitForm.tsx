@@ -47,6 +47,7 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
+import TextArea from 'antd/es/input/TextArea';
 
 interface IOption {
     value: string;
@@ -97,6 +98,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
     const length = t('d:length');
     const baseUnitWeight = t('d:baseUnitWeight');
     const article = t('common:article');
+    const description = t('common:description');
     const handlingUnitModel = t('d:handlingUnitModel');
     const logisticUnitModel = t('d:logisticUnitModel');
     const parentLogisticUnit = t('d:parentLogisticUnit');
@@ -596,10 +598,6 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
                                 ))}
                             </Select>
                         </Form.Item>
-                    </Col>
-                </Row>
-                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-                    <Col xs={8} xl={12}>
                         <Form.Item label={pickingType} name="pickingType">
                             <Select
                                 allowClear
@@ -614,6 +612,11 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
                                     </Option>
                                 ))}
                             </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item label={description} name="description">
+                            <TextArea />
                         </Form.Item>
                     </Col>
                     {isPickingLocationDisplay && (

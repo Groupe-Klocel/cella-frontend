@@ -157,40 +157,66 @@ const LoadsPage: PageComponent = () => {
 
     // DISPATCH LOAD
     const statusDispatched = configs.DELIVERY_STATUS_DISPATCHED;
-    const { mutate: updateLoadMutate, isPending: dispatch } = useUpdateLoadMutation<Error>(
-        graphqlRequestClient,
-        {
-            onSuccess: async (
-                data: UpdateLoadMutation,
-                _variables: UpdateLoadMutationVariables,
-                _context: any
-            ) => {
-                showSuccess(t('messages:success-dispatched'));
-                if (data?.updateLoad?.id) {
-                    printLoad(
-                        {
-                            id: data.updateLoad.id,
-                            statusDispatched
-                        },
-                        defaultPrinterLaser
-                    );
-                }
-                setTriggerRefresh(!triggerRefresh);
-            },
-            onError: () => {
-                showError(t('messages:error-dispatching-data'));
-            }
-        }
-    );
-
-    const dispatchLoad = ({ id, input }: UpdateLoadMutationVariables) => {
+    const [isDispatchLoading, setIsDispatchLoading] = useState(false);
+    const dispatchLoad = async (id: String) => {
         Modal.confirm({
             title: t('messages:dispatch-load-confirm'),
-            onOk: () => {
-                updateLoadMutate({
-                    id: id,
-                    input: input
-                });
+            onOk: async () => {
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+
+                const variables = {
+                    functionName: 'load_dispatch',
+                    event: { input: { loadId: id } }
+                };
+                setIsDispatchLoading(true);
+                let dispatchSuccessful = false;
+                try {
+                    const deliveryHUO = await graphqlRequestClient.request(query, variables);
+                    if (deliveryHUO.executeFunction.status === 'ERROR') {
+                        showError(deliveryHUO.executeFunction.output);
+                    } else if (
+                        deliveryHUO.executeFunction.status === 'OK' &&
+                        deliveryHUO.executeFunction.output.status === 'KO'
+                    ) {
+                        const deliveryList =
+                            deliveryHUO.executeFunction.output.output.delivery.join(', ');
+                        showError(
+                            t(`errors:${deliveryHUO.executeFunction.output.output.code}`, {
+                                name: t(deliveryList)
+                            })
+                        );
+                        console.log('Backend_message', deliveryHUO.executeFunction.output.output);
+                    } else {
+                        showSuccess(t('messages:success-dispatched'));
+                        setTriggerRefresh(!triggerRefresh);
+                        dispatchSuccessful = true;
+                    }
+                    if (dispatchSuccessful) {
+                        try {
+                            printLoad(
+                                {
+                                    id: id,
+                                    statusDispatched
+                                },
+                                defaultPrinterLaser
+                            );
+                        } catch (error) {
+                            console.error('Print error :', error);
+                            showError(t('messages:error-print'));
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error during dispatch request:', error);
+                    showError(t('messages:error-executing-function'));
+                }
+                setIsDispatchLoading(false);
             },
             okText: t('messages:confirm'),
             cancelText: t('messages:cancel')
@@ -243,15 +269,7 @@ const LoadsPage: PageComponent = () => {
                 data?.status < configs.LOAD_STATUS_DISPATCHED &&
                 data?.numberHuLoaded > 0 &&
                 model.isEditable ? (
-                    <Button
-                        loading={dispatch}
-                        onClick={() =>
-                            dispatchLoad({
-                                id: data.id,
-                                input: { status: configs.LOAD_STATUS_DISPATCHED }
-                            })
-                        }
-                    >
+                    <Button loading={isDispatchLoading} onClick={() => dispatchLoad(data.id)}>
                         {t('actions:dispatch')}
                     </Button>
                 ) : (
