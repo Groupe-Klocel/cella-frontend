@@ -80,7 +80,7 @@ const EditRuleVersion: FC<EditRuleVersionProps> = ({ id, router }: EditRuleVersi
     }, [error]);
 
     const { permissions } = useAppState();
-    const modes = getModesFromPermissions(permissions, Table.Location);
+    const modes = getModesFromPermissions(permissions, Table.RuleVersion);
 
     return (
         <>

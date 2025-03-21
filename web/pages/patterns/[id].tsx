@@ -22,7 +22,7 @@ import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSucces
 import { PatternModelV2 as model } from 'models/PatternModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { PatternDetailsExtra } from 'modules/Patterns/Elements/PatternDetailsExtras';
-import { patternsSubRoutes as itemRoutes } from 'modules/Patterns/Static/patternsRoutes';
+import { patternsRoutes as itemRoutes } from 'modules/Patterns/Static/patternsRoutes';
 import { useRouter } from 'next/router';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -149,14 +149,7 @@ const PatternPage: PageComponent = () => {
             <>
                 <AppHead title={META_DEFAULTS.title} />
                 <ItemDetailComponent
-                    extraDataComponent={
-                        <PatternDetailsExtra
-                            id={id!}
-                            name={data?.name}
-                            stockOwnerId={data?.stockOwnerId}
-                            stockOwnerName={data?.stockOwnerName}
-                        />
-                    }
+                    extraDataComponent={<PatternDetailsExtra id={id!} name={data?.name} />}
                     headerData={headerData}
                     id={id!}
                     dataModel={model}

@@ -46,6 +46,7 @@ import { FC, useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
 import { FormOptionType } from 'models/ModelsV2';
+import TextArea from 'antd/es/input/TextArea';
 
 export type EditArticleLogisticUnitFormProps = {
     details: any;
@@ -97,6 +98,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     const length = t('d:length');
     const baseUnitWeight = t('d:baseUnitWeight');
     const article = t('common:article');
+    const description = t('common:description');
     const handlingUnitModel = t('d:handlingUnitModel');
     const parentLogisticUnit = t('d:parentLogisticUnit');
     const replenish = t('d:replenishByParentLu');
@@ -564,10 +566,6 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
                                 ))}
                             </Select>
                         </Form.Item>
-                    </Col>
-                </Row>
-                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-                    <Col xs={8} xl={12}>
                         <Form.Item label={pickingType} name="pickingType">
                             <Select
                                 allowClear
@@ -582,6 +580,11 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
                                     </Option>
                                 ))}
                             </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col xs={8} xl={12}>
+                        <Form.Item label={description} name="description">
+                            <TextArea />
                         </Form.Item>
                     </Col>
                     {isPickingLocationDisplay && (

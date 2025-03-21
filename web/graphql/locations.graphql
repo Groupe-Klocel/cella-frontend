@@ -142,61 +142,52 @@ query GetLocationIds(
 
 mutation CreateLocation($input: CreateLocationInput!) {
     createLocation(input: $input) {
-        __typename
-        ... on LocationType {
-            id
+        id
+        name
+        barcode
+        aisle
+        column
+        level
+        position
+        replenish
+        blockId
+        block {
             name
-            barcode
-            aisle
-            column
-            level
-            position
-            replenish
-            blockId
-            block {
-                name
-            }
-            replenishType
-            replenishTypeText
-            constraint
-            comment
-            baseUnitRotation
-            allowCycleCountStockMin
-            huManagement
-            stockStatus
-            locationGroupId
         }
-        ... on ValidationError {
-            message
-        }
+        replenishType
+        replenishTypeText
+        constraint
+        comment
+        baseUnitRotation
+        allowCycleCountStockMin
+        huManagement
+        stockStatus
+        locationGroupId
     }
 }
 
 mutation BulkCreateLocations($input: BulkCreateLocationsInput!) {
     bulkCreateLocations(input: $input) {
-        __typename
-        ... on LocationType {
-            id
+        id
+        name
+        barcode
+        aisle
+        column
+        level
+        position
+        replenish
+        blockId
+        block {
             name
-            barcode
-            aisle
-            column
-            level
-            position
-            replenish
-            blockId
-            block {
-                name
-            }
-            replenishType
-            constraint
-            comment
-            baseUnitRotation
-            allowCycleCountStockMin
-            huManagement
-            stockStatus
-            locationGroupId
         }
+        replenishType
+        constraint
+        comment
+        baseUnitRotation
+        allowCycleCountStockMin
+        huManagement
+        stockStatus
+        locationGroupId
     }
 }
 

@@ -23,22 +23,23 @@ import { ManagePatternPathLocation } from 'modules/PatternPaths/PagesContainer/M
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const ManagePatternPathLocationPage: PageComponent = () => {
     const router = useRouter();
     return (
-        <>
+        <DndProvider backend={HTML5Backend}>
             <AppHead title={META_DEFAULTS.title} />
             <ManagePatternPathLocation
                 router={router}
                 id={router.query.id!}
                 name={router.query.name!}
                 patternName={router.query.patternName!}
-                stockOwnerName={router.query.stockOwnerName!}
             />
-        </>
+        </DndProvider>
     );
 };
 
