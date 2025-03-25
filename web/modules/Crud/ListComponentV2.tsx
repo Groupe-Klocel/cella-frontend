@@ -1169,16 +1169,24 @@ const ListComponent = (props: IListProps) => {
                         return flatten(item);
                     });
                     if (props.isDragAndDroppable) {
-                        listData['results'] = listData['results'].map(
-                            (item: any, index: number) => {
-                                return { ...item, index };
+                        if (props.isDragSource) {
+                            if (listData['results'].length === 0) {
+                                listData['results'] = props.defaultEmptyList;
                             }
-                        );
-                        if (listData['results'].filter((e: any) => e.id !== 'null').length !== 0) {
-                            listData['results'] = [
-                                ...listData['results'],
-                                ...props.defaultEmptyList
-                            ];
+                        } else {
+                            listData['results'] = listData['results'].map(
+                                (item: any, index: number) => {
+                                    return { ...item, index };
+                                }
+                            );
+                            if (
+                                listData['results'].filter((e: any) => e.id !== 'null').length !== 0
+                            ) {
+                                listData['results'] = [
+                                    ...listData['results'],
+                                    ...props.defaultEmptyList
+                                ];
+                            }
                         }
                     }
                     // iterate over the first result and get list of columns to define table structure
