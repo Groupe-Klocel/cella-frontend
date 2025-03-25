@@ -271,7 +271,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
         {
             id: 'null',
             name: t('actions:drop_here'),
-            index: 0
+            index: 999999
         }
     ];
 
@@ -298,15 +298,13 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                 const updatedItems = [...prev];
                 updatedItems.splice(toIndex ?? updatedItems.length - 1, 0, newItem);
 
-                return (
-                    updatedItems
-                        // .filter((e: any) => e.id !== 'null')
-                        .map((e, index) => ({
-                            ...e,
-                            order: e.id === 'null' ? null : index + 1,
-                            index: e.id === 'null' ? null : index
-                        }))
-                );
+                return updatedItems
+                    .map((e, index) => ({
+                        ...e,
+                        order: e.id === 'null' ? null : index + 1,
+                        index: e.id === 'null' ? 999999 : index
+                    }))
+                    .sort((a, b) => a.index - b.index);
             }
             return prev;
         });
@@ -335,6 +333,9 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
             toIndex === null
         )
             return;
+
+        console.log('fromIndex', fromIndex);
+        console.log('toIndex', toIndex);
 
         const updatedItems = [...patternPathLocationsList];
         const [movedItem] = updatedItems.splice(fromIndex, 1);
