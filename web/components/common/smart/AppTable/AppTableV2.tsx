@@ -434,6 +434,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                               total: pagination.total,
                               current: pagination.current,
                               pageSize: pagination.itemsPerPage,
+                              showSizeChanger: true,
                               onChange: (page, pageSize) => {
                                   handlePaginationChange(page, pageSize);
                               }
