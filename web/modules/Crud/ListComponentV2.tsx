@@ -1010,6 +1010,13 @@ const ListComponent = (props: IListProps) => {
     //first version of advancedFilters handling is for development purpose only
     const advancedFilters = props.advancedFilters ?? null;
 
+    const adjustedPagination =
+        props.isDragSource &&
+        (pagination?.total ?? 1) / pagination?.itemsPerPage === pagination?.current - 1
+            ? pagination?.current > 1
+                ? pagination.current - 1
+                : pagination?.current
+            : pagination?.current;
     // #region USELIST
 
     const {
@@ -1021,7 +1028,7 @@ const ListComponent = (props: IListProps) => {
         props.dataModel.endpoints.list,
         listFields,
         search,
-        pagination.current,
+        adjustedPagination,
         pagination.itemsPerPage,
         sort,
         router.locale,
@@ -1152,12 +1159,16 @@ const ListComponent = (props: IListProps) => {
             // if data is refreshed
             let listData: any = data?.[props.dataModel.endpoints.list];
             if (props.isDragAndDroppable && listData && listData['results'].length === 0) {
-                listData = {
-                    count: 1,
-                    itemsPerPage: 10,
-                    totalPages: 1,
-                    results: props.defaultEmptyList
-                };
+                if (listData.count === 0) {
+                    listData = {
+                        count: 1,
+                        itemsPerPage: 10,
+                        totalPages: 1,
+                        results: props.defaultEmptyList
+                    };
+                } else {
+                    setSwitchReloadData((prev: boolean) => !prev);
+                }
             }
 
             if (listData && listData['results']) {
@@ -1168,7 +1179,7 @@ const ListComponent = (props: IListProps) => {
                     listData['results'] = listData['results'].map((item: any) => {
                         return flatten(item);
                     });
-                    if (props.isDragAndDroppable) {
+                    if (props.isDragAndDroppable && !props.isDragSource) {
                         listData['results'] = listData['results'].map(
                             (item: any, index: number) => {
                                 return { ...item, index };
@@ -1240,8 +1251,10 @@ const ListComponent = (props: IListProps) => {
                 if (props.setData) props.setData(listData.results);
                 //this is to initialize and keep data at a given time on parent component
                 if (props.setInitialData) props.setInitialData(listData.results);
+
                 setPagination({
                     ...pagination,
+                    current: adjustedPagination,
                     total: listData['count']
                 });
             }
