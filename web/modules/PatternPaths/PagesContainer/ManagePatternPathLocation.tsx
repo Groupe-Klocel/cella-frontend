@@ -271,12 +271,12 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
         {
             id: 'null',
             name: t('actions:drop_here'),
-            index: 0
+            index: 999999
         }
     ];
 
     //#region Handledrag and drop functions
-    const handleDropToTarget = (item: any, toIndex: number) => {
+    const handleDropToTarget = (item: any, toIndex: number | undefined) => {
         setPatternPathLocationsList((prev: any) => {
             if (!prev.some((e: any) => e.locationId === item.id)) {
                 let counter = 1;
@@ -294,19 +294,17 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                     locationId: item.id,
                     location_name: item.name
                 };
-
+                toIndex = toIndex === 999999 ? undefined : toIndex;
                 const updatedItems = [...prev];
                 updatedItems.splice(toIndex ?? updatedItems.length - 1, 0, newItem);
 
-                return (
-                    updatedItems
-                        // .filter((e: any) => e.id !== 'null')
-                        .map((e, index) => ({
-                            ...e,
-                            order: e.id === 'null' ? null : index + 1,
-                            index: e.id === 'null' ? null : index
-                        }))
-                );
+                return updatedItems
+                    .map((e, index) => ({
+                        ...e,
+                        order: e.id === 'null' ? null : index + 1,
+                        index: e.id === 'null' ? 999999 : index
+                    }))
+                    .sort((a, b) => a.index - b.index);
             }
             return prev;
         });
@@ -331,8 +329,10 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
         if (
             fromIndex === undefined ||
             fromIndex === null ||
+            fromIndex === 999999 ||
             toIndex === undefined ||
-            toIndex === null
+            toIndex === null ||
+            toIndex === 999999
         )
             return;
 
