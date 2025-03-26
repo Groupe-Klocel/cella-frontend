@@ -276,7 +276,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
     ];
 
     //#region Handledrag and drop functions
-    const handleDropToTarget = (item: any, toIndex: number) => {
+    const handleDropToTarget = (item: any, toIndex: number | undefined) => {
         setPatternPathLocationsList((prev: any) => {
             if (!prev.some((e: any) => e.locationId === item.id)) {
                 let counter = 1;
@@ -294,7 +294,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                     locationId: item.id,
                     location_name: item.name
                 };
-
+                toIndex = toIndex === 999999 ? undefined : toIndex;
                 const updatedItems = [...prev];
                 updatedItems.splice(toIndex ?? updatedItems.length - 1, 0, newItem);
 
@@ -329,13 +329,12 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
         if (
             fromIndex === undefined ||
             fromIndex === null ||
+            fromIndex === 999999 ||
             toIndex === undefined ||
-            toIndex === null
+            toIndex === null ||
+            toIndex === 999999
         )
             return;
-
-        console.log('fromIndex', fromIndex);
-        console.log('toIndex', toIndex);
 
         const updatedItems = [...patternPathLocationsList];
         const [movedItem] = updatedItems.splice(fromIndex, 1);
