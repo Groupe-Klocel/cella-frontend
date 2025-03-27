@@ -865,6 +865,15 @@ const ListComponent = (props: IListProps) => {
 
     useEffect(() => {
         if (JSON.stringify(search) !== JSON.stringify(searchCriterias)) {
+            setPagination({
+                total: undefined,
+                current: DEFAULT_PAGE_NUMBER,
+                itemsPerPage: 10
+            });
+            changeFilter(searchCriterias, 'default', {
+                current: DEFAULT_PAGE_NUMBER,
+                itemsPerPage: 10
+            });
             setSearch(searchCriterias);
         }
     }, [searchCriterias]);
