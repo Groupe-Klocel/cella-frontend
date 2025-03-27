@@ -38,6 +38,7 @@ import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';
 import configs from '../../../common/configs.json';
 import parameters from '../../../common/parameters.json';
+import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -155,8 +156,7 @@ const BoxesPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable &&
-                                record.status <
-                                    configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
+                                statusForCancelation.HUO.includes(record?.status) ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
