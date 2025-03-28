@@ -865,15 +865,17 @@ const ListComponent = (props: IListProps) => {
 
     useEffect(() => {
         if (JSON.stringify(search) !== JSON.stringify(searchCriterias)) {
-            setPagination({
-                total: undefined,
-                current: DEFAULT_PAGE_NUMBER,
-                itemsPerPage: 10
-            });
-            changeFilter(searchCriterias, 'default', {
-                current: DEFAULT_PAGE_NUMBER,
-                itemsPerPage: 10
-            });
+            if (props.isDragAndDroppable && props.isDragSource) {
+                setPagination({
+                    total: undefined,
+                    current: DEFAULT_PAGE_NUMBER,
+                    itemsPerPage: 10
+                });
+                changeFilter(searchCriterias, 'default', {
+                    current: DEFAULT_PAGE_NUMBER,
+                    itemsPerPage: 10
+                });
+            }
             setSearch(searchCriterias);
         }
     }, [searchCriterias]);
@@ -1018,7 +1020,7 @@ const ListComponent = (props: IListProps) => {
 
     //first version of advancedFilters handling is for development purpose only
     const advancedFilters = props.advancedFilters ?? null;
-
+    // this is to adjust pagination when the last item of the last page is dynamically removed (e.g. drag and drop)
     const adjustedPagination =
         props.isDragSource &&
         (pagination?.total ?? 1) / pagination?.itemsPerPage === pagination?.current - 1
@@ -1026,8 +1028,8 @@ const ListComponent = (props: IListProps) => {
                 ? pagination.current - 1
                 : pagination?.current
             : pagination?.current;
-    // #region USELIST
 
+    // #region USELIST
     const {
         isLoading,
         data,

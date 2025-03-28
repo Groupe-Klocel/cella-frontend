@@ -299,10 +299,16 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                 updatedItems.splice(toIndex ?? updatedItems.length - 1, 0, newItem);
 
                 return updatedItems
-                    .map((e, index) => ({
+                    .map((e) => ({
                         ...e,
-                        order: e.id === 'null' ? null : index + 1,
-                        index: e.id === 'null' ? 999999 : index
+                        order:
+                            e.id === 'null'
+                                ? null
+                                : updatedItems.filter((item) => item.id !== 'null').indexOf(e) + 1,
+                        index:
+                            e.id === 'null'
+                                ? 999999
+                                : updatedItems.filter((item) => item.id !== 'null').indexOf(e)
                     }))
                     .sort((a, b) => a.index - b.index);
             }
