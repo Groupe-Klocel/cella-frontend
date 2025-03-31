@@ -52,15 +52,17 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         name,
                         barcode,
                         level,
-                        stockStatus
+                        stockStatus,
+                        huManagement
                     }: {
                         id: string;
                         name: string;
                         barcode: string;
                         level: number;
                         stockStatus: string;
+                        huManagement: boolean;
                     }) => {
-                        return { id, name, barcode, level, stockStatus };
+                        return { id, name, barcode, level, stockStatus, huManagement };
                     }
                 );
 

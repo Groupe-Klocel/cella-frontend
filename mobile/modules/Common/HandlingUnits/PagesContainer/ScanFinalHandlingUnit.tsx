@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
-import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 
@@ -215,7 +214,7 @@ export const ScanFinalHandlingUnit = ({
         setResetForm
     };
 
-    const levelofBack = 2;
+    const levelofBack = 1;
 
     return (
         <>

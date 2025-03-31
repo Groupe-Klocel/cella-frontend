@@ -35,6 +35,7 @@ export interface ISelectLocationByLevelProps {
     buttons: { [label: string]: any };
     locations: Array<any>;
     roundsCheck?: boolean;
+    originLocationId?: any;
 }
 
 export const SelectLocationByLevelForm = ({
@@ -43,7 +44,8 @@ export const SelectLocationByLevelForm = ({
     trigger: { triggerRender, setTriggerRender },
     buttons,
     locations,
-    roundsCheck
+    roundsCheck,
+    originLocationId
 }: ISelectLocationByLevelProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -93,12 +95,15 @@ export const SelectLocationByLevelForm = ({
     // end camera scanner section
 
     //SelectLocationByLevel-2b: handle back to previous step settings
-    const onBack = () => {
+    const onBack = (enforcedPreviousStep?: number) => {
         setTriggerRender(!triggerRender);
-        for (let i = storedObject[`step${stepNumber}`]?.previousStep ?? 0; i <= stepNumber; i++) {
+        const previousStep =
+            enforcedPreviousStep ?? storedObject[`step${stepNumber}`]?.previousStep ?? 0;
+        for (let i = previousStep; i <= stepNumber; i++) {
             delete storedObject[`step${i}`]?.data;
         }
-        storedObject.currentStep = storedObject[`step${stepNumber}`]?.previousStep ?? 0;
+
+        storedObject.currentStep = previousStep;
         storage.set(process, JSON.stringify(storedObject));
     };
 
@@ -143,6 +148,12 @@ export const SelectLocationByLevelForm = ({
                     });
                 }
                 setPopModal((prev) => prev + 1);
+                if (originLocationId) {
+                    if (!locations[0]?.huManagement && locations[0]?.id === originLocationId) {
+                        showError(t('messages:location-origin-final-identical'));
+                        onBack(storedObject.currentStep);
+                    }
+                }
             } else if (storedObject.currentStep < stepNumber) {
                 //check workflow direction and assign current step accordingly
                 storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
@@ -207,6 +218,15 @@ export const SelectLocationByLevelForm = ({
                     nextStep();
                 }
             });
+        }
+        if (originLocationId) {
+            if (
+                !data['chosenLocation']?.huManagement &&
+                data['chosenLocation']?.id === originLocationId
+            ) {
+                showError(t('messages:location-origin-final-identical'));
+                onBack();
+            }
         }
     };
 

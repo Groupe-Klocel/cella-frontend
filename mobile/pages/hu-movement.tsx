@@ -55,19 +55,24 @@ const HuMovement: PageComponent = () => {
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
     const [action1Trigger, setAction1Trigger] = useState<boolean>(false);
-    const workflow = {
-        processName: 'huMvt',
-        expectedSteps: [10, 15, 20, 30, 35, 40, 50]
-    };
-    const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
+    const processName = 'huMvt';
+    const storedObject = JSON.parse(storage.get(processName) || '{}');
+
+    //Step10: Scan Location (origin)
+    //Step15: Select Location by Level
+    //Step20: Scan Handling Unit (origin)
+    //Step30: Scan Location or Handling Unit (final)
+    //Step35: Select Location by Level
+    //Step40: Scan Handling Unit (final)
+    //Step50: Validate HU Movement
 
     console.log('huMvt', storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
-        storedObject[`step${workflow.expectedSteps[0]}`] = { previousStep: 0 };
-        storedObject['currentStep'] = workflow.expectedSteps[0];
-        storage.set(workflow.processName, JSON.stringify(storedObject));
+        storedObject['step10'] = { previousStep: 0 };
+        storedObject['currentStep'] = 10;
+        storage.set(processName, JSON.stringify(storedObject));
     }
 
     //function to retrieve information to display in RadioInfosHeader before step 20
@@ -77,30 +82,30 @@ const HuMovement: PageComponent = () => {
             setHeaderContent(false);
         }
         if (
-            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.locations &&
-            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.locations?.length > 1
+            storedObject['step10']?.data?.locations &&
+            storedObject['step10']?.data?.locations?.length > 1
         ) {
-            const locationsList = storedObject[`step${workflow.expectedSteps[0]}`]?.data?.locations;
+            const locationsList = storedObject['step10']?.data?.locations;
             object[t('common:location-origin_abbr')] = locationsList[0].barcode;
         }
-        if (storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenLocation) {
-            const location = storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenLocation;
+        if (storedObject['step15']?.data?.chosenLocation) {
+            const location = storedObject['step15']?.data?.chosenLocation;
             object[t('common:location-origin_abbr')] = location.name;
         }
-        if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit) {
-            const originalHu = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
+        if (storedObject['step20']?.data?.handlingUnit) {
+            const originalHu = storedObject['step20']?.data?.handlingUnit;
             object[t('common:handling-unit-origin_abbr')] = originalHu.name;
             object[t('common:article')] =
                 originalHu.handlingUnitContents.length > 0
                     ? originalHu.handlingUnitContents[0].article.name
                     : null;
         }
-        if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenLocation) {
-            const location = storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenLocation;
+        if (storedObject['step35']?.data?.chosenLocation) {
+            const location = storedObject['step35']?.data?.chosenLocation;
             object[t('common:location-final_abbr')] = location.name;
         }
-        if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.handlingUnit) {
-            const hu = storedObject[`step${workflow.expectedSteps[5]}`]?.data?.handlingUnit;
+        if (storedObject['step40']?.data?.handlingUnit) {
+            const hu = storedObject['step40']?.data?.handlingUnit;
             object[t('common:handling-unit-final_abbr')] = hu.name;
         }
         setOriginDisplay(object);
@@ -110,27 +115,24 @@ const HuMovement: PageComponent = () => {
     useEffect(() => {
         const finalObject: { [k: string]: any } = {};
         if (storedObject?.currentStep === 50) {
-            const originLocation =
-                storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenLocation;
+            const originLocation = storedObject['step15']?.data?.chosenLocation;
             finalObject[t('common:location-origin_abbr')] = originLocation.name;
             setHeaderContent(true);
         }
-        if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit) {
-            const originalHu = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
+        if (storedObject['step20']?.data?.handlingUnit) {
+            const originalHu = storedObject['step20']?.data?.handlingUnit;
             finalObject[t('common:handling-unit-origin_abbr')] = originalHu.name;
             finalObject[t('common:article')] =
                 originalHu.handlingUnitContents.length > 0
                     ? originalHu.handlingUnitContents[0].article.name
                     : null;
         }
-        if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenLocation) {
-            const chosenLocation =
-                storedObject[`step${workflow.expectedSteps[4]}`]?.data.chosenLocation;
+        if (storedObject['step35']?.data?.chosenLocation) {
+            const chosenLocation = storedObject['step35']?.data.chosenLocation;
             finalObject[t('common:location-final_abbr')] = chosenLocation.name;
         }
-        if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.finalHandlingUnit) {
-            const finalHandlingUnit =
-                storedObject[`step${workflow.expectedSteps[5]}`]?.data.finalHandlingUnit;
+        if (storedObject['step40']?.data?.finalHandlingUnit) {
+            const finalHandlingUnit = storedObject['step40']?.data.finalHandlingUnit;
             finalObject[t('common:handling-unit-final_abbr')] = finalHandlingUnit.name;
         }
         setFinalDisplay(finalObject);
@@ -160,7 +162,7 @@ const HuMovement: PageComponent = () => {
                 title={t('common:hu-movement')}
                 actionsRight={
                     <Space>
-                        {storedObject.currentStep > workflow.expectedSteps[0] ? (
+                        {storedObject.currentStep > 10 ? (
                             <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
                         ) : (
                             <></>
@@ -179,42 +181,35 @@ const HuMovement: PageComponent = () => {
                 ></RadioInfosHeader>
             )}
             {showSimilarLocations &&
-            storedObject[`step${workflow.expectedSteps[2]}`]?.data.handlingUnit.handlingUnitContents
-                .length > 0 &&
-            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                .handlingUnitContents[0].articleId ? (
+            storedObject['step20']?.data.handlingUnit.handlingUnitContents.length > 0 &&
+            storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId ? (
                 <SimilarLocations
                     articleId={
-                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                            .handlingUnitContents[0].articleId
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
                     }
                     chosenContentId={
-                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                            .handlingUnitContents[0].id
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].id
                     }
                     stockOwnerId={
-                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                            .handlingUnitContents[0].stockOwnerId
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0]
+                            .stockOwnerId
                     }
                     stockStatus={
-                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                            .handlingUnitContents[0].stockStatus
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].stockStatus
                     }
                 />
             ) : (
                 <></>
             )}
-            {showEmptyLocations &&
-            storedObject[`step${workflow.expectedSteps[2]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
+            {showEmptyLocations && storedObject['step20']?.data && !storedObject['step30']?.data ? (
                 <EmptyLocations withAvailableHU={false} />
             ) : (
                 <></>
             )}
-            {!storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
+            {!storedObject['step10']?.data ? (
                 <ScanLocation
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[0]}
+                    process={processName}
+                    stepNumber={10}
                     label={t('common:location-origin')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ submitButton: true, backButton: false }}
@@ -223,24 +218,22 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject[`step${workflow.expectedSteps[0]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[1]}`]?.data ? (
+            {storedObject['step10']?.data && !storedObject['step15']?.data ? (
                 <SelectLocationByLevelForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[1]}
+                    process={processName}
+                    stepNumber={15}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
-                    locations={storedObject[`step${workflow.expectedSteps[0]}`].data.locations}
+                    locations={storedObject['step10'].data.locations}
                     roundsCheck={true}
                 ></SelectLocationByLevelForm>
             ) : (
                 <></>
             )}
-            {storedObject[`step${workflow.expectedSteps[1]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[2]}`]?.data ? (
+            {storedObject['step15']?.data && !storedObject['step20']?.data ? (
                 <ScanHandlingUnit
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[2]}
+                    process={processName}
+                    stepNumber={20}
                     label={t('common:handling-unit')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ submitButton: true, backButton: true }}
@@ -249,22 +242,20 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject[`step${workflow.expectedSteps[2]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
+            {storedObject['step20']?.data && !storedObject['step30']?.data ? (
                 <ScanHuOrLocation
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[3]}
+                    process={processName}
+                    stepNumber={30}
                     label={t('common:location-final') + ' / ' + t('common:handling-unit')}
                     buttons={{
                         submitButton: true,
                         backButton: true,
                         locationButton:
-                            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
-                                .handlingUnitContents.length > 0
+                            storedObject['step20'].data.handlingUnit.handlingUnitContents.length > 0
                                 ? true
                                 : false,
                         emptyButton: true
-                        // storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit
+                        // storedObject['step20'].data.handlingUnit
                         //     .handlingUnitContents.length <= 0
                         //     ? true
                         //     : false
@@ -278,33 +269,28 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject[`step${workflow.expectedSteps[3]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[4]}`]?.data ? (
+            {storedObject['step30']?.data && !storedObject['step35']?.data ? (
                 <SelectLocationByLevelForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[4]}
+                    process={processName}
+                    stepNumber={35}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
-                    locations={storedObject[`step${workflow.expectedSteps[3]}`].data.finalLocation}
+                    locations={storedObject['step30'].data.finalLocation}
                 ></SelectLocationByLevelForm>
             ) : (
                 <></>
             )}
-            {storedObject[`step${workflow.expectedSteps[4]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[5]}`]?.data ? (
+            {storedObject['step35']?.data && !storedObject['step40']?.data ? (
                 <ScanFinalHandlingUnit
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[5]}
+                    process={processName}
+                    stepNumber={40}
                     label={t('common:handling-unit-final')}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{
                         submitButton: true,
                         backButton: true,
                         action1Button:
-                            storedObject[`step${workflow.expectedSteps[3]}`].data.resType ==
-                            'location'
-                                ? true
-                                : false
+                            storedObject['step30'].data.resType == 'location' ? true : false
                     }}
                     checkComponent={(data: any) => <HandlingUnitFinalChecks dataToCheck={data} />}
                     action1Trigger={{
@@ -312,10 +298,8 @@ const HuMovement: PageComponent = () => {
                         setAction1Trigger
                     }}
                     defaultValue={
-                        storedObject[`step${workflow.expectedSteps[3]}`].data.resType ==
-                        'handlingUnit'
-                            ? storedObject[`step${workflow.expectedSteps[3]}`].data
-                                  .finalHandlingUnit
+                        storedObject['step30'].data.resType == 'handlingUnit'
+                            ? storedObject['step30'].data.finalHandlingUnit
                             : null
                     }
                 ></ScanFinalHandlingUnit>
@@ -323,10 +307,10 @@ const HuMovement: PageComponent = () => {
                 <></>
             )}
 
-            {storedObject[`step${workflow.expectedSteps[5]}`]?.data ? (
+            {storedObject['step40']?.data ? (
                 <ValidateHuMoveForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[6]}
+                    process={processName}
+                    stepNumber={50}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}

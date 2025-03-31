@@ -66,15 +66,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     category
                     code
                     parentHandlingUnitId
-                    childrenHandlingUnits {
-                        id
-                    }
                     reservation
                     status
                     stockOwnerId
-                    stockOwner {
-                        name
-                    }
                     location {
                         id
                         name
@@ -84,19 +78,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         statusText
                         stockStatus
                         stockStatusText
-                    }
-                    handlingUnitContents {
-                        id
-                        quantity
-                        reservation
-                        stockStatus
-                        stockStatusText
-                        articleId
-                        article {
-                            id
-                            name
-                            baseUnitWeight
-                        }
+                        huManagement
                     }
                 }
             }
@@ -112,56 +94,24 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 results {
                     id
                     name
-                    barcode
-                    aisle
-                    column
-                    level
-                    position
-                    replenish
-                    blockId
-                    block {
-                        name
-                    }
-                    replenishType
-                    constraint
-                    comment
-                    baseUnitRotation
-                    allowCycleCountStockMin
                     category
                     categoryText
-                    stockStatus
-                    stockStatusText
                     status
                     statusText
+                    stockStatus
+                    stockStatusText
+                    huManagement
                     handlingUnits {
                         id
                         name
+                        type
                         barcode
                         category
                         code
                         parentHandlingUnitId
-                        childrenHandlingUnits {
-                            id
-                        }
                         reservation
                         status
                         stockOwnerId
-                        stockOwner {
-                            name
-                        }
-                        handlingUnitContents {
-                            id
-                            quantity
-                            reservation
-                            stockStatus
-                            stockStatusText
-                            articleId
-                            article {
-                                id
-                                name
-                                baseUnitWeight
-                            }
-                        }
                     }
                 }
             }
