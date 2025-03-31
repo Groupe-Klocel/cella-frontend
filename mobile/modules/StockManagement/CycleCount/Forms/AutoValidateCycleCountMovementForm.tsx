@@ -73,8 +73,8 @@ export const AutoValidateCycleCountMovementForm = ({
         currentCycleCountLine = { id, status };
     }
     let location: { [k: string]: any } = {};
-    if (storedObject.step20.data.location) {
-        const { id, name } = storedObject.step20.data.location;
+    if (storedObject.step22.data.chosenLocation) {
+        const { id, name } = storedObject.step22.data.chosenLocation;
         location = { id, name };
     }
     let handlingUnit: any;

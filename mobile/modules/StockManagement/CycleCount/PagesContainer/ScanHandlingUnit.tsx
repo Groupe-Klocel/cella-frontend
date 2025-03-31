@@ -33,6 +33,7 @@ export interface IScanHandlingUnitProps {
     checkComponent: any;
     triggerAlternativeSubmit1?: any;
     defaultValue?: any;
+    enforcedValue?: any;
 }
 
 export const ScanCCHandlingUnit = ({
@@ -43,7 +44,8 @@ export const ScanCCHandlingUnit = ({
     buttons,
     checkComponent,
     triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-    defaultValue
+    defaultValue,
+    enforcedValue
 }: IScanHandlingUnitProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -61,6 +63,8 @@ export const ScanCCHandlingUnit = ({
             data['handlingUnit'] = defaultValue;
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
+        } else if (enforcedValue) {
+            setScannedInfo(enforcedValue);
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
@@ -88,7 +92,7 @@ export const ScanCCHandlingUnit = ({
         handlingUnitInfos,
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-        alternativeSubmitInput: storedObject?.step20?.data?.location ?? undefined,
+        alternativeSubmitInput: storedObject?.step22?.data?.chosenLocation ?? undefined,
         setResetForm
     };
 

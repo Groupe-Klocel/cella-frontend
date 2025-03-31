@@ -123,12 +123,12 @@ export const ValidateQuantityMoveForm = ({
         finalLocation = storedObject.step65.data.chosenLocation;
     }
     let finalHandlingUnit: { [k: string]: any } = {};
-    if (storedObject.step80.data.finalHandlingUnit) {
-        finalHandlingUnit = storedObject.step80.data.finalHandlingUnit;
+    if (storedObject.step70.data.finalHandlingUnit) {
+        finalHandlingUnit = storedObject.step70.data.finalHandlingUnit;
     }
     let isHuToCreate = false;
-    if (storedObject.step80.data.isHuToCreate) {
-        isHuToCreate = storedObject.step80.data.isHuToCreate;
+    if (storedObject.step70.data.isHuToCreate) {
+        isHuToCreate = storedObject.step70.data.isHuToCreate;
     }
     let resType: string;
     if (storedObject.step30.data.resType) {

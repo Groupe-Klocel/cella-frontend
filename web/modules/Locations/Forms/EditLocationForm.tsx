@@ -398,7 +398,13 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                     </Checkbox>
                 </Form.Item>
                 <Form.Item name="huManagement">
-                    <Checkbox checked={huManagementValue} onChange={onHuManagementChange}>
+                    <Checkbox
+                        checked={huManagementValue}
+                        disabled={details?.handlingUnits?.some(
+                            (unit: any) => unit.autocountHandlingUnitContent > 0
+                        )}
+                        onChange={onHuManagementChange}
+                    >
                         {t('d:huManagement')}
                     </Checkbox>
                 </Form.Item>

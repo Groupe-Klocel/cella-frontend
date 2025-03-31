@@ -53,6 +53,12 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     setScannedInfo(undefined);
                     return;
                 }
+                if (!handlingUnitInfos.handlingUnits.results[0].location.huManagement) {
+                    showError(t('messages:hu-cannot-move'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    return;
+                }
                 if (
                     handlingUnitInfos.handlingUnits.results[0].category !==
                     parameters.HANDLING_UNIT_CATEGORY_STOCK

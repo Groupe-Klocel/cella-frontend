@@ -19,9 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
-import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
 
@@ -73,10 +72,15 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                     setResetForm(true);
                     setScannedInfo(undefined);
                 }
-                // final HU with different article = error
+                // final HU does not have the article = error
                 else if (
-                    handlingUnit.handlingUnitContents[0].articleId !=
-                    storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
+                    handlingUnit.handlingUnitContents.length > 0 &&
+                    !storedObject['step20'].data.handlingUnit.handlingUnitContents.every(
+                        (originContent: any) =>
+                            handlingUnit.handlingUnitContents.some(
+                                (content: any) => content.articleId === originContent.articleId
+                            )
+                    )
                 ) {
                     showError(t('messages:unexpected-hu-article'));
                     setResetForm(true);

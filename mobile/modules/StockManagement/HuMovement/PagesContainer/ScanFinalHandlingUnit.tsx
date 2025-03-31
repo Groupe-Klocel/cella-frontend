@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
-import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { gql } from 'graphql-request';
@@ -84,78 +83,24 @@ export const ScanFinalHandlingUnit = ({
                             id
                             name
                             type
-                            typeText
                             barcode
                             category
-                            categoryText
                             code
                             parentHandlingUnitId
-                            parentHandlingUnit {
-                                id
-                                name
-                                type
-                                typeText
-                            }
-                            childrenHandlingUnits {
-                                id
-                                name
-                                type
-                                typeText
-                                barcode
-                                category
-                                categoryText
-                                code
-                                handlingUnitContents {
-                                    id
-                                    quantity
-                                    reservation
-                                    stockStatus
-                                    stockStatusText
-                                    stockOwnerId
-                                    handlingUnit {
-                                        id
-                                        name
-                                        locationId
-                                        location {
-                                            id
-                                            name
-                                        }
-                                    }
-                                    stockOwner {
-                                        id
-                                        name
-                                    }
-                                    articleId
-                                    article {
-                                        id
-                                        name
-                                        stockOwnerId
-                                        stockOwner {
-                                            name
-                                        }
-                                        baseUnitWeight
-                                    }
-                                    handlingUnitContentFeatures {
-                                        id
-                                        featureCode {
-                                            name
-                                            unique
-                                        }
-                                        value
-                                    }
-                                }
-                            }
                             reservation
                             status
                             stockOwnerId
-                            stockOwner {
-                                name
-                            }
                             locationId
                             location {
+                                id
                                 name
                                 category
                                 categoryText
+                                status
+                                statusText
+                                stockStatus
+                                stockStatusText
+                                huManagement
                             }
                             handlingUnitContents {
                                 id
@@ -164,19 +109,6 @@ export const ScanFinalHandlingUnit = ({
                                 stockStatus
                                 stockStatusText
                                 stockOwnerId
-                                handlingUnit {
-                                    id
-                                    name
-                                    locationId
-                                    location {
-                                        id
-                                        name
-                                    }
-                                }
-                                stockOwner {
-                                    id
-                                    name
-                                }
                                 articleId
                                 article {
                                     id
