@@ -211,6 +211,9 @@ export const AddLocationForm = () => {
                 const formData = form.getFieldsValue(true);
                 formData.replenishType = parseInt(formData.replenishType);
                 if (formData['replenish'] == false) formData.replenishType = 0;
+                formData.replenish = formData.replenish ? true : false;
+                formData.allowCycleCountStockMin = formData.allowCycleCountStockMin ? true : false;
+                formData.huManagement = formData.huManagement ? true : false;
                 formData.baseUnitRotation = parseInt(formData.rotation);
                 formData.status = configs.LOCATION_STATUS_AVAILABLE;
                 delete formData.rotation;
