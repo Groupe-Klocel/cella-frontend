@@ -35,6 +35,7 @@ export interface IValidateReceptionProps {
     buttons: { [label: string]: any };
     headerContent: { [label: string]: any };
     triggerAlternativeSubmit1?: any;
+    isHuScannedAtEnd?: boolean;
 }
 
 export const ValidateReceptionForm = ({
@@ -42,7 +43,8 @@ export const ValidateReceptionForm = ({
     stepNumber,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    triggerAlternativeSubmit1
+    triggerAlternativeSubmit1,
+    isHuScannedAtEnd
 }: IValidateReceptionProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -157,21 +159,25 @@ export const ValidateReceptionForm = ({
                 storedObject[`step10`] = { previousStep: 0, data: step10Data };
                 storedObject[`step20`] = { data: step20Data };
                 storedObject['currentStep'] =
-                    final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND
+                    final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND ||
+                    isHuScannedAtEnd
                         ? 40
-                        : handlingUnit !== 'huScannedAtEnd' && handlingUnit !== 'noHuManagement'
-                          ? 30
-                          : 10;
-                handlingUnit !== 'huScannedAtEnd' && handlingUnit !== 'noHuManagement'
-                    ? final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND
-                        ? (storedObject[`step30`] = {
-                              previousStep: 10,
-                              data: step30Data
-                          })
-                        : (storedObject[`step30`] = {
-                              previousStep: 10
-                          })
-                    : undefined;
+                        : 30;
+                isHuScannedAtEnd
+                    ? ((storedObject[`step30`] = {
+                          data: { handlingUnit: 'huScannedAtEnd' }
+                      }),
+                      (storedObject[`step40`] = {
+                          previousStep: 10
+                      }))
+                    : final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND
+                      ? (storedObject[`step30`] = {
+                            previousStep: 10,
+                            data: step30Data
+                        })
+                      : (storedObject[`step30`] = {
+                            previousStep: 10
+                        });
                 storage.set(process, JSON.stringify(storedObject));
                 setTriggerRender(!triggerRender);
             }

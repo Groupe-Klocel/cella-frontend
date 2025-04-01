@@ -532,6 +532,7 @@ const Reception: PageComponent = () => {
                             triggerAlternativeSubmit1: triggerHUClose,
                             setTriggerAlternativeSubmit1: setTriggerHUClose
                         }}
+                        isHuScannedAtEnd={isHuScannedAtEnd}
                         headerContent={{ setHeaderContent }}
                     ></ValidateReceptionForm>
                 ) : (
