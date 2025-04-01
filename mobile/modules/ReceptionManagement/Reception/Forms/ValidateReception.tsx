@@ -159,15 +159,19 @@ export const ValidateReceptionForm = ({
                 storedObject['currentStep'] =
                     final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND
                         ? 40
-                        : 30;
-                final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND
-                    ? (storedObject[`step30`] = {
-                          previousStep: 10,
-                          data: step30Data
-                      })
-                    : (storedObject[`step30`] = {
-                          previousStep: 10
-                      });
+                        : handlingUnit !== 'huScannedAtEnd' && handlingUnit !== 'noHuManagement'
+                          ? 30
+                          : 10;
+                handlingUnit !== 'huScannedAtEnd' && handlingUnit !== 'noHuManagement'
+                    ? final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND
+                        ? (storedObject[`step30`] = {
+                              previousStep: 10,
+                              data: step30Data
+                          })
+                        : (storedObject[`step30`] = {
+                              previousStep: 10
+                          })
+                    : undefined;
                 storage.set(process, JSON.stringify(storedObject));
                 setTriggerRender(!triggerRender);
             }
