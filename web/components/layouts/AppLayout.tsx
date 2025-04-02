@@ -48,7 +48,10 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     const getUserSettings = useCallback(async () => {
         const query = gql`
             query getUserSettings($warehouseWorkerId: String!) {
-                warehouseWorkerSettings(filters: { warehouseWorkerId: $warehouseWorkerId }) {
+                warehouseWorkerSettings(
+                    filters: { warehouseWorkerId: $warehouseWorkerId }
+                    itemsPerPage: 1000
+                ) {
                     results {
                         id
                         code
