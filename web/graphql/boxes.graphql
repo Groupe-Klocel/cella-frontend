@@ -218,24 +218,6 @@ mutation DeleteBox($id: String!) {
 #     }
 # }
 
-# mutation RenderDocument($templateFilename: String!, $context: JSON!) {
-#     renderDocument(templateFilename: $templateFilename, context: $context) {
-#         __typename
-#         ... on RenderedDocument {
-#             url
-#         }
-#         ... on TemplateDoesNotExist {
-#             message
-#         }
-#         ... on TemplateError {
-#             message
-#         }
-#         ... on MissingContext {
-#             message
-#         }
-#     }
-# }
-
 mutation UpdateBox($id: String!, $input: UpdateHandlingUnitOutboundInput!) {
     updateHandlingUnitOutbound(id: $id, input: $input) {
         id
