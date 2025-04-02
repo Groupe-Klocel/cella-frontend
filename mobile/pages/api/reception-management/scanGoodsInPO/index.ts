@@ -200,6 +200,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             quantityToBeProcessed
                             processedQuantity
                             roundLineId
+                            handlingUnitContentInbounds {
+                                id
+                                lineNumber
+                                status
+                                statusText
+                                receivedQuantity
+                                missingQuantity
+                                status
+                                statusText
+                                handlingUnitContentId
+                                handlingUnitContent {
+                                    handlingUnitId
+                                    handlingUnit {
+                                        name
+                                    }
+
+                                    quantity
+                                }
+                            }
                             purchaseOrderLineId
                             purchaseOrderLine {
                                 id
@@ -331,7 +350,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
             const extractGoodsInResponse = GoodsInResponse.rounds?.results[0];
             if (extractGoodsInResponse!.status <= configs.ROUND_STATUS_CLOSED) {
-                const { roundLines, ...goodsInOnly } = extractGoodsInResponse;
+                const { roundLines } = extractGoodsInResponse;
+                // goodsInOnly.roundLines = roundLines;
                 // extract Rounds as goodsIns
                 let purchaseOrders: any[] = [];
                 roundLines.forEach((roundLine: any) => {
@@ -343,7 +363,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     });
                 });
                 response = {
-                    goodsIns: [goodsInOnly],
+                    goodsIns: [extractGoodsInResponse],
                     purchaseOrder: purchaseOrders[0],
                     responseType: 'goodsIn'
                 };
