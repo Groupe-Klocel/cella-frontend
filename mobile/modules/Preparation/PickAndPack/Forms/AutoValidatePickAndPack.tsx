@@ -62,15 +62,20 @@ export const AutoValidatePickAndPackForm = ({
         setTriggerRender(!triggerRender);
     }, []);
     // retrieve values for update contents/boxline and create movement
-    const { step10, step25, step30, step40, step50, step60, step75 } = storedObject;
+    const { step10, step15, step30, step40, step50, step70, step80 } = storedObject;
 
     const proposedRoundAdvisedAddresses = step10?.data?.proposedRoundAdvisedAddresses;
     const round = step10?.data?.round;
-    const pickedLocation = step25?.data.chosenLocation;
-    const pickedHU = step30?.data.handlingUnit;
-    const articleInfo = step40?.data.article;
-    const movingQuantity = step60?.data?.movingQuantity;
-    const huModel = step75?.data?.handlingUnitModel;
+    const huName = step15?.data?.handlingUnit;
+    const huType = step15?.data?.handlingUnitType;
+    const isHUToCreate = step15?.data?.isHUToCreate;
+    const pickedLocation = step30?.data.chosenLocation;
+    const pickedHU = step40?.data.handlingUnit;
+    const articleInfo = step50?.data.article;
+    const movingQuantity = step70?.data?.movingQuantity;
+    const huModel = step80?.data?.handlingUnitModel;
+
+    console.log(huName, huType, 'huName, huType');
 
     useEffect(() => {
         const onFinish = async () => {
@@ -81,7 +86,9 @@ export const AutoValidatePickAndPackForm = ({
                 pickedHU,
                 articleInfo,
                 movingQuantity,
-                ...(huModel !== 'huModelExist' && { huModel })
+                ...(huModel !== 'huModelExist' && { huModel }),
+                ...(huName && isHUToCreate && { huName }),
+                ...(huType && isHUToCreate && { huType })
             };
             //For HU creation : look at the ValidateRoundPacking API
             setIsAutoValidateLoading(true);
@@ -95,7 +102,7 @@ export const AutoValidatePickAndPackForm = ({
             `;
 
             const variables = {
-                functionName: 'K_RF_pickAndPack_validate',
+                functionName: 'RF_pickAndPack_validate',
                 event: {
                     input: inputToValidate
                 }
@@ -120,6 +127,8 @@ export const AutoValidatePickAndPackForm = ({
                 } else {
                     storage.remove(process);
                     showSuccess(t('messages:picked-and-packed-successfully'));
+                    console.log(validateFullBoxResult.executeFunction.output.output, 'output');
+
                     const storedObject: any = {};
                     const { updatedRound, isRoundClosed } =
                         validateFullBoxResult.executeFunction.output.output;
@@ -147,9 +156,14 @@ export const AutoValidatePickAndPackForm = ({
                             round: updatedRound,
                             currentShippingPalletId: updatedRound.extraText1
                         };
+                        const dataStep15 = {
+                            handlingUnit: huName,
+                            handlingUnitType: huType,
+                            isHUToCreate: false
+                        };
                         storedObject['currentStep'] = 20;
                         storedObject[`step10`] = { previousStep: 0, data };
-                        storedObject[`step20`] = { previousStep: 10 };
+                        storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
                         storage.set(process, JSON.stringify(storedObject));
                     }
                     setTriggerRender(!triggerRender);
@@ -175,5 +189,5 @@ export const AutoValidatePickAndPackForm = ({
         storage.set(process, JSON.stringify(storedObject));
     };
 
-    return <WrapperForm>{isAutoValidateLoading ? <ContentSpin /> : <>/</>}</WrapperForm>;
+    return <WrapperForm>{isAutoValidateLoading ? <ContentSpin /> : <></>}</WrapperForm>;
 };

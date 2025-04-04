@@ -47,10 +47,13 @@ export const ScanArticleEAN = ({
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [articleLuBarcodesInfos, setArticleLuBarcodesInfos] = useState<any>();
+    const [featureTypeDetailsInfos, setFeatureTypeDetailsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
 
     //N.B.: Version1 autorecovers information from previous step as there is only one HUC and no article scan check.
     //Pre-requisite: initialize current step
+    console.log('contents', contents);
+    console.log('articleLuBarcodesInfos', articleLuBarcodesInfos);
     useEffect(() => {
         if (contents.length === 1) {
             // N.B.: in this case previous step is kept at its previous value
@@ -117,10 +120,45 @@ export const ScanArticleEAN = ({
         }
     };
 
+    const getFeatureTypeDetails = async (
+        featureType: any
+    ): Promise<{ [key: string]: any } | undefined> => {
+        if (featureType) {
+            const query = gql`
+                query featureTypeDetails($filters: FeatureTypeDetailSearchFilters) {
+                    featureTypeDetails(filters: $filters) {
+                        results {
+                            id
+                            atPreparation
+                            featureType
+                            featureCodeId
+                        }
+                    }
+                }
+            `;
+            const variables = {
+                filters: { featureType: featureType }
+            };
+            const featureTypeDetails = await graphqlRequestClient
+                .request(query, variables)
+                .then((data: any) => data.featureTypeDetails.results);
+            return featureTypeDetails;
+        }
+    };
+
     useEffect(() => {
         async function fetchData() {
-            const result = await getArticleLuBarcodes(scannedInfo);
+            let result = await getArticleLuBarcodes(scannedInfo);
+            const featureTypeDetails: any = await getFeatureTypeDetails(
+                result?.articleLuBarcodes?.results[0]?.article?.featureType
+            );
+            // add feature type details to resutls
+            result = { ...result, featureTypeDetails };
             if (result) setArticleLuBarcodesInfos(result);
+            if (featureTypeDetails?.filter((item: any) => item.atPreparation).length > 0)
+                setFeatureTypeDetailsInfos(
+                    featureTypeDetails.filter((item: any) => item.atPreparation)
+                );
         }
         fetchData();
     }, [scannedInfo]);
@@ -131,6 +169,7 @@ export const ScanArticleEAN = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         contents,
         articleLuBarcodesInfos,
+        featureTypeDetailsInfos,
         trigger: { triggerRender, setTriggerRender },
         setResetForm
     };
