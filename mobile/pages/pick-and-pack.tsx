@@ -242,21 +242,29 @@ const PickAndPack: PageComponent = () => {
                     storedObject['step50']?.data?.content?.handlingUnitContentFeatures
                 ) {
                     setIsLoading(true);
+                } else {
+                    setIsLoading(false);
                 }
                 break;
             case 40:
                 if (storedObject['step30'].data.handlingUnit) {
                     setIsLoading(true);
+                } else {
+                    setIsLoading(false);
                 }
                 break;
             case 50:
                 if (storedObject['step40']?.data?.handlingUnit?.handlingUnitContents.length === 1) {
                     setIsLoading(true);
+                } else {
+                    setIsLoading(false);
                 }
                 break;
             case 60:
                 if (!storedObject['step50']?.data?.content?.handlingUnitContentFeatures) {
                     setIsLoading(true);
+                } else {
+                    setIsLoading(false);
                 }
                 break;
             default:
