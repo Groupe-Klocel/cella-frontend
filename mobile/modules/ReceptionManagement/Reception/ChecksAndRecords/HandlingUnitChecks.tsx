@@ -67,6 +67,19 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                         }
                     }
                 }
+                const selectedLocation = storedObject['step65'].data.chosenLocation;
+                if (selectedLocation) {
+                    if (selectedLocation.id !== huToCheck.locationId) {
+                        showError(
+                            t('messages:hu-exists-other-location', {
+                                locationName: selectedLocation.name
+                            })
+                        );
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                        return;
+                    }
+                }
                 if (!isHUInGoodsIn) {
                     showError(t('messages:hu-already-used'));
                     setResetForm(true);
