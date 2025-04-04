@@ -118,24 +118,30 @@ const BoxPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                <Button
-                    type="primary"
-                    ghost
-                    onClick={() => {
-                        setShowNumberOfPrintsModal(true);
-                        setIdToPrint(data?.id as string);
-                    }}
-                    icon={<BarcodeOutlined />}
-                />
-                <NumberOfPrintsModalV2
-                    showModal={{
-                        showNumberOfPrintsModal,
-                        setShowNumberOfPrintsModal
-                    }}
-                    dataToPrint={{ boxes: [idToPrint] }}
-                    documentName="K_OutboundHandlingUnitLabel"
-                    documentReference={data?.name}
-                />
+                {data?.status !== configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                    <>
+                        <Button
+                            type="primary"
+                            ghost
+                            onClick={() => {
+                                setShowNumberOfPrintsModal(true);
+                                setIdToPrint(data?.id as string);
+                            }}
+                            icon={<BarcodeOutlined />}
+                        />
+                        <NumberOfPrintsModalV2
+                            showModal={{
+                                showNumberOfPrintsModal,
+                                setShowNumberOfPrintsModal
+                            }}
+                            dataToPrint={{ boxes: [idToPrint] }}
+                            documentName="K_OutboundHandlingUnitLabel"
+                            documentReference={data?.name}
+                        />
+                    </>
+                ) : (
+                    <></>
+                )}
             </Space>
         )
     };

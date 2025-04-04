@@ -459,8 +459,7 @@ const DeliveryDetailsExtra = ({
                                         {huOutboundModes.length > 0 &&
                                         huOutboundModes.includes(ModeEnum.Update) &&
                                         HandlingUnitOutboundModelV2.isEditable &&
-                                        record?.status <
-                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
+                                        statusForCancelation.HUO.includes(record?.status) ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary('/boxes/edit/[id]', {
