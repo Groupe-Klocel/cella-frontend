@@ -44,7 +44,7 @@ export const SelectRoundForm = ({
     trigger: { triggerRender, setTriggerRender },
     buttons
 }: ISelectRoundProps) => {
-    const { graphqlRequestClient } = useAuth();
+    const { graphqlRequestClient, user } = useAuth();
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -89,37 +89,81 @@ export const SelectRoundForm = ({
         max: configs.ROUND_STATUS_TO_BE_VERIFIED
     });
 
-    //this will have to be reviewed with types once round calculation reviewed
-    const roundsList = useSimpleGetRoundsQuery<Partial<SimpleGetRoundsQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: { status: configsToFilterOn, type: [configs.ROUND_TYPE_PICK_AND_PACK] },
+    const fetchRoundsList = async () => {
+        const roundsListFromGQL = gql`
+            query rounds(
+                $filters: RoundSearchFilters
+                $orderBy: [RoundOrderByCriterion!]
+                $page: Int
+                $itemsPerPage: Int
+            ) {
+                rounds(
+                    filters: $filters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                ) {
+                    results {
+                        id
+                        name
+                        equipment {
+                            id
+                            name
+                        }
+                        expectedDeliveryDate
+                        assignedUser
+                    }
+                }
+            }
+        `;
+
+        const roundsListVariables = {
+            filters: { status: configsToFilterOn },
             orderBy: null,
             page: 1,
             itemsPerPage: 100
-        }
-    );
+        };
+
+        const roundsList_result = await graphqlRequestClient.request(
+            roundsListFromGQL,
+            roundsListVariables
+        );
+
+        return roundsList_result;
+    };
 
     useEffect(() => {
-        if (roundsList) {
-            const newTypeTexts: Array<any> = [];
-            const cData = roundsList?.data?.rounds?.results;
-            if (cData) {
-                cData.forEach((item) => {
-                    const displayedText = `${item.name}${
-                        item.equipment?.name ? ` - ${item.equipment.name}` : ''
-                    }${
-                        item.expectedDeliveryDate
-                            ? ` - ${moment(item.expectedDeliveryDate).format('DD/MM/YYYY')}`
-                            : ''
-                    }`;
-                    newTypeTexts.push({ key: item.id, text: displayedText });
-                });
-                newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
-                setRounds(newTypeTexts);
+        const fetchAndSetRounds = async () => {
+            try {
+                const roundsList = await fetchRoundsList();
+                const cData = roundsList?.rounds?.results;
+                console.log('cData', cData);
+                if (cData) {
+                    const newTypeTexts: Array<any> = [];
+                    cData.forEach((item: any) => {
+                        const displayedText = `${item.name}${
+                            item.equipment?.name ? ` - ${item.equipment.name}` : ''
+                        }${
+                            item.expectedDeliveryDate
+                                ? ` - ${moment(item.expectedDeliveryDate).format('DD/MM/YYYY')}`
+                                : ''
+                        }`;
+                        if (!item.assignedUser || item.assignedUser === user.username) {
+                            newTypeTexts.push({ key: item.id, text: displayedText });
+                        }
+                    });
+                    newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
+                    setRounds(newTypeTexts);
+                }
+            } catch (error) {
+                console.error('Error fetching rounds list:', error);
             }
-        }
-    }, [roundsList.data]);
+        };
+
+        fetchAndSetRounds();
+    }, []);
+
+    console.log('rounds', rounds);
 
     //SelectRound-2a: retrieve chosen level from select and set information
     const onFinish = async (values: any) => {
@@ -144,6 +188,7 @@ export const SelectRoundForm = ({
                         id
                         name
                         checkPosition
+                        forcePickingCheck
                     }
                     handlingUnitOutbounds {
                         id
@@ -273,7 +318,7 @@ export const SelectRoundForm = ({
                 : 'fullBox';
         }
 
-        if (selectedRound?.status == configs.ROUND_STATUS_STARTED) {
+        if (selectedRound?.round?.status == configs.ROUND_STATUS_STARTED) {
             const query = gql`
                 mutation executeFunction($functionName: String!, $event: JSON!) {
                     executeFunction(functionName: $functionName, event: $event) {
@@ -283,11 +328,17 @@ export const SelectRoundForm = ({
                 }
             `;
 
-            let roundIds = rounds?.map((item) => ({ id: item.key }));
+            let roundIds = [{ id: selectedRound?.round?.id }];
 
             const variables = {
-                functionName: 'K_updateRoundsStatus',
-                event: { input: { rounds: roundIds, status: configs.ROUND_STATUS_IN_PREPARATION } }
+                functionName: 'update_rounds_status',
+                event: {
+                    input: {
+                        rounds: roundIds,
+                        status: configs.ROUND_STATUS_IN_PREPARATION,
+                        assignedUser: user.username
+                    }
+                }
             };
             try {
                 const launchRoundsResult = await graphqlRequestClient.request(query, variables);

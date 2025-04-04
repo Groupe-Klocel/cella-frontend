@@ -22,12 +22,13 @@ import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import configs from '../../../../../common/configs.json';
+import parameters from '../../../../../common/parameters.json';
 
-export interface IArticleChecksProps {
+export interface IHandlingUnitChecksProps {
     dataToCheck: any;
 }
 
-export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
+export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
 
@@ -35,54 +36,46 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
         process,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        contents,
-        articleLuBarcodesInfos,
-        featureTypeDetailsInfos,
+        handlingUnitInfos,
+        uniqueHU,
         trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
+    console.log('handlingUnitInfos', handlingUnitInfos);
+
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
-    // ScanBox-3: manage information for persistence storage and front-end errors
 
     useEffect(() => {
-        if (scannedInfo && articleLuBarcodesInfos) {
-            if (articleLuBarcodesInfos.articleLuBarcodes?.count !== 0) {
-                const articleLuBarcode = articleLuBarcodesInfos.articleLuBarcodes?.results[0];
-                const contentFromScan = contents.find(
-                    (content: any) => content.articleId == articleLuBarcode.articleId
-                );
-                if (
-                    articleLuBarcode.articleId ==
-                    storedObject[`step10`].data.proposedRoundAdvisedAddresses[0]
-                        ?.handlingUnitContent?.articleId
-                ) {
-                    const data: { [label: string]: any } = {};
-                    data['articleLuBarcode'] = articleLuBarcode;
-                    if (contentFromScan) {
-                        data['content'] = contentFromScan;
-                        data['article'] = contentFromScan.article;
-                    }
-                    console.log('featureTypeDetailsInfos', featureTypeDetailsInfos);
-                    if (featureTypeDetailsInfos) {
-                        data['article']['featureType'] = featureTypeDetailsInfos;
-                    }
-                    setTriggerRender(!triggerRender);
+        if (scannedInfo && handlingUnitInfos) {
+            const data: { [label: string]: any } = {};
+            if (!handlingUnitInfos.handlingUnits?.results[0]) {
+                const type =
+                    scannedInfo[0] == '0' || scannedInfo[0] == 'P'
+                        ? parameters.HANDLING_UNIT_TYPE_PALLET
+                        : parameters.HANDLING_UNIT_TYPE_BOX;
+                data['handlingUnit'] = scannedInfo;
+                data['handlingUnitType'] = type;
+                data['isHUToCreate'] = true;
+                // specific to handle unique handling unit in selected location and back function for next step
+                if (!uniqueHU) {
                     storedObject[`step${stepNumber}`] = {
                         ...storedObject[`step${stepNumber}`],
                         data
                     };
                 } else {
-                    showError(t('messages:unexpected-scanned-item'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
+                    storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+                    storedObject[`step${stepNumber}`] = {
+                        data
+                    };
                 }
             } else {
-                showError(t('messages:no-articleLuBarcode'));
+                showError(t('messages:unexpected-scanned-item'));
                 setResetForm(true);
                 setScannedInfo(undefined);
             }
+            setTriggerRender(!triggerRender);
         }
         if (
             storedObject[`step${stepNumber}`] &&
@@ -90,11 +83,7 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
         ) {
             storage.set(process, JSON.stringify(storedObject));
         }
-    }, [articleLuBarcodesInfos]);
+    }, [handlingUnitInfos]);
 
-    return (
-        <WrapperForm>
-            {scannedInfo && !articleLuBarcodesInfos ? <ContentSpin /> : <></>}
-        </WrapperForm>
-    );
+    return <WrapperForm>{scannedInfo && !handlingUnitInfos ? <ContentSpin /> : <></>}</WrapperForm>;
 };
