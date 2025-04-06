@@ -2,31 +2,31 @@
   "folders": [
     {
       "name": "📦  common",
-      "path": "common",
+      "path": "common"
     },
     {
       "name": "🌐  web",
-      "path": "web",
+      "path": "web"
     },
     {
       "name": "📱  mobile",
-      "path": "mobile",
+      "path": "mobile"
     },
     {
       "name": "✨  cella",
-      "path": ".",
-    },
+      "path": "."
+    }
   ],
   "settings": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "workbench.colorCustomizations": {
-      "titleBar.activeBackground": "#f9c834",
-      "titleBar.activeForeground": "#000000",
-      "titleBar.inactiveBackground": "#f9da7a",
-      "titleBar.inactiveForeground": "#666666",
+      "titleBar.activeBackground": "#815450",
+      "titleBar.activeForeground": "#FFFFFF",
+      "titleBar.inactiveBackground": "#b4736d",
+      "titleBar.inactiveForeground": "#a6a6a6"
     },
-    "window.title": "TEMPL_${activeEditorShort}",
+    "window.title": "NVG_${activeEditorShort}"
   },
   "extensions": {
     "recommendations": [
@@ -39,7 +39,7 @@
       "DavidAnson.vscode-markdownlint",
       "shd101wyy.markdown-preview-enhanced",
       "shardulm94.trailing-spaces",
-      "meganrogge.template-string-converter",
-    ],
-  },
+      "meganrogge.template-string-converter"
+    ]
+  }
 }
