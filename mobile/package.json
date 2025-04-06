@@ -12,6 +12,7 @@
         "-------------------------------- DEV  ----": "----",
         "dev": "next dev -p 3001",
         "dev2": "next dev -p 80",
+        "devOverloads": "node ../common/scripts/KlocelLicenceHeaders.js && node ../common/scripts/FinditSpeBanner.js && node ../common/scripts/overloads.js && next dev -p 3001",
         "start": "next start -p 3001",
         "serve": "yarn build && yarn start -p 3001",
         "export": "next export",
