@@ -48,6 +48,9 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     } = dataToCheck;
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
+    const handlingUnitContentId =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
+            ?.id;
 
     // TYPED SAFE ALL
     useEffect(() => {
@@ -79,6 +82,24 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         return { id, name, barcode, level, handlingUnits, category };
                     }
                 );
+                if (handlingUnitContentId) {
+                    if (
+                        data['locations'].filter(
+                            (location: any) =>
+                                location.handlingUnits?.filter(
+                                    (hu: any) =>
+                                        hu.handlingUnitContents.filter(
+                                            (huc: any) => huc.article.id == handlingUnitContentId
+                                        ).length > 0
+                                ).length > 0
+                        ).length === 0
+                    ) {
+                        console.log('No matching handling unit content', data);
+                        showError(t('messages:unexpected-scanned-item'));
+                        setResetForm(true);
+                        return;
+                    }
+                }
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],

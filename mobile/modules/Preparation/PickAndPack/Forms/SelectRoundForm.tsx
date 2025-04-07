@@ -184,6 +184,7 @@ export const SelectRoundForm = ({
                     productivity
                     expectedDeliveryDate
                     extraText1
+                    assignedUser
                     equipment {
                         id
                         name
@@ -296,6 +297,38 @@ export const SelectRoundForm = ({
 
         const selectedRound = await graphqlRequestClient.request(query, variables);
 
+        if (
+            selectedRound?.round?.assignedUser &&
+            selectedRound?.round?.assignedUser !== user.username
+        ) {
+            showError(t('messages:round-already-assigned'));
+            return;
+        }
+        if (!selectedRound?.round?.assignedUser) {
+            // if the round is not assigned, we assign it to the current user
+            const updateRoundMutation = gql`
+                mutation updateRound($id: String!, $input: UpdateRoundInput!) {
+                    updateRound(id: $id, input: $input) {
+                        id
+                        status
+                        assignedUser
+                    }
+                }
+            `;
+            const updateRoundVariables = {
+                id: selectedRound?.round?.id,
+                input: {
+                    assignedUser: user.username
+                }
+            };
+
+            const updateRoundResult = await graphqlRequestClient.request(
+                updateRoundMutation,
+                updateRoundVariables
+            );
+            console.log('updateRoundResult', updateRoundResult);
+        }
+
         data['round'] = selectedRound.round;
         const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
             ?.filter((raa: any) => raa.quantity != 0)
@@ -335,8 +368,7 @@ export const SelectRoundForm = ({
                 event: {
                     input: {
                         rounds: roundIds,
-                        status: configs.ROUND_STATUS_IN_PREPARATION,
-                        assignedUser: user.username
+                        status: configs.ROUND_STATUS_IN_PREPARATION
                     }
                 }
             };
