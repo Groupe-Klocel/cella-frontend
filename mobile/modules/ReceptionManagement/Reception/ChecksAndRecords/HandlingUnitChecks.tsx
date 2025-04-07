@@ -67,12 +67,12 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                         }
                     }
                 }
-                const selectedLocation = storedObject['step65'].data.chosenLocation;
+                const selectedLocation = storedObject['step100']?.data?.chosenLocation;
                 if (selectedLocation) {
                     if (selectedLocation.id !== huToCheck.locationId) {
                         showError(
                             t('messages:hu-exists-other-location', {
-                                locationName: selectedLocation.name
+                                locationName: huToCheck?.location?.name
                             })
                         );
                         setResetForm(true);
