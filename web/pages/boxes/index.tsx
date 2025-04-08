@@ -180,15 +180,20 @@ const BoxesPage: PageComponent = () => {
                                 ) : (
                                     <></>
                                 )}
-                                <Button
-                                    type="primary"
-                                    ghost
-                                    onClick={() => {
-                                        setShowNumberOfPrintsModal(true);
-                                        setIdsToPrint([record.id]);
-                                    }}
-                                    icon={<BarcodeOutlined />}
-                                />
+                                {record?.status !==
+                                configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
+                                    <Button
+                                        type="primary"
+                                        ghost
+                                        onClick={() => {
+                                            setShowNumberOfPrintsModal(true);
+                                            setIdsToPrint([record.id]);
+                                        }}
+                                        icon={<BarcodeOutlined />}
+                                    />
+                                ) : (
+                                    <></>
+                                )}
                             </Space>
                         )
                     }
