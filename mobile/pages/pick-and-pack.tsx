@@ -27,7 +27,7 @@ import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { EnterQuantity } from '@CommonRadio';
-import { SelectLocationByLevelForm } from 'modules/Common/Locations/Forms/SelectLocationByLevelFormPAP';
+import { SelectLocationByLevelForm } from 'modules/Preparation/PickAndPack/Forms/SelectLocationByLevelForm';
 import parameters from '../../common/parameters.json';
 import { SimilarPickingLocations } from 'modules/Preparation/PickAndPack/Elements/SimilarLocations';
 import { QuantityChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/QuantityChecks';

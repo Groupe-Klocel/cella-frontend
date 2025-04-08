@@ -301,7 +301,11 @@ export const SelectRoundForm = ({
             selectedRound?.round?.assignedUser &&
             selectedRound?.round?.assignedUser !== user.username
         ) {
-            showError(t('messages:round-already-assigned'));
+            showError(
+                t('messages:round-already-assigned-to', {
+                    name: selectedRound?.round?.assignedUser
+                })
+            );
             return;
         }
         if (!selectedRound?.round?.assignedUser) {

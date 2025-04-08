@@ -161,7 +161,7 @@ export const AutoValidatePickAndPackForm = ({
                             handlingUnitType: huType,
                             isHUToCreate: false
                         };
-                        storedObject['currentStep'] = 20;
+                        storedObject['currentStep'] = 10;
                         storedObject[`step10`] = { previousStep: 0, data };
                         storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
                         storage.set(process, JSON.stringify(storedObject));
