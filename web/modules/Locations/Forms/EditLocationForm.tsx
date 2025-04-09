@@ -173,7 +173,8 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                 router.push(`/locations/${data.updateLocation?.id}`);
                 showSuccess(t('messages:success-updated'));
             },
-            onError: () => {
+            onError: (err) => {
+                console.log('Error in update', err);
                 showError(t('messages:error-update-data'));
             }
         }
@@ -243,10 +244,12 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                 delete formData['associatedBlock'];
                 delete formData['replenishTypeText'];
                 delete formData['baseUnitRotationText'];
+                delete formData.handlingUnits;
                 updateLocation({ id: locationId, input: formData });
                 setUnsavedChanges(false);
             })
             .catch((err) => {
+                console.log('Error in form validation', err);
                 showError(t('messages:error-update-data'));
             });
     };

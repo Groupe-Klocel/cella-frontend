@@ -129,31 +129,6 @@ export const ValidateHuMoveForm = ({
             console.log('executeFunctionError', error);
             setIsLoading(false);
         }
-        // const res = await fetch(`/api/stock-management/validateHuMove/`, {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify({
-        //         originHandlingUnit,
-        //         originLocation,
-        //         finalHandlingUnit,
-        //         finalLocation,
-        //         isHuToCreate
-        //     })
-        // });
-        // if (res.ok) {
-        //     showSuccess(t('messages:movement-success'));
-        //     storage.removeAll();
-        //     setHeaderContent(false);
-        //     setTriggerRender(!triggerRender);
-        // } else {
-        //     showError(t('messages:movement-failed'));
-        // }
-        // // const response = await res.json();
-        // if (res) {
-        //     setIsLoading(false);
-        // }
     };
 
     //ValidateHuMove-1b: handle back to previous - previous step settings (specific since check is automatic)

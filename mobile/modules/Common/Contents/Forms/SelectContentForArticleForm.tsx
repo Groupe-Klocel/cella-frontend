@@ -145,6 +145,7 @@ export const SelectContentForArticleForm = ({
                     quantity
                     stockStatus
                     stockStatusText
+                    reservation
                     handlingUnitId
                     handlingUnit {
                         name
@@ -178,9 +179,12 @@ export const SelectContentForArticleForm = ({
                         }
                     }
                     handlingUnitContentFeatures {
+                        id
+                        featureCodeId
                         featureCode {
                             id
                             name
+                            unique
                         }
                         value
                     }

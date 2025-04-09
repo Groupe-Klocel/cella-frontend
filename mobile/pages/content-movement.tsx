@@ -312,21 +312,26 @@ const ContentMvmt: PageComponent = () => {
     useEffect(() => {
         switch (storedObject.currentStep) {
             case 10:
-                setIsLoading(!!enforcedOriginLocation);
+                setIsLoading(
+                    !!enforcedOriginLocation ||
+                        !!storedObject['step10']?.data?.locations ||
+                        (!storedObject['step15']?.data?.chosenLocation?.huManagement &&
+                            !!storedObject['step15']?.data?.chosenLocation?.barcode)
+                );
                 break;
             case 15:
                 setIsLoading(!!storedObject['step10']?.data?.locations);
                 break;
             case 20:
                 setIsLoading(
-                    !storedObject['step15']?.data?.chosenLocation.huManagement &&
-                        storedObject['step15']?.data?.chosenLocation.barcode
+                    !storedObject['step15']?.data?.chosenLocation?.huManagement &&
+                        !!storedObject['step15']?.data?.chosenLocation?.barcode
                 );
                 break;
             default:
                 setIsLoading(false);
         }
-    }, [storedObject.currentStep]);
+    }, [storedObject]);
 
     return (
         <PageContentWrapper>
@@ -424,7 +429,10 @@ const ContentMvmt: PageComponent = () => {
                         process={processName}
                         stepNumber={30}
                         label={t('common:article')}
-                        buttons={{ submitButton: true, backButton: true }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: enforcedOriginLocation !== 'defaultReception'
+                        }}
                         trigger={{ triggerRender, setTriggerRender }}
                         checkComponent={(data: any) => (
                             <ArticleOrFeatureChecks dataToCheck={data} />

@@ -136,6 +136,7 @@ export const ScanHandlingUnit = ({
                                     }
                                     handlingUnitContentFeatures {
                                         id
+                                        featureCodeId
                                         featureCode {
                                             name
                                             unique
@@ -189,6 +190,7 @@ export const ScanHandlingUnit = ({
                                 }
                                 handlingUnitContentFeatures {
                                     id
+                                    featureCodeId
                                     featureCode {
                                         name
                                         unique

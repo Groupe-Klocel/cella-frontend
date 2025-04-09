@@ -23,6 +23,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
 import { showError, showSuccess, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
 export interface IValidateQuantityMoveProps {
@@ -44,6 +46,7 @@ export const ValidateQuantityMoveForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { graphqlRequestClient } = useAuth();
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -65,14 +68,15 @@ export const ValidateQuantityMoveForm = ({
     let articleInfo: { [k: string]: any } = {};
     let articleLuBarcodeId: string;
     if (storedObject.step35.data.chosenArticleLuBarcode) {
-        articleInfo.articleId = storedObject.step35.data.chosenArticleLuBarcode.articleId;
-        articleInfo.articleName = storedObject.step35.data.chosenArticleLuBarcode.article
+        articleInfo.id = storedObject.step35.data.chosenArticleLuBarcode.articleId;
+        articleInfo.name = storedObject.step35.data.chosenArticleLuBarcode.article
             ? storedObject.step35.data.chosenArticleLuBarcode.article.name
             : storedObject.step35.data.chosenArticleLuBarcode.name;
         articleInfo.stockOwnerId =
             storedObject.step35.data.chosenArticleLuBarcode.stockOwnerId ?? undefined;
-        articleInfo.stockOwnerName =
-            storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ?? undefined;
+        articleInfo.stockOwner = {
+            name: storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ?? undefined
+        };
         articleLuBarcodeId = storedObject.step35.data.chosenArticleLuBarcode.id ?? undefined;
     }
     let feature: { [k: string]: any } = {};
@@ -86,15 +90,19 @@ export const ValidateQuantityMoveForm = ({
                 id: storedObject.step40.data.chosenContent.id,
                 quantity: storedObject.step40.data.chosenContent.quantity,
                 stockStatus: storedObject.step40.data.chosenContent.stockStatus,
+                reservation: storedObject.step40.data.chosenContent.reservation,
                 stockOwnerId: storedObject.step30.data.feature.handlingUnitContent.stockOwnerId,
                 stockOwnerName:
-                    storedObject.step30.data.feature.handlingUnitContent.stockOwner?.name
+                    storedObject.step30.data.feature.handlingUnitContent.stockOwner?.name,
+                handlingUnitContentFeatures:
+                    storedObject.step40.data.chosenContent.handlingUnitContentFeatures
             };
         } else {
             originalContent = {
                 id: storedObject.step40.data.chosenContent.id,
                 quantity: storedObject.step40.data.chosenContent.quantity,
                 stockStatus: storedObject.step40.data.chosenContent.stockStatus,
+                reservation: storedObject.step40.data.chosenContent.reservation,
                 stockOwnerId: storedObject.step40.data.chosenContent.stockOwnerId,
                 stockOwnerName: storedObject.step40.data.chosenContent.stockOwner?.name,
                 handlingUnitContentFeatures:
@@ -130,41 +138,57 @@ export const ValidateQuantityMoveForm = ({
     if (storedObject.step70.data.isHuToCreate) {
         isHuToCreate = storedObject.step70.data.isHuToCreate;
     }
-    let resType: string;
-    if (storedObject.step30.data.resType) {
-        resType = storedObject.step30.data.resType;
-    }
 
     //ValidateQuantityMove-1a: retrieve chosen level from select and set information
     const onFinish = async () => {
         setIsLoading(true);
-        const res = await fetch(`/api/stock-management/validateQuantityMove`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                originalLocation,
-                articleInfo,
-                articleLuBarcodeId,
-                movingQuantity,
-                finalLocation,
-                finalHandlingUnit,
-                isHuToCreate,
-                resType,
-                feature
-            })
-        });
-        if (res.ok) {
-            showSuccess(t('messages:movement-success'));
-            storage.removeAll();
-            setHeaderContent(false);
-            setTriggerRender(!triggerRender);
-        } else {
-            showError(t('messages:movement-failed'));
-        }
-        // const response = await res.json();
-        if (res) {
+        const inputToValidate = {
+            originalLocation,
+            articleInfo,
+            articleLuBarcodeId,
+            movingQuantity,
+            finalLocation,
+            finalHandlingUnit,
+            isHuToCreate,
+            feature
+        };
+
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'RF_handling_unit_content_movement_validate',
+            event: {
+                input: inputToValidate
+            }
+        };
+        try {
+            const validateHuMove = await graphqlRequestClient.request(query, variables);
+            if (validateHuMove.executeFunction.status === 'ERROR') {
+                showError(validateHuMove.executeFunction.output);
+            } else if (
+                validateHuMove.executeFunction.status === 'OK' &&
+                validateHuMove.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${validateHuMove.executeFunction.output.output.code}`));
+                console.log('Backend_message', validateHuMove.executeFunction.output.output);
+                setIsLoading(false);
+            } else {
+                showSuccess(t('messages:movement-success'));
+                storage.removeAll();
+                setHeaderContent(false);
+                setTriggerRender(!triggerRender);
+                setIsLoading(false);
+            }
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
             setIsLoading(false);
         }
     };

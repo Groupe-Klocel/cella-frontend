@@ -23,7 +23,6 @@ import {
     AutoComplete,
     Button,
     Col,
-    Input,
     InputNumber,
     Row,
     Form,
@@ -46,22 +45,14 @@ import {
     useSimpleGetInProgressStockOwnersQuery,
     SimpleGetInProgressStockOwnersQuery
 } from 'generated/graphql';
-import { debounce, set } from 'lodash';
+import { debounce } from 'lodash';
 import _ from 'lodash';
-import {
-    showError,
-    showSuccess,
-    useArticleIds,
-    useLocationIds,
-    DataQueryType,
-    removeDuplicatesAndSort
-} from '@helpers';
+import { showError, showSuccess, useArticleIds } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import existingConfigs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
 
 const { Option } = Select;
-const { TextArea } = Input;
 
 interface IOption {
     value: string;
@@ -206,13 +197,9 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     //section to handle relation ship between locations-related fields
     //chose block
     const [blockToSearch, setBlockToSearch] = useState<any>(null);
-    const onBlockChange = (id: string, options: any) => {
+    const onBlockChange = (id: string) => {
         setBlockToSearch(id);
     };
-    const search = blockToSearch ? { blockId: blockToSearch! } : undefined;
-    const { data: locationsData } = useLocationIds(search, 1, 1000, null);
-
-    const [locations, setLocations] = useState<DataQueryType>();
 
     //useStates to take the values to search at each choice
     const [originAisleToSearch, setOriginAisleToSearch] = useState<string | undefined>(undefined);
@@ -221,43 +208,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const [finalColumnToSearch, setFinalColumnToSearch] = useState<string | undefined>(undefined);
     const [originLevelToSearch, setOriginLevelToSearch] = useState<string | undefined>(undefined);
     const [finalLevelToSearch, setFinalLevelToSearch] = useState<string | undefined>(undefined);
-
-    //set reference Locations list
-    useEffect(() => {
-        if (locationsData && blockToSearch) {
-            setLocations(locationsData?.locations);
-            if (locationsData?.locations && locationsData?.locations?.results.length > 0) {
-                const locations = locationsData.locations.results.sort((a: any, b: any) => {
-                    const aisleComparison = a.aisle.localeCompare(b.aisle);
-                    if (aisleComparison !== 0) return aisleComparison;
-                    const columnComparison = Number(a.column) - Number(b.column);
-                    if (columnComparison !== 0) return columnComparison;
-                    const levelComparison = Number(a.level) - Number(b.level);
-                    if (levelComparison !== 0) return levelComparison;
-                    return Number(a.position) - Number(b.position);
-                });
-                const firstLocation = locations[0];
-                const lastLocation = locations[locations.length - 1];
-
-                form.setFieldsValue({
-                    originalAisle: firstLocation.aisle,
-                    originalColumn: firstLocation.column,
-                    originalLevel: firstLocation.level,
-                    originalPosition: firstLocation.position,
-                    finalAisle: lastLocation.aisle,
-                    finalColumn: lastLocation.column,
-                    finalLevel: lastLocation.level,
-                    finalPosition: lastLocation.position
-                });
-                setOriginAisleToSearch(firstLocation.aisle);
-                setFinalAisleToSearch(lastLocation.aisle);
-                setOriginColumnToSearch(firstLocation.column);
-                setFinalColumnToSearch(lastLocation.column);
-                setOriginLevelToSearch(firstLocation.level);
-                setFinalLevelToSearch(lastLocation.level);
-            }
-        }
-    }, [locationsData, blockToSearch]);
 
     // onChange for each location property select
     const onInputChange = (value: string, source: string, setState: any) => {
@@ -273,111 +223,148 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         }
     };
 
-    //generic filter function to generate list of values provided in select options
-    function filterAndMap(locations: any, setOptions: any, filters: any, returnedData: string) {
-        const dataSet = locations?.results.filter((e: any) => {
-            for (const key in filters) {
-                if (filters.hasOwnProperty(key)) {
-                    if (filters[key] && e[key] !== filters[key]) {
-                        return false;
+    //request to get aisles, columns, levels and positions
+    const fetchLocationsData = async (
+        field: string,
+        aisle?: Array<string>,
+        column?: [string],
+        level?: [string]
+    ) => {
+        const defaultFilters = { blockId: blockToSearch };
+        const filters = {
+            ...defaultFilters,
+            ...(aisle && { aisle }),
+            ...(column && { column }),
+            ...(level && { level })
+        };
+        const query = gql`
+                query locationsInfos($filters: LocationSearchFilters!, $functions: [JSON!]) {
+                    locations(filters: $filters, functions: $functions) {
+                        count
+                        results {
+                            ${field}
+                        }
                     }
                 }
-            }
-            return true;
-        });
-        const newOpts: Array<string> = dataSet.map((e: any) => {
-            return e[returnedData];
-        });
-        setOptions(removeDuplicatesAndSort(newOpts));
-    }
+            `;
+        const queryVariables = {
+            filters,
+            functions: [{ function: 'count', fields: ['id'] }]
+        };
+
+        try {
+            const data = await graphqlRequestClient.request(query, queryVariables);
+            return data?.locations.results
+                .map((location: any) => location[field])
+                .sort((a: any, b: any) => {
+                    if (!isNaN(a) && !isNaN(b)) {
+                        return Number(a) - Number(b);
+                    }
+                    return a.localeCompare(b);
+                });
+        } catch (error) {
+            console.error('Error fetching aisle data:', error);
+            return [];
+        }
+    };
 
     //list aisles
-    const [aisleValueOptions, setAisleValueOptions] = useState<any>(null);
+    const [aislesValueOptions, setAislesValueOptions] = useState<any>(null);
     useEffect(() => {
-        if (locations) {
-            const newOpts: Array<any> = locations.results.map(({ aisle }) => {
-                return aisle!;
+        if (blockToSearch) {
+            fetchLocationsData('aisle').then((data: any) => {
+                setAislesValueOptions(data);
+                form.setFieldsValue({
+                    originalAisle: data[0],
+                    finalAisle: data[data.length - 1]
+                });
+                setOriginAisleToSearch(data[0]);
+                setFinalAisleToSearch(data[data.length - 1]);
             });
-            setAisleValueOptions(removeDuplicatesAndSort(newOpts));
-            // setOriginAisleToSearch(newOpts[0]);
-            // setFinalAisleToSearch(newOpts[newOpts.length - 1]);
         }
-    }, [locations]);
+    }, [blockToSearch]);
 
-    //list columns
+    //list columns dynamically
     const [originColumnValueOptions, setOriginColumnValueOptions] = useState<any>(null);
     const [finalColumnValueOptions, setFinalColumnValueOptions] = useState<any>(null);
     useEffect(() => {
         if (originAisleToSearch) {
-            filterAndMap(
-                locations,
-                setOriginColumnValueOptions,
-                { aisle: originAisleToSearch },
-                'column'
-            );
+            fetchLocationsData('column', [originAisleToSearch]).then((data: any) => {
+                setOriginColumnValueOptions(data);
+                form.setFieldsValue({
+                    originalColumn: data[0]
+                });
+                setOriginColumnToSearch(data[0]);
+            });
         }
         if (finalAisleToSearch) {
-            filterAndMap(
-                locations,
-                setFinalColumnValueOptions,
-                { aisle: finalAisleToSearch },
-                'column'
-            );
+            fetchLocationsData('column', [finalAisleToSearch]).then((data: any) => {
+                setFinalColumnValueOptions(data);
+                form.setFieldsValue({
+                    finalColumn: data[data.length - 1]
+                });
+                setFinalColumnToSearch(data[data.length - 1]);
+            });
         }
     }, [originAisleToSearch, finalAisleToSearch]);
 
-    //List levels
+    //list levels dynamically
     const [originLevelValueOptions, setOriginLevelValueOptions] = useState<any>(null);
     const [finalLevelValueOptions, setFinalLevelValueOptions] = useState<any>(null);
     useEffect(() => {
         if (originAisleToSearch && originColumnToSearch) {
-            filterAndMap(
-                locations,
-                setOriginLevelValueOptions,
-                {
-                    aisle: originAisleToSearch,
-                    column: originColumnToSearch
-                },
-                'level'
+            fetchLocationsData('level', [originAisleToSearch], [originColumnToSearch]).then(
+                (data: any) => {
+                    setOriginLevelValueOptions(data);
+                    form.setFieldsValue({
+                        originalLevel: data[0]
+                    });
+                    setOriginLevelToSearch(data[0]);
+                }
             );
         }
         if (finalAisleToSearch && finalColumnToSearch) {
-            filterAndMap(
-                locations,
-                setFinalLevelValueOptions,
-                { aisle: finalAisleToSearch, column: finalColumnToSearch },
-                'level'
+            fetchLocationsData('level', [finalAisleToSearch], [finalColumnToSearch]).then(
+                (data: any) => {
+                    setFinalLevelValueOptions(data);
+                    form.setFieldsValue({
+                        finalLevel: data[data.length - 1]
+                    });
+                    setFinalLevelToSearch(data[data.length - 1]);
+                }
             );
         }
     }, [originAisleToSearch, finalAisleToSearch, originColumnToSearch, finalColumnToSearch]);
 
-    //List positions
+    //list positions dynamically
     const [originPositionValueOptions, setOriginPositionValueOptions] = useState<any>(null);
     const [finalPositionValueOptions, setFinalPositionValueOptions] = useState<any>(null);
     useEffect(() => {
         if (originAisleToSearch && originColumnToSearch && originLevelToSearch) {
-            filterAndMap(
-                locations,
-                setOriginPositionValueOptions,
-                {
-                    aisle: originAisleToSearch,
-                    column: originColumnToSearch,
-                    level: originLevelToSearch
-                },
-                'position'
-            );
+            fetchLocationsData(
+                'position',
+                [originAisleToSearch],
+                [originColumnToSearch],
+                [originLevelToSearch]
+            ).then((data: any) => {
+                setOriginPositionValueOptions(data);
+                form.setFieldsValue({
+                    originalPosition: data[0]
+                });
+            });
         }
         if (finalAisleToSearch && finalColumnToSearch && finalLevelToSearch) {
-            filterAndMap(
-                locations,
-                setFinalPositionValueOptions,
-                {
-                    aisle: finalAisleToSearch,
-                    column: finalColumnToSearch,
-                    level: finalLevelToSearch
-                },
-                'position'
-            );
+            fetchLocationsData(
+                'position',
+                [finalAisleToSearch],
+                [finalColumnToSearch],
+                [finalLevelToSearch]
+            ).then((data: any) => {
+                setFinalPositionValueOptions(data);
+                form.setFieldsValue({
+                    finalPosition: data[data.length - 1]
+                });
+            });
         }
     }, [
         originAisleToSearch,
@@ -726,8 +713,9 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 );
                                             }}
                                             allowClear
+                                            disabled={blockToSearch ? false : true}
                                         >
-                                            {aisleValueOptions?.map((aisle: any) => (
+                                            {aislesValueOptions?.map((aisle: any) => (
                                                 <Option key={aisle} value={aisle}>
                                                     {aisle}
                                                 </Option>
@@ -764,6 +752,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 );
                                             }}
                                             allowClear
+                                            disabled={blockToSearch ? false : true}
                                         >
                                             {originColumnValueOptions?.map((column: any) => (
                                                 <Option key={column} value={column}>
@@ -802,6 +791,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 );
                                             }}
                                             allowClear
+                                            disabled={blockToSearch ? false : true}
                                         >
                                             {originLevelValueOptions?.map((level: any) => (
                                                 <Option key={level} value={level}>
@@ -833,6 +823,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     .indexOf(inputValue.toUpperCase()) !== -1
                                             }
                                             allowClear
+                                            disabled={blockToSearch ? false : true}
                                         >
                                             {originPositionValueOptions?.map((position: any) => (
                                                 <Option key={position} value={position}>
@@ -877,7 +868,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                             allowClear
                                             disabled={blockToSearch ? false : true}
                                         >
-                                            {aisleValueOptions?.map((aisle: any) => (
+                                            {aislesValueOptions?.map((aisle: any) => (
                                                 <Option key={aisle} value={aisle}>
                                                     {aisle}
                                                 </Option>
@@ -914,9 +905,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 );
                                             }}
                                             allowClear
-                                            disabled={
-                                                blockToSearch && finalAisleToSearch ? false : true
-                                            }
+                                            disabled={blockToSearch ? false : true}
                                         >
                                             {finalColumnValueOptions?.map((column: any) => (
                                                 <Option key={column} value={column}>
@@ -955,13 +944,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 );
                                             }}
                                             allowClear
-                                            disabled={
-                                                blockToSearch &&
-                                                finalAisleToSearch &&
-                                                finalColumnToSearch
-                                                    ? false
-                                                    : true
-                                            }
+                                            disabled={blockToSearch ? false : true}
                                         >
                                             {finalLevelValueOptions?.map((level: any) => (
                                                 <Option key={level} value={level}>
@@ -993,14 +976,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     .indexOf(inputValue.toUpperCase()) !== -1
                                             }
                                             allowClear
-                                            disabled={
-                                                blockToSearch &&
-                                                finalAisleToSearch &&
-                                                finalColumnToSearch &&
-                                                finalLevelToSearch
-                                                    ? false
-                                                    : true
-                                            }
+                                            disabled={blockToSearch ? false : true}
                                         >
                                             {finalPositionValueOptions?.map((position: any) => (
                                                 <Option key={position} value={position}>
