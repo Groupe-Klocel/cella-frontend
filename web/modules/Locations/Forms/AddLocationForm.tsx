@@ -217,6 +217,7 @@ export const AddLocationForm = () => {
                 formData.baseUnitRotation = parseInt(formData.rotation);
                 formData.status = configs.LOCATION_STATUS_AVAILABLE;
                 delete formData.rotation;
+                delete formData.handlingUnits;
 
                 bulkCreateLocation({ input: formData });
                 setUnsavedChanges(false);
