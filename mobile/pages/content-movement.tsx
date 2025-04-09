@@ -462,6 +462,12 @@ const ContentMvmt: PageComponent = () => {
                             articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
                             locationId={storedObject['step15'].data.chosenLocation.id}
                             handlingUnitId={storedObject['step20'].data.handlingUnit.id}
+                            stockOwnerId={
+                                storedObject['step35'].data.chosenArticleLuBarcode.article
+                                    ? storedObject['step35'].data.chosenArticleLuBarcode.article
+                                          .stockOwnerId
+                                    : undefined
+                            }
                         ></SelectContentForArticleForm>
                     ) : (
                         <SelectContentForFeatureForm

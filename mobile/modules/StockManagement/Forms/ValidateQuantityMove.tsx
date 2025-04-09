@@ -72,10 +72,13 @@ export const ValidateQuantityMoveForm = ({
         articleInfo.name = storedObject.step35.data.chosenArticleLuBarcode.article
             ? storedObject.step35.data.chosenArticleLuBarcode.article.name
             : storedObject.step35.data.chosenArticleLuBarcode.name;
-        articleInfo.stockOwnerId =
-            storedObject.step35.data.chosenArticleLuBarcode.stockOwnerId ?? undefined;
+        articleInfo.stockOwnerId = storedObject.step35.data.chosenArticleLuBarcode.article
+            ? storedObject.step35.data.chosenArticleLuBarcode.article.stockOwnerId
+            : (storedObject.step35.data.chosenArticleLuBarcode.stockOwnerId ?? undefined);
         articleInfo.stockOwner = {
-            name: storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ?? undefined
+            name: storedObject.step35.data.chosenArticleLuBarcode.article
+                ? storedObject.step35.data.chosenArticleLuBarcode.article.stockOwner?.name
+                : (storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ?? undefined)
         };
         articleLuBarcodeId = storedObject.step35.data.chosenArticleLuBarcode.id ?? undefined;
     }
