@@ -60,6 +60,7 @@ export const SelectLocationByLevelForm = ({
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
     const [popModal, setPopModal] = useState(0);
+    const [reload, setReload] = useState(false);
 
     const getLocations = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
@@ -498,6 +499,7 @@ export const SelectLocationByLevelForm = ({
                                 showSimilarLocations.setShowSimilarLocations(false);
                                 storage.set(process, JSON.stringify(newStoredObject));
                                 setTriggerRender(!triggerRender);
+                                setReload((prev) => !prev);
                             }
                         }
                         return true;
@@ -576,7 +578,7 @@ export const SelectLocationByLevelForm = ({
             }
             storage.set(process, JSON.stringify(storedObject));
         }
-    }, []);
+    }, [reload]);
 
     //SelectLocationByLevel-1: retrieve levels choices for select
     useEffect(() => {

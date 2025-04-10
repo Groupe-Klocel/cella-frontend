@@ -48,7 +48,7 @@ export const AutoValidatePickAndPackForm = ({
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
-    const { graphqlRequestClient } = useAuth();
+    const { graphqlRequestClient, user } = useAuth();
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -75,10 +75,43 @@ export const AutoValidatePickAndPackForm = ({
     const movingQuantity = step70?.data?.movingQuantity;
     const huModel = step80?.data?.handlingUnitModel;
 
-    console.log(huName, huType, 'huName, huType');
+    console.log(huName, huType, round, 'huName, huType', 'round');
 
     useEffect(() => {
         const onFinish = async () => {
+            //check if assigned user is still good
+
+            const assignedUserQuery = gql`
+                query round($id: String!) {
+                    round(id: $id) {
+                        id
+                        assignedUser
+                    }
+                }
+            `;
+
+            const assignedUserVariables = {
+                id: round.id
+            };
+
+            const selectedRound = await graphqlRequestClient.request(
+                assignedUserQuery,
+                assignedUserVariables
+            );
+
+            if (
+                selectedRound.round.assignedUser &&
+                selectedRound.round.assignedUser !== user.username
+            ) {
+                showError(
+                    t('messages:round-already-assigned-to', {
+                        name: selectedRound.round.assignedUser
+                    })
+                );
+                onBack();
+                return;
+            }
+
             const inputToValidate = {
                 proposedRoundAdvisedAddresses,
                 round,
