@@ -139,7 +139,9 @@ export const SelectRoundForm = ({
                 const cData = roundsList?.rounds?.results;
                 console.log('cData', cData);
                 if (cData) {
-                    const newTypeTexts: Array<any> = [];
+                    const assignedToUser: Array<any> = [];
+                    const notAssignedToUser: Array<any> = [];
+
                     cData.forEach((item: any) => {
                         const displayedText = `${item.name}${
                             item.equipment?.name ? ` - ${item.equipment.name}` : ''
@@ -148,12 +150,21 @@ export const SelectRoundForm = ({
                                 ? ` - ${moment(item.expectedDeliveryDate).format('DD/MM/YYYY')}`
                                 : ''
                         }`;
-                        if (!item.assignedUser || item.assignedUser === user.username) {
-                            newTypeTexts.push({ key: item.id, text: displayedText });
+                        if (item.assignedUser === user.username) {
+                            assignedToUser.push({ key: item.id, text: displayedText });
+                        } else if (!item.assignedUser) {
+                            notAssignedToUser.push({ key: item.id, text: displayedText });
                         }
                     });
-                    newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
-                    setRounds(newTypeTexts);
+
+                    const sortedAssignedToUser = assignedToUser.sort((a, b) =>
+                        a.text.localeCompare(b.text)
+                    );
+                    const sortedNotAssignedToUser = notAssignedToUser.sort((a, b) =>
+                        a.text.localeCompare(b.text)
+                    );
+
+                    setRounds([...sortedAssignedToUser, ...sortedNotAssignedToUser]);
                 }
             } catch (error) {
                 console.error('Error fetching rounds list:', error);
@@ -330,6 +341,7 @@ export const SelectRoundForm = ({
                 updateRoundMutation,
                 updateRoundVariables
             );
+            selectedRound.round.assignedUser = updateRoundResult.updateRound.assignedUser;
             console.log('updateRoundResult', updateRoundResult);
         }
 
