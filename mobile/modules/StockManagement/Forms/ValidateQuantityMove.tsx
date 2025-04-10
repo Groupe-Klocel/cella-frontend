@@ -88,30 +88,26 @@ export const ValidateQuantityMoveForm = ({
     }
     if (storedObject.step40.data.chosenContent) {
         let originalContent: { [label: string]: any } | null;
-        if (storedObject.step30.data.resType == 'serialNumber') {
-            originalContent = {
-                id: storedObject.step40.data.chosenContent.id,
-                quantity: storedObject.step40.data.chosenContent.quantity,
-                stockStatus: storedObject.step40.data.chosenContent.stockStatus,
-                reservation: storedObject.step40.data.chosenContent.reservation,
-                stockOwnerId: storedObject.step30.data.feature.handlingUnitContent.stockOwnerId,
-                stockOwnerName:
-                    storedObject.step30.data.feature.handlingUnitContent.stockOwner?.name,
-                handlingUnitContentFeatures:
-                    storedObject.step40.data.chosenContent.handlingUnitContentFeatures
-            };
-        } else {
-            originalContent = {
-                id: storedObject.step40.data.chosenContent.id,
-                quantity: storedObject.step40.data.chosenContent.quantity,
-                stockStatus: storedObject.step40.data.chosenContent.stockStatus,
-                reservation: storedObject.step40.data.chosenContent.reservation,
-                stockOwnerId: storedObject.step40.data.chosenContent.stockOwnerId,
-                stockOwnerName: storedObject.step40.data.chosenContent.stockOwner?.name,
-                handlingUnitContentFeatures:
-                    storedObject.step40.data.chosenContent.handlingUnitContentFeatures
-            };
-        }
+        originalContent = {
+            id: storedObject.step40.data.chosenContent.id,
+            quantity: storedObject.step40.data.chosenContent.quantity,
+            stockStatus: storedObject.step40.data.chosenContent.stockStatus,
+            reservation: storedObject.step40.data.chosenContent.reservation,
+            articleId: storedObject.step40.data.chosenContent.articleId,
+            article: { name: storedObject.step40.data.chosenContent.article?.name },
+            stockOwnerId:
+                storedObject.step30.data.resType === 'serialNumber'
+                    ? storedObject.step30.data.feature.handlingUnitContent.stockOwnerId
+                    : storedObject.step40.data.chosenContent.stockOwnerId,
+            stockOwner: {
+                name:
+                    storedObject.step30.data.resType === 'serialNumber'
+                        ? storedObject.step30.data.feature.handlingUnitContent.stockOwner?.name
+                        : storedObject.step40.data.chosenContent.stockOwner?.name
+            },
+            handlingUnitContentFeatures:
+                storedObject.step40.data.chosenContent.handlingUnitContentFeatures
+        };
         if (storedObject.step40.data.chosenContent.handlingUnit) {
             let originalHu: { [label: string]: any } | null;
             originalHu = {

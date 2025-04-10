@@ -65,7 +65,7 @@ export const SelectLocationByLevelForm = ({
             roundAdvisedAddresses(
                 filters: {
                     location_id: $locationId
-                    round_Status: [400, 450]
+                    round_Status: [400, 450, 455]
                     round_Category: 71210
                 }
             ) {
