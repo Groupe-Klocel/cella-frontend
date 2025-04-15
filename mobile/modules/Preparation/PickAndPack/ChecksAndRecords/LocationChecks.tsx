@@ -130,7 +130,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
         `;
 
         const variables = {
-            functionName: 'K_RF_pickAndPack_closeShippingPallet',
+            functionName: 'RF_pickAndPack_closeShippingPallet',
             event: {
                 input: { currentShippingPalletId }
             }
