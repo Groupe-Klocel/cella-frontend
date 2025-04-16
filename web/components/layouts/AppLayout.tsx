@@ -64,6 +64,8 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             warehouseWorkerId: user.id
         };
         const queryInfo: any = await graphqlRequestClient.request(query, variables);
+        console.log('userSettings-queryInfo', queryInfo);
+
         const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
             (item: any) => item.code === 'globalParameters'
         );

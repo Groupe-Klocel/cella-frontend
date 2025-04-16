@@ -230,28 +230,28 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
     };
 
     const filterConfig = [
-        { label: 'Catégorie', value: 'category', list: categoriesTexts, width: '25%' },
-        { label: 'Bloc', value: 'blockId', list: blockList, width: '25%' },
+        { label: t('d:category'), value: 'category', list: categoriesTexts, width: '25%' },
+        { label: t('d:block'), value: 'blockId', list: blockList, width: '25%' },
         {
-            label: 'Allée',
+            label: t('d:aisle'),
             value: 'aisle',
             list: aislesList,
             disabled: !filters.blockId
         },
         {
-            label: 'Colonne',
+            label: t('d:column'),
             value: 'column',
             list: columnsList,
             disabled: !filters.blockId
         },
         {
-            label: 'Niveau',
+            label: t('d:level'),
             value: 'level',
             list: levelsList,
             disabled: !filters.blockId
         },
         {
-            label: 'Position',
+            label: t('d:position'),
             value: 'position',
             list: positionsList,
             disabled: !filters.blockId

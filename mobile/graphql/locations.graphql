@@ -127,6 +127,7 @@ query GetLocationIds(
             stockStatusText
             status
             statusText
+            huManagement
         }
     }
 }

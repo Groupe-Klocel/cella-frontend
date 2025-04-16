@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { HeaderContent, MenuItem, NavButton } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { pathParamsFromDictionary, useTranslationWithFallback as useTranslation } from '@helpers';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 
@@ -30,6 +30,12 @@ const menuItemDatas = [
     {
         title: 'menu:reception-movement',
         path: '/reception-movement'
+    },
+    {
+        title: 'menu:reception-content-movement',
+        path: pathParamsFromDictionary('/content-movement', {
+            originLocation: 'defaultReception'
+        })
     },
     {
         title: 'menu:content-movement',

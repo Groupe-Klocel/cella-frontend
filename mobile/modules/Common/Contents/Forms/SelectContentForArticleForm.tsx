@@ -40,8 +40,8 @@ export interface ISelectContentForArticleProps {
     articleId: string;
     locationId?: string;
     hideSelect?: boolean;
-    uniqueId?: string;
     handlingUnitId?: string;
+    stockOwnerId?: string;
 }
 
 const StyledTitle = styled(Title)`
@@ -84,7 +84,7 @@ export const SelectContentForArticleForm = ({
     locationId,
     hideSelect,
     handlingUnitId,
-    uniqueId
+    stockOwnerId
 }: ISelectContentForArticleProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -109,7 +109,15 @@ export const SelectContentForArticleForm = ({
     const defaultFilter = { articleId: `${articleId}` };
     const locationFilter = locationId ? { handlingUnit_LocationId: `${locationId}` } : undefined;
     const handlingUnitFilter = handlingUnitId ? { handlingUnitId: `${handlingUnitId}` } : undefined;
-    let filter = { ...defaultFilter, ...locationFilter, ...handlingUnitFilter };
+    const stockOwnerFilter = stockOwnerId
+        ? { stockOwnerId: `${stockOwnerId}` }
+        : { stockOwnerId: `null` };
+    let filter = {
+        ...defaultFilter,
+        ...locationFilter,
+        ...handlingUnitFilter,
+        ...stockOwnerFilter
+    };
 
     const handlingUnitContentsQuery = gql`
         query GetHandlingUnitContents(
@@ -145,6 +153,7 @@ export const SelectContentForArticleForm = ({
                     quantity
                     stockStatus
                     stockStatusText
+                    reservation
                     handlingUnitId
                     handlingUnit {
                         name
@@ -178,9 +187,12 @@ export const SelectContentForArticleForm = ({
                         }
                     }
                     handlingUnitContentFeatures {
+                        id
+                        featureCodeId
                         featureCode {
                             id
                             name
+                            unique
                         }
                         value
                     }

@@ -103,15 +103,15 @@ export const SelectContentForFeatureForm = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    const handlingUnitContentsQuery = gql`
-        query GetHandlingUnitContents(
-            $filters: HandlingUnitContentSearchFilters
-            $orderBy: [HandlingUnitContentOrderByCriterion!]
+    const handlingUnitContentFeaturesQuery = gql`
+        query GetHandlingUnitContentFeatures(
+            $filters: HandlingUnitContentFeatureSearchFilters
+            $orderBy: [HandlingUnitContentFeatureOrderByCriterion!]
             $page: Int!
             $itemsPerPage: Int!
             $language: String = "en"
         ) {
-            handlingUnitContents(
+            handlingUnitContentFeatures(
                 filters: $filters
                 orderBy: $orderBy
                 page: $page
@@ -123,58 +123,68 @@ export const SelectContentForFeatureForm = ({
                 totalPages
                 results {
                     id
-                    stockOwnerId
-                    stockOwner {
+                    extraStatus1
+                    value
+                    featureCodeId
+                    featureCode {
                         id
                         name
+                        unique
                     }
-                    article {
-                        description
-                        name
-                        featureTypeText
-                        baseUnitWeight
-                    }
-                    quantity
-                    stockStatus
-                    stockStatusText
-                    handlingUnitId
-                    handlingUnit {
-                        name
-                        code
-                        type
-                        typeText
-                        category
-                        categoryText
-                        locationId
-                        location {
-                            name
-                            replenish
-                            category
-                            categoryText
-                            block {
-                                name
-                            }
-                        }
-                        parentHandlingUnit {
-                            name
-                        }
+                    handlingUnitContentId
+                    handlingUnitContent {
+                        id
+                        stockStatus
+                        stockStatusText
+                        reservation
+                        quantity
+                        handlingUnitId
+                        stockOwnerId
                         stockOwner {
-                            name
-                        }
-                    }
-                    articleLuBarcodeId
-                    articleLuBarcode {
-                        barcodeId
-                        barcode {
-                            name
-                        }
-                    }
-                    handlingUnitContentFeatures {
-                        featureCode {
                             id
                             name
                         }
-                        value
+                        handlingUnit {
+                            id
+                            name
+                            category
+                            locationId
+                            location {
+                                id
+                                name
+                                category
+                                categoryText
+                                block {
+                                    name
+                                }
+                            }
+                            stockOwnerId
+                            stockOwner {
+                                id
+                                name
+                            }
+                            parentHandlingUnitId
+                            parentHandlingUnit {
+                                id
+                                name
+                            }
+                        }
+                        articleId
+                        article {
+                            id
+                            name
+                            stockOwnerId
+                        }
+                        handlingUnitContentFeatures {
+                            id
+                            value
+                            featureCodeId
+                            featureCode {
+                                id
+                                name
+                                unique
+                            }
+                        }
                     }
                 }
             }
@@ -183,15 +193,16 @@ export const SelectContentForFeatureForm = ({
 
     const variables = {
         filters: { value: uniqueId },
-        orderBy: [{ field: 'handlingUnit_location_category', ascending: true }],
         page: 1,
         itemsPerPage: 100
     };
 
     function dataFunction() {
-        graphqlRequestClient.request(handlingUnitContentsQuery, variables).then((data: any) => {
-            setData(data);
-        });
+        graphqlRequestClient
+            .request(handlingUnitContentFeaturesQuery, variables)
+            .then((data: any) => {
+                setData(data);
+            });
     }
     dataFunction();
 

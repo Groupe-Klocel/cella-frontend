@@ -67,6 +67,19 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                         }
                     }
                 }
+                const selectedLocation = storedObject['step100']?.data?.chosenLocation;
+                if (selectedLocation) {
+                    if (selectedLocation.id !== huToCheck.locationId) {
+                        showError(
+                            t('messages:hu-exists-other-location', {
+                                locationName: huToCheck?.location?.name
+                            })
+                        );
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                        return;
+                    }
+                }
                 if (!isHUInGoodsIn) {
                     showError(t('messages:hu-already-used'));
                     setResetForm(true);
@@ -75,7 +88,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 }
                 const data: { [label: string]: any } = {};
                 data['isHuToCreate'] = false;
-                data['receptionHandlingUnit'] = huToCheck;
+                data['handlingUnit'] = huToCheck;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
@@ -101,7 +114,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
 
                 const data: { [label: string]: any } = {};
                 data['isHuToCreate'] = true;
-                data['receptionHandlingUnit'] = handlingUnitToCreate;
+                data['handlingUnit'] = handlingUnitToCreate;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],

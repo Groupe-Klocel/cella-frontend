@@ -65,9 +65,11 @@ export const ScanArticleOrFeature = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-        alternativeSubmitInput1:
-            (storedObject?.step30?.data?.handlingUnit || storedObject?.step30?.data?.huToCreate) ??
-            undefined,
+        alternativeSubmitInput1: storedObject['step22']?.data?.chosenLocation.huManagement
+            ? ((storedObject?.step30?.data?.handlingUnit ||
+                  storedObject?.step30?.data?.huToCreate) ??
+              undefined)
+            : (storedObject?.step22?.data?.chosenLocation ?? undefined),
         setResetForm
     };
 
@@ -86,7 +88,11 @@ export const ScanArticleOrFeature = ({
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
                 action1Label={t('common:other-articles')}
-                alternativeSubmitLabel1={t('common:hu-count-finished')}
+                alternativeSubmitLabel1={
+                    storedObject['step22']?.data?.chosenLocation.huManagement
+                        ? t('common:hu-count-finished')
+                        : t('common:location-count-finished')
+                }
             ></ScanForm>
             {checkComponent(dataToCheck)}
         </>
