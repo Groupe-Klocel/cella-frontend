@@ -23,23 +23,25 @@ import { LsIsSecured } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 
-export interface IScanFinalHandlingUnitProps {
+export interface IScanHandlingUnitProps {
     process: string;
     stepNumber: number;
     label: string;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     checkComponent: any;
+    defaultValue?: any;
 }
 
-export const ScanFinalHandlingUnit = ({
+export const ScanHandlingUnit = ({
     process,
     stepNumber,
     label,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    checkComponent
-}: IScanFinalHandlingUnitProps) => {
+    checkComponent,
+    defaultValue
+}: IScanHandlingUnitProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
@@ -49,17 +51,22 @@ export const ScanFinalHandlingUnit = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        //check workflow direction and assign current step accordingly
-        if (storedObject.currentStep < stepNumber) {
-            storedObject[`step${stepNumber}`] = {
-                previousStep: storedObject.currentStep
-            };
+        //automatically set handlingUnit when defaultValue is provided
+        if (defaultValue) {
+            // N.B.: in this case previous step is kept at its previous value
+            const data: { [label: string]: any } = {};
+            data['handlingUnit'] = defaultValue;
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            setTriggerRender(!triggerRender);
+        } else if (storedObject.currentStep < stepNumber) {
+            //check workflow direction and assign current step accordingly
+            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
             storedObject.currentStep = stepNumber;
         }
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    // ScanFinalHandlingUnit-2: launch query
+    // ScanHandlingUnit-2: launch query
     const getHU = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
             const query = gql`
@@ -77,68 +84,8 @@ export const ScanFinalHandlingUnit = ({
                             category
                             categoryText
                             code
-                            parentHandlingUnitId
-                            parentHandlingUnit {
-                                id
-                                name
-                                type
-                                typeText
-                            }
-                            childrenHandlingUnits {
-                                id
-                                name
-                                type
-                                typeText
-                                barcode
-                                category
-                                categoryText
-                                code
-                                handlingUnitContents {
-                                    id
-                                    quantity
-                                    reservation
-                                    stockStatus
-                                    stockStatusText
-                                    stockOwnerId
-                                    handlingUnit {
-                                        id
-                                        name
-                                        locationId
-                                        location {
-                                            id
-                                            name
-                                        }
-                                    }
-                                    stockOwner {
-                                        id
-                                        name
-                                    }
-                                    articleId
-                                    article {
-                                        id
-                                        name
-                                        stockOwnerId
-                                        stockOwner {
-                                            name
-                                        }
-                                        baseUnitWeight
-                                    }
-                                    handlingUnitContentFeatures {
-                                        id
-                                        featureCode {
-                                            name
-                                            unique
-                                        }
-                                        value
-                                    }
-                                }
-                            }
                             reservation
                             status
-                            stockOwnerId
-                            stockOwner {
-                                name
-                            }
                             locationId
                             location {
                                 name
@@ -152,15 +99,6 @@ export const ScanFinalHandlingUnit = ({
                                 stockStatus
                                 stockStatusText
                                 stockOwnerId
-                                handlingUnit {
-                                    id
-                                    name
-                                    locationId
-                                    location {
-                                        id
-                                        name
-                                    }
-                                }
                                 stockOwner {
                                     id
                                     name
@@ -170,9 +108,6 @@ export const ScanFinalHandlingUnit = ({
                                     id
                                     name
                                     stockOwnerId
-                                    stockOwner {
-                                        name
-                                    }
                                     baseUnitWeight
                                 }
                                 handlingUnitContentFeatures {
@@ -183,6 +118,27 @@ export const ScanFinalHandlingUnit = ({
                                     }
                                     value
                                 }
+                                handlingUnitContentInbounds {
+                                    id
+                                    handlingUnitContentId
+                                    handlingUnitInboundId
+                                    receivedQuantity
+                                    status
+                                    purchaseOrderId
+                                    purchaseOrderLineId
+                                    lineNumber
+                                    roundLineDetailId
+                                    lastTransactionId
+                                }
+                            }
+                            handlingUnitInbounds {
+                                id
+                                name
+                                status
+                                handlingUnitId
+                                purchaseOrderId
+                                roundId
+                                roundLineDetailId
                             }
                         }
                     }
@@ -190,7 +146,9 @@ export const ScanFinalHandlingUnit = ({
             `;
 
             const variables = {
-                filters: { barcode: [`${scannedInfo}`] }
+                filters: {
+                    barcode: [`${scannedInfo}`]
+                }
             };
             const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitInfos;
@@ -200,7 +158,11 @@ export const ScanFinalHandlingUnit = ({
     useEffect(() => {
         async function fetchData() {
             const result = await getHU(scannedInfo);
-            if (result) setHandlingUnitInfos(result);
+            if (result) {
+                setHandlingUnitInfos(result);
+            } else {
+                setHandlingUnitInfos(undefined);
+            }
         }
         fetchData();
     }, [scannedInfo]);
@@ -214,21 +176,20 @@ export const ScanFinalHandlingUnit = ({
         setResetForm
     };
 
-    const levelofBack = 1;
-
     return (
         <>
-            <ScanForm
-                process={process}
-                stepNumber={stepNumber}
-                label={label}
-                trigger={{ triggerRender, setTriggerRender }}
-                buttons={{ ...buttons }}
-                setScannedInfo={setScannedInfo}
-                resetForm={{ resetForm, setResetForm }}
-                levelOfBack={levelofBack}
-            ></ScanForm>
-            {checkComponent(dataToCheck)}
+            <>
+                <ScanForm
+                    process={process}
+                    stepNumber={stepNumber}
+                    label={label}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    buttons={{ ...buttons }}
+                    setScannedInfo={setScannedInfo}
+                    resetForm={{ resetForm, setResetForm }}
+                ></ScanForm>
+                {checkComponent(dataToCheck)}
+            </>
         </>
     );
 };

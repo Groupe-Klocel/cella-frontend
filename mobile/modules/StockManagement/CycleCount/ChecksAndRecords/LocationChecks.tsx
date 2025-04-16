@@ -57,11 +57,21 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         storedObject.step10?.data?.cycleCount?.cycleCountLines.filter(
                             (line: any) => line.locationId === location.id
                         );
-                    data['location'] = locationInfos.data?.locations?.results.map(
-                        ({ id, name }: { id: string; name: string }) => {
-                            return { id, name };
+                    data['locations'] = locationInfos.data?.locations?.results.map(
+                        ({
+                            id,
+                            name,
+                            barcode,
+                            huManagement
+                        }: {
+                            id: string;
+                            name: string;
+                            barcode: string;
+                            huManagement: boolean;
+                        }) => {
+                            return { id, name, barcode, huManagement };
                         }
-                    )[0];
+                    );
 
                     setTriggerRender(!triggerRender);
                     storedObject[`step${stepNumber}`] = {

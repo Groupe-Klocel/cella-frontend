@@ -58,21 +58,6 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                     );
 
                 if (matchingArticleLuBarcodes.length > 0) {
-                    if (!storedObject[`step30`].data.isHuToCreate) {
-                        const isArticleInHU = storedObject[
-                            `step30`
-                        ].data.receptionHandlingUnit.handlingUnitContents.some((huc: any) => {
-                            return articleLuBarcodes.some(
-                                (articleLuBarcode: any) =>
-                                    articleLuBarcode.articleId == huc.articleId
-                            );
-                        });
-                        if (!isArticleInHU) {
-                            showError(t('messages:unexpected-scanned-item'));
-                            setResetForm(true);
-                            setScannedInfo(undefined);
-                        }
-                    }
                     const data: { [label: string]: any } = {};
                     data['articleLuBarcodes'] = matchingArticleLuBarcodes;
                     setTriggerRender(!triggerRender);

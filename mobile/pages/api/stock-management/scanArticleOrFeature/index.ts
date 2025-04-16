@@ -63,6 +63,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 count
                 results {
                     id
+                    featureCodeId
                     featureCode {
                         id
                         name
@@ -174,8 +175,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     if (HUCFeatureResponse && HUCFeatureResponse.handlingUnitContentFeatures.count === 1) {
         const extractHUCFResponse = HUCFeatureResponse.handlingUnitContentFeatures?.results[0];
         const { articleId, article, handlingUnit } = extractHUCFResponse.handlingUnitContent;
-        const { id, featureCode, handlingUnitContentId, handlingUnitContent, value } =
-            extractHUCFResponse;
+        const {
+            id,
+            featureCodeId,
+            featureCode,
+            handlingUnitContentId,
+            handlingUnitContent,
+            value
+        } = extractHUCFResponse;
         response = {
             resType: 'serialNumber',
             article: {
@@ -188,6 +195,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             handlingUnit,
             handlingUnitContentFeature: {
                 id,
+                featureCodeId,
                 featureCode,
                 handlingUnitContentId,
                 handlingUnitContent,

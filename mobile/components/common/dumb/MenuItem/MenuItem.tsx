@@ -40,7 +40,7 @@ const buttonStyle: CSS.Properties = {
 
 export interface IMenuItemProps {
     title: string;
-    path: string;
+    path: any;
 }
 const MenuItem: FC<IMenuItemProps> = ({ title, path }: IMenuItemProps) => {
     return (
