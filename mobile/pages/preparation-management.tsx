@@ -39,10 +39,10 @@ const menuItemDatas = [
         title: 'menu:pick-and-pack',
         path: '/pick-and-pack'
     },
-    // {
-    //     title: 'menu:round',
-    //     path: '/'
-    // },
+    {
+        title: 'common:box-checking',
+        path: '/box-checking'
+    },
     {
         title: 'menu:box-preparation',
         path: '/box-preparation'
