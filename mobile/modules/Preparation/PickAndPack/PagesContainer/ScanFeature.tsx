@@ -79,14 +79,22 @@ export const ScanFeature = ({
     //N.B.: Version1 autorecovers information from previous step as there is only one HUC and no features scan check.
     //Pre-requisite: initialize current step
     useEffect(() => {
+        console.log(featureType, 'featureType');
+        console.log(contentFeatures, 'contentFeatures');
+
         //check workflow direction and assign current step accordingly
         if (contentFeatures) {
             const data: { [label: string]: any } = {};
-            data['processedFeatures'] = contentFeatures;
-            data['remainingFeatures'] = [];
+            data['processedFeatures'] = contentFeatures.filter(
+                (item: any) =>
+                    !featureType?.map((f: any) => f.featureCodeId).includes(item.featureCode.id)
+            );
+            data['remainingFeatures'] = contentFeatures.filter((item: any) =>
+                featureType?.map((f: any) => f.featureCodeId).includes(item.featureCode.id)
+            );
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
-        } else if (featureType === null) {
+        } else if (!featureType) {
             // N.B.: in this case previous step is kept at its previous value
             const data: { [label: string]: any } = {};
             data['feature'] = null;
@@ -105,7 +113,7 @@ export const ScanFeature = ({
     const getFeatures = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
             const query = gql`
-                query featureTypeDetails($filters: [FeatureTypeDetailSearchFilters!]) {
+                query featureTypeDetails($filters: FeatureTypeDetailSearchFilters) {
                     featureTypeDetails(filters: $filters) {
                         count
                         itemsPerPage
@@ -136,7 +144,7 @@ export const ScanFeature = ({
             `;
 
             const variables = {
-                filters: { featureType, atPreparation: true }
+                filters: { featureType: featureType[0].featureType, atPreparation: true }
             };
             const featuresInfos = await graphqlRequestClient.request(query, variables);
             return featuresInfos;
