@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { META_DEFAULTS } from 'helpers/configs/misc';
-import { cookie, showError } from '@helpers';
 import 'antd/dist/reset.css';
 import { AppProvider, useAppState } from 'context/AppContext';
 import { AuthProvider } from 'context/AuthContext';
@@ -45,8 +44,6 @@ type AppLayoutProps = AppProps & {
 };
 
 const App = ({ Component, pageProps }: AppLayoutProps) => {
-    // const [isAllowed, setIsAllowed] = useState(false);
-
     const getLayout = Component.getLayout ?? ((page) => page);
     const Layout = Component.layout ?? Fragment;
 

@@ -23,7 +23,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
@@ -47,6 +47,7 @@ const RoundPage: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idsToPrint, setIdsToPrint] = useState<string[]>();
+    const [refetch, setRefetch] = useState(false);
     const { graphqlRequestClient } = useAuth();
 
     // #region to customize information
@@ -121,6 +122,31 @@ const RoundPage: PageComponent = () => {
         };
     };
 
+    function unassignUser() {
+        const updateRound = async () => {
+            const unassignUser = gql`
+                mutation unassignUser($id: String!, $input: UpdateRoundInput!) {
+                    updateRound(id: $id, input: $input) {
+                        id
+                        assignedUser
+                    }
+                }
+            `;
+            const unassignUserVariables = { id, input: { assignedUser: null } };
+            await graphqlRequestClient.request(unassignUser, unassignUserVariables);
+            showSuccess(t('messages:success-updated'));
+            setRefetch((prev) => !prev);
+            return;
+        };
+
+        Modal.confirm({
+            title: t('messages:action-confirm'),
+            onOk: async () => await updateRound(),
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
+    }
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -163,6 +189,19 @@ const RoundPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                {/* Unassign user */}
+                {data?.assignedUser ? (
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            unassignUser();
+                        }}
+                    >
+                        {t('actions:unassign-user')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
                 <Button
                     type="primary"
                     ghost
@@ -198,6 +237,7 @@ const RoundPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                refetch={refetch}
             />
         </>
     );

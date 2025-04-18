@@ -26,6 +26,13 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     const dispatchUser = useAppDispatch();
     const [userSettingsLoading, setUserSettingsLoading] = useState<number>(0);
 
+    useEffect(() => {
+        const scrollableContainer = document.querySelector('.bqHEif');
+        if (scrollableContainer && !router.query?.scrollTo) {
+            scrollableContainer.scrollTo(0, 0);
+        }
+    }, [router.asPath]);
+
     const token = cookie.get('token');
     const requestHeader = {
         authorization: `Bearer ${token}`
