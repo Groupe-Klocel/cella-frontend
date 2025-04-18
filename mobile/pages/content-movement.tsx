@@ -414,7 +414,7 @@ const ContentMvmt: PageComponent = () => {
                         buttons={{ submitButton: true, backButton: true }}
                         enforcedValue={
                             !storedObject['step15']?.data?.chosenLocation.huManagement
-                                ? storedObject['step15']?.data?.chosenLocation.barcode
+                                ? storedObject['step15']?.data?.chosenLocation.name
                                 : undefined
                         }
                         checkComponent={(data: any) => (
@@ -539,7 +539,7 @@ const ContentMvmt: PageComponent = () => {
                         buttons={{ submitButton: true, backButton: true }}
                         enforcedValue={
                             !storedObject['step65']?.data?.chosenLocation.huManagement
-                                ? storedObject['step65']?.data?.chosenLocation.barcode
+                                ? storedObject['step65']?.data?.chosenLocation.name
                                 : undefined
                         }
                         checkComponent={(data: any) => (
