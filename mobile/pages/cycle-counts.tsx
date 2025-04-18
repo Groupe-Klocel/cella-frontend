@@ -275,7 +275,7 @@ const CycleCounts: PageComponent = () => {
                     }}
                     enforcedValue={
                         !storedObject['step22']?.data?.chosenLocation.huManagement
-                            ? storedObject['step22']?.data?.chosenLocation.barcode
+                            ? storedObject['step22']?.data?.chosenLocation.name
                             : undefined
                     }
                     triggerAlternativeSubmit1={{
