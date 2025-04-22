@@ -319,9 +319,6 @@ const ContentMvmt: PageComponent = () => {
                             !!storedObject['step15']?.data?.chosenLocation?.barcode)
                 );
                 break;
-            case 15:
-                setIsLoading(!!storedObject['step10']?.data?.locations);
-                break;
             case 20:
                 setIsLoading(
                     !storedObject['step15']?.data?.chosenLocation?.huManagement &&
