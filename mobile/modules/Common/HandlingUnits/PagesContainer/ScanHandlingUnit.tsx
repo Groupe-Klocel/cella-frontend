@@ -252,6 +252,7 @@ export const ScanHandlingUnit = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         trigger: { triggerRender, setTriggerRender },
+        isEnforcedValue: !!enforcedValue,
         setResetForm
     };
 
