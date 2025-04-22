@@ -37,8 +37,18 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         trigger: { triggerRender, setTriggerRender },
+        isEnforcedValue,
         setResetForm
     } = dataToCheck;
+
+    const onBack = (fromStep: number) => {
+        setTriggerRender(!triggerRender);
+        for (let i = fromStep; i <= stepNumber; i++) {
+            delete storedObject[`step${i}`]?.data;
+        }
+        storedObject.currentStep = fromStep;
+        storage.set(process, JSON.stringify(storedObject));
+    };
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
@@ -57,6 +67,9 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     showError(t('messages:no-huc-quantity'));
                     setResetForm(true);
                     setScannedInfo(undefined);
+                    if (isEnforcedValue) {
+                        onBack(storedObject.currentStep);
+                    }
                     return;
                 }
                 const handlingUnitInfosFiltered = {
@@ -68,6 +81,9 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     showError(t('messages:no-hu-location'));
                     setResetForm(true);
                     setScannedInfo(undefined);
+                    if (isEnforcedValue) {
+                        onBack(storedObject.currentStep);
+                    }
                     return;
                 }
                 if (
@@ -76,6 +92,9 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     showError(t('messages:only-stock-hu-move'));
                     setResetForm(true);
                     setScannedInfo(undefined);
+                    if (isEnforcedValue) {
+                        onBack(storedObject.currentStep);
+                    }
                     return;
                 }
                 const data: { [label: string]: any } = {};
@@ -89,6 +108,9 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                 showError(t('messages:no-hu-or-empty'));
                 setResetForm(true);
                 setScannedInfo(undefined);
+                if (isEnforcedValue) {
+                    onBack(storedObject.currentStep);
+                }
             }
         }
         if (
