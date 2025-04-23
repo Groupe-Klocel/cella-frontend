@@ -33,6 +33,7 @@ export interface IScanFinalHandlingUnitProps {
     checkComponent: any;
     defaultValue?: any;
     action1Trigger?: any;
+    enforcedValue?: any;
 }
 
 export const ScanFinalHandlingUnit = ({
@@ -43,7 +44,8 @@ export const ScanFinalHandlingUnit = ({
     buttons,
     checkComponent,
     defaultValue,
-    action1Trigger: { action1Trigger, setAction1Trigger }
+    action1Trigger: { action1Trigger, setAction1Trigger },
+    enforcedValue
 }: IScanFinalHandlingUnitProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -62,6 +64,8 @@ export const ScanFinalHandlingUnit = ({
             data['handlingUnit'] = defaultValue;
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
+        } else if (enforcedValue) {
+            setScannedInfo(enforcedValue);
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
