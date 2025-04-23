@@ -163,9 +163,11 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                 if (triggerAlternativeSubmit?.triggerAlternativeSubmit) {
                     data['finalHandlingUnit'] = storedObject['step20'].data.handlingUnit;
                 }
-
                 data['resType'] = fetchResult.resType;
-                data['finalLocation'] = [fetchResult.location];
+                data['finalLocation'] =
+                    fetchResult.location.length === 1
+                        ? [fetchResult.location]
+                        : fetchResult.location;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
