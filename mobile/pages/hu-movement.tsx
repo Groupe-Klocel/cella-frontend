@@ -255,10 +255,6 @@ const HuMovement: PageComponent = () => {
                                 ? true
                                 : false,
                         emptyButton: true
-                        // storedObject['step20'].data.handlingUnit
-                        //     .handlingUnitContents.length <= 0
-                        //     ? true
-                        //     : false
                     }}
                     trigger={{ triggerRender, setTriggerRender }}
                     showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
@@ -301,6 +297,11 @@ const HuMovement: PageComponent = () => {
                         storedObject['step30'].data.resType == 'handlingUnit'
                             ? storedObject['step30'].data.finalHandlingUnit
                             : null
+                    }
+                    enforcedValue={
+                        !storedObject['step35']?.data?.chosenLocation.huManagement
+                            ? storedObject['step35']?.data?.chosenLocation.name
+                            : undefined
                     }
                 ></ScanFinalHandlingUnit>
             ) : (
