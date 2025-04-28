@@ -29,7 +29,6 @@ import { useRouter } from 'next/router';
 import {
     EnterQuantity,
     ScanHandlingUnit,
-    SelectLocationByLevelForm,
     SelectStockOwnerForm,
     SelectStockStatusForm
 } from '@CommonRadio';
@@ -47,6 +46,7 @@ import { ScanLocation } from 'modules/StockManagement/CycleCount/PagesContainer/
 import { ScanCCHandlingUnit } from 'modules/StockManagement/CycleCount/PagesContainer/ScanHandlingUnit';
 import { ReviewFeatures } from 'modules/StockManagement/CycleCount/PagesContainer/ReviewFeatures';
 import { AutoValidateCycleCountMovementForm } from 'modules/StockManagement/CycleCount/Forms/AutoValidateCycleCountMovementForm';
+import { SelectLocationByLevelForm } from 'modules/StockManagement/CycleCount/Forms/SelectLocationByLevelForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
