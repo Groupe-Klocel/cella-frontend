@@ -21,13 +21,14 @@ import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
+import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
 
-export interface IHandlingUnitOriginChecksProps {
+export interface IHandlingUnitChecksProps {
     dataToCheck: any;
 }
 
-export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChecksProps) => {
+export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
 
@@ -36,50 +37,45 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
+        uniqueHU,
         trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
+    console.log('handlingUnitInfos', handlingUnitInfos);
+
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
-    //ScanPallet-3: manage information for persistence storage and front-end errors
+
     useEffect(() => {
         if (scannedInfo && handlingUnitInfos) {
-            const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
-            if (handlingUnitInfos.handlingUnits?.count !== 0) {
-                if (handlingUnitInfos.handlingUnits.results[0].locationId !== chosenLocationId) {
-                    showError(t('messages:no-hu-location'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    return;
+            const data: { [label: string]: any } = {};
+            if (!handlingUnitInfos.handlingUnits?.results[0]) {
+                const type =
+                    scannedInfo[0] == '0' || scannedInfo[0] == 'P'
+                        ? parameters.HANDLING_UNIT_TYPE_PALLET
+                        : parameters.HANDLING_UNIT_TYPE_BOX;
+                data['handlingUnit'] = scannedInfo;
+                data['handlingUnitType'] = type;
+                data['isHUToCreate'] = true;
+                // specific to handle unique handling unit in selected location and back function for next step
+                if (!uniqueHU) {
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
+                } else {
+                    storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+                    storedObject[`step${stepNumber}`] = {
+                        data
+                    };
                 }
-                if (!handlingUnitInfos.handlingUnits.results[0].location.huManagement) {
-                    showError(t('messages:hu-cannot-move'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    return;
-                }
-                if (
-                    handlingUnitInfos.handlingUnits.results[0].category !==
-                    parameters.HANDLING_UNIT_CATEGORY_STOCK
-                ) {
-                    showError(t('messages:only-stock-hu-move'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    return;
-                }
-                const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
             } else {
-                showError(t('messages:no-hu-or-empty'));
+                showError(t('messages:unexpected-scanned-item'));
                 setResetForm(true);
                 setScannedInfo(undefined);
             }
+            setTriggerRender(!triggerRender);
         }
         if (
             storedObject[`step${stepNumber}`] &&

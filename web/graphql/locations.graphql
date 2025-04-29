@@ -101,6 +101,9 @@ query GetLocationById($id: String!) {
         huManagement
         stockStatus
         locationGroupId
+        handlingUnits {
+            autocountHandlingUnitContent
+        }
     }
 }
 

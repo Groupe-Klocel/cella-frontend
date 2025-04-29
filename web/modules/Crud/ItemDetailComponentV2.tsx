@@ -57,6 +57,7 @@ export interface ISingleItemProps {
     dataModel: ModelType;
     triggerDelete: any;
     triggerSoftDelete?: any;
+    triggerCancel?: any;
     triggerReopen?: any;
     headerComponent?: any;
     extraDataComponent?: any;
@@ -264,7 +265,6 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     useEffect(() => {
         if (props.triggerDelete && props.triggerDelete.idToDelete) {
             callDelete(props.triggerDelete.idToDelete);
-            props.triggerDelete.setIdToDelete(undefined);
         }
     }, [props.triggerDelete]);
 
@@ -275,6 +275,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     }, [deleteLoading]);
 
     useEffect(() => {
+        props.triggerDelete.setIdToDelete(undefined);
         if (!(deleteResult && deleteResult.data)) return;
 
         if (deleteResult.success) {
@@ -319,7 +320,43 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     }, [softDeleteResult]);
     // #endregion
 
-    //# region REOPEN MUTATION
+    // #region CANCEL MUTATION
+    const {
+        isLoading: cancelLoading,
+        result: cancelResult,
+        mutate: callCancel
+    } = useUpdate(props.dataModel.resolverName, props.dataModel.endpoints.update, detailFields);
+
+    useEffect(() => {
+        if (props.triggerCancel && props.triggerCancel.cancelInfo) {
+            callCancel({
+                id: props.triggerCancel.cancelInfo.id,
+                input: { status: props.triggerCancel.cancelInfo.status }
+            });
+            props.triggerCancel.setCancelInfo(undefined);
+        }
+    }, [props.triggerCancel]);
+
+    useEffect(() => {
+        if (cancelLoading) {
+            showInfo(t('messages:info-canceling-wip'));
+        }
+    }, [cancelLoading]);
+
+    useEffect(() => {
+        if (!(cancelResult && cancelResult.data)) return;
+
+        if (cancelResult.success) {
+            showSuccess(t('messages:success-canceled'));
+            reloadData();
+        } else {
+            showError(t('messages:error-canceling-data'));
+        }
+    }, [cancelResult]);
+
+    // #endregion
+
+    //#region REOPEN MUTATION
     const {
         isLoading: reopenLoading,
         result: reopenResult,
@@ -352,7 +389,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
             showError(t('messages:error-enabling-data'));
         }
     }, [reopenResult]);
-    // #endregion
+    //#endregion
 
     return (
         <>

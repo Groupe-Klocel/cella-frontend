@@ -17,13 +17,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-export * from './hooks/crudHooks';
-export * from './hooks/hooks';
-export * from './types/types';
-export * from './utils/cancelHuoDeliveryStatus';
-export * from './utils/constant';
-export * from './utils/utils';
-export * from './configs/env';
-export * from './utils/TranslationFromDB';
-export * from './configs/misc';
-export * from './configs/cors-config';
+import { Spin } from 'antd';
+import { FC } from 'react';
+import styled from 'styled-components';
+
+const StyledSpinWrapper = styled.div`
+    display: flex;
+    justify-content: center; // centers in the flex direction and the default flex-direction is row;
+    margin-top: 5vh;
+    height: 40vh;
+`;
+
+const UpperMobileSpinner: FC = () => {
+    return (
+        <StyledSpinWrapper>
+            <Spin />
+        </StyledSpinWrapper>
+    );
+};
+
+UpperMobileSpinner.displayName = 'UpperMobileSpinner';
+
+export { UpperMobileSpinner };

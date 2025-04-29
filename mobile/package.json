@@ -11,7 +11,7 @@
         "fix": "yarn lint --fix && yarn format",
         "-------------------------------- DEV  ----": "----",
         "dev": "next dev -p 3001",
-        "dev2": "next dev -p 80",
+        "dev2": "next dev --turbo -p 3001",
         "start": "next start -p 3001",
         "serve": "yarn build && yarn start -p 3001",
         "export": "next export",

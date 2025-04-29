@@ -18,13 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError, LsIsSecured, showSuccess } from '@helpers';
 import { Modal } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { createCycleCountError, searchByIdInCCMs } from 'helpers/utils/crudFunctions/cycleCount';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
+import configs from '../../../../../common/configs.json';
 
 export interface IArticleOrFeatureChecksProps {
     dataToCheck: any;
@@ -510,9 +511,9 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     }, [fetchResult, contents]);
 
     // HU closure function
-    const [isHuClosureLoading, setIsHuClosureLoading] = useState(false);
+    const [isClosureLoading, setIsClosureLoading] = useState(false);
     async function closeHU(CclInputs: any) {
-        setIsHuClosureLoading(true);
+        setIsClosureLoading(true);
         const query = gql`
             mutation executeFunction($functionName: String!, $event: JSON!) {
                 executeFunction(functionName: $functionName, event: $event) {
@@ -550,21 +551,153 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 storage.set(process, JSON.stringify(newStoredObject));
                 setTriggerRender(!triggerRender);
             }
-            setIsHuClosureLoading(false);
+            setIsClosureLoading(false);
         } catch (error) {
             showError(t('messages:error-executing-function'));
             console.log('executeFunctionError', error);
-            setIsHuClosureLoading(false);
+            setIsClosureLoading(false);
+        }
+    }
+
+    // Location closure function (used if huManagement = false)
+    async function closeLocation(cycleCountLineIds: any) {
+        setIsClosureLoading(true);
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'K_updateCycleCountLines',
+            event: {
+                input: { cycleCountLineIds }
+            }
+        };
+
+        try {
+            const cc_result = await graphqlRequestClient.request(query, variables);
+            if (cc_result.executeFunction.status === 'ERROR') {
+                showError(cc_result.executeFunction.output);
+            } else if (
+                cc_result.executeFunction.status === 'OK' &&
+                cc_result.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${cc_result.executeFunction.output.output.code}`));
+                console.log('Backend_message', cc_result.executeFunction.output.output);
+            } else {
+                storage.remove(process);
+                const newStoredObject = JSON.parse(storage.get(process) || '{}');
+
+                const cc_output = cc_result.executeFunction.output;
+                const updatedCycleCount = cc_output.cycleCount;
+                const updatedCurrentCycleCountLines = cc_output.cycleCountLines;
+
+                let isCurrentCCLineValidated = false;
+                let nextCycleCountLine: any;
+                if (
+                    updatedCycleCount?.status === configs.CYCLE_COUNT_STATUS_PASS_1_VALIDATED ||
+                    updatedCycleCount?.status === configs.CYCLE_COUNT_STATUS_PASS_2_VALIDATED ||
+                    updatedCycleCount?.status === configs.CYCLE_COUNT_STATUS_VALIDATED
+                ) {
+                    storage.remove(process);
+                    showSuccess(t('messages:cycle-count-finished'));
+                } else {
+                    isCurrentCCLineValidated = updatedCurrentCycleCountLines.every(
+                        (item: any) =>
+                            item.status >= updatedCycleCount?.status &&
+                            [
+                                configs.CYCLE_COUNT_STATUS_PASS_1_VALIDATED,
+                                configs.CYCLE_COUNT_STATUS_PASS_2_VALIDATED,
+                                configs.CYCLE_COUNT_STATUS_VALIDATED
+                            ].includes(item.status)
+                    );
+                    if (isCurrentCCLineValidated) {
+                        showSuccess(t('messages:cycle-count-line-finished'));
+                        //handle CClines to return the relevant one.
+                        const updatedCycleCountLines = updatedCycleCount?.cycleCountLines.filter(
+                            (ccl: any) => ccl.status <= updatedCycleCount.status
+                        );
+                        if (updatedCycleCountLines[0].status != updatedCycleCount.status) {
+                            // Begin Update CCL status
+                            const updateCycleCountLineMutation = gql`
+                                mutation updateCycleCountLine(
+                                    $id: String!
+                                    $input: UpdateCycleCountLineInput!
+                                ) {
+                                    updateCycleCountLine(id: $id, input: $input) {
+                                        id
+                                        status
+                                        statusText
+                                        order
+                                        articleId
+                                        articleNameStr
+                                        stockOwnerId
+                                        stockOwnerNameStr
+                                        locationId
+                                        locationNameStr
+                                        handlingUnitId
+                                        handlingUnitNameStr
+                                        parentHandlingUnitNameStr
+                                        handlingUnitContentId
+                                        cycleCountId
+                                    }
+                                }
+                            `;
+                            const updateCycleCountLineVariables = {
+                                id: updatedCycleCountLines[0].id,
+                                input: {
+                                    status: updatedCycleCount.status
+                                }
+                            };
+                            const updateCycleCountLineResponse = await graphqlRequestClient.request(
+                                updateCycleCountLineMutation,
+                                updateCycleCountLineVariables
+                            );
+                            nextCycleCountLine = updateCycleCountLineResponse.updateCycleCountLine;
+                        } else {
+                            nextCycleCountLine = updatedCycleCountLines[0];
+                        }
+                    } else {
+                        nextCycleCountLine = updatedCurrentCycleCountLines;
+                    }
+                    if (nextCycleCountLine) {
+                        newStoredObject['currentStep'] = 20;
+                        const step10Data: { [label: string]: any } = {};
+                        step10Data['cycleCount'] = updatedCycleCount;
+                        step10Data['currentCycleCountLine'] = nextCycleCountLine;
+                        newStoredObject[`step10`] = { previousStep: 0, data: step10Data };
+
+                        storage.set(process, JSON.stringify(newStoredObject));
+                    }
+                }
+                setTriggerRender(!triggerRender);
+            }
+            setIsClosureLoading(false);
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+            setIsClosureLoading(false);
         }
     }
 
     useEffect(() => {
         if (triggerAlternativeSubmit1.triggerAlternativeSubmit1) {
             if (!alternativeSubmitInput1) {
-                showError(t('messages:no-hu-to-close'));
+                showError(
+                    storedObject['step22']?.data?.chosenLocation.huManagement
+                        ? 'messages:no-hu-to-close'
+                        : t('messages:no-location-to-close')
+                );
                 triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
             } else {
-                if (storedObject.step10?.data?.currentCycleCountLine?.handlingUnitStr) {
+                if (!storedObject['step22']?.data?.chosenLocation.huManagement) {
+                    triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
+                    closeLocation([currentCycleCountLineId]);
+                } else if (storedObject.step10?.data?.currentCycleCountLine?.handlingUnitStr) {
                     triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
                     closeHU([currentCycleCountLineId]);
                 } else {
@@ -584,5 +717,5 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         }
     }, [triggerAlternativeSubmit1.triggerAlternativeSubmit1]);
 
-    return <WrapperForm>{isLoading || isHuClosureLoading ? <ContentSpin /> : <></>}</WrapperForm>;
+    return <WrapperForm>{isLoading || isClosureLoading ? <ContentSpin /> : <></>}</WrapperForm>;
 };

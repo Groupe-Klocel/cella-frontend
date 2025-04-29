@@ -126,10 +126,16 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                 }
                 // final HU with different article = error
                 else if (
+                    fetchResult.location.huManagement &&
                     fetchResult.handlingUnit.type != parameters.HANDLING_UNIT_TYPE_PALLET &&
                     storedObject['step20'].data.handlingUnit.handlingUnitContents &&
-                    fetchResult.handlingUnit.handlingUnitContents[0].articleId !=
-                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
+                    fetchResult.handlingUnit.handlingUnitContents?.length > 0 &&
+                    !storedObject['step20'].data.handlingUnit.handlingUnitContents.every(
+                        (originContent: any) =>
+                            fetchResult.handlingUnit.handlingUnitContents.some(
+                                (content: any) => content.articleId === originContent.articleId
+                            )
+                    )
                 ) {
                     showError(t('messages:unexpected-hu-article'));
                     setResetForm(true);
@@ -157,9 +163,11 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                 if (triggerAlternativeSubmit?.triggerAlternativeSubmit) {
                     data['finalHandlingUnit'] = storedObject['step20'].data.handlingUnit;
                 }
-
                 data['resType'] = fetchResult.resType;
-                data['finalLocation'] = [fetchResult.location];
+                data['finalLocation'] =
+                    fetchResult.location.length === 1
+                        ? [fetchResult.location]
+                        : fetchResult.location;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],

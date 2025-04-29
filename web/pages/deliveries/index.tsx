@@ -39,6 +39,8 @@ import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/delive
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { DeliveryProgressBar } from 'modules/Deliveries/Elements/DeliveryProgressBar';
+import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
+
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const DeliveryPages: PageComponent = () => {
@@ -212,7 +214,7 @@ const DeliveryPages: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable &&
-                                record?.status < configs.DELIVERY_STATUS_PREPARED ? (
+                                statusForCancelation.delivery.includes(record?.status) ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>

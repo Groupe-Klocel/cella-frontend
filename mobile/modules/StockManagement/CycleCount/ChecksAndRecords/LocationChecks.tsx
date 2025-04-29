@@ -19,7 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
-import { createCycleCountError } from 'helpers/utils/crudFunctions/cycleCount';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 
@@ -50,35 +49,30 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     useEffect(() => {
         if (scannedInfo && locationInfos.data) {
             if (locationInfos.data.locations?.count !== 0) {
-                const location = locationInfos.data?.locations?.results[0];
-                if (locationIdToCheck === location.id) {
-                    const data: { [label: string]: any } = {};
-                    data['cycleCountLines'] =
-                        storedObject.step10?.data?.cycleCount?.cycleCountLines.filter(
-                            (line: any) => line.locationId === location.id
-                        );
-                    data['location'] = locationInfos.data?.locations?.results.map(
-                        ({ id, name }: { id: string; name: string }) => {
-                            return { id, name };
-                        }
-                    )[0];
+                const data: { [label: string]: any } = {};
+                data['locations'] = locationInfos.data?.locations?.results.map(
+                    ({
+                        id,
+                        name,
+                        barcode,
+                        level,
+                        huManagement
+                    }: {
+                        id: string;
+                        name: string;
+                        barcode: string;
+                        level: string;
+                        huManagement: boolean;
+                    }) => {
+                        return { id, name, barcode, level, huManagement };
+                    }
+                );
 
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
-                } else {
-                    createCycleCountError(
-                        currentCycleCountId,
-                        `Step ${stepNumber} - ${t(
-                            'messages:unexpected-scanned-item'
-                        )} - ${scannedInfo}`
-                    );
-                    showError(t('messages:unexpected-scanned-item'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                }
+                setTriggerRender(!triggerRender);
+                storedObject[`step${stepNumber}`] = {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                };
             } else {
                 showError(t('messages:no-location'));
                 setResetForm(true);

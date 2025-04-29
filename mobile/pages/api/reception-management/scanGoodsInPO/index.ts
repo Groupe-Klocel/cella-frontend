@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { gql, GraphQLClient } from 'graphql-request';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import configs from '../../../../../common/configs.json';
-import parameters from '../../../../../common/parameters.json';
 import { GraphQLResponseType } from '@helpers';
 
 const parseCookie = (str: string) =>
@@ -50,13 +49,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const { scannedInfo } = req.body;
 
     const purchaseOrderFilter = {
-        filters: { name: scannedInfo },
-        advancedFilters: {
-            filter: {
-                field: { type: 10104 },
-                searchType: 'INFERIOR'
-            }
-        }
+        filters: { name: scannedInfo }
     };
 
     // configs.PURCHASE_ORDER_TYPE_L3_RETURN
@@ -207,6 +200,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             quantityToBeProcessed
                             processedQuantity
                             roundLineId
+                            handlingUnitContentInbounds {
+                                id
+                                lineNumber
+                                status
+                                statusText
+                                receivedQuantity
+                                missingQuantity
+                                status
+                                statusText
+                                handlingUnitContentId
+                                handlingUnitContent {
+                                    handlingUnitId
+                                    handlingUnit {
+                                        name
+                                    }
+
+                                    quantity
+                                }
+                            }
                             purchaseOrderLineId
                             purchaseOrderLine {
                                 id
@@ -338,7 +350,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
             const extractGoodsInResponse = GoodsInResponse.rounds?.results[0];
             if (extractGoodsInResponse!.status <= configs.ROUND_STATUS_CLOSED) {
-                const { roundLines, ...goodsInOnly } = extractGoodsInResponse;
+                const { roundLines } = extractGoodsInResponse;
+                // goodsInOnly.roundLines = roundLines;
                 // extract Rounds as goodsIns
                 let purchaseOrders: any[] = [];
                 roundLines.forEach((roundLine: any) => {
@@ -350,7 +363,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     });
                 });
                 response = {
-                    goodsIns: [goodsInOnly],
+                    goodsIns: [extractGoodsInResponse],
                     purchaseOrder: purchaseOrders[0],
                     responseType: 'goodsIn'
                 };

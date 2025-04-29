@@ -21,12 +21,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured, showError } from '@helpers';
-import { Select, Form, Modal } from 'antd';
+import { Select, Form } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import { createCycleCountError } from 'helpers/utils/crudFunctions/cycleCount';
 
 export interface ISelectLocationByLevelProps {
     process: string;
@@ -43,14 +44,11 @@ export const SelectLocationByLevelForm = ({
     stepNumber,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    locations,
-    roundsCheck,
-    originLocationId
+    locations
 }: ISelectLocationByLevelProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
-    const { graphqlRequestClient } = useAuth();
 
     // TYPED SAFE ALL
     const [levelsChoices, setLevelsChoices] = useState<Array<any>>();
@@ -107,52 +105,34 @@ export const SelectLocationByLevelForm = ({
         storage.set(process, JSON.stringify(storedObject));
     };
 
+    const currentCycleCountId: string = storedObject.step10?.data?.cycleCount?.id;
+    const locationIdToCheck: string = storedObject.step10?.data?.currentCycleCountLine?.locationId;
+
     //Pre-requisite: initialize current step
     useEffect(() => {
         //automatically set chosenLocation when single location
         if (locations) {
             if (locations.length === 1) {
                 // N.B.: in this case previous step is kept at its previous value
-                const data: { [label: string]: any } = {};
-                data['chosenLocation'] = locations[0];
-                const variables = {
-                    locationId: data['chosenLocation'].id
-                };
-                const nextStep = () => {
-                    if (data['chosenLocation']?.handlingUnits?.length === 1) {
-                        data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
-                    }
+                const location = locations[0];
+                if (locationIdToCheck === location.id) {
+                    const data: { [label: string]: any } = {};
+                    data['chosenLocation'] = location;
                     storedObject[`step${stepNumber}`] = {
                         ...storedObject[`step${stepNumber}`],
                         data
                     };
                     storage.set(process, JSON.stringify(storedObject));
                     setTriggerRender(!triggerRender);
-                };
-                if (!roundsCheck) {
-                    nextStep();
-                }
-                if (popModal === 2 && roundsCheck) {
-                    graphqlRequestClient.request(query, variables).then((result: any) => {
-                        if (result.roundAdvisedAddresses.count > 0) {
-                            Modal.confirm({
-                                title: t('messages:round-planned-for-location'),
-                                onOk: () => nextStep(),
-                                onCancel: () => onBack(),
-                                okText: t('messages:confirm'),
-                                cancelText: t('messages:cancel')
-                            });
-                        } else {
-                            nextStep();
-                        }
-                    });
-                }
-                setPopModal((prev) => prev + 1);
-                if (originLocationId) {
-                    if (!locations[0]?.huManagement && locations[0]?.id === originLocationId) {
-                        showError(t('messages:location-origin-final-identical'));
-                        onBack(storedObject.currentStep);
-                    }
+                } else {
+                    createCycleCountError(
+                        currentCycleCountId,
+                        `Step ${stepNumber} - ${t(
+                            'messages:unexpected-scanned-item'
+                        )} - ${location.name}`
+                    );
+                    showError(t('messages:unexpected-scanned-item'));
+                    onBack();
                 }
             } else if (storedObject.currentStep < stepNumber) {
                 //check workflow direction and assign current step accordingly
@@ -184,49 +164,24 @@ export const SelectLocationByLevelForm = ({
 
     //SelectLocationByLevel-2a: retrieve chosen level from select and set information
     const onFinish = (values: any) => {
-        const data: { [label: string]: any } = {};
-        data['chosenLocation'] = locations?.find((e: any) => {
+        const location = locations?.find((e: any) => {
             return e.level == values.level;
         });
-        const variables = {
-            locationId: data['chosenLocation'].id
-        };
-        const nextStep = () => {
-            if (data['chosenLocation']?.handlingUnits?.length === 1) {
-                data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
-            }
+        if (locationIdToCheck === location.id) {
+            const data: { [label: string]: any } = {};
+            data['chosenLocation'] = location;
             storedObject[`step${stepNumber}`] = {
                 ...storedObject[`step${stepNumber}`],
                 data
             };
             storage.set(process, JSON.stringify(storedObject));
             setTriggerRender(!triggerRender);
-        };
-        if (!roundsCheck) {
-            nextStep();
         } else {
-            graphqlRequestClient.request(query, variables).then((result: any) => {
-                if (result.roundAdvisedAddresses.count > 0) {
-                    Modal.confirm({
-                        title: t('messages:round-planned-for-location'),
-                        onOk: () => nextStep(),
-                        onCancel: () => onBack(),
-                        okText: t('messages:confirm'),
-                        cancelText: t('messages:cancel')
-                    });
-                } else {
-                    nextStep();
-                }
-            });
-        }
-        if (originLocationId) {
-            if (
-                !data['chosenLocation']?.huManagement &&
-                data['chosenLocation']?.id === originLocationId
-            ) {
-                showError(t('messages:location-origin-final-identical'));
-                onBack();
-            }
+            createCycleCountError(
+                currentCycleCountId,
+                `Step ${stepNumber} - ${t('messages:unexpected-scanned-item')} - ${location.name}`
+            );
+            showError(t('messages:unexpected-scanned-item'));
         }
     };
 
