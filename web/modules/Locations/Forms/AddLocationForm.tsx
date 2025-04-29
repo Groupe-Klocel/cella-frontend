@@ -211,9 +211,13 @@ export const AddLocationForm = () => {
                 const formData = form.getFieldsValue(true);
                 formData.replenishType = parseInt(formData.replenishType);
                 if (formData['replenish'] == false) formData.replenishType = 0;
+                formData.replenish = formData.replenish ? true : false;
+                formData.allowCycleCountStockMin = formData.allowCycleCountStockMin ? true : false;
+                formData.huManagement = formData.huManagement ? true : false;
                 formData.baseUnitRotation = parseInt(formData.rotation);
                 formData.status = configs.LOCATION_STATUS_AVAILABLE;
                 delete formData.rotation;
+                delete formData.handlingUnits;
 
                 bulkCreateLocation({ input: formData });
                 setUnsavedChanges(false);
@@ -278,6 +282,13 @@ export const AddLocationForm = () => {
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:block')
                                 })}`}
+                                showSearch
+                                allowClear
+                                filterOption={(input, option) =>
+                                    option?.props.children
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
                             >
                                 {blocks?.map((block: any) => (
                                     <Option key={block.id} value={block.id}>

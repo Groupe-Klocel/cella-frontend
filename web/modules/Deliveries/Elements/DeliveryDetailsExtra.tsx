@@ -37,6 +37,7 @@ import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2'
 import configs from '../../../../common/configs.json';
 import { useEffect, useState } from 'react';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 
 const { Title } = Typography;
 
@@ -47,6 +48,7 @@ export interface IItemDetailsProps {
     stockOwnerId?: string | any;
     stockOwnerName?: string | any;
     setShippingAddress?: any;
+    refetchHUO?: any;
 }
 
 const DeliveryDetailsExtra = ({
@@ -55,7 +57,8 @@ const DeliveryDetailsExtra = ({
     deliveryStatus,
     stockOwnerId,
     stockOwnerName,
-    setShippingAddress
+    setShippingAddress,
+    refetchHUO
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
@@ -472,8 +475,7 @@ const DeliveryDetailsExtra = ({
                                         {huOutboundModes.length > 0 &&
                                         huOutboundModes.includes(ModeEnum.Delete) &&
                                         HandlingUnitOutboundModelV2.isSoftDeletable &&
-                                        record?.status <
-                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
+                                        statusForCancelation.HUO.includes(record?.status) ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
@@ -492,6 +494,7 @@ const DeliveryDetailsExtra = ({
                             }
                         ]}
                         searchable={false}
+                        refetch={refetchHUO}
                         setData={setHandlingUnitOutboundsData}
                         sortDefault={[{ field: 'created', ascending: true }]}
                     />
