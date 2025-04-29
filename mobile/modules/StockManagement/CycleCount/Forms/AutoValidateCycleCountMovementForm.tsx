@@ -246,6 +246,7 @@ export const AutoValidateCycleCountMovementForm = ({
                         newStoredObject['currentStep'] = 40;
                         newStoredObject[`step10`] = { previousStep: 0, data: step10Data };
                         newStoredObject[`step20`] = storedObject[`step20`];
+                        newStoredObject[`step22`] = storedObject[`step22`];
                         newStoredObject[`step25`] = storedObject[`step25`];
                         newStoredObject[`step30`] = storedObject[`step30`];
                         newStoredObject[`step40`] = {
