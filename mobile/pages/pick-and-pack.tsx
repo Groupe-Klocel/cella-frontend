@@ -48,6 +48,8 @@ import { HandlingUnitOutboundFinalChecks } from 'modules/Preparation/PickAndPack
 import { ScanFinalHandlingUnitOutbound } from 'modules/Preparation/PickAndPack/PagesContainer/ScanFinalHandlingUnitOutbound';
 import { SelectHuModelForm } from 'modules/Preparation/PickAndPack/Forms/SelectHuModelForm';
 import { UpperMobileSpinner } from 'components/common/dumb/Spinners/UpperMobileSpinner';
+import { gql } from 'graphql-request';
+import graphqlRequestClient from 'graphql/graphqlRequestClient';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -69,6 +71,41 @@ const PickAndPack: PageComponent = () => {
     const [isAutoValidateLoading, setIsAutoValidateLoading] = useState<boolean>(false);
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [manualyGenerateParent, setManualyGenerateParent] = useState<number>();
+
+    useEffect(() => {
+        const manualyGenerateParent = async () => {
+            const manualyGenerateParentQuery = gql`
+                query parameters($filters: ParameterSearchFilters) {
+                    parameters(filters: $filters) {
+                        results {
+                            code
+                            value
+                            scope
+                        }
+                    }
+                }
+            `;
+
+            const manualyGenerateParentVariables = {
+                filters: { scope: 'outbound', code: 'MANUALY_GENERATE_PARENT' }
+            };
+
+            try {
+                const manualyGenerateParentResult: any = await graphqlRequestClient.request(
+                    manualyGenerateParentQuery,
+                    manualyGenerateParentVariables
+                );
+                setManualyGenerateParent(
+                    parseInt(manualyGenerateParentResult.parameters.results[0]?.value)
+                );
+            } catch (error) {
+                console.error('Error fetching manualyGenerateParent:', error);
+            }
+        };
+
+        manualyGenerateParent();
+    }, []);
 
     const processName = 'pickAndPack';
 
@@ -236,7 +273,7 @@ const PickAndPack: PageComponent = () => {
         switch (storedObject.currentStep) {
             case 20:
                 if (
-                    storedObject['step20']?.data?.locations.length === 1 ||
+                    storedObject['step20']?.data?.locations?.length === 1 ||
                     storedObject['step30']?.data?.handlingUnit ||
                     storedObject['step40']?.data?.handlingUnit?.handlingUnitContents.length === 1 ||
                     storedObject['step50']?.data?.content?.handlingUnitContentFeatures
@@ -335,7 +372,7 @@ const PickAndPack: PageComponent = () => {
                     (huo: any) => huo.status === 500
                 ).length === 0 &&
                 !storedObject['step15']?.data &&
-                parameters.HANDLING_UNIT_MANUALY_GENERATE_PARENT ? (
+                manualyGenerateParent ? (
                     <ScanHandlingUnit
                         process={processName}
                         stepNumber={15}
@@ -353,7 +390,7 @@ const PickAndPack: PageComponent = () => {
                     <></>
                 )}
                 {storedObject[
-                    !parameters.HANDLING_UNIT_MANUALY_GENERATE_PARENT ||
+                    !manualyGenerateParent ||
                     storedObject['step10']?.data?.round?.handlingUnitOutbounds?.filter(
                         (huo: any) => huo.status === 500
                     ).length !== 0
