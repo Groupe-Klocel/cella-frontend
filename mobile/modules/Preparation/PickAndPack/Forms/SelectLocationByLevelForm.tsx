@@ -61,6 +61,7 @@ export const SelectLocationByLevelForm = ({
     const [camData, setCamData] = useState();
     const [popModal, setPopModal] = useState(0);
     const [reload, setReload] = useState(false);
+    const [tempLocations, setTempLocations] = useState<any>(locations);
 
     const getLocations = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
@@ -295,21 +296,8 @@ export const SelectLocationByLevelForm = ({
                 location.id === proposedRoundAdvisedAddress?.locationId &&
                 matchingHandlingUnitContent
             ) {
-                data['locations'] = [
-                    {
-                        id: chosenLocation.id,
-                        name: chosenLocation.name,
-                        barcode: chosenLocation.barcode,
-                        level: chosenLocation.level,
-                        handlingUnits: chosenLocation.handlingUnits
-                    }
-                ];
-                storedObject[`step20`] = {
-                    ...storedObject[`step20`],
-                    data
-                };
-                storage.set(process, JSON.stringify(storedObject));
-                setTriggerRender(!triggerRender);
+                setTempLocations([chosenLocation]);
+                setReload((prev) => !prev);
                 return true;
             } else if (
                 location.category === configs.LOCATION_CATEGORY_PICKING &&
@@ -326,7 +314,6 @@ export const SelectLocationByLevelForm = ({
                     ),
                     onOk: async () => {
                         //check whether the modal is already visible before opening it again and avoid useEffect re-rendering
-                        console.log('Otherlocation');
                         const updateRoundAdvisedAddressesMutation = gql`
                             mutation updateRoundAdvisedAddresses(
                                 $ids: [String!]!
@@ -347,7 +334,6 @@ export const SelectLocationByLevelForm = ({
                                 updateRoundAdvisedAddressesMutation,
                                 updateRoundAdvisedAddressesVariables
                             );
-
                         if (updateRoundAdvisedAddressesResponse.updateRoundAdvisedAddresses) {
                             const raaQuery = gql`
                                 query roundAdvisedAddresses(
@@ -456,24 +442,6 @@ export const SelectLocationByLevelForm = ({
                             );
                             if (raaResults?.roundAdvisedAddresses?.count > 0) {
                                 const data: { [label: string]: any } = {};
-                                const locationInfos: any = await getLocations(location.barcode);
-                                data['locations'] = locationInfos?.locations?.results.map(
-                                    ({
-                                        id,
-                                        name,
-                                        barcode,
-                                        level,
-                                        handlingUnits
-                                    }: {
-                                        id: string;
-                                        name: string;
-                                        barcode: string;
-                                        level: number;
-                                        handlingUnits: any;
-                                    }) => {
-                                        return { id, name, barcode, level, handlingUnits };
-                                    }
-                                );
                                 const step10Data = storedObject.step10.data;
                                 storage.remove(process);
                                 const newStoredObject = JSON.parse(storage.get(process) || '{}');
@@ -498,7 +466,7 @@ export const SelectLocationByLevelForm = ({
                                 };
                                 showSimilarLocations.setShowSimilarLocations(false);
                                 storage.set(process, JSON.stringify(newStoredObject));
-                                setTriggerRender(!triggerRender);
+                                setTempLocations([chosenLocation]);
                                 setReload((prev) => !prev);
                             }
                         }
@@ -507,6 +475,13 @@ export const SelectLocationByLevelForm = ({
                     onCancel: () => {
                         console.log('Reset');
                         form.resetFields();
+                        if (locations.length === 1) {
+                            storedObject[`step20`] = {};
+                            storage.set(process, JSON.stringify(storedObject));
+                        }
+                        setTriggerRender(!triggerRender);
+                        showSimilarLocations.setShowSimilarLocations(false);
+                        setReload((prev) => !prev);
                         return false;
                     },
                     okText: t('messages:confirm'),
@@ -529,12 +504,12 @@ export const SelectLocationByLevelForm = ({
     //Pre-requisite: initialize current step
     useEffect(() => {
         //automatically set chosenLocation when single location
-        if (locations) {
-            if (locations.length === 1) {
+        if (tempLocations) {
+            if (tempLocations.length === 1) {
                 // N.B.: in this case previous step is kept at its previous value
                 const data: { [label: string]: any } = {};
 
-                data.chosenLocation = locations[0];
+                data.chosenLocation = tempLocations[0];
 
                 if (!checkChosenLocation(data['chosenLocation'], data)) return;
 
@@ -571,6 +546,7 @@ export const SelectLocationByLevelForm = ({
                     });
                 }
                 setPopModal((prev) => prev + 1);
+                setTempLocations(locations);
             } else if (storedObject.currentStep < stepNumber) {
                 //check workflow direction and assign current step accordingly
                 storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
@@ -606,39 +582,7 @@ export const SelectLocationByLevelForm = ({
             return e.level == values.level;
         });
 
-        if (!checkChosenLocation(data['chosenLocation'], data)) return;
-
-        const variables = {
-            locationId: data['chosenLocation'].id
-        };
-        const nextStep = () => {
-            if (data['chosenLocation']?.handlingUnits?.length === 1) {
-                data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
-            }
-            storedObject[`step${stepNumber}`] = {
-                ...storedObject[`step${stepNumber}`],
-                data
-            };
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
-        };
-        if (!roundsCheck) {
-            nextStep();
-        } else {
-            graphqlRequestClient.request(query, variables).then((result: any) => {
-                if (result.roundAdvisedAddresses.count > 0) {
-                    Modal.confirm({
-                        title: t('messages:round-planned-for-location'),
-                        onOk: () => nextStep(),
-                        onCancel: () => onBack(),
-                        okText: t('messages:confirm'),
-                        cancelText: t('messages:cancel')
-                    });
-                } else {
-                    nextStep();
-                }
-            });
-        }
+        checkChosenLocation(data['chosenLocation'], data);
     };
 
     return (
