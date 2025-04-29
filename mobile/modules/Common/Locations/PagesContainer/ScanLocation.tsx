@@ -34,6 +34,7 @@ export interface IScanLocationProps {
     checkComponent: any;
     headerContent?: any;
     initValue?: string;
+    defaultValue?: any;
 }
 
 export const ScanLocation = ({
@@ -46,7 +47,8 @@ export const ScanLocation = ({
     showSimilarLocations,
     checkComponent,
     headerContent,
-    initValue
+    initValue,
+    defaultValue
 }: IScanLocationProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -56,15 +58,21 @@ export const ScanLocation = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        //check workflow direction and assign current step accordingly
-        if (storedObject.currentStep < stepNumber) {
+        if (defaultValue) {
+            // N.B.: in this case previous step is kept at its previous value
+            const data: { [label: string]: any } = {};
+            data['locations'] = [defaultValue];
+            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            setTriggerRender(!triggerRender);
+            //check workflow direction and assign current step accordingly
+        } else if (storedObject.currentStep < stepNumber) {
             storedObject[`step${stepNumber}`] = {
                 previousStep: storedObject.currentStep
             };
             storedObject.currentStep = stepNumber;
         }
         storage.set(process, JSON.stringify(storedObject));
-    }, []);
+    }, [defaultValue]);
 
     // ScanLocation-2: launch query
     const locationInfos = useLocationIds(

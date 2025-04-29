@@ -26,11 +26,14 @@ import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import { EnterQuantity, SelectLocationByLevelForm } from '@CommonRadio';
+import { EnterQuantity } from '@CommonRadio';
+import { SelectLocationByLevelForm } from 'modules/Preparation/PickAndPack/Forms/SelectLocationByLevelForm';
+import parameters from '../../common/parameters.json';
 import { SimilarPickingLocations } from 'modules/Preparation/PickAndPack/Elements/SimilarLocations';
 import { QuantityChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/QuantityChecks';
 import { SelectRoundForm } from 'modules/Preparation/PickAndPack/Forms/SelectRoundForm';
 import { HandlingUnitChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/HandlingUnitChecks';
+import { HandlingUnitChecksWithoutChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/HandlingUnitChecksWithoutChecks';
 import { ScanLocation } from 'modules/Preparation/PickAndPack/PagesContainer/ScanLocation';
 import { LocationChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/LocationChecks';
 import { ArticleChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/ArticleChecks';
@@ -44,6 +47,9 @@ import { AutoValidatePickAndPackForm } from 'modules/Preparation/PickAndPack/For
 import { HandlingUnitOutboundFinalChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/HandlingUnitOutboundFinalChecks';
 import { ScanFinalHandlingUnitOutbound } from 'modules/Preparation/PickAndPack/PagesContainer/ScanFinalHandlingUnitOutbound';
 import { SelectHuModelForm } from 'modules/Preparation/PickAndPack/Forms/SelectHuModelForm';
+import { UpperMobileSpinner } from 'components/common/dumb/Spinners/UpperMobileSpinner';
+import { gql } from 'graphql-request';
+import graphqlRequestClient from 'graphql/graphqlRequestClient';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -64,41 +70,76 @@ const PickAndPack: PageComponent = () => {
     const [isHuInProgress, setIsHuInProgress] = useState<boolean>(false);
     const [isAutoValidateLoading, setIsAutoValidateLoading] = useState<boolean>(false);
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [manualyGenerateParent, setManualyGenerateParent] = useState<number>();
 
-    //define workflow parameters
-    const workflow = {
-        processName: 'pickAndPack',
-        expectedSteps: [10, 20, 25, 30, 40, 50, 60, 70, 75, 80]
-    };
-    // [0] : 10 -> SelectRoundForm
-    // [1] : 20 -> Scan location
-    // [2] : 25 -> SelectLocation
-    // [3] : 30 -> Scan HU
-    // [4] : 40 -> Scan Article
-    // [5] : 50 -> Scan features
-    // [6] : 60 -> Enter quantity
-    // [7] : 70 -> (for detail only) scan finalHU
-    // [8] : 75 -> SelectHUModel
-    // [9] : 80 -> Autovalidate pickAndPack
-    const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
+    useEffect(() => {
+        const manualyGenerateParent = async () => {
+            const manualyGenerateParentQuery = gql`
+                query parameters($filters: ParameterSearchFilters) {
+                    parameters(filters: $filters) {
+                        results {
+                            code
+                            value
+                            scope
+                        }
+                    }
+                }
+            `;
 
-    console.log('pickAndPack', storedObject);
+            const manualyGenerateParentVariables = {
+                filters: { scope: 'outbound', code: 'MANUALY_GENERATE_PARENT' }
+            };
+
+            try {
+                const manualyGenerateParentResult: any = await graphqlRequestClient.request(
+                    manualyGenerateParentQuery,
+                    manualyGenerateParentVariables
+                );
+                setManualyGenerateParent(
+                    parseInt(manualyGenerateParentResult.parameters.results[0]?.value)
+                );
+            } catch (error) {
+                console.error('Error fetching manualyGenerateParent:', error);
+            }
+        };
+
+        manualyGenerateParent();
+    }, []);
+
+    const processName = 'pickAndPack';
+
+    // 10 -> SelectRoundForm
+    // 15 -> ScanHU (optional on parameter parameters.HANDLING_UNIT_AUTO_GENERATE_PARENT)
+    // 20 -> Scan location
+    // 30 -> SelectLocation
+    // 40 -> Scan HU
+    // 50 -> Scan Article
+    // 60 -> Scan features
+    // 70 -> Enter quantity
+    // 75 -> (for detail only) scan finalHU
+    // 80 -> SelectHUModel
+    // 90 -> Autovalidate pickAndPack
+
+    const storedObject = JSON.parse(storage.get(processName) || '{}');
+
+    console.log(processName, storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
-        storedObject[`step${workflow.expectedSteps[0]}`] = { previousStep: 0 };
-        storedObject['currentStep'] = workflow.expectedSteps[0];
-        storage.set(workflow.processName, JSON.stringify(storedObject));
+        storedObject['step10'] = { previousStep: 0 };
+        storedObject['currentStep'] = 10;
+        storage.set(processName, JSON.stringify(storedObject));
     }
 
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
         const object: { [k: string]: any } = {};
         if (
-            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round &&
-            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddresses
+            storedObject['step10']?.data?.round &&
+            storedObject['step10']?.data?.proposedRoundAdvisedAddresses
         ) {
-            const round = storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round;
+            const round = storedObject['step10']?.data?.round;
             const totalProcessedQuantity = round.roundAdvisedAddresses.reduce(
                 (sum: number, address: any) => {
                     return sum + address.roundLineDetail.processedQuantity;
@@ -106,56 +147,54 @@ const PickAndPack: PageComponent = () => {
                 0
             );
             const proposedRoundAdvisedAddress =
-                storedObject[`step${workflow.expectedSteps[0]}`]?.data
-                    ?.proposedRoundAdvisedAddresses[0];
+                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0];
             object[t('common:round')] = round.name;
             object[t('common:total-picked-quantity')] =
                 totalProcessedQuantity + '/' + round.nbPickArticle;
-            if (
-                storedObject[`step${workflow.expectedSteps[0]}`]?.data?.pickAndPackType === 'detail'
-            ) {
+            if (storedObject['step10']?.data?.pickAndPackType === 'detail') {
                 object[t('common:handling-unit-final_abbr')] =
                     proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.name;
             }
-            if (!storedObject[`step${workflow.expectedSteps[2]}`]?.data?.chosenLocation) {
+            if (storedObject['step15']?.data?.handlingUnit) {
+                object[t('common:handling-unit_abbr')] = storedObject['step15']?.data?.handlingUnit;
+            }
+            if (!storedObject['step30']?.data?.chosenLocation) {
                 object[t('common:expected-location_abbr')] =
                     proposedRoundAdvisedAddress.location.name;
             } else {
                 object[t('common:location_abbr')] =
-                    storedObject[`step${workflow.expectedSteps[2]}`]?.data?.chosenLocation.name;
+                    storedObject['step30']?.data?.chosenLocation.name;
             }
             if (proposedRoundAdvisedAddress?.handlingUnitContent?.stockOwner) {
-                if (!storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit) {
+                if (!storedObject['step40']?.data?.handlingUnit) {
                     const handlingUnitContent = proposedRoundAdvisedAddress?.handlingUnitContent;
                     object[t('common:expected-stock-owner_abbr')] =
                         handlingUnitContent.stockOwner?.name;
                 } else {
                     object[t('common:handling-unit_abbr')] =
-                        storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit?.name;
+                        storedObject['step40']?.data?.handlingUnit?.name;
                     object[t('common:stock-owner_abbr')] =
                         storedObject[
-                            `step${workflow.expectedSteps[3]}`
+                            'step40'
                         ]?.data?.handlingUnit?.handlingUnitContents[0]?.stockOwner?.name;
                 }
             }
-            if (!storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article) {
+            if (!storedObject['step50']?.data?.article) {
                 object[t('common:expected-article_abbr')] =
                     proposedRoundAdvisedAddress.handlingUnitContent.article?.name;
                 object[t('common:article-description')] =
                     proposedRoundAdvisedAddress.handlingUnitContent.article?.description;
             } else {
-                object[t('common:article_abbr')] =
-                    storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article.name;
+                object[t('common:article_abbr')] = storedObject['step50']?.data?.article.name;
                 object[t('common:article-description')] =
-                    storedObject[`step${workflow.expectedSteps[4]}`]?.data?.article.description;
+                    storedObject['step50']?.data?.article.description;
             }
-            if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.content) {
+            if (storedObject['step50']?.data?.content) {
                 object[t('common:available-quantity')] =
-                    storedObject[`step${workflow.expectedSteps[4]}`]?.data?.content.quantity;
+                    storedObject['step50']?.data?.content.quantity;
             }
-            if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures) {
-                const processedFeatures =
-                    storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures;
+            if (storedObject['step60']?.data?.processedFeatures) {
+                const processedFeatures = storedObject['step60']?.data?.processedFeatures;
                 processedFeatures.map((feature: any) => {
                     const { featureCode, value } = feature;
                     let formattedValue = value;
@@ -170,20 +209,18 @@ const PickAndPack: PageComponent = () => {
                     object[featureCode.name] = formattedValue;
                 });
             }
-            if (!storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity) {
+            if (!storedObject['step70']?.data?.movingQuantity) {
                 object[t('common:expected-quantity_abbr')] = storedObject[
-                    `step${workflow.expectedSteps[0]}`
+                    'step10'
                 ]?.data?.proposedRoundAdvisedAddresses.reduce(
                     (total: number, current: any) => total + current.quantity,
                     0
                 );
             } else {
                 object[t('common:quantity_abbr')] =
-                    storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity +
+                    storedObject['step70']?.data?.movingQuantity +
                     '/' +
-                    storedObject[
-                        `step${workflow.expectedSteps[0]}`
-                    ]?.data?.proposedRoundAdvisedAddresses.reduce(
+                    storedObject['step10']?.data?.proposedRoundAdvisedAddresses.reduce(
                         (total: number, current: any) => total + current.quantity,
                         0
                     );
@@ -195,20 +232,18 @@ const PickAndPack: PageComponent = () => {
 
     // retrieve location, article and qty to propose
     useEffect(() => {
-        if (storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddresses) {
+        if (storedObject['step10']?.data?.proposedRoundAdvisedAddresses) {
             setLocationToPropose(
-                storedObject[`step${workflow.expectedSteps[0]}`]?.data
-                    ?.proposedRoundAdvisedAddresses[0].location?.name
+                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0].location?.name
             );
             setArticleToPropose(
-                storedObject[`step${workflow.expectedSteps[0]}`]?.data
-                    ?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article?.name
+                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent
+                    ?.article?.name
             );
         }
 
-        if (storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round) {
-            const currentShippingPalletId =
-                storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round.extraText1;
+        if (storedObject['step10']?.data?.round) {
+            const currentShippingPalletId = storedObject['step10']?.data?.round.extraText1;
             const isHuInProgress = currentShippingPalletId ? true : false;
             setIsHuInProgress(isHuInProgress);
         }
@@ -234,13 +269,53 @@ const PickAndPack: PageComponent = () => {
         setShowEmptyLocations(false);
     };
 
+    useEffect(() => {
+        switch (storedObject.currentStep) {
+            case 20:
+                if (
+                    storedObject['step20']?.data?.locations?.length === 1 ||
+                    storedObject['step30']?.data?.handlingUnit ||
+                    storedObject['step40']?.data?.handlingUnit?.handlingUnitContents.length === 1 ||
+                    storedObject['step50']?.data?.content?.handlingUnitContentFeatures
+                ) {
+                    setIsLoading(true);
+                } else {
+                    setIsLoading(false);
+                }
+                break;
+            case 40:
+                if (storedObject['step30'].data.handlingUnit) {
+                    setIsLoading(true);
+                } else {
+                    setIsLoading(false);
+                }
+                break;
+            case 50:
+                if (storedObject['step40']?.data?.handlingUnit?.handlingUnitContents.length === 1) {
+                    setIsLoading(true);
+                } else {
+                    setIsLoading(false);
+                }
+                break;
+            case 60:
+                if (!storedObject['step50']?.data?.content?.handlingUnitContentFeatures) {
+                    setIsLoading(true);
+                } else {
+                    setIsLoading(false);
+                }
+                break;
+            default:
+                setIsLoading(false);
+        }
+    }, [storedObject]);
+
     return (
         <PageContentWrapper>
             <HeaderContent
                 title={t('common:pickAndPack')}
                 actionsRight={
                     <Space>
-                        {storedObject.currentStep > workflow.expectedSteps[0] ? (
+                        {storedObject.currentStep > 10 ? (
                             <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
                         ) : (
                             <></>
@@ -258,248 +333,246 @@ const PickAndPack: PageComponent = () => {
                     }}
                 ></RadioInfosHeader>
             )}
-            {showSimilarLocations && storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
-                <SimilarPickingLocations
-                    articleId={
-                        storedObject[`step${workflow.expectedSteps[0]}`].data
-                            .proposedRoundAdvisedAddresses[0].handlingUnitContent.articleId
-                    }
-                    chosenContentId={
-                        storedObject[`step${workflow.expectedSteps[0]}`].data
-                            .proposedRoundAdvisedAddresses[0].handlingUnitContent.id
-                    }
-                    stockOwnerId={
-                        storedObject[`step${workflow.expectedSteps[0]}`].data
-                            .proposedRoundAdvisedAddresses[0].handlingUnitContent.stockOwnerId
-                    }
-                    stockStatus={
-                        storedObject[`step${workflow.expectedSteps[0]}`].data
-                            .proposedRoundAdvisedAddresses[0].handlingUnitContent.stockStatus
-                    }
-                />
-            ) : (
-                <></>
-            )}
-            {!storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
-                <SelectRoundForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[0]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: false }}
-                ></SelectRoundForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[0]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[1]}`]?.data ? (
-                <ScanLocation
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[1]}
-                    label={t('common:location-var', {
-                        name: `${locationToPropose}`
-                    })}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    triggerAlternativeSubmit1={{
-                        triggerAlternativeSubmit1: triggerHuClose,
-                        setTriggerAlternativeSubmit1: setTriggerHuClose
-                    }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true,
-                        alternativeSubmitButton1: isHuInProgress,
-                        locationButton: true
-                    }}
-                    checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
-                    showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
-                    showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
-                    headerContent={{ headerContent, setHeaderContent }}
-                ></ScanLocation>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[1]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[2]}`]?.data ? (
-                <SelectLocationByLevelForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[2]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    locations={storedObject[`step${workflow.expectedSteps[1]}`].data.locations}
-                ></SelectLocationByLevelForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[2]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
-                <ScanHandlingUnit
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[3]}
-                    label={t('common:handling-unit')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
-                    defaultValue={
-                        storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit ??
-                        undefined
-                    }
-                ></ScanHandlingUnit>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[3]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[4]}`]?.data ? (
-                <ScanArticleEAN
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[4]}
-                    label={t('common:article-var', {
-                        name: `${articleToPropose}`
-                    })}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    contents={
-                        storedObject[`step${workflow.expectedSteps[3]}`]?.data?.handlingUnit
-                            ?.handlingUnitContents
-                    }
-                    checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
-                ></ScanArticleEAN>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[4]}`]?.data &&
-            !(
-                storedObject[`step${workflow.expectedSteps[5]}`]?.data?.remainingFeatures
-                    ?.length === 0
-            ) ? (
-                <ScanFeature
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[5]}
-                    label={t('common:feature-code')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    contentFeatures={
-                        storedObject[`step${workflow.expectedSteps[4]}`]?.data?.content
-                            ?.handlingUnitContentFeatures
-                    }
-                    action1Trigger={{
-                        action1Trigger: finishUniqueFeatures,
-                        setAction1Trigger: setFinishUniqueFeatures
-                    }}
-                    featureType={
-                        storedObject[`step${workflow.expectedSteps[4]}`].data?.article?.featureType
-                    }
-                    processedFeatures={
-                        storedObject[`step${workflow.expectedSteps[5]}`]?.data?.processedFeatures ??
-                        undefined
-                    }
-                    nextFeatureCode={
-                        storedObject[`step${workflow.expectedSteps[5]}`]?.data?.nextFeatureCode ??
-                        undefined
-                    }
-                    checkComponent={(data: any) => <FeatureChecks dataToCheck={data} />}
-                ></ScanFeature>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[5]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[6]}`]?.data ? (
-                <EnterQuantity
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[6]}
-                    label={t('common:quantity-var', {
-                        number: `${storedObject[
-                            `step${workflow.expectedSteps[0]}`
-                        ].data.proposedRoundAdvisedAddresses.reduce(
-                            (total: number, current: any) => total + current.quantity,
-                            0
-                        )}`
-                    })}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    availableQuantity={Math.min(
-                        storedObject[
-                            `step${workflow.expectedSteps[0]}`
-                        ].data.proposedRoundAdvisedAddresses.reduce(
-                            (total: number, current: any) => total + current.quantity,
-                            0
-                        ),
-                        storedObject[`step${workflow.expectedSteps[4]}`].data?.content?.quantity
-                    )}
-                    checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
-                ></EnterQuantity>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[6]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[7]}`]?.data ? (
-                <ScanFinalHandlingUnitOutbound
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[7]}
-                    label={t('common:handling-unit-final')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true
-                    }}
-                    checkComponent={(data: any) => (
-                        <HandlingUnitOutboundFinalChecks dataToCheck={data} />
-                    )}
-                    defaultValue={
-                        storedObject[`step${workflow.expectedSteps[0]}`]?.data?.pickAndPackType ===
-                        'fullBox'
-                            ? 'fullBox'
-                            : undefined
-                    }
-                ></ScanFinalHandlingUnitOutbound>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[7]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[8]}`]?.data ? (
-                <SelectHuModelForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[8]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true }}
-                    defaultValue={isHuInProgress ? 'huModelExist' : undefined}
-                ></SelectHuModelForm>
-            ) : (
-                <></>
-            )}
-            {/* {storedObject[`step${workflow.expectedSteps[7]}`]?.data ? (
-                <ValidatePickAndPackForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[9]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    headerContent={{ setHeaderContent }}
-                ></ValidatePickAndPackForm>
-            ) : (
-                <></>
-            )} */}
-            {storedObject[`step${workflow.expectedSteps[8]}`]?.data || isAutoValidateLoading ? (
-                <AutoValidatePickAndPackForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[9]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    headerContent={{ setHeaderContent }}
-                    autoValidateLoading={{ isAutoValidateLoading, setIsAutoValidateLoading }}
-                ></AutoValidatePickAndPackForm>
-            ) : (
-                <></>
-            )}
+            {isLoading ? <UpperMobileSpinner></UpperMobileSpinner> : <></>}
+            <div hidden={isLoading}>
+                {showSimilarLocations && storedObject['step10']?.data ? (
+                    <SimilarPickingLocations
+                        articleId={
+                            storedObject['step10'].data.proposedRoundAdvisedAddresses[0]
+                                .handlingUnitContent.articleId
+                        }
+                        chosenContentId={
+                            storedObject['step10'].data.proposedRoundAdvisedAddresses[0]
+                                .handlingUnitContent.id
+                        }
+                        stockOwnerId={
+                            storedObject['step10'].data.proposedRoundAdvisedAddresses[0]
+                                .handlingUnitContent.stockOwnerId
+                        }
+                        stockStatus={
+                            storedObject['step10'].data.proposedRoundAdvisedAddresses[0]
+                                .handlingUnitContent.stockStatus
+                        }
+                    />
+                ) : (
+                    <></>
+                )}
+                {!storedObject['step10']?.data ? (
+                    <SelectRoundForm
+                        process={processName}
+                        stepNumber={10}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: true, backButton: false }}
+                    ></SelectRoundForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step10']?.data &&
+                storedObject['step10']?.data?.round?.handlingUnitOutbounds?.filter(
+                    (huo: any) => huo.status === 500
+                ).length === 0 &&
+                !storedObject['step15']?.data &&
+                manualyGenerateParent ? (
+                    <ScanHandlingUnit
+                        process={processName}
+                        stepNumber={15}
+                        label={t('common:handling-unit')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        checkComponent={(data: any) => (
+                            <HandlingUnitChecksWithoutChecks dataToCheck={data} />
+                        )}
+                    ></ScanHandlingUnit>
+                ) : (
+                    <></>
+                )}
+                {storedObject[
+                    !manualyGenerateParent ||
+                    storedObject['step10']?.data?.round?.handlingUnitOutbounds?.filter(
+                        (huo: any) => huo.status === 500
+                    ).length !== 0
+                        ? 'step10'
+                        : 'step15'
+                ]?.data && !storedObject['step20']?.data ? (
+                    <ScanLocation
+                        process={processName}
+                        stepNumber={20}
+                        label={t('common:location-var', {
+                            name: `${locationToPropose}`
+                        })}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        triggerAlternativeSubmit1={{
+                            triggerAlternativeSubmit1: triggerHuClose,
+                            setTriggerAlternativeSubmit1: setTriggerHuClose
+                        }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true,
+                            alternativeSubmitButton1: isHuInProgress,
+                            locationButton: true
+                        }}
+                        checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
+                        showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
+                        showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
+                        headerContent={{ headerContent, setHeaderContent }}
+                    ></ScanLocation>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step20']?.data && !storedObject['step30']?.data ? (
+                    <SelectLocationByLevelForm
+                        process={processName}
+                        stepNumber={30}
+                        buttons={{ submitButton: true, backButton: true }}
+                        showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        locations={storedObject['step20'].data.locations}
+                    ></SelectLocationByLevelForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step30']?.data && !storedObject['step40']?.data ? (
+                    <ScanHandlingUnit
+                        process={processName}
+                        stepNumber={40}
+                        label={t('common:handling-unit')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
+                        defaultValue={storedObject['step30'].data.handlingUnit ?? undefined}
+                    ></ScanHandlingUnit>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step40']?.data && !storedObject['step50']?.data ? (
+                    <ScanArticleEAN
+                        process={processName}
+                        stepNumber={50}
+                        label={t('common:article-var', {
+                            name: `${articleToPropose}`
+                        })}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        contents={storedObject['step40']?.data?.handlingUnit?.handlingUnitContents}
+                        checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
+                    ></ScanArticleEAN>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step50']?.data &&
+                !(storedObject['step60']?.data?.remainingFeatures?.length === 0) ? (
+                    <ScanFeature
+                        process={processName}
+                        stepNumber={60}
+                        label={t('common:feature-code')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        contentFeatures={
+                            storedObject['step50']?.data?.content?.handlingUnitContentFeatures
+                        }
+                        action1Trigger={{
+                            action1Trigger: finishUniqueFeatures,
+                            setAction1Trigger: setFinishUniqueFeatures
+                        }}
+                        featureType={storedObject['step50'].data?.article?.featureType}
+                        processedFeatures={
+                            storedObject['step60']?.data?.processedFeatures ?? undefined
+                        }
+                        nextFeatureCode={storedObject['step60']?.data?.nextFeatureCode ?? undefined}
+                        checkComponent={(data: any) => <FeatureChecks dataToCheck={data} />}
+                    ></ScanFeature>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step60']?.data &&
+                storedObject['step60']?.data.remainingFeatures.length === 0 &&
+                !storedObject['step70']?.data ? (
+                    <EnterQuantity
+                        process={processName}
+                        stepNumber={70}
+                        label={t('common:quantity-var', {
+                            number: `${storedObject[
+                                'step10'
+                            ].data.proposedRoundAdvisedAddresses.reduce(
+                                (total: number, current: any) => total + current.quantity,
+                                0
+                            )}`
+                        })}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        availableQuantity={Math.min(
+                            storedObject['step10'].data.proposedRoundAdvisedAddresses.reduce(
+                                (total: number, current: any) => total + current.quantity,
+                                0
+                            ),
+                            storedObject['step50'].data?.content?.quantity
+                        )}
+                        checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
+                    ></EnterQuantity>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step70']?.data && !storedObject['step75']?.data ? (
+                    <ScanFinalHandlingUnitOutbound
+                        process={processName}
+                        stepNumber={75}
+                        label={t('common:handling-unit-final')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true
+                        }}
+                        checkComponent={(data: any) => (
+                            <HandlingUnitOutboundFinalChecks dataToCheck={data} />
+                        )}
+                        defaultValue={
+                            storedObject['step10']?.data?.pickAndPackType === 'fullBox'
+                                ? 'fullBox'
+                                : undefined
+                        }
+                    ></ScanFinalHandlingUnitOutbound>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step75']?.data && !storedObject['step80']?.data ? (
+                    <SelectHuModelForm
+                        process={processName}
+                        stepNumber={80}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: true, backButton: true }}
+                        defaultValue={isHuInProgress ? 'huModelExist' : undefined}
+                    ></SelectHuModelForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step80']?.data || isAutoValidateLoading ? (
+                    <AutoValidatePickAndPackForm
+                        process={processName}
+                        stepNumber={90}
+                        buttons={{ submitButton: true, backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        headerContent={{ setHeaderContent }}
+                        autoValidateLoading={{ isAutoValidateLoading, setIsAutoValidateLoading }}
+                    ></AutoValidatePickAndPackForm>
+                ) : (
+                    <></>
+                )}
+            </div>
         </PageContentWrapper>
     );
 };

@@ -44,7 +44,7 @@ export const SelectRoundForm = ({
     trigger: { triggerRender, setTriggerRender },
     buttons
 }: ISelectRoundProps) => {
-    const { graphqlRequestClient } = useAuth();
+    const { graphqlRequestClient, user } = useAuth();
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -89,37 +89,92 @@ export const SelectRoundForm = ({
         max: configs.ROUND_STATUS_TO_BE_VERIFIED
     });
 
-    //this will have to be reviewed with types once round calculation reviewed
-    const roundsList = useSimpleGetRoundsQuery<Partial<SimpleGetRoundsQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: { status: configsToFilterOn, type: [configs.ROUND_TYPE_PICK_AND_PACK] },
+    const fetchRoundsList = async () => {
+        const roundsListFromGQL = gql`
+            query rounds(
+                $filters: RoundSearchFilters
+                $orderBy: [RoundOrderByCriterion!]
+                $page: Int
+                $itemsPerPage: Int
+            ) {
+                rounds(
+                    filters: $filters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                ) {
+                    results {
+                        id
+                        name
+                        equipment {
+                            id
+                            name
+                        }
+                        expectedDeliveryDate
+                        assignedUser
+                    }
+                }
+            }
+        `;
+
+        const roundsListVariables = {
+            filters: { status: configsToFilterOn },
             orderBy: null,
             page: 1,
             itemsPerPage: 100
-        }
-    );
+        };
+
+        const roundsList_result = await graphqlRequestClient.request(
+            roundsListFromGQL,
+            roundsListVariables
+        );
+
+        return roundsList_result;
+    };
 
     useEffect(() => {
-        if (roundsList) {
-            const newTypeTexts: Array<any> = [];
-            const cData = roundsList?.data?.rounds?.results;
-            if (cData) {
-                cData.forEach((item) => {
-                    const displayedText = `${item.name}${
-                        item.equipment?.name ? ` - ${item.equipment.name}` : ''
-                    }${
-                        item.expectedDeliveryDate
-                            ? ` - ${moment(item.expectedDeliveryDate).format('DD/MM/YYYY')}`
-                            : ''
-                    }`;
-                    newTypeTexts.push({ key: item.id, text: displayedText });
-                });
-                newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
-                setRounds(newTypeTexts);
+        const fetchAndSetRounds = async () => {
+            try {
+                const roundsList = await fetchRoundsList();
+                const cData = roundsList?.rounds?.results;
+                console.log('cData', cData);
+                if (cData) {
+                    const assignedToUser: Array<any> = [];
+                    const notAssignedToUser: Array<any> = [];
+
+                    cData.forEach((item: any) => {
+                        const displayedText = `${item.name}${
+                            item.equipment?.name ? ` - ${item.equipment.name}` : ''
+                        }${
+                            item.expectedDeliveryDate
+                                ? ` - ${moment(item.expectedDeliveryDate).format('DD/MM/YYYY')}`
+                                : ''
+                        }`;
+                        if (item.assignedUser === user.username) {
+                            assignedToUser.push({ key: item.id, text: displayedText });
+                        } else if (!item.assignedUser) {
+                            notAssignedToUser.push({ key: item.id, text: displayedText });
+                        }
+                    });
+
+                    const sortedAssignedToUser = assignedToUser.sort((a, b) =>
+                        a.text.localeCompare(b.text)
+                    );
+                    const sortedNotAssignedToUser = notAssignedToUser.sort((a, b) =>
+                        a.text.localeCompare(b.text)
+                    );
+
+                    setRounds([...sortedAssignedToUser, ...sortedNotAssignedToUser]);
+                }
+            } catch (error) {
+                console.error('Error fetching rounds list:', error);
             }
-        }
-    }, [roundsList.data]);
+        };
+
+        fetchAndSetRounds();
+    }, []);
+
+    console.log('rounds', rounds);
 
     //SelectRound-2a: retrieve chosen level from select and set information
     const onFinish = async (values: any) => {
@@ -140,10 +195,12 @@ export const SelectRoundForm = ({
                     productivity
                     expectedDeliveryDate
                     extraText1
+                    assignedUser
                     equipment {
                         id
                         name
                         checkPosition
+                        forcePickingCheck
                     }
                     handlingUnitOutbounds {
                         id
@@ -251,6 +308,43 @@ export const SelectRoundForm = ({
 
         const selectedRound = await graphqlRequestClient.request(query, variables);
 
+        if (
+            selectedRound?.round?.assignedUser &&
+            selectedRound?.round?.assignedUser !== user.username
+        ) {
+            showError(
+                t('messages:round-already-assigned-to', {
+                    name: selectedRound?.round?.assignedUser
+                })
+            );
+            return;
+        }
+        if (!selectedRound?.round?.assignedUser) {
+            // if the round is not assigned, we assign it to the current user
+            const updateRoundMutation = gql`
+                mutation updateRound($id: String!, $input: UpdateRoundInput!) {
+                    updateRound(id: $id, input: $input) {
+                        id
+                        status
+                        assignedUser
+                    }
+                }
+            `;
+            const updateRoundVariables = {
+                id: selectedRound?.round?.id,
+                input: {
+                    assignedUser: user.username
+                }
+            };
+
+            const updateRoundResult = await graphqlRequestClient.request(
+                updateRoundMutation,
+                updateRoundVariables
+            );
+            selectedRound.round.assignedUser = updateRoundResult.updateRound.assignedUser;
+            console.log('updateRoundResult', updateRoundResult);
+        }
+
         data['round'] = selectedRound.round;
         const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
             ?.filter((raa: any) => raa.quantity != 0)
@@ -273,7 +367,7 @@ export const SelectRoundForm = ({
                 : 'fullBox';
         }
 
-        if (selectedRound?.status == configs.ROUND_STATUS_STARTED) {
+        if (selectedRound?.round?.status == configs.ROUND_STATUS_STARTED) {
             const query = gql`
                 mutation executeFunction($functionName: String!, $event: JSON!) {
                     executeFunction(functionName: $functionName, event: $event) {
@@ -283,11 +377,16 @@ export const SelectRoundForm = ({
                 }
             `;
 
-            let roundIds = rounds?.map((item) => ({ id: item.key }));
+            let roundIds = [{ id: selectedRound?.round?.id }];
 
             const variables = {
-                functionName: 'K_updateRoundsStatus',
-                event: { input: { rounds: roundIds, status: configs.ROUND_STATUS_IN_PREPARATION } }
+                functionName: 'update_rounds_status',
+                event: {
+                    input: {
+                        rounds: roundIds,
+                        status: configs.ROUND_STATUS_IN_PREPARATION
+                    }
+                }
             };
             try {
                 const launchRoundsResult = await graphqlRequestClient.request(query, variables);

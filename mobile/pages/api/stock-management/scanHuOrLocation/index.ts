@@ -66,15 +66,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     category
                     code
                     parentHandlingUnitId
-                    childrenHandlingUnits {
-                        id
-                    }
                     reservation
                     status
                     stockOwnerId
-                    stockOwner {
-                        name
-                    }
                     location {
                         id
                         name
@@ -84,19 +78,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         statusText
                         stockStatus
                         stockStatusText
-                    }
-                    handlingUnitContents {
-                        id
-                        quantity
-                        reservation
-                        stockStatus
-                        stockStatusText
-                        articleId
-                        article {
-                            id
-                            name
-                            baseUnitWeight
-                        }
+                        huManagement
                     }
                 }
             }
@@ -133,72 +115,63 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     stockStatusText
                     status
                     statusText
+                    huManagement
                     handlingUnits {
                         id
                         name
+                        type
                         barcode
                         category
                         code
                         parentHandlingUnitId
-                        childrenHandlingUnits {
-                            id
-                        }
                         reservation
                         status
                         stockOwnerId
-                        stockOwner {
-                            name
-                        }
-                        handlingUnitContents {
-                            id
-                            quantity
-                            reservation
-                            stockStatus
-                            stockStatusText
-                            articleId
-                            article {
-                                id
-                                name
-                                baseUnitWeight
-                            }
-                        }
                     }
                 }
             }
         }
     `;
 
-    const huResponse: GraphQLResponseType = await graphqlRequestClient.request(
-        husQuery,
+    const locationResponse: GraphQLResponseType = await graphqlRequestClient.request(
+        locationsQuery,
         sharedFilter,
         requestHeader
     );
 
     let response;
-    if (huResponse && huResponse.handlingUnits.count === 1) {
-        const extractHuResponse = huResponse.handlingUnits?.results[0];
-        const { location, ...huOnly } = extractHuResponse;
-        response = {
-            resType: 'handlingUnit',
-            handlingUnit: huOnly,
-            location: { ...location }
-        };
-    } else {
-        const locationResponse: GraphQLResponseType = await graphqlRequestClient.request(
-            locationsQuery,
-            sharedFilter,
-            requestHeader
-        );
-
-        if (locationResponse && locationResponse.locations.count !== 0) {
-            const extractLocationResponse = locationResponse.locations?.results[0];
-            const { handlingUnits, ...locationOnly } = extractLocationResponse;
+    if (locationResponse && locationResponse.locations.count !== 0) {
+        const extractLocationResponse = locationResponse.locations?.results;
+        if (locationResponse.locations?.results.length === 1) {
+            const { handlingUnits, ...locationOnly } = extractLocationResponse[0];
             const handlingUnitOnly =
                 handlingUnits.length !== 0 ? { ...handlingUnits[0] } : undefined;
             response = {
                 resType: 'location',
                 handlingUnit: handlingUnitOnly,
                 location: locationOnly
+            };
+        } else {
+            response = {
+                resType: 'location',
+                handlingUnit: undefined,
+                location: extractLocationResponse
+            };
+        }
+    } else {
+        const huResponse: GraphQLResponseType = await graphqlRequestClient.request(
+            husQuery,
+            sharedFilter,
+            requestHeader
+        );
+
+        if (huResponse && huResponse.handlingUnits.count === 1) {
+            const extractHuResponse = huResponse.handlingUnits?.results[0];
+            const { location, ...huOnly } = extractHuResponse;
+            response = {
+                resType: 'handlingUnit',
+                handlingUnit: huOnly,
+                location: { ...location }
             };
         } else {
             res.status(500).json({

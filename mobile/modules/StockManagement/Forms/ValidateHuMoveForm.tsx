@@ -23,6 +23,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
 import { showError, showSuccess, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
 export interface IValidateHuMoveProps {
@@ -44,6 +46,7 @@ export const ValidateHuMoveForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { graphqlRequestClient } = useAuth();
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -81,29 +84,49 @@ export const ValidateHuMoveForm = ({
     //ValidateHuMove-1a: fetch front API
     const onFinish = async () => {
         setIsLoading(true);
-        const res = await fetch(`/api/stock-management/validateHuMove/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                originHandlingUnit,
-                originLocation,
-                finalHandlingUnit,
-                finalLocation,
-                isHuToCreate
-            })
-        });
-        if (res.ok) {
-            showSuccess(t('messages:movement-success'));
-            storage.removeAll();
-            setHeaderContent(false);
-            setTriggerRender(!triggerRender);
-        } else {
-            showError(t('messages:movement-failed'));
-        }
-        // const response = await res.json();
-        if (res) {
+        const inputToValidate = {
+            originHandlingUnit,
+            originLocation,
+            finalHandlingUnit,
+            finalLocation,
+            isHuToCreate
+        };
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'RF_handling_unit_movement_validate',
+            event: {
+                input: inputToValidate
+            }
+        };
+        try {
+            const validateHuMove = await graphqlRequestClient.request(query, variables);
+            if (validateHuMove.executeFunction.status === 'ERROR') {
+                showError(validateHuMove.executeFunction.output);
+            } else if (
+                validateHuMove.executeFunction.status === 'OK' &&
+                validateHuMove.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${validateHuMove.executeFunction.output.output.code}`));
+                console.log('Backend_message', validateHuMove.executeFunction.output.output);
+                setIsLoading(false);
+            } else {
+                showSuccess(t('messages:movement-success'));
+                storage.removeAll();
+                setHeaderContent(false);
+                setTriggerRender(!triggerRender);
+                setIsLoading(false);
+            }
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
             setIsLoading(false);
         }
     };

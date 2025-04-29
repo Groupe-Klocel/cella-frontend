@@ -31,6 +31,7 @@ export interface IScanHandlingUnitProps {
     buttons: { [label: string]: any };
     checkComponent: any;
     defaultValue?: any;
+    enforcedValue?: any;
 }
 
 export const ScanHandlingUnit = ({
@@ -40,7 +41,8 @@ export const ScanHandlingUnit = ({
     trigger: { triggerRender, setTriggerRender },
     buttons,
     checkComponent,
-    defaultValue
+    defaultValue,
+    enforcedValue
 }: IScanHandlingUnitProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -58,6 +60,8 @@ export const ScanHandlingUnit = ({
             data['handlingUnit'] = defaultValue;
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
+        } else if (enforcedValue) {
+            setScannedInfo(enforcedValue);
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
@@ -132,6 +136,7 @@ export const ScanHandlingUnit = ({
                                     }
                                     handlingUnitContentFeatures {
                                         id
+                                        featureCodeId
                                         featureCode {
                                             name
                                             unique
@@ -151,6 +156,7 @@ export const ScanHandlingUnit = ({
                                 name
                                 category
                                 categoryText
+                                huManagement
                             }
                             handlingUnitContents {
                                 id
@@ -184,6 +190,7 @@ export const ScanHandlingUnit = ({
                                 }
                                 handlingUnitContentFeatures {
                                     id
+                                    featureCodeId
                                     featureCode {
                                         name
                                         unique
@@ -245,6 +252,7 @@ export const ScanHandlingUnit = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         trigger: { triggerRender, setTriggerRender },
+        isEnforcedValue: !!enforcedValue,
         setResetForm
     };
 

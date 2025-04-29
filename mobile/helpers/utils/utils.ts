@@ -336,6 +336,10 @@ function isNonUniqueAndMatches(feature: any, features: any) {
     return !!matchingFeature;
 }
 
+const pathParamsFromDictionary = (pathname: string, values: any) => {
+    return { pathname: pathname, query: values };
+};
+
 export {
     isEmpty,
     pathParams,
@@ -370,5 +374,6 @@ export {
     setUTCDate,
     formatLocaleDate,
     formatUTCLocaleDate,
-    getDatesDifference
+    getDatesDifference,
+    pathParamsFromDictionary
 };

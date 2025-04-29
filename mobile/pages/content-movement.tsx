@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { PageContentWrapper, NavButton } from '@components';
+import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
@@ -35,8 +35,7 @@ import {
     ScanLocation,
     EnterQuantity,
     ScanArticleOrFeature,
-    ScanHandlingUnit,
-    ScanFinalHandlingUnit
+    ScanHandlingUnit
 } from '@CommonRadio';
 import { LocationChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/LocationChecks';
 import { ArticleOrFeatureChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/ArticleOrFeatureChecks';
@@ -45,6 +44,8 @@ import { HandlingUnitOriginChecks } from 'modules/StockManagement/ContentMovemen
 import { HandlingUnitFinalChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitFinalChecks';
 import { ValidateQuantityMoveForm } from 'modules/StockManagement/Forms/ValidateQuantityMove';
 import { SelectContentForFeatureForm } from 'modules/Common/Contents/Forms/SelectContentForFeatureForm';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -52,6 +53,7 @@ const ContentMvmt: PageComponent = () => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const router = useRouter();
+    const { graphqlRequestClient } = useAuth();
     const [triggerRender, setTriggerRender] = useState<boolean>(true);
     const [originDisplay, setOriginDisplay] = useState<any>({});
     const [finalDisplay, setFinalDisplay] = useState<any>({});
@@ -59,21 +61,130 @@ const ContentMvmt: PageComponent = () => {
     const [displayed, setDisplayed] = useState<any>({});
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
-    //define workflow parameters
-    const workflow = {
-        processName: 'contentMvt',
-        expectedSteps: [10, 15, 20, 30, 35, 40, 50, 60, 65, 80, 90]
-    };
-    const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
 
-    console.log('contentMvt', storedObject);
+    const { originLocation: enforcedOriginLocation } = router.query;
+
+    //define workflow parameters
+    const processName =
+        enforcedOriginLocation && enforcedOriginLocation === 'defaultReception'
+            ? 'contentMvtReception'
+            : 'contentMvt';
+
+    const storedObject = JSON.parse(storage.get(processName) || '{}');
+
+    //step10: scan Location (origin)
+    //step15: select Location by level (origin)
+    //step20: scan Handling Unit (origin)
+    //step30: scan Article or Feature
+    //step35: select Article by Stock Owner
+    //step40: select Content for Article
+    //step50: enter Quantity
+    //step60: scan Location (final)
+    //step65: select Location by level (final)
+    //step70: scan Handling Unit (final)
+    //step80: validate Quantity Move
+
+    console.log(`${processName}`, storedObject);
 
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
-        storedObject[`step${workflow.expectedSteps[0]}`] = { previousStep: 0 };
-        storedObject['currentStep'] = workflow.expectedSteps[0];
-        storage.set(workflow.processName, JSON.stringify(storedObject));
+        storedObject['step10'] = { previousStep: 0 };
+        storedObject['currentStep'] = 10;
+        storage.set(processName, JSON.stringify(storedObject));
     }
+
+    //origin Location handling
+    const getParameters = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query parameters($filters: ParameterSearchFilters) {
+                parameters(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        scope
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                scope: 'inbound',
+                code: ['DEFAULT_RECEPTION_LOCATION']
+            }
+        };
+        const receptionParameters = await graphqlRequestClient.request(query, variables);
+        return receptionParameters;
+    };
+
+    const getLocations = async (name: string): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query locations($filters: LocationSearchFilters) {
+                locations(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        name
+                        barcode
+                        aisle
+                        column
+                        level
+                        position
+                        replenish
+                        blockId
+                        block {
+                            name
+                        }
+                        replenishType
+                        constraint
+                        comment
+                        baseUnitRotation
+                        allowCycleCountStockMin
+                        category
+                        categoryText
+                        stockStatus
+                        stockStatusText
+                        status
+                        statusText
+                        huManagement
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: { name }
+        };
+        const receptionParameters = await graphqlRequestClient.request(query, variables);
+        return receptionParameters;
+    };
+    const [defaultReceptionLocation, setDefaultReceptionLocation] = useState<any>(null);
+    useEffect(() => {
+        async function fetchData() {
+            const receptionParameters = await getParameters();
+            if (receptionParameters) {
+                const receptionParametersResults = receptionParameters.parameters.results;
+                const defaultReceptionLocation = receptionParametersResults.find(
+                    (param: any) => param.code === 'DEFAULT_RECEPTION_LOCATION'
+                ).value;
+                if (defaultReceptionLocation) {
+                    const locations = await getLocations(defaultReceptionLocation);
+                    setDefaultReceptionLocation(locations?.locations.results[0]);
+                }
+            }
+        }
+        if (enforcedOriginLocation) {
+            fetchData();
+        }
+    }, []);
+
+    console.log('defaultReceptionLocation', defaultReceptionLocation);
 
     //function to retrieve information to display in RadioInfosHeader before step 50
     useEffect(() => {
@@ -82,52 +193,50 @@ const ContentMvmt: PageComponent = () => {
             setHeaderContent(false);
         }
         if (
-            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.locations &&
-            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.locations?.length > 1
+            storedObject['step10']?.data?.locations &&
+            storedObject['step10']?.data?.locations?.length > 1
         ) {
-            const locationsList = storedObject[`step${workflow.expectedSteps[0]}`]?.data?.locations;
+            const locationsList = storedObject['step10']?.data?.locations;
             object[t('common:location-origin_abbr')] = locationsList[0].barcode;
         }
-        if (storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenLocation) {
-            const location = storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenLocation;
+        if (storedObject['step15']?.data?.chosenLocation) {
+            const location = storedObject['step15']?.data?.chosenLocation;
             object[t('common:location-origin_abbr')] = location.name;
         }
-        if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit) {
-            const originalHu = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
+        if (
+            storedObject['step15']?.data?.chosenLocation.huManagement &&
+            storedObject['step20']?.data?.handlingUnit
+        ) {
+            const originalHu = storedObject['step20']?.data?.handlingUnit;
             object[t('common:handling-unit-origin_abbr')] = originalHu.name;
         }
         if (
-            storedObject[`step${workflow.expectedSteps[3]}`]?.data?.articleLuBarcodes &&
-            storedObject[`step${workflow.expectedSteps[3]}`]?.data?.articleLuBarcodes.length > 1
+            storedObject['step30']?.data?.articleLuBarcodes &&
+            storedObject['step30']?.data?.articleLuBarcodes.length > 1
         ) {
-            const articleLuBarcodesList =
-                storedObject[`step${workflow.expectedSteps[3]}`]?.data.articleLuBarcodes;
+            const articleLuBarcodesList = storedObject['step30']?.data.articleLuBarcodes;
             object[t('common:article-barcode')] = articleLuBarcodesList[0].barcode.name;
         }
-        if (storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenArticleLuBarcode) {
-            const articleLuBarcode =
-                storedObject[`step${workflow.expectedSteps[4]}`]?.data.chosenArticleLuBarcode;
+        if (storedObject['step35']?.data?.chosenArticleLuBarcode) {
+            const articleLuBarcode = storedObject['step35']?.data.chosenArticleLuBarcode;
             const stockOwnerName = articleLuBarcode?.stockOwner?.name ?? undefined;
             const article = articleLuBarcode.article ? articleLuBarcode.article : articleLuBarcode;
             stockOwnerName
                 ? (object[t('common:article')] = article.name + ' (' + stockOwnerName + ')')
                 : (object[t('common:article')] = article.name);
             object[t('common:article-description')] = article.description;
-            if (storedObject[`step${workflow.expectedSteps[3]}`]?.data?.feature) {
-                const serialNumber =
-                    storedObject[`step${workflow.expectedSteps[3]}`]?.data.feature.value;
+            if (storedObject['step30']?.data?.feature) {
+                const serialNumber = storedObject['step30']?.data.feature.value;
                 object[t('common:serial-number')] = serialNumber;
             }
         }
-        if (storedObject[`step${workflow.expectedSteps[5]}`]?.data?.chosenContent) {
-            const chosenContent =
-                storedObject[`step${workflow.expectedSteps[5]}`]?.data.chosenContent;
+        if (storedObject['step40']?.data?.chosenContent) {
+            const chosenContent = storedObject['step40']?.data.chosenContent;
             object[t('common:stock-status')] = chosenContent.stockStatusText;
             object[t('common:stock-owner')] = chosenContent.stockOwner.name;
         }
-        if (storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity) {
-            const movingQuantity =
-                storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity;
+        if (storedObject['step50']?.data?.movingQuantity) {
+            const movingQuantity = storedObject['step50']?.data?.movingQuantity;
             object[t('common:quantity')] = movingQuantity;
         }
         setOriginDisplay(object);
@@ -137,23 +246,20 @@ const ContentMvmt: PageComponent = () => {
     useEffect(() => {
         const finalObject: { [k: string]: any } = {};
         if (storedObject?.currentStep === 90) {
-            const originLocation =
-                storedObject[`step${workflow.expectedSteps[1]}`]?.data?.chosenLocation;
+            const originLocation = storedObject['step15']?.data?.chosenLocation;
             finalObject[t('common:location-origin_abbr')] = originLocation.name;
             setHeaderContent(true);
         }
-        if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit) {
-            const originalHu = storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
+        if (storedObject['step20']?.data?.handlingUnit) {
+            const originalHu = storedObject['step20']?.data?.handlingUnit;
             finalObject[t('common:handling-unit-origin_abbr')] = originalHu.name;
         }
         if (
-            storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenArticleLuBarcode &&
-            storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity
+            storedObject['step35']?.data?.chosenArticleLuBarcode &&
+            storedObject['step50']?.data?.movingQuantity
         ) {
-            const articleLuBarcode =
-                storedObject[`step${workflow.expectedSteps[4]}`]?.data?.chosenArticleLuBarcode;
-            const movingQuantity =
-                storedObject[`step${workflow.expectedSteps[6]}`]?.data?.movingQuantity;
+            const articleLuBarcode = storedObject['step35']?.data?.chosenArticleLuBarcode;
+            const movingQuantity = storedObject['step50']?.data?.movingQuantity;
             const stockOwnerName = articleLuBarcode?.stockOwner?.name ?? undefined;
             const article = articleLuBarcode.article ? articleLuBarcode.article : articleLuBarcode;
             stockOwnerName
@@ -163,20 +269,19 @@ const ContentMvmt: PageComponent = () => {
             finalObject[t('common:article-description')] = article.description;
         }
         if (
-            storedObject[`step${workflow.expectedSteps[7]}`]?.data?.locations &&
-            storedObject[`step${workflow.expectedSteps[7]}`]?.data?.locations?.length > 1
+            storedObject['step60']?.data?.locations &&
+            storedObject['step60']?.data?.locations?.length > 1
         ) {
-            const locationsList = storedObject[`step${workflow.expectedSteps[7]}`]?.data?.locations;
+            const locationsList = storedObject['step60']?.data?.locations;
             finalObject[t('common:location-final_abbr')] = locationsList[0].barcode;
         }
-        if (storedObject[`step${workflow.expectedSteps[8]}`]?.data?.chosenLocation) {
-            const location = storedObject[`step${workflow.expectedSteps[8]}`]?.data?.chosenLocation;
+        if (storedObject['step65']?.data?.chosenLocation) {
+            const location = storedObject['step65']?.data?.chosenLocation;
             finalObject[t('common:location-final_abbr')] = location.name;
             setHeaderContent(true);
         }
-        if (storedObject[`step${workflow.expectedSteps[10]}`]?.data?.finalHandlingUnit) {
-            const finalHu =
-                storedObject[`step${workflow.expectedSteps[10]}`]?.data?.finalHandlingUnit;
+        if (storedObject['step70']?.data?.finalHandlingUnit) {
+            const finalHu = storedObject['step70']?.data?.finalHandlingUnit;
             finalObject[t('common:handling-unit-final_abbr')] = finalHu.name;
         }
         setFinalDisplay(finalObject);
@@ -202,13 +307,40 @@ const ContentMvmt: PageComponent = () => {
         setShowEmptyLocations(false);
     };
 
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        switch (storedObject.currentStep) {
+            case 10:
+                setIsLoading(
+                    !!enforcedOriginLocation ||
+                        !!storedObject['step10']?.data?.locations ||
+                        (!storedObject['step15']?.data?.chosenLocation?.huManagement &&
+                            !!storedObject['step15']?.data?.chosenLocation?.barcode)
+                );
+                break;
+            case 20:
+                setIsLoading(
+                    !storedObject['step15']?.data?.chosenLocation?.huManagement &&
+                        !!storedObject['step15']?.data?.chosenLocation?.barcode
+                );
+                break;
+            default:
+                setIsLoading(false);
+        }
+    }, [storedObject]);
+
     return (
         <PageContentWrapper>
             <HeaderContent
-                title={t('common:movement')}
+                title={
+                    enforcedOriginLocation && enforcedOriginLocation === 'defaultReception'
+                        ? t('common:reception-content-movement')
+                        : t('common:content-movement')
+                }
                 actionsRight={
                     <Space>
-                        {storedObject.currentStep > workflow.expectedSteps[0] ? (
+                        {storedObject.currentStep > 10 ? (
                             <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
                         ) : (
                             <></>
@@ -226,221 +358,207 @@ const ContentMvmt: PageComponent = () => {
                     }}
                 ></RadioInfosHeader>
             )}
-            {showSimilarLocations &&
-            storedObject[`step${workflow.expectedSteps[4]}`].data.chosenArticleLuBarcode
-                .articleId ? (
-                <SimilarLocations
-                    articleId={
-                        storedObject[`step${workflow.expectedSteps[4]}`].data.chosenArticleLuBarcode
-                            .articleId
-                    }
-                    chosenContentId={
-                        storedObject[`step${workflow.expectedSteps[5]}`].data.chosenContent.id
-                    }
-                    stockOwnerId={
-                        storedObject[`step${workflow.expectedSteps[5]}`].data.chosenContent
-                            .stockOwnerId
-                    }
-                    stockStatus={
-                        storedObject[`step${workflow.expectedSteps[5]}`].data.chosenContent
-                            .stockStatus
-                    }
-                />
-            ) : (
-                <></>
-            )}
-            {showEmptyLocations &&
-            storedObject[`step${workflow.expectedSteps[4]}`].data.chosenArticleLuBarcode
-                .articleId ? (
-                <EmptyLocations withAvailableHU={true} />
-            ) : (
-                <></>
-            )}
-            {!storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
-                <ScanLocation
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[0]}
-                    label={t('common:location-origin')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: false }}
-                    checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
-                ></ScanLocation>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[0]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[1]}`]?.data ? (
-                <SelectLocationByLevelForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[1]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    locations={storedObject[`step${workflow.expectedSteps[0]}`].data.locations}
-                    roundsCheck={true}
-                ></SelectLocationByLevelForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[1]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[2]}`]?.data ? (
-                <ScanHandlingUnit
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[2]}
-                    label={t('common:handling-unit')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true }}
-                    checkComponent={(data: any) => <HandlingUnitOriginChecks dataToCheck={data} />}
-                ></ScanHandlingUnit>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[2]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
-                <ScanArticleOrFeature
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[3]}
-                    label={t('common:article')}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    checkComponent={(data: any) => <ArticleOrFeatureChecks dataToCheck={data} />}
-                ></ScanArticleOrFeature>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[3]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[4]}`]?.data ? (
-                <SelectArticleByStockOwnerForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[4]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    articleLuBarcodes={
-                        storedObject[`step${workflow.expectedSteps[3]}`].data.articleLuBarcodes
-                    }
-                ></SelectArticleByStockOwnerForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[4]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[5]}`]?.data ? (
-                storedObject[`step${workflow.expectedSteps[3]}`].data?.resType != 'serialNumber' ? (
-                    <SelectContentForArticleForm
-                        process={workflow.processName}
-                        stepNumber={workflow.expectedSteps[5]}
-                        buttons={{ backButton: true }}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        articleId={
-                            storedObject[`step${workflow.expectedSteps[4]}`].data
-                                .chosenArticleLuBarcode.articleId
-                        }
-                        locationId={
-                            storedObject[`step${workflow.expectedSteps[1]}`].data.chosenLocation.id
-                        }
-                        handlingUnitId={
-                            storedObject[`step${workflow.expectedSteps[2]}`].data.handlingUnit.id
-                        }
-                    ></SelectContentForArticleForm>
+            {isLoading ? <UpperMobileSpinner></UpperMobileSpinner> : <></>}
+            <div hidden={isLoading}>
+                {showSimilarLocations &&
+                storedObject['step35'].data.chosenArticleLuBarcode.articleId ? (
+                    <SimilarLocations
+                        articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
+                        chosenContentId={storedObject['step40'].data.chosenContent.id}
+                        stockOwnerId={storedObject['step40'].data.chosenContent.stockOwnerId}
+                        stockStatus={storedObject['step40'].data.chosenContent.stockStatus}
+                    />
                 ) : (
-                    <SelectContentForFeatureForm
-                        process={workflow.processName}
-                        stepNumber={workflow.expectedSteps[5]}
-                        buttons={{ backButton: true }}
+                    <></>
+                )}
+                {showEmptyLocations &&
+                storedObject['step35'].data.chosenArticleLuBarcode.articleId ? (
+                    <EmptyLocations withAvailableHU={true} />
+                ) : (
+                    <></>
+                )}
+                {!storedObject['step10']?.data ? (
+                    <ScanLocation
+                        process={processName}
+                        stepNumber={10}
+                        label={t('common:location-origin')}
                         trigger={{ triggerRender, setTriggerRender }}
-                        articleId={
-                            storedObject[`step${workflow.expectedSteps[4]}`].data
-                                .chosenArticleLuBarcode.articleId
+                        buttons={{ submitButton: true, backButton: false }}
+                        checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
+                        defaultValue={enforcedOriginLocation ? defaultReceptionLocation : undefined}
+                    ></ScanLocation>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step10']?.data && !storedObject['step15']?.data ? (
+                    <SelectLocationByLevelForm
+                        process={processName}
+                        stepNumber={15}
+                        buttons={{ submitButton: true, backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        locations={storedObject['step10'].data.locations}
+                        roundsCheck={true}
+                    ></SelectLocationByLevelForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step15']?.data && !storedObject['step20']?.data ? (
+                    <ScanHandlingUnit
+                        process={processName}
+                        stepNumber={20}
+                        label={t('common:handling-unit')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: true, backButton: true }}
+                        enforcedValue={
+                            !storedObject['step15']?.data?.chosenLocation.huManagement
+                                ? storedObject['step15']?.data?.chosenLocation.name
+                                : undefined
                         }
-                        locationId={
-                            storedObject[`step${workflow.expectedSteps[1]}`].data.chosenLocation.id
+                        checkComponent={(data: any) => (
+                            <HandlingUnitOriginChecks dataToCheck={data} />
+                        )}
+                    ></ScanHandlingUnit>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step20']?.data && !storedObject['step30']?.data ? (
+                    <ScanArticleOrFeature
+                        process={processName}
+                        stepNumber={30}
+                        label={t('common:article')}
+                        buttons={{
+                            submitButton: true,
+                            backButton: enforcedOriginLocation !== 'defaultReception'
+                        }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        checkComponent={(data: any) => (
+                            <ArticleOrFeatureChecks dataToCheck={data} />
+                        )}
+                    ></ScanArticleOrFeature>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step30']?.data && !storedObject['step35']?.data ? (
+                    <SelectArticleByStockOwnerForm
+                        process={processName}
+                        stepNumber={35}
+                        buttons={{ submitButton: true, backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        articleLuBarcodes={storedObject['step30'].data.articleLuBarcodes}
+                    ></SelectArticleByStockOwnerForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step35']?.data && !storedObject['step40']?.data ? (
+                    storedObject['step30'].data?.resType != 'serialNumber' ? (
+                        <SelectContentForArticleForm
+                            process={processName}
+                            stepNumber={40}
+                            buttons={{ backButton: true }}
+                            trigger={{ triggerRender, setTriggerRender }}
+                            articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
+                            locationId={storedObject['step15'].data.chosenLocation.id}
+                            handlingUnitId={storedObject['step20'].data.handlingUnit.id}
+                            stockOwnerId={
+                                storedObject['step35'].data.chosenArticleLuBarcode.article
+                                    ? storedObject['step35'].data.chosenArticleLuBarcode.article
+                                          .stockOwnerId
+                                    : undefined
+                            }
+                        ></SelectContentForArticleForm>
+                    ) : (
+                        <SelectContentForFeatureForm
+                            process={processName}
+                            stepNumber={40}
+                            buttons={{ backButton: true }}
+                            trigger={{ triggerRender, setTriggerRender }}
+                            articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
+                            locationId={storedObject['step15'].data.chosenLocation.id}
+                            uniqueId={storedObject['step30'].data.feature.value}
+                        ></SelectContentForFeatureForm>
+                    )
+                ) : (
+                    <></>
+                )}
+                {storedObject['step40']?.data && !storedObject['step50']?.data ? (
+                    <EnterQuantity
+                        process={processName}
+                        stepNumber={50}
+                        buttons={{ submitButton: true, backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        availableQuantity={storedObject['step40']?.data.chosenContent?.quantity}
+                        defaultValue={
+                            storedObject['step30'].data.resType === 'serialNumber' ? 1 : undefined
                         }
-                        uniqueId={
-                            storedObject[`step${workflow.expectedSteps[3]}`].data.feature.value
+                        checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
+                    ></EnterQuantity>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step50']?.data && !storedObject['step60']?.data ? (
+                    <ScanLocation
+                        process={processName}
+                        stepNumber={60}
+                        label={t('common:location-final')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{
+                            submitButton: true,
+                            backButton: true,
+                            locationButton: true,
+                            emptyButton: true
+                        }}
+                        showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
+                        showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
+                        headerContent={{ headerContent, setHeaderContent }}
+                        checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
+                    ></ScanLocation>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step60']?.data && !storedObject['step65']?.data ? (
+                    <SelectLocationByLevelForm
+                        process={processName}
+                        stepNumber={65}
+                        buttons={{ submitButton: true, backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        locations={storedObject['step60'].data.locations}
+                        originLocationId={storedObject['step15'].data.chosenLocation.id}
+                    ></SelectLocationByLevelForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step65']?.data && !storedObject['step70']?.data ? (
+                    <ScanHandlingUnit
+                        process={processName}
+                        stepNumber={70}
+                        label={t('common:handling-unit')}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: true, backButton: true }}
+                        enforcedValue={
+                            !storedObject['step65']?.data?.chosenLocation.huManagement
+                                ? storedObject['step65']?.data?.chosenLocation.name
+                                : undefined
                         }
-                    ></SelectContentForFeatureForm>
-                )
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[5]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[6]}`]?.data ? (
-                <EnterQuantity
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[6]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    availableQuantity={
-                        storedObject[`step${workflow.expectedSteps[5]}`]?.data.chosenContent
-                            ?.quantity
-                    }
-                    defaultValue={
-                        storedObject[`step${workflow.expectedSteps[3]}`].data.resType ===
-                        'serialNumber'
-                            ? 1
-                            : undefined
-                    }
-                    checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
-                ></EnterQuantity>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[6]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[7]}`]?.data ? (
-                <ScanLocation
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[7]}
-                    label={t('common:location-final')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{
-                        submitButton: true,
-                        backButton: true,
-                        locationButton: true,
-                        emptyButton: true
-                    }}
-                    showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
-                    showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
-                    headerContent={{ headerContent, setHeaderContent }}
-                    checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
-                ></ScanLocation>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[7]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[8]}`]?.data ? (
-                <SelectLocationByLevelForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[8]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    locations={storedObject[`step${workflow.expectedSteps[7]}`].data.locations}
-                ></SelectLocationByLevelForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[8]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[9]}`]?.data ? (
-                <ScanFinalHandlingUnit
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[9]}
-                    label={t('common:handling-unit')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true }}
-                    checkComponent={(data: any) => <HandlingUnitFinalChecks dataToCheck={data} />}
-                ></ScanFinalHandlingUnit>
-            ) : (
-                <></>
-            )}
+                        checkComponent={(data: any) => (
+                            <HandlingUnitFinalChecks dataToCheck={data} />
+                        )}
+                    ></ScanHandlingUnit>
+                ) : (
+                    <></>
+                )}
 
-            {storedObject[`step${workflow.expectedSteps[9]}`]?.data ? (
-                <ValidateQuantityMoveForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[10]}
-                    buttons={{ submitButton: true, backButton: true }}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    headerContent={{ setHeaderContent }}
-                ></ValidateQuantityMoveForm>
-            ) : (
-                <></>
-            )}
+                {storedObject['step70']?.data ? (
+                    <ValidateQuantityMoveForm
+                        process={processName}
+                        stepNumber={80}
+                        buttons={{ submitButton: true, backButton: true }}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        headerContent={{ setHeaderContent }}
+                    ></ValidateQuantityMoveForm>
+                ) : (
+                    <></>
+                )}
+            </div>
         </PageContentWrapper>
     );
 };

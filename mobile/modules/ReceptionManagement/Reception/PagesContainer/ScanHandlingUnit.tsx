@@ -21,10 +21,9 @@ import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
 import { useAuth } from 'context/AuthContext';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { gql } from 'graphql-request';
 
-export interface IScanFinalHandlingUnitProps {
+export interface IScanHandlingUnitProps {
     process: string;
     stepNumber: number;
     label: string;
@@ -32,28 +31,23 @@ export interface IScanFinalHandlingUnitProps {
     buttons: { [label: string]: any };
     checkComponent: any;
     defaultValue?: any;
-    action1Trigger?: any;
-    enforcedValue?: any;
 }
 
-export const ScanFinalHandlingUnit = ({
+export const ScanHandlingUnit = ({
     process,
     stepNumber,
     label,
     trigger: { triggerRender, setTriggerRender },
     buttons,
     checkComponent,
-    defaultValue,
-    action1Trigger: { action1Trigger, setAction1Trigger },
-    enforcedValue
-}: IScanFinalHandlingUnitProps) => {
+    defaultValue
+}: IScanHandlingUnitProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
-    const { graphqlRequestClient } = useAuth();
-    const { t } = useTranslation();
     const [handlingUnitInfos, setHandlingUnitInfos] = useState<any>();
+    const { graphqlRequestClient } = useAuth();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -64,8 +58,6 @@ export const ScanFinalHandlingUnit = ({
             data['handlingUnit'] = defaultValue;
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
-        } else if (enforcedValue) {
-            setScannedInfo(enforcedValue);
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
@@ -74,7 +66,7 @@ export const ScanFinalHandlingUnit = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    // ScanFinalHandlingUnit-2: launch query
+    // ScanHandlingUnit-2: launch query
     const getHU = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
             const query = gql`
@@ -87,24 +79,18 @@ export const ScanFinalHandlingUnit = ({
                             id
                             name
                             type
+                            typeText
                             barcode
                             category
+                            categoryText
                             code
-                            parentHandlingUnitId
                             reservation
                             status
-                            stockOwnerId
                             locationId
                             location {
-                                id
                                 name
                                 category
                                 categoryText
-                                status
-                                statusText
-                                stockStatus
-                                stockStatusText
-                                huManagement
                             }
                             handlingUnitContents {
                                 id
@@ -113,14 +99,15 @@ export const ScanFinalHandlingUnit = ({
                                 stockStatus
                                 stockStatusText
                                 stockOwnerId
+                                stockOwner {
+                                    id
+                                    name
+                                }
                                 articleId
                                 article {
                                     id
                                     name
                                     stockOwnerId
-                                    stockOwner {
-                                        name
-                                    }
                                     baseUnitWeight
                                 }
                                 handlingUnitContentFeatures {
@@ -131,6 +118,27 @@ export const ScanFinalHandlingUnit = ({
                                     }
                                     value
                                 }
+                                handlingUnitContentInbounds {
+                                    id
+                                    handlingUnitContentId
+                                    handlingUnitInboundId
+                                    receivedQuantity
+                                    status
+                                    purchaseOrderId
+                                    purchaseOrderLineId
+                                    lineNumber
+                                    roundLineDetailId
+                                    lastTransactionId
+                                }
+                            }
+                            handlingUnitInbounds {
+                                id
+                                name
+                                status
+                                handlingUnitId
+                                purchaseOrderId
+                                roundId
+                                roundLineDetailId
                             }
                         }
                     }
@@ -138,7 +146,9 @@ export const ScanFinalHandlingUnit = ({
             `;
 
             const variables = {
-                filters: { barcode: [`${scannedInfo}`] }
+                filters: {
+                    barcode: [`${scannedInfo}`]
+                }
             };
             const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitInfos;
@@ -148,7 +158,11 @@ export const ScanFinalHandlingUnit = ({
     useEffect(() => {
         async function fetchData() {
             const result = await getHU(scannedInfo);
-            if (result) setHandlingUnitInfos(result);
+            if (result) {
+                setHandlingUnitInfos(result);
+            } else {
+                setHandlingUnitInfos(undefined);
+            }
         }
         fetchData();
     }, [scannedInfo]);
@@ -159,22 +173,9 @@ export const ScanFinalHandlingUnit = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         trigger: { triggerRender, setTriggerRender },
-        action1Trigger: { action1Trigger, setAction1Trigger },
         setResetForm
     };
-    if (action1Trigger) {
-        const data: { [label: string]: any } = {};
 
-        data['isHuToCreate'] = false;
-        data['handlingUnit'] = storedObject['step20'].data.handlingUnit;
-        setTriggerRender(!triggerRender);
-        storedObject[`step${stepNumber}`] = {
-            ...storedObject[`step${stepNumber}`],
-            data
-        };
-        storage.set(process, JSON.stringify(storedObject));
-        setAction1Trigger(false);
-    }
     return (
         <>
             <>
@@ -186,8 +187,6 @@ export const ScanFinalHandlingUnit = ({
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
-                    action1Trigger={{ action1Trigger, setAction1Trigger }}
-                    action1Label={t('common:move-hu_abbr')}
                 ></ScanForm>
                 {checkComponent(dataToCheck)}
             </>

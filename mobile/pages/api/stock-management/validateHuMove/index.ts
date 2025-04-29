@@ -141,8 +141,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 : finalHandlingUnit.category;
 
         // update originHandlingUnit.parent_hu_id if there a finalHandlingUnit and it is different from originHandlingUnit
+        const isHuManagement = finalLocation.huManagement;
         let parentHandlingUnitId = null;
-        if (finalHandlingUnit && finalHandlingUnit.id != originHandlingUnit.id) {
+        if (finalHandlingUnit && finalHandlingUnit.id != originHandlingUnit.id && isHuManagement) {
             parentHandlingUnitId = finalHandlingUnit.id;
         }
 
@@ -184,6 +185,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             const updateHUCVariables = {
                 ids: hucIds,
                 input: {
+                    handlingUnitId: !isHuManagement ? finalHandlingUnit.id : undefined,
                     stockStatus: finalLocation.stockStatus,
                     lastTransactionId
                 }

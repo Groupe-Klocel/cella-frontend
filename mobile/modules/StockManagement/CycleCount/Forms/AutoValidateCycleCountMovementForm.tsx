@@ -73,8 +73,8 @@ export const AutoValidateCycleCountMovementForm = ({
         currentCycleCountLine = { id, status };
     }
     let location: { [k: string]: any } = {};
-    if (storedObject.step20.data.location) {
-        const { id, name } = storedObject.step20.data.location;
+    if (storedObject.step22.data.chosenLocation) {
+        const { id, name } = storedObject.step22.data.chosenLocation;
         location = { id, name };
     }
     let handlingUnit: any;
@@ -246,6 +246,7 @@ export const AutoValidateCycleCountMovementForm = ({
                         newStoredObject['currentStep'] = 40;
                         newStoredObject[`step10`] = { previousStep: 0, data: step10Data };
                         newStoredObject[`step20`] = storedObject[`step20`];
+                        newStoredObject[`step22`] = storedObject[`step22`];
                         newStoredObject[`step25`] = storedObject[`step25`];
                         newStoredObject[`step30`] = storedObject[`step30`];
                         newStoredObject[`step40`] = {
