@@ -38,7 +38,7 @@ export interface IScanFeatureProps {
     processedFeatures?: any;
     nextFeatureCode?: any;
     action1Trigger?: any;
-    contentFeatures?: any;
+    contents?: any;
 }
 const { Title } = Typography;
 
@@ -64,7 +64,7 @@ export const ScanFeature = ({
     featureType,
     processedFeatures,
     nextFeatureCode,
-    contentFeatures
+    contents
 }: IScanFeatureProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -73,115 +73,52 @@ export const ScanFeature = ({
     const router = useRouter();
     const { t } = useTranslation();
     const [buttonsState, setButtonsState] = useState<any>({ ...buttons });
-    const [featuresInfos, setFeaturesInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
 
     //N.B.: Version1 autorecovers information from previous step as there is only one HUC and no features scan check.
     //Pre-requisite: initialize current step
     useEffect(() => {
         console.log(featureType, 'featureType');
-        console.log(contentFeatures, 'contentFeatures');
+        console.log(contents, 'contentFeatures');
+        console.log(processedFeatures, 'processedFeatures');
 
         //check workflow direction and assign current step accordingly
-        if (contentFeatures) {
-            const data: { [label: string]: any } = {};
-            data['processedFeatures'] = contentFeatures.filter(
-                (item: any) =>
-                    !featureType?.map((f: any) => f.featureCodeId).includes(item.featureCode.id)
-            );
-            data['remainingFeatures'] = contentFeatures.filter((item: any) =>
-                featureType?.map((f: any) => f.featureCodeId).includes(item.featureCode.id)
-            );
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            setTriggerRender(!triggerRender);
-        } else if (!featureType) {
+        if (contents.length === 1 || featureType.length === 0) {
             // N.B.: in this case previous step is kept at its previous value
             const data: { [label: string]: any } = {};
-            data['feature'] = null;
-            data['remainingFeatures'] = [];
+            data['processedFeatures'] = contents[0].handlingUnitContentFeatures;
+            data['content'] = contents[0];
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
-        } else if (storedObject.currentStep < stepNumber) {
-            storedObject[`step${stepNumber}`] = {
-                previousStep: storedObject.currentStep
-            };
-            storedObject.currentStep = stepNumber;
+            storage.set(process, JSON.stringify(storedObject));
+            setScannedInfo(undefined);
+            setResetForm(true);
+            return;
         }
-        storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    const getFeatures = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
-        if (scannedInfo) {
-            const query = gql`
-                query featureTypeDetails($filters: FeatureTypeDetailSearchFilters) {
-                    featureTypeDetails(filters: $filters) {
-                        count
-                        itemsPerPage
-                        totalPages
-                        results {
-                            id
-                            featureType
-                            featureTypeText
-                            featureCodeId
-                            featureCode {
-                                id
-                                name
-                                unique
-                                dateType
-                            }
-                            atReception
-                            atPreparation
-                            stockOwnerId
-                            stockOwner {
-                                id
-                                name
-                            }
-                            sortType
-                            sortTypeText
-                        }
-                    }
-                }
-            `;
-
-            const variables = {
-                filters: { featureType: featureType[0].featureType, atPreparation: true }
-            };
-            const featuresInfos = await graphqlRequestClient.request(query, variables);
-            return featuresInfos;
-        }
-    };
-
-    useEffect(() => {
-        async function fetchData() {
-            const result = await getFeatures(scannedInfo);
-            if (result) setFeaturesInfos(result);
-        }
-        fetchData();
-    }, [scannedInfo]);
-
     //initialize features to process
-    const [initialFeaturesList, setInitialFeaturesList] = useState<any>();
     const [currentFeatureCode, setCurrentFeatureCode] = useState<any>();
 
     useEffect(() => {
-        if (featuresInfos?.featureTypeDetails?.results) {
-            const queriedFeatures = featuresInfos?.featureTypeDetails?.results;
-            setInitialFeaturesList(queriedFeatures);
-            if (!nextFeatureCode) {
-                setCurrentFeatureCode(queriedFeatures[0].featureCode);
-            } else {
-                setCurrentFeatureCode(nextFeatureCode);
-            }
+        if (featureType.length === 0) {
+            return;
         }
-    }, [featuresInfos, nextFeatureCode]);
+        if (!nextFeatureCode && contents.length > 1) {
+            setCurrentFeatureCode(featureType[0].featureCode);
+        } else {
+            setCurrentFeatureCode(nextFeatureCode);
+        }
+    }, [nextFeatureCode]);
 
     const dataToCheck = {
         process,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        featuresToProcess: initialFeaturesList,
-        processedFeatures,
+        featuresToProcess: featureType,
+        processedFeatures: processedFeatures,
         currentFeatureCode,
+        contents,
         trigger: { triggerRender, setTriggerRender },
         action1Trigger: { action1Trigger, setAction1Trigger },
         setResetForm

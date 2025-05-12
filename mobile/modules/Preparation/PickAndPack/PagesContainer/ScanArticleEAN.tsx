@@ -50,27 +50,70 @@ export const ScanArticleEAN = ({
     const [featureTypeDetailsInfos, setFeatureTypeDetailsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
 
+    const getFeatureTypeDetails = async (
+        featureType: any
+    ): Promise<{ [key: string]: any } | undefined> => {
+        if (featureType) {
+            const query = gql`
+                query featureTypeDetails($filters: FeatureTypeDetailSearchFilters) {
+                    featureTypeDetails(filters: $filters) {
+                        results {
+                            id
+                            atPreparation
+                            featureType
+                            featureCodeId
+                            featureCode {
+                                id
+                                name
+                                unique
+                                dateType
+                            }
+                        }
+                    }
+                }
+            `;
+            const variables = {
+                filters: { featureType: featureType }
+            };
+            const featureTypeDetails = await graphqlRequestClient
+                .request(query, variables)
+                .then((data: any) => data.featureTypeDetails.results);
+            return featureTypeDetails;
+        }
+    };
+
     //N.B.: Version1 autorecovers information from previous step as there is only one HUC and no article scan check.
     //Pre-requisite: initialize current step
-    console.log('contents', contents);
-    console.log('articleLuBarcodesInfos', articleLuBarcodesInfos);
     useEffect(() => {
-        if (contents.length === 1) {
-            // N.B.: in this case previous step is kept at its previous value
-            const data: { [label: string]: any } = {};
-            data['article'] = contents[0].article;
-            data['content'] = contents[0];
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            setTriggerRender(!triggerRender);
-        }
-        //check workflow direction and assign current step accordingly
-        else if (storedObject.currentStep < stepNumber) {
-            storedObject[`step${stepNumber}`] = {
-                previousStep: storedObject.currentStep
-            };
-            storedObject.currentStep = stepNumber;
-        }
-        storage.set(process, JSON.stringify(storedObject));
+        const fetchData = async () => {
+            if (contents.length === 1) {
+                // N.B.: in this case previous step is kept at its previous value
+                let data: { [label: string]: any } = {};
+                data['article'] = contents[0].article;
+                data['contents'] = contents;
+                const featureTypeDetails: any = await getFeatureTypeDetails(
+                    contents[0].article.featureType
+                );
+                // add feature type details to results
+                if (featureTypeDetails?.filter((item: any) => item.atPreparation).length > 0) {
+                    data['article']['featureType'] = featureTypeDetailsInfos;
+                } else {
+                    data['article']['featureType'] = [];
+                }
+                storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+                setTriggerRender(!triggerRender);
+            }
+            // check workflow direction and assign current step accordingly
+            else if (storedObject.currentStep < stepNumber) {
+                storedObject[`step${stepNumber}`] = {
+                    previousStep: storedObject.currentStep
+                };
+                storedObject.currentStep = stepNumber;
+            }
+            storage.set(process, JSON.stringify(storedObject));
+        };
+
+        fetchData();
     }, []);
 
     const getArticleLuBarcodes = async (
@@ -117,32 +160,6 @@ export const ScanArticleEAN = ({
             };
             const ArticleLuBarcodesInfos = await graphqlRequestClient.request(query, variables);
             return ArticleLuBarcodesInfos;
-        }
-    };
-
-    const getFeatureTypeDetails = async (
-        featureType: any
-    ): Promise<{ [key: string]: any } | undefined> => {
-        if (featureType) {
-            const query = gql`
-                query featureTypeDetails($filters: FeatureTypeDetailSearchFilters) {
-                    featureTypeDetails(filters: $filters) {
-                        results {
-                            id
-                            atPreparation
-                            featureType
-                            featureCodeId
-                        }
-                    }
-                }
-            `;
-            const variables = {
-                filters: { featureType: featureType }
-            };
-            const featureTypeDetails = await graphqlRequestClient
-                .request(query, variables)
-                .then((data: any) => data.featureTypeDetails.results);
-            return featureTypeDetails;
         }
     };
 

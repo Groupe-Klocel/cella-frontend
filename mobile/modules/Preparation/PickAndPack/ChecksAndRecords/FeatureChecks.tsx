@@ -38,6 +38,7 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
         featuresToProcess,
         processedFeatures,
         currentFeatureCode,
+        contents,
         trigger: { triggerRender, setTriggerRender },
         action1Trigger,
         setResetForm
@@ -47,90 +48,67 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
 
     // ScanArticle: manage information for persistence storage and front-end errors
     useEffect(() => {
-        const tmp_processedFeatures = processedFeatures ?? [];
-        let updatedFeaturesToProcess;
+        console.log('featuresToProcess', featuresToProcess);
+        console.log('processedFeatures', processedFeatures);
+        console.log('currentFeatureCode', currentFeatureCode);
+
         if (scannedInfo && featuresToProcess && currentFeatureCode) {
             if (featuresToProcess.length > 0) {
-                const featureToUpdate = featuresToProcess.find((item: any) => {
-                    return item.featureCode.id === currentFeatureCode.id;
-                });
-                //this to record only date when scannedInfo is a valid date
-                let shortDate;
-                if (dayjs(scannedInfo).isValid() && currentFeatureCode.dateType) {
-                    shortDate = dayjs(scannedInfo).format('YYYY-MM-DD');
-                }
-                if (!currentFeatureCode.unique) {
-                    const updatedFeature = {
-                        ...featureToUpdate,
-                        value:
-                            dayjs(scannedInfo).isValid() && currentFeatureCode.dateType
-                                ? shortDate
-                                : scannedInfo
-                    };
-                    tmp_processedFeatures.push(updatedFeature);
+                const formattedScannedInfo =
+                    dayjs(scannedInfo).isValid() && currentFeatureCode.dateType
+                        ? dayjs(scannedInfo).format('YYYY-MM-DD')
+                        : scannedInfo;
+                //contentsFiltered is the variable that contains the contents filtered by the processedFeatures
+                const contentsFiltered = processedFeatures
+                    ? contents.filter((content: any) =>
+                          content.handlingUnitContentFeatures.some((feature: any) =>
+                              processedFeatures?.some(
+                                  (processed: any) =>
+                                      processed.featureCodeId === feature.featureCode.id &&
+                                      processed.value === feature.value
+                              )
+                          )
+                      )
+                    : contents;
 
-                    if (!storedObject[`step${stepNumber}`]?.data?.remainingFeatures) {
-                        updatedFeaturesToProcess = featuresToProcess.filter((item: any) => {
-                            return item.featureCode.id !== currentFeatureCode.id;
-                        });
-                    } else {
-                        updatedFeaturesToProcess = storedObject[
-                            `step${stepNumber}`
-                        ]?.data?.remainingFeatures.filter((item: any) => {
-                            return item.featureCode.id !== currentFeatureCode.id;
-                        });
-                    }
-                } else {
-                    let isUniqueFeaturesEnd = false;
-                    const currentUniqueFeature = tmp_processedFeatures.find((item: any) => {
-                        return item.featureCode.id === currentFeatureCode.id;
-                    });
+                // Check if the scannedInfo is valid and if the currentFeatureCode is a date type
+                const checkNewFeatureExists = contentsFiltered.some((content: any) =>
+                    content.handlingUnitContentFeatures.some(
+                        (feature: any) =>
+                            feature.featureCode.id === currentFeatureCode.id &&
+                            feature.value === formattedScannedInfo
+                    )
+                );
 
-                    let tmp_uniqueFeatures = currentUniqueFeature ? currentUniqueFeature.value : [];
-
-                    if (scannedInfo) {
-                        tmp_uniqueFeatures.push(scannedInfo);
-                    }
-
-                    const updatedFeature = {
-                        ...featureToUpdate,
-                        value: tmp_uniqueFeatures
-                    };
-                    const existingIndex = tmp_processedFeatures.findIndex(
-                        (item: any) => item.featureCode.id === currentFeatureCode.id
-                    );
-                    if (existingIndex === -1) {
-                        tmp_processedFeatures.push(updatedFeature);
-                    } else {
-                        tmp_processedFeatures[existingIndex] = updatedFeature;
-                    }
-
-                    if (
-                        processedFeatures &&
-                        !storedObject[`step${stepNumber}`]?.data?.remainingFeatures
-                    ) {
-                        updatedFeaturesToProcess = featuresToProcess.filter((item: any) => {
-                            return item.featureCode.id !== currentFeatureCode.id;
-                        });
-                    } else if (isUniqueFeaturesEnd) {
-                        updatedFeaturesToProcess = storedObject[
-                            `step${stepNumber}`
-                        ]?.data?.remainingFeatures.filter((item: any) => {
-                            return item.featureCode.id !== currentFeatureCode.id;
-                        });
-                    } else {
-                        updatedFeaturesToProcess =
-                            storedObject[`step${stepNumber}`]?.data?.remainingFeatures ??
-                            featuresToProcess.filter((item: any) => {
-                                return item.featureCode.id === currentFeatureCode.id;
-                            });
-                    }
+                if (!checkNewFeatureExists) {
+                    showError(t('messages:combination-of-features-data-missing'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    return;
                 }
 
                 const data: { [label: string]: any } = {};
-                data['remainingFeatures'] = updatedFeaturesToProcess;
-                data['processedFeatures'] = tmp_processedFeatures;
-                data['nextFeatureCode'] = updatedFeaturesToProcess[0]?.featureCode;
+
+                const tmp_featuresToProcess = featuresToProcess.find(
+                    (feature: any) => feature.featureCodeId === currentFeatureCode.id
+                );
+
+                if (tmp_featuresToProcess) {
+                    const processedFeature = {
+                        ...tmp_featuresToProcess,
+                        value: formattedScannedInfo
+                    };
+
+                    data['processedFeatures'] = [...(processedFeatures || []), processedFeature];
+                }
+
+                data['nextFeatureCode'] = featuresToProcess.find(
+                    (feature: any) =>
+                        feature.featureCodeId !== currentFeatureCode.id &&
+                        !processedFeatures?.some(
+                            (processed: any) => processed.featureCodeId === feature.featureCodeId
+                        )
+                )?.featureCode;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
@@ -155,7 +133,6 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
     useEffect(() => {
         if (action1Trigger.action1Trigger) {
             const updatedData = { ...storedObject[`step${stepNumber}`].data };
-            updatedData['remainingFeatures'] = [];
             updatedData['nextFeatureCode'] = undefined;
             setTriggerRender(!triggerRender);
             storedObject[`step${stepNumber}`] = {

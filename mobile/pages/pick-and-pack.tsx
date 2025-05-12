@@ -72,6 +72,7 @@ const PickAndPack: PageComponent = () => {
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [manualyGenerateParent, setManualyGenerateParent] = useState<number>();
+    const [toBePalletized, setToBePalletized] = useState<boolean>(true);
 
     useEffect(() => {
         const manualyGenerateParent = async () => {
@@ -240,6 +241,15 @@ const PickAndPack: PageComponent = () => {
                 storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent
                     ?.article?.name
             );
+        }
+        if (
+            !storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0].roundLineDetail
+                .handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.carrierShippingMode
+                ?.toBePalletized &&
+            !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
+        ) {
+            console.log('AXC - pick-and-pack.tsx - useEffect - toBePalletized:', toBePalletized);
+            setToBePalletized(false);
         }
 
         if (storedObject['step10']?.data?.round) {
@@ -469,7 +479,10 @@ const PickAndPack: PageComponent = () => {
                     <></>
                 )}
                 {storedObject['step50']?.data &&
-                !(storedObject['step60']?.data?.remainingFeatures?.length === 0) ? (
+                !(
+                    storedObject['step60']?.data.processedFeatures?.length >=
+                    storedObject['step50'].data?.article?.featureType?.length
+                ) ? (
                     <ScanFeature
                         process={processName}
                         stepNumber={60}
@@ -479,9 +492,7 @@ const PickAndPack: PageComponent = () => {
                             submitButton: true,
                             backButton: true
                         }}
-                        contentFeatures={
-                            storedObject['step50']?.data?.content?.handlingUnitContentFeatures
-                        }
+                        contents={storedObject['step50']?.data?.contents}
                         action1Trigger={{
                             action1Trigger: finishUniqueFeatures,
                             setAction1Trigger: setFinishUniqueFeatures
@@ -497,7 +508,8 @@ const PickAndPack: PageComponent = () => {
                     <></>
                 )}
                 {storedObject['step60']?.data &&
-                storedObject['step60']?.data.remainingFeatures.length === 0 &&
+                storedObject['step60']?.data.processedFeatures?.length >=
+                    storedObject['step50'].data?.article?.featureType?.length &&
                 !storedObject['step70']?.data ? (
                     <EnterQuantity
                         process={processName}
@@ -549,7 +561,7 @@ const PickAndPack: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step75']?.data && !storedObject['step80']?.data ? (
+                {storedObject['step75']?.data && toBePalletized && !storedObject['step80']?.data ? (
                     <SelectHuModelForm
                         process={processName}
                         stepNumber={80}
@@ -560,13 +572,16 @@ const PickAndPack: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step80']?.data || isAutoValidateLoading ? (
+                {storedObject['step80']?.data ||
+                (!toBePalletized && storedObject['step75']?.data) ||
+                isAutoValidateLoading ? (
                     <AutoValidatePickAndPackForm
                         process={processName}
                         stepNumber={90}
                         buttons={{ submitButton: true, backButton: true }}
                         trigger={{ triggerRender, setTriggerRender }}
                         headerContent={{ setHeaderContent }}
+                        toBePalletized={toBePalletized}
                         autoValidateLoading={{ isAutoValidateLoading, setIsAutoValidateLoading }}
                     ></AutoValidatePickAndPackForm>
                 ) : (
