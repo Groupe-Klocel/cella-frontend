@@ -237,6 +237,7 @@ export const SelectRoundForm = ({
                                 }
                                 description
                                 baseUnitWeight
+                                featureType
                             }
                             stockOwnerId
                             stockOwner {
@@ -277,6 +278,10 @@ export const SelectRoundForm = ({
                                 handlingUnitOutbound {
                                     id
                                     name
+                                    carrierShippingMode {
+                                        id
+                                        toBePalletized
+                                    }
                                 }
                             }
                             roundLineId

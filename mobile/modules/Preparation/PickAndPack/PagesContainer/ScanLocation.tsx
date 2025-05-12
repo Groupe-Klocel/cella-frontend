@@ -168,6 +168,7 @@ export const ScanLocation = ({
                                                 name
                                             }
                                             baseUnitWeight
+                                            featureType
                                         }
                                         handlingUnitContentFeatures {
                                             id
@@ -175,6 +176,7 @@ export const ScanLocation = ({
                                                 name
                                                 unique
                                             }
+                                            featureCodeId
                                             value
                                         }
                                     }
@@ -220,9 +222,11 @@ export const ScanLocation = ({
                                             name
                                         }
                                         baseUnitWeight
+                                        featureType
                                     }
                                     handlingUnitContentFeatures {
                                         id
+                                        featureCodeId
                                         featureCode {
                                             id
                                             name

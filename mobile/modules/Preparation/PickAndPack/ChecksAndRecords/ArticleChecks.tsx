@@ -50,9 +50,6 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
         if (scannedInfo && articleLuBarcodesInfos) {
             if (articleLuBarcodesInfos.articleLuBarcodes?.count !== 0) {
                 const articleLuBarcode = articleLuBarcodesInfos.articleLuBarcodes?.results[0];
-                const contentFromScan = contents.find(
-                    (content: any) => content.articleId == articleLuBarcode.articleId
-                );
                 if (
                     articleLuBarcode.articleId ==
                     storedObject[`step10`].data.proposedRoundAdvisedAddresses[0]
@@ -60,13 +57,12 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                 ) {
                     const data: { [label: string]: any } = {};
                     data['articleLuBarcode'] = articleLuBarcode;
-                    if (contentFromScan) {
-                        data['content'] = contentFromScan;
-                        data['article'] = contentFromScan.article;
-                    }
-                    console.log('featureTypeDetailsInfos', featureTypeDetailsInfos);
+                    data['contents'] = contents;
+                    data['article'] = contents[0].article;
                     if (featureTypeDetailsInfos) {
                         data['article']['featureType'] = featureTypeDetailsInfos;
+                    } else {
+                        data['article']['featureType'] = [];
                     }
                     setTriggerRender(!triggerRender);
                     storedObject[`step${stepNumber}`] = {

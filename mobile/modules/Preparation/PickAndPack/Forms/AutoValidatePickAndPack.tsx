@@ -34,6 +34,7 @@ export interface IAutoValidatePickAndPackProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     headerContent: { [label: string]: any };
+    toBePalletized: boolean;
     autoValidateLoading: { [label: string]: any };
 }
 
@@ -43,6 +44,7 @@ export const AutoValidatePickAndPackForm = ({
     trigger: { triggerRender, setTriggerRender },
     buttons,
     headerContent: { setHeaderContent },
+    toBePalletized,
     autoValidateLoading: { isAutoValidateLoading, setIsAutoValidateLoading }
 }: IAutoValidatePickAndPackProps) => {
     const { t } = useTranslation('common');
@@ -121,6 +123,7 @@ export const AutoValidatePickAndPackForm = ({
                 features,
                 articleInfo,
                 movingQuantity,
+                toBePalletized,
                 ...(huModel !== 'huModelExist' && { huModel }),
                 ...(huName && isHUToCreate && { huName }),
                 ...(huType && isHUToCreate && { huType })
