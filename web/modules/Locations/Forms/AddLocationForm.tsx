@@ -386,6 +386,19 @@ export const AddLocationForm = () => {
                     <InputNumber min={0} />
                 </Form.Item>
                 <Divider />
+                <Form.Item label={t('d:length')} name="length">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:width')} name="width">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:height')} name="height">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:maxWeight')} name="weight">
+                    <InputNumber />
+                </Form.Item>
+                <Divider />
                 <Form.Item name="replenish" initialValue={false}>
                     <Checkbox onChange={onReplenishChange}>{t('d:replenish')}</Checkbox>
                 </Form.Item>
@@ -468,7 +481,6 @@ export const AddLocationForm = () => {
                         ))}
                     </Select>
                 </Form.Item>
-
                 <Form.Item label={t('d:locationGroupIdText')} name="locationGroupId" rules={[]}>
                     <Select defaultValue="">
                         <Option value="">-</Option>
