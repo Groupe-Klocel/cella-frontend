@@ -76,7 +76,8 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                     content.handlingUnitContentFeatures.some(
                         (feature: any) =>
                             feature.featureCode.id === currentFeatureCode.id &&
-                            feature.value === formattedScannedInfo
+                            feature.value === formattedScannedInfo &&
+                            content.quantity > 0
                     )
                 );
 
