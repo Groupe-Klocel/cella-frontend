@@ -243,6 +243,7 @@ const PickAndPack: PageComponent = () => {
             );
         }
         if (
+            storedObject['step10']?.data &&
             !storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0].roundLineDetail
                 .handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.carrierShippingMode
                 ?.toBePalletized &&
