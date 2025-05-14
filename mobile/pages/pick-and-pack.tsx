@@ -190,12 +190,20 @@ const PickAndPack: PageComponent = () => {
                 object[t('common:article-description')] =
                     storedObject['step50']?.data?.article.description;
             }
-            if (storedObject['step50']?.data?.content) {
-                object[t('common:available-quantity')] =
-                    storedObject['step50']?.data?.content.quantity;
-            }
             if (storedObject['step60']?.data?.processedFeatures) {
                 const processedFeatures = storedObject['step60']?.data?.processedFeatures;
+                const handling_unit_contents = storedObject[
+                    'step40'
+                ]?.data?.handlingUnit?.handlingUnitContents.find((content: any) =>
+                    processedFeatures.every((feature_filter: any) =>
+                        content.handlingUnitContentFeatures.some(
+                            (feature_content: any) =>
+                                feature_content.featureCode.id === feature_filter.featureCodeId &&
+                                feature_content.value === feature_filter.value
+                        )
+                    )
+                );
+                object[t('common:available-quantity')] = handling_unit_contents?.quantity;
                 processedFeatures.map((feature: any) => {
                     const { featureCode, value } = feature;
                     let formattedValue = value;
@@ -481,7 +489,7 @@ const PickAndPack: PageComponent = () => {
                 )}
                 {storedObject['step50']?.data &&
                 !(
-                    storedObject['step60']?.data.processedFeatures?.length >=
+                    storedObject['step60']?.data?.processedFeatures?.length >=
                     storedObject['step50'].data?.article?.featureType?.length
                 ) ? (
                     <ScanFeature
@@ -533,7 +541,18 @@ const PickAndPack: PageComponent = () => {
                                 (total: number, current: any) => total + current.quantity,
                                 0
                             ),
-                            storedObject['step50'].data?.content?.quantity
+                            storedObject['step40']?.data?.handlingUnit?.handlingUnitContents.find(
+                                (content: any) =>
+                                    storedObject['step60']?.data.processedFeatures.every(
+                                        (feature_filter: any) =>
+                                            content.handlingUnitContentFeatures.some(
+                                                (feature_content: any) =>
+                                                    feature_content.featureCode.id ===
+                                                        feature_filter.featureCodeId &&
+                                                    feature_content.value === feature_filter.value
+                                            )
+                                    )
+                            )?.quantity
                         )}
                         checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                     ></EnterQuantity>
