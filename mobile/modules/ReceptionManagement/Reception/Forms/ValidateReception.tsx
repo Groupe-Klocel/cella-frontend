@@ -27,6 +27,7 @@ import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';
+import { useRouter } from 'next/router';
 
 export interface IValidateReceptionProps {
     process: string;
@@ -52,6 +53,8 @@ export const ValidateReceptionForm = ({
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
     const [isHuToBeClosed, setIsHuToBeClosed] = useState<boolean>(false);
+    const router = useRouter();
+    const { receptionType } = router.query;
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -65,7 +68,7 @@ export const ValidateReceptionForm = ({
         setTriggerRender(!triggerRender);
     }, []);
     // retrieve values for update locations/contents and create movement
-    const { step10, step20, step30, step50, step60, step70, step80, step100, step110 } =
+    const { comment, step10, step20, step30, step50, step60, step70, step80, step100, step110 } =
         storedObject;
 
     const purchaseOrder = step10?.data?.purchaseOrder;
@@ -105,7 +108,9 @@ export const ValidateReceptionForm = ({
             receivedQuantity,
             features,
             isNewProductToUpdate,
-            receptionLocation
+            receptionLocation,
+            receptionType,
+            comment
         };
 
         setIsLoading(true);
