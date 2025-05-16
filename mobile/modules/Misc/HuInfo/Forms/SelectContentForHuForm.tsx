@@ -28,6 +28,10 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import parameters from '../../../../../common/parameters.json';
+import graphqlRequestClient from 'graphql/graphqlRequestClient';
+import { gql } from 'graphql-request';
+import { ChangeStockStatusModal } from 'modules/Misc/HuInfo/Modals/ChangeStockStatusModal';
 
 const { Title } = Typography;
 export interface ISelectContentForHuProps {
@@ -82,8 +86,11 @@ export const SelectContentForHuForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
+    const [radio, setRadio] = useState<any>([]);
+    const [showChangeStockStatusModal, setShowChangeStockStatusModal] = useState(false);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [refetch, setRefetch] = useState(false);
 
-    // TYPED SAFE ALL
     //Pre-requisite: initialize current step
     useEffect(() => {
         if (storedObject.currentStep < stepNumber) {
@@ -94,42 +101,138 @@ export const SelectContentForHuForm = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    //SelectContentForHu-1: query contents choices related to chosen HU
-    const defaultFilter = { handlingUnitId: `${huId}` };
-    let filter = defaultFilter;
-
-    const { isLoading, data, error } = useHandlingUnitContents(
-        filter,
-        1,
-        100,
-        {
-            field: 'handlingUnit_location_category',
-            ascending: true
-        },
-        router.locale
-    );
-
-    //SelectContentForHU-2: set contents to provide to carousel
-    const [contents, setContents] = useState<any>([]);
     useEffect(() => {
-        if (data) {
-            if (data?.handlingUnitContents) {
-                setContents(data?.handlingUnitContents?.results);
+        const query = gql`
+            query ListParametersForAScope($scope: String!, $code: String, $language: String) {
+                listParametersForAScope(scope: $scope, code: $code, language: $language) {
+                    id
+                    text
+                    scope
+                    code
+                }
+            }
+        `;
+        const queryVariables = {
+            language: router.locale,
+            scope: 'radio'
+        };
+
+        graphqlRequestClient.request(query, queryVariables).then((data: any) => {
+            setRadio(
+                data?.listParametersForAScope.find(
+                    (e: any) => e.scope === 'radio' && e.code === 'enableContentChange'
+                )
+            );
+        });
+    }, []);
+
+    //SelectContentForHu-1: query contents choices related to chosen HU
+
+    const handlingUnitContentsQuery = gql`
+        query GetHandlingUnitContents(
+            $filters: HandlingUnitContentSearchFilters
+            $orderBy: [HandlingUnitContentOrderByCriterion!]
+            $page: Int!
+            $itemsPerPage: Int!
+            $language: String = "en"
+        ) {
+            handlingUnitContents(
+                filters: $filters
+                orderBy: $orderBy
+                page: $page
+                itemsPerPage: $itemsPerPage
+                language: $language
+            ) {
+                count
+                itemsPerPage
+                totalPages
+                results {
+                    id
+                    stockOwnerId
+                    stockOwner {
+                        id
+                        name
+                    }
+                    articleId
+                    article {
+                        description
+                        name
+                        featureTypeText
+                        baseUnitWeight
+                    }
+                    quantity
+                    stockStatus
+                    stockStatusText
+                    reservation
+                    handlingUnitId
+                    handlingUnit {
+                        name
+                        code
+                        type
+                        typeText
+                        category
+                        categoryText
+                        locationId
+                        location {
+                            name
+                            replenish
+                            category
+                            categoryText
+                            block {
+                                name
+                            }
+                        }
+                        parentHandlingUnit {
+                            name
+                        }
+                        stockOwner {
+                            name
+                        }
+                    }
+                    articleLuBarcodeId
+                    articleLuBarcode {
+                        barcodeId
+                        barcode {
+                            name
+                        }
+                    }
+                    handlingUnitContentFeatures {
+                        id
+                        featureCodeId
+                        featureCode {
+                            id
+                            name
+                            unique
+                        }
+                        value
+                    }
+                }
             }
         }
-    }, [data]);
+    `;
 
-    //SelectContentForHu-3: set stored chosenContent once select button is pushed
-    const [chosenContent, setChosenContent] = useState<any>();
+    const variables = {
+        filters: { handlingUnitId: huId },
+        orderBy: [{ field: 'handlingUnit_location_category', ascending: true }],
+        page: 1,
+        itemsPerPage: 100
+    };
+
+    //SelectContentForHU-2: set contents to provide to carousel & set the first selected content
+    const [contents, setContents] = useState<any>([]);
+    const [selectContent, setSelectContent] = useState<any>();
+    // Fetch data from GraphQL and update contents and selectContent
+
     useEffect(() => {
-        if (chosenContent) {
-            const data: { [label: string]: any } = {};
-            data['chosenContent'] = contents.find((e: any) => e.id === chosenContent);
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
-        }
-    }, [chosenContent]);
+        graphqlRequestClient
+            .request(handlingUnitContentsQuery, { ...variables, language: router.locale })
+            .then((res: any) => {
+                if (res?.handlingUnitContents) {
+                    setContents(res.handlingUnitContents.results);
+                    setSelectContent(res.handlingUnitContents.results[0]);
+                }
+            });
+    }, [huId, refetch]);
 
     //SelectContentForHu-3b: handle back to previous step settings
     const onBack = () => {
@@ -141,114 +244,144 @@ export const SelectContentForHuForm = ({
         storage.set(process, JSON.stringify(storedObject));
     };
 
-    console.log('Ctts', contents);
-
     return (
-        <WrapperForm>
-            {data && !isLoading ? (
-                <CarouselWrapper
-                    arrows
-                    prevArrow={<LeftOutlined />}
-                    nextArrow={<RightOutlined />}
-                    style={{ maxWidth: '95%' }}
-                >
-                    {contents && contents.length >= 1 ? (
-                        contents.map((content: any, index: number, array: any) => (
-                            <WrapperSlide key={content.id}>
-                                <StyledTitle level={5}>
-                                    {t('common:content')} {index + 1}/{array.length}
-                                </StyledTitle>
-                                <Divider style={{ margin: 2 }} />
+        <>
+            <WrapperForm>
+                {contents ? (
+                    <CarouselWrapper
+                        arrows
+                        prevArrow={<LeftOutlined />}
+                        nextArrow={<RightOutlined />}
+                        style={{ maxWidth: '95%' }}
+                        afterChange={(current) => {
+                            setCurrentIndex(current);
+                            const visibleContent = contents[current];
+                            setSelectContent(visibleContent);
+                        }}
+                    >
+                        {contents && contents.length >= 1 ? (
+                            contents.map((content: any, index: number, array: any) => (
+                                <WrapperSlide key={content.id}>
+                                    <StyledTitle level={5}>
+                                        {t('common:content')} {index + 1}/{array.length}
+                                    </StyledTitle>
+                                    <Divider style={{ margin: 2 }} />
 
-                                <Row>
-                                    <Col span={8}>
-                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
-                                            {t('common:handling-unit_abbr')}:
-                                        </Typography>
-                                    </Col>
-                                    <Col span={16}>
-                                        <Typography style={{ fontSize: '10px' }}>
-                                            {content.handlingUnit?.name}
-                                        </Typography>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                    <Col span={8}>
-                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
-                                            {t('common:stock-owner')}:
-                                        </Typography>
-                                    </Col>
-                                    <Col span={16}>
-                                        <Typography style={{ fontSize: '10px' }}>
-                                            {content.stockOwner?.name}
-                                        </Typography>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                    <Col span={8}>
-                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
-                                            {t('common:quantity')}:
-                                        </Typography>
-                                    </Col>
-                                    <Col span={16}>
-                                        <Typography style={{ fontSize: '10px' }}>
-                                            {content.quantity ? content.quantity : 0}
-                                        </Typography>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                    <Col span={8}>
-                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
-                                            {t('common:article')}:
-                                        </Typography>
-                                    </Col>
-                                    <Col span={16}>
-                                        <Typography style={{ fontSize: '10px' }}>
-                                            {content.article.name}
-                                        </Typography>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                    <Col span={8}>
-                                        <Typography style={{ color: 'grey', fontSize: '10px' }}>
-                                            {t('common:stock-status')}:
-                                        </Typography>
-                                    </Col>
-                                    <Col span={16}>
-                                        <Typography style={{ fontSize: '10px' }}>
-                                            {content.stockStatusText}
-                                        </Typography>
-                                    </Col>
-                                </Row>
+                                    <Row>
+                                        <Col span={8}>
+                                            <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                                {t('common:handling-unit_abbr')}:
+                                            </Typography>
+                                        </Col>
+                                        <Col span={16}>
+                                            <Typography style={{ fontSize: '10px' }}>
+                                                {content.handlingUnit?.name}
+                                            </Typography>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col span={8}>
+                                            <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                                {t('common:stock-owner')}:
+                                            </Typography>
+                                        </Col>
+                                        <Col span={16}>
+                                            <Typography style={{ fontSize: '10px' }}>
+                                                {content.stockOwner?.name}
+                                            </Typography>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col span={8}>
+                                            <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                                {t('common:quantity')}:
+                                            </Typography>
+                                        </Col>
+                                        <Col span={16}>
+                                            <Typography style={{ fontSize: '10px' }}>
+                                                {content.quantity ? content.quantity : 0}
+                                            </Typography>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col span={8}>
+                                            <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                                {t('common:article')}:
+                                            </Typography>
+                                        </Col>
+                                        <Col span={16}>
+                                            <Typography style={{ fontSize: '10px' }}>
+                                                {content.article.name}
+                                            </Typography>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col span={8}>
+                                            <Typography style={{ color: 'grey', fontSize: '10px' }}>
+                                                {t('common:stock-status')}:
+                                            </Typography>
+                                        </Col>
+                                        <Col span={16}>
+                                            <Typography style={{ fontSize: '10px' }}>
+                                                {content.stockStatusText}
+                                            </Typography>
+                                        </Col>
+                                    </Row>
 
-                                {content.handlingUnitContentFeatures.map(
-                                    (huContentFeature: any, index: number) => (
-                                        <Row key={index}>
-                                            <Col span={8}>
-                                                <Typography
-                                                    style={{ color: 'grey', fontSize: '10px' }}
-                                                >
-                                                    {huContentFeature.featureCode.name}:
-                                                </Typography>
-                                            </Col>
-                                            <Col span={16}>
-                                                <Typography style={{ fontSize: '10px' }}>
-                                                    {huContentFeature.value}
-                                                </Typography>
-                                            </Col>
+                                    {content.handlingUnitContentFeatures.map(
+                                        (huContentFeature: any, index: number) => (
+                                            <Row key={index}>
+                                                <Col span={8}>
+                                                    <Typography
+                                                        style={{ color: 'grey', fontSize: '10px' }}
+                                                    >
+                                                        {huContentFeature.featureCode.name}:
+                                                    </Typography>
+                                                </Col>
+                                                <Col span={16}>
+                                                    <Typography style={{ fontSize: '10px' }}>
+                                                        {huContentFeature.value}
+                                                    </Typography>
+                                                </Col>
+                                            </Row>
+                                        )
+                                    )}
+                                    <br />
+                                    {radio?.text == 1 &&
+                                    content.handlingUnit.category ==
+                                        parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
+                                        <Row justify="center">
+                                            <Button
+                                                onClick={() => {
+                                                    setShowChangeStockStatusModal(true);
+                                                }}
+                                            >
+                                                {t('actions:change-content')}
+                                            </Button>
                                         </Row>
-                                    )
-                                )}
-                            </WrapperSlide>
-                        ))
-                    ) : (
-                        <Text type="warning">{t('messages:no-content')}</Text>
-                    )}
-                </CarouselWrapper>
-            ) : (
-                <ContentSpin />
-            )}
-            <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
-        </WrapperForm>
+                                    ) : (
+                                        <></>
+                                    )}
+                                </WrapperSlide>
+                            ))
+                        ) : (
+                            <Text type="warning">{t('messages:no-content')}</Text>
+                        )}
+                    </CarouselWrapper>
+                ) : (
+                    <ContentSpin />
+                )}
+                <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
+            </WrapperForm>
+            <ChangeStockStatusModal
+                visible={showChangeStockStatusModal}
+                showhideModal={() => {
+                    setShowChangeStockStatusModal(!showChangeStockStatusModal);
+                }}
+                content={selectContent}
+                id={selectContent?.id}
+                setRefetch={setRefetch}
+            />
+        </>
     );
 };
