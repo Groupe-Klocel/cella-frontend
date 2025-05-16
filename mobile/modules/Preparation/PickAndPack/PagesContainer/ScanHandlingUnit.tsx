@@ -142,6 +142,7 @@ export const ScanHandlingUnit = ({
                                             name
                                         }
                                         baseUnitWeight
+                                        featureType
                                     }
                                 }
                             }
@@ -207,6 +208,7 @@ export const ScanHandlingUnit = ({
                                 }
                                 handlingUnitContentFeatures {
                                     id
+                                    featureCodeId
                                     featureCode {
                                         id
                                         name
