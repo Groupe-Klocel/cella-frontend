@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { useHandlingUnitContents, LsIsSecured, showError } from '@helpers';
+import { LsIsSecured, showError } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -30,6 +30,8 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import { useAppState } from 'context/AppContext';
+import { lang } from 'moment';
 
 const { Title } = Typography;
 export interface ISelectContentForArticleProps {
@@ -89,6 +91,12 @@ export const SelectContentForArticleForm = ({
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
+    const { userSettings } = useAppState();
+    const generalUserSettings = userSettings?.find((item: any) => {
+        return 'globalParametersMobile' === item.code;
+    });
+    const globalLocale = generalUserSettings?.valueJson?.lang;
+    const searchedLanguage = globalLocale == 'en-us' ? 'en' : globalLocale;
 
     const [data, setData] = useState<any>();
 
@@ -197,9 +205,13 @@ export const SelectContentForArticleForm = ({
 
     const variables = {
         filters: filter,
-        orderBy: [{ field: 'handlingUnit_location_category', ascending: true }],
+        orderBy: [
+            { field: 'handlingUnit_location_name', ascending: true },
+            { field: 'handlingUnit_name', ascending: true }
+        ],
         page: 1,
-        itemsPerPage: 100
+        itemsPerPage: 100,
+        language: searchedLanguage
     };
 
     function dataFunction() {
@@ -364,7 +376,7 @@ export const SelectContentForArticleForm = ({
                                         </Col>
                                         <Col span={16}>
                                             <Typography style={{ fontSize: '10px' }}>
-                                                {content?.handlingUnit?.location?.categoryText}
+                                                {content?.handlingUnit?.categoryText}
                                             </Typography>
                                         </Col>
                                     </Row>
