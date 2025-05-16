@@ -46,13 +46,44 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     );
 
-    const { scannedInfo } = req.body;
+    const { scannedInfo, receptionType } = req.body;
+    const receptionTypesQuery = gql`
+        query getReceptionTypes {
+            listConfigsForAScope(scope: "purchase_order_type") {
+                id
+                scope
+                code
+                text
+            }
+        }
+    `;
 
+    const receptionTypesResponse: GraphQLResponseType = await graphqlRequestClient.request(
+        receptionTypesQuery,
+        requestHeader
+    );
+    let receptionTypesFilter: number[] = [];
+
+    if (receptionType === 'return') {
+        receptionTypesResponse.listConfigsForAScope
+            .filter(
+                (item: any) =>
+                    parseInt(item.code) === configs.PURCHASE_ORDER_TYPE_L2_RETURN ||
+                    parseInt(item.code) === configs.PURCHASE_ORDER_TYPE_L3_RETURN
+            )
+            .map((item: any) => receptionTypesFilter.push(parseInt(item.code)));
+    } else {
+        receptionTypesResponse.listConfigsForAScope
+            .filter(
+                (item: any) =>
+                    parseInt(item.code) !== configs.PURCHASE_ORDER_TYPE_L2_RETURN ||
+                    parseInt(item.code) !== configs.PURCHASE_ORDER_TYPE_L3_RETURN
+            )
+            .map((item: any) => receptionTypesFilter.push(parseInt(item.code)));
+    }
     const purchaseOrderFilter = {
-        filters: { name: scannedInfo }
+        filters: { name: scannedInfo, type: receptionTypesFilter }
     };
-
-    // configs.PURCHASE_ORDER_TYPE_L3_RETURN
 
     const purchaseOrderQuery = gql`
         query GetPurchaseOrders(
