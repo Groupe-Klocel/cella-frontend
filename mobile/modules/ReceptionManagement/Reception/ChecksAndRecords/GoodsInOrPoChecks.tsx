@@ -40,7 +40,8 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
-        setResetForm
+        setResetForm,
+        receptionType
     } = dataToCheck;
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -56,7 +57,8 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        scannedInfo
+                        scannedInfo,
+                        receptionType
                     })
                 });
                 const response = await res.json();

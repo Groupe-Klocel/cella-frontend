@@ -336,6 +336,7 @@ const Reception: PageComponent = () => {
                         trigger={{ triggerRender, setTriggerRender }}
                         buttons={{ submitButton: true, backButton: false }}
                         checkComponent={(data: any) => <GoodsInOrPoChecks dataToCheck={data} />}
+                        receptionType={receptionType}
                     ></ScanGoodsInOrPo>
                 ) : (
                     <></>

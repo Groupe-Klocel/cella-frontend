@@ -29,6 +29,7 @@ export interface IScanGoodsInOrPoProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     checkComponent: any;
+    receptionType?: string | string[];
 }
 
 export const ScanGoodsInOrPo = ({
@@ -37,7 +38,8 @@ export const ScanGoodsInOrPo = ({
     label,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    checkComponent
+    checkComponent,
+    receptionType
 }: IScanGoodsInOrPoProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
@@ -62,7 +64,8 @@ export const ScanGoodsInOrPo = ({
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
-        setResetForm
+        setResetForm,
+        receptionType
     };
 
     return (
