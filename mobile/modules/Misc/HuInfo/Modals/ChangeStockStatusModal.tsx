@@ -123,11 +123,20 @@ const ChangeStockStatusModal = ({
         scope: 'stock_statuses'
     });
 
+    useEffect(() => {
+        form.setFieldsValue({
+            stockStatus: content?.stockStatus,
+            quantity: content?.quantity,
+            comment: ''
+        });
+    }, [content, form]);
+
     const handleCancel = async () => {
         showhideModal();
         form.resetFields();
         setRefetch((prev: any) => !prev);
     };
+
     const onClickOk = async () => {
         const movementInfos: { [key: string]: any } = {
             locationId: content?.handlingUnit?.locationId,
@@ -201,7 +210,6 @@ const ChangeStockStatusModal = ({
                 }
                 showhideModal();
                 setRefetch((prev: any) => !prev);
-                form.resetFields(['comment']);
             })
             .catch((err) => {
                 showError(errorMessageUpdateData);

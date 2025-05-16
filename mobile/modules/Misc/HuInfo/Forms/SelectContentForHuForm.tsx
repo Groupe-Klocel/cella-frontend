@@ -229,7 +229,11 @@ export const SelectContentForHuForm = ({
             .then((res: any) => {
                 if (res?.handlingUnitContents) {
                     setContents(res.handlingUnitContents.results);
-                    setSelectContent(res.handlingUnitContents.results[0]);
+                    setSelectContent(
+                        res.handlingUnitContents.results.find(
+                            (e: any) => e.id === selectContent?.id
+                        ) ?? res.handlingUnitContents.results[0]
+                    );
                 }
             });
     }, [huId, refetch]);
