@@ -257,7 +257,6 @@ const PickAndPack: PageComponent = () => {
                 ?.toBePalletized &&
             !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
         ) {
-            console.log('AXC - pick-and-pack.tsx - useEffect - toBePalletized:', toBePalletized);
             setToBePalletized(false);
         }
 

@@ -48,10 +48,6 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
 
     // ScanArticle: manage information for persistence storage and front-end errors
     useEffect(() => {
-        console.log('featuresToProcess', featuresToProcess);
-        console.log('processedFeatures', processedFeatures);
-        console.log('currentFeatureCode', currentFeatureCode);
-
         if (scannedInfo && featuresToProcess && currentFeatureCode) {
             if (featuresToProcess.length > 0) {
                 const formattedScannedInfo =
