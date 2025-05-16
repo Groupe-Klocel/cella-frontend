@@ -158,11 +158,11 @@ const ChangeStockStatusModal = ({
                         id: id,
                         input: formDataWithoutComment
                     };
-                    const updateHandlingUnitContentResult = await graphqlRequestClient
-                        .request(updateHandlingUnitContentQuery, updateHandlingUnitContentVariables)
-                        .catch((err: any) => {
-                            throw new Error(err);
-                        });
+                    const updateHandlingUnitContentResult = await graphqlRequestClient.request(
+                        updateHandlingUnitContentQuery,
+                        updateHandlingUnitContentVariables
+                    );
+
                     let executeFunctionVariables = {
                         functionName: 'create_movements',
                         event: {
@@ -177,16 +177,31 @@ const ChangeStockStatusModal = ({
                         }
                     };
 
-                    await graphqlRequestClient
-                        .request(executeFunctionQuery, executeFunctionVariables)
-                        .catch((err: any) => {
-                            throw new Error(err);
-                        });
-                    showSuccess(successMessageUpdateData);
+                    const executeFunctionResult = await graphqlRequestClient.request(
+                        executeFunctionQuery,
+                        executeFunctionVariables
+                    );
+
+                    if (executeFunctionResult.executeFunction.status === 'ERROR') {
+                        showError(executeFunctionResult.executeFunction.output);
+                    } else if (
+                        executeFunctionResult.executeFunction.status === 'OK' &&
+                        executeFunctionResult.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(
+                            t(`errors:${executeFunctionResult.executeFunction.output.output.code}`)
+                        );
+                        console.log(
+                            'Backend_message',
+                            executeFunctionResult.executeFunction.output.output
+                        );
+                    } else {
+                        showSuccess(successMessageUpdateData);
+                    }
                 }
                 showhideModal();
-                form.resetFields();
                 setRefetch((prev: any) => !prev);
+                form.resetFields(['comment']);
             })
             .catch((err) => {
                 showError(errorMessageUpdateData);
@@ -204,10 +219,13 @@ const ChangeStockStatusModal = ({
             width={800}
         >
             <Form form={form} layout="vertical" scrollToFirstError size="small">
-                <Form.Item label={t('common:stock-status')} name="stockStatus">
+                <Form.Item
+                    label={t('common:stock-status')}
+                    name="stockStatus"
+                    initialValue={content?.stockStatus}
+                >
                     <Select
                         allowClear
-                        defaultValue={content?.stockStatus}
                         placeholder={`${t('messages:please-select-a', {
                             name: t('common:stock-status')
                         })}`}
@@ -219,8 +237,12 @@ const ChangeStockStatusModal = ({
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={t('common:quantity')} name="quantity">
-                    <InputNumber min={0} defaultValue={content?.quantity} />
+                <Form.Item
+                    label={t('common:quantity')}
+                    name="quantity"
+                    initialValue={content?.quantity}
+                >
+                    <InputNumber min={0} />
                 </Form.Item>
                 <Form.Item label={t('common:comment')} name="comment">
                     <TextArea />
