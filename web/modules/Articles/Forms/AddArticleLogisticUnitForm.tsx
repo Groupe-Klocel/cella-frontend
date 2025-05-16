@@ -249,7 +249,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
             const newIdOpts: Array<FormOptionType> = [];
             locationData.data.locations?.results.forEach(({ id, name, status, category }) => {
                 if (
-                    status != configs.LOCATION_STATUS_NOT_AVAILABLE &&
+                    status != configs.LOCATION_STATUS_DISABLED &&
                     category === configs.LOCATION_CATEGORY_PICKING
                 )
                     newIdOpts.push({ text: name!, key: id! });
