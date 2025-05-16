@@ -112,7 +112,7 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                     type: parameters.HANDLING_UNIT_TYPE_PALLET,
                     status: configs.HANDLING_UNIT_STATUS_VALIDATED,
                     category: parameters.HANDLING_UNIT_CATEGORY_STOCK,
-                    locationId: storedObject['step30'].data.finalLocation[0].id,
+                    locationId: storedObject['step30'].data.finalLocations[0].id,
                     stockOwnerId: storedObject['step20'].data.handlingUnit.stockOwnerId
                 };
 

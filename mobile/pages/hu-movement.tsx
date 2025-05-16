@@ -271,7 +271,7 @@ const HuMovement: PageComponent = () => {
                     stepNumber={35}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
-                    locations={storedObject['step30'].data.finalLocation}
+                    locations={storedObject['step30'].data.finalLocations}
                 ></SelectLocationByLevelForm>
             ) : (
                 <></>
