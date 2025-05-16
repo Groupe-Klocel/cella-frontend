@@ -78,10 +78,6 @@ export const ScanFeature = ({
     //N.B.: Version1 autorecovers information from previous step as there is only one HUC and no features scan check.
     //Pre-requisite: initialize current step
     useEffect(() => {
-        console.log(featureType, 'featureType');
-        console.log(contents, 'contentFeatures');
-        console.log(processedFeatures, 'processedFeatures');
-
         //check workflow direction and assign current step accordingly
         if (contents.length === 1 || featureType.length === 0) {
             // N.B.: in this case previous step is kept at its previous value
