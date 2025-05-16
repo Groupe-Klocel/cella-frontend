@@ -128,7 +128,10 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
             ascending: false
         };
         const variables = {
-            filters: { autocountHandlingUnit: 0 },
+            filters: {
+                autocountHandlingUnit: 0,
+                status: configs.LOCATION_STATUS_AVAILABLE
+            },
             orderBy: sortByDate,
             page: 1,
             itemsPerPage: 100,
