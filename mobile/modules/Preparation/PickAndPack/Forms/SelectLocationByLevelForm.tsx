@@ -149,6 +149,7 @@ export const SelectLocationByLevelForm = ({
                                                 name
                                             }
                                             baseUnitWeight
+                                            featureType
                                         }
                                         handlingUnitContentFeatures {
                                             id
@@ -365,6 +366,7 @@ export const SelectLocationByLevelForm = ({
                                                         name
                                                     }
                                                     baseUnitWeight
+                                                    featureType
                                                 }
                                                 stockOwnerId
                                                 stockOwner {
@@ -375,6 +377,7 @@ export const SelectLocationByLevelForm = ({
                                                         name
                                                         unique
                                                     }
+                                                    featureCodeId
                                                     value
                                                 }
                                                 handlingUnitId
