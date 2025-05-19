@@ -92,9 +92,6 @@ export const SimilarLocations = ({
         }
         fetchData();
     }, []);
-
-    console.log('DLA-nbMaxLocations-sim', nbMaxLocations);
-
     //handle similar features if any
     useEffect(() => {
         if (!currentFeatures) {
@@ -135,7 +132,8 @@ export const SimilarLocations = ({
                     (e: any) =>
                         e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_STOCK &&
                         e.handlingUnit.category === parameters.HANDLING_UNIT_CATEGORY_STOCK &&
-                        e.handlingUnit.locationId !== locationIdToExclude
+                        e.handlingUnit.locationId !== locationIdToExclude &&
+                        e.handlingUnit.location.status !== configs.LOCATION_STATUS_DISABLED
                 )
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {
@@ -151,7 +149,8 @@ export const SimilarLocations = ({
                     (e: any) =>
                         e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_RECEPTION &&
                         e.handlingUnit.category === parameters.HANDLING_UNIT_CATEGORY_STOCK &&
-                        e.handlingUnit.locationId !== locationIdToExclude
+                        e.handlingUnit.locationId !== locationIdToExclude &&
+                        e.handlingUnit.location.status !== configs.LOCATION_STATUS_DISABLED
                 )
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {

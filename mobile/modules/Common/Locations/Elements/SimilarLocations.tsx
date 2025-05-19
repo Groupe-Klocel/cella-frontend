@@ -140,6 +140,7 @@ export const SimilarLocations = ({
                                 replenish
                                 category
                                 categoryText
+                                status
                                 extraText1
                                 extraText3
                                 block {
@@ -201,7 +202,8 @@ export const SimilarLocations = ({
                     (e: any) =>
                         e.id !== chosenContentId &&
                         e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_STOCK &&
-                        e.handlingUnit.category === parameters.HANDLING_UNIT_CATEGORY_STOCK
+                        e.handlingUnit.category === parameters.HANDLING_UNIT_CATEGORY_STOCK &&
+                        e.handlingUnit.location.status !== configs.LOCATION_STATUS_DISABLED
                 )
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {
@@ -217,7 +219,8 @@ export const SimilarLocations = ({
                     (e: any) =>
                         e.id !== chosenContentId &&
                         e.handlingUnit.location?.category === configs.LOCATION_CATEGORY_PICKING &&
-                        e.handlingUnit.category === parameters.HANDLING_UNIT_CATEGORY_STOCK
+                        e.handlingUnit.category === parameters.HANDLING_UNIT_CATEGORY_STOCK &&
+                        e.handlingUnit.location.status !== configs.LOCATION_STATUS_DISABLED
                 )
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {

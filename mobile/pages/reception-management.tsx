@@ -21,7 +21,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { HeaderContent, MenuItem, NavButton } from '@components';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { pathParamsFromDictionary, useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -29,11 +29,15 @@ type PageComponent = FC & { layout: typeof MainLayout };
 const menuItemDatas = [
     {
         title: 'menu:reception',
-        path: '/reception'
+        path: pathParamsFromDictionary('/reception', {
+            receptionType: 'normal'
+        })
     },
     {
         title: 'menu:return-reception',
-        path: '/reception'
+        path: pathParamsFromDictionary('/reception', {
+            receptionType: 'return'
+        })
     }
 ];
 
