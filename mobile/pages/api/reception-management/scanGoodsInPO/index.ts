@@ -76,11 +76,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         receptionTypesResponse.listConfigsForAScope
             .filter(
                 (item: any) =>
-                    parseInt(item.code) !== configs.PURCHASE_ORDER_TYPE_L2_RETURN ||
+                    parseInt(item.code) !== configs.PURCHASE_ORDER_TYPE_L2_RETURN &&
                     parseInt(item.code) !== configs.PURCHASE_ORDER_TYPE_L3_RETURN
             )
             .map((item: any) => receptionTypesFilter.push(parseInt(item.code)));
     }
+
     const purchaseOrderFilter = {
         filters: { name: scannedInfo, type: receptionTypesFilter }
     };
