@@ -29,6 +29,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';
 import CameraScanner from 'modules/Common/CameraScanner';
+import TextArea from 'antd/es/input/TextArea';
 
 export interface ISelectStockStatusProps {
     process: string;
@@ -37,6 +38,7 @@ export interface ISelectStockStatusProps {
     buttons: { [label: string]: any };
     defaultValue?: any;
     initialValue?: any;
+    isCommentDisplayed?: boolean;
 }
 
 export const SelectStockStatusForm = ({
@@ -45,7 +47,8 @@ export const SelectStockStatusForm = ({
     defaultValue,
     initialValue,
     trigger: { triggerRender, setTriggerRender },
-    buttons
+    buttons,
+    isCommentDisplayed
 }: ISelectStockStatusProps) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
@@ -119,6 +122,17 @@ export const SelectStockStatusForm = ({
         data['stockStatus'] = stockStatuses?.find((e: any) => {
             return e.key == values.stockStatus;
         });
+
+        if (isCommentDisplayed) {
+            if (values.comment && values.comment.length > 0) {
+                storedObject['comment'] = values.comment;
+            } else {
+                if (storedObject['comment']) {
+                    delete storedObject['comment'];
+                }
+            }
+        }
+
         storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
         storage.set(process, JSON.stringify(storedObject));
         setTriggerRender(!triggerRender);
@@ -168,6 +182,15 @@ export const SelectStockStatusForm = ({
                         ))}
                     </Select>
                 </StyledFormItem>
+                {isCommentDisplayed && (
+                    <StyledFormItem
+                        label={t('common:comment')}
+                        name="comment"
+                        initialValue={storedObject['comment'] ?? undefined}
+                    >
+                        <TextArea allowClear></TextArea>
+                    </StyledFormItem>
+                )}
                 <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>

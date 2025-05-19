@@ -22,6 +22,7 @@ import { LsIsSecured } from '@helpers';
 import { Form, InputNumber } from 'antd';
 import { RadioButtons } from 'components/common/dumb/Buttons/RadioButtons';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import TextArea from 'antd/es/input/TextArea';
 
 export interface IEnterNumberFormProps {
     process: string;
@@ -36,6 +37,7 @@ export interface IEnterNumberFormProps {
     max?: number;
     initialValue?: number;
     isSelected?: boolean;
+    isCommentDisplayed?: boolean;
 }
 
 export const EnterNumberForm = ({
@@ -49,7 +51,8 @@ export const EnterNumberForm = ({
     min,
     max,
     initialValue,
-    isSelected
+    isSelected,
+    isCommentDisplayed
 }: IEnterNumberFormProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -60,6 +63,16 @@ export const EnterNumberForm = ({
     //EnterNumberForm-1a: retrieve chosen level from select and set information
     const onFinish = (values: any) => {
         setEnteredInfo(values.number);
+        if (isCommentDisplayed) {
+            if (values.comment && values.comment.length > 0) {
+                storedObject['comment'] = values.comment;
+            } else {
+                if (storedObject['comment']) {
+                    delete storedObject['comment'];
+                }
+            }
+            storage.set(process, JSON.stringify(storedObject));
+        }
     };
 
     //EnterNumberForm-1b: handle back to previous step settings
@@ -97,6 +110,15 @@ export const EnterNumberForm = ({
                         autoFocus
                     />
                 </StyledFormItem>
+                {isCommentDisplayed && (
+                    <StyledFormItem
+                        label={t('common:comment')}
+                        name="comment"
+                        initialValue={storedObject['comment'] ?? undefined}
+                    >
+                        <TextArea allowClear></TextArea>
+                    </StyledFormItem>
+                )}
                 <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
             </StyledForm>
         </WrapperForm>

@@ -87,7 +87,7 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
     useEffect(() => {
         if (scannedInfo && fetchResult) {
             // No HU and no Location = error
-            if (!fetchResult.handlingUnit && !fetchResult.location) {
+            if (!fetchResult.handlingUnit && !fetchResult.locations) {
                 showError(t('messages:unexpected-scanned-item'));
                 setResetForm(true);
                 setScannedInfo(undefined);
@@ -95,7 +95,7 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
 
             if (fetchResult.resType === 'handlingUnit') {
                 // HU without Location = error
-                if (!fetchResult.location) {
+                if (!fetchResult.locations) {
                     showError(t('messages:no-location-hu'));
                     setResetForm(true);
                     setScannedInfo(undefined);
@@ -126,7 +126,7 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                 }
                 // final HU with different article = error
                 else if (
-                    fetchResult.location.huManagement &&
+                    fetchResult.locations[0].huManagement &&
                     fetchResult.handlingUnit.type != parameters.HANDLING_UNIT_TYPE_PALLET &&
                     storedObject['step20'].data.handlingUnit.handlingUnitContents &&
                     fetchResult.handlingUnit.handlingUnitContents?.length > 0 &&
@@ -144,7 +144,7 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
                     // HU and Location = next step
                     const data: { [label: string]: any } = {};
                     data['resType'] = fetchResult.resType;
-                    data['finalLocation'] = [fetchResult.location];
+                    data['finalLocations'] = fetchResult.locations;
                     data['finalHandlingUnit'] = fetchResult.handlingUnit;
                     setTriggerRender(!triggerRender);
                     storedObject[`step${stepNumber}`] = {
@@ -157,17 +157,14 @@ export const HuOrLocationChecks = ({ dataToCheck }: IHuOrLocationChecksProps) =>
             }
 
             // Location : next step
-            if (fetchResult.resType === 'location' && fetchResult.location) {
+            if (fetchResult.resType === 'location' && fetchResult.locations) {
                 const data: { [label: string]: any } = {};
 
                 if (triggerAlternativeSubmit?.triggerAlternativeSubmit) {
                     data['finalHandlingUnit'] = storedObject['step20'].data.handlingUnit;
                 }
                 data['resType'] = fetchResult.resType;
-                data['finalLocation'] =
-                    fetchResult.location.length === 1
-                        ? [fetchResult.location]
-                        : fetchResult.location;
+                data['finalLocations'] = fetchResult.locations;
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],

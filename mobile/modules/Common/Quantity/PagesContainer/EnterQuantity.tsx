@@ -31,6 +31,7 @@ export interface IEnterQuantityProps {
     buttons: { [label: string]: any };
     availableQuantity?: number;
     checkComponent: any;
+    isCommentDisplayed?: boolean;
 }
 
 export const EnterQuantity = ({
@@ -41,7 +42,8 @@ export const EnterQuantity = ({
     trigger: { triggerRender, setTriggerRender },
     buttons,
     availableQuantity,
-    checkComponent
+    checkComponent,
+    isCommentDisplayed
 }: IEnterQuantityProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -94,6 +96,7 @@ export const EnterQuantity = ({
                 min={1}
                 initialValue={1}
                 isSelected={true}
+                isCommentDisplayed={isCommentDisplayed}
             ></EnterNumberForm>
             {checkComponent(dataToCheck)}
         </>

@@ -70,8 +70,10 @@ const Reception: PageComponent = () => {
     const [requestNewGoodsIn, setRequestNewGoodsIn] = useState<boolean>(false);
     const [triggerHUClose, setTriggerHUClose] = useState<boolean>(false);
 
+    const { receptionType } = router.query;
+
     //define workflow parameters
-    const processName = 'reception';
+    const processName = receptionType === 'return' ? 'return-reception' : 'reception';
 
     // [0] : 10-> Scan PO
     // [1] : 20 -> Select GoodsIn
@@ -87,7 +89,7 @@ const Reception: PageComponent = () => {
     // [11] : 120 -> Validate reception
     const storedObject = JSON.parse(storage.get(processName) || '{}');
 
-    console.log('reception', storedObject);
+    console.log(`${processName}`, storedObject);
 
     //#region retrieve configuration
     const getParameters = async (): Promise<{ [key: string]: any } | undefined> => {
@@ -286,7 +288,9 @@ const Reception: PageComponent = () => {
     return (
         <PageContentWrapper>
             <HeaderContent
-                title={t('common:reception')}
+                title={
+                    receptionType === 'return' ? t('menu:return-reception') : t('common:reception')
+                }
                 actionsRight={
                     <Space>
                         {storedObject.currentStep > 10 ? (
@@ -332,6 +336,7 @@ const Reception: PageComponent = () => {
                         trigger={{ triggerRender, setTriggerRender }}
                         buttons={{ submitButton: true, backButton: false }}
                         checkComponent={(data: any) => <GoodsInOrPoChecks dataToCheck={data} />}
+                        receptionType={receptionType}
                     ></ScanGoodsInOrPo>
                 ) : (
                     <></>
@@ -438,6 +443,7 @@ const Reception: PageComponent = () => {
                         initialValue={
                             storedObject['step50'].data.currentPurchaseOrderLine.blockingStatus
                         }
+                        isCommentDisplayed={true}
                     ></SelectStockStatusForm>
                 ) : (
                     <></>
@@ -460,6 +466,7 @@ const Reception: PageComponent = () => {
                                 : undefined
                         }
                         checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
+                        isCommentDisplayed={true}
                     ></EnterQuantity>
                 ) : (
                     <></>
