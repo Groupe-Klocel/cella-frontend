@@ -39,6 +39,7 @@ query GetHandlingUnitContents(
                 id
                 name
             }
+            articleId
             article {
                 description
                 name
