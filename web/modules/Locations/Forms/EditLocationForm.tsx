@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import configs from '../../../../common/configs.json';
-import { Button, Input, Form, Checkbox, Select, Space, Modal } from 'antd';
+import { Button, Input, Form, Checkbox, Select, Space, Modal, InputNumber } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -344,6 +344,18 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
                 </Form.Item>
                 <Form.Item label={t('d:constraint')} name="constraint">
                     <Input />
+                </Form.Item>
+                <Form.Item label={t('d:length')} name="length">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:width')} name="width">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:height')} name="height">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:maxWeight')} name="weight">
+                    <InputNumber />
                 </Form.Item>
                 <Form.Item label={t('d:comment')} name="comment">
                     <TextArea />

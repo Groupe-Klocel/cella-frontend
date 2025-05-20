@@ -82,6 +82,10 @@ query GetLocationById($id: String!) {
         column
         level
         position
+        length
+        width
+        height
+        weight
         replenish
         blockId
         block {
