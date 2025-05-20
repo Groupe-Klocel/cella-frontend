@@ -22,6 +22,7 @@ import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import parameters from '../../../../../common/parameters.json';
+import { useRouter } from 'next/router';
 
 export interface IHandlingUnitOriginChecksProps {
     dataToCheck: any;
@@ -30,6 +31,7 @@ export interface IHandlingUnitOriginChecksProps {
 export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
+    const router = useRouter();
 
     const {
         process,
@@ -68,7 +70,8 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     setResetForm(true);
                     setScannedInfo(undefined);
                     if (isEnforcedValue) {
-                        onBack(storedObject.currentStep);
+                        router.back();
+                        storage.remove(process);
                     }
                     return;
                 }
@@ -82,7 +85,8 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     setResetForm(true);
                     setScannedInfo(undefined);
                     if (isEnforcedValue) {
-                        onBack(storedObject.currentStep);
+                        router.back();
+                        storage.remove(process);
                     }
                     return;
                 }
@@ -93,7 +97,8 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     setResetForm(true);
                     setScannedInfo(undefined);
                     if (isEnforcedValue) {
-                        onBack(storedObject.currentStep);
+                        router.back();
+                        storage.remove(process);
                     }
                     return;
                 }
@@ -104,6 +109,10 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     ...storedObject[`step${stepNumber}`],
                     data
                 };
+            } else if (isEnforcedValue) {
+                showError(t('messages:no-content-in-reception'));
+                router.back();
+                storage.remove(process);
             } else {
                 showError(t('messages:no-hu-or-empty'));
                 setResetForm(true);

@@ -26,13 +26,10 @@ import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import {
-    SelectArticleByStockOwnerForm,
-    SelectContentForArticleForm,
-    ScanArticleOrFeature
-} from '@CommonRadio';
+import { SelectArticleByStockOwnerForm, ScanArticleOrFeature } from '@CommonRadio';
 import { ArticleOrFeatureChecks } from 'modules/Misc/ArticleInfo/ChecksAndRecords/ArticleOrFeatureChecks';
 import { DisplayContentByArticleSerialForm } from 'modules/Common/Contents/Forms/DisplayContentByArticleSerialForm';
+import { SelectContentForArticleForm } from 'modules/Misc/ArticleInfo/Forms/SelectContentForArticleForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

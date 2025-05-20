@@ -39,6 +39,7 @@ query GetHandlingUnitContents(
                 id
                 name
             }
+            articleId
             article {
                 description
                 name
@@ -62,6 +63,7 @@ query GetHandlingUnitContents(
                     replenish
                     category
                     categoryText
+                    status
                     block {
                         name
                     }

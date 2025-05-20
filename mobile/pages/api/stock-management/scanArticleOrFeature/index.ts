@@ -51,7 +51,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const { scannedInfo } = req.body;
 
     const hucFeatureFilter = {
-        filters: { value: scannedInfo }
+        filters: { value: scannedInfo, featureCode_Unique: true }
     };
 
     const huFeaturesQuery = gql`
