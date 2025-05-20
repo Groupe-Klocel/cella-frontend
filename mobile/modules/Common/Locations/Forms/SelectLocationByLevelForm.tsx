@@ -27,6 +27,7 @@ import { useEffect, useState } from 'react';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import configs from '../../../../../common/configs.json';
 
 export interface ISelectLocationByLevelProps {
     process: string;
@@ -35,6 +36,7 @@ export interface ISelectLocationByLevelProps {
     buttons: { [label: string]: any };
     locations: Array<any>;
     roundsCheck?: boolean;
+    isOriginLocation?: boolean;
     originLocationId?: any;
 }
 
@@ -45,6 +47,7 @@ export const SelectLocationByLevelForm = ({
     buttons,
     locations,
     roundsCheck,
+    isOriginLocation,
     originLocationId
 }: ISelectLocationByLevelProps) => {
     const { t } = useTranslation();
@@ -154,6 +157,10 @@ export const SelectLocationByLevelForm = ({
                         onBack(storedObject.currentStep);
                     }
                 }
+                if (!isOriginLocation && locations[0].status === configs.LOCATION_STATUS_DISABLED) {
+                    showError(t('messages:location-disabled'));
+                    onBack(storedObject.currentStep);
+                }
             } else if (storedObject.currentStep < stepNumber) {
                 //check workflow direction and assign current step accordingly
                 storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
@@ -227,6 +234,10 @@ export const SelectLocationByLevelForm = ({
                 showError(t('messages:location-origin-final-identical'));
                 onBack();
             }
+        }
+        if (data['chosenLocation']?.status === configs.LOCATION_STATUS_DISABLED) {
+            showError(t('messages:location-disabled'));
+            onBack(storedObject.currentStep);
         }
     };
 

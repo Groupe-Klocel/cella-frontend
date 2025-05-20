@@ -34,6 +34,7 @@ export interface IAutoValidatePickAndPackProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     headerContent: { [label: string]: any };
+    toBePalletized: boolean;
     autoValidateLoading: { [label: string]: any };
 }
 
@@ -43,6 +44,7 @@ export const AutoValidatePickAndPackForm = ({
     trigger: { triggerRender, setTriggerRender },
     buttons,
     headerContent: { setHeaderContent },
+    toBePalletized,
     autoValidateLoading: { isAutoValidateLoading, setIsAutoValidateLoading }
 }: IAutoValidatePickAndPackProps) => {
     const { t } = useTranslation('common');
@@ -62,7 +64,7 @@ export const AutoValidatePickAndPackForm = ({
         setTriggerRender(!triggerRender);
     }, []);
     // retrieve values for update contents/boxline and create movement
-    const { step10, step15, step30, step40, step50, step70, step80 } = storedObject;
+    const { step10, step15, step30, step40, step50, step60, step70, step80 } = storedObject;
 
     const proposedRoundAdvisedAddresses = step10?.data?.proposedRoundAdvisedAddresses;
     const round = step10?.data?.round;
@@ -72,6 +74,7 @@ export const AutoValidatePickAndPackForm = ({
     const pickedLocation = step30?.data.chosenLocation;
     const pickedHU = step40?.data.handlingUnit;
     const articleInfo = step50?.data.article;
+    const features = step60?.data?.processedFeatures;
     const movingQuantity = step70?.data?.movingQuantity;
     const huModel = step80?.data?.handlingUnitModel;
 
@@ -117,8 +120,10 @@ export const AutoValidatePickAndPackForm = ({
                 round,
                 pickedLocation,
                 pickedHU,
+                features,
                 articleInfo,
                 movingQuantity,
+                toBePalletized,
                 ...(huModel !== 'huModelExist' && { huModel }),
                 ...(huName && isHUToCreate && { huName }),
                 ...(huType && isHUToCreate && { huType })

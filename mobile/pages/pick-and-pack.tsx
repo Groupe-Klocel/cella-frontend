@@ -72,6 +72,7 @@ const PickAndPack: PageComponent = () => {
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [manualyGenerateParent, setManualyGenerateParent] = useState<number>();
+    const [toBePalletized, setToBePalletized] = useState<boolean>(true);
 
     useEffect(() => {
         const manualyGenerateParent = async () => {
@@ -189,12 +190,20 @@ const PickAndPack: PageComponent = () => {
                 object[t('common:article-description')] =
                     storedObject['step50']?.data?.article.description;
             }
-            if (storedObject['step50']?.data?.content) {
-                object[t('common:available-quantity')] =
-                    storedObject['step50']?.data?.content.quantity;
-            }
             if (storedObject['step60']?.data?.processedFeatures) {
                 const processedFeatures = storedObject['step60']?.data?.processedFeatures;
+                const handling_unit_contents = storedObject[
+                    'step40'
+                ]?.data?.handlingUnit?.handlingUnitContents.find((content: any) =>
+                    processedFeatures.every((feature_filter: any) =>
+                        content.handlingUnitContentFeatures.some(
+                            (feature_content: any) =>
+                                feature_content.featureCode.id === feature_filter.featureCodeId &&
+                                feature_content.value === feature_filter.value
+                        )
+                    )
+                );
+                object[t('common:available-quantity')] = handling_unit_contents?.quantity;
                 processedFeatures.map((feature: any) => {
                     const { featureCode, value } = feature;
                     let formattedValue = value;
@@ -240,6 +249,15 @@ const PickAndPack: PageComponent = () => {
                 storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent
                     ?.article?.name
             );
+        }
+        if (
+            storedObject['step10']?.data &&
+            !storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0].roundLineDetail
+                .handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.carrierShippingMode
+                ?.toBePalletized &&
+            !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
+        ) {
+            setToBePalletized(false);
         }
 
         if (storedObject['step10']?.data?.round) {
@@ -469,7 +487,10 @@ const PickAndPack: PageComponent = () => {
                     <></>
                 )}
                 {storedObject['step50']?.data &&
-                !(storedObject['step60']?.data?.remainingFeatures?.length === 0) ? (
+                !(
+                    storedObject['step60']?.data?.processedFeatures?.length >=
+                    storedObject['step50'].data?.article?.featureType?.length
+                ) ? (
                     <ScanFeature
                         process={processName}
                         stepNumber={60}
@@ -479,9 +500,7 @@ const PickAndPack: PageComponent = () => {
                             submitButton: true,
                             backButton: true
                         }}
-                        contentFeatures={
-                            storedObject['step50']?.data?.content?.handlingUnitContentFeatures
-                        }
+                        contents={storedObject['step50']?.data?.contents}
                         action1Trigger={{
                             action1Trigger: finishUniqueFeatures,
                             setAction1Trigger: setFinishUniqueFeatures
@@ -497,7 +516,8 @@ const PickAndPack: PageComponent = () => {
                     <></>
                 )}
                 {storedObject['step60']?.data &&
-                storedObject['step60']?.data.remainingFeatures.length === 0 &&
+                storedObject['step60']?.data.processedFeatures?.length >=
+                    storedObject['step50'].data?.article?.featureType?.length &&
                 !storedObject['step70']?.data ? (
                     <EnterQuantity
                         process={processName}
@@ -520,7 +540,18 @@ const PickAndPack: PageComponent = () => {
                                 (total: number, current: any) => total + current.quantity,
                                 0
                             ),
-                            storedObject['step50'].data?.content?.quantity
+                            storedObject['step40']?.data?.handlingUnit?.handlingUnitContents.find(
+                                (content: any) =>
+                                    storedObject['step60']?.data.processedFeatures.every(
+                                        (feature_filter: any) =>
+                                            content.handlingUnitContentFeatures.some(
+                                                (feature_content: any) =>
+                                                    feature_content.featureCode.id ===
+                                                        feature_filter.featureCodeId &&
+                                                    feature_content.value === feature_filter.value
+                                            )
+                                    )
+                            )?.quantity
                         )}
                         checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                     ></EnterQuantity>
@@ -549,7 +580,7 @@ const PickAndPack: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step75']?.data && !storedObject['step80']?.data ? (
+                {storedObject['step75']?.data && toBePalletized && !storedObject['step80']?.data ? (
                     <SelectHuModelForm
                         process={processName}
                         stepNumber={80}
@@ -560,13 +591,16 @@ const PickAndPack: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step80']?.data || isAutoValidateLoading ? (
+                {storedObject['step80']?.data ||
+                (!toBePalletized && storedObject['step75']?.data) ||
+                isAutoValidateLoading ? (
                     <AutoValidatePickAndPackForm
                         process={processName}
                         stepNumber={90}
                         buttons={{ submitButton: true, backButton: true }}
                         trigger={{ triggerRender, setTriggerRender }}
                         headerContent={{ setHeaderContent }}
+                        toBePalletized={toBePalletized}
                         autoValidateLoading={{ isAutoValidateLoading, setIsAutoValidateLoading }}
                     ></AutoValidatePickAndPackForm>
                 ) : (

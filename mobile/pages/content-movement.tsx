@@ -398,6 +398,7 @@ const ContentMvmt: PageComponent = () => {
                         trigger={{ triggerRender, setTriggerRender }}
                         locations={storedObject['step10'].data.locations}
                         roundsCheck={true}
+                        isOriginLocation={true}
                     ></SelectLocationByLevelForm>
                 ) : (
                     <></>

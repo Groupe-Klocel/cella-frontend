@@ -149,13 +149,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             response = {
                 resType: 'location',
                 handlingUnit: handlingUnitOnly,
-                location: locationOnly
+                locations: [locationOnly]
             };
         } else {
             response = {
                 resType: 'location',
                 handlingUnit: undefined,
-                location: extractLocationResponse
+                locations: extractLocationResponse
             };
         }
     } else {
@@ -171,7 +171,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             response = {
                 resType: 'handlingUnit',
                 handlingUnit: huOnly,
-                location: { ...location }
+                locations: [{ ...location }]
             };
         } else {
             res.status(500).json({
