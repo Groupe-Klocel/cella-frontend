@@ -500,7 +500,7 @@ const PickAndPack: PageComponent = () => {
                             submitButton: true,
                             backButton: true
                         }}
-                        contents={storedObject['step50']?.data?.contents}
+                        dataInfos={storedObject['step50']?.data}
                         action1Trigger={{
                             action1Trigger: finishUniqueFeatures,
                             setAction1Trigger: setFinishUniqueFeatures
