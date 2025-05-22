@@ -58,7 +58,11 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                     const data: { [label: string]: any } = {};
                     data['articleLuBarcode'] = articleLuBarcode;
                     data['contents'] = contents;
-                    data['article'] = contents[0].article;
+                    data['article'] = contents.find(
+                        (content: any) =>
+                            content.articleId ==
+                            articleLuBarcodesInfos.articleLuBarcodes.results[0].articleId
+                    ).article;
                     if (featureTypeDetailsInfos) {
                         data['article']['featureType'] = featureTypeDetailsInfos;
                     } else {

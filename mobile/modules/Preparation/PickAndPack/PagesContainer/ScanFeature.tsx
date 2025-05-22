@@ -38,7 +38,7 @@ export interface IScanFeatureProps {
     processedFeatures?: any;
     nextFeatureCode?: any;
     action1Trigger?: any;
-    contents?: any;
+    dataInfos?: any;
 }
 const { Title } = Typography;
 
@@ -64,7 +64,7 @@ export const ScanFeature = ({
     featureType,
     processedFeatures,
     nextFeatureCode,
-    contents
+    dataInfos
 }: IScanFeatureProps) => {
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -74,7 +74,7 @@ export const ScanFeature = ({
     const { t } = useTranslation();
     const [buttonsState, setButtonsState] = useState<any>({ ...buttons });
     const { graphqlRequestClient } = useAuth();
-
+    const { contents, articleLuBarcode, article } = dataInfos;
     //N.B.: Version1 autorecovers information from previous step as there is only one HUC and no features scan check.
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -82,8 +82,17 @@ export const ScanFeature = ({
         if (contents.length === 1 || featureType.length === 0) {
             // N.B.: in this case previous step is kept at its previous value
             const data: { [label: string]: any } = {};
-            data['processedFeatures'] = contents[0].handlingUnitContentFeatures;
-            data['content'] = contents[0];
+            if (contents.length === 1) {
+                data['processedFeatures'] = contents[0].handlingUnitContentFeatures;
+                data['content'] = contents[0];
+            } else {
+                data['processedFeatures'] = contents.find(
+                    (content: any) => content.articleId === articleLuBarcode.articleId
+                ).handlingUnitContentFeatures;
+                data['content'] = contents.find(
+                    (content: any) => content.articleId === articleLuBarcode.articleId
+                );
+            }
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
             storage.set(process, JSON.stringify(storedObject));
