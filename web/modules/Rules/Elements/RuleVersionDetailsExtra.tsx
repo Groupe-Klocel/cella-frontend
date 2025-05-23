@@ -33,44 +33,57 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData } from 'modules/Crud/ListComponentV2';
 import { RuleVersionConfigDetailModelV2 as modelLineConf } from 'models/RuleVersionConfigDetailModelV2';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RuleVersionDetailInModelV2 as modelConfIn } from 'models/RuleVersionDetailInModelV2';
 import { RuleVersionDetailOutModelV2 as modelConfOut } from 'models/RuleVersionDetailOutModelV2';
 import { RuleVersionConfigListComponent } from './RuleVersionConfigListComponent';
 import { RuleVersionListComponent } from './RuleVersionListComponent';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 export interface IItemDetailsProps {
-    ruleVersionId?: string | any;
-    ruleVersion?: number | any;
-    ruleName?: string | any;
-    ruleActiveVersion?: number | any;
-    ruleId?: string | any;
+    rule: any;
 }
 
-const RuleVersionDetailsExtra = ({
-    ruleVersionId,
-    ruleVersion,
-    ruleName,
-    ruleActiveVersion,
-    ruleId
-}: IItemDetailsProps) => {
+const RuleVersionDetailsExtra = ({ rule }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
+    const { graphqlRequestClient } = useAuth();
+    const [dataInConfig, setDataInConfig] = useState<any>(null);
+    const [dataOutConfig, setDataOutConfig] = useState<any>(null);
+    const [ruleConfigInToDelete, setRuleConfigInToDelete] = useState<any>(null);
+    const [ruleConfigOutToDelete, setRuleConfigOutToDelete] = useState<any>(null);
+    const [refetchInConfig, setRefetchInConfig] = useState(false);
+    const [refetchOutConfig, setRefetchOutConfig] = useState(false);
     const [idToDeleteVersionConfig, setIdToDeleteVersionConfig] = useState<string | undefined>();
     const [idToDisableVersionConfig, setIdToDisableVersionConfig] = useState<string | undefined>();
     const modes = getModesFromPermissions(permissions, Table.RuleVersionConfig);
+
+    const updateRuleVersionQuery = gql`
+        mutation updateRuleVersion($id: String!, $input: UpdateRuleVersionInput!) {
+            updateRuleVersion(id: $id, input: $input) {
+                id
+                ruleConfigurationIn
+                ruleConfigurationOut
+                ruleVersionConfigs {
+                    id
+                    order
+                }
+            }
+        }
+    `;
 
     const [priorityStatus, setPriorityStatus] = useState({
         id: '',
         type: ''
     });
 
-    const confirmAction = (id: string | undefined, setId: any) => {
+    const confirmAction = (info: any | undefined, setInfo: any) => {
         return () => {
             Modal.confirm({
                 title: t('messages:action-confirm'),
                 onOk: () => {
-                    setId(id);
+                    setInfo(info);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -78,18 +91,80 @@ const RuleVersionDetailsExtra = ({
         };
     };
 
+    useEffect(() => {
+        const handleDeleteConfig = async () => {
+            if (ruleConfigInToDelete || ruleConfigOutToDelete) {
+                const configType = ruleConfigInToDelete ? 'In' : 'Out';
+                let dataToUpdate: any[] = [];
+                if (configType === 'In') {
+                    dataToUpdate = dataInConfig.filter(
+                        (item: any) => item !== ruleConfigInToDelete
+                    );
+                } else {
+                    dataToUpdate = dataOutConfig.filter(
+                        (item: any) => item !== ruleConfigOutToDelete
+                    );
+                }
+                const dataToUpdateFormated = {
+                    ...dataToUpdate.reduce((acc: any, item: any) => {
+                        acc[item.parameterName] = {
+                            description: item.description,
+                            type: item.type,
+                            validationRule: item.validationRule
+                        };
+                        return acc;
+                    }, {})
+                };
+                const updateRuleVersionVariables = {
+                    id: rule.id,
+                    input: {
+                        ['ruleConfiguration' + configType]: dataToUpdateFormated
+                    }
+                };
+                // to avoid back security
+
+                await graphqlRequestClient.request(updateRuleVersionQuery, {
+                    id: rule.id,
+                    input: {
+                        ['ruleConfiguration' + configType]: null
+                    }
+                });
+                graphqlRequestClient
+                    .request(updateRuleVersionQuery, updateRuleVersionVariables)
+                    .then((result: any) => {
+                        if (result) {
+                            if (result.updateRuleVersion) {
+                                setDataInConfig(result.updateRuleVersion.ruleConfigurationIn);
+                                setDataOutConfig(result.updateRuleVersion.ruleConfigurationOut);
+                                setRuleConfigInToDelete(null);
+                                setRuleConfigOutToDelete(null);
+                                if (configType === 'In') {
+                                    setRefetchInConfig((prev) => !prev);
+                                }
+                                if (configType === 'Out') {
+                                    setRefetchOutConfig((prev) => !prev);
+                                }
+                            } else {
+                                console.error('Error updating rule version');
+                            }
+                        }
+                    });
+            }
+        };
+
+        handleDeleteConfig();
+    }, [ruleConfigInToDelete, ruleConfigOutToDelete]);
+
     const ruleVersionHeaderDataIn: HeaderData = {
         title: t('common:rule-configs-in'),
         routes: [],
         actionsComponent:
-            ruleVersion !== ruleActiveVersion ? (
+            rule.version !== rule.rule_activeVersion ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:rule-config-in') })}
-                    path={pathParamsFromDictionary('/rules/config-in/add', {
-                        ruleVersionId: ruleVersionId,
-                        ruleVersion: ruleVersion,
-                        ruleName: ruleName,
-                        ruleId: ruleId
+                    path={pathParamsFromDictionary('/rules/config/add', {
+                        rule: JSON.stringify(rule),
+                        type: 'In'
                     })}
                     type="primary"
                 />
@@ -102,14 +177,12 @@ const RuleVersionDetailsExtra = ({
         title: t('common:rule-configs-out'),
         routes: [],
         actionsComponent:
-            ruleVersion !== ruleActiveVersion ? (
+            rule.version !== rule.rule_activeVersion ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:rule-config-out') })}
-                    path={pathParamsFromDictionary('/rules/config-out/add', {
-                        ruleVersionId: ruleVersionId,
-                        ruleVersion: ruleVersion,
-                        ruleName: ruleName,
-                        ruleId: ruleId
+                    path={pathParamsFromDictionary('/rules/config/add', {
+                        rule: JSON.stringify(rule),
+                        type: 'Out'
                     })}
                     type="primary"
                 />
@@ -122,14 +195,11 @@ const RuleVersionDetailsExtra = ({
         title: t('common:configuration'),
         routes: [],
         actionsComponent:
-            ruleVersion !== ruleActiveVersion ? (
+            rule.version !== rule.rule_activeVersion ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:configuration') })}
                     path={pathParamsFromDictionary('/rules/version/config/add', {
-                        ruleVersionId: ruleVersionId,
-                        ruleVersion: ruleVersion,
-                        ruleName: ruleName,
-                        ruleId: ruleId
+                        rule: JSON.stringify(rule)
                     })}
                     type="primary"
                 />
@@ -144,24 +214,125 @@ const RuleVersionDetailsExtra = ({
                 <>
                     <Divider />
                     <RuleVersionListComponent
-                        searchCriteria={{ id: ruleVersionId }}
+                        searchCriteria={{ id: rule.id }}
                         headerData={ruleVersionHeaderDataIn}
+                        setData={setDataInConfig}
                         dataModel={modelConfIn}
                         triggerDelete={undefined}
                         triggerSoftDelete={undefined}
                         searchable={false}
+                        actionColumns={
+                            rule.version !== rule.rule_activeVersion
+                                ? [
+                                      {
+                                          title: 'actions:actions',
+                                          key: 'actions',
+                                          render: (record: { id: string; order: number }) => (
+                                              <Space>
+                                                  {modes.length > 0 &&
+                                                  modes.includes(ModeEnum.Update) ? (
+                                                      <LinkButton
+                                                          icon={<EditTwoTone />}
+                                                          path={pathParamsFromDictionary(
+                                                              '/rules/config/edit/:id'.replace(
+                                                                  ':id',
+                                                                  rule.id
+                                                              ),
+                                                              {
+                                                                  rule: JSON.stringify(rule),
+                                                                  data: JSON.stringify(record),
+                                                                  type: 'In'
+                                                              }
+                                                          )}
+                                                      />
+                                                  ) : (
+                                                      <></>
+                                                  )}
+                                                  {modes.length > 0 &&
+                                                  modes.includes(ModeEnum.Delete) ? (
+                                                      <Button
+                                                          icon={<DeleteOutlined />}
+                                                          danger
+                                                          onClick={() =>
+                                                              confirmAction(
+                                                                  record,
+                                                                  setRuleConfigInToDelete
+                                                              )()
+                                                          }
+                                                      ></Button>
+                                                  ) : (
+                                                      <></>
+                                                  )}
+                                              </Space>
+                                          )
+                                      }
+                                  ]
+                                : []
+                        }
+                        refetch={refetchInConfig}
                     />
+                    {console.log('rule', rule)}
                     <RuleVersionListComponent
-                        searchCriteria={{ id: ruleVersionId }}
+                        searchCriteria={{ id: rule.id }}
                         headerData={ruleVersionHeaderDataOut}
+                        setData={setDataOutConfig}
                         dataModel={modelConfOut}
                         triggerDelete={undefined}
                         triggerSoftDelete={undefined}
                         searchable={false}
+                        actionColumns={
+                            rule.version !== rule.rule_activeVersion
+                                ? [
+                                      {
+                                          title: 'actions:actions',
+                                          key: 'actions',
+                                          render: (record: { id: string; order: number }) => (
+                                              <Space>
+                                                  {modes.length > 0 &&
+                                                  modes.includes(ModeEnum.Update) ? (
+                                                      <LinkButton
+                                                          icon={<EditTwoTone />}
+                                                          path={pathParamsFromDictionary(
+                                                              '/rules/config/edit/:id'.replace(
+                                                                  ':id',
+                                                                  rule.id
+                                                              ),
+                                                              {
+                                                                  rule: JSON.stringify(rule),
+                                                                  data: JSON.stringify(record),
+                                                                  type: 'Out'
+                                                              }
+                                                          )}
+                                                      />
+                                                  ) : (
+                                                      <></>
+                                                  )}
+                                                  {modes.length > 0 &&
+                                                  modes.includes(ModeEnum.Delete) ? (
+                                                      <Button
+                                                          icon={<DeleteOutlined />}
+                                                          danger
+                                                          onClick={() =>
+                                                              confirmAction(
+                                                                  record,
+                                                                  setRuleConfigOutToDelete
+                                                              )()
+                                                          }
+                                                      ></Button>
+                                                  ) : (
+                                                      <></>
+                                                  )}
+                                              </Space>
+                                          )
+                                      }
+                                  ]
+                                : []
+                        }
+                        refetch={refetchOutConfig}
                     />
                     <Divider />
                     <RuleVersionConfigListComponent
-                        searchCriteria={{ ruleVersionId: ruleVersionId }}
+                        searchCriteria={{ ruleVersionId: rule.id }}
                         headerData={ruleVersionLineConfigHeaderData}
                         dataModel={modelLineConf}
                         searchable={false}
@@ -198,7 +369,7 @@ const RuleVersionDetailsExtra = ({
                                                 />
                                             </>
                                         )}
-                                        {ruleVersion !== ruleActiveVersion ? (
+                                        {rule.version !== rule.rule_activeVersion ? (
                                             <>
                                                 <Button
                                                     onClick={() =>

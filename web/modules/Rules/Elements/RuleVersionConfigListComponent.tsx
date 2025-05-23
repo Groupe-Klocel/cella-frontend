@@ -509,7 +509,7 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
             showError(t('messages:error-enabling-element'));
         }
     }, [enableResult]);
-    // #end region
+    // #endregion
 
     // #region SEARCH OPERATIONS
 
@@ -758,6 +758,25 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
             if (listData && listData['results']) {
                 if (listData['results'].length > 0) {
                     listData['results'] = listData['results'].map((item: any) => {
+                        if (item.ruleLineConfigurationOut) {
+                            Object.entries(item.ruleLineConfigurationOut).forEach(
+                                ([key, value]: any) => {
+                                    item.ruleLineConfigurationOut[key] = {
+                                        value: JSON.stringify(value.value)
+                                    };
+                                }
+                            );
+                        }
+                        if (item.ruleLineConfigurationIn) {
+                            Object.entries(item.ruleLineConfigurationIn).forEach(
+                                ([key, value]: any) => {
+                                    item.ruleLineConfigurationIn[key] = {
+                                        value: JSON.stringify(value.value),
+                                        operator: value.operator
+                                    };
+                                }
+                            );
+                        }
                         return flatten(item);
                     });
 
@@ -883,7 +902,6 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
                     }
 
                     listData.results = newListData;
-
                     setRows(listData);
                     setColumns(new_column_list);
                 }

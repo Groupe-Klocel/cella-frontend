@@ -43,6 +43,8 @@ const RuleVersionPage: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
+    console.log(data, 'data');
+
     // #region to customize information
     const ruleDetailBreadCrumb = [
         ...itemRoutes,
@@ -92,16 +94,6 @@ const RuleVersionPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isSoftDeletable ? (
-                    <Button
-                        onClick={() => confirmAction(id as string, setIdToDisable)()}
-                        type="primary"
-                    >
-                        {t('actions:cancel')}
-                    </Button>
-                ) : (
-                    <></>
-                )}
                 {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
@@ -118,15 +110,7 @@ const RuleVersionPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
-                extraDataComponent={
-                    <RuleVersionDetailsExtra
-                        ruleVersionId={id}
-                        ruleVersion={data?.version}
-                        ruleName={data?.rule_name}
-                        ruleActiveVersion={data?.rule_activeVersion}
-                        ruleId={data?.ruleId}
-                    />
-                }
+                extraDataComponent={<RuleVersionDetailsExtra rule={data} />}
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
