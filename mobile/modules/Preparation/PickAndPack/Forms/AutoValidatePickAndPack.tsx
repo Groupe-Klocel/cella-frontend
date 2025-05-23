@@ -78,7 +78,7 @@ export const AutoValidatePickAndPackForm = ({
     const movingQuantity = step70?.data?.movingQuantity;
     const huModel = step80?.data?.handlingUnitModel;
 
-    console.log(huName, huType, round, 'huName, huType', 'round');
+    console.log(pickedHU, features, 'pickedHU, features');
 
     useEffect(() => {
         const onFinish = async () => {
