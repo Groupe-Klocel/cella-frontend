@@ -29,15 +29,12 @@ type PageComponent = FC & { layout: typeof MainLayout };
 const AddRuleVersionConfigPage: PageComponent = () => {
     const router = useRouter();
 
+    const rule = JSON.parse(router?.query?.rule as string);
+
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddRuleVersionConfig
-                ruleVersionId={router.query.ruleVersionId}
-                ruleVersion={router.query.ruleVersion}
-                ruleName={router.query.ruleName}
-                ruleId={router.query.ruleId}
-            />
+            <AddRuleVersionConfig rule={rule} />
         </>
     );
 };
