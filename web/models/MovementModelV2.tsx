@@ -669,7 +669,7 @@ export const MovementModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
-            link: 'goods-ins/handlingUnitInboundIdStr',
+            link: 'inbound-boxes/handlingUnitInboundIdStr',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
