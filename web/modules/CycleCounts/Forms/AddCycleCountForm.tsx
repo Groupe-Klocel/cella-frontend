@@ -199,6 +199,26 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const [blockToSearch, setBlockToSearch] = useState<any>(null);
     const onBlockChange = (id: string) => {
         setBlockToSearch(id);
+
+        form.setFieldsValue({
+            originalAisle: undefined,
+            originalColumn: undefined,
+            originalLevel: undefined,
+            originalPosition: undefined,
+            finalAisle: undefined,
+            finalColumn: undefined,
+            finalLevel: undefined,
+            finalPosition: undefined,
+        });
+
+        setOriginAisleToSearch(undefined);
+        setOriginColumnToSearch(undefined);
+        setOriginLevelToSearch(undefined);
+        setOriginPositionToSearch(undefined);
+        setFinalAisleToSearch(undefined);
+        setFinalColumnToSearch(undefined);
+        setFinalLevelToSearch(undefined);
+        setFinalPositionToSearch(undefined);
     };
 
     //useStates to take the values to search at each choice
@@ -208,6 +228,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const [finalColumnToSearch, setFinalColumnToSearch] = useState<string | undefined>(undefined);
     const [originLevelToSearch, setOriginLevelToSearch] = useState<string | undefined>(undefined);
     const [finalLevelToSearch, setFinalLevelToSearch] = useState<string | undefined>(undefined);
+    const [originPositionToSearch, setOriginPositionToSearch] = useState<string | undefined>(
+        undefined
+    );
+    const [finalPositionToSearch, setFinalPositionToSearch] = useState<string | undefined>(
+        undefined
+    );
 
     // onChange for each location property select
     const onInputChange = (value: string, source: string, setState: any) => {
@@ -233,9 +259,9 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         const defaultFilters = { blockId: blockToSearch };
         const filters = {
             ...defaultFilters,
-            ...(aisle && { aisle }),
-            ...(column && { column }),
-            ...(level && { level })
+            ...(aisle && !aisle.includes('*') && { aisle }),
+            ...(column && !column.includes('*') && { column }),
+            ...(level && !level.includes('*') && { level })
         };
         const query = gql`
                 query locationsInfos($filters: LocationSearchFilters!, $functions: [JSON!]) {
@@ -274,10 +300,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         if (blockToSearch) {
             fetchLocationsData('aisle').then((data: any) => {
                 setAislesValueOptions(data);
-                form.setFieldsValue({
-                    originalAisle: data[0],
-                    finalAisle: data[data.length - 1]
-                });
                 setOriginAisleToSearch(data[0]);
                 setFinalAisleToSearch(data[data.length - 1]);
             });
@@ -291,50 +313,46 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         if (originAisleToSearch) {
             fetchLocationsData('column', [originAisleToSearch]).then((data: any) => {
                 setOriginColumnValueOptions(data);
-                form.setFieldsValue({
-                    originalColumn: data[0]
-                });
-                setOriginColumnToSearch(data[0]);
+                const current = form.getFieldValue('originalColumn');
+                if (!data.includes(current)) {
+                    setOriginColumnToSearch(data[0]);
+                }
             });
         }
+    }, [originAisleToSearch]);
+
+    useEffect(() => {
         if (finalAisleToSearch) {
             fetchLocationsData('column', [finalAisleToSearch]).then((data: any) => {
                 setFinalColumnValueOptions(data);
-                form.setFieldsValue({
-                    finalColumn: data[data.length - 1]
-                });
                 setFinalColumnToSearch(data[data.length - 1]);
             });
         }
-    }, [originAisleToSearch, finalAisleToSearch]);
+    }, [finalAisleToSearch]);
 
     //list levels dynamically
     const [originLevelValueOptions, setOriginLevelValueOptions] = useState<any>(null);
     const [finalLevelValueOptions, setFinalLevelValueOptions] = useState<any>(null);
     useEffect(() => {
         if (originAisleToSearch && originColumnToSearch) {
-            fetchLocationsData('level', [originAisleToSearch], [originColumnToSearch]).then(
-                (data: any) => {
-                    setOriginLevelValueOptions(data);
-                    form.setFieldsValue({
-                        originalLevel: data[0]
-                    });
+            fetchLocationsData('level', [originAisleToSearch], [originColumnToSearch]).then((data: any) => {
+                setOriginLevelValueOptions(data);
+                const current = form.getFieldValue('originalLevel');
+                if (!data.includes(current)) {
                     setOriginLevelToSearch(data[0]);
                 }
-            );
+            });
         }
+    }, [originAisleToSearch, originColumnToSearch]);
+
+    useEffect(() => {
         if (finalAisleToSearch && finalColumnToSearch) {
-            fetchLocationsData('level', [finalAisleToSearch], [finalColumnToSearch]).then(
-                (data: any) => {
-                    setFinalLevelValueOptions(data);
-                    form.setFieldsValue({
-                        finalLevel: data[data.length - 1]
-                    });
-                    setFinalLevelToSearch(data[data.length - 1]);
-                }
-            );
+            fetchLocationsData('level', [finalAisleToSearch], [finalColumnToSearch]).then((data: any) => {
+                setFinalLevelValueOptions(data);
+                setFinalLevelToSearch(data[data.length - 1]);
+            });
         }
-    }, [originAisleToSearch, finalAisleToSearch, originColumnToSearch, finalColumnToSearch]);
+    }, [finalAisleToSearch, finalColumnToSearch]);
 
     //list positions dynamically
     const [originPositionValueOptions, setOriginPositionValueOptions] = useState<any>(null);
@@ -348,9 +366,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 [originLevelToSearch]
             ).then((data: any) => {
                 setOriginPositionValueOptions(data);
-                form.setFieldsValue({
-                    originalPosition: data[0]
-                });
             });
         }
         if (finalAisleToSearch && finalColumnToSearch && finalLevelToSearch) {
@@ -361,9 +376,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 [finalLevelToSearch]
             ).then((data: any) => {
                 setFinalPositionValueOptions(data);
-                form.setFieldsValue({
-                    finalPosition: data[data.length - 1]
-                });
             });
         }
     }, [
@@ -522,9 +534,8 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 if (articleDisplayGroup) {
                     functionName = 'K_createCycleCountTypeProduct';
                 } else if (locationDisplayGroup) {
-                    functionName = 'K_createCycleCountTypeLocation';
+                    functionName = 'create_cycle_count_type_location';
                 }
-
                 createCC(functionName!, tmp_formData);
                 // createCycleCount({ input: tmp_formData });
                 setUnsavedChanges(false);
@@ -545,6 +556,14 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
             cancelText: t('common:bool-no')
         });
     };
+
+    const originalAisle = Form.useWatch('originalAisle', form);
+    const originalColumn = Form.useWatch('originalColumn', form);
+    const originalLevel = Form.useWatch('originalLevel', form);
+    const finalAisle = Form.useWatch('finalAisle', form);
+    const finalColumn = Form.useWatch('finalColumn', form);
+    const finalLevel = Form.useWatch('finalLevel', form);
+    const finalPosition = Form.useWatch('finalPosition', form);
 
     return (
         <WrapperForm>
@@ -711,10 +730,34 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     'origin',
                                                     setOriginAisleToSearch
                                                 );
+                                                if (value === '*') {
+                                                    form.setFieldsValue({ finalAisle: '*' });
+                                                    onInputChange(
+                                                        '*',
+                                                        'final',
+                                                        setFinalAisleToSearch
+                                                    );
+                                                } else if (
+                                                    form.getFieldValue('finalAisle') === '*'
+                                                ) {
+                                                    const last =
+                                                        aislesValueOptions?.[
+                                                            aislesValueOptions.length - 1
+                                                        ];
+                                                    form.setFieldsValue({ finalAisle: last });
+                                                    onInputChange(
+                                                        last,
+                                                        'final',
+                                                        setFinalAisleToSearch
+                                                    );
+                                                }
                                             }}
                                             allowClear
                                             disabled={blockToSearch ? false : true}
                                         >
+                                            <Option key="*" value="*">
+                                                *
+                                            </Option>
                                             {aislesValueOptions?.map((aisle: any) => (
                                                 <Option key={aisle} value={aisle}>
                                                     {aisle}
@@ -750,10 +793,34 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     'origin',
                                                     setOriginColumnToSearch
                                                 );
+                                                if (value === '*') {
+                                                    form.setFieldsValue({ finalColumn: '*' });
+                                                    onInputChange(
+                                                        '*',
+                                                        'final',
+                                                        setFinalColumnToSearch
+                                                    );
+                                                } else if (
+                                                    form.getFieldValue('finalColumn') === '*'
+                                                ) {
+                                                    const last =
+                                                        originColumnValueOptions?.[
+                                                            originColumnValueOptions.length - 1
+                                                        ];
+                                                    form.setFieldsValue({ finalColumn: last });
+                                                    onInputChange(
+                                                        last,
+                                                        'final',
+                                                        setFinalColumnToSearch
+                                                    );
+                                                }
                                             }}
                                             allowClear
-                                            disabled={blockToSearch ? false : true}
+                                            disabled={!originalAisle || !blockToSearch}
                                         >
+                                            <Option key="*" value="*">
+                                                *
+                                            </Option>
                                             {originColumnValueOptions?.map((column: any) => (
                                                 <Option key={column} value={column}>
                                                     {column}
@@ -789,10 +856,34 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     'origin',
                                                     setOriginLevelToSearch
                                                 );
+                                                if (value === '*') {
+                                                    form.setFieldsValue({ finalLevel: '*' });
+                                                    onInputChange(
+                                                        '*',
+                                                        'final',
+                                                        setFinalLevelToSearch
+                                                    );
+                                                } else if (
+                                                    form.getFieldValue('finalLevel') === '*'
+                                                ) {
+                                                    const last =
+                                                        originLevelValueOptions?.[
+                                                            originLevelValueOptions.length - 1
+                                                        ];
+                                                    form.setFieldsValue({ finalLevel: last });
+                                                    onInputChange(
+                                                        last,
+                                                        'final',
+                                                        setFinalLevelToSearch
+                                                    );
+                                                }
                                             }}
                                             allowClear
-                                            disabled={blockToSearch ? false : true}
+                                            disabled={!originalColumn || !blockToSearch}
                                         >
+                                            <Option key="*" value="*">
+                                                *
+                                            </Option>
                                             {originLevelValueOptions?.map((level: any) => (
                                                 <Option key={level} value={level}>
                                                     {level}
@@ -822,9 +913,40 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     .toUpperCase()
                                                     .indexOf(inputValue.toUpperCase()) !== -1
                                             }
+                                            onChange={(value: string) => {
+                                                onInputChange(
+                                                    value,
+                                                    'origin',
+                                                    setOriginPositionToSearch
+                                                );
+                                                if (value === '*') {
+                                                    form.setFieldsValue({ finalPosition: '*' });
+                                                    onInputChange(
+                                                        '*',
+                                                        'final',
+                                                        setFinalPositionToSearch
+                                                    );
+                                                } else if (
+                                                    form.getFieldValue('finalPosition') === '*'
+                                                ) {
+                                                    const last =
+                                                        originPositionValueOptions?.[
+                                                            originPositionValueOptions.length - 1
+                                                        ];
+                                                    form.setFieldsValue({ finalPosition: last });
+                                                    onInputChange(
+                                                        last,
+                                                        'final',
+                                                        setFinalPositionToSearch
+                                                    );
+                                                }
+                                            }}
                                             allowClear
-                                            disabled={blockToSearch ? false : true}
+                                            disabled={!originalLevel || !blockToSearch}
                                         >
+                                            <Option key="*" value="*">
+                                                *
+                                            </Option>
                                             {originPositionValueOptions?.map((position: any) => (
                                                 <Option key={position} value={position}>
                                                     {position}
@@ -864,9 +986,27 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     'final',
                                                     setFinalAisleToSearch
                                                 );
+                                                if (value === '*') {
+                                                    form.setFieldsValue({ originalAisle: '*' });
+                                                    onInputChange(
+                                                        '*',
+                                                        'origin',
+                                                        setOriginAisleToSearch
+                                                    );
+                                                } else if (
+                                                    form.getFieldValue('originalAisle') === '*'
+                                                ) {
+                                                    const first = aislesValueOptions?.[0];
+                                                    form.setFieldsValue({ originalAisle: first });
+                                                    onInputChange(
+                                                        first,
+                                                        'origin',
+                                                        setOriginAisleToSearch
+                                                    );
+                                                }
                                             }}
                                             allowClear
-                                            disabled={blockToSearch ? false : true}
+                                            disabled={(blockToSearch ? false : true) || finalAisle == '*'}
                                         >
                                             {aislesValueOptions?.map((aisle: any) => (
                                                 <Option key={aisle} value={aisle}>
@@ -903,9 +1043,27 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     'final',
                                                     setFinalColumnToSearch
                                                 );
+                                                if (value === '*') {
+                                                    form.setFieldsValue({ originalColumn: '*' });
+                                                    onInputChange(
+                                                        '*',
+                                                        'origin',
+                                                        setOriginColumnToSearch
+                                                    );
+                                                } else if (
+                                                    form.getFieldValue('originalColumn') === '*'
+                                                ) {
+                                                    const first = finalColumnValueOptions?.[0];
+                                                    form.setFieldsValue({ originalColumn: first });
+                                                    onInputChange(
+                                                        first,
+                                                        'origin',
+                                                        setOriginColumnToSearch
+                                                    );
+                                                }
                                             }}
                                             allowClear
-                                            disabled={blockToSearch ? false : true}
+                                            disabled={(!finalAisle || !blockToSearch) || finalColumn == '*'}
                                         >
                                             {finalColumnValueOptions?.map((column: any) => (
                                                 <Option key={column} value={column}>
@@ -942,9 +1100,27 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     'final',
                                                     setFinalLevelToSearch
                                                 );
+                                                if (value === '*') {
+                                                    form.setFieldsValue({ originalLevel: '*' });
+                                                    onInputChange(
+                                                        '*',
+                                                        'origin',
+                                                        setOriginLevelToSearch
+                                                    );
+                                                } else if (
+                                                    form.getFieldValue('originalLevel') === '*'
+                                                ) {
+                                                    const first = finalLevelValueOptions?.[0];
+                                                    form.setFieldsValue({ originalLevel: first });
+                                                    onInputChange(
+                                                        first,
+                                                        'origin',
+                                                        setOriginLevelToSearch
+                                                    );
+                                                }
                                             }}
                                             allowClear
-                                            disabled={blockToSearch ? false : true}
+                                            disabled={(!finalColumn || !blockToSearch) || finalLevel == '*'}
                                         >
                                             {finalLevelValueOptions?.map((level: any) => (
                                                 <Option key={level} value={level}>
@@ -975,8 +1151,38 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                     .toUpperCase()
                                                     .indexOf(inputValue.toUpperCase()) !== -1
                                             }
+                                            onChange={(value: string) => {
+                                                onInputChange(
+                                                    value,
+                                                    'final',
+                                                    setFinalPositionToSearch
+                                                );
+                                                if (value === '*') {
+                                                    form.setFieldsValue({
+                                                        originalPosition: '*'
+                                                    });
+                                                    onInputChange(
+                                                        '*',
+                                                        'origin',
+                                                        setOriginPositionToSearch
+                                                    );
+                                                } else if (
+                                                    form.getFieldValue('originalPosition') ===
+                                                    '*'
+                                                ) {
+                                                    const first = finalPositionValueOptions?.[0];
+                                                    form.setFieldsValue({
+                                                        originalPosition: first
+                                                    });
+                                                    onInputChange(
+                                                        first,
+                                                        'origin',
+                                                        setOriginPositionToSearch
+                                                    );
+                                                }
+                                            }}
                                             allowClear
-                                            disabled={blockToSearch ? false : true}
+                                            disabled={(!finalLevel || !blockToSearch) || finalPosition == '*'}
                                         >
                                             {finalPositionValueOptions?.map((position: any) => (
                                                 <Option key={position} value={position}>
