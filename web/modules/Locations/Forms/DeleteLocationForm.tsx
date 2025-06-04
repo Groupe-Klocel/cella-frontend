@@ -31,6 +31,7 @@ import { SimpleGetAllBLocksQuery, useSimpleGetAllBLocksQuery } from 'generated/g
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { gql } from 'graphql-request';
 
 const { Option } = Select;
 
@@ -42,6 +43,7 @@ export const DeleteLocationForm = () => {
     const [locations, setLocations] = useState<DataQueryType>();
     const [current, setCurrent] = useState(0);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [createLoading, setCreateLoading] = useState(false);
 
     //To render simple blocks list for attached block selection (id and name without any filter)
     const blocksList = useSimpleGetAllBLocksQuery<Partial<SimpleGetAllBLocksQuery>, Error>(
@@ -206,36 +208,44 @@ export const DeleteLocationForm = () => {
             position: formData.finalPosition
         };
 
-        const res = await fetch(`/api/locations/bulk-delete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                blockId: formData.blockId,
-                originLocation: originLocationInput,
-                finalLocation: finalLocationInput
-            })
-        });
+        const bulkDeleteLocation = async (formData: any) => {
+            setCreateLoading(true);
+            try {
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+                const variables = {
+                    functionName: 'bulk_delete_locations',
+                    event: {
+                        ...formData
+                    }
+                };
 
-        const response = await res.json();
+                const response = await graphqlRequestClient.request(query, variables);
 
-        setUnsavedChanges(false);
-
-        if (res.ok) {
-            // delete success
-            showSuccess(t('messages:success-deleted'));
-            router.push(`/locations/`);
-        } else {
-            // error
-            if (response.error.is_error) {
-                // specific error
-                showError(t(`errors:${response.error.code}`));
-            } else {
-                // generic error
-                showError(t('messages:error-delete-location-impossible'));
+                if (response?.executeFunction?.status === 'OK') {
+                    showSuccess(t('messages:success-deleted'));
+                    router.push(`/locations`);
+                } else {
+                    showError(t('messages:error-deleting-data'));
+                }
+            } catch (error) {
+                console.error(error);
+                showError(t('messages:error-deleting-data'));
+            } finally {
+                setCreateLoading(false);
             }
-        }
+        };
+
+        bulkDeleteLocation({
+            input: formData
+        });
+        setUnsavedChanges(false);
     };
 
     const handleClickNext = () => {
@@ -553,7 +563,7 @@ export const DeleteLocationForm = () => {
                         {steps.length > 1 && (
                             <Button onClick={handleClickBack}>{t('actions:back-step')}</Button>
                         )}
-                        <Button type="primary" onClick={() => bulkDeleteLocation()}>
+                        <Button type="primary" loading={createLoading} onClick={bulkDeleteLocation}>
                             {t('actions:submit')}
                         </Button>
                         <Button onClick={onCancel}>{t('actions:cancel')}</Button>
