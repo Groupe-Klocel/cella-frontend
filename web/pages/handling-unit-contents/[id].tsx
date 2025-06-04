@@ -23,13 +23,12 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, showError } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
 import parameters from '../../../common/parameters.json';
 import { HandlingUnitContentDetailsExtra } from 'modules/HandlingUnits/Elements/HandlingUnitContentDetailsExtra';
 import { BarcodeOutlined } from '@ant-design/icons';
@@ -70,51 +69,27 @@ const HandlingUnitContentPage: PageComponent = () => {
             Modal.confirm({
                 title: t('messages:delete-confirm'),
                 onOk: () => {
-                    const fetchData = async () => {
-                        const res = await fetch(`/api/create-movement/`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                trigger: 'deleteContent',
-                                originData: {
-                                    articleId: data.articleId,
-                                    articleName: data.article_name,
-                                    stockStatus: data.stockStatus,
-                                    quantity: data.quantity,
-                                    locationId: data.handlingUnit_locationId,
-                                    locationName: data.handlingUnit_location_name,
-                                    handlingUnitId: data.handlingUnitId,
-                                    handlingUnitName: data.handlingUnit_name,
-                                    stockOwnerId: data.stockOwnerId,
-                                    stockOwnerName: data.stockOwner_name,
-                                    handlingUnitContentId: data.id
-                                }
-                            })
-                        });
-                        if (res.ok) {
-                            setId(id);
-                        }
-                        if (!res.ok) {
-                            const errorResponse = await res.json();
-                            if (errorResponse.error.response.errors[0].extensions) {
-                                showError(
-                                    t(
-                                        `errors:${errorResponse.error.response.errors[0].extensions.code}`
-                                    )
-                                );
-                            } else {
-                                showError(t('messages:error-update-data'));
-                            }
-                        }
-                    };
-                    fetchData();
+                    setId(id);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
         };
+    };
+    const dataToCreateMovement = {
+        content: {
+            articleId: data?.articleId,
+            articleName: data?.article_name,
+            stockStatus: data?.stockStatus,
+            quantity: data?.quantity,
+            locationId: data?.handlingUnit_locationId,
+            locationName: data?.handlingUnit_location_name,
+            handlingUnitId: data?.handlingUnitId,
+            handlingUnitName: data?.handlingUnit_name,
+            stockOwnerId: data?.stockOwnerId,
+            stockOwnerName: data?.stockOwner_name,
+            handlingUnitContentId: data?.id
+        }
     };
 
     const headerData: HeaderData = {
@@ -207,6 +182,8 @@ const HandlingUnitContentPage: PageComponent = () => {
                 refetch={refetchContent}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                isCreateAMovement={true}
+                dataToCreateMovement={dataToCreateMovement}
             />
         </>
     );
