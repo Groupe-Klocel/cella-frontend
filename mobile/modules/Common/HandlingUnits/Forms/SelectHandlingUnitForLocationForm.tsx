@@ -181,7 +181,7 @@ export const SelectHandlingUnitForLocationForm = ({
                                     </Col>
                                     <Col span={16}>
                                         <Typography style={{ fontSize: '10px' }}>
-                                            {handlingUnit.code}
+                                            {handlingUnit.typeText}
                                         </Typography>
                                     </Col>
                                 </Row>
