@@ -484,23 +484,38 @@ const useExport = () => {
 const useDelete = (queryName: string) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [result, setResult] = useState<any>({ data: null, success: false, transactionId: '' });
 
-    const query = gql`mutation ${queryName}($id: String!) {
-        ${queryName}(id: $id)
+    const fetchTransactionId = async () => {
+        // Generate a new transaction ID
+        const generateTransactionId = gql`
+            mutation {
+                generateTransactionId
+            }
+        `;
+        const transactionIdResponse = await graphqlRequestClient.request(generateTransactionId);
+        const lastTransactionIdWithTid = transactionIdResponse.generateTransactionId;
+        const lastTransactionId =
+            lastTransactionIdWithTid.split('_')[1] ?? lastTransactionIdWithTid;
+        return lastTransactionId;
+    };
+
+    const query = gql`mutation ${queryName}($id: String!, $transactionId: String!) {
+        ${queryName}(id: $id transactionId: $transactionId)
       }`;
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [result, setResult] = useState<any>({ data: null, success: false });
-
-    const mutate = (id: string) => {
+    const mutate = async (id: string) => {
         setIsLoading(true);
+        const lastTransationId = await fetchTransactionId();
         graphqlRequestClient
             .request(query, {
-                id: id
+                id: id,
+                transactionId: lastTransationId
             })
             .then((result: any) => {
                 setIsLoading(false);
-                setResult({ data: result, success: true });
+                setResult({ data: result, success: true, transactionId: lastTransationId });
             })
             .catch((error: any) => {
                 if (error.response && error.response.errors[0].extensions) {

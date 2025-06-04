@@ -25,7 +25,7 @@ import {
     LockTwoTone
 } from '@ant-design/icons';
 import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
-import { getModesFromPermissions, META_DEFAULTS, pathParams, showError } from '@helpers';
+import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -33,10 +33,9 @@ import { ModeEnum } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import { HandlingUnitContentModelV2 as model } from 'models/HandlingUnitContentModelV2';
 import parameters from '../../../common/parameters.json';
-import configs from '../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -49,6 +48,7 @@ const HandlingUnitContentsPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, model.tableName);
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [infoToPrint, setInfoToPrint] = useState<any>();
+    const [dataToCreateMovement, setDataToCreateMovement] = useState<any>();
 
     const headerData: HeaderData = {
         title: t('common:handlingUnitContents'),
@@ -65,46 +65,12 @@ const HandlingUnitContentsPage: PageComponent = () => {
             ) : null
     };
 
-    const confirmAction = (
-        id: string | undefined,
-        setId: any,
-        action: 'delete' | 'disable',
-        infoForMove: any
-    ) => {
+    const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
             Modal.confirm({
                 title: t('messages:delete-confirm'),
                 onOk: () => {
-                    const fetchData = async () => {
-                        const res = await fetch(`/api/create-movement/`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                trigger: 'deleteContent',
-                                originData: {
-                                    ...infoForMove
-                                }
-                            })
-                        });
-                        if (res.ok) {
-                            setId(id);
-                        }
-                        if (!res.ok) {
-                            const errorResponse = await res.json();
-                            if (errorResponse.error.response.errors[0].extensions) {
-                                showError(
-                                    t(
-                                        `errors:${errorResponse.error.response.errors[0].extensions.code}`
-                                    )
-                                );
-                            } else {
-                                showError(t('messages:error-update-data'));
-                            }
-                        }
-                    };
-                    fetchData();
+                    setId(id);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -120,6 +86,7 @@ const HandlingUnitContentsPage: PageComponent = () => {
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                isCreateAMovement={true}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -153,7 +120,7 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable /*&&
                                 record.handlingUnit_status ==
-                                    configs.HANDLING_UNIT_STATUS_VALIDATED*/ &&
+                                configs.HANDLING_UNIT_STATUS_VALIDATED*/ &&
                                 record.handlingUnit_category ==
                                     parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
                                     <LinkButton
@@ -173,12 +140,7 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
-                                            confirmAction(
-                                                record.id,
-                                                setIdToDisable,
-                                                'disable',
-                                                undefined
-                                            )()
+                                            confirmAction(record.id, setIdToDisable, 'disable')()
                                         }
                                     ></Button>
                                 ) : (
@@ -194,21 +156,24 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger
-                                        onClick={() =>
-                                            confirmAction(record.id, setIdToDelete, 'delete', {
-                                                articleId: record.articleId,
-                                                articleName: record.article_name,
-                                                stockStatus: record.stockStatus,
-                                                quantity: record.quantity,
-                                                locationId: record.handlingUnit_locationId,
-                                                locationName: record.handlingUnit_location_name,
-                                                handlingUnitId: record.handlingUnitId,
-                                                handlingUnitName: record.handlingUnit_name,
-                                                stockOwnerId: record.stockOwnerId,
-                                                stockOwnerName: record.stockOwner_name,
-                                                handlingUnitContentId: record.id
-                                            })()
-                                        }
+                                        onClick={() => {
+                                            confirmAction(record.id, setIdToDelete, 'delete')();
+                                            setDataToCreateMovement({
+                                                content: {
+                                                    articleId: record.articleId,
+                                                    articleName: record.article_name,
+                                                    stockStatus: record.stockStatus,
+                                                    quantity: record.quantity,
+                                                    locationId: record.handlingUnit_locationId,
+                                                    locationName: record.handlingUnit_location_name,
+                                                    handlingUnitId: record.handlingUnitId,
+                                                    handlingUnitName: record.handlingUnit_name,
+                                                    stockOwnerId: record.stockOwnerId,
+                                                    stockOwnerName: record.stockOwner_name,
+                                                    handlingUnitContentId: record.id
+                                                }
+                                            });
+                                        }}
                                     ></Button>
                                 ) : (
                                     <></>
@@ -230,6 +195,7 @@ const HandlingUnitContentsPage: PageComponent = () => {
                         )
                     }
                 ]}
+                dataToCreateMovement={dataToCreateMovement}
                 routeDetailPage={'/handling-unit-contents/:id'}
             />
             <NumberOfPrintsModalV2
