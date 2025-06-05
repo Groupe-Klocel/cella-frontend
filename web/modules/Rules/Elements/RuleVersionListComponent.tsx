@@ -101,7 +101,6 @@ const RuleVersionListComponent = (props: IListProps) => {
     };
     props = { ...defaultProps, ...props };
     // #endregion
-
     // #region extract data from modelV2
     const listFields = Object.keys(props.dataModel.fieldsInfo).filter(
         (key) => props.dataModel.fieldsInfo[key].isListRequested
@@ -478,7 +477,6 @@ const RuleVersionListComponent = (props: IListProps) => {
         router.locale,
         defaultModelSort
     );
-
     useEffect(() => {
         reloadData();
     }, [search, props.refetch, pagination.current, pagination.itemsPerPage, sort, router.locale]);
@@ -551,7 +549,6 @@ const RuleVersionListComponent = (props: IListProps) => {
                     listData['results'] = listData['results'].map((item: any) => {
                         return flatten(item);
                     });
-
                     // Specific to rule_version
                     // iterate over the first result and get list of columns to define table structure
                     Object.keys(listData['results'][0]).forEach((column_name: any) => {
@@ -560,24 +557,6 @@ const RuleVersionListComponent = (props: IListProps) => {
                         let title = `d:${column_name}`;
                         if (displayedLabels && column_name in displayedLabels) {
                             title = `d:${displayedLabels[column_name]}`;
-                        }
-
-                        // Specific to record_history
-                        const prefixesToCheck = [
-                            'd:ruleConfigurationIn_',
-                            'd:ruleConfigurationOut_'
-                        ];
-                        const suffixesToCheck = ['_description', '_type', '_validationRule'];
-                        // Check if the title starts with any of the prefixes
-                        for (const prefix of prefixesToCheck) {
-                            if (title.startsWith(prefix)) {
-                                for (const suffix of suffixesToCheck) {
-                                    if (title.endsWith(suffix)) {
-                                        const subTitle = title.split('_');
-                                        title = subTitle[2];
-                                    }
-                                }
-                            }
                         }
 
                         const row_data: any = {
@@ -602,51 +581,35 @@ const RuleVersionListComponent = (props: IListProps) => {
                 }
 
                 // Specific to display columns for input/output parameters of json fields
-
-                if (result_list) {
-                    result_list.splice(3, 10);
-                }
-
-                const new_result_list: any[] = [];
-
-                const first_column_element: any = {};
-
-                if (
-                    result_list[0].dataIndex === 'ruleConfigurationIn' ||
-                    result_list[0].dataIndex === 'ruleConfigurationOut'
-                ) {
-                    <></>;
-                } else {
-                    first_column_element['title'] = 'd:parameterName';
-                    first_column_element['dataIndex'] = 'parameterName';
-                    first_column_element['key'] = 'parameterName';
-                    first_column_element['showSorterTooltip'] = false;
-
-                    new_result_list.push(first_column_element);
-
-                    for (const oneColumnElement of result_list) {
-                        const new_column_element: any = {};
-                        Object.keys(oneColumnElement).forEach((key: any) => {
-                            if (key === 'dataIndex' || key === 'key') {
-                                const subValues = oneColumnElement[key].split('_');
-
-                                if (subValues.length > 0) {
-                                    new_column_element[key] = subValues[2];
-                                }
-                            } else if (key === 'title') {
-                                new_column_element[key] = 'd:' + oneColumnElement[key];
-                            } else {
-                                new_column_element[key] = oneColumnElement[key];
-                            }
-                        });
-
-                        new_result_list.push(new_column_element);
+                const new_result_list: any[] = [
+                    {
+                        title: 'd:parameterName',
+                        dataIndex: 'parameterName',
+                        key: 'parameterName',
+                        showSorterTooltip: false
+                    },
+                    {
+                        title: 'd:description',
+                        dataIndex: 'description',
+                        key: 'description',
+                        showSorterTooltip: false
+                    },
+                    {
+                        title: 'd:type',
+                        dataIndex: 'type',
+                        key: 'type',
+                        showSorterTooltip: false
+                    },
+                    {
+                        title: 'd:validationRule',
+                        dataIndex: 'validationRule',
+                        key: 'validationRule',
+                        showSorterTooltip: false
                     }
-                }
+                ];
 
                 // set columns to use in table
                 setColumns(new_result_list);
-
                 // Specific to display columns for input/output parameters of json fields
                 let newElementListData: any = {};
                 const newListData: any[] = [];
@@ -657,32 +620,29 @@ const RuleVersionListComponent = (props: IListProps) => {
                     result_list[0].dataIndex !== 'ruleConfigurationOut'
                 ) {
                     Object.keys(listData.results[0]).forEach((key: any) => {
+                        newElementListData = {};
                         const subKeys = key.split('_');
+                        const keyWithoutPrefixAndSuffix = subKeys.slice(1, -1).join('_');
+                        const lastElement =
+                            newListData.length > 0 ? newListData[newListData.length - 1] : null;
 
-                        if (key.endsWith('_description')) {
-                            if (Object.keys(newElementListData).length > 0) {
-                                newListData.push(newElementListData);
-                            }
-
-                            newElementListData = {};
-
-                            newElementListData['parameterName'] = subKeys[1];
-                            newElementListData[subKeys[2]] = listData.results[0][key];
+                        if (
+                            lastElement &&
+                            lastElement['parameterName'] === keyWithoutPrefixAndSuffix
+                        ) {
+                            lastElement[subKeys[subKeys.length - 1]] = listData.results[0][key];
                         } else {
-                            newElementListData[subKeys[2]] = listData.results[0][key];
+                            newElementListData['parameterName'] = keyWithoutPrefixAndSuffix;
+                            newElementListData[subKeys[subKeys.length - 1]] =
+                                listData.results[0][key];
+                            newListData.push(newElementListData);
                         }
                     });
-
-                    if (Object.keys(newElementListData).length > 0) {
-                        newListData.push(newElementListData);
-                    }
-
                     listData.results = newListData;
                 }
 
                 // set data for the table
                 setRows(listData);
-
                 if (props.setData) props.setData(listData.results);
                 setPagination({
                     ...pagination,

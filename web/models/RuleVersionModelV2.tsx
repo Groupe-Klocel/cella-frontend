@@ -260,6 +260,26 @@ export const RuleVersionModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null
+        },
+        'ruleVersionConfigs{ruleVersionId}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
         }
     }
 };
