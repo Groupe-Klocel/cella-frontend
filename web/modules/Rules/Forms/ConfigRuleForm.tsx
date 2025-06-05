@@ -117,7 +117,7 @@ export const ConfigRuleForm = (props: ISingleItemProps) => {
                 return graphqlRequestClient
                     .request(updateRuleVersionQuery, updateRuleVersionVariables)
                     .then((res: any) => {
-                        showSuccess(t('messages:success-creating-data'));
+                        showSuccess(t('messages:success-created'));
                         router.push('/rules/version/' + rule.id);
                     })
                     .catch((err: any) => {

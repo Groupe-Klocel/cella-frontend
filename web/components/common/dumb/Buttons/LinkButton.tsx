@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import Link from 'next/link';
 import { FC, ReactNode } from 'react';
 
@@ -32,6 +32,8 @@ export interface ILinkButtonProps {
           };
     type?: 'link' | 'text' | 'default' | 'primary' | 'dashed' | undefined;
     icon?: ReactNode;
+    disabled?: boolean;
+    tooltip?: string;
 }
 
 const LinkButton: FC<ILinkButtonProps> = ({
@@ -39,14 +41,48 @@ const LinkButton: FC<ILinkButtonProps> = ({
     path,
     type,
     icon,
-    replace
+    replace,
+    disabled,
+    tooltip
 }: ILinkButtonProps) => {
     return (
-        <Link href={path} passHref replace={replace}>
-            <Button icon={icon} type={type}>
-                {title}
-            </Button>
-        </Link>
+        <>
+            {disabled ? (
+                <Tooltip placement="top" title={tooltip}>
+                    <Button icon={icon} type={type} disabled>
+                        {title}
+                    </Button>
+                </Tooltip>
+            ) : (
+                <Link href={path} passHref replace={replace}>
+                    <Tooltip placement="top" title={tooltip}>
+                        <Button icon={icon} type={type}>
+                            {title}
+                        </Button>
+                    </Tooltip>
+                </Link>
+            )}
+        </>
+    );
+};
+
+const UsualButton: any = ({ title, type, danger, icon, onClick, disabled, tooltip }: any) => {
+    return (
+        <>
+            {disabled ? (
+                <Tooltip placement="top" title={tooltip}>
+                    <Button icon={icon} type={type} disabled>
+                        {title}
+                    </Button>
+                </Tooltip>
+            ) : (
+                <Tooltip placement="top" title={tooltip}>
+                    <Button icon={icon} type={type} onClick={onClick} danger={danger}>
+                        {title}
+                    </Button>
+                </Tooltip>
+            )}
+        </>
     );
 };
 
@@ -54,4 +90,4 @@ LinkButton.displayName = 'LinkButton';
 LinkButton.defaultProps = {
     replace: false
 };
-export { LinkButton };
+export { LinkButton, UsualButton };

@@ -101,10 +101,13 @@ const PatternDetailsExtra = ({ id, name }: IItemDetailsProps) => {
                 `;
 
                 const variables = {
-                    functionName: 'pattern_path_links_delete',
+                    functionName: 'reorder_on_delete',
                     event: {
                         input: {
-                            patternPathLinkIds: [patternPathLinkId]
+                            ids: patternPathLinkId,
+                            tableName: 'patternPathLink',
+                            orderingField: 'order',
+                            parentId: 'patternId'
                         }
                     }
                 };

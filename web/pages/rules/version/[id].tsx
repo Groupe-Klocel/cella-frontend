@@ -42,6 +42,7 @@ const RuleVersionPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [refetch, setRefetch] = useState<boolean>(false);
 
     console.log(data, 'data');
 
@@ -110,13 +111,16 @@ const RuleVersionPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
-                extraDataComponent={<RuleVersionDetailsExtra rule={data} />}
+                extraDataComponent={
+                    <RuleVersionDetailsExtra rule={data} setRefetchRuleVersion={setRefetch} />
+                }
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                refetch={refetch}
             />
         </>
     );

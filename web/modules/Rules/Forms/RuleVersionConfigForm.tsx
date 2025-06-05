@@ -130,12 +130,12 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
         form.validateFields()
             .then(async () => {
                 const formData = form.getFieldsValue(true);
-
                 const input_tmp: any = {};
                 const output_tmp: any = {};
-
                 Object.entries(formData).forEach(([key, value]: any) => {
-                    const [field, type] = key.split('_');
+                    const keySplit = key.split('_');
+                    const field = keySplit.slice(0, keySplit.length - 1).join('_');
+                    const type = keySplit[keySplit.length - 1];
                     if (!type) return;
 
                     if (type === 'operator') {
@@ -151,7 +151,7 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                                 value: value === '*' ? null : formData[`${field}_value`]
                             };
                         }
-                    } else if (type === 'value' && !formData.hasOwnProperty(`${field}_operator`)) {
+                    } else if (type.startsWith('value') && type !== 'value') {
                         // Output config (no operator for this field)
                         try {
                             output_tmp[field] = { value: JSON.parse(value) };
@@ -160,7 +160,6 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                         }
                     }
                 });
-
                 const currentOrder = ruleVersion?.ruleVersionConfigs
                     ? ruleVersion?.ruleVersionConfigs.length + 1
                     : 1;
@@ -197,7 +196,7 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                     );
                     if (createRuleVersionConfigResult) {
                         showSuccess(
-                            t('messages:success-creating-data', {
+                            t('messages:success-created', {
                                 name: t('d:rule-version-config')
                             })
                         );
@@ -227,27 +226,25 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                                         ([key]) => key === item.name
                                     )
                                 ) {
-                                    initialValue =
-                                        typeof initialData.ruleLineConfigurationIn[item.name]
-                                            .value === 'string'
-                                            ? initialData.ruleLineConfigurationIn[item.name].value
-                                            : JSON.stringify(
-                                                  initialData.ruleLineConfigurationIn[item.name]
-                                                      .value
-                                              );
                                     initialOperator =
                                         initialData.ruleLineConfigurationIn[item.name].operator;
+                                    initialValue =
+                                        initialOperator === '*'
+                                            ? ''
+                                            : typeof initialData.ruleLineConfigurationIn[item.name]
+                                                    .value === 'string'
+                                              ? initialData.ruleLineConfigurationIn[item.name].value
+                                              : JSON.stringify(
+                                                    initialData.ruleLineConfigurationIn[item.name]
+                                                        .value
+                                                );
                                 }
 
                                 return (
                                     <>
                                         <Form.Item
                                             name={item.name + operator}
-                                            label={
-                                                item.description
-                                                    ? item.description
-                                                    : t(`d:${item.name}`)
-                                            }
+                                            label={item.name ? item.name : item.description}
                                             key={item.name + operator}
                                             initialValue={initialOperator}
                                         >
@@ -347,7 +344,7 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                 {
                     <HeaderContent title={output}>
                         <Form.Item>
-                            {ruleConfigOutArray.map((item: any) => {
+                            {ruleConfigOutArray.map((item: any, index: number) => {
                                 const initialValue =
                                     initialData &&
                                     initialData.ruleLineConfigurationOut &&
@@ -364,13 +361,13 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                                         : null;
                                 return (
                                     <Form.Item
-                                        name={item.name + value}
+                                        name={item.name + value + index}
                                         label={
                                             item.description
                                                 ? item.description
                                                 : t(`d:${item.name}`)
                                         }
-                                        key={item.name + value}
+                                        key={item.name + value + index}
                                         initialValue={initialValue}
                                     >
                                         {item.type.toUpperCase() === 'NUMBER' ? (
