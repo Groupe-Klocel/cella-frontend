@@ -40,7 +40,8 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [loading, setLoading] = useState(false);
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<any>([]);
+    const [tableData, setTableData] = useState<any[]>([]);
     const [showDeliveriesManualAllocationModal, setShowDeliveriesManualAllocationModal] =
         useState(false);
     const headerData: HeaderData = {
@@ -48,9 +49,21 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
         routes: itemRoutes,
         actionsComponent: null
     };
+    const [autocountFilter] = useState({
+        filter: { field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }
+    });
 
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
-        setSelectedRowKeys(newSelectedRowKeys);
+    const onSelectChange = (newSelectedRowKeys: any) => {
+        selectedRowKeys.forEach((key: string) => {
+            if (!newSelectedRowKeys.includes(key) && tableData.map((d) => d.id).includes(key)) {
+                setSelectedRowKeys((prevKeys: React.Key[]) => prevKeys.filter((k) => k !== key));
+            }
+        });
+        newSelectedRowKeys.forEach((value: string) => {
+            if (!selectedRowKeys?.includes(value)) {
+                setSelectedRowKeys((prevKeys: React.Key[]) => [...prevKeys, value]);
+            }
+        });
     };
 
     const rowSelection = {
@@ -90,10 +103,6 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
             ) : null
     };
 
-    const autocountFilter = {
-        filter: { field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }
-    };
-
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
@@ -112,6 +121,7 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
                 advancedFilters={autocountFilter}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                setData={setTableData}
                 extraColumns={[
                     {
                         title: 'd:progress',
