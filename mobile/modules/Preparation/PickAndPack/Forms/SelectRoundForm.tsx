@@ -51,6 +51,7 @@ export const SelectRoundForm = ({
 
     // TYPED SAFE ALL
     const [rounds, setRounds] = useState<Array<any>>();
+    const [roundNumber, setRoundNumber] = useState<number>(0);
 
     //camera scanner section
     const [form] = Form.useForm();
@@ -129,6 +130,8 @@ export const SelectRoundForm = ({
             roundsListFromGQL,
             roundsListVariables
         );
+
+        setRoundNumber(roundsList_result?.rounds?.results.length || 0);
 
         return roundsList_result;
     };
@@ -352,6 +355,7 @@ export const SelectRoundForm = ({
         }
 
         data['round'] = selectedRound.round;
+        data['roundNumber'] = roundNumber;
         const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
             ?.filter((raa: any) => raa.quantity != 0)
             .sort((a: any, b: any) => {
