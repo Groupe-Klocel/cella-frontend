@@ -848,21 +848,38 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
                                 });
                             }
 
+                            function isNotNull(value: any) {
+                                if (value === 'null' || value === null || value === undefined) {
+                                    return '';
+                                } else {
+                                    return value;
+                                }
+                            }
+
                             if (typeField.endsWith('Out')) {
-                                newElementListData[typeField + '_' + value] =
-                                    valueFields[valueField];
+                                newElementListData[typeField + '_' + value] = isNotNull(
+                                    valueFields[valueField]
+                                );
                             } else if (typeField.endsWith('In')) {
                                 if (operator === '*') {
                                     newElementListData[typeField + '_' + value] =
-                                        value + ' ' + operator;
+                                        isNotNull(value) + ' ' + isNotNull(operator);
                                 } else {
                                     newElementListData[typeField + '_' + value] =
-                                        value + ' ' + operator + ' ' + valueFields[valueField];
+                                        isNotNull(value) +
+                                        ' ' +
+                                        isNotNull(operator) +
+                                        ' ' +
+                                        isNotNull(valueFields[valueField]);
                                 }
                             }
                         });
 
                         newListData.push(newElementListData);
+                        console.log(
+                            "AXC - RuleVersionConfigListComponent.tsx - listData['results'].map - newElementListData:",
+                            newElementListData
+                        );
                         return null;
                     });
                     listData.results = newListData;
