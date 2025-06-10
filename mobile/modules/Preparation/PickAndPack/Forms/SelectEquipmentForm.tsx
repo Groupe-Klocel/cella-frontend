@@ -72,7 +72,7 @@ export const SelectEquipmentForm = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
+        storedObject[`step${stepNumber}`] = { previousStep: 0 };
         storedObject.currentStep = stepNumber;
         storage.set(process, JSON.stringify(storedObject));
     }, []);
