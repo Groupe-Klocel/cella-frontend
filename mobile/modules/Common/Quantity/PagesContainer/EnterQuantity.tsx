@@ -76,13 +76,14 @@ export const EnterQuantity = ({
     };
 
     let rules: Array<any> = [{ required: true, message: t('messages:error-message-empty-input') }];
-    if (availableQuantity) {
+    if (availableQuantity !== undefined && availableQuantity !== null) {
         rules.push({
             type: 'number',
             max: availableQuantity,
             message: t('messages:erroneous-quantity')
         });
     }
+
     return (
         <>
             <EnterNumberForm
