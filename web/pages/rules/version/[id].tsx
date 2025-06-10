@@ -30,6 +30,7 @@ import { rulesRoutes as itemRoutes } from 'modules/Rules/Static/rulesRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import { RuleVersionDetailsExtra } from 'modules/Rules/Elements/RuleVersionDetailsExtra';
+import config from '../../../../common/configs.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -81,29 +82,35 @@ const RuleVersionPage: PageComponent = () => {
         };
     };
 
+    console.log(data, 'data in confirmAction');
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
-        actionsComponent: (
-            <Space>
-                {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
-                    <LinkButton
-                        title={t('actions:edit')}
-                        path={`${rootPath}/version/edit/${id}`}
-                        type="primary"
-                    />
-                ) : (
-                    <></>
-                )}
-                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
-                    <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
-                        {t('actions:delete')}
-                    </Button>
-                ) : (
-                    <></>
-                )}
-            </Space>
-        )
+        actionsComponent:
+            data?.version !== data?.rule_activeVersion ||
+            data?.rule_status !== config.RULE_STATUS_IN_PROGRESS ? (
+                <Space>
+                    {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
+                        <LinkButton
+                            title={t('actions:edit')}
+                            path={`${rootPath}/version/edit/${id}`}
+                            type="primary"
+                        />
+                    ) : (
+                        <></>
+                    )}
+                    {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
+                        <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
+                            {t('actions:delete')}
+                        </Button>
+                    ) : (
+                        <></>
+                    )}
+                </Space>
+            ) : (
+                <></>
+            )
     };
     // #endregion
 

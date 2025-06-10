@@ -299,60 +299,49 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
             : [];
 
     const actionCollumnsconfig = [
-        {
-            title: 'actions:actions',
-            key: 'actions',
-            render: (record: { id: string; order: number }) => (
-                <Space>
-                    {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
-                        <LinkButton
-                            icon={<EyeTwoTone />}
-                            path={'/rules/version/config/:id'.replace(':id', record.id)}
-                        />
-                    ) : null}
-                    {rule.version !== rule.rule_activeVersion ? (
-                        <>
-                            <Button
-                                onClick={() =>
-                                    setPriorityStatus({
-                                        type: 'up',
-                                        id: record.id
-                                    })
-                                }
-                                icon={<CaretUpOutlined />}
-                            />
-                            <Button
-                                onClick={() =>
-                                    setPriorityStatus({
-                                        type: 'down',
-                                        id: record.id
-                                    })
-                                }
-                                icon={<CaretDownOutlined />}
-                            />
-                            {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
-                                <LinkButton
-                                    icon={<EditTwoTone />}
-                                    path={'/rules/version/config/edit/:id'.replace(
-                                        ':id',
-                                        record.id
-                                    )}
-                                />
-                            ) : null}
-                            {modes.length > 0 && modes.includes(ModeEnum.Delete) ? (
-                                <Button
-                                    icon={<DeleteOutlined />}
-                                    danger
-                                    onClick={() =>
-                                        confirmAction(record.id, setIdToDeleteVersionConfig)()
-                                    }
-                                ></Button>
-                            ) : null}
-                        </>
-                    ) : null}
-                </Space>
-            )
-        }
+        (rule.version !== rule.rule_activeVersion
+            ? {
+                  title: 'actions:actions',
+                  key: 'actions',
+                  render: (record: { id: string; order: number }) => (
+                      <Space>
+                          <Button
+                              onClick={() =>
+                                  setPriorityStatus({
+                                      type: 'up',
+                                      id: record.id
+                                  })
+                              }
+                              icon={<CaretUpOutlined />}
+                          />
+                          <Button
+                              onClick={() =>
+                                  setPriorityStatus({
+                                      type: 'down',
+                                      id: record.id
+                                  })
+                              }
+                              icon={<CaretDownOutlined />}
+                          />
+                          {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
+                              <LinkButton
+                                  icon={<EditTwoTone />}
+                                  path={'/rules/version/config/edit/:id'.replace(':id', record.id)}
+                              />
+                          ) : null}
+                          {modes.length > 0 && modes.includes(ModeEnum.Delete) ? (
+                              <Button
+                                  icon={<DeleteOutlined />}
+                                  danger
+                                  onClick={() =>
+                                      confirmAction(record.id, setIdToDeleteVersionConfig)()
+                                  }
+                              ></Button>
+                          ) : null}
+                      </Space>
+                  )
+              }
+            : []) as any
     ];
 
     return (
