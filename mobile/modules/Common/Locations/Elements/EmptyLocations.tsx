@@ -17,17 +17,59 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { PageTableContentWrapper, ContentSpin, RadioSimpleTable } from '@components';
+import {
+    PageTableContentWrapper,
+    ContentSpin,
+    RadioSimpleTable,
+    StyledFormItem,
+    StyledForm
+} from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
+import { Select } from 'antd';
+import styled from 'styled-components';
 
 export interface IEmptyLocationsProps {
     withAvailableHU?: boolean;
 }
+
+const SmallSelect = styled(Select)`
+    &.ant-select {
+        font-size: 13px;
+        width: 100%;
+    }
+
+    .ant-select-selector {
+        height: 22px !important;
+        min-height: 22px !important;
+        padding: 0 8px !important;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+    }
+
+    .ant-select-arrow,
+    .ant-select-clear {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .ant-select-selection-search {
+        display: flex;
+        align-items: center;
+    }
+    .ant-select-dropdown {
+        font-size: 12px;
+    }
+
+    .ant-select-item {
+        font-size: 12px;
+    }
+`;
 
 export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
     const { t } = useTranslation();
@@ -35,10 +77,12 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
     const { graphqlRequestClient } = useAuth();
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
+    const [withBlockFilter, setWithBlockFilter] = useState<boolean>(false);
     const [emptyLocations, setEmptyLocationsInfos] = useState<any>();
     const [locationsData, setLocationsData] = useState<any>();
+    const [block, setBlock] = useState<string | undefined>(undefined);
 
-    const getLocationsNumber = async (): Promise<string | undefined> => {
+    const getEmptyLocationsParameters = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
             query parameters($filters: ParameterSearchFilters) {
                 parameters(filters: $filters) {
@@ -58,23 +102,85 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
         const variables = {
             filters: {
                 scope: 'radio',
-                code: 'EMPTY_LOCATIONS_NUMBER'
+                code: ['EMPTY_LOCATIONS_NUMBER', 'EMPTY_LOCATIONS_SHOW_BLOCK_FILTER']
             }
         };
-        const locationsNumber = await graphqlRequestClient.request(query, variables);
-        return locationsNumber.parameters.results[0].value;
+        const locationsParameters = await graphqlRequestClient.request(query, variables);
+        return locationsParameters;
     };
 
     useEffect(() => {
         async function fetchData() {
-            const locationNumber = await getLocationsNumber();
-
-            if (locationNumber) {
-                setNbMaxLocations(parseInt(locationNumber));
+            const locationsParameters = await getEmptyLocationsParameters();
+            if (locationsParameters) {
+                const locationsParametersResults = locationsParameters.parameters.results;
+                const locationNumber = locationsParametersResults.find(
+                    (param: any) => param.code === 'EMPTY_LOCATIONS_NUMBER'
+                )?.value;
+                if (locationNumber) {
+                    setNbMaxLocations(parseInt(locationNumber));
+                }
+                const withBlockFilter = locationsParametersResults.find(
+                    (param: any) => param.code === 'EMPTY_LOCATIONS_SHOW_BLOCK_FILTER'
+                )?.value;
+                if (withBlockFilter) {
+                    setWithBlockFilter(withBlockFilter == 1);
+                }
             }
         }
         fetchData();
     }, []);
+
+    const getBlocks = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query blocks(
+                $filters: BlockSearchFilters
+                $orderBy: [BlockOrderByCriterion!]
+                $page: Int!
+                $itemsPerPage: Int!
+            ) {
+                blocks(
+                    filters: $filters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                ) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        name
+                    }
+                }
+            }
+        `;
+        const variables = {
+            filters: {},
+            orderBy: {
+                field: 'name',
+                ascending: true
+            },
+            page: 1,
+            itemsPerPage: 1000
+        };
+        const blockInfos = await graphqlRequestClient.request(query, variables);
+        return blockInfos;
+    };
+
+    const [blocksList, setBlocksList] = useState<Array<any>>([]);
+    useEffect(() => {
+        if (withBlockFilter) {
+            getBlocks()
+                .then((blocks) => {
+                    setBlocksList(blocks?.blocks?.results || []);
+                })
+                .catch((error) => {
+                    console.error('Error fetching blocks:', error);
+                    setBlocksList([]);
+                });
+        }
+    }, [withBlockFilter]);
 
     const getLocationIds = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
@@ -130,7 +236,8 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
         const variables = {
             filters: {
                 autocountHandlingUnit: 0,
-                status: configs.LOCATION_STATUS_AVAILABLE
+                status: configs.LOCATION_STATUS_AVAILABLE,
+                blockId: block ?? undefined
             },
             orderBy: sortByDate,
             page: 1,
@@ -194,7 +301,8 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
             filters: {
                 autocountHandlingUnitContent: 0,
                 location_Category: 20710,
-                status: configs.LOCATION_STATUS_AVAILABLE
+                status: configs.LOCATION_STATUS_AVAILABLE,
+                location_BlockId: block ?? undefined
             },
             orderBy: sortByName,
             page: 1,
@@ -216,7 +324,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
             if (result) setEmptyLocationsInfos(result);
         }
         fetchEmptyLocationsData();
-    }, []);
+    }, [block]);
 
     //When location
     useEffect(() => {
@@ -273,7 +381,49 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
     ];
 
     return (
-        <PageTableContentWrapper>
+        <PageTableContentWrapper
+            style={{
+                border: '1px solid rgb(255, 228, 149)',
+                borderRadius: '5px',
+                paddingBottom: '10px',
+                width: '97%'
+            }}
+        >
+            {withBlockFilter ? (
+                <StyledForm>
+                    <StyledFormItem
+                        label={
+                            <span style={{ fontSize: '12px' }}>{t('common:filter-on-block')}</span>
+                        }
+                        name="blocks"
+                        style={{ marginBottom: '5px', width: '95%' }}
+                    >
+                        <SmallSelect
+                            showSearch
+                            filterOption={(inputValue, option) =>
+                                option!.props.children
+                                    .toUpperCase()
+                                    .indexOf(inputValue.toUpperCase()) !== -1
+                            }
+                            allowClear
+                            onSelect={(option: any) => {
+                                setBlock(option);
+                            }}
+                            onClear={() => {
+                                setBlock(undefined);
+                            }}
+                        >
+                            {blocksList?.map((option: any) => (
+                                <Select.Option key={option.id} value={option.id}>
+                                    {option.name}
+                                </Select.Option>
+                            ))}
+                        </SmallSelect>
+                    </StyledFormItem>
+                </StyledForm>
+            ) : (
+                <></>
+            )}
             {locationsData ? (
                 <RadioSimpleTable columns={columns} displayedLocations={displayedLocations} />
             ) : (

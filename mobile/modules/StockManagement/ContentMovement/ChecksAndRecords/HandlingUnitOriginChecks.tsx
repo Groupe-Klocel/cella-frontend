@@ -26,9 +26,15 @@ import { useRouter } from 'next/router';
 
 export interface IHandlingUnitOriginChecksProps {
     dataToCheck: any;
+    isEnforcedOriginLocation?: boolean;
+    expectedHandlingUnitId?: string;
 }
 
-export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChecksProps) => {
+export const HandlingUnitOriginChecks = ({
+    dataToCheck,
+    isEnforcedOriginLocation,
+    expectedHandlingUnitId
+}: IHandlingUnitOriginChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const router = useRouter();
@@ -54,6 +60,21 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
+    const handleError = (message: string, enforedValueMessage?: string) => {
+        const displayedMessage =
+            isEnforcedValue && enforedValueMessage ? enforedValueMessage : message;
+        showError(t(displayedMessage));
+        setResetForm(true);
+        setScannedInfo(undefined);
+        if (isEnforcedValue) {
+            if (isEnforcedOriginLocation) {
+                router.back();
+                storage.remove(process);
+            } else {
+                onBack(storedObject.currentStep);
+            }
+        }
+    };
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && handlingUnitInfos) {
@@ -66,13 +87,7 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                         (huContent: any) => huContent.quantity > 0
                     );
                 if (handlingUnitContentsFiltered.length === 0) {
-                    showError(t('messages:no-huc-quantity'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    if (isEnforcedValue) {
-                        router.back();
-                        storage.remove(process);
-                    }
+                    handleError('messages:no-huc-quantity');
                     return;
                 }
                 const handlingUnitInfosFiltered = {
@@ -81,26 +96,20 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                 };
                 const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
                 if (handlingUnitInfosFiltered.locationId !== chosenLocationId) {
-                    showError(t('messages:no-hu-location'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    if (isEnforcedValue) {
-                        router.back();
-                        storage.remove(process);
-                    }
+                    handleError('messages:no-hu-location');
                     return;
                 }
                 if (
                     handlingUnitInfosFiltered.category !== parameters.HANDLING_UNIT_CATEGORY_STOCK
                 ) {
-                    showError(t('messages:only-stock-hu-move'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    if (isEnforcedValue) {
-                        router.back();
-                        storage.remove(process);
-                    }
+                    handleError('messages:only-stock-hu-move');
                     return;
+                }
+                if (expectedHandlingUnitId) {
+                    if (handlingUnitInfosFiltered.id !== expectedHandlingUnitId) {
+                        handleError('messages:unexpected-scanned-item');
+                        return;
+                    }
                 }
                 const data: { [label: string]: any } = {};
                 data['handlingUnit'] = handlingUnitInfosFiltered;
@@ -109,17 +118,11 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
                     ...storedObject[`step${stepNumber}`],
                     data
                 };
-            } else if (isEnforcedValue) {
-                showError(t('messages:no-content-in-reception'));
-                router.back();
-                storage.remove(process);
             } else {
-                showError(t('messages:no-hu-or-empty'));
-                setResetForm(true);
-                setScannedInfo(undefined);
-                if (isEnforcedValue) {
-                    onBack(storedObject.currentStep);
-                }
+                const message = isEnforcedValue
+                    ? 'messages:no-content-in-location'
+                    : 'messages:no-hu-or-empty';
+                handleError(message);
             }
         }
         if (
