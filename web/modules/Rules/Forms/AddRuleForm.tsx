@@ -76,8 +76,8 @@ export const AddRuleForm = () => {
     useEffect(() => {
         const fetchStockOwners = async () => {
             const query = gql`
-                query {
-                    stockOwners(filters: {}) {
+                query GetStockOwner($filters: StockOwnerSearchFilters, $itemsPerPage: Int!) {
+                    stockOwners(filters: $filters, itemsPerPage: $itemsPerPage) {
                         results {
                             id
                             name
@@ -85,7 +85,13 @@ export const AddRuleForm = () => {
                     }
                 }
             `;
-            const queryInfo: any = await graphqlRequestClient.request(query);
+            const queryVariables: any = {
+                filters: {
+                    status: configs.STOCK_OWNER_STATUS_IN_PROGRESS
+                },
+                itemsPerPage: 100 // Adjust as needed
+            };
+            const queryInfo: any = await graphqlRequestClient.request(query, queryVariables);
             setStockOwnerList(queryInfo.stockOwners.results);
         };
         fetchStockOwners();
