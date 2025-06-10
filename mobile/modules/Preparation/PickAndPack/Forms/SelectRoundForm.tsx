@@ -90,6 +90,7 @@ export const SelectRoundForm = ({
     });
 
     const fetchRoundsList = async () => {
+        const equipmentId = storedObject[`step5`]?.data?.equipmentId;
         const roundsListFromGQL = gql`
             query rounds(
                 $filters: RoundSearchFilters
@@ -118,7 +119,7 @@ export const SelectRoundForm = ({
         `;
 
         const roundsListVariables = {
-            filters: { status: configsToFilterOn },
+            filters: { status: configsToFilterOn, equipment_Id: equipmentId },
             orderBy: null,
             page: 1,
             itemsPerPage: 100
