@@ -29,6 +29,7 @@ export interface IScanArticleEANProps {
     label: string;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
+    forceArticleScan?: boolean;
     checkComponent: any;
     contents?: any;
 }
@@ -39,6 +40,7 @@ export const ScanArticleEAN = ({
     label,
     trigger: { triggerRender, setTriggerRender },
     buttons,
+    forceArticleScan,
     checkComponent,
     contents
 }: IScanArticleEANProps) => {
@@ -86,7 +88,7 @@ export const ScanArticleEAN = ({
     //Pre-requisite: initialize current step
     useEffect(() => {
         const fetchData = async () => {
-            if (contents.length === 1) {
+            if (contents.length === 1 && !forceArticleScan) {
                 // N.B.: in this case previous step is kept at its previous value
                 let data: { [label: string]: any } = {};
                 data['article'] = contents[0].article;
@@ -96,7 +98,9 @@ export const ScanArticleEAN = ({
                 );
                 // add feature type details to results
                 if (featureTypeDetails?.filter((item: any) => item.atPreparation).length > 0) {
-                    data['article']['featureType'] = featureTypeDetailsInfos;
+                    data['article']['featureType'] = featureTypeDetails?.filter(
+                        (item: any) => item.atPreparation
+                    );
                 } else {
                     data['article']['featureType'] = [];
                 }
