@@ -235,7 +235,6 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
         };
         const variables = {
             filters: {
-                autocountHandlingUnit: 0,
                 status: configs.LOCATION_STATUS_AVAILABLE,
                 blockId: block ?? undefined
             },
@@ -299,7 +298,6 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
         };
         const variables = {
             filters: {
-                autocountHandlingUnitContent: 0,
                 location_Category: 20710,
                 status: configs.LOCATION_STATUS_AVAILABLE,
                 location_BlockId: block ?? undefined
