@@ -115,7 +115,7 @@ export const AddRuleForm = () => {
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
-                <Form.Item label={name} name="name">
+                <Form.Item label={name} name="name" rules={[{ required: true }]}>
                     <Input />
                 </Form.Item>
                 <Form.Item label={description} name="description">
