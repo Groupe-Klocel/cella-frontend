@@ -61,7 +61,7 @@ const HandlingUnitContentPage: PageComponent = () => {
         data?.article_name
     } x ${data?.quantity}`;
     // #endregions
-
+    console.log('HandlingUnitContentPage', { data, id, refetchContent });
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
 
