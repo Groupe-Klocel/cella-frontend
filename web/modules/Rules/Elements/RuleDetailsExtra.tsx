@@ -31,10 +31,10 @@ import { useState } from 'react';
 
 export interface IItemDetailsProps {
     ruleId?: string | any;
-    ruleName?: string | any;
+    rule?: any;
 }
 
-const RuleDetailsExtra = ({ ruleId, ruleName }: IItemDetailsProps) => {
+const RuleDetailsExtra = ({ ruleId, rule }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
     const [idToDeleteVersion, setIdToDeleteVersion] = useState<string | undefined>();
@@ -64,7 +64,7 @@ const RuleDetailsExtra = ({ ruleId, ruleName }: IItemDetailsProps) => {
                     title={t('actions:add2', { name: t('common:rule-version') })}
                     path={pathParamsFromDictionary('/rules/version/add', {
                         ruleId: ruleId,
-                        ruleName: ruleName
+                        ruleName: rule?.name
                     })}
                     type="primary"
                 />
@@ -121,25 +121,10 @@ const RuleDetailsExtra = ({ ruleId, ruleName }: IItemDetailsProps) => {
                                                     {
                                                         id: record.id,
                                                         ruleId,
-                                                        ruleName
+                                                        ruleName: rule?.name
                                                     }
                                                 )}
                                             />
-                                        ) : (
-                                            <></>
-                                        )}
-                                        {ruleVersionModes.length > 0 &&
-                                        ruleVersionModes.includes(ModeEnum.Delete) &&
-                                        RuleVersionModelV2.isSoftDeletable ? (
-                                            <Button
-                                                icon={<StopOutlined />}
-                                                onClick={() =>
-                                                    confirmAction(
-                                                        record.id,
-                                                        setIdToDisableVersion
-                                                    )()
-                                                }
-                                            ></Button>
                                         ) : (
                                             <></>
                                         )}

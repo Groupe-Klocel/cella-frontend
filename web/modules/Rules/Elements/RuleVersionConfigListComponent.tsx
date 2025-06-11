@@ -86,6 +86,7 @@ export interface IListProps {
     mode?: string;
     refetch?: boolean;
     columnFilter?: boolean;
+    setRefetchRuleVersion?: any;
 }
 
 const RuleVersionConfigListComponent = (props: IListProps) => {
@@ -180,12 +181,19 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
         });
     }
 
+    const infoDeleteOrder = {
+        tableName: 'ruleVersionConfig',
+        orderingField: 'order',
+        // put '*' if no parentId is needed (ex: for equipement)
+        parentId: 'ruleVersionId'
+    };
+
     // #region DELETE MUTATION
     const {
         isLoading: deleteLoading,
         result: deleteResult,
         mutate: callDelete
-    } = useDelete(props.dataModel.endpoints.delete);
+    } = useDelete(props.dataModel.endpoints.delete, infoDeleteOrder);
 
     useEffect(() => {
         if (props.triggerDelete && props.triggerDelete.idToDeleteVersionConfig) {
@@ -205,6 +213,7 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
 
         if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
+            props.setRefetchRuleVersion((prev: boolean) => !prev);
             reloadData();
         } else {
             showError(t('messages:error-deleting-data'));
@@ -509,7 +518,7 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
             showError(t('messages:error-enabling-element'));
         }
     }, [enableResult]);
-    // #end region
+    // #endregion
 
     // #region SEARCH OPERATIONS
 
@@ -758,132 +767,105 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
             if (listData && listData['results']) {
                 if (listData['results'].length > 0) {
                     listData['results'] = listData['results'].map((item: any) => {
+                        if (item.ruleLineConfigurationOut) {
+                            Object.entries(item.ruleLineConfigurationOut).forEach(
+                                ([key, value]: any) => {
+                                    item.ruleLineConfigurationOut[key] = {
+                                        value: JSON.stringify(value.value)
+                                    };
+                                }
+                            );
+                        }
+                        if (item.ruleLineConfigurationIn) {
+                            Object.entries(item.ruleLineConfigurationIn).forEach(
+                                ([key, value]: any) => {
+                                    item.ruleLineConfigurationIn[key] = {
+                                        value: JSON.stringify(value.value),
+                                        operator: value.operator
+                                    };
+                                }
+                            );
+                        }
+                        console.log(item, 'item');
                         return flatten(item);
                     });
 
-                    const new_column_list: any[] = [];
-                    let column_element: any = {};
+                    let new_column_list: any[] = [
+                        {
+                            title: 'd:order',
+                            dataIndex: 'order',
+                            key: 'order',
+                            showSorterTooltip: false
+                        }
+                    ];
 
                     //Specific for display input/output elements of rule
                     const newListData: any[] = [];
-                    let titleDetail: String;
 
-                    for (resElement = 0; resElement < listData['results'].length; resElement++) {
+                    listData['results'].map((result: any) => {
                         const newElementListData: any = {};
 
-                        newElementListData['order'] = listData['results'][resElement]['order'];
-                        newElementListData['id'] = listData['results'][resElement]['id'];
-
-                        if (resElement === 0) {
-                            column_element['title'] = 'd:order';
-                            column_element['dataIndex'] = 'order';
-                            column_element['key'] = 'order';
-                            column_element['showSorterTooltip'] = false;
-
-                            new_column_list.push(column_element);
-                        }
+                        newElementListData['order'] = result['order'];
+                        newElementListData['id'] = result['id'];
 
                         // Input/output rule fields
 
-                        let fieldToSearch: any;
-                        let cpt_column: number;
-                        Object.keys(listData['results'][resElement]).forEach((field: any) => {
+                        const operatorField: Record<string, any> = {};
+                        const valueFields: Record<string, any> = {};
+
+                        Object.keys(result).forEach((field: any) => {
+                            const inputFields = field.split('_');
+                            const valueType = inputFields[inputFields.length - 1];
+                            if (valueType === 'operator') {
+                                operatorField[field] = result[field];
+                            }
+                            if (valueType === 'value') {
+                                valueFields[field] = result[field];
+                            }
+                        });
+
+                        Object.keys(valueFields).forEach((valueField: any) => {
+                            const inputFields = valueField.split('_');
+
+                            const typeField = inputFields[0];
+                            const value = inputFields.slice(1, inputFields.length - 1).join('_');
+                            const operator = operatorField[typeField + '_' + value + '_operator'];
+                            // Remove duplicate columns based on dataIndex before pushing new column
                             if (
-                                field.startsWith('ruleLineConfigurationIn') ||
-                                field.startsWith('ruleLineConfigurationOut')
+                                !new_column_list.some(
+                                    (col) => col.dataIndex === typeField + '_' + value
+                                )
                             ) {
-                                const inputFields = field.split('_');
+                                new_column_list.push({
+                                    title:
+                                        value +
+                                        ' (' +
+                                        ((typeField.endsWith('In') ? t('d:input') : t('d:output')) +
+                                            ')'),
+                                    dataIndex: typeField + '_' + value,
+                                    key: typeField + '_' + value,
+                                    showSorterTooltip: false
+                                });
+                            }
 
-                                if (
-                                    !newElementListData.hasOwnProperty(
-                                        inputFields[0] + '_' + inputFields[1]
-                                    )
-                                ) {
-                                    if (inputFields[0].endsWith('In')) {
-                                        newElementListData[inputFields[0] + '_' + inputFields[1]] =
-                                            inputFields[1];
-                                    }
-
-                                    fieldToSearch =
-                                        inputFields[0] + '_' + inputFields[1] + '_operator';
-
-                                    if (listData['results'][resElement][fieldToSearch] === '*') {
-                                        newElementListData[inputFields[0] + '_' + inputFields[1]] +=
-                                            ' = ';
-                                    }
-                                    if (listData['results'][resElement][fieldToSearch]) {
-                                        newElementListData[inputFields[0] + '_' + inputFields[1]] +=
-                                            ' ' +
-                                            listData['results'][resElement][fieldToSearch] +
-                                            ' ';
-                                    }
-
-                                    fieldToSearch =
-                                        inputFields[0] + '_' + inputFields[1] + '_value';
-
-                                    if (inputFields[0].endsWith('In')) {
-                                        if (listData['results'][resElement][fieldToSearch]) {
-                                            newElementListData[
-                                                inputFields[0] + '_' + inputFields[1]
-                                            ] +=
-                                                ' ' +
-                                                listData['results'][resElement][fieldToSearch] +
-                                                ' ';
-                                        }
-                                    } else {
-                                        if (listData['results'][resElement][fieldToSearch]) {
-                                            newElementListData[
-                                                inputFields[0] + '_' + inputFields[1]
-                                            ] =
-                                                ' ' +
-                                                listData['results'][resElement][fieldToSearch] +
-                                                ' ';
-                                        }
-                                    }
-
-                                    for (
-                                        cpt_column = 0;
-                                        cpt_column < new_column_list.length;
-                                        cpt_column++
-                                    ) {
-                                        if (
-                                            new_column_list[cpt_column]['key'] ===
-                                            inputFields[0] + '_' + inputFields[1]
-                                        ) {
-                                            break;
-                                        }
-                                    }
-
-                                    if (
-                                        new_column_list.length === 0 ||
-                                        cpt_column === new_column_list.length
-                                    ) {
-                                        column_element = {};
-
-                                        if (inputFields[0].endsWith('In')) {
-                                            titleDetail = t('d:input');
-                                        } else {
-                                            titleDetail = t('d:output');
-                                        }
-
-                                        column_element['title'] =
-                                            inputFields[1] + ' (' + titleDetail + ')';
-                                        column_element['dataIndex'] =
-                                            inputFields[0] + '_' + inputFields[1];
-                                        column_element['key'] =
-                                            inputFields[0] + '_' + inputFields[1];
-                                        column_element['showSorterTooltip'] = false;
-
-                                        new_column_list.push(column_element);
-                                    }
+                            if (typeField.endsWith('Out')) {
+                                newElementListData[typeField + '_' + value] =
+                                    valueFields[valueField];
+                            } else if (typeField.endsWith('In')) {
+                                if (operator === '*') {
+                                    newElementListData[typeField + '_' + value] =
+                                        value + ' ' + operator;
+                                } else {
+                                    newElementListData[typeField + '_' + value] =
+                                        value + ' ' + operator + ' ' + valueFields[valueField];
                                 }
                             }
                         });
+
                         newListData.push(newElementListData);
-                    }
-
+                        return null;
+                    });
                     listData.results = newListData;
-
                     setRows(listData);
                     setColumns(new_column_list);
                 }
@@ -906,7 +888,7 @@ const RuleVersionConfigListComponent = (props: IListProps) => {
     // }, [props.refresh]);
 
     const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
-        await setSort(orderByFormater(sorter));
+        setSort(orderByFormater(sorter));
     };
 
     // date formatting

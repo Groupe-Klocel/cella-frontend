@@ -42,6 +42,9 @@ const RuleVersionPage: PageComponent = () => {
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [refetch, setRefetch] = useState<boolean>(false);
+
+    console.log(data, 'data');
 
     // #region to customize information
     const ruleDetailBreadCrumb = [
@@ -92,16 +95,6 @@ const RuleVersionPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isSoftDeletable ? (
-                    <Button
-                        onClick={() => confirmAction(id as string, setIdToDisable)()}
-                        type="primary"
-                    >
-                        {t('actions:cancel')}
-                    </Button>
-                ) : (
-                    <></>
-                )}
                 {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
@@ -119,13 +112,7 @@ const RuleVersionPage: PageComponent = () => {
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
                 extraDataComponent={
-                    <RuleVersionDetailsExtra
-                        ruleVersionId={id}
-                        ruleVersion={data?.version}
-                        ruleName={data?.rule_name}
-                        ruleActiveVersion={data?.rule_activeVersion}
-                        ruleId={data?.ruleId}
-                    />
+                    <RuleVersionDetailsExtra rule={data} setRefetchRuleVersion={setRefetch} />
                 }
                 id={id!}
                 headerData={headerData}
@@ -133,6 +120,7 @@ const RuleVersionPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                refetch={refetch}
             />
         </>
     );
