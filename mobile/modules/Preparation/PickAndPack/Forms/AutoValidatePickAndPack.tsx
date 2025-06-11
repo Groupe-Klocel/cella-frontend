@@ -64,7 +64,7 @@ export const AutoValidatePickAndPackForm = ({
         setTriggerRender(!triggerRender);
     }, []);
     // retrieve values for update contents/boxline and create movement
-    const { step10, step15, step30, step40, step50, step60, step70, step80 } = storedObject;
+    const { step5, step10, step15, step30, step40, step50, step60, step70, step80 } = storedObject;
 
     const proposedRoundAdvisedAddresses = step10?.data?.proposedRoundAdvisedAddresses;
     const round = step10?.data?.round;
@@ -199,7 +199,9 @@ export const AutoValidatePickAndPackForm = ({
                             handlingUnitType: huType,
                             isHUToCreate: false
                         };
-                        storedObject['currentStep'] = 10;
+
+                        storedObject['currentStep'] =
+                            step5.data && step10.roundNumber !== 1 ? 10 : 5;
                         storedObject[`step10`] = { previousStep: 0, data };
                         storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
                         storage.set(process, JSON.stringify(storedObject));
