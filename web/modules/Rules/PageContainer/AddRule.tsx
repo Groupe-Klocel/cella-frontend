@@ -54,7 +54,7 @@ const AddRule = () => {
                 ) : (
                     <>
                         <HeaderContent
-                            title={t('add2', { name: t('common:rule-version') })}
+                            title={t('add2', { name: t('common:rule') })}
                             onBack={() => router.push('/rules/')}
                         />
                         <StyledPageContent>
