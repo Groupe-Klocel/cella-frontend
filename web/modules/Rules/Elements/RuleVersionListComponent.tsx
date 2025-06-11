@@ -774,7 +774,7 @@ const RuleVersionListComponent = (props: IListProps) => {
                                                 hiddenColumns={hiddenListFields}
                                                 rowSelection={props.rowSelection}
                                                 linkFields={linkFields}
-                                                filter={props.columnFilter}
+                                                filter={false}
                                             />
                                         </>
                                     ) : (
@@ -792,7 +792,7 @@ const RuleVersionListComponent = (props: IListProps) => {
                                                 onChange={handleTableChange}
                                                 hiddenColumns={hiddenListFields}
                                                 linkFields={linkFields}
-                                                filter={props.columnFilter}
+                                                filter={false}
                                             />
                                         </>
                                     )}

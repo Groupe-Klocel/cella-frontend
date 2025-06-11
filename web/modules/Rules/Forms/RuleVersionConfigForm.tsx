@@ -180,11 +180,7 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                         updateRuleVersionConfigVariable
                     );
                     if (updateRuleVersionConfigResult) {
-                        showSuccess(
-                            t('messages:success-updating-data', {
-                                name: t('d:rule-version-config')
-                            })
-                        );
+                        showSuccess(t('messages:success-updated'));
                     }
                 } else {
                     const createRuleVersionConfigVariable = {
@@ -316,7 +312,9 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                                         <Form.Item
                                             name={item.name + value}
                                             key={item.name + value}
-                                            initialValue={initialValue}
+                                            initialValue={
+                                                initialValue != 'null' ? initialValue : undefined
+                                            }
                                         >
                                             {item.type.toUpperCase() === 'NUMBER' ? (
                                                 <InputNumber
@@ -362,13 +360,11 @@ export const RuleVersionConfigForm = (props: ISingleItemProps) => {
                                 return (
                                     <Form.Item
                                         name={item.name + value + index}
-                                        label={
-                                            item.description
-                                                ? item.description
-                                                : t(`d:${item.name}`)
-                                        }
+                                        label={item.description ? item.description : item.name}
                                         key={item.name + value + index}
-                                        initialValue={initialValue}
+                                        initialValue={
+                                            initialValue != 'null' ? initialValue : undefined
+                                        }
                                     >
                                         {item.type.toUpperCase() === 'NUMBER' ? (
                                             <InputNumber />
