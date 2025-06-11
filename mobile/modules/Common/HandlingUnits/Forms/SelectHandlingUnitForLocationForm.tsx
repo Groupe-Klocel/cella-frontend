@@ -27,6 +27,7 @@ import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { useRouter } from 'next/router';
 
 const { Title } = Typography;
 export interface ISelectHandlingUnitForLocationProps {
@@ -78,6 +79,7 @@ export const SelectHandlingUnitForLocationForm = ({
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
+    const router = useRouter();
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -95,7 +97,8 @@ export const SelectHandlingUnitForLocationForm = ({
         { locationId: `${locationId}` },
         1,
         100,
-        null
+        null,
+        router.locale
     );
 
     //SelecHandlingUnitForLocation-2: set handling units to provide to carousel
@@ -181,7 +184,7 @@ export const SelectHandlingUnitForLocationForm = ({
                                     </Col>
                                     <Col span={16}>
                                         <Typography style={{ fontSize: '10px' }}>
-                                            {handlingUnit.code}
+                                            {handlingUnit.typeText}
                                         </Typography>
                                     </Col>
                                 </Row>
