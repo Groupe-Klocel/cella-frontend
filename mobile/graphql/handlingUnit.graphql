@@ -20,8 +20,15 @@ query GetHandlingUnits(
     $orderBy: [HandlingUnitOrderByCriterion!]
     $page: Int!
     $itemsPerPage: Int!
+    $language: String = "en"
 ) {
-    handlingUnits(filters: $filters, orderBy: $orderBy, page: $page, itemsPerPage: $itemsPerPage) {
+    handlingUnits(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+        language: $language
+    ) {
         count
         itemsPerPage
         totalPages
