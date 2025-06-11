@@ -100,6 +100,26 @@ export const RuleVersionModelV2: ModelType = {
             param: null,
             isEditDisabled: true
         },
+        'rule{status}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: false,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         version: {
             isListRequested: true,
             isDefaultHiddenList: false,

@@ -28,6 +28,7 @@ import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { RuleVersionModelV2 } from 'models/RuleVersionModelV2';
 import { useState } from 'react';
+import config from '../../../../common/configs.json';
 
 export interface IItemDetailsProps {
     ruleId?: string | any;
@@ -35,10 +36,10 @@ export interface IItemDetailsProps {
 }
 
 const RuleDetailsExtra = ({ ruleId, rule }: IItemDetailsProps) => {
+    console.log('AXC - RuleDetailsExtra.tsx - RuleDetailsExtra - rule:', rule);
     const { t } = useTranslation();
     const { permissions } = useAppState();
     const [idToDeleteVersion, setIdToDeleteVersion] = useState<string | undefined>();
-    const [idToDisableVersion, setIdToDisableVersion] = useState<string | undefined>();
     const ruleVersionModes = getModesFromPermissions(permissions, Table.RuleVersion);
     const [, setRuleVersionsData] = useState<any>();
 
@@ -84,16 +85,18 @@ const RuleDetailsExtra = ({ ruleId, rule }: IItemDetailsProps) => {
                             idToDelete: idToDeleteVersion,
                             setIdToDelete: setIdToDeleteVersion
                         }}
-                        triggerSoftDelete={{
-                            idToDisable: idToDisableVersion,
-                            setIdToDisable: setIdToDisableVersion
-                        }}
+                        triggerSoftDelete={null}
                         routeDetailPage={'/rules/detail/:id'}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: { id: string }) => (
+                                render: (record: {
+                                    rule_status: number;
+                                    id: string | undefined;
+                                    version: any;
+                                    rule_activeVersion: any;
+                                }) => (
                                     <Space>
                                         {ruleVersionModes.length == 0 ||
                                         !ruleVersionModes.includes(ModeEnum.Read) ? (
@@ -130,6 +133,9 @@ const RuleDetailsExtra = ({ ruleId, rule }: IItemDetailsProps) => {
                                         )}
                                         {ruleVersionModes.length > 0 &&
                                         ruleVersionModes.includes(ModeEnum.Delete) &&
+                                        (record.version !== record.rule_activeVersion ||
+                                            record.rule_status !==
+                                                config.RULE_STATUS_IN_PROGRESS) &&
                                         RuleVersionModelV2.isDeletable ? (
                                             <Button
                                                 icon={<DeleteOutlined />}
