@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import { Alert, Layout } from 'antd';
 import { useRouter } from 'next/router';
 import { rulesRoutes } from '../Static/rulesRoutes';
-import { AddRuleVersionConfigForm } from '../Forms/AddRuleVersionConfigForm';
+import { RuleVersionConfigForm } from '../Forms/RuleVersionConfigForm';
 import { useAppState } from 'context/AppContext';
 import { getModesFromPermissions } from '@helpers';
 import { ModeEnum, Table } from 'generated/graphql';
@@ -33,28 +33,27 @@ const StyledPageContent = styled(Layout.Content)`
 `;
 
 export interface ISingleItemProps {
-    ruleVersionId: string | any;
-    ruleVersion: number | any;
-    ruleName: string | any;
-    ruleId: string | any;
+    rule: any;
 }
 
 const AddRuleVersionConfig = (props: ISingleItemProps) => {
+    const rule = props.rule;
     const { t } = useTranslation('actions');
     const router = useRouter();
 
     const ruleDetailBreadCrumb = [
         ...rulesRoutes,
         {
-            breadcrumbName: `${props.ruleName}`,
-            path: '/rules/' + props.ruleId
+            breadcrumbName: `${rule.rule_name}`,
+            path: '/rules/' + rule.ruleId
         }
     ];
+
     const ruleVersionDetailBreadCrumb = [
         ...ruleDetailBreadCrumb,
         {
-            breadcrumbName: 'version' + `${props.ruleVersion}`,
-            path: '/rules/version/' + props.ruleVersionId
+            breadcrumbName: 'version' + `${rule.version}`,
+            path: '/rules/version/' + rule.id
         }
     ];
 
@@ -85,13 +84,13 @@ const AddRuleVersionConfig = (props: ISingleItemProps) => {
                         <HeaderContent
                             title={t('add2', { name: t('common:rule-version-config') })}
                             routes={breadsCrumb}
-                            onBack={() => router.push('/rules/version/' + props?.ruleVersionId)}
+                            onBack={() => router.push('/rules/version/' + rule.id)}
                         />
                         <StyledPageContent>
-                            <AddRuleVersionConfigForm
-                                ruleVersionId={props.ruleVersionId}
-                                ruleVersion={props.ruleVersion}
-                                ruleName={props.ruleName}
+                            <RuleVersionConfigForm
+                                ruleVersionId={rule.id}
+                                ruleVersion={rule.version}
+                                ruleName={rule.rule_name}
                             />
                         </StyledPageContent>
                     </>

@@ -188,16 +188,6 @@ export const EditRuleVersionForm: FC<EditRuleVersionFormProps> = ({
                 >
                     <Input disabled={true} />
                 </Form.Item>
-                <Form.Item name="status" label={t('d:status')}>
-                    <Select defaultValue="">
-                        <Option value="">{t('common:none')}</Option>
-                        {statusTexts?.map((status: any) => (
-                            <Option key={status.code} value={parseInt(status.code)}>
-                                {status.text}
-                            </Option>
-                        ))}
-                    </Select>
-                </Form.Item>
                 <Form.Item name="description" label={t('d:description')}>
                     <Input />
                 </Form.Item>
