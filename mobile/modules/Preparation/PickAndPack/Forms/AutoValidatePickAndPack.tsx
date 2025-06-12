@@ -171,6 +171,14 @@ export const AutoValidatePickAndPackForm = ({
                     const { updatedRound, isRoundClosed } =
                         validateFullBoxResult.executeFunction.output.output;
                     if (isRoundClosed) {
+                        if (step5.data && step10.roundNumber !== 1) {
+                            storedObject['cuurrentStep'] = 10;
+                            storedObject[`step5`] = { previousStep: 0, data: step5.data };
+                        } else {
+                            storedObject['currentStep'] = 5;
+                            storedObject[`step5`] = { previousStep: 0 };
+                        }
+                        storage.set(process, JSON.stringify(storedObject));
                         showSuccess(t('messages:pick-and-pack-round-finished'));
                     } else {
                         const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses
@@ -200,9 +208,10 @@ export const AutoValidatePickAndPackForm = ({
                             isHUToCreate: false
                         };
 
-                        storedObject['currentStep'] =
-                            step5.data && step10.roundNumber !== 1 ? 10 : 5;
-                        storedObject[`step10`] = { previousStep: 0, data };
+                        if (step5) {
+                            storedObject[`step5`] = { previousStep: 0, data: step5.data };
+                        }
+                        storedObject[`step10`] = { previousStep: step5 ? 5 : 0, data };
                         storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
                         storage.set(process, JSON.stringify(storedObject));
                     }
