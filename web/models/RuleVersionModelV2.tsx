@@ -106,7 +106,7 @@ export const RuleVersionModelV2: ModelType = {
             isExcludedFromList: true,
             isSortable: true,
             searchingFormat: null,
-            isDetailRequested: false,
+            isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
             link: null,
