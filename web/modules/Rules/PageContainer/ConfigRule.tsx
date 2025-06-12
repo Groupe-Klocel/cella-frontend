@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import { Alert, Layout } from 'antd';
 import { useRouter } from 'next/router';
 import { rulesRoutes } from '../Static/rulesRoutes';
-import { AddConfigOutRuleForm } from '../Forms/AddConfigOutRuleForm';
+import { ConfigRuleForm } from '../Forms/ConfigRuleForm';
 import { useAppState } from 'context/AppContext';
 import { getModesFromPermissions } from '@helpers';
 import { ModeEnum, Table } from 'generated/graphql';
@@ -33,36 +33,40 @@ const StyledPageContent = styled(Layout.Content)`
 `;
 
 export interface ISingleItemProps {
-    ruleVersionId: string | any;
-    ruleVersion: number | any;
-    ruleName: string | any;
-    ruleId: string | any;
+    rule: any;
+    data?: any;
+    type: string;
+    ruleVersionToUpdate: any;
 }
 
-const AddConfigOutRule = (props: ISingleItemProps) => {
+const ConfigRule = (props: ISingleItemProps) => {
+    const rule = props.rule;
+    const initialValues = props?.data;
+    const type = props?.type;
+    const ruleVersionToUpdate = props?.ruleVersionToUpdate;
     const { t } = useTranslation('actions');
     const router = useRouter();
 
     const ruleDetailBreadCrumb = [
         ...rulesRoutes,
         {
-            breadcrumbName: `${props.ruleName}`,
-            path: '/rules/' + props.ruleId
+            breadcrumbName: `${rule.rule_name}`,
+            path: '/rules/' + rule.ruleId
         }
     ];
 
     const ruleVersionDetailBreadCrumb = [
         ...ruleDetailBreadCrumb,
         {
-            breadcrumbName: 'version' + `${props.ruleVersion}`,
-            path: '/rules/version/' + props.ruleVersionId
+            breadcrumbName: 'version' + `${rule.version}`,
+            path: '/rules/version/' + rule.id
         }
     ];
-
+    const breadcrumbName = type === 'In' ? t('common:rule-config-in') : t('common:rule-config-out');
     const breadsCrumb = [
         ...ruleVersionDetailBreadCrumb,
         {
-            breadcrumbName: t('add2', { name: t('common:rule-config-out') })
+            breadcrumbName: breadcrumbName
         }
     ];
 
@@ -84,15 +88,16 @@ const AddConfigOutRule = (props: ISingleItemProps) => {
                 ) : (
                     <>
                         <HeaderContent
-                            title={t('add2', { name: t('common:rule-config-out') })}
+                            title={breadcrumbName}
                             routes={breadsCrumb}
-                            onBack={() => router.push('/rules/version/' + props?.ruleVersionId)}
+                            onBack={() => router.push('/rules/version/' + rule.id)}
                         />
                         <StyledPageContent>
-                            <AddConfigOutRuleForm
-                                ruleVersionId={props.ruleVersionId}
-                                ruleVersion={props.ruleVersion}
-                                ruleName={props.ruleName}
+                            <ConfigRuleForm
+                                rule={rule}
+                                initialValues={initialValues}
+                                type={type}
+                                ruleVersionToUpdate={ruleVersionToUpdate}
                             />
                         </StyledPageContent>
                     </>
@@ -104,4 +109,4 @@ const AddConfigOutRule = (props: ISingleItemProps) => {
     );
 };
 
-export { AddConfigOutRule };
+export { ConfigRule };

@@ -38,6 +38,8 @@ import { useRouter } from 'next/router';
 import { ModeEnum } from 'generated/graphql';
 import { useAppState } from 'context/AppContext';
 import { GroupItemDetailList } from './submodules/GroupItemDetailList';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 const { Link } = Typography;
 
@@ -65,6 +67,8 @@ export interface ISingleItemProps {
     headerData?: HeaderData;
     refetch?: boolean;
     refetchSubList?: any;
+    isCreateAMovement?: boolean;
+    dataToCreateMovement?: any;
 }
 
 const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
@@ -72,6 +76,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const [displayedGrouping, setDisplayedGrouping] = useState<any>();
+    const { graphqlRequestClient } = useAuth();
 
     // #region extract data from modelV2
     const detailFields = Object.keys(props.dataModel.fieldsInfo).filter(
@@ -255,6 +260,32 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     const pathAfterDelete = props?.headerData?.routes[props?.headerData?.routes.length - 2].path;
     // #region
 
+    const createMovement = async (dataToCreateMovement: any) => {
+        const executeFunctionQuery = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        let executeFunctionVariables = {
+            functionName: 'create_movements',
+            event: {
+                input: {
+                    content: dataToCreateMovement.content,
+                    type: 'delete',
+                    lastTransactionId: deleteResult.transactionId
+                }
+            }
+        };
+
+        const executeFunctionResult = await graphqlRequestClient.request(
+            executeFunctionQuery,
+            executeFunctionVariables
+        );
+    };
     // #region DELETE MUTATION
     const {
         isLoading: deleteLoading,
@@ -281,6 +312,14 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
         if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
             router.push(`${pathAfterDelete}`);
+            if (props.isCreateAMovement) {
+                try {
+                    createMovement(props.dataToCreateMovement);
+                } catch (error) {
+                    console.error('Error creating movement:', error);
+                    showError(t('messages:error-creating-movement'));
+                }
+            }
         } else {
             showError(t('messages:error-deleting-data'));
         }

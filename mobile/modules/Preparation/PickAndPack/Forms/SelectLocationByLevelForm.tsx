@@ -449,6 +449,9 @@ export const SelectLocationByLevelForm = ({
                                 storage.remove(process);
                                 const newStoredObject = JSON.parse(storage.get(process) || '{}');
                                 newStoredObject['currentStep'] = 20;
+                                newStoredObject[`step5`] = {
+                                    ...storedObject.step5
+                                };
                                 const newStep10Data = {
                                     round: step10Data.round,
                                     proposedRoundAdvisedAddresses:

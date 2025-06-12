@@ -416,7 +416,10 @@ const ContentMvmt: PageComponent = () => {
                                 : undefined
                         }
                         checkComponent={(data: any) => (
-                            <HandlingUnitOriginChecks dataToCheck={data} />
+                            <HandlingUnitOriginChecks
+                                dataToCheck={data}
+                                isEnforcedOriginLocation={!!enforcedOriginLocation}
+                            />
                         )}
                     ></ScanHandlingUnit>
                 ) : (

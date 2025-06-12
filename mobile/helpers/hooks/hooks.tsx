@@ -175,7 +175,13 @@ const useFeatureTypeDetails = (
     return featureTypeDetails;
 };
 
-const useHandlingUnits = (search: any, page: number, itemsPerPage: number, sort: any) => {
+const useHandlingUnits = (
+    search: any,
+    page: number,
+    itemsPerPage: number,
+    sort: any,
+    language?: any
+) => {
     const { graphqlRequestClient } = useAuth();
 
     const sortByDate = {
@@ -197,7 +203,8 @@ const useHandlingUnits = (search: any, page: number, itemsPerPage: number, sort:
             filters: search,
             orderBy: newSort,
             page: page,
-            itemsPerPage: itemsPerPage
+            itemsPerPage: itemsPerPage,
+            language: language
         }
     );
 

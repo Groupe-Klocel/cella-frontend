@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
-import { FC, use, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
@@ -61,7 +61,7 @@ const Reception: PageComponent = () => {
 
     const [triggerRender, setTriggerRender] = useState<boolean>(true);
     const [originDisplay, setOriginDisplay] = useState<any>({});
-    const [finalDisplay, setFinalDisplay] = useState<any>({});
+    const [finalDisplay] = useState<any>({});
     const [headerContent, setHeaderContent] = useState<boolean>(false);
     const [displayed, setDisplayed] = useState<any>({});
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
@@ -464,6 +464,10 @@ const Reception: PageComponent = () => {
                                       0
                                   )
                                 : undefined
+                        }
+                        availableQuantity={
+                            storedObject['step50'].data.currentPurchaseOrderLine.quantityMax -
+                            storedObject['step50'].data.currentPurchaseOrderLine.receivedQuantity
                         }
                         checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                         isCommentDisplayed={true}

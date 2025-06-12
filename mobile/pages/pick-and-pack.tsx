@@ -32,6 +32,7 @@ import parameters from '../../common/parameters.json';
 import { SimilarPickingLocations } from 'modules/Preparation/PickAndPack/Elements/SimilarLocations';
 import { QuantityChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/QuantityChecks';
 import { SelectRoundForm } from 'modules/Preparation/PickAndPack/Forms/SelectRoundForm';
+import { SelectEquipmentForm } from 'modules/Preparation/PickAndPack/Forms/SelectEquipmentForm';
 import { HandlingUnitChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/HandlingUnitChecks';
 import { HandlingUnitChecksWithoutChecks } from 'modules/Preparation/PickAndPack/ChecksAndRecords/HandlingUnitChecksWithoutChecks';
 import { ScanLocation } from 'modules/Preparation/PickAndPack/PagesContainer/ScanLocation';
@@ -71,12 +72,15 @@ const PickAndPack: PageComponent = () => {
     const [isAutoValidateLoading, setIsAutoValidateLoading] = useState<boolean>(false);
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [manualyGenerateParent, setManualyGenerateParent] = useState<number>();
-    const [toBePalletized, setToBePalletized] = useState<boolean>(true);
+    const [manualyGenerateParent, setManualyGenerateParent] = useState<boolean>();
+    const [forceArticleScan, setForceArticleScan] = useState<boolean>();
+    const [equipmentScanAtPreparation, setEquipmentScanAtPreparation] = useState<boolean>(false);
+    const [toBePalletizedForBackEnd, setToBePalletizedForBackEnd] = useState<boolean>(true);
+    const [toBePalletizedForHUModel, setToBePalletizedForHUModel] = useState<boolean>(true);
 
     useEffect(() => {
-        const manualyGenerateParent = async () => {
-            const manualyGenerateParentQuery = gql`
+        const getParameters = async () => {
+            const getParametersQuery = gql`
                 query parameters($filters: ParameterSearchFilters) {
                     parameters(filters: $filters) {
                         results {
@@ -88,24 +92,49 @@ const PickAndPack: PageComponent = () => {
                 }
             `;
 
-            const manualyGenerateParentVariables = {
-                filters: { scope: 'outbound', code: 'MANUALY_GENERATE_PARENT' }
+            const getParametersVariables = {
+                filters: {
+                    scope: 'outbound',
+                    code: [
+                        'MANUALY_GENERATE_PARENT',
+                        'FORCE_ARTICLE_SCAN',
+                        'EQUIPMENT_SCAN_AT_PREPARATION'
+                    ]
+                }
             };
 
             try {
                 const manualyGenerateParentResult: any = await graphqlRequestClient.request(
-                    manualyGenerateParentQuery,
-                    manualyGenerateParentVariables
+                    getParametersQuery,
+                    getParametersVariables
                 );
                 setManualyGenerateParent(
-                    parseInt(manualyGenerateParentResult.parameters.results[0]?.value)
+                    manualyGenerateParentResult.parameters.results.find(
+                        (param: any) => param.code === 'MANUALY_GENERATE_PARENT'
+                    )?.value === '1'
+                        ? true
+                        : false
+                );
+                setForceArticleScan(
+                    manualyGenerateParentResult.parameters.results.find(
+                        (param: any) => param.code === 'FORCE_ARTICLE_SCAN'
+                    )?.value === '1'
+                        ? true
+                        : false
+                );
+                setEquipmentScanAtPreparation(
+                    manualyGenerateParentResult.parameters.results.find(
+                        (param: any) => param.code === 'EQUIPMENT_SCAN_AT_PREPARATION'
+                    )?.value === '1'
+                        ? true
+                        : false
                 );
             } catch (error) {
                 console.error('Error fetching manualyGenerateParent:', error);
             }
         };
 
-        manualyGenerateParent();
+        getParameters();
     }, []);
 
     const processName = 'pickAndPack';
@@ -136,6 +165,9 @@ const PickAndPack: PageComponent = () => {
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
         const object: { [k: string]: any } = {};
+        if (storedObject['step5']?.data?.equipmentName) {
+            object[t('common:equipment')] = storedObject['step5']?.data?.equipmentName;
+        }
         if (
             storedObject['step10']?.data?.round &&
             storedObject['step10']?.data?.proposedRoundAdvisedAddresses
@@ -257,7 +289,17 @@ const PickAndPack: PageComponent = () => {
                 ?.toBePalletized &&
             !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
         ) {
-            setToBePalletized(false);
+            setToBePalletizedForBackEnd(false);
+        }
+
+        if (
+            storedObject['step10']?.data &&
+            !storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0].roundLineDetail
+                .handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.carrierShippingMode
+                ?.toBePalletized &&
+            storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
+        ) {
+            setToBePalletizedForHUModel(false);
         }
 
         if (storedObject['step10']?.data?.round) {
@@ -309,7 +351,10 @@ const PickAndPack: PageComponent = () => {
                 }
                 break;
             case 50:
-                if (storedObject['step40']?.data?.handlingUnit?.handlingUnitContents.length === 1) {
+                if (
+                    storedObject['step40']?.data?.handlingUnit?.handlingUnitContents.length === 1 &&
+                    !forceArticleScan
+                ) {
                     setIsLoading(true);
                 } else {
                     setIsLoading(false);
@@ -375,12 +420,23 @@ const PickAndPack: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {!storedObject['step10']?.data ? (
+                {equipmentScanAtPreparation && !storedObject['step5']?.data ? (
+                    <SelectEquipmentForm
+                        process={processName}
+                        stepNumber={5}
+                        trigger={{ triggerRender, setTriggerRender }}
+                        buttons={{ submitButton: true, backButton: false }}
+                    ></SelectEquipmentForm>
+                ) : (
+                    <></>
+                )}
+                {(!equipmentScanAtPreparation || storedObject['step5']?.data) &&
+                !storedObject['step10']?.data ? (
                     <SelectRoundForm
                         process={processName}
                         stepNumber={10}
                         trigger={{ triggerRender, setTriggerRender }}
-                        buttons={{ submitButton: true, backButton: false }}
+                        buttons={{ submitButton: true, backButton: equipmentScanAtPreparation }}
                     ></SelectRoundForm>
                 ) : (
                     <></>
@@ -480,6 +536,7 @@ const PickAndPack: PageComponent = () => {
                             submitButton: true,
                             backButton: true
                         }}
+                        forceArticleScan={forceArticleScan}
                         contents={storedObject['step40']?.data?.handlingUnit?.handlingUnitContents}
                         checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
                     ></ScanArticleEAN>
@@ -580,7 +637,9 @@ const PickAndPack: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step75']?.data && toBePalletized && !storedObject['step80']?.data ? (
+                {storedObject['step75']?.data &&
+                toBePalletizedForHUModel &&
+                !storedObject['step80']?.data ? (
                     <SelectHuModelForm
                         process={processName}
                         stepNumber={80}
@@ -592,7 +651,7 @@ const PickAndPack: PageComponent = () => {
                     <></>
                 )}
                 {storedObject['step80']?.data ||
-                (!toBePalletized && storedObject['step75']?.data) ||
+                (!toBePalletizedForHUModel && storedObject['step75']?.data) ||
                 isAutoValidateLoading ? (
                     <AutoValidatePickAndPackForm
                         process={processName}
@@ -600,7 +659,7 @@ const PickAndPack: PageComponent = () => {
                         buttons={{ submitButton: true, backButton: true }}
                         trigger={{ triggerRender, setTriggerRender }}
                         headerContent={{ setHeaderContent }}
-                        toBePalletized={toBePalletized}
+                        toBePalletized={toBePalletizedForBackEnd}
                         autoValidateLoading={{ isAutoValidateLoading, setIsAutoValidateLoading }}
                     ></AutoValidatePickAndPackForm>
                 ) : (

@@ -71,32 +71,34 @@ const DeliveriesManualAllocationModal = ({
     }, []);
 
     const getDeliveries = async () => {
-        const query = gql`
-            query deliveries($id: [String!]!) {
-                deliveries(filters: { id: $id }) {
-                    count
-                    results {
+    const query = gql`
+        query deliveries($id: [String!]!, $itemsPerPage: Int) {
+            deliveries(filters: { id: $id }, itemsPerPage: $itemsPerPage) {
+                count
+                results {
+                    id
+                    handlingUnitOutbounds {
                         id
-                        handlingUnitOutbounds {
+                        theoriticalWeight
+                        handlingUnit {
                             id
-                            handlingUnit {
-                                id
-                                length
-                                width
-                                height
-                            }
+                            length
+                            width
+                            height
                         }
                     }
                 }
             }
-        `;
+        }
+    `;
 
-        const variables = {
-            id: selectedRowKeys
-        };
+    const variables = {
+        id: selectedRowKeys,
+        itemsPerPage: 999
+    };
 
-        const deliveries = await graphqlRequestClient.request(query, variables);
-        return deliveries.deliveries.results;
+    const deliveries = await graphqlRequestClient.request(query, variables);
+    return deliveries.deliveries.results;
     };
 
     useEffect(() => {
@@ -118,6 +120,20 @@ const DeliveriesManualAllocationModal = ({
         showModal.setShowDeliveriesManualAllocationModal(false);
         form.resetFields();
         setFieldsValue();
+    };
+
+    const calculateTotalWeight = (deliveries: any[]) => {
+        const totalWeight = deliveries.reduce((totalWeight, curr) => {
+            const unitWeight = curr.handlingUnitOutbounds.reduce((unitAcc: number, unit: any) => {
+                if (unit.theoriticalWeight) {
+                    return unitAcc + unit.theoriticalWeight;
+                }
+                return unitAcc;
+            }, 0);
+            return totalWeight + unitWeight;
+        }
+        , 0);
+        return Math.round((totalWeight / 1000) * 1000) / 1000; // 3 digits after comma
     };
 
     const calculateTotalVolume = (deliveries: any[]) => {
@@ -236,6 +252,8 @@ const DeliveriesManualAllocationModal = ({
                     {`${t('common:number-of-boxes')} : ${deliveries.reduce((acc, curr) => acc + curr.handlingUnitOutbounds.length, 0)}`}
                     <br />
                     {`${t('common:total-volume')} : ${calculateTotalVolume(deliveries)} m³`}
+                    <br />
+                    {`${t('common:weight')} : ${calculateTotalWeight(deliveries)} kg`}
                 </Text>
             )}
         </Modal>

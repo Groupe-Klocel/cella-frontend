@@ -100,6 +100,8 @@ export interface IListProps {
     setInitialData?: any;
     setAppliedSort?: any;
     isIndependentScrollable?: boolean;
+    isCreateAMovement?: boolean;
+    dataToCreateMovement?: any;
 }
 
 export interface newPaginationType {
@@ -509,6 +511,32 @@ const ListComponent = (props: IListProps) => {
         });
     }
 
+    const createMovement = async (dataToCreateMovement: any) => {
+        const executeFunctionQuery = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        let executeFunctionVariables = {
+            functionName: 'create_movements',
+            event: {
+                input: {
+                    content: dataToCreateMovement.content,
+                    type: 'delete',
+                    lastTransactionId: deleteResult.transactionId
+                }
+            }
+        };
+
+        const executeFunctionResult = await graphqlRequestClient.request(
+            executeFunctionQuery,
+            executeFunctionVariables
+        );
+    };
     // #region DELETE MUTATION
     const {
         isLoading: deleteLoading,
@@ -534,6 +562,14 @@ const ListComponent = (props: IListProps) => {
 
         if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
+            if (props.isCreateAMovement) {
+                try {
+                    createMovement(props.dataToCreateMovement);
+                } catch (error) {
+                    console.error('Error creating movement:', error);
+                    showError(t('messages:error-creating-movement'));
+                }
+            }
             reloadData();
         } else {
             showError(t('messages:error-deleting-data'));

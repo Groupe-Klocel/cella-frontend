@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, InputNumber } from 'antd';
+import { Button, Input, Form, InputNumber, Select } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -29,17 +29,21 @@ import {
 } from 'generated/graphql';
 import { showError, showSuccess } from '@helpers';
 import configs from '../../../../common/configs.json';
+import { useEffect, useState } from 'react';
+import { gql } from 'graphql-request';
 
 export const AddRuleForm = () => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const [stockOwnerList, setStockOwnerList] = useState<any[]>([]);
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
 
     const name = t('common:name');
     const status = t('d:status');
     const description = t('d:description');
+    const stockOwner = t('common:stock-owner');
     const submit = t('actions:submit');
     // END TEXTS TRANSLATION
 
@@ -60,6 +64,7 @@ export const AddRuleForm = () => {
             },
             onError: (err) => {
                 showError(t('messages:error-creating-data'));
+                console.error('Error creating rule:', err);
             }
         }
     );
@@ -67,6 +72,30 @@ export const AddRuleForm = () => {
     const createRule = ({ input }: CreateRuleMutationVariables) => {
         mutate({ input });
     };
+
+    useEffect(() => {
+        const fetchStockOwners = async () => {
+            const query = gql`
+                query GetStockOwner($filters: StockOwnerSearchFilters, $itemsPerPage: Int!) {
+                    stockOwners(filters: $filters, itemsPerPage: $itemsPerPage) {
+                        results {
+                            id
+                            name
+                        }
+                    }
+                }
+            `;
+            const queryVariables: any = {
+                filters: {
+                    status: configs.STOCK_OWNER_STATUS_IN_PROGRESS
+                },
+                itemsPerPage: 100 // Adjust as needed
+            };
+            const queryInfo: any = await graphqlRequestClient.request(query, queryVariables);
+            setStockOwnerList(queryInfo.stockOwners.results);
+        };
+        fetchStockOwners();
+    }, []);
 
     const onFinish = () => {
         form.validateFields()
@@ -83,24 +112,23 @@ export const AddRuleForm = () => {
             });
     };
 
-    // useEffect(() => {
-    //     const tmp_details = {
-    //         ruleId: props.ruleId
-    //     };
-    //     form.setFieldsValue(tmp_details);
-    //     if (createLoading) {
-    //         showInfo(t('messages:info-create-wip'));
-    //     }
-    // }, [createLoading]);
-
     return (
         <WrapperForm>
             <Form form={form} layout="vertical" scrollToFirstError>
-                <Form.Item label={name} name="name">
+                <Form.Item label={name} name="name" rules={[{ required: true }]}>
                     <Input />
                 </Form.Item>
                 <Form.Item label={description} name="description">
                     <Input />
+                </Form.Item>
+                <Form.Item label={stockOwner} name="stockOwnerId">
+                    <Select allowClear>
+                        {stockOwnerList?.map((item: any) => (
+                            <Select.Option key={item.id} value={item.id}>
+                                {item.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>
