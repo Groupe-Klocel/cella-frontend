@@ -167,7 +167,12 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                     pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
                 };
                 newStoredObject['currentStep'] = 10;
-                newStoredObject[`step10`] = { previousStep: 0, data };
+                if (storedObject[`step5`]) {
+                    newStoredObject[`step5`] = {
+                        ...storedObject[`step5`]
+                    };
+                }
+                newStoredObject[`step10`] = { previousStep: storedObject[`step5`] ? 5 : 0, data };
                 delete newStoredObject['step10']['data']['currentShippingPallet'];
                 storage.set(process, JSON.stringify(newStoredObject));
                 setTriggerRender(!triggerRender);
