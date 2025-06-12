@@ -27,14 +27,15 @@ import {
     useGetRuleVersionConfigByIdQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { NextRouter } from 'next/router';
 import styled from 'styled-components';
 import { HeaderContent } from '@components';
 import { getModesFromPermissions, showError } from '@helpers';
 import { rulesRoutes as itemRoutes } from '../Static/rulesRoutes';
 import { useAppState } from 'context/AppContext';
-import { EditRuleVersionConfigForm } from '../Forms/EditRuleVersionConfigForm';
+import { RuleVersionConfigForm } from '../Forms/RuleVersionConfigForm';
+import { gql } from 'graphql-request';
 
 const StyledPageContent = styled(Layout.Content)`
     margin: 0px 30px 50px 30px;
@@ -54,18 +55,49 @@ const EditRuleVersionConfig: FC<EditRuleVersionConfigProps> = ({
 
     const { graphqlRequestClient } = useAuth();
 
-    const { isLoading, data, error } = useGetRuleVersionConfigByIdQuery<
-        GetRuleVersionConfigByIdQuery,
-        Error
-    >(graphqlRequestClient, {
-        id: id
-    });
+    const [data, setData] = useState<any>();
+
+    useEffect(() => {
+        if (id) {
+            const fetchData = async () => {
+                const ruleVersionQuery = gql`
+                    query ruleVersionConfig($id: String!) {
+                        ruleVersionConfig(id: $id) {
+                            id
+                            order
+                            ruleLineConfigurationIn
+                            ruleLineConfigurationOut
+                            ruleVersion {
+                                id
+                                version
+                                ruleConfigurationIn
+                                ruleConfigurationOut
+                                rule {
+                                    id
+                                    name
+                                }
+                            }
+                        }
+                    }
+                `;
+                const ruleVersionRVariable = {
+                    id: id
+                };
+                const result = await graphqlRequestClient.request(
+                    ruleVersionQuery,
+                    ruleVersionRVariable
+                );
+                setData(result);
+            };
+            fetchData();
+        }
+    }, [id]);
 
     const ruleDetailBreadCrumb = [
         ...itemRoutes,
         {
             breadcrumbName: `${data?.ruleVersionConfig?.ruleVersion?.rule?.name}`,
-            path: '/rules/' + data?.ruleVersionConfig?.ruleVersion?.ruleId
+            path: '/rules/' + data?.ruleVersionConfig?.ruleVersion?.rule?.id
         }
     ];
 
@@ -75,7 +107,7 @@ const EditRuleVersionConfig: FC<EditRuleVersionConfigProps> = ({
             breadcrumbName: `${t('common:version')} ${
                 data?.ruleVersionConfig?.ruleVersion?.version
             }`,
-            path: '/rules/version/' + data?.ruleVersionConfig?.ruleVersionId
+            path: '/rules/version/' + data?.ruleVersionConfig?.ruleVersion?.id
         }
     ];
 
@@ -85,12 +117,6 @@ const EditRuleVersionConfig: FC<EditRuleVersionConfigProps> = ({
             breadcrumbName: `${t('common:order')} ${data?.ruleVersionConfig?.order}`
         }
     ];
-
-    useEffect(() => {
-        if (error) {
-            showError(t('messages:error-getting-data'));
-        }
-    }, [error]);
 
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.Location);
@@ -119,10 +145,12 @@ const EditRuleVersionConfig: FC<EditRuleVersionConfigProps> = ({
                             }
                         />
                         <StyledPageContent>
-                            {data && !isLoading ? (
-                                <EditRuleVersionConfigForm
-                                    ruleVersionConfigId={id}
-                                    details={data?.ruleVersionConfig}
+                            {data?.ruleVersionConfig ? (
+                                <RuleVersionConfigForm
+                                    ruleVersionId={data?.ruleVersionConfig?.ruleVersion?.id}
+                                    ruleVersion={data?.ruleVersionConfig?.ruleVersion?.version}
+                                    ruleName={data?.ruleVersionConfig?.ruleVersion?.rule?.name}
+                                    data={data?.ruleVersionConfig}
                                 />
                             ) : (
                                 <ContentSpin />

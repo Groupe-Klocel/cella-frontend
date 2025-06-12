@@ -115,19 +115,19 @@ const useList = (
         graphqlRequestClient
             .request(query, variables)
             .then((result: any) => {
-                Object.keys(result).forEach((element) => {
-                    Object.keys(result[element]).forEach((key) => {
-                        if (
-                            isString(result[element][key]) &&
-                            isStringDateTime(result[element][key])
-                        ) {
-                            result[element][key] = setUTCDateTime(result[element][key]);
-                        }
-                        if (isString(result[element][key]) && isStringDate(result[element][key])) {
-                            result[element][key] = setUTCDate(result[element][key]);
-                        }
-                    });
-                });
+                // Object.keys(result).forEach((element) => {
+                //     Object.keys(result[element]).forEach((key) => {
+                //         if (
+                //             isString(result[element][key]) &&
+                //             isStringDateTime(result[element][key])
+                //         ) {
+                //             result[element][key] = setUTCDateTime(result[element][key]);
+                //         }
+                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
+                //             result[element][key] = setUTCDate(result[element][key]);
+                //         }
+                //     });
+                // });
 
                 setData(result);
                 setIsLoading(false);
@@ -481,26 +481,63 @@ const useExport = () => {
  * @param queryName endpoint of delete query
  * @returns { isLoading, result, mutate } where isLoading and result are state variable and mutate is method to call for deleting.
  */
-const useDelete = (queryName: string) => {
+const useDelete = (queryName: string, infoDeleteOrder?: any) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
-    const query = gql`mutation ${queryName}($id: String!) {
-        ${queryName}(id: $id)
+    const fetchTransactionId = async () => {
+        // Generate a new transaction ID
+        const generateTransactionId = gql`
+            mutation {
+                generateTransactionId
+            }
+        `;
+        const transactionIdResponse = await graphqlRequestClient.request(generateTransactionId);
+        const lastTransactionIdWithTid = transactionIdResponse.generateTransactionId;
+        const lastTransactionId =
+            lastTransactionIdWithTid.split('_')[1] ?? lastTransactionIdWithTid;
+        return lastTransactionId;
+    };
+
+    let querydelete = gql`mutation ${queryName}($id: String!, $transactionId: String!) {
+        ${queryName}(id: $id transactionId: $transactionId)
       }`;
+
+    if (infoDeleteOrder) {
+        querydelete = gql`
+            mutation executeFunction($id: String!) {
+                executeFunction(
+                    functionName: "reorder_on_delete"
+                    event: {
+                        input: {
+                            ids: $id
+                            tableName: ${infoDeleteOrder.tableName}
+                            orderingField: "${infoDeleteOrder.orderingField}"
+                            parentId: "${infoDeleteOrder.parentId}"
+                        }
+                    }
+                ) {
+                    status
+                    output
+                }
+            }
+        `;
+    }
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [result, setResult] = useState<any>({ data: null, success: false });
 
-    const mutate = (id: string) => {
+    const mutate = async (id: string) => {
         setIsLoading(true);
+        const lastTransationId = await fetchTransactionId();
         graphqlRequestClient
-            .request(query, {
-                id: id
+            .request(querydelete, {
+                id: id,
+                transactionId: lastTransationId
             })
             .then((result: any) => {
                 setIsLoading(false);
-                setResult({ data: result, success: true });
+                setResult({ data: result, success: true, transactionId: lastTransationId });
             })
             .catch((error: any) => {
                 if (error.response && error.response.errors[0].extensions) {

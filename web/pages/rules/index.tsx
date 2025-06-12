@@ -40,7 +40,6 @@ const RulePages: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [loading, setLoading] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const [showModal, setShowModal] = useState(false);
     const [refetch, setRefetch] = useState<boolean>(false);
     const headerData: HeaderData = {
         title: t('common:rules'),
@@ -74,36 +73,6 @@ const RulePages: PageComponent = () => {
     const rowSelection = {
         selectedRowKeys,
         onChange: onSelectChange
-    };
-    const hasSelected = selectedRowKeys.length > 0;
-    const actionButtons: ActionButtons = {
-        actionsComponent:
-            modes.length > 0 && modes.includes(ModeEnum.Update) ? (
-                <>
-                    <>
-                        <span className="selected-items-span" style={{ marginLeft: 16 }}>
-                            {hasSelected
-                                ? `${t('messages:selected-items-number', {
-                                      number: selectedRowKeys.length
-                                  })}`
-                                : ''}
-                        </span>
-
-                        <span style={{ marginLeft: 16 }}>
-                            <Button
-                                type="primary"
-                                onClick={() => {
-                                    setShowModal(true);
-                                }}
-                                disabled={!hasSelected}
-                                loading={loading}
-                            >
-                                {t('actions:edit')}
-                            </Button>
-                        </span>
-                    </>
-                </>
-            ) : null
     };
 
     return (
@@ -169,8 +138,6 @@ const RulePages: PageComponent = () => {
                     }
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
-                checkbox={true}
-                actionButtons={actionButtons}
                 rowSelection={rowSelection}
             />
         </>
