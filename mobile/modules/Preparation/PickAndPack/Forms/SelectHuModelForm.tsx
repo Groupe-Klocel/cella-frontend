@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, extractGivenConfigsParams, showError } from '@helpers';
+import { LsIsSecured, showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -28,15 +28,9 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
-import {
-    GetHandlingUnitModelsQuery,
-    GetRoundsQuery,
-    ParametersQuery,
-    useGetHandlingUnitModelsQuery,
-    useGetRoundsQuery,
-    useParametersQuery
-} from 'generated/graphql';
+import { ParametersQuery, useParametersQuery } from 'generated/graphql';
 import CameraScanner from 'modules/Common/CameraScanner';
+import { gql } from 'graphql-request';
 
 export interface ISelectHuModelProps {
     process: string;
@@ -58,7 +52,6 @@ export const SelectHuModelForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const router = useRouter();
-    const { locale } = router;
     // TYPED SAFE ALL
     const [huModels, setHuModels] = useState<Array<any>>();
 
@@ -83,20 +76,87 @@ export const SelectHuModelForm = ({
     };
     // end camera scanner section
 
+    //query hums
+    const getHUMs = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query handlingUnitModels($filters: HandlingUnitModelSearchFilters) {
+                handlingUnitModels(filters: $filters) {
+                    results {
+                        id
+                        name
+                        description
+                        default
+                        dispatchable
+                        status
+                        statusText
+                        weight
+                        length
+                        height
+                        width
+                        system
+                        type
+                        typeText
+                        category
+                        categoryText
+                        preparationMode
+                        preparationModeText
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                status: [configs.HANDLING_UNIT_MODEL_STATUS_IN_PROGRESS],
+                category: [
+                    parameters['HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND'],
+                    parameters['HANDLING_UNIT_MODEL_CATEGORY_INBOUND/OUTBOUND'],
+                    parameters['HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND/STOCK'],
+                    parameters['HANDLING_UNIT_MODEL_CATEGORY_INBOUND/STOCK/OUTBOUND']
+                ]
+            },
+            orderBy: null,
+            page: 1,
+            itemsPerPage: 100
+        };
+        const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
+        return handlingUnitInfos;
+    };
+
     //Pre-requisite: initialize current step
     useEffect(() => {
-        if (defaultValue) {
-            // N.B.: in this case previous step is kept at its previous value
-            const data: { [label: string]: any } = {};
-            data['handlingUnitModel'] = defaultValue;
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            setTriggerRender(!triggerRender);
-        } else if (storedObject.currentStep < stepNumber) {
-            //check workflow direction and assign current step accordingly
-            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-            storedObject.currentStep = stepNumber;
-        }
-        storage.set(process, JSON.stringify(storedObject));
+        const initialize = async () => {
+            if (defaultValue) {
+                const data: { [label: string]: any } = {};
+                let defaultValueToSend;
+                if (defaultValue === 'defaultModel') {
+                    const huModels = await getHUMs();
+                    if (huModels) {
+                        defaultValueToSend = huModels.handlingUnitModels.results.find(
+                            (e: any) => e.type === parameters.HANDLING_UNIT_TYPE_PALLET
+                        );
+                    }
+                } else {
+                    defaultValueToSend = defaultValue;
+                }
+
+                data['handlingUnitModel'] = defaultValueToSend;
+                storedObject[`step${stepNumber}`] = {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                };
+                setTriggerRender(!triggerRender);
+            } else if (storedObject.currentStep < stepNumber) {
+                storedObject[`step${stepNumber}`] = {
+                    previousStep: storedObject.currentStep
+                };
+                storedObject.currentStep = stepNumber;
+            }
+
+            storage.set(process, JSON.stringify(storedObject));
+        };
+
+        initialize();
     }, []);
 
     //SelectHuModel-1: retrieve DEFAULT_DECLARATIVE_LU parameter
@@ -116,44 +176,35 @@ export const SelectHuModelForm = ({
         }
     }, [defaultDeclarativeParameter.data]);
 
-    //SelectHuModel-2: retrieve huModel choices for select
-    const huModelList = useGetHandlingUnitModelsQuery<Partial<GetHandlingUnitModelsQuery>, Error>(
-        graphqlRequestClient,
-        {
-            filters: {
-                status: [configs.HANDLING_UNIT_MODEL_STATUS_IN_PROGRESS],
-                category: [
-                    parameters['HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND'],
-                    parameters['HANDLING_UNIT_MODEL_CATEGORY_INBOUND/OUTBOUND'],
-                    parameters['HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND/STOCK'],
-                    parameters['HANDLING_UNIT_MODEL_CATEGORY_INBOUND/STOCK/OUTBOUND']
-                ]
-            },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
-        }
-    );
+    const [huModelsList, setHuModelsList] = useState<Array<any>>();
 
     useEffect(() => {
-        if (huModelList) {
-            const newTypeTexts: Array<any> = [];
-            const cData = huModelList?.data?.handlingUnitModels?.results.filter(
-                (item) => item?.name !== packagingToExclude?.value
-            );
-            if (cData) {
-                cData.forEach((item) => {
-                    newTypeTexts.push({ key: item.id, text: `${item.name} - ${item.description}` });
-                });
-                setHuModels(newTypeTexts);
+        const fetchHuModels = async () => {
+            const hums = await getHUMs();
+            if (hums) {
+                const newTypeTexts: Array<any> = [];
+                const cData = hums?.handlingUnitModels?.results.filter(
+                    (item: any) => item?.name !== packagingToExclude?.value
+                );
+                setHuModelsList(cData);
+                if (cData) {
+                    cData.forEach((item: any) => {
+                        newTypeTexts.push({
+                            key: item.id,
+                            text: `${item.name} - ${item.description}`
+                        });
+                    });
+                    setHuModels(newTypeTexts);
+                }
             }
-        }
-    }, [huModelList.data, packagingToExclude]);
+        };
+        fetchHuModels();
+    }, [packagingToExclude]);
 
     //SelectHuModel-2a: retrieve chosen level from select and set information
     const onFinish = (values: any) => {
         const data: { [label: string]: any } = {};
-        const selectedHuModel = huModelList?.data?.handlingUnitModels?.results.find((e: any) => {
+        const selectedHuModel = huModelsList?.find((e: any) => {
             return e.id == values.huModel;
         });
         data['handlingUnitModel'] = selectedHuModel;

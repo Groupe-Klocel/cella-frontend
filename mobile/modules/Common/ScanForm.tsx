@@ -47,6 +47,7 @@ export interface IScanProps {
     isSelected?: boolean;
     getFormData?: boolean;
     setFormData?: (value: string) => void;
+    mask?: string;
 }
 
 export const ScanForm = ({
@@ -70,8 +71,10 @@ export const ScanForm = ({
     initValue,
     isSelected,
     getFormData,
-    setFormData
+    setFormData,
+    mask
 }: IScanProps) => {
+    console.log('DLA - mask:', mask);
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -152,7 +155,26 @@ export const ScanForm = ({
                 <StyledFormItem
                     label={label}
                     name="scannedItem"
-                    rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
+                    rules={[
+                        {
+                            required: true,
+                            message: t('messages:error-message-empty-input')
+                        },
+                        ...(mask
+                            ? [
+                                  {
+                                      validator: (_: any, value: any) => {
+                                          if (!value || new RegExp(mask).test(value)) {
+                                              return Promise.resolve();
+                                          }
+                                          return Promise.reject(
+                                              new Error(t('errors:FEATURECODE-000100'))
+                                          );
+                                      }
+                                  }
+                              ]
+                            : [])
+                    ]}
                     // initialValue={initValue ? initValue : undefined}
                 >
                     <Input
