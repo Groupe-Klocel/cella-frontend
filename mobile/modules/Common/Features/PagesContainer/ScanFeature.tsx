@@ -101,7 +101,6 @@ export const ScanFeature = ({
     //initialize features to process
     const [initialFeaturesList, setInitialFeaturesList] = useState<any>();
     const [currentFeatureCode, setCurrentFeatureCode] = useState<any>();
-
     useEffect(() => {
         if (featuresInfos?.data?.featureTypeDetails?.results) {
             const queriedFeatures = featuresInfos?.data?.featureTypeDetails?.results;
@@ -156,6 +155,7 @@ export const ScanFeature = ({
                     action1Label={t('common:finish-features-entry')}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
+                    mask={currentFeatureCode?.mask}
                 ></ScanForm>
             ) : (
                 <DatePickerForm

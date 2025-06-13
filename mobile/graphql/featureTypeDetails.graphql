@@ -42,6 +42,7 @@ query getFeatureTypeDetails(
                 name
                 unique
                 dateType
+                mask
             }
             atReception
             atPreparation
