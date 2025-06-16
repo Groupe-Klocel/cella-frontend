@@ -507,11 +507,12 @@ const useDelete = (queryName: string, infoDeleteOrder?: any) => {
         querydelete = gql`
             mutation executeFunction($id: String!) {
                 executeFunction(
-                    functionName: "reorder_on_delete"
+                    functionName: "reorder_priority"
                     event: {
                         input: {
                             ids: $id
                             tableName: ${infoDeleteOrder.tableName}
+                            operation: "${infoDeleteOrder.operation}"
                             orderingField: "${infoDeleteOrder.orderingField}"
                             parentId: "${infoDeleteOrder.parentId}"
                         }

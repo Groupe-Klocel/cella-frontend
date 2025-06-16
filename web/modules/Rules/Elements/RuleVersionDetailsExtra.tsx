@@ -47,7 +47,6 @@ export interface IItemDetailsProps {
 }
 
 const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsProps) => {
-    console.log('AXC - RuleVersionDetailsExtra.tsx - RuleVersionDetailsExtra - rule:', rule);
     const { t } = useTranslation();
     const { permissions } = useAppState();
     const { graphqlRequestClient } = useAuth();
@@ -78,10 +77,11 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
             }
         }
     `;
+    const [RuleVersionConfigData, setRuleVersionConfigData] = useState<any>([]);
 
     const [priorityStatus, setPriorityStatus] = useState({
-        id: '',
-        type: ''
+        id: null as string | null,
+        newOrder: null as number | null
     });
 
     const confirmAction = (info: any | undefined, setInfo: any) => {
@@ -306,20 +306,31 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
                   render: (record: { id: string; order: number }) => (
                       <Space>
                           <Button
-                              onClick={() =>
-                                  setPriorityStatus({
-                                      type: 'up',
-                                      id: record.id
-                                  })
-                              }
+                              onClick={() => {
+                                  if (priorityStatus.id === null) {
+                                      setPriorityStatus({
+                                          newOrder: record.order - 1,
+                                          id: record.id
+                                      });
+                                  }
+                              }}
+                              disabled={record.order === 1}
+                              loading={priorityStatus.id !== null && record.order !== 1}
                               icon={<CaretUpOutlined />}
                           />
                           <Button
-                              onClick={() =>
-                                  setPriorityStatus({
-                                      type: 'down',
-                                      id: record.id
-                                  })
+                              onClick={() => {
+                                  if (priorityStatus.id === null) {
+                                      setPriorityStatus({
+                                          newOrder: record.order + 1,
+                                          id: record.id
+                                      });
+                                  }
+                              }}
+                              disabled={RuleVersionConfigData[0].listDataCount === record.order}
+                              loading={
+                                  priorityStatus.id !== null &&
+                                  RuleVersionConfigData[0].listDataCount !== record.order
                               }
                               icon={<CaretDownOutlined />}
                           />
@@ -391,10 +402,12 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
                         triggerPriorityChange={{
                             id: priorityStatus.id,
                             setId: setPriorityStatus,
-                            type: priorityStatus.type,
-                            orderingField: 'order'
+                            newOrder: priorityStatus.newOrder,
+                            orderingField: 'order',
+                            parentId: 'ruleVersionId'
                         }}
                         actionColumns={actionCollumnsconfig}
+                        setData={setRuleVersionConfigData}
                     />
                     <Divider />
                 </>
