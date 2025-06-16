@@ -39,6 +39,7 @@ import {
     useUpdateEquipmentMutation
 } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
+import { gql } from 'graphql-request';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -222,41 +223,6 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
         }
     }, [priorityList]);
 
-    //rework priorities list
-    function compare(a: any, b: any) {
-        if (a.priority < b.priority) {
-            return -1;
-        }
-        if (a.priority > b.priority) {
-            return 1;
-        }
-        return 0;
-    }
-    const inCourseEquipment = equipmentWithPriorities
-        ?.filter((e: any) => e.priority !== null)
-        .sort(compare);
-
-    const { mutate, isPending: updateLoading } = useUpdateEquipmentMutation<Error>(
-        graphqlRequestClient,
-        {
-            onSuccess: (
-                data: UpdateEquipmentMutation,
-                _variables: UpdateEquipmentMutationVariables,
-                _context: any
-            ) => {
-                router.push(`/equipment/${equipmentId}`);
-                //showSuccess(t('messages:success-updated'));
-            },
-            onError: () => {
-                showError(t('messages:error-update-data'));
-            }
-        }
-    );
-
-    const updateEquipment = ({ id, input }: UpdateEquipmentMutationVariables) => {
-        mutate({ id, input });
-    };
-
     //manage call back on change boxes
     const onAvailableChange = (e: CheckboxChangeEvent) => {
         setAvailableValue(!availableValue);
@@ -341,32 +307,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                 if (formData['stockOwnerId'] == '') {
                     formData['stockOwnerId'] = null;
                 }
-                //part to update priorities on foreigners
 
-                let equipmentToUpdate: any;
-                let updateSide: number;
-                if (formData.priority > details.priority && details.priority !== null) {
-                    equipmentToUpdate = inCourseEquipment.filter(
-                        (e: any) => e.priority <= formData.priority && e.priority > details.priority
-                    );
-                    updateSide = -1;
-                } else if (details.priority !== null) {
-                    equipmentToUpdate = inCourseEquipment.filter(
-                        (e: any) => e.priority >= formData.priority && e.priority < details.priority
-                    );
-                    updateSide = 1;
-                } else {
-                    equipmentToUpdate = inCourseEquipment.filter(
-                        (e: any) => e.priority >= formData.priority
-                    );
-                    updateSide = 1;
-                }
-                if (equipmentToUpdate) {
-                    equipmentToUpdate.forEach((e: any) =>
-                        updateEquipment({ id: e.id, input: { priority: e.priority + updateSide } })
-                    );
-                }
-                //end part to update priorities on foreigners
                 delete formData['stockOwnerName'];
                 delete formData['stockOwner'];
                 delete formData['typeText'];
@@ -374,8 +315,50 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                 delete formData['mechanizedSystemText'];
                 delete formData['automaticLabelPrintingText'];
                 delete formData['statusText'];
-                updateEquipment({ id: equipmentId, input: formData });
-                setUnsavedChanges(false);
+                const updateWithOrder = gql`
+                            mutation executeFunction($id: String!, $fieldsInfos: JSON!) {
+                                executeFunction(
+                                    functionName: "reorder_priority"
+                                    event: {
+                                        input: {
+                                            ids: $id
+                                            tableName: "equipment"
+                                            orderingField: "priority"
+                                            operation: "update"
+                                            parentId: "*"
+                                            newOrder: ${formData.priority}
+                                            fieldsInfos: $fieldsInfos
+                                        }
+                                    }
+                                ) {
+                                    status
+                                    output
+                                }
+                            }
+                        `;
+                graphqlRequestClient
+                    .request(updateWithOrder, {
+                        id: equipmentId,
+                        fieldsInfos: formData
+                    })
+                    .then((result: any) => {
+                        if (result.executeFunction.status === 'ERROR') {
+                            showError(result.executeFunction.output);
+                        } else if (
+                            result.executeFunction.status === 'OK' &&
+                            result.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(t(`errors:${result.executeFunction.output.output.code}`));
+                            console.log('Backend_message', result.executeFunction.output.output);
+                        } else {
+                            showInfo(t('messages:info-create-wip'));
+                            showSuccess(t('messages:success-updated'));
+                            setUnsavedChanges(false);
+                            router.push(
+                                `/equipment/${equipmentId}`.replace(':id', equipmentId.toString())
+                            );
+                        }
+                    });
             })
             .catch((err) => {
                 showError(t('error-update-data'));
@@ -393,11 +376,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
         delete tmp_details['modified'];
         delete tmp_details['modifiedBy'];
         form.setFieldsValue(tmp_details);
-        if (updateLoading) {
-            showInfo(t('messages:info-create-wip'));
-            showSuccess(t('messages:success-updated'));
-        }
-    }, [updateLoading, details]);
+    }, [details]);
 
     const onCancel = () => {
         setUnsavedChanges(false);
@@ -762,7 +741,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
             </Form>
             <div style={{ textAlign: 'center' }}>
                 <Space>
-                    <Button type="primary" loading={updateLoading} onClick={onFinish}>
+                    <Button type="primary" onClick={onFinish}>
                         {t('actions:submit')}
                     </Button>
                     <Button onClick={onCancel}>{t('actions:cancel')}</Button>
