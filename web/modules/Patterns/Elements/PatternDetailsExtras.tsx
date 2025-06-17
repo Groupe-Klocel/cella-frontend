@@ -53,8 +53,8 @@ const PatternDetailsExtra = ({ id, name }: IItemDetailsProps) => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [patternPathLinksList, setPatterPathLinksList] = useState<any>();
     const [priorityStatus, setPriorityStatus] = useState({
-        id: '',
-        type: ''
+        id: null as string | null,
+        newOrder: null as number | null
     });
     const [refetch, setRefetch] = useState<boolean>(false);
 
@@ -101,12 +101,13 @@ const PatternDetailsExtra = ({ id, name }: IItemDetailsProps) => {
                 `;
 
                 const variables = {
-                    functionName: 'reorder_on_delete',
+                    functionName: 'reorder_priority',
                     event: {
                         input: {
                             ids: patternPathLinkId,
                             tableName: 'patternPathLink',
                             orderingField: 'order',
+                            operation: 'delete',
                             parentId: 'patternId'
                         }
                     }
@@ -159,8 +160,9 @@ const PatternDetailsExtra = ({ id, name }: IItemDetailsProps) => {
                         triggerPriorityChange={{
                             id: priorityStatus.id,
                             setId: setPriorityStatus,
-                            type: priorityStatus.type,
-                            orderingField: 'order'
+                            newOrder: priorityStatus.newOrder,
+                            orderingField: 'order',
+                            parentId: 'patternId'
                         }}
                         sortDefault={[{ ascending: true, field: 'order' }]}
                         actionColumns={[
@@ -178,20 +180,38 @@ const PatternDetailsExtra = ({ id, name }: IItemDetailsProps) => {
                                         ) : (
                                             <>
                                                 <Button
-                                                    onClick={() =>
-                                                        setPriorityStatus({
-                                                            type: 'up',
-                                                            id: record.id
-                                                        })
+                                                    onClick={() => {
+                                                        if (priorityStatus.id === null) {
+                                                            setPriorityStatus({
+                                                                newOrder: record.order - 1,
+                                                                id: record.id
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={record.order === 1}
+                                                    loading={
+                                                        priorityStatus.id !== null &&
+                                                        record.order !== 1
                                                     }
                                                     icon={<CaretUpOutlined />}
                                                 />
                                                 <Button
-                                                    onClick={() =>
-                                                        setPriorityStatus({
-                                                            type: 'down',
-                                                            id: record.id
-                                                        })
+                                                    onClick={() => {
+                                                        if (priorityStatus.id === null) {
+                                                            setPriorityStatus({
+                                                                newOrder: record.order + 1,
+                                                                id: record.id
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={
+                                                        patternPathLinksList[0].listDataCount ===
+                                                        record.order
+                                                    }
+                                                    loading={
+                                                        priorityStatus.id !== null &&
+                                                        patternPathLinksList[0].listDataCount !==
+                                                            record.order
                                                     }
                                                     icon={<CaretDownOutlined />}
                                                 />
