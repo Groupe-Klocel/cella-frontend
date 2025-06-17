@@ -19,17 +19,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS } from '@helpers';
-import { EyeTwoTone, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
+import { EyeTwoTone, EditTwoTone, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC } from 'react';
+import { FC, useMemo, useState } from 'react';
 import { EquipmentModelV2 } from 'models/EquipmentModelV2';
 import { equipmentRoutes } from 'modules/Equipment/Static/equipmentRoutes';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { useState } from 'react';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -39,9 +38,10 @@ const EquipmentPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, EquipmentModelV2.tableName);
 
     const [priorityStatus, setPriorityStatus] = useState({
-        id: '',
-        type: ''
+        id: null as string | null,
+        newOrder: null as number | null
     });
+    const [data, setData] = useState<any[]>([]);
 
     const headerData: HeaderData = {
         title: t('common:equipments'),
@@ -56,6 +56,61 @@ const EquipmentPage: PageComponent = () => {
             ) : null
     };
 
+    const actionColumns = [
+        {
+            title: 'actions:actions',
+            key: 'actions',
+            render: (record: any) => (
+                <Space key={priorityStatus.id ?? 'none'}>
+                    <LinkButton
+                        icon={<EyeTwoTone />}
+                        path={'/equipment/:id'.replace(':id', record.id)}
+                    />
+                    <LinkButton
+                        icon={<EditTwoTone />}
+                        path={'/equipment/edit/:id'.replace(':id', record.id)}
+                        disabled={!modes.includes(ModeEnum.Update)}
+                    />
+                    {record.priority === null ? (
+                        <></>
+                    ) : (
+                        <>
+                            <Button
+                                onClick={() => {
+                                    if (priorityStatus.id === null) {
+                                        setPriorityStatus({
+                                            newOrder: parseInt(record.priority) - 1,
+                                            id: record.id
+                                        });
+                                    }
+                                }}
+                                disabled={record.priority === 1}
+                                loading={priorityStatus.id !== null && record.priority !== 1}
+                                icon={<CaretUpOutlined />}
+                            />
+                            <Button
+                                onClick={() => {
+                                    if (priorityStatus.id === null) {
+                                        setPriorityStatus({
+                                            newOrder: parseInt(record.priority) + 1,
+                                            id: record.id
+                                        });
+                                    }
+                                }}
+                                disabled={data[0].listDataCount === record.priority}
+                                loading={
+                                    priorityStatus.id !== null &&
+                                    data[0].listDataCount !== record.priority
+                                }
+                                icon={<CaretDownOutlined />}
+                            />
+                        </>
+                    )}
+                </Space>
+            )
+        }
+    ];
+
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
@@ -68,48 +123,13 @@ const EquipmentPage: PageComponent = () => {
                 triggerPriorityChange={{
                     id: priorityStatus.id,
                     setId: setPriorityStatus,
-                    type: priorityStatus.type,
-                    orderingField: 'priority'
+                    newOrder: priorityStatus.newOrder,
+                    orderingField: 'priority',
+                    parentId: '*'
                 }}
                 sortDefault={[{ ascending: true, field: 'priority' }]}
-                actionColumns={[
-                    {
-                        title: 'actions:actions',
-                        key: 'actions',
-                        render: (record: any) => (
-                            <Space>
-                                {record.priority === null ? (
-                                    <></>
-                                ) : (
-                                    <>
-                                        <Button
-                                            onClick={() =>
-                                                setPriorityStatus({
-                                                    type: 'up',
-                                                    id: record.id
-                                                })
-                                            }
-                                            icon={<CaretUpOutlined />}
-                                        />
-                                        <Button
-                                            onClick={() =>
-                                                setPriorityStatus({
-                                                    type: 'down',
-                                                    id: record.id
-                                                })
-                                            }
-                                            icon={<CaretDownOutlined />}
-                                        />
-                                    </>
-                                )}
-                                <LinkButton
-                                    icon={<EyeTwoTone />}
-                                    path={'/equipment/:id'.replace(':id', record.id)}
-                                />
-                            </Space>
-                        )
-                    }
-                ]}
+                actionColumns={actionColumns}
+                setData={setData}
             />
         </>
     );

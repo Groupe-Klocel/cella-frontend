@@ -67,9 +67,10 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
         Table.HandlingUnitOutbound
     );
     const [priorityStatus, setPriorityStatus] = useState({
-        id: '',
-        type: ''
+        id: null as string | null,
+        newOrder: null as number | null
     });
+    const [RoundAdvisedAddressData, setRoundAdvisedAddressData] = useState<any[]>([]);
     const router = useRouter();
     const [form] = Form.useForm();
     const errorMessageUpdateData = t('messages:error-update-data');
@@ -192,8 +193,9 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                         triggerPriorityChange={{
                             id: priorityStatus.id,
                             setId: setPriorityStatus,
-                            type: priorityStatus.type,
-                            orderingField: 'roundOrderId'
+                            newOrder: priorityStatus.newOrder,
+                            orderingField: 'roundOrderId',
+                            parentId: 'roundId'
                         }}
                         sortDefault={[{ ascending: true, field: 'roundOrderId' }]}
                         actionColumns={[
@@ -202,25 +204,43 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                                 key: 'actions',
                                 render: (record: any) => (
                                     <Space>
-                                        {record.order === null ? (
+                                        {record.roundOrderId === null ? (
                                             <></>
                                         ) : (
                                             <>
                                                 <Button
-                                                    onClick={() =>
-                                                        setPriorityStatus({
-                                                            type: 'up',
-                                                            id: record.id
-                                                        })
+                                                    onClick={() => {
+                                                        if (priorityStatus.id === null) {
+                                                            setPriorityStatus({
+                                                                newOrder: record.roundOrderId - 1,
+                                                                id: record.id
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={record.roundOrderId === 1}
+                                                    loading={
+                                                        priorityStatus.id !== null &&
+                                                        record.roundOrderId !== 1
                                                     }
                                                     icon={<CaretUpOutlined />}
                                                 />
                                                 <Button
-                                                    onClick={() =>
-                                                        setPriorityStatus({
-                                                            type: 'down',
-                                                            id: record.id
-                                                        })
+                                                    onClick={() => {
+                                                        if (priorityStatus.id === null) {
+                                                            setPriorityStatus({
+                                                                newOrder: record.roundOrderId + 1,
+                                                                id: record.id
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={
+                                                        RoundAdvisedAddressData[0].listDataCount ===
+                                                        record.roundOrderId
+                                                    }
+                                                    loading={
+                                                        priorityStatus.id !== null &&
+                                                        RoundAdvisedAddressData[0].listDataCount !==
+                                                            record.roundOrderId
                                                     }
                                                     icon={<CaretDownOutlined />}
                                                 />
@@ -234,6 +254,7 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                                 )
                             }
                         ]}
+                        setData={setRoundAdvisedAddressData}
                     />
                     {/* <ListComponent
                         searchCriteria={{ roundId: roundId }}
