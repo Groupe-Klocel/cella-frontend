@@ -76,10 +76,11 @@ const CustomerOrderDetailsExtra = ({
     const [customerOrderAddressesData, setCustomerOrderAddressesData] = useState<any>();
     const paymentLineModes = getModesFromPermissions(permissions, Table.PaymentLine);
     const deliveryModes = getModesFromPermissions(permissions, Table.Delivery);
-    const [priorityStatus, setPriorityStatus] = useState<{ type: string; id: string }>({
-        type: '',
-        id: ''
+    const [priorityStatus, setPriorityStatus] = useState({
+        id: null as string | null,
+        newOrder: null as number | null
     });
+    const [customerOrderLinedata, setCustomerOrderLineData] = useState<any[]>([]);
 
     const customerOrderAddressHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:customer-order-addresses') }),
@@ -307,8 +308,9 @@ const CustomerOrderDetailsExtra = ({
                         triggerPriorityChange={{
                             id: priorityStatus.id,
                             setId: setPriorityStatus,
-                            type: priorityStatus.type,
-                            orderingField: 'lineNumber'
+                            newOrder: priorityStatus.newOrder,
+                            orderingField: 'lineNumber',
+                            parentId: 'orderId'
                         }}
                         routeDetailPage={'/customer-orders/:id'}
                         actionColumns={[
@@ -338,20 +340,38 @@ const CustomerOrderDetailsExtra = ({
                                         ) : (
                                             <>
                                                 <Button
-                                                    onClick={() =>
-                                                        setPriorityStatus({
-                                                            type: 'up',
-                                                            id: record.id
-                                                        })
+                                                    onClick={() => {
+                                                        if (priorityStatus.id === null) {
+                                                            setPriorityStatus({
+                                                                newOrder: record.lineNumber - 1,
+                                                                id: record.id
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={record.lineNumber === 1}
+                                                    loading={
+                                                        priorityStatus.id !== null &&
+                                                        record.lineNumber !== 1
                                                     }
                                                     icon={<CaretUpOutlined />}
                                                 />
                                                 <Button
-                                                    onClick={() =>
-                                                        setPriorityStatus({
-                                                            type: 'down',
-                                                            id: record.id
-                                                        })
+                                                    onClick={() => {
+                                                        if (priorityStatus.id === null) {
+                                                            setPriorityStatus({
+                                                                newOrder: record.lineNumber + 1,
+                                                                id: record.id
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={
+                                                        customerOrderLinedata[0].listDataCount ===
+                                                        record.lineNumber
+                                                    }
+                                                    loading={
+                                                        priorityStatus.id !== null &&
+                                                        customerOrderLinedata[0].listDataCount !==
+                                                            record.lineNumber
                                                     }
                                                     icon={<CaretDownOutlined />}
                                                 />
@@ -409,6 +429,7 @@ const CustomerOrderDetailsExtra = ({
                                 )
                             }
                         ]}
+                        setData={setCustomerOrderLineData}
                         searchable={false}
                     />
                 </>

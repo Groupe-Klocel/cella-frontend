@@ -139,6 +139,10 @@ const AppTableV2: FC<IAppTableV2Props> = ({
 
     const [tableColumns, setTableColumns] = useState<any[]>(setCustomColumnsProps(columns));
 
+    useEffect(() => {
+        setFilteredColumns(setCustomColumnsProps(columns));
+    }, [columns]);
+
     if (data) {
         formatDigitsForData(data);
     }
