@@ -20,14 +20,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import { Button, Col, Input, Row, Form, Select } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import {
     useCreateEquipmentDetailMutation,
     CreateEquipmentDetailMutationVariables,
     CreateEquipmentDetailMutation,
-    useListParametersForAScopeQuery
+    useListParametersForAScopeQuery,
+    useListConfigsForAScopeQuery
 } from 'generated/graphql';
 import {
     showError,
@@ -66,6 +67,7 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
 
     const [handlingUnitModelId, setStatusHandlingUnitModel] = useState<Array<FormOptionType>>();
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
+    const [locationCategory, setLocationCategory] = useState<Array<FormOptionType>>();
     const [carrierShippingModes, setCarrierShippingModes] = useState<any>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
     const [carrierShippingModeIds, setcarrierShippingMode] = useState<Array<FormOptionType>>();
@@ -73,6 +75,10 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
 
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'preparation_mode'
+    });
+
+    const locationCategoryList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'location_category'
     });
 
     useEffect(() => {
@@ -88,6 +94,16 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
             }
         }
     }, [modePreparationList.data]);
+
+    useEffect(() => {
+        if (locationCategoryList.data) {
+            const newLocationCategory: Array<FormOptionType> = [];
+            locationCategoryList.data.listConfigsForAScope?.forEach(({ code, text }) => {
+                newLocationCategory.push({ key: parseInt(code), text });
+            });
+            setLocationCategory(newLocationCategory);
+        }
+    }, [locationCategoryList.data]);
 
     useEffect(() => {
         if (handlingUnitModelData.data) {
@@ -201,6 +217,21 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
                             })}`}
                         >
                             {preparationMode?.map((ed: any) => (
+                                <Option key={ed.key} value={ed.key}>
+                                    {ed.text}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                </Col>
+                <Col>
+                    <Form.Item label={t('d:locationCategoryText')} name="locationCategory">
+                        <Select
+                            placeholder={`${t('messages:please-select-a', {
+                                name: t('d:locationCategory')
+                            })}`}
+                        >
+                            {locationCategory?.map((ed: any) => (
                                 <Option key={ed.key} value={ed.key}>
                                     {ed.text}
                                 </Option>

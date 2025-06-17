@@ -77,7 +77,6 @@ const PickAndPack: PageComponent = () => {
     const [equipmentScanAtPreparation, setEquipmentScanAtPreparation] = useState<boolean>(false);
     const [toBePalletizedForBackEnd, setToBePalletizedForBackEnd] = useState<boolean>(true);
     const [toBePalletizedForHUModel, setToBePalletizedForHUModel] = useState<boolean>(true);
-
     useEffect(() => {
         const getParameters = async () => {
             const getParametersQuery = gql`
@@ -637,22 +636,24 @@ const PickAndPack: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step75']?.data &&
-                toBePalletizedForHUModel &&
-                !storedObject['step80']?.data ? (
+                {storedObject['step75']?.data && !storedObject['step80']?.data ? (
                     <SelectHuModelForm
                         process={processName}
                         stepNumber={80}
                         trigger={{ triggerRender, setTriggerRender }}
                         buttons={{ submitButton: true, backButton: true }}
-                        defaultValue={isHuInProgress ? 'huModelExist' : undefined}
+                        defaultValue={
+                            isHuInProgress
+                                ? 'huModelExist'
+                                : !toBePalletizedForHUModel
+                                  ? 'defaultModel'
+                                  : undefined
+                        }
                     ></SelectHuModelForm>
                 ) : (
                     <></>
                 )}
-                {storedObject['step80']?.data ||
-                (!toBePalletizedForHUModel && storedObject['step75']?.data) ||
-                isAutoValidateLoading ? (
+                {storedObject['step80']?.data || isAutoValidateLoading ? (
                     <AutoValidatePickAndPackForm
                         process={processName}
                         stepNumber={90}

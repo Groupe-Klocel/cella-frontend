@@ -29,7 +29,8 @@ import {
     UpdateEquipmentDetailMutation,
     useListParametersForAScopeQuery,
     useGetEquipmentDetailByIdQuery,
-    GetEquipmentDetailByIdQuery
+    GetEquipmentDetailByIdQuery,
+    useListConfigsForAScopeQuery
 } from 'generated/graphql';
 import {
     showError,
@@ -66,6 +67,7 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
 
     const [handlingUnitModelId, setStatusHandlingUnitModel] = useState<Array<FormOptionType>>();
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
+    const [locationCategory, setLocationCategory] = useState<Array<FormOptionType>>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
     const [carrierShippingModeIds, setcarrierShippingMode] = useState<Array<FormOptionType>>();
     const carrierShippingModeData = useGetCarrierShippingModes({}, 1, 100, null, router.locale);
@@ -73,6 +75,10 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
         language: router.locale,
         scope: 'preparation_mode'
+    });
+
+    const locationCategoryList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'location_category'
     });
 
     useEffect(() => {
@@ -88,6 +94,16 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
             }
         }
     }, [modePreparationList.data]);
+
+    useEffect(() => {
+        if (locationCategoryList.data) {
+            const newLocationCategory: Array<FormOptionType> = [];
+            locationCategoryList.data.listConfigsForAScope?.forEach(({ code, text }) => {
+                newLocationCategory.push({ key: parseInt(code), text });
+            });
+            setLocationCategory(newLocationCategory);
+        }
+    }, [locationCategoryList.data]);
 
     useEffect(() => {
         if (handlingUnitModelData.data) {
@@ -138,6 +154,7 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
                 const formData = form.getFieldsValue(true);
                 delete formData.equipmentName;
                 delete formData.preparationModeText;
+                delete formData.locationCategoryText;
                 delete formData['equipment'];
                 delete formData['handlingUnitModel'];
                 delete formData['stockOwner'];
@@ -155,9 +172,9 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
             equipmentId: props.details.equipmentId,
             equipmentName: props.details.equipment.name,
             stockOwnerId: props.details.stockOwnerId,
-            carrierShippingModeId: props.details.carrierShippingModeId
+            carrierShippingModeId: props.details.carrierShippingModeId,
+            locationCategory: props.details.locationCategory
         };
-
         delete tmp_details['id'];
         delete tmp_details['created'];
         delete tmp_details['createdBy'];
@@ -215,6 +232,21 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
                             allowClear
                         >
                             {preparationMode?.map((ed: any) => (
+                                <Option key={ed.key} value={ed.key}>
+                                    {ed.text}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                </Col>
+                <Col>
+                    <Form.Item label={t('d:locationCategoryText')} name="locationCategory">
+                        <Select
+                            placeholder={`${t('messages:please-select-a', {
+                                name: t('d:locationCategory')
+                            })}`}
+                        >
+                            {locationCategory?.map((ed: any) => (
                                 <Option key={ed.key} value={ed.key}>
                                     {ed.text}
                                 </Option>

@@ -42,6 +42,7 @@ import {
 import { showError, showSuccess, showInfo } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import configs from '../../../../common/configs.json';
+import { gql } from 'graphql-request';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -57,7 +58,6 @@ export const AddEquipmentForm = () => {
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     const [stockOwners, setStockOwners] = useState<any>();
-    const [equipmentWithPriorities, setEquipmentWithPriorities] = useState<any>();
     const [equipmentTypes, setEquipmentTypes] = useState<any>();
     const [pattern, setPattern] = useState<any>();
     const [equipmentLimitTypes, setEquipmentLimitTypes] = useState<any>();
@@ -104,53 +104,30 @@ export const AddEquipmentForm = () => {
         }
     }, [stockOwnerList]);
 
-    //To render existing priorities list
-    const priorityList = useGetListOfPrioritiesQuery<Partial<GetListOfPrioritiesQuery>, Error>(
-        graphqlRequestClient
-    );
     useEffect(() => {
-        const receivedList = priorityList?.data?.equipments?.results.map((e: any) => e.priority);
-        if (receivedList) {
-            setMaxPriority(Math.max(...receivedList) + 1);
-            form.setFieldsValue({ priority: Math.max(...receivedList) + 1 });
-        }
-        setEquipmentWithPriorities(priorityList?.data?.equipments?.results);
-    }, [priorityList]);
-
-    //rework priorities list
-    function compare(a: any, b: any) {
-        if (a.priority < b.priority) {
-            return -1;
-        }
-        if (a.priority > b.priority) {
-            return 1;
-        }
-        return 0;
-    }
-    const inCourseEquipment = equipmentWithPriorities
-        ?.filter((e: any) => e.priority !== null)
-        .sort(compare);
-
-    //For priority updates on Finish
-    const { mutate: updateMutate, isPending: updateLoading } = useUpdateEquipmentMutation<Error>(
-        graphqlRequestClient,
-        {
-            onSuccess: (
-                data: UpdateEquipmentMutation,
-                _variables: UpdateEquipmentMutationVariables,
-                _context: any
-            ) => {
-                // showSuccess(t('messages:success-updated'));
-            },
-            onError: () => {
-                showError(t('messages:error-update-data'));
+        const equipementPriorityList = gql`
+            query getEquipmentPriorities {
+                equipments {
+                    results {
+                        priority
+                    }
+                }
             }
-        }
-    );
-
-    const updateEquipment = ({ id, input }: UpdateEquipmentMutationVariables) => {
-        updateMutate({ id, input });
-    };
+        `;
+        graphqlRequestClient
+            .request(equipementPriorityList)
+            .then((data: any) => {
+                const receivedList = data?.equipments?.results.map((e: any) => e.priority);
+                if (receivedList) {
+                    setMaxPriority(Math.max(...receivedList) + 1);
+                    form.setFieldsValue({ priority: Math.max(...receivedList) + 1 });
+                }
+            })
+            .catch((error: any) => {
+                console.error('Error fetching equipment priorities:', error);
+                showError(t('messages:error-fetching-priorities'));
+            });
+    }, []);
 
     //To render Equipment types list configs
     const equipmentTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -233,27 +210,6 @@ export const AddEquipmentForm = () => {
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
-
-    const { mutate, isPending: createLoading } = useCreateEquipmentMutation<Error>(
-        graphqlRequestClient,
-        {
-            onSuccess: (
-                data: CreateEquipmentMutation,
-                _variables: CreateEquipmentMutationVariables,
-                _context: any
-            ) => {
-                router.push(`/equipment/${data.createEquipment.id}`);
-                showSuccess(t('messages:success-created'));
-            },
-            onError: () => {
-                showError(t('messages:error-creating-data'));
-            }
-        }
-    );
-
-    const createEquipment = ({ input }: CreateEquipmentMutationVariables) => {
-        mutate({ input });
-    };
 
     //handle call back on equipment Type change for displays
     const handleEquipmentTypeChange = (value: any) => {
@@ -346,30 +302,57 @@ export const AddEquipmentForm = () => {
         form.validateFields()
             .then(() => {
                 // Here make api call of something else
+                setUnsavedChanges(false);
                 const formData = form.getFieldsValue(true);
-                const equipmentToUpdate = inCourseEquipment.filter(
-                    (e: any) => e.priority >= formData.priority
-                );
-                if (equipmentToUpdate) {
-                    equipmentToUpdate.forEach((e: any) =>
-                        updateEquipment({ id: e.id, input: { priority: e.priority + 1 } })
-                    );
-                }
                 formData['status'] = configs.EQUIPMENT_STATUS_IN_PROGRESS;
                 delete formData['limitTypeText'];
-                createEquipment({ input: formData });
-                setUnsavedChanges(false);
+                const updateWithOrder = gql`
+                    mutation executeFunction($id: String!, $fieldsInfos: JSON!) {
+                        executeFunction(
+                            functionName: "reorder_priority"
+                            event: {
+                                input: {
+                                    ids: $id
+                                    tableName: "equipment"
+                                    orderingField: "priority"
+                                    operation: "create"
+                                    parentId: "*"
+                                    newOrder: ${formData.priority}
+                                    fieldsInfos: $fieldsInfos
+                                }
+                            }
+                        ) {
+                            status
+                            output
+                        }
+                    }
+                `;
+                graphqlRequestClient
+                    .request(updateWithOrder, {
+                        id: 'new',
+                        fieldsInfos: formData
+                    })
+                    .then((result: any) => {
+                        if (result.executeFunction.status === 'ERROR') {
+                            showError(result.executeFunction.output);
+                            setUnsavedChanges(true);
+                        } else if (
+                            result.executeFunction.status === 'OK' &&
+                            result.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(t(`errors:${result.executeFunction.output.output.code}`));
+                            console.log('Backend_message', result.executeFunction.output.output);
+                            setUnsavedChanges(true);
+                        } else {
+                            showSuccess(t('messages:success-created'));
+                            router.push('/equipment');
+                        }
+                    });
             })
             .catch((err) => {
                 showError(t('messages:error-creating-data'));
             });
     };
-
-    useEffect(() => {
-        if (createLoading) {
-            showInfo(t('messages:info-create-wip'));
-        }
-    }, [createLoading]);
 
     const onCancel = () => {
         setUnsavedChanges(false);
@@ -739,7 +722,7 @@ export const AddEquipmentForm = () => {
             </Form>
             <div style={{ textAlign: 'center' }}>
                 <Space>
-                    <Button type="primary" loading={createLoading} onClick={onFinish}>
+                    <Button type="primary" onClick={onFinish}>
                         {t('actions:submit')}
                     </Button>
                     <Button onClick={onCancel}>{t('actions:cancel')}</Button>
