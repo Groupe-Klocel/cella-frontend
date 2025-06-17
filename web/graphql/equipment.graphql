@@ -340,6 +340,8 @@ query GetEquipmentDetailById($id: String!) {
         id
         preparationMode
         preparationModeText
+        locationCategory
+        locationCategoryText
         carrierShippingModeId
         carrierShippingMode {
             name
