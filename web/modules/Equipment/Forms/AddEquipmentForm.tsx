@@ -302,6 +302,7 @@ export const AddEquipmentForm = () => {
         form.validateFields()
             .then(() => {
                 // Here make api call of something else
+                setUnsavedChanges(false);
                 const formData = form.getFieldsValue(true);
                 formData['status'] = configs.EQUIPMENT_STATUS_IN_PROGRESS;
                 delete formData['limitTypeText'];
@@ -334,16 +335,17 @@ export const AddEquipmentForm = () => {
                     .then((result: any) => {
                         if (result.executeFunction.status === 'ERROR') {
                             showError(result.executeFunction.output);
+                            setUnsavedChanges(true);
                         } else if (
                             result.executeFunction.status === 'OK' &&
                             result.executeFunction.output.status === 'KO'
                         ) {
                             showError(t(`errors:${result.executeFunction.output.output.code}`));
                             console.log('Backend_message', result.executeFunction.output.output);
+                            setUnsavedChanges(true);
                         } else {
-                            setUnsavedChanges(false);
-                            router.push('/equipment');
                             showSuccess(t('messages:success-created'));
+                            router.push('/equipment');
                         }
                     });
             })

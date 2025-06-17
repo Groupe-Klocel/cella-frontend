@@ -219,7 +219,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
         setEquipmentWithPriorities(priorityList?.data?.equipments?.results);
         const receivedList = priorityList?.data?.equipments?.results.map((e: any) => e.priority);
         if (receivedList) {
-            setMaxPriority(Math.max(...receivedList) + 1);
+            setMaxPriority(Math.max(...receivedList));
         }
     }, [priorityList]);
 
