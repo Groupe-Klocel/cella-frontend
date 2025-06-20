@@ -106,7 +106,7 @@ const DeliveryPages: PageComponent = () => {
                 `;
 
                 const variables = {
-                    functionName: 'K_customCubing',
+                    functionName: 'custom_cubing',
                     event: {
                         deliveries: deliveries
                     }
