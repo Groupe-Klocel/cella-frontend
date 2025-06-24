@@ -265,7 +265,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         };
         const query = gql`
                 query locationsInfos($filters: LocationSearchFilters!, $functions: [JSON!]) {
-                    locations(filters: $filters, functions: $functions) {
+                    locations(filters: $filters, functions: $functions, itemsPerPage: 9999) {
                         count
                         results {
                             ${field}
