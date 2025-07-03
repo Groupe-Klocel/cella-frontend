@@ -20,20 +20,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { useState, useEffect, FC } from 'react';
 import { Form, Button, Space, Modal, Input, Select, DatePicker } from 'antd';
 import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { formatFeatures, useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import moment from 'moment';
 import { showError, showSuccess, showInfo, useCreate } from '@helpers';
 import { FilterFieldType, ModelType, FormOptionType } from 'models/ModelsV2';
-import {
-    GetHandlingUnitContentByIdQuery,
-    useGetHandlingUnitContentByIdQuery
-} from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import dayjs from 'dayjs';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'moment/locale/fr'; // French
+import { gql } from 'graphql-request';
 
 export interface IAddItemFormProps {
     dataModel: ModelType;
@@ -53,7 +50,8 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const [current, setCurrent] = useState(0);
     const [form] = Form.useForm();
-
+    const { handlingUnitContentId } = router.query;
+    const [originContentData, setOriginContentData] = useState<any>();
     moment.locale(router.locale);
     const localeData = moment.localeData();
     const localeDateTimeFormat = localeData.longDateFormat('L');
@@ -103,83 +101,145 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
         result: createResult,
         mutate
     } = useCreate(props.dataModel.resolverName, props.dataModel.endpoints.create, detailFields);
+    const hucQuery = gql`
+        query handlingUnitContent($id: String!) {
+            handlingUnitContent(id: $id) {
+                id
+                quantity
+                articleId
+                article {
+                    id
+                    name
+                }
+                stockStatus
+                stockOwner {
+                    id
+                    name
+                }
+                handlingUnitId
+                handlingUnit {
+                    id
+                    name
+                    locationId
+                    location {
+                        id
+                        name
+                    }
+                }
+                handlingUnitContentFeatures {
+                    featureCode {
+                        name
+                    }
+                    id
+                    value
+                }
+            }
+        }
+    `;
 
-    const { isLoading, data, error } = useGetHandlingUnitContentByIdQuery<
-        GetHandlingUnitContentByIdQuery,
-        Error
-    >(graphqlRequestClient, {
-        id: props.extraData.handlingUnitContentId
-    });
+    useEffect(() => {
+        if (handlingUnitContentId) {
+            const fetchData = async () => {
+                const variables = {
+                    id: handlingUnitContentId
+                };
+                const result = await graphqlRequestClient.request(hucQuery, variables);
+                if (result) {
+                    const originContentData = {
+                        articleId: result.handlingUnitContent?.articleId,
+                        articleName: result.handlingUnitContent?.article.name,
+                        stockStatus: result.handlingUnitContent?.stockStatus,
+                        quantity: result.handlingUnitContent?.quantity,
+                        locationId: result.handlingUnitContent?.handlingUnit.locationId,
+                        locationName: result.handlingUnitContent?.handlingUnit.location?.name,
+                        handlingUnitId: result.handlingUnitContent?.handlingUnitId,
+                        handlingUnitName: result.handlingUnitContent?.handlingUnit.name,
+                        stockOwnerId: result.handlingUnitContent?.stockOwner?.id,
+                        stockOwnerName: result.handlingUnitContent?.stockOwner?.name,
+                        handlingUnitContentId: result.handlingUnitContent?.id,
+                        features: formatFeatures(
+                            result.handlingUnitContent.handlingUnitContentFeatures
+                        )
+                    };
+                    setOriginContentData(originContentData);
+                }
+            };
+            fetchData();
+        }
+    }, [handlingUnitContentId]);
+
+    const executeFunctionQuery = gql`
+        mutation executeFunction($functionName: String!, $event: JSON!) {
+            executeFunction(functionName: $functionName, event: $event) {
+                status
+                output
+            }
+        }
+    `;
 
     useEffect(() => {
         if (!(createResult && createResult.data)) return;
 
         if (createResult.success) {
-            console.log('ID res', createResult.data);
-            const createdFeature = createResult.data.createHandlingUnitContentFeature;
-            const relatedHUC = data?.handlingUnitContent;
-            const fetchData = async () => {
-                const res = await fetch(`/api/create-movement/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        trigger: 'addContentFeature',
-                        originData: {
-                            articleId: relatedHUC?.articleId,
-                            articleName: relatedHUC?.article.name,
-                            stockStatus: relatedHUC?.stockStatus,
-                            quantity: 1,
-                            locationId: relatedHUC?.handlingUnit.locationId,
-                            locationName: relatedHUC?.handlingUnit.location?.name,
-                            handlingUnitId: relatedHUC?.handlingUnitId,
-                            handlingUnitName: relatedHUC?.handlingUnit.name,
-                            stockOwnerId: relatedHUC?.stockOwner?.id,
-                            stockOwnerName: relatedHUC?.stockOwner?.name,
-                            handlingUnitContentId: relatedHUC?.id
-                        },
-                        destinationData: {
-                            articleId: relatedHUC?.articleId,
-                            articleName: relatedHUC?.article.name,
-                            stockStatus: relatedHUC?.stockStatus,
-                            quantity: Number(relatedHUC?.quantity) + 1,
-                            locationId: relatedHUC?.handlingUnit.locationId,
-                            locationName: relatedHUC?.handlingUnit.location?.name,
-                            handlingUnitId: relatedHUC?.handlingUnitId,
-                            handlingUnitName: relatedHUC?.handlingUnit.name,
-                            stockOwnerId: relatedHUC?.stockOwner?.id,
-                            stockOwnerName: relatedHUC?.stockOwner?.name,
-                            handlingUnitContentId: relatedHUC?.id,
-                            feature: {
-                                code: createdFeature.featureCode.name,
-                                value: createdFeature.value
+            const movementProcess = async () => {
+                const hucVariables = {
+                    id: handlingUnitContentId
+                };
+                const result = await graphqlRequestClient.request(hucQuery, hucVariables);
+                if (result) {
+                    const updatedHuc = result.handlingUnitContent;
+                    if (originContentData && originContentData.quantity !== updatedHuc.quantity) {
+                        // Create a movement
+                        const executeFunctionVariables = {
+                            functionName: 'create_movements',
+                            event: {
+                                input: {
+                                    content: originContentData,
+                                    data: {
+                                        quantity: updatedHuc.quantity,
+                                        finalFeatures: formatFeatures(
+                                            updatedHuc.handlingUnitContentFeatures
+                                        )
+                                    },
+                                    type: 'update',
+                                    lastTransactionId:
+                                        createResult.data.createHandlingUnitContentFeature
+                                            .lastTransactionId
+                                }
                             }
-                        }
-                    })
-                });
-                if (res.ok) {
-                    setUnsavedChanges(false);
-                    router.push(
-                        props.routeAfterSuccess.replace(
-                            ':id',
-                            createResult.data[props.dataModel.endpoints.create]?.id
-                        )
-                    );
-                    showSuccess(t('messages:success-created'));
-                }
-                if (!res.ok) {
-                    const errorResponse = await res.json();
-                    if (errorResponse.error.response.errors[0].extensions) {
-                        showError(
-                            t(`errors:${errorResponse.error.response.errors[0].extensions.code}`)
+                        };
+                        const executeFunctionResult = await graphqlRequestClient.request(
+                            executeFunctionQuery,
+                            executeFunctionVariables
                         );
-                    } else {
-                        showError(t('messages:error-update-data'));
+                        if (executeFunctionResult.executeFunction.status === 'ERROR') {
+                            showError(executeFunctionResult.executeFunction.output);
+                        } else if (
+                            executeFunctionResult.executeFunction.status === 'OK' &&
+                            executeFunctionResult.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(
+                                t(
+                                    `errors:${executeFunctionResult.executeFunction.output.output.code}`
+                                )
+                            );
+                            console.log(
+                                'Backend_message',
+                                executeFunctionResult.executeFunction.output.output
+                            );
+                        }
                     }
                 }
             };
-            fetchData();
+            movementProcess();
+            setUnsavedChanges(false);
+            router.push(
+                props.routeAfterSuccess.replace(
+                    ':id',
+                    createResult.data[props.dataModel.endpoints.create]?.id
+                )
+            );
+            showSuccess(t('messages:success-created'));
         } else {
             showError(t('messages:error-creating-data'));
         }

@@ -387,7 +387,7 @@ export const HandlingUnitContentFeatureModelV2: ModelType = {
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
-            displayName: null,
+            displayName: 'dateType',
             isMandatory: false,
             minRule: null,
             maxRule: null,
