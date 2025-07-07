@@ -311,14 +311,17 @@ const useCreate = (resolverName: string, queryName: string, fields: Array<string
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
+    const fieldsWithTransactionId = [...fields, 'lastTransactionId'];
+
     const query = gql`mutation ${queryName}($input: Create${resolverName}Input!) {
         ${queryName}(input: $input) {
-            ${fields.join('\n')}
+            ${fieldsWithTransactionId.join('\n')}
         }
       }`;
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [result, setResult] = useState<any>({ data: null, success: false });
+    console.log('DLA - useCreate - result:', result);
 
     const mutate = (variables: any) => {
         setIsLoading(true);
