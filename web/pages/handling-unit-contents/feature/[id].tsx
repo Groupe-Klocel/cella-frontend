@@ -21,7 +21,7 @@ import { AppHead, LinkButton } from '@components';
 import { HandlingUnitContentFeatureModelV2 as model } from 'models/HandlingUnitContentFeatureModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import {
     META_DEFAULTS,
@@ -32,7 +32,8 @@ import {
     isStringDateTime,
     setUTCDate,
     isStringDate,
-    formatUTCLocaleDate
+    formatUTCLocaleDate,
+    formatFeatures
 } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -40,18 +41,25 @@ import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUni
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import { isString } from 'lodash';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const HandlingUnitContentPage: PageComponent = () => {
+const HandlingUnitContentFeaturePage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
-    const { id } = router.query;
+    const { id, handlingUnitContentId } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [successDeleteResult, setSuccessDeleteResult] = useState<any>();
+    const [originContentData, setOriginContentData] = useState<any>();
+    const [currentHucfs, setCurrentHucfs] = useState<any[]>([]);
+
+    const { graphqlRequestClient } = useAuth();
 
     let displayedValue;
     if (isString(data?.value) && isStringDateTime(data?.value) && data?.featureCode_dateType) {
@@ -87,73 +95,139 @@ const HandlingUnitContentPage: PageComponent = () => {
     const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t('messages:action-confirm'),
                 onOk: () => {
-                    const fetchData = async () => {
-                        const res = await fetch(`/api/create-movement/`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                trigger: 'deleteContentFeature',
-                                originData: {
-                                    articleId: data.handlingUnitContent_articleId,
-                                    articleName: data.handlingUnitContent_article_name,
-                                    stockStatus: data.handlingUnitContent_stockStatus,
-                                    quantity: 1,
-                                    locationId: data.handlingUnitContent_handlingUnit_locationId,
-                                    locationName:
-                                        data.handlingUnitContent_handlingUnit_location_name,
-                                    handlingUnitId: data.handlingUnitContent_handlingUnitId,
-                                    handlingUnitName: data.handlingUnitContent_handlingUnit_name,
-                                    stockOwnerId: data.handlingUnitContent_stockOwnerId,
-                                    stockOwnerName: data.handlingUnitContent_stockOwner_name,
-                                    handlingUnitContentId: data.handlingUnitContentId,
-                                    feature: {
-                                        code: data.featureCode_name,
-                                        value: data.value
-                                    }
-                                },
-                                destinationData: {
-                                    articleId: data.handlingUnitContent_articleId,
-                                    articleName: data.handlingUnitContent_article_name,
-                                    stockStatus: data.handlingUnitContent_stockStatus,
-                                    quantity: Number(data.handlingUnitContent_quantity) - 1,
-                                    locationId: data.handlingUnitContent_handlingUnit_locationId,
-                                    locationName:
-                                        data.handlingUnitContent_handlingUnit_location_name,
-                                    handlingUnitId: data.handlingUnitContent_handlingUnitId,
-                                    handlingUnitName: data.handlingUnitContent_handlingUnit_name,
-                                    stockOwnerId: data.handlingUnitContent_stockOwnerId,
-                                    stockOwnerName: data.handlingUnitContent_stockOwner_name,
-                                    handlingUnitContentId: data.handlingUnitContentId
-                                }
-                            })
-                        });
-                        if (res.ok) {
-                            setId(id);
-                        }
-                        if (!res.ok) {
-                            const errorResponse = await res.json();
-                            if (errorResponse.error.response.errors[0].extensions) {
-                                showError(
-                                    t(
-                                        `errors:${errorResponse.error.response.errors[0].extensions.code}`
-                                    )
-                                );
-                            } else {
-                                showError(t('messages:error-update-data'));
-                            }
-                        }
+                    setId(id);
+                    const originData = {
+                        articleId: data.handlingUnitContent_articleId,
+                        articleName: data.handlingUnitContent_article_name,
+                        stockStatus: data.handlingUnitContent_stockStatus,
+                        quantity: Number(data.handlingUnitContent_quantity),
+                        locationId: data.handlingUnitContent_handlingUnit_locationId,
+                        locationName: data.handlingUnitContent_handlingUnit_location_name,
+                        handlingUnitId: data.handlingUnitContent_handlingUnitId,
+                        handlingUnitName: data.handlingUnitContent_handlingUnit_name,
+                        stockOwnerId: data.handlingUnitContent_stockOwnerId,
+                        stockOwnerName: data.handlingUnitContent_stockOwner_name,
+                        handlingUnitContentId: data.handlingUnitContentId
                     };
-                    fetchData();
+                    setOriginContentData(originData);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
         };
     };
+
+    const hucQuery = gql`
+        query handlingUnitContent($id: String!) {
+            handlingUnitContent(id: $id) {
+                id
+                quantity
+                handlingUnitContentFeatures {
+                    featureCode {
+                        name
+                    }
+                    id
+                    value
+                }
+            }
+        }
+    `;
+
+    const executeFunctionQuery = gql`
+        mutation executeFunction($functionName: String!, $event: JSON!) {
+            executeFunction(functionName: $functionName, event: $event) {
+                status
+                output
+            }
+        }
+    `;
+
+    const hucfsQuery = gql`
+        query handlingUnitContentFeatures($filters: HandlingUnitContentFeatureSearchFilters) {
+            handlingUnitContentFeatures(filters: $filters) {
+                results {
+                    id
+                    featureCode {
+                        id
+                        name
+                        dateType
+                    }
+                    value
+                }
+            }
+        }
+    `;
+
+    useEffect(() => {
+        if (handlingUnitContentId) {
+            const fetchData = async () => {
+                const variables = { filters: { handlingUnitContentId: handlingUnitContentId } };
+                const result = await graphqlRequestClient.request(hucfsQuery, variables);
+                if (result) {
+                    setCurrentHucfs(result.handlingUnitContentFeatures.results);
+                }
+            };
+            fetchData();
+        }
+    }, [handlingUnitContentId]);
+
+    useEffect(() => {
+        if (successDeleteResult) {
+            const movementProcess = async () => {
+                const hucVariables = {
+                    id: handlingUnitContentId
+                };
+                const result = await graphqlRequestClient.request(hucQuery, hucVariables);
+                if (result) {
+                    const updatedHuc = result.handlingUnitContent;
+                    if (originContentData && originContentData.quantity !== updatedHuc.quantity) {
+                        originContentData.features = formatFeatures(currentHucfs);
+                        // Create a movement
+                        const executeFunctionVariables = {
+                            functionName: 'create_movements',
+                            event: {
+                                input: {
+                                    content: originContentData,
+                                    data: {
+                                        quantity: updatedHuc.quantity,
+                                        finalFeatures: formatFeatures(
+                                            updatedHuc.handlingUnitContentFeatures
+                                        )
+                                    },
+                                    type: 'update',
+                                    lastTransactionId: successDeleteResult.transactionId
+                                }
+                            }
+                        };
+                        const executeFunctionResult = await graphqlRequestClient.request(
+                            executeFunctionQuery,
+                            executeFunctionVariables
+                        );
+                        if (executeFunctionResult.executeFunction.status === 'ERROR') {
+                            showError(executeFunctionResult.executeFunction.output);
+                        } else if (
+                            executeFunctionResult.executeFunction.status === 'OK' &&
+                            executeFunctionResult.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(
+                                t(
+                                    `errors:${executeFunctionResult.executeFunction.output.output.code}`
+                                )
+                            );
+                            console.log(
+                                'Backend_message',
+                                executeFunctionResult.executeFunction.output.output
+                            );
+                        }
+                    }
+                }
+            };
+            movementProcess();
+            setSuccessDeleteResult(undefined);
+        }
+    }, [successDeleteResult]);
 
     const headerData: HeaderData = {
         title: pageTitle,
@@ -202,11 +276,12 @@ const HandlingUnitContentPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                setSuccessDeleteResult={setSuccessDeleteResult}
             />
         </>
     );
 };
 
-HandlingUnitContentPage.layout = MainLayout;
+HandlingUnitContentFeaturePage.layout = MainLayout;
 
-export default HandlingUnitContentPage;
+export default HandlingUnitContentFeaturePage;

@@ -572,6 +572,24 @@ const checkUndefinedValues = (form: any) => {
     form.setFieldsValue(tmpFieldsValues);
 };
 
+const formatFeatures = (hucfs: any[]): Record<string, any> => {
+    const updated_features: any[] = [];
+    if (hucfs && hucfs.length > 0) {
+        hucfs.forEach((hucf: any) => {
+            const featureName =
+                hucf.featureCode_name || (hucf.featureCode && hucf.featureCode.name);
+            const single_feature = {
+                [featureName]: {
+                    id: hucf.id,
+                    value: hucf.value
+                }
+            };
+            updated_features.push(single_feature);
+        });
+    }
+    return updated_features;
+};
+
 export {
     isNumeric,
     formatDigitsForData,
@@ -619,5 +637,6 @@ export {
     extractComparisonValues,
     queryString,
     areObjectsIdentical,
-    checkUndefinedValues
+    checkUndefinedValues,
+    formatFeatures
 };

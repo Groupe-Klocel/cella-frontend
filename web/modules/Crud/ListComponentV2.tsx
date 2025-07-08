@@ -102,6 +102,7 @@ export interface IListProps {
     isIndependentScrollable?: boolean;
     isCreateAMovement?: boolean;
     dataToCreateMovement?: any;
+    setSuccessDeleteResult?: any;
 }
 
 export interface newPaginationType {
@@ -562,6 +563,7 @@ const ListComponent = (props: IListProps) => {
 
         if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
+            if (props.setSuccessDeleteResult) props.setSuccessDeleteResult(deleteResult);
             if (props.isCreateAMovement) {
                 try {
                     createMovement(props.dataToCreateMovement);

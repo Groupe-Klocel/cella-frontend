@@ -24,17 +24,20 @@ import {
     META_DEFAULTS,
     getModesFromPermissions,
     pathParamsFromDictionary,
-    showError
+    showError,
+    formatFeatures
 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ModeEnum } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { useAppState } from 'context/AppContext';
 import { HandlingUnitContentFeatureModelV2 as model } from 'models/HandlingUnitContentFeatureModelV2';
 import parameters from '../../../../common/parameters.json';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 export interface IItemDetailsProps {
     handlingUnitContentId?: string | any;
@@ -62,6 +65,11 @@ const HandlingUnitContentDetailsExtra = ({
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const modes = getModesFromPermissions(permissions, model.tableName);
+    const [successDeleteResult, setSuccessDeleteResult] = useState<any>();
+    const [originContentData, setOriginContentData] = useState<any>();
+    const [currentHucfs, setCurrentHucfs] = useState<any[]>([]);
+
+    const { graphqlRequestClient } = useAuth();
 
     const headerData: HeaderData = {
         title: t('common:content-features'),
@@ -88,49 +96,102 @@ const HandlingUnitContentDetailsExtra = ({
         id: string | undefined,
         setId: any,
         action: 'delete' | 'disable',
-        originData: any,
-        destinationData: any
+        originData: any
     ) => {
         return () => {
             Modal.confirm({
-                title: t('messages:delete-confirm'),
+                title: t('messages:action-confirm'),
                 onOk: () => {
-                    const fetchData = async () => {
-                        const res = await fetch(`/api/create-movement/`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                trigger: 'deleteContentFeature',
-                                originData,
-                                destinationData
-                            })
-                        });
-                        if (res.ok) {
-                            setId(id);
-                            setRefetch((prev: boolean) => !prev);
-                        }
-                        if (!res.ok) {
-                            const errorResponse = await res.json();
-                            if (errorResponse.error.response.errors[0].extensions) {
-                                showError(
-                                    t(
-                                        `errors:${errorResponse.error.response.errors[0].extensions.code}`
-                                    )
-                                );
-                            } else {
-                                showError(t('messages:error-update-data'));
-                            }
-                        }
-                    };
-                    fetchData();
+                    setId(id);
+                    setOriginContentData(originData);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
             });
         };
     };
+
+    const hucQuery = gql`
+        query handlingUnitContent($id: String!) {
+            handlingUnitContent(id: $id) {
+                id
+                quantity
+                handlingUnitContentFeatures {
+                    featureCode {
+                        name
+                    }
+                    id
+                    value
+                }
+            }
+        }
+    `;
+
+    const executeFunctionQuery = gql`
+        mutation executeFunction($functionName: String!, $event: JSON!) {
+            executeFunction(functionName: $functionName, event: $event) {
+                status
+                output
+            }
+        }
+    `;
+
+    useEffect(() => {
+        if (successDeleteResult) {
+            const movementProcess = async () => {
+                const hucVariables = {
+                    id: handlingUnitContentId
+                };
+                const result = await graphqlRequestClient.request(hucQuery, hucVariables);
+                if (result) {
+                    const updatedHuc = result.handlingUnitContent;
+                    if (originContentData && originContentData.quantity !== updatedHuc.quantity) {
+                        originContentData.features = formatFeatures(currentHucfs);
+                        // Create a movement
+                        const executeFunctionVariables = {
+                            functionName: 'create_movements',
+                            event: {
+                                input: {
+                                    content: originContentData,
+                                    data: {
+                                        quantity: updatedHuc.quantity,
+                                        finalFeatures: formatFeatures(
+                                            updatedHuc.handlingUnitContentFeatures
+                                        )
+                                    },
+                                    type: 'update',
+                                    lastTransactionId: successDeleteResult.transactionId
+                                }
+                            }
+                        };
+                        const executeFunctionResult = await graphqlRequestClient.request(
+                            executeFunctionQuery,
+                            executeFunctionVariables
+                        );
+                        if (executeFunctionResult.executeFunction.status === 'ERROR') {
+                            showError(executeFunctionResult.executeFunction.output);
+                        } else if (
+                            executeFunctionResult.executeFunction.status === 'OK' &&
+                            executeFunctionResult.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(
+                                t(
+                                    `errors:${executeFunctionResult.executeFunction.output.output.code}`
+                                )
+                            );
+                            console.log(
+                                'Backend_message',
+                                executeFunctionResult.executeFunction.output.output
+                            );
+                        }
+                        setRefetch((prev: boolean) => !prev);
+                    }
+                }
+            };
+            movementProcess();
+            setSuccessDeleteResult(undefined);
+        }
+    }, [successDeleteResult]);
 
     return (
         <>
@@ -142,6 +203,8 @@ const HandlingUnitContentDetailsExtra = ({
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                setSuccessDeleteResult={setSuccessDeleteResult}
+                setData={setCurrentHucfs}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -167,7 +230,10 @@ const HandlingUnitContentDetailsExtra = ({
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
                                         icon={<EyeTwoTone />}
-                                        path={pathParams(`${rootPath}/[id]`, record.id)}
+                                        path={pathParamsFromDictionary(`${rootPath}/[id]`, {
+                                            id: record.id,
+                                            handlingUnitContentId: record.handlingUnitContentId
+                                        })}
                                     />
                                 ) : (
                                     <></>
@@ -194,7 +260,6 @@ const HandlingUnitContentDetailsExtra = ({
                                                 record.id,
                                                 setIdToDisable,
                                                 'disable',
-                                                undefined,
                                                 undefined
                                             )()
                                         }
@@ -210,64 +275,28 @@ const HandlingUnitContentDetailsExtra = ({
                                         icon={<DeleteOutlined />}
                                         danger
                                         onClick={() =>
-                                            confirmAction(
-                                                record.id,
-                                                setIdToDelete,
-                                                'delete',
-                                                {
-                                                    articleId: record.handlingUnitContent_articleId,
-                                                    articleName:
-                                                        record.handlingUnitContent_article_name,
-                                                    stockStatus:
-                                                        record.handlingUnitContent_stockStatus,
-                                                    quantity: 1,
-                                                    locationId:
-                                                        record.handlingUnitContent_handlingUnit_locationId,
-                                                    locationName:
-                                                        record.handlingUnitContent_handlingUnit_location_name,
-                                                    handlingUnitId:
-                                                        record.handlingUnitContent_handlingUnitId,
-                                                    handlingUnitName:
-                                                        record.handlingUnitContent_handlingUnit_name,
-                                                    stockOwnerId:
-                                                        record.handlingUnitContent_stockOwnerId,
-                                                    stockOwnerName:
-                                                        record.handlingUnitContent_stockOwner_name,
-                                                    handlingUnitContentId:
-                                                        record.handlingUnitContentId,
-                                                    feature: {
-                                                        code: record.featureCode_name,
-                                                        value: record.value,
-                                                        id: record.id,
-                                                        extraText2: record.extraText2
-                                                    }
-                                                },
-                                                {
-                                                    articleId: record.handlingUnitContent_articleId,
-                                                    articleName:
-                                                        record.handlingUnitContent_article_name,
-                                                    stockStatus:
-                                                        record.handlingUnitContent_stockStatus,
-                                                    quantity:
-                                                        Number(
-                                                            record.handlingUnitContent_quantity
-                                                        ) - 1,
-                                                    locationId:
-                                                        record.handlingUnitContent_handlingUnit_locationId,
-                                                    locationName:
-                                                        record.handlingUnitContent_handlingUnit_location_name,
-                                                    handlingUnitId:
-                                                        record.handlingUnitContent_handlingUnitId,
-                                                    handlingUnitName:
-                                                        record.handlingUnitContent_handlingUnit_name,
-                                                    stockOwnerId:
-                                                        record.handlingUnitContent_stockOwnerId,
-                                                    stockOwnerName:
-                                                        record.handlingUnitContent_stockOwner_name,
-                                                    handlingUnitContentId:
-                                                        record.handlingUnitContentId
-                                                }
-                                            )()
+                                            confirmAction(record.id, setIdToDelete, 'delete', {
+                                                articleId: record.handlingUnitContent_articleId,
+                                                articleName:
+                                                    record.handlingUnitContent_article_name,
+                                                stockStatus: record.handlingUnitContent_stockStatus,
+                                                quantity: Number(
+                                                    record.handlingUnitContent_quantity
+                                                ),
+                                                locationId:
+                                                    record.handlingUnitContent_handlingUnit_locationId,
+                                                locationName:
+                                                    record.handlingUnitContent_handlingUnit_location_name,
+                                                handlingUnitId:
+                                                    record.handlingUnitContent_handlingUnitId,
+                                                handlingUnitName:
+                                                    record.handlingUnitContent_handlingUnit_name,
+                                                stockOwnerId:
+                                                    record.handlingUnitContent_stockOwnerId,
+                                                stockOwnerName:
+                                                    record.handlingUnitContent_stockOwner_name,
+                                                handlingUnitContentId: record.handlingUnitContentId
+                                            })()
                                         }
                                     ></Button>
                                 ) : (
