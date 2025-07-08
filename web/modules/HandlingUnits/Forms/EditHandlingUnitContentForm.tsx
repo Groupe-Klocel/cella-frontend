@@ -404,6 +404,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                                 }}
                                 allowClear
                                 onChange={onChangeArticle}
+                                disabled={details?.autocountHandlingUnitContentFeature > 0}
                             />
                         </Form.Item>
                     </Col>

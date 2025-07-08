@@ -108,78 +108,14 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
         if (!(updateResult && updateResult.data)) return;
 
         if (updateResult.success) {
-            const updatedFeature = updateResult.data.updateHandlingUnitContentFeature;
-            const relatedHUC = data?.handlingUnitContent;
-            const fetchData = async () => {
-                const res = await fetch(`/api/create-movement/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        trigger: 'updateContentFeature',
-                        originData: {
-                            articleId: relatedHUC?.articleId,
-                            articleName: relatedHUC?.article.name,
-                            stockStatus: relatedHUC?.stockStatus,
-                            quantity: relatedHUC?.quantity,
-                            locationId: relatedHUC?.handlingUnit.locationId,
-                            locationName: relatedHUC?.handlingUnit.location?.name,
-                            handlingUnitId: relatedHUC?.handlingUnitId,
-                            handlingUnitName: relatedHUC?.handlingUnit.name,
-                            stockOwnerId: relatedHUC?.stockOwner?.id,
-                            stockOwnerName: relatedHUC?.stockOwner?.name,
-                            handlingUnitContentId: relatedHUC?.id,
-                            feature: {
-                                code: props.details?.featureCode?.name,
-                                value: props.details?.value,
-                                id: props.id,
-                                extraText2: props.details?.extraText2
-                            }
-                        },
-                        destinationData: {
-                            articleId: relatedHUC?.articleId,
-                            articleName: relatedHUC?.article.name,
-                            stockStatus: relatedHUC?.stockStatus,
-                            quantity: relatedHUC?.quantity,
-                            locationId: relatedHUC?.handlingUnit.locationId,
-                            locationName: relatedHUC?.handlingUnit.location?.name,
-                            handlingUnitId: relatedHUC?.handlingUnitId,
-                            handlingUnitName: relatedHUC?.handlingUnit.name,
-                            stockOwnerId: relatedHUC?.stockOwner?.id,
-                            stockOwnerName: relatedHUC?.stockOwner?.name,
-                            handlingUnitContentId: relatedHUC?.id,
-                            feature: {
-                                code: updatedFeature.featureCode.name,
-                                value: updatedFeature.value,
-                                id: props.id,
-                                extraText2: updatedFeature.extraText2
-                            }
-                        }
-                    })
-                });
-                if (res.ok) {
-                    setUnsavedChanges(false);
-                    router.push(
-                        props.routeAfterSuccess.replace(
-                            ':id',
-                            updateResult.data[props.dataModel.endpoints.update]?.id
-                        )
-                    );
-                    showSuccess(t('messages:success-updated'));
-                }
-                if (!res.ok) {
-                    const errorResponse = await res.json();
-                    if (errorResponse.error.response.errors[0].extensions) {
-                        showError(
-                            t(`errors:${errorResponse.error.response.errors[0].extensions.code}`)
-                        );
-                    } else {
-                        showError(t('messages:error-update-data'));
-                    }
-                }
-            };
-            fetchData();
+            setUnsavedChanges(false);
+            router.push(
+                props.routeAfterSuccess.replace(
+                    ':id',
+                    updateResult.data[props.dataModel.endpoints.update]?.id
+                )
+            );
+            showSuccess(t('messages:success-updated'));
         } else {
             showError(t('messages:error-update-data'));
         }

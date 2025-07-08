@@ -96,6 +96,7 @@ query GetHandlingUnitContentById($id: String!) {
             description
         }
         quantity
+        autocountHandlingUnitContentFeature
         stockStatus
         reservation
         stockOwner {
