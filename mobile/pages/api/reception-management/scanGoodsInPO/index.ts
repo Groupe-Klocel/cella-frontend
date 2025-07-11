@@ -112,6 +112,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         id
                         lineNumber
                         status
+                        reservation
                         quantity
                         quantityMax
                         receivedQuantity

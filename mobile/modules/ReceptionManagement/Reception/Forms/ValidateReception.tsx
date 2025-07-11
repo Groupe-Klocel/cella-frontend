@@ -81,7 +81,7 @@ export const ValidateReceptionForm = ({
         articleInfo.articleId = step50?.data?.chosenArticleLuBarcode.articleId;
         articleInfo.articleName = step50?.data?.chosenArticleLuBarcode.article.name;
     }
-    const poLine = step50?.data?.currentPurchaseOrderLine;
+    const poLines = step80?.data?.updatedPoLines;
     const isNewProductToUpdate = step50?.data?.isNewProductToUpdate;
     const features = step60?.data?.processedFeatures;
     const receivedQuantity = step80?.data?.movingQuantity;
@@ -104,7 +104,7 @@ export const ValidateReceptionForm = ({
             isHuToBeClosed,
             stockStatus,
             articleInfo,
-            poLine,
+            poLines,
             receivedQuantity,
             features,
             isNewProductToUpdate,

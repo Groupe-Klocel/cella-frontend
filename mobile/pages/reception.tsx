@@ -165,6 +165,7 @@ const Reception: PageComponent = () => {
 
     const [isHuScannedAtEnd, setIsHuScannedAtEnd] = useState<boolean>(false);
     const [defaultReceptionLocation, setDefaultReceptionLocation] = useState<any>(null);
+    const [availableQuantity, setAvailableQuantity] = useState<number | undefined>(undefined);
     useEffect(() => {
         async function fetchData() {
             const receptionParameters = await getParameters();
@@ -216,6 +217,22 @@ const Reception: PageComponent = () => {
             const articleLuBarcode = storedObject['step50']?.data?.chosenArticleLuBarcode;
             object[t('common:article_abbr')] =
                 articleLuBarcode.article.name + '-' + articleLuBarcode.article.description;
+        }
+        if (storedObject['step50']?.data?.currentPurchaseOrderLine) {
+            object[t('common:stock-owner')] =
+                storedObject['step50']?.data?.currentPurchaseOrderLine[0]?.stockOwner?.name;
+            const quantityReceived = storedObject['step50']?.data?.currentPurchaseOrderLine.reduce(
+                (acc: number, line: any) => acc + (line.receivedQuantity || 0),
+                0
+            );
+            const quantityMax = storedObject['step50']?.data?.currentPurchaseOrderLine.reduce(
+                (acc: number, line: any) => acc + (line.quantityMax || 0),
+                0
+            );
+            console.log(quantityMax, quantityReceived, 'quantityMax, quantityReceived');
+            setAvailableQuantity(
+                quantityMax - quantityReceived > 0 ? quantityMax - quantityReceived : undefined
+            );
         }
         if (storedObject['step60']?.data?.processedFeatures) {
             const processedFeatures = storedObject['step60']?.data?.processedFeatures;
@@ -465,10 +482,7 @@ const Reception: PageComponent = () => {
                                   )
                                 : undefined
                         }
-                        availableQuantity={
-                            storedObject['step50'].data.currentPurchaseOrderLine.quantityMax -
-                            storedObject['step50'].data.currentPurchaseOrderLine.receivedQuantity
-                        }
+                        availableQuantity={availableQuantity}
                         checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                         isCommentDisplayed={true}
                     ></EnterQuantity>

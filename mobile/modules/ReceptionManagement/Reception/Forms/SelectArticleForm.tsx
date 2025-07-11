@@ -68,12 +68,50 @@ export const SelectArticleForm = ({
             const data: { [label: string]: any } = {};
             data['isNewProductToUpdate'] = isNewProductToUpdate;
             data['chosenArticleLuBarcode'] = articleLuBarcodes[0];
-            data['currentPurchaseOrderLine'] = storedObject[
+            const POLineByArticle = storedObject[
                 `step10`
-            ].data.purchaseOrder.purchaseOrderLines.find(
+            ].data.purchaseOrder.purchaseOrderLines.filter(
                 (purchaseOrderLine: any) =>
                     purchaseOrderLine.articleId === articleLuBarcodes[0].articleId
             );
+            // group POLines by articleId & stockOwnerId & reservation & blockingStatus
+            const groupedPOLines = POLineByArticle.reduce((acc: any, curr: any) => {
+                const key = `${curr.articleId}-${curr.stockOwnerId}-${curr.reservation}-${curr.blockingStatus}`;
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+                acc[key].push(curr);
+                return acc;
+            }, {});
+            console.log('groupedPOLines', groupedPOLines);
+
+            let firstPassSelectedPOLine: any = null;
+            let secondPassSelectedPOLine: any = null;
+            Object.keys(groupedPOLines).forEach((key) => {
+                if (
+                    groupedPOLines[key].filter(
+                        (purchaseOrderLine: any) =>
+                            purchaseOrderLine.receivedQuantity < purchaseOrderLine.quantity
+                    ).length > 0
+                ) {
+                    firstPassSelectedPOLine = groupedPOLines[key];
+                }
+            });
+            console.log('firstPassSelectedPOLine', firstPassSelectedPOLine);
+            if (!firstPassSelectedPOLine) {
+                Object.keys(groupedPOLines).forEach((key) => {
+                    if (
+                        groupedPOLines[key].filter(
+                            (purchaseOrderLine: any) =>
+                                purchaseOrderLine.receivedQuantity < purchaseOrderLine.quantityMax
+                        ).length > 0
+                    ) {
+                        secondPassSelectedPOLine = groupedPOLines[key];
+                    }
+                });
+            }
+
+            data['currentPurchaseOrderLine'] = firstPassSelectedPOLine ?? secondPassSelectedPOLine;
             storedObject[`step${stepNumber}`] = {
                 ...storedObject[`step${stepNumber}`],
                 data
@@ -133,7 +171,7 @@ export const SelectArticleForm = ({
             data['isNewProductToUpdate'] = isNewProductToUpdate;
             data['currentPurchaseOrderLine'] = storedObject[
                 `step10`
-            ].data.purchaseOrder.purchaseOrderLines.find(
+            ].data.purchaseOrder.purchaseOrderLines.filter(
                 (purchaseOrderLine: any) => purchaseOrderLine.articleId === selectedArticle.id
             );
             storedObject[`step${stepNumber}`] = {
@@ -148,7 +186,7 @@ export const SelectArticleForm = ({
             data['isNewProductToUpdate'] = isNewProductToUpdate;
             data['currentPurchaseOrderLine'] = storedObject[
                 `step10`
-            ].data.purchaseOrder.purchaseOrderLines.find(
+            ].data.purchaseOrder.purchaseOrderLines.filter(
                 (purchaseOrderLine: any) => purchaseOrderLine.articleId === selectedArticle.id
             );
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
