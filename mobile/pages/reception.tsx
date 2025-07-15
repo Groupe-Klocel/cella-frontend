@@ -458,7 +458,8 @@ const Reception: PageComponent = () => {
                             backButton: true
                         }}
                         initialValue={
-                            storedObject['step50'].data.currentPurchaseOrderLine.blockingStatus
+                            storedObject['step50'].data.currentPurchaseOrderLine?.[0]
+                                ?.blockingStatus
                         }
                         isCommentDisplayed={true}
                     ></SelectStockStatusForm>

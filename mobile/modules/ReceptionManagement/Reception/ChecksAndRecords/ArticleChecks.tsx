@@ -57,7 +57,16 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                         }
                     );
 
-                if (matchingArticleLuBarcodes.length > 0) {
+                const remainingPOLines = storedObject[
+                    `step10`
+                ].data.purchaseOrder.purchaseOrderLines.filter(
+                    (poLine: any) =>
+                        !matchingArticleLuBarcodes.some(
+                            (articleLuBarcode: any) =>
+                                articleLuBarcode.articleId === poLine.articleId
+                        )
+                );
+                if (matchingArticleLuBarcodes.length > 0 && remainingPOLines.length > 0) {
                     const data: { [label: string]: any } = {};
                     data['articleLuBarcodes'] = matchingArticleLuBarcodes;
                     setTriggerRender(!triggerRender);
