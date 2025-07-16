@@ -231,8 +231,10 @@ const Reception: PageComponent = () => {
             );
             console.log(quantityMax, quantityReceived, 'quantityMax, quantityReceived');
             setAvailableQuantity(
-                quantityMax - quantityReceived > 0 ? quantityMax - quantityReceived : undefined
+                quantityMax - quantityReceived > 0 ? quantityMax - quantityReceived : 0
             );
+            object[t('common:stock-status')] =
+                storedObject['step50']?.data?.currentPurchaseOrderLine[0]?.blockingStatusText;
         }
         if (storedObject['step60']?.data?.processedFeatures) {
             const processedFeatures = storedObject['step60']?.data?.processedFeatures;

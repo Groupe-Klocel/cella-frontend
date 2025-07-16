@@ -48,13 +48,12 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
 
             // check every original PoLine and set the received quantity to match the quantity first and then the quantity max
             const updatedPoLinesFirstPAss = originalPoLines.map((line: any) => {
-                if (line.receivedQuantity === line.quantity) {
+                if (line.receivedQuantity >= line.quantity) {
                     return line; // already fully received, skip
                 }
                 const receivedQuantity = line.receivedQuantity || 0;
                 const quantity = line.quantity || 0;
                 const quantityNeeded = quantity - receivedQuantity;
-                console.log(receivedQuantity, quantity, quantityNeeded, 'quantityNeeded');
 
                 if (quantityNeeded > 0) {
                     if (movingQuantity >= quantityNeeded) {

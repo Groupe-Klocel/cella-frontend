@@ -61,10 +61,8 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                     `step10`
                 ].data.purchaseOrder.purchaseOrderLines.filter(
                     (poLine: any) =>
-                        !matchingArticleLuBarcodes.some(
-                            (articleLuBarcode: any) =>
-                                articleLuBarcode.articleId === poLine.articleId
-                        )
+                        poLine.articleId === matchingArticleLuBarcodes[0].articleId &&
+                        poLine.receivedQuantity < poLine.quantityMax
                 );
                 if (matchingArticleLuBarcodes.length > 0 && remainingPOLines.length > 0) {
                     const data: { [label: string]: any } = {};

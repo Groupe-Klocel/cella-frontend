@@ -151,7 +151,15 @@ export const ValidateReceptionForm = ({
                 const { final_goodsIn, final_handling_unit, final_po, po_rounds } =
                     validateReceptionResult.executeFunction.output.output;
                 const step10Data = {
-                    purchaseOrder: final_po,
+                    purchaseOrder: {
+                        ...final_po,
+                        purchaseOrderLines: final_po.purchaseOrderLines.map((line: any) => ({
+                            ...line,
+                            blockingStatusText: poLines.find(
+                                (linePo: any) => linePo.articleId === line.articleId
+                            ).blockingStatusText
+                        }))
+                    },
                     goodsIns: po_rounds,
                     responseType: 'goodsIn'
                 };

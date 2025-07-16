@@ -117,7 +117,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         quantityMax
                         receivedQuantity
                         blockingStatus
-                        blockingStatusText
                         stockOwnerId
                         stockOwner {
                             name
@@ -137,7 +136,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                                 round {
                                     id
                                     name
-                                    status
                                     status
                                     statusText
                                     priority
