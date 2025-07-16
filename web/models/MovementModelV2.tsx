@@ -762,7 +762,7 @@ export const MovementModelV2: ModelType = {
         },
         finalQuantity: {
             isListRequested: true,
-            isDefaultHiddenList: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
             searchingFormat: 'Number',
