@@ -218,23 +218,22 @@ const Reception: PageComponent = () => {
             object[t('common:article_abbr')] =
                 articleLuBarcode.article.name + '-' + articleLuBarcode.article.description;
         }
-        if (storedObject['step50']?.data?.currentPurchaseOrderLine) {
+        if (storedObject['step40']?.data?.currentPurchaseOrderLine) {
             object[t('common:stock-owner')] =
-                storedObject['step50']?.data?.currentPurchaseOrderLine[0]?.stockOwner?.name;
-            const quantityReceived = storedObject['step50']?.data?.currentPurchaseOrderLine.reduce(
+                storedObject['step40']?.data?.currentPurchaseOrderLine[0]?.stockOwner?.name;
+            const quantityReceived = storedObject['step40']?.data?.currentPurchaseOrderLine.reduce(
                 (acc: number, line: any) => acc + (line.receivedQuantity || 0),
                 0
             );
-            const quantityMax = storedObject['step50']?.data?.currentPurchaseOrderLine.reduce(
+            const quantityMax = storedObject['step40']?.data?.currentPurchaseOrderLine.reduce(
                 (acc: number, line: any) => acc + (line.quantityMax || 0),
                 0
             );
-            console.log(quantityMax, quantityReceived, 'quantityMax, quantityReceived');
             setAvailableQuantity(
                 quantityMax - quantityReceived > 0 ? quantityMax - quantityReceived : 0
             );
             object[t('common:stock-status')] =
-                storedObject['step50']?.data?.currentPurchaseOrderLine[0]?.blockingStatusText;
+                storedObject['step40']?.data?.currentPurchaseOrderLine[0]?.blockingStatusText;
         }
         if (storedObject['step60']?.data?.processedFeatures) {
             const processedFeatures = storedObject['step60']?.data?.processedFeatures;
@@ -460,7 +459,7 @@ const Reception: PageComponent = () => {
                             backButton: true
                         }}
                         initialValue={
-                            storedObject['step50'].data.currentPurchaseOrderLine?.[0]
+                            storedObject['step40'].data.currentPurchaseOrderLine?.[0]
                                 ?.blockingStatus
                         }
                         isCommentDisplayed={true}
