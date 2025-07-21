@@ -155,7 +155,7 @@ export const ValidateReceptionForm = ({
                         ...final_po,
                         purchaseOrderLines: final_po.purchaseOrderLines.map((line: any) => ({
                             ...line,
-                            blockingStatusText: poLines.find(
+                            blockingStatusText: purchaseOrder.purchaseOrderLines.find(
                                 (linePo: any) => linePo.articleId === line.articleId
                             ).blockingStatusText
                         }))
