@@ -43,7 +43,7 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
         if (enteredInfo) {
             const data: { [label: string]: any } = {};
             data['movingQuantity'] = enteredInfo;
-            const originalPoLines = storedObject[`step50`]?.data?.currentPurchaseOrderLine || [];
+            const originalPoLines = storedObject[`step40`]?.data?.currentPurchaseOrderLine || [];
             let movingQuantity = enteredInfo;
 
             // check every original PoLine and set the received quantity to match the quantity first and then the quantity max
