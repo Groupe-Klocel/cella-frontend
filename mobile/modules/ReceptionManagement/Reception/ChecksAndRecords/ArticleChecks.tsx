@@ -56,16 +56,72 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                             );
                         }
                     );
+                const POLineByArticle = storedObject[
+                    `step10`
+                ].data.purchaseOrder.purchaseOrderLines.filter(
+                    (purchaseOrderLine: any) =>
+                        purchaseOrderLine.articleId === articleLuBarcodes[0].articleId
+                );
+                // group POLines by articleId & stockOwnerId & reservation & blockingStatus
+                const groupedPOLines = POLineByArticle.reduce((acc: any, curr: any) => {
+                    const key = `${curr.articleId}-${curr.stockOwnerId}-${curr.reservation}-${curr.blockingStatus}`;
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+                    acc[key].push(curr);
+                    return acc;
+                }, {});
+                console.log('groupedPOLines', groupedPOLines);
+
+                let firstPassSelectedPOLine: any = null;
+                let secondPassSelectedPOLine: any = null;
+                // Prioritize groups with already received quantities
+                Object.keys(groupedPOLines).forEach((key) => {
+                    const hasReceived = groupedPOLines[key].some(
+                        (purchaseOrderLine: any) =>
+                            purchaseOrderLine.receivedQuantity > 0 &&
+                            purchaseOrderLine.receivedQuantity < purchaseOrderLine.quantity
+                    );
+                    if (hasReceived) {
+                        firstPassSelectedPOLine = groupedPOLines[key];
+                    }
+                });
+                // If none found, fallback to groups with remaining quantity to receive
+                if (!firstPassSelectedPOLine) {
+                    Object.keys(groupedPOLines).forEach((key) => {
+                        const hasToReceive = groupedPOLines[key].some(
+                            (purchaseOrderLine: any) =>
+                                purchaseOrderLine.receivedQuantity < purchaseOrderLine.quantity
+                        );
+                        if (hasToReceive) {
+                            firstPassSelectedPOLine = groupedPOLines[key];
+                        }
+                    });
+                }
+                // If still none found, fallback to groups with remaining quantityMax to receive
+                if (!firstPassSelectedPOLine) {
+                    Object.keys(groupedPOLines).forEach((key) => {
+                        const hasToReceiveMax = groupedPOLines[key].some(
+                            (purchaseOrderLine: any) =>
+                                purchaseOrderLine.receivedQuantity < purchaseOrderLine.quantityMax
+                        );
+                        if (hasToReceiveMax) {
+                            secondPassSelectedPOLine = groupedPOLines[key];
+                        }
+                    });
+                }
 
                 const remainingPOLines = storedObject[
                     `step10`
                 ].data.purchaseOrder.purchaseOrderLines.filter(
                     (poLine: any) =>
-                        poLine.articleId === matchingArticleLuBarcodes[0].articleId &&
+                        poLine.articleId === matchingArticleLuBarcodes[0]?.articleId &&
                         poLine.receivedQuantity < poLine.quantityMax
                 );
                 if (matchingArticleLuBarcodes.length > 0 && remainingPOLines.length > 0) {
                     const data: { [label: string]: any } = {};
+                    data['currentPurchaseOrderLine'] =
+                        firstPassSelectedPOLine ?? secondPassSelectedPOLine;
                     data['articleLuBarcodes'] = matchingArticleLuBarcodes;
                     setTriggerRender(!triggerRender);
                     storedObject[`step${stepNumber}`] = {
