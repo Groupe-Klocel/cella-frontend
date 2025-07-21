@@ -43,6 +43,69 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
         if (enteredInfo) {
             const data: { [label: string]: any } = {};
             data['movingQuantity'] = enteredInfo;
+            const originalPoLines = storedObject[`step40`]?.data?.currentPurchaseOrderLine || [];
+            let movingQuantity = enteredInfo;
+
+            // check every original PoLine and set the received quantity to match the quantity first and then the quantity max
+            const updatedPoLinesFirstPAss = originalPoLines.map((line: any) => {
+                if (line.receivedQuantity >= line.quantity) {
+                    return line; // already fully received, skip
+                }
+                const receivedQuantity = line.receivedQuantity || 0;
+                const quantity = line.quantity || 0;
+                const quantityNeeded = quantity - receivedQuantity;
+
+                if (quantityNeeded > 0) {
+                    if (movingQuantity >= quantityNeeded) {
+                        movingQuantity -= quantityNeeded;
+                        return {
+                            ...line,
+                            receivedQuantity: quantity
+                        };
+                    } else {
+                        const newQuantity = receivedQuantity + movingQuantity;
+                        movingQuantity = 0; // reset movingQuantity to 0
+                        return {
+                            ...line,
+                            receivedQuantity: newQuantity
+                        };
+                    }
+                }
+            });
+            let updatedPoLinesSecondPAss = null;
+            if (movingQuantity > 0) {
+                updatedPoLinesSecondPAss = updatedPoLinesFirstPAss.map((line: any) => {
+                    if (line.receivedQuantity === line.quantityMax) {
+                        return line; // already fully received, skip
+                    }
+                    const receivedQuantity = line.receivedQuantity || 0;
+                    const quantityMax = line.quantityMax || 0;
+                    const quantityNeeded = quantityMax - receivedQuantity;
+                    if (quantityNeeded > 0) {
+                        if (movingQuantity >= quantityNeeded) {
+                            movingQuantity -= quantityNeeded;
+                            return {
+                                ...line,
+                                receivedQuantity: quantityMax
+                            };
+                        } else {
+                            const newQuantity = receivedQuantity + movingQuantity;
+                            movingQuantity = 0; // reset movingQuantity to 0
+                            return {
+                                ...line,
+                                receivedQuantity: newQuantity
+                            };
+                        }
+                    }
+                });
+            }
+            const newPOLines = updatedPoLinesSecondPAss ?? updatedPoLinesFirstPAss;
+            data['updatedPoLines'] = newPOLines.filter(
+                (newPoline: any) =>
+                    newPoline.receivedQuantity !==
+                    originalPoLines.find((oldPoline: any) => oldPoline.id === newPoline.id)
+                        ?.receivedQuantity
+            );
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             storage.set(process, JSON.stringify(storedObject));
             setTriggerRender(!triggerRender);
