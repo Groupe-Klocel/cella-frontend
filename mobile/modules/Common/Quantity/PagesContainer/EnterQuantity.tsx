@@ -58,7 +58,7 @@ export const EnterQuantity = ({
             // N.B.: in this case previous step is kept at its previous value
             const data: { [label: string]: any } = {};
             data['movingQuantity'] = defaultValue;
-            const originalPoLines = storedObject[`step50`]?.data?.currentPurchaseOrderLine || [];
+            const originalPoLines = storedObject[`step40`]?.data?.currentPurchaseOrderLine || [];
             let movingQuantity = defaultValue;
 
             // check every original PoLine and set the received quantity to match the quantity first and then the quantity max
