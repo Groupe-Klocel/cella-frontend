@@ -524,7 +524,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         `;
 
         const variables = {
-            functionName: 'K_updateCycleCountLines',
+            functionName: 'update_cycle_count_lines',
             event: {
                 input: CclInputs
             }
@@ -572,7 +572,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         `;
 
         const variables = {
-            functionName: 'K_updateCycleCountLines',
+            functionName: 'update_cycle_count_lines',
             event: {
                 input: { cycleCountLineIds }
             }

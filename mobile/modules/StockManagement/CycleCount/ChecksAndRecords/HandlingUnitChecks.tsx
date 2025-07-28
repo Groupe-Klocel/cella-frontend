@@ -294,7 +294,7 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
         `;
 
         const variables = {
-            functionName: 'K_updateCycleCountLines',
+            functionName: 'update_cycle_count_lines',
             event: {
                 input: { cycleCountLineIds }
             }
