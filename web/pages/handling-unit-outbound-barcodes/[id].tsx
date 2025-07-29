@@ -17,26 +17,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
-import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
+import { AppHead, LinkButton } from '@components';
+import { HandlingUnitOutboundBarcodeModelV2 as model } from 'models/HandlingUnitOutboundBarcodeModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, useBoxLines } from '@helpers';
+import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
+import { handlingUnitOutboundBarcodesRoutes as itemRoutes } from 'modules/HandlingUnitOutboundBarcodes/Static/handlingUnitOutboundBarcodesRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
-import { BoxDetailsExtra } from 'modules/Boxes/Elements/BoxDetailsExtra';
-import { BarcodeOutlined } from '@ant-design/icons';
-import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const BoxPage: PageComponent = () => {
+const HandlingUnitOutboundBarcodePage: PageComponent = () => {
     const router = useRouter();
     const { permissions } = useAppState();
     const { t } = useTranslation();
@@ -44,9 +40,7 @@ const BoxPage: PageComponent = () => {
     const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
-    const [cancelInfo, setCancelInfo] = useState<any>();
-    const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
-    const [idToPrint, setIdToPrint] = useState<string>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     // #region to customize information
     const breadCrumb = [
@@ -56,18 +50,18 @@ const BoxPage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:box')} ${data?.name}`;
+    const pageTitle = `${t('common:handling-unit-outbound-barcode')} ${data?.name}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
-    const confirmAction = (id: string | undefined, setInfo: any) => {
+    const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
             Modal.confirm({
-                title: t('messages:action-confirm'),
+                title: t('messages:delete-confirm'),
                 onOk: () => {
-                    setInfo({ id, status: configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED });
+                    setId(id);
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -78,12 +72,10 @@ const BoxPage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
+        onBackRoute: rootPath,
         actionsComponent: (
             <Space>
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Update) &&
-                model.isEditable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/edit/${id}`}
@@ -92,53 +84,20 @@ const BoxPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Update) &&
-                model.isEditable &&
-                statusForCancelation.HUO.includes(data?.status) ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isSoftDeletable ? (
                     <Button
+                        onClick={() => confirmAction(id as string, setIdToDisable)()}
                         type="primary"
-                        danger
-                        onClick={() => {
-                            confirmAction(id as string, setCancelInfo)();
-                        }}
                     >
-                        {t('actions:cancel')}
+                        {t('actions:disable')}
                     </Button>
                 ) : (
                     <></>
                 )}
-                {modes.length > 0 &&
-                modes.includes(ModeEnum.Delete) &&
-                model.isDeletable &&
-                data?.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CREATED ? (
+                {modes.length > 0 && modes.includes(ModeEnum.Delete) && model.isDeletable ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
                     </Button>
-                ) : (
-                    <></>
-                )}
-                {data?.status !== configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? (
-                    <>
-                        <Button
-                            type="primary"
-                            ghost
-                            onClick={() => {
-                                setShowNumberOfPrintsModal(true);
-                                setIdToPrint(data?.id as string);
-                            }}
-                            icon={<BarcodeOutlined />}
-                        />
-                        <NumberOfPrintsModalV2
-                            showModal={{
-                                showNumberOfPrintsModal,
-                                setShowNumberOfPrintsModal
-                            }}
-                            dataToPrint={{ boxes: [idToPrint] }}
-                            documentName="K_OutboundHandlingUnitLabel"
-                            documentReference={data?.name}
-                        />
-                    </>
                 ) : (
                     <></>
                 )}
@@ -151,18 +110,17 @@ const BoxPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
-                extraDataComponent={<BoxDetailsExtra boxId={id} boxName={data?.name} />}
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
-                triggerCancel={{ cancelInfo, setCancelInfo }}
+                triggerSoftDelete={{ idToDisable, setIdToDisable }}
             />
         </>
     );
 };
 
-BoxPage.layout = MainLayout;
+HandlingUnitOutboundBarcodePage.layout = MainLayout;
 
-export default BoxPage;
+export default HandlingUnitOutboundBarcodePage;
