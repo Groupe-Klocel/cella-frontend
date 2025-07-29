@@ -200,6 +200,16 @@ const SideMenu: FC = () => {
                     key: 'configuration-shipping-modes',
                     label: <Link href="/shipping-modes">{t('shipping-modes')}</Link>
                 },
+                getModesFromPermissions(permissions, Table.RoundCalculationProfile).includes(
+                    ModeEnum.Read
+                ) && {
+                    key: 'configuration-round-calculation-profiles',
+                    label: (
+                        <Link href="/round-calculation-profiles">
+                            {t('round-calculation-profiles')}
+                        </Link>
+                    )
+                },
                 getModesFromPermissions(permissions, Table.StockOwner).includes(ModeEnum.Read) && {
                     key: 'configuration-stock-owners',
                     label: <Link href="/stock-owners">{t('stock-owners')}</Link>
@@ -381,6 +391,16 @@ const SideMenu: FC = () => {
                 getModesFromPermissions(permissions, Table.Load).includes(ModeEnum.Read) && {
                     key: 'preparation-management-loads',
                     label: <Link href="/loads">{t('loads')}</Link>
+                },
+                getModesFromPermissions(permissions, Table.HandlingUnitOutboundBarcode).includes(
+                    ModeEnum.Read
+                ) && {
+                    key: 'preparation-management-handling-unit-outbound-barcodes',
+                    label: (
+                        <Link href="/handling-unit-outbound-barcodes">
+                            {t('handling-unit-outbound-barcodes')}
+                        </Link>
+                    )
                 },
                 getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
                     ModeEnum.Read
