@@ -48,6 +48,8 @@ import parameters from '../../../common/parameters.json';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { PaymentModal } from 'modules/CustomerOrders/Modals/PaymentModal';
+import { stat } from 'fs';
+import { forEach } from 'lodash';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -67,6 +69,7 @@ const CustomerOrderPages: PageComponent = () => {
     const [orderId, setOrderId] = useState<any>();
     const [isCreateDeliveryAllowed, setIsCreateDeliveryAllowed] = useState<boolean>(false);
     const [refetchPayment, setRefetchPayment] = useState<boolean>(false);
+    const [statusAuthorizedToBulk, setStatusAuthorizedToBulk] = useState<boolean>(false);
 
     const headerData: HeaderData = {
         title: t('common:customer-orders'),
@@ -137,6 +140,13 @@ const CustomerOrderPages: PageComponent = () => {
         const allowedStatus = allowedStatuses.includes(firstStatus);
         const allSameStatus = newSelectedRows.every((item: any) => item.status === firstStatus);
         setCommonStatus(allSameStatus ? (allowedStatus ? firstStatus : undefined) : undefined);
+
+        const allStatusesValid = newSelectedRows.every(
+            (item: any) =>
+                item.status >= configs.ORDER_STATUS_QUOTE_TRANSMITTED &&
+                item.status <= configs.ORDER_STATUS_TO_BE_DELIVERED
+        );
+        setStatusAuthorizedToBulk(allStatusesValid);
     };
 
     //this useEffect checks deliveries addresses for selected orders and allow create delivery button or not
@@ -201,7 +211,7 @@ const CustomerOrderPages: PageComponent = () => {
         `;
 
         try {
-            const result = await graphqlRequestClient.request(updateMutation, updateVariables);
+            const result: any = await graphqlRequestClient.request(updateMutation, updateVariables);
             setTriggerRefresh((current) => !current);
             return result;
         } catch (error) {
@@ -211,7 +221,7 @@ const CustomerOrderPages: PageComponent = () => {
 
     // confirm and execute delivery creation function
     const [isCreateDeliveryLoading, setIsCreateDeliveryLoading] = useState(false);
-    const createDelivery = (orderIds: [string]) => {
+    const createDelivery = (orderIds: [string], isSingle: boolean = false) => {
         Modal.confirm({
             title: t('messages:create-delivery-confirm'),
             onOk: async () => {
@@ -227,9 +237,10 @@ const CustomerOrderPages: PageComponent = () => {
                 `;
 
                 const variables = {
-                    functionName: 'K_orderDelivery',
+                    functionName: 'order_delivery',
                     event: {
-                        orderIds
+                        orderIds,
+                        isSingleDelivery: isSingle
                     }
                 };
 
@@ -337,13 +348,24 @@ const CustomerOrderPages: PageComponent = () => {
                             }}
                             disabled={!hasSelected || !isCreateDeliveryAllowed}
                         >
-                            {t('actions:create-delivery')}
+                            {t('actions:create-grouped-delivery')}
+                        </Button>
+                    </span>
+                    <span style={{ marginLeft: 16 }}>
+                        <Button
+                            type="primary"
+                            loading={isCreateDeliveryLoading}
+                            onClick={() => {
+                                createDelivery(selectedRowKeys as [string], true);
+                            }}
+                            disabled={!hasSelected || !statusAuthorizedToBulk}
+                        >
+                            {t('actions:create-bulk-delivery')}
                         </Button>
                     </span>
                 </>
             ) : null
     };
-
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
