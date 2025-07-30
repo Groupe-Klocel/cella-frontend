@@ -17,16 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import {
-    Form,
-    Input,
-    InputNumber,
-    Checkbox,
-    Select,
-    DatePicker,
-    AutoComplete,
-    ConfigProvider
-} from 'antd';
+import { Form, Input, Button, InputNumber, Checkbox, Select, DatePicker, AutoComplete } from 'antd';
 import { RangePickerProps } from 'antd/lib/date-picker';
 import { debounce } from 'lodash';
 import moment from 'moment';
@@ -44,25 +35,40 @@ import { ContentSpin } from '@components';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'moment/locale/fr';
+import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
+import { useAppState } from 'context/AppContext';
 
 export interface IGeneralSearchProps {
     form: any;
     columns: Array<FilterFieldType>;
+    setAllSubOptions?: any;
     handleSubmit?: any;
     resetForm?: boolean;
     allFieldsInitialValue?: string;
+    selectCase: string[];
+    setSelectCase: any;
+    selectJoker: string[];
+    setSelectJoker: any;
 }
 
 const ListFilters: FC<IGeneralSearchProps> = ({
     form,
     columns,
+    setAllSubOptions,
     handleSubmit,
     resetForm,
-    allFieldsInitialValue
+    allFieldsInitialValue,
+    selectCase,
+    setSelectCase,
+    selectJoker,
+    setSelectJoker
 }: IGeneralSearchProps) => {
     const { t } = useTranslation();
     const { RangePicker } = DatePicker;
     const router = useRouter();
+    const state = useAppState();
+    const configs = state?.configs;
+    const parameters = state?.parameters;
     const [columnsInfos, setColumnsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
@@ -95,65 +101,8 @@ const ListFilters: FC<IGeneralSearchProps> = ({
     async function getConfigsAndParametersByScopes(
         columns: any[]
     ): Promise<{ [key: string]: any }> {
-        const configsQuery = gql`
-            query GetConfigs($filters: ConfigSearchFilters, $itemsPerPage: Int!) {
-                configs(filters: $filters, itemsPerPage: $itemsPerPage) {
-                    results {
-                        id
-                        scope
-                        code
-                        value
-                        translation
-                    }
-                }
-            }
-        `;
-        const paramsQuery = gql`
-            query GetParams($filters: ParameterSearchFilters, $itemsPerPage: Int!) {
-                parameters(filters: $filters, itemsPerPage: $itemsPerPage) {
-                    results {
-                        id
-                        scope
-                        code
-                        value
-                        translation
-                    }
-                }
-            }
-        `;
-
-        const configScopes = columns
-            .filter((obj) => obj.hasOwnProperty('config') && obj.config !== undefined)
-            .map((obj) => obj.config);
-
-        const paramScopes = columns
-            .filter((obj) => obj.hasOwnProperty('param') && obj.param !== undefined)
-            .map((obj) => obj.param);
-
-        const configsInput = {
-            filters: {
-                scope: configScopes.length > 0 ? configScopes : ''
-            },
-            itemsPerPage: 1000
-        };
-
-        const paramsInput = {
-            filters: {
-                scope: paramScopes.length > 0 ? paramScopes : ''
-            },
-            itemsPerPage: 1000
-        };
-
-        const config = await graphqlRequestClient.request(configsQuery, configsInput);
-        const param = await graphqlRequestClient.request(paramsQuery, paramsInput);
-
         const result: { [key: string]: any } = {};
-
-        config?.configs?.results.sort(
-            (a: { [key: string]: any }, b: { [key: string]: any }) =>
-                parseInt(a.code) - parseInt(b.code)
-        );
-        config.configs.results.forEach((item: any) => {
+        configs.forEach((item: any) => {
             if (!result[item.scope]) {
                 result[item.scope] = [];
             }
@@ -166,16 +115,13 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                 text: value
             });
         });
-        param?.parameters.results.sort(
-            (a: { [key: string]: any }, b: { [key: string]: any }) =>
-                parseInt(a.code) - parseInt(b.code)
-        );
-        param?.parameters.results.forEach((item: any) => {
+
+        parameters.forEach((item: any) => {
             if (!result[item.scope]) {
                 result[item.scope] = [];
             }
             const value =
-                filterLanguage && item.translation
+                filterLanguage && item.translation && item.translation[`${filterLanguage}`]
                     ? item.translation[`${filterLanguage}`]
                     : item.value;
             result[item.scope].push({
@@ -249,6 +195,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                     text: item[`${fieldToDisplay}`]
                 });
             });
+
             return result;
         }
         return;
@@ -279,9 +226,21 @@ const ListFilters: FC<IGeneralSearchProps> = ({
     // #region add information to columns once available
     useEffect(() => {
         form.resetFields();
+
+        // Fix: Initialize tempAllSubOptions with correct typing
+        const tempAllSubOptions: Array<{ [key: string]: any }> = [];
+
         const tmp_columns = columns.map((e) => {
             if (optionsList) {
                 if (e.optionTable) {
+                    if (setAllSubOptions) {
+                        tempAllSubOptions.push({
+                            [e.name]:
+                                optionsList[
+                                    `${JSON.parse(e.optionTable).table}` as keyof typeof optionsList
+                                ]
+                        });
+                    }
                     return {
                         ...e,
                         subOptions:
@@ -293,6 +252,20 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                 }
             }
             if (e.type === 2) {
+                if (setAllSubOptions) {
+                    tempAllSubOptions.push({
+                        [e.name]: [
+                            {
+                                key: true,
+                                text: t('common:bool-yes')
+                            },
+                            {
+                                key: false,
+                                text: t('common:bool-no')
+                            }
+                        ]
+                    });
+                }
                 return {
                     ...e,
                     type: 4,
@@ -310,6 +283,17 @@ const ListFilters: FC<IGeneralSearchProps> = ({
             }
             if (configParamOptionsList) {
                 if (e.config || e.param) {
+                    if (setAllSubOptions) {
+                        tempAllSubOptions.push({
+                            [e.name]:
+                                configParamOptionsList[
+                                    `${e.config}` as keyof typeof configParamOptionsList
+                                ] ||
+                                configParamOptionsList[
+                                    `${e.param}` as keyof typeof configParamOptionsList
+                                ]
+                        });
+                    }
                     return {
                         ...e,
                         subOptions: e.config
@@ -325,9 +309,14 @@ const ListFilters: FC<IGeneralSearchProps> = ({
             }
             return e;
         });
-        setColumnsInfos(tmp_columns);
-        setIsLoading(false);
-    }, [configParamOptionsList, optionsList]);
+
+        columns.filter((e) => e.optionTable || e.config || e.param || e.type === 2).length ===
+        tempAllSubOptions.length
+            ? (setAllSubOptions(tempAllSubOptions),
+              setColumnsInfos(tmp_columns),
+              setIsLoading(false))
+            : null;
+    }, [configParamOptionsList, optionsList, columns]);
     // #endregion
 
     //enter key for form validation
@@ -355,7 +344,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                     >
                         <Input allowClear />
                     </Form.Item>
-                    {columnsInfos?.map((item: FilterFieldType) => {
+                    {columnsInfos?.map((item: FilterFieldType, index: number) => {
                         if (item.type === FormDataType.Number)
                             return (
                                 <Form.Item
@@ -363,7 +352,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     label={
                                         item.displayName ? item.displayName : t(`d:${item.name}`)
                                     }
-                                    key={item.name}
+                                    key={item.name + index}
                                     rules={item.rules!}
                                     normalize={(value) => (value ? value : undefined)}
                                     initialValue={
@@ -378,22 +367,16 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                             );
                         else if (item.type == FormDataType.String)
                             return (
-                                <Form.Item
-                                    name={item.name}
-                                    label={
-                                        item.displayName ? item.displayName : t(`d:${item.name}`)
-                                    }
-                                    key={item.name}
-                                    normalize={(value) => (value ? value : undefined)}
-                                    initialValue={
-                                        item?.initialValue ? item?.initialValue : undefined
-                                    }
-                                >
-                                    <Input
-                                        maxLength={item.maxLength ? item.maxLength : 100}
-                                        allowClear
-                                    />
-                                </Form.Item>
+                                <StringInput
+                                    item={item}
+                                    key={item.name + index}
+                                    filtersParameters={{
+                                        selectCase: selectCase,
+                                        setSelectCase: setSelectCase,
+                                        selectJoker: selectJoker,
+                                        setSelectJoker: setSelectJoker
+                                    }}
+                                />
                             );
                         else if (item.type == FormDataType.TextArea)
                             return (
@@ -402,7 +385,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     label={
                                         item.displayName ? item.displayName : t(`d:${item.name}`)
                                     }
-                                    key={item.name}
+                                    key={item.name + index}
                                     normalize={(value) => (value ? value : undefined)}
                                     initialValue={
                                         item?.initialValue ? item?.initialValue : undefined
@@ -422,7 +405,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     }
                                     name={item.name}
                                     rules={item.rules!}
-                                    key={item.name}
+                                    key={item.name + index}
                                     initialValue={
                                         item?.initialValue ? item?.initialValue : undefined
                                     }
@@ -439,11 +422,16 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                                 .indexOf(inputValue.toUpperCase()) !== -1
                                         }
                                     >
-                                        {item.subOptions?.map((option: FormOptionType) => (
-                                            <Select.Option key={option.key} value={option.key}>
-                                                {option.text}
-                                            </Select.Option>
-                                        ))}
+                                        {item.subOptions?.map(
+                                            (option: FormOptionType, selectIndex: number) => (
+                                                <Select.Option
+                                                    key={option.text + selectIndex}
+                                                    value={option.key}
+                                                >
+                                                    {option.text}
+                                                </Select.Option>
+                                            )
+                                        )}
                                     </Select>
                                 </Form.Item>
                             );
@@ -454,7 +442,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     label={
                                         item.displayName ? item.displayName : t(`d:${item.name}`)
                                     }
-                                    key={item.name}
+                                    key={item.name + index}
                                     rules={item.rules!}
                                     normalize={(value) => (value ? value : undefined)}
                                     initialValue={
@@ -483,7 +471,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     label={
                                         item.displayName ? item.displayName : t(`d:${item.name}`)
                                     }
-                                    key={item.name}
+                                    key={item.name + index}
                                     rules={item.rules!}
                                     normalize={(value) => (value ? value : undefined)}
                                 >
@@ -508,7 +496,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                         item.displayName ? item.displayName : t(`d:${item.name}`)
                                     }
                                     name={item.name}
-                                    key={item.name}
+                                    key={item.name + index}
                                     rules={item.rules!}
                                     initialValue={
                                         item?.initialValue ? item?.initialValue : undefined
@@ -541,14 +529,16 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                         }}
                                         allowClear
                                     >
-                                        {item.subOptions?.map((option: FormOptionType) => (
-                                            <AutoComplete.Option
-                                                key={option.key}
-                                                value={option.text}
-                                            >
-                                                {option.text}
-                                            </AutoComplete.Option>
-                                        ))}
+                                        {item.subOptions?.map(
+                                            (option: FormOptionType, subIndex: number) => (
+                                                <AutoComplete.Option
+                                                    key={option.text + subIndex}
+                                                    value={option.text}
+                                                >
+                                                    {option.text}
+                                                </AutoComplete.Option>
+                                            )
+                                        )}
                                     </AutoComplete>
                                 </Form.Item>
                             );
@@ -558,7 +548,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     name={item.name}
                                     valuePropName="checked"
                                     initialValue={item.initialValue ? item.initialValue : false}
-                                    key={item.name}
+                                    key={item.name + index}
                                 >
                                     <Checkbox>{t(`d:${item.name}`)}</Checkbox>
                                 </Form.Item>

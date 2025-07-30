@@ -33,7 +33,6 @@ export * from './common/dumb/Wrappers/Wrappers';
 export * from './common/smart/AppHead/AppHead';
 export * from './common/smart/AppTable/AppTable';
 export * from './common/smart/AppTable/AppTableV2';
-export * from './common/smart/AppTable/AppTableV2HighLimit';
 export * from './common/smart/Drawers/DrawerItems';
 export * from '../modules/Articles/Forms/ArticlesSearch';
 export * from '../modules/Barcodes/Forms/BarcodesSearch';
