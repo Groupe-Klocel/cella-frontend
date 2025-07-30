@@ -314,7 +314,16 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
 
         if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
-            if (props.setSuccessDeleteResult) props.setSuccessDeleteResult(deleteResult);
+            // Dispatch the delete action to the reducer
+            if (
+                props.dataModel.endpoints.detail === 'config' ||
+                props.dataModel.endpoints.detail === 'parameter'
+            ) {
+                dispatchToReducer({
+                    type: ('delete_' + props.dataModel.endpoints.list).toUpperCase(),
+                    [props.dataModel.endpoints.detail]: { id: props.triggerDelete.idToDelete }
+                });
+            }
             router.push(`${pathAfterDelete}`);
             if (props.isCreateAMovement) {
                 try {
