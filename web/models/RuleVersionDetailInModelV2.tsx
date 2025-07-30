@@ -22,6 +22,7 @@ import { ModelType } from './ModelsV2';
 
 export const RuleVersionDetailInModelV2: ModelType = {
     tableName: Table.RuleVersion,
+    modelName: 'RuleVersionDetailIn',
     resolverName: 'RuleVersion',
     isEditable: true,
     isDeletable: true,

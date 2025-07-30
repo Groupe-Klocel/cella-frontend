@@ -23,7 +23,12 @@ import {
     CheckCircleOutlined,
     CloseSquareOutlined
 } from '@ant-design/icons';
-import { TableFilter, WrapperStickyActions, PageTableContentWrapper } from '@components';
+import {
+    TableFilter,
+    WrapperStickyActions,
+    PageTableContentWrapper,
+    DrawerItems
+} from '@components';
 import {
     showWarning,
     getKeys,
@@ -37,13 +42,14 @@ import {
 } from '@helpers';
 import { Space, Button, Table, Typography } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import { isString } from 'lodash';
+import { debounce, isString, set } from 'lodash';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
-import { FC, useCallback, useEffect, useState, useRef, Key } from 'react';
+import { FC, useCallback, useEffect, useState, useRef, useMemo, Key } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import React from 'react';
 
 const { Column } = Table;
 const { Link } = Typography;
@@ -65,6 +71,7 @@ export interface IAppTableV2Props {
         // delete?: boolean;
     };
     filter?: boolean;
+    sortInfos?: any;
     onChange?: any;
     hiddenColumns?: any;
     rowSelection?: any;
@@ -79,6 +86,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     onChange,
     stickyActions,
     filter,
+    sortInfos,
     data,
     columns,
     scroll,
@@ -103,9 +111,11 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     const dispatch = useAppDispatch();
     const { graphqlRequestClient } = useAuth();
 
-    const userSettings = state?.userSettings?.find((item: any) => {
-        return `${dataModel.resolverName}${router.pathname}` === item.code;
-    });
+    const [userSettings, setUserSettings] = useState<any>(
+        state?.userSettings?.find((item: any) => {
+            return `${dataModel.resolverName}${router.pathname}` === item.code;
+        })
+    );
     const initialState = userSettings?.valueJson?.visibleCollumns;
 
     if (initialState) {
@@ -125,41 +135,48 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         });
     }
 
+    // Memoize custom columns to avoid redundant computation
+    const customColumns = useMemo(() => setCustomColumnsProps(columns), [columns]);
+
     const [visibleColumnKeys, setVisibleColumnKeys] = useState<Key[]>(
         initialState
             ? initialState.visibleColumnKeys
-            : allColumnKeys.filter((x) => {
-                  return !hiddenColumns.includes(x);
-              })
+            : allColumnKeys.filter((x) => !hiddenColumns.includes(x))
     );
     const [fixedColumns, setFixedColumns] = useState<Key[]>(initialState?.fixedColumns ?? []);
     const [filteredColumns, setFilteredColumns] = useState<any[]>(
-        initialState?.filteredColumns ?? setCustomColumnsProps(columns)
+        initialState?.filteredColumns ?? customColumns
     );
+    const [tableColumns, setTableColumns] = useState<any[]>(customColumns);
 
-    const [tableColumns, setTableColumns] = useState<any[]>(setCustomColumnsProps(columns));
-
+    // Format data only when it changes
     useEffect(() => {
-        setFilteredColumns(setCustomColumnsProps(columns));
-    }, [columns]);
+        if (data) {
+            formatDigitsForData(data);
+        }
+    }, [data]);
 
-    if (data) {
-        formatDigitsForData(data);
-    }
+    // #region updateUserSettings
 
-    const [onSave, setOnSave] = useState<boolean>(false);
-
-    const updateUserSettings = useCallback(async () => {
+    async function updateUserSettings(
+        columnsWidth?: any,
+        newUserSettings?: any,
+        newFilteredColumns?: any,
+        newTableColumns?: any,
+        newVisibleColumnKeys?: any,
+        newFixedColumns?: any
+    ) {
         const newsSettings = {
-            ...userSettings,
+            ...newUserSettings,
             valueJson: {
-                ...userSettings?.valueJson,
+                ...newUserSettings?.valueJson,
                 visibleCollumns: {
-                    filteredColumns: filteredColumns,
-                    tableColumns: tableColumns,
-                    visibleColumnKeys: visibleColumnKeys,
-                    fixedColumns: fixedColumns
-                }
+                    filteredColumns: newFilteredColumns ?? filteredColumns,
+                    tableColumns: newTableColumns ?? tableColumns,
+                    visibleColumnKeys: newVisibleColumnKeys ?? visibleColumnKeys,
+                    fixedColumns: newFixedColumns ?? fixedColumns
+                },
+                columnsWidth: columnsWidth ?? newUserSettings?.valueJson?.columnsWidth ?? {}
             }
         };
         const updateQuery = gql`
@@ -175,11 +192,12 @@ const AppTableV2: FC<IAppTableV2Props> = ({
             }
         `;
         const updateVariables = {
-            warehouseWorkerSettingsId: userSettings.id,
+            warehouseWorkerSettingsId: newUserSettings.id,
             input: { valueJson: newsSettings.valueJson }
         };
         try {
             const queryInfo: any = await graphqlRequestClient.request(updateQuery, updateVariables);
+            console.log('AXC - AppTableV2.tsx - updateUserSettings - queryInfo:', queryInfo);
             dispatch({
                 type: 'SWITCH_USER_SETTINGS',
                 userSettings: state.userSettings.map((item: any) => {
@@ -188,21 +206,57 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                         : item;
                 })
             });
+            setUserSettings(queryInfo.updateWarehouseWorkerSetting);
         } catch (error) {
             console.log('queryInfo update appTableV2 error', error);
             showWarning(t('messages:config-save-error'));
         }
-    }, [visibleColumnKeys, fixedColumns, filteredColumns, tableColumns]);
+    }
 
-    const createUsersSettings = useCallback(async () => {
+    // 2. Debounce wrapper for updateUserSettings
+    const debouncedUpdateUserSettings = useRef(
+        debounce(
+            (
+                columnsWidth: any,
+                newUserSettings?: any,
+                filteredColumns?: any,
+                tableColumns?: any,
+                visibleColumnKeys?: any,
+                fixedColumns?: any
+            ) => {
+                updateUserSettings(
+                    columnsWidth,
+                    newUserSettings,
+                    filteredColumns,
+                    tableColumns,
+                    visibleColumnKeys,
+                    fixedColumns
+                );
+            },
+            500
+        )
+    ).current;
+
+    // #endregion
+
+    // #region createUsersSettings
+
+    async function createUsersSettings(
+        columnsWidth?: any,
+        newFilteredColumns?: any,
+        newTableColumns?: any,
+        newVisibleColumnKeys?: any,
+        newFixedColumns?: any
+    ) {
         const newsSettings = {
             valueJson: {
                 visibleCollumns: {
-                    filteredColumns: filteredColumns,
-                    tableColumns: tableColumns,
-                    visibleColumnKeys: visibleColumnKeys,
-                    fixedColumns: fixedColumns
-                }
+                    filteredColumns: newFilteredColumns ?? filteredColumns,
+                    tableColumns: newTableColumns ?? tableColumns,
+                    visibleColumnKeys: newVisibleColumnKeys ?? visibleColumnKeys,
+                    fixedColumns: newFixedColumns ?? fixedColumns
+                },
+                columnsWidth: columnsWidth ?? {}
             },
             code: `${dataModel.resolverName}${router.pathname}`,
             warehouseWorkerId: state.user.id
@@ -224,23 +278,70 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                 type: 'SWITCH_USER_SETTINGS',
                 userSettings: [...state.userSettings, queryInfo.createWarehouseWorkerSetting]
             });
+            setUserSettings(queryInfo.createWarehouseWorkerSetting);
         } catch (error) {
             console.log('queryInfo create appTableV2 error', error);
             showWarning(t('messages:config-save-error'));
         }
-    }, [visibleColumnKeys, fixedColumns, filteredColumns, tableColumns]);
+    }
+
+    const debouncedCreateUsersSettings = useRef(
+        debounce(
+            (
+                columnsWidth: any,
+                filteredColumns?: any,
+                tableColumns?: any,
+                visibleColumnKeys?: any,
+                fixedColumns?: any
+            ) => {
+                createUsersSettings(
+                    columnsWidth,
+                    filteredColumns,
+                    tableColumns,
+                    visibleColumnKeys,
+                    fixedColumns
+                );
+            },
+            500
+        )
+    ).current;
+
+    // #endregion
 
     useEffect(() => {
-        if (onSave) {
-            if (userSettings) {
-                updateUserSettings();
-            } else {
-                createUsersSettings();
-            }
+        return () => {
+            debouncedUpdateUserSettings.cancel();
+            debouncedCreateUsersSettings.cancel();
+        };
+    }, []);
+
+    function changeFilter(
+        columnWidths: any,
+        userSettings: any,
+        filteredColumns: any,
+        tableColumns: any,
+        visibleColumnKeys: any,
+        fixedColumns: any
+    ) {
+        if (userSettings) {
+            debouncedUpdateUserSettings(
+                columnWidths,
+                userSettings,
+                filteredColumns,
+                tableColumns,
+                visibleColumnKeys,
+                fixedColumns
+            );
+        } else {
+            debouncedCreateUsersSettings(
+                columnWidths,
+                filteredColumns,
+                tableColumns,
+                visibleColumnKeys,
+                fixedColumns
+            );
         }
-        setOnSave(false);
-        return () => {};
-    }, [onSave]);
+    }
 
     // #region links generation
     const renderLink = (text: string, record: any, dataIndex: string) => {
@@ -288,7 +389,6 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     const newTableColumns = columnWithLinks.map((e: any) =>
         e.render ? e : (e = { ...e, render: render })
     );
-
     // make wrapper function to give child
 
     const childSetVisibleColumnKeys = useCallback(
@@ -322,6 +422,8 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         setPagination(page, pageSize);
     };
 
+    const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
+
     const handleReset = () => {
         const filteredKeys = allColumnKeys.filter((x) => {
             return !hiddenColumns.includes(x);
@@ -333,43 +435,43 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     };
 
     const handleSave = () => {
-        setOnSave(true);
-        closeDrawer();
+        changeFilter(
+            filterDrawerRef!.current.columnWidths,
+            userSettings,
+            filteredColumns,
+            tableColumns,
+            visibleColumnKeys,
+            fixedColumns
+        );
+        setIsSearchDrawerOpen(false);
     };
 
-    const dispatchDrawer = useDrawerDispatch();
-
-    const closeDrawer = useCallback(
-        () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
-        [dispatchDrawer]
-    );
-
-    const openFilterDrawer = useCallback(
-        () =>
-            dispatchDrawer({
-                size: 700,
-                type: 'OPEN_DRAWER',
-                title: 'actions:filter',
-                cancelButtonTitle: 'actions:reset',
-                cancelButton: true,
-                onCancel: () => handleReset(),
-                comfirmButtonTitle: 'actions:save',
-                comfirmButton: true,
-                onComfirm: () => handleSave(),
-                content: (
-                    <TableFilter
-                        ref={filterDrawerRef}
-                        columnsToFilter={filteredColumns}
-                        visibleKeys={visibleColumnKeys}
-                        fixKeys={fixedColumns}
-                        onSort={childSetTableColumns}
-                        onShowChange={childSetVisibleColumnKeys}
-                        onFixed={childSetFixedColumns}
-                    />
-                )
-            }),
-        [dispatchDrawer, visibleColumnKeys, filteredColumns]
-    );
+    function drawerProps() {
+        return {
+            size: 700,
+            isOpen: isSearchDrawerOpen,
+            setIsOpen: setIsSearchDrawerOpen,
+            type: 'OPEN_DRAWER',
+            title: 'actions:filter',
+            cancelButtonTitle: 'actions:reset',
+            cancelButton: true,
+            comfirmButtonTitle: 'actions:save',
+            comfirmButton: true,
+            content: (
+                <TableFilter
+                    ref={filterDrawerRef}
+                    columnsToFilter={filteredColumns}
+                    visibleKeys={visibleColumnKeys}
+                    fixKeys={fixedColumns}
+                    onSort={childSetTableColumns}
+                    onShowChange={childSetVisibleColumnKeys}
+                    onFixed={childSetFixedColumns}
+                />
+            ),
+            onComfirm: () => handleSave(),
+            onCancel: () => handleReset()
+        } as any;
+    }
 
     useEffect(() => {
         if (visibleColumnKeys) {
@@ -395,23 +497,119 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     const insideScroll = { x: '100%', y: 400 };
     const insideScrollPagination = { pageSize: dataSource.length, showSizeChanger: false };
 
+    // 1. Add state for column widths
+    const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>(() =>
+        columns.reduce(
+            (acc, col) => {
+                Object.keys(userSettings?.valueJson?.columnsWidth ?? {}).forEach((key) => {
+                    if (key === col.key) {
+                        acc[col.key] = userSettings.valueJson.columnsWidth[key];
+                    }
+                });
+                if (!acc[col.key]) {
+                    acc[col.key] = typeof col.width === 'number' ? col.width : 160;
+                }
+                return acc;
+            },
+            {} as { [key: string]: number }
+        )
+    );
+    // 2. Custom header cell for resizing
+    const ResizableTitle = (props: any) => {
+        const { onResize, width, ...restProps } = props;
+        return (
+            <th
+                {...restProps}
+                style={{
+                    ...restProps.style,
+                    width,
+                    position: 'relative' // Ensure relative positioning for the resizer
+                }}
+            >
+                {restProps.children}
+                <div
+                    style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: '5px',
+                        cursor: 'col-resize',
+                        userSelect: 'none',
+                        zIndex: 1,
+                        background: 'transparent'
+                    }}
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        const startX = e.clientX;
+                        const startWidth = width;
+                        const onMouseMove = (moveEvent: MouseEvent) => {
+                            const newWidth = Math.max(startWidth + moveEvent.clientX - startX, 50);
+                            onResize(newWidth);
+                        };
+                        const onMouseUp = () => {
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+                        };
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                    }}
+                />
+            </th>
+        );
+    };
+
+    // 3. Update columns with resizable header
+    const resizableColumns = newTableColumns.map((col: any) => ({
+        ...col,
+        width: columnWidths[col.key], // width is a number
+        onHeaderCell: (column: any) => ({
+            width: columnWidths[col.key],
+            onResize: (newWidth: number) => {
+                setColumnWidths((prev) => ({
+                    ...prev,
+                    [col.key]: Math.max(newWidth, 80) // minimum width
+                }));
+                changeFilter(
+                    {
+                        ...columnWidths,
+                        [col.key]: Math.max(newWidth, 80)
+                    },
+                    userSettings,
+                    filteredColumns,
+                    tableColumns,
+                    visibleColumnKeys,
+                    fixedColumns
+                );
+            }
+        })
+    }));
+
+    // 4. Add custom components for header cell
+    const tableComponents = {
+        ...components,
+        header: {
+            cell: ResizableTitle
+        }
+    };
+
+    // Ensure scroll.x is always set for fixed table layout
+    const tableScroll = isIndependentScrollable
+        ? insideScroll
+        : scroll && scroll.x
+          ? scroll
+          : { x: '100%' };
+
     return (
         <PageTableContentWrapper>
+            <DrawerItems {...drawerProps()} />
             <WrapperStickyActions>
                 <Space direction="vertical">
-                    {/* {stickyActions?.delete && (
-                        <Button
-                            icon={<DeleteOutlined />}
-                            onClick={deleteRecords}
-                            type="primary"
-                            danger
-                        />
-                    )} */}
                     {filter && (
                         <Button
                             type="primary"
                             icon={<SettingOutlined />}
-                            onClick={() => openFilterDrawer()}
+                            onClick={() => setIsSearchDrawerOpen(true)}
                         />
                     )}
                     {stickyActions?.export.active && (
@@ -425,11 +623,10 @@ const AppTableV2: FC<IAppTableV2Props> = ({
             <Table
                 rowKey="id"
                 dataSource={dataSource}
-                scroll={isIndependentScrollable ? insideScroll : scroll}
+                scroll={tableScroll}
                 size="small"
                 loading={isLoading}
                 onChange={onChange}
-                // rowSelection={rowSelection}
                 pagination={
                     isIndependentScrollable
                         ? insideScrollPagination
@@ -447,20 +644,55 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                           }
                 }
                 rowSelection={rowSelection}
-                components={components}
+                components={tableComponents}
+                tableLayout="fixed"
             >
-                {newTableColumns.map((c) => {
+                {resizableColumns.map((c) => {
                     return (
                         <Column
-                            title={typeof c.title === 'string' ? t(c.title) : c.title}
+                            title={() => {
+                                return (
+                                    <>
+                                        {typeof c.title === 'string' ? t(c.title) : c.title}
+                                        {sortInfos && (
+                                            <span
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: 0,
+                                                    top: 0,
+                                                    transform:
+                                                        'translateY(-10px) translateX(22.5px)',
+                                                    color: '#1677ff',
+                                                    opacity: 0.5,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    height: '100%'
+                                                }}
+                                            >
+                                                {
+                                                    sortInfos
+                                                        .map((sortInfo: any, index: number) => {
+                                                            if (sortInfo.field === c.key) {
+                                                                return `${index + 1}`;
+                                                            }
+                                                            return null;
+                                                        })
+                                                        .filter((item: any) => item !== null)[0]
+                                                }
+                                            </span>
+                                        )}
+                                    </>
+                                );
+                            }}
                             dataIndex={c.dataIndex}
                             key={c.key}
                             fixed={c.fixed}
-                            width={c.width}
+                            width={c.width} // width is a number
                             sorter={c.sorter}
                             showSorterTooltip={c.showSorterTooltip}
                             render={c.render}
                             defaultSortOrder={c.defaultSortOrder}
+                            onHeaderCell={c.onHeaderCell}
                         />
                     );
                 })}

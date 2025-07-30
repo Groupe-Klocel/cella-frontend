@@ -51,23 +51,18 @@ const useList = (
     sort: any,
     language?: string,
     defaultModelSort?: any,
-    advancedFilters?: any
+    advancedFilters?: any,
+    functions?: any
 ) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
-
-    const sortByDate = {
-        field: 'created',
-        ascending: false
-    };
-
-    const defaultSort = defaultModelSort ? defaultModelSort : sortByDate;
 
     const query = gql`
         query CustomListQuery(
             $filters: ${resolverName}SearchFilters
             ${advancedFilters ? `$advancedFilters: [${resolverName}AdvancedSearchFilters!]` : ''}
             $orderBy: [${resolverName}OrderByCriterion!]
+            $functions: [JSON!]
             $page: Int!
             $itemsPerPage: Int!
             $language: String = "en"
@@ -76,6 +71,7 @@ const useList = (
                 filters: $filters
                 ${advancedFilters ? 'advancedFilters: $advancedFilters' : ''}
                 orderBy: $orderBy
+                functions: $functions
                 page: $page
                 itemsPerPage: $itemsPerPage
                 language: $language
@@ -94,19 +90,12 @@ const useList = (
 
     const reload = () => {
         setIsLoading(true);
-        let newSort: any;
-
-        if (sort === null) {
-            newSort = defaultSort;
-        } else if (sort != null) {
-            newSort = sort;
-            setIsLoading(false);
-        }
 
         const variables = {
             filters: search,
             advancedFilters: advancedFilters,
-            orderBy: newSort,
+            orderBy: sort,
+            functions: functions,
             page: page,
             itemsPerPage: itemsPerPage,
             language: language
@@ -115,6 +104,7 @@ const useList = (
         graphqlRequestClient
             .request(query, variables)
             .then((result: any) => {
+                console.log('AXC - crudHooks.tsx - .then - result:', result);
                 // Object.keys(result).forEach((element) => {
                 //     Object.keys(result[element]).forEach((key) => {
                 //         if (
@@ -484,7 +474,7 @@ const useExport = () => {
  * @param queryName endpoint of delete query
  * @returns { isLoading, result, mutate } where isLoading and result are state variable and mutate is method to call for deleting.
  */
-const useDelete = (queryName: string, infoDeleteOrder?: any) => {
+const useDelete = (queryName: string, infoDeleteOrder?: any, useLastTransactionId?: any) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
@@ -502,9 +492,14 @@ const useDelete = (queryName: string, infoDeleteOrder?: any) => {
         return lastTransactionId;
     };
 
-    let querydelete = gql`mutation ${queryName}($id: String!, $transactionId: String!) {
-        ${queryName}(id: $id transactionId: $transactionId)
+    let querydelete = gql`mutation ${queryName}($id: String!) {
+        ${queryName}(id: $id)
       }`;
+    if (useLastTransactionId) {
+        querydelete = gql`mutation ${queryName}($id: String!, $transactionId: String!) {
+            ${queryName}(id: $id, transactionId: $transactionId)
+          }`;
+    }
 
     if (infoDeleteOrder) {
         querydelete = gql`
@@ -533,12 +528,14 @@ const useDelete = (queryName: string, infoDeleteOrder?: any) => {
 
     const mutate = async (id: string) => {
         setIsLoading(true);
-        const lastTransationId = await fetchTransactionId();
+        const queryVariables: any = { id: id };
+        let lastTransationId = null;
+        if (useLastTransactionId) {
+            lastTransationId = await fetchTransactionId();
+            queryVariables.transactionId = lastTransationId;
+        }
         graphqlRequestClient
-            .request(querydelete, {
-                id: id,
-                transactionId: lastTransationId
-            })
+            .request(querydelete, queryVariables)
             .then((result: any) => {
                 setIsLoading(false);
                 setResult({ data: result, success: true, transactionId: lastTransationId });

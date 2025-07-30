@@ -49,9 +49,9 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
         routes: itemRoutes,
         actionsComponent: null
     };
-    const [autocountFilter] = useState({
-        filter: { field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }
-    });
+    const autocountFilter = {
+        filter: [{ field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }]
+    };
 
     const onSelectChange = (newSelectedRowKeys: any) => {
         selectedRowKeys.forEach((key: string) => {

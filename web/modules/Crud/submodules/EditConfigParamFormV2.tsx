@@ -31,7 +31,7 @@ import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, useUpdate, setUTCDateTime } from '@helpers';
 import { FormGroup } from 'modules/Crud/submodules/FormGroup';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
-import moment from 'moment';
+import { useAppDispatch } from 'context/AppContext';
 
 export interface IEditItemFormProps {
     id: string;
@@ -49,6 +49,7 @@ export const EditConfigParamForm: FC<IEditItemFormProps> = (props: IEditItemForm
     const [current, setCurrent] = useState(0);
     const [form] = Form.useForm();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const dispatchToReducer = useAppDispatch();
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -85,7 +86,16 @@ export const EditConfigParamForm: FC<IEditItemFormProps> = (props: IEditItemForm
         if (!(updateResult && updateResult.data)) return;
 
         if (updateResult.success) {
+            console.log(
+                'AXC - EditConfigParamFormV2.tsx - updateResult:',
+                updateResult.data[props.dataModel.endpoints.update]
+            );
             setUnsavedChanges(false);
+            dispatchToReducer({
+                type: ('update_' + props.dataModel.endpoints.list).toUpperCase(),
+                [props.dataModel.endpoints.detail]:
+                    updateResult.data[props.dataModel.endpoints.update]
+            });
             router.push(
                 props.routeAfterSuccess.replace(
                     ':id',

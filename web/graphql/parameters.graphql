@@ -100,6 +100,15 @@ query getArticleFeatureTypeParameters {
         text
     }
 }
+
+query getHandlingUnitCategoryParams {
+    listParametersForAScope(scope: "handling_unit_category") {
+        id
+        scope
+        code
+        text
+    }
+}
 # All scope for parameter .
 query GetParameterScopes {
     parameterScopes {

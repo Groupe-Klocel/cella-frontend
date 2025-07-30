@@ -31,13 +31,11 @@ import { Button, Divider, Modal, Space } from 'antd';
 import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import { HeaderData } from 'modules/Crud/ListComponentV2';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { RuleVersionConfigDetailModelV2 as modelLineConf } from 'models/RuleVersionConfigDetailModelV2';
 import { useEffect, useState, useMemo } from 'react';
 import { RuleVersionDetailInModelV2 as modelConfIn } from 'models/RuleVersionDetailInModelV2';
 import { RuleVersionDetailOutModelV2 as modelConfOut } from 'models/RuleVersionDetailOutModelV2';
-import { RuleVersionConfigListComponent } from './RuleVersionConfigListComponent';
-import { RuleVersionListComponent } from './RuleVersionListComponent';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 
@@ -360,7 +358,7 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
             {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
-                    <RuleVersionListComponent
+                    <ListComponent
                         key={(disabled ? 'disabled' : 'enabled') + 'In'}
                         searchCriteria={{ id: rule.id }}
                         headerData={ruleVersionHeaderDataIn}
@@ -372,7 +370,7 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
                         actionColumns={actionColumnsIn}
                         refetch={refetchInConfig}
                     />
-                    <RuleVersionListComponent
+                    <ListComponent
                         key={(disabled ? 'disabled' : 'enabled') + 'out'}
                         searchCriteria={{ id: rule.id }}
                         headerData={ruleVersionHeaderDataOut}
@@ -385,10 +383,9 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
                         refetch={refetchOutConfig}
                     />
                     <Divider />
-                    <RuleVersionConfigListComponent
+                    <ListComponent
                         searchCriteria={{ ruleVersionId: rule.id }}
                         headerData={ruleVersionLineConfigHeaderData}
-                        setRefetchRuleVersion={setRefetchRuleVersion}
                         dataModel={modelLineConf}
                         searchable={false}
                         triggerDelete={{
