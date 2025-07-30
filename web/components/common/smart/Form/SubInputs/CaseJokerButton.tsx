@@ -40,7 +40,7 @@ const CaseJokerButton: FC<IDraggerInputProps> = ({
     return (
         <>
             <Button
-                type={selectCase.includes(item.name) ? 'primary' : 'default'}
+                type={selectCase.includes(item.name) ? 'default' : 'primary'}
                 onClick={() =>
                     setSelectCase((prev) =>
                         prev.includes(item.name)
