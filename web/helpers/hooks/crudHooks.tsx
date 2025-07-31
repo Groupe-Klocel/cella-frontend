@@ -63,7 +63,7 @@ const useList = (
             $filters: ${resolverName}SearchFilters
             ${isAdvancedFilters ? `$advancedFilters: [${resolverName}AdvancedSearchFilters!]` : ''}
             $orderBy: [${resolverName}OrderByCriterion!]
-            ${functions ? `$functions: [${resolverName}Function!]` : ''}
+            ${functions ? `$functions: [JSON!]` : ''}
             $page: Int!
             $itemsPerPage: Int!
             $language: String = "en"
