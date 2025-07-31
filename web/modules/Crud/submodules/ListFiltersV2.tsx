@@ -474,6 +474,18 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                     key={item.name + index}
                                     rules={item.rules!}
                                     normalize={(value) => (value ? value : undefined)}
+                                    initialValue={
+                                        item?.initialValue
+                                            ? [
+                                                  item.initialValue[0]
+                                                      ? dayjs(item.initialValue[0])
+                                                      : null,
+                                                  item.initialValue[1]
+                                                      ? dayjs(item.initialValue[1])
+                                                      : null
+                                              ]
+                                            : undefined
+                                    }
                                 >
                                     <RangePicker
                                         showTime={{ format: 'HH:mm' }}
