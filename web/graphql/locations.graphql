@@ -173,31 +173,6 @@ mutation CreateLocation($input: CreateLocationInput!) {
     }
 }
 
-mutation BulkCreateLocations($input: BulkCreateLocationsInput!) {
-    bulkCreateLocations(input: $input) {
-        id
-        name
-        barcode
-        aisle
-        column
-        level
-        position
-        replenish
-        blockId
-        block {
-            name
-        }
-        replenishType
-        constraint
-        comment
-        baseUnitRotation
-        allowCycleCountStockMin
-        huManagement
-        stockStatus
-        locationGroupId
-    }
-}
-
 mutation DeleteLocation($id: String!) {
     deleteLocation(id: $id)
 }
@@ -252,8 +227,4 @@ query GetLocationsRange($originLocationName: String!, $finalLocationName: String
         stockStatus
         locationGroupId
     }
-}
-
-mutation BulkDeleteLocations($locationsIds: [String!]!) {
-    bulkDeleteLocations(locationsIds: $locationsIds)
 }
