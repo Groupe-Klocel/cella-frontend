@@ -87,7 +87,7 @@ export const HandlingUnitOutboundBarcodeModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
-            link: 'handling-unit-outbounds/handlingUnitOutboundId',
+            link: 'boxes/handlingUnitOutboundId',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
