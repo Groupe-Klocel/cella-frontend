@@ -122,6 +122,7 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
     }, [unsavedChanges]);
 
     const bulkCreateLocation = async (formData: any) => {
+        const blockId = formData['input']['blockId'];
         setCreateLoading(true);
         try {
             const query = gql`
@@ -141,16 +142,22 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
 
             const response = await graphqlRequestClient.request(query, variables);
 
-            if (response?.executeFunction?.status === 'OK') {
-                showSuccess(t('messages:success-created'));
-                router.push(`/locations`);
+            if (response.executeFunction.status === 'ERROR') {
+                showError(response.executeFunction.output);
+            } else if (
+                response.executeFunction.status === 'OK' &&
+                response.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${response.executeFunction.output.output.code}`));
+                console.log('Backend_message', response.executeFunction.output.output);
             } else {
-                showError(t('messages:error-creating-data'));
+                showSuccess(t('messages:success-created'));
+                router.push(`/blocks/${blockId}`);
             }
+            setCreateLoading(false);
         } catch (error) {
-            console.error(error);
-            showError(t('messages:error-creating-data'));
-        } finally {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
             setCreateLoading(false);
         }
     };

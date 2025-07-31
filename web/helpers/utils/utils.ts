@@ -373,7 +373,19 @@ function formatUTCLocaleDate(date: any, locale: any) {
 }
 
 function removeDuplicatesAndSort(arr: any[]) {
-    return Array.from(new Set(arr)).sort((a, b) => a - b);
+    return Array.from(new Set(arr)).sort((a, b) => {
+        const aNum = Number(a);
+        const bNum = Number(b);
+
+        const aIsNum = !isNaN(aNum);
+        const bIsNum = !isNaN(bNum);
+
+        if (aIsNum && bIsNum) {
+            return aNum - bNum; // Numeric sort
+        }
+
+        return String(a).localeCompare(String(b));
+    });
 }
 
 function pascalToSnakeUpper(pascalCase: string): string {

@@ -62,7 +62,7 @@ export const DeleteLocationForm = () => {
     // Block to Aisle
     const [blockToSearch, setBlockToSearch] = useState<any>(null);
     const search = blockToSearch ? { blockId: blockToSearch! } : undefined;
-    const { data: locationsData } = useLocationIds(search, 1, 1000, null);
+    const { data: locationsData } = useLocationIds(search, 1, 9999, null);
 
     //set reference Locations list
     useEffect(() => {
@@ -187,28 +187,8 @@ export const DeleteLocationForm = () => {
     const bulkDeleteLocation = async () => {
         const formData = form.getFieldsValue(true);
 
-        const selectedBlock = blocksList?.data?.blocks?.results.find((e: any) => {
-            return e.id == formData.blockId;
-        });
-
-        const originLocationInput = {
-            blockId: formData.blockId,
-            blockName: selectedBlock?.name,
-            aisle: formData.originAisle,
-            column: formData.originColumn,
-            level: formData.originLevel,
-            position: formData.originPosition
-        };
-        const finalLocationInput = {
-            blockId: formData.blockId,
-            blockName: selectedBlock?.name,
-            aisle: formData.finalAisle,
-            column: formData.finalColumn,
-            level: formData.finalLevel,
-            position: formData.finalPosition
-        };
-
         const bulkDeleteLocation = async (formData: any) => {
+            const blockId = formData['input']['blockId'];
             setCreateLoading(true);
             try {
                 const query = gql`
@@ -228,16 +208,22 @@ export const DeleteLocationForm = () => {
 
                 const response = await graphqlRequestClient.request(query, variables);
 
-                if (response?.executeFunction?.status === 'OK') {
-                    showSuccess(t('messages:success-deleted'));
-                    router.push(`/locations`);
+                if (response.executeFunction.status === 'ERROR') {
+                    showError(response.executeFunction.output);
+                } else if (
+                    response.executeFunction.status === 'OK' &&
+                    response.executeFunction.output.status === 'KO'
+                ) {
+                    showError(t(`errors:${response.executeFunction.output.output.code}`));
+                    console.log('Backend_message', response.executeFunction.output.output);
                 } else {
-                    showError(t('messages:error-deleting-data'));
+                    showSuccess(t('messages:success-deleted'));
+                    router.push(`/blocks/${blockId}`);
                 }
+                setCreateLoading(false);
             } catch (error) {
-                console.error(error);
-                showError(t('messages:error-deleting-data'));
-            } finally {
+                showError(t('messages:error-executing-function'));
+                console.log('executeFunctionError', error);
                 setCreateLoading(false);
             }
         };
