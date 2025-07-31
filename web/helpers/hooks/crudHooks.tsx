@@ -56,22 +56,23 @@ const useList = (
 ) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
+    const isAdvancedFilters = advancedFilters && advancedFilters.length !== 0;
 
     const query = gql`
         query CustomListQuery(
             $filters: ${resolverName}SearchFilters
-            ${advancedFilters ? `$advancedFilters: [${resolverName}AdvancedSearchFilters!]` : ''}
+            ${isAdvancedFilters ? `$advancedFilters: [${resolverName}AdvancedSearchFilters!]` : ''}
             $orderBy: [${resolverName}OrderByCriterion!]
-            $functions: [JSON!]
+            ${functions ? `$functions: [${resolverName}Function!]` : ''}
             $page: Int!
             $itemsPerPage: Int!
             $language: String = "en"
         ) {
             ${queryName}(
                 filters: $filters
-                ${advancedFilters ? 'advancedFilters: $advancedFilters' : ''}
+                ${isAdvancedFilters ? 'advancedFilters: $advancedFilters' : ''}
                 orderBy: $orderBy
-                functions: $functions
+                ${functions ? 'functions: $functions' : ''}
                 page: $page
                 itemsPerPage: $itemsPerPage
                 language: $language

@@ -1868,7 +1868,7 @@ const ListComponent = (props: IListProps) => {
                     // if type is 7, it means it is a date field
                     return {
                         [key]: searchForTags[key].map((date: any) => ({
-                            text: formatUTCLocaleDateTime(date, router.locale),
+                            text: date ? new Date(date).toLocaleString(router.locale) : '*',
                             code: date
                         }))
                     };
@@ -1909,7 +1909,7 @@ const ListComponent = (props: IListProps) => {
                     allTags.push({
                         key: findDisplayNameForKey(key),
                         value: {
-                            text: item[key][0].text + ' -> ' + item[key][1].text
+                            text: (item[key][0]?.text ?? '-') + ' -> ' + (item[key][1]?.text ?? '-')
                         },
                         originalKey: key
                     });
