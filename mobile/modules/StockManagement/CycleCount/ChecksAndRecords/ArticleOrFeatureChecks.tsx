@@ -24,7 +24,7 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { createCycleCountError, searchByIdInCCMs } from 'helpers/utils/crudFunctions/cycleCount';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 
 export interface IArticleOrFeatureChecksProps {
@@ -64,7 +64,6 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     const [currentCcmsCreatedByCc, setCurrentCcmsCreatedByCc] = useState<any>();
 
     const [isOverwrittingModalVisible, setIsOverwrittingModalVisible] = useState(false);
-
     const getCCMs = async (): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
             const query = gql`
@@ -270,6 +269,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                                 identifiable
                                                 unique
                                                 dateType
+                                                mask
                                             }
                                             value
                                         }
@@ -338,6 +338,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     }, [scannedInfo]);
 
     // perform checks and manage information for persistence storage and front-end errors
+    const workingObjectRef = useRef<any>(null);
     useEffect(() => {
         if (scannedInfo && fetchResult && contents) {
             //set ExpectedFeatures depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
@@ -350,8 +351,10 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                           (feature: any) => !feature.featureCode.identifiable
                       )
                     : undefined;
+
             //set content depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
             const content = isHuToCreate || isHuFromCCM ? undefined : contents?.[0];
+
             // define what will be sent to storage
             let workingObject: { [label: string]: any } = {};
             fetchResult.resType === 'serialNumber'
@@ -369,6 +372,8 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                       handlingUnitContent: content,
                       expectedFeatures
                   });
+            //Important: record the last version for the confirmation modal use
+            workingObjectRef.current = workingObject;
 
             const currentCCMovement =
                 workingObject.resType == 'serialNumber'
@@ -384,33 +389,28 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     item.createdByCycleCount && item.handlingUnitNameStr === choosenHu?.name
             );
 
+            // Function to handle errors and reset state
+            const handleCycleCountError = (messageKey: string, extra?: any) => {
+                createCycleCountError(
+                    currentCycleCountId,
+                    `Step ${stepNumber} - ${t(messageKey, extra)} - ${scannedInfo}`
+                );
+                showError(t(messageKey, extra));
+                setResetForm(true);
+                setScannedInfo(undefined);
+                setIsLoading(false);
+                setContents(undefined);
+            };
+
             if (expectedArticleId) {
                 if (expectedArticleId !== workingObject.article.id) {
-                    createCycleCountError(
-                        currentCycleCountId,
-                        `Step ${stepNumber} - ${t(
-                            'messages:unexpected-scanned-item'
-                        )} - ${scannedInfo}`
-                    );
-                    showError(t('messages:unexpected-scanned-item'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    setIsLoading(false);
-                    setContents(undefined);
+                    handleCycleCountError('messages:unexpected-scanned-item');
                 }
             } else if (
                 ccmFromPreviousPass &&
                 ccmFromPreviousPass.articleId !== workingObject.article.id
             ) {
-                createCycleCountError(
-                    currentCycleCountId,
-                    `Step ${stepNumber} - ${t('messages:unexpected-scanned-item')} - ${scannedInfo}`
-                );
-                showError(t('messages:unexpected-scanned-item'));
-                setResetForm(true);
-                setScannedInfo(undefined);
-                setIsLoading(false);
-                setContents(undefined);
+                handleCycleCountError('messages:unexpected-scanned-item');
             } else if (
                 contents?.length === 0 ||
                 (fetchResult.resType === 'serialNumber' &&
@@ -451,8 +451,9 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                     </span>
                                 ),
                                 onOk: () => {
+                                    //RESTART HERE see how to refresh workingObject with the relevant value
                                     console.log('ConfirmQuantityOverwritting');
-                                    const data = { ...workingObject, currentCCMovement };
+                                    const data = { ...workingObjectRef.current, currentCCMovement };
                                     setTriggerRender(!triggerRender);
                                     storedObject[`step${stepNumber}`] = {
                                         ...storedObject[`step${stepNumber}`],
@@ -670,7 +671,6 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                         step10Data['cycleCount'] = updatedCycleCount;
                         step10Data['currentCycleCountLine'] = nextCycleCountLine;
                         newStoredObject[`step10`] = { previousStep: 0, data: step10Data };
-
                         storage.set(process, JSON.stringify(newStoredObject));
                     }
                 }
@@ -702,7 +702,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     closeHU([currentCycleCountLineId]);
                 } else {
                     for (
-                        let i = storedObject[`step${stepNumber}`].previousStep;
+                        let i = storedObject[`step${stepNumber}`].previousÒtep;
                         i <= stepNumber;
                         i++
                     ) {
