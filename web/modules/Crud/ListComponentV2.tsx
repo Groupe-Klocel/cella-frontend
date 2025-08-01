@@ -220,9 +220,7 @@ const ListComponent = (props: IListProps) => {
         currentUserSettings?: any
     ) {
         const settings = currentUserSettings ?? userSettings; // use latest from state
-        if (newPagination && newPagination.current) {
-            newPagination.current = 1;
-        }
+
         const newsSettings = {
             ...settings,
             valueJson: {
@@ -266,6 +264,11 @@ const ListComponent = (props: IListProps) => {
                 })
             });
             setUserSettings(queryInfo.updateWarehouseWorkerSetting);
+            setPagination({
+                ...pagination,
+                current: newPagination?.current ?? pagination.current,
+                itemsPerPage: newPagination?.itemsPerPage ?? pagination.itemsPerPage
+            });
         } catch (error) {
             console.log('queryInfo update listComponent error', error);
             showWarning(t('messages:config-save-error'));
@@ -318,6 +321,11 @@ const ListComponent = (props: IListProps) => {
                 userSettings: [...state?.userSettings, queryInfo.createWarehouseWorkerSetting]
             });
             setUserSettings(queryInfo.createWarehouseWorkerSetting);
+            setPagination({
+                ...pagination,
+                current: newPagination?.current ?? pagination.current,
+                itemsPerPage: newPagination?.itemsPerPage ?? pagination.itemsPerPage
+            });
         } catch (error) {
             console.log('queryInfo create listComponent error', error);
             showWarning(t('messages:config-save-error'));
@@ -900,7 +908,7 @@ const ListComponent = (props: IListProps) => {
             return;
         }
         if (filterFields.length > 0 && !resetForm) {
-            const newSearchCriterias: any = {};
+            const newSearchCriterias: any = searchCriterias ?? {};
             filterFields.forEach((field: any) => {
                 if (field.initialValue !== undefined && field.initialValue !== null) {
                     if (field.isMultipleSearch) {
@@ -952,7 +960,8 @@ const ListComponent = (props: IListProps) => {
             if (filterParams !== '') {
                 searchWithParamsInfos[key] = [filterParams, value];
             } else {
-                searchWithParamsInfos[key] = value;
+                searchWithParamsInfos[key] =
+                    Array.isArray(value) && value.length === 1 ? value[0] : value;
             }
         });
 
