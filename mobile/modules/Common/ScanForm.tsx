@@ -84,7 +84,7 @@ export const ScanForm = ({
     // TYPED SAFE ALL
     //Scan-1a: retrieve value from input and set values for display
     const onFinish = (values: any) => {
-        setScannedInfo(values.scannedItem);
+        setScannedInfo(values.scannedItem.trim());
     };
 
     // Scan-2: manage form reset in case of error
