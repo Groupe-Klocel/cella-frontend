@@ -26,6 +26,7 @@ import { createCycleCountError, searchByIdInCCMs } from 'helpers/utils/crudFunct
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import configs from '../../../../../common/configs.json';
+import { set } from 'lodash';
 
 export interface IArticleOrFeatureChecksProps {
     dataToCheck: any;
@@ -338,7 +339,6 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     }, [scannedInfo]);
 
     // perform checks and manage information for persistence storage and front-end errors
-    const workingObjectRef = useRef<any>(null);
     useEffect(() => {
         if (scannedInfo && fetchResult && contents) {
             //set ExpectedFeatures depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
@@ -372,8 +372,6 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                       handlingUnitContent: content,
                       expectedFeatures
                   });
-            //Important: record the last version for the confirmation modal use
-            workingObjectRef.current = workingObject;
 
             const currentCCMovement =
                 workingObject.resType == 'serialNumber'
@@ -453,7 +451,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                 onOk: () => {
                                     //RESTART HERE see how to refresh workingObject with the relevant value
                                     console.log('ConfirmQuantityOverwritting');
-                                    const data = { ...workingObjectRef.current, currentCCMovement };
+                                    const data = { ...workingObject, currentCCMovement };
                                     setTriggerRender(!triggerRender);
                                     storedObject[`step${stepNumber}`] = {
                                         ...storedObject[`step${stepNumber}`],
@@ -472,6 +470,8 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                     setResetForm(true);
                                     setIsLoading(false);
                                     setScannedInfo(undefined);
+                                    setFetchResult(undefined);
+                                    setContents(undefined);
                                     setIsOverwrittingModalVisible(false);
                                 },
                                 okText: t('messages:confirm'),
