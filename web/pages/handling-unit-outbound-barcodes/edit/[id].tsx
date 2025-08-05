@@ -58,6 +58,7 @@ const EditHandlingUnitOutboundBarcodePage: PageComponent = () => {
                     />
                 }
                 routeAfterSuccess={`/handling-unit-outbound-barcodes/:id`}
+                stringCodeScopes={['barcode_type']}
             />
         </>
     );

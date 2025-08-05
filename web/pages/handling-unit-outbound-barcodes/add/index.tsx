@@ -56,6 +56,7 @@ const AddHandlingUnitOutboundBarcodePage: PageComponent = () => {
                         : undefined
                 }
                 routeAfterSuccess={`/handling-unit-outbound-barcodes`}
+                stringCodeScopes={['barcode_type']}
             />
         </>
     );

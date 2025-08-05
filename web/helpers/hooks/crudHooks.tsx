@@ -316,6 +316,7 @@ const useCreate = (resolverName: string, queryName: string, fields: Array<string
 
     const mutate = (variables: any) => {
         setIsLoading(true);
+        console.log('IKI', variables);
         graphqlRequestClient
             .request(query, variables)
             .then((result: any) => {
