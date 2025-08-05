@@ -38,7 +38,6 @@ const AddEquipmentPage: PageComponent = () => {
 
     const defaultValues = {
         roundCalculationProfileId: router.query.roundCalculationProfileId,
-        roundCalculationProfileName: router.query.roundCalculationProfileName,
         order: prevMaxOrder ? parseInt(prevMaxOrder as string) + 1 : 1
     };
 
