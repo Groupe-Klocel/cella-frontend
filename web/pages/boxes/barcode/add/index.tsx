@@ -76,6 +76,7 @@ const AddEquipmentPage: PageComponent = () => {
                         ? defaultValues
                         : undefined
                 }
+                stringCodeScopes={['barcode_type']}
             />
         </>
     );
