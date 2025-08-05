@@ -93,10 +93,14 @@ export const SelectLocationByLevelForm = ({
     // end camera scanner section
 
     //SelectLocationByLevel-2b: handle back to previous step settings
-    const onBack = (enforcedPreviousStep?: number) => {
+    const onBack = (previousStepFromPreviousStep?: number, enforcedPreviousStep?: number) => {
         setTriggerRender(!triggerRender);
         const previousStep =
-            enforcedPreviousStep ?? storedObject[`step${stepNumber}`]?.previousStep ?? 0;
+            enforcedPreviousStep ??
+            storedObject[`step${stepNumber}`]?.previousStep ??
+            previousStepFromPreviousStep ??
+            0;
+
         for (let i = previousStep; i <= stepNumber; i++) {
             delete storedObject[`step${i}`]?.data;
         }
@@ -132,7 +136,7 @@ export const SelectLocationByLevelForm = ({
                         )} - ${location.name}`
                     );
                     showError(t('messages:unexpected-scanned-item'));
-                    onBack();
+                    onBack(storedObject.currentStep);
                 }
             } else if (storedObject.currentStep < stepNumber) {
                 //check workflow direction and assign current step accordingly

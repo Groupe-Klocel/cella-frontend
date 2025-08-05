@@ -191,7 +191,29 @@ export const ReviewFeatures = ({
                             label={feature.featureCode.name}
                             name={feature.featureCode.name}
                             rules={[
-                                { required: true, message: t('messages:error-message-empty-input') }
+                                {
+                                    required: true,
+                                    message: t('messages:error-message-empty-input')
+                                },
+                                ...(feature.featureCode.mask
+                                    ? [
+                                          {
+                                              validator: (_: any, value: any) => {
+                                                  if (
+                                                      !value ||
+                                                      new RegExp(feature.featureCode.mask).test(
+                                                          value
+                                                      )
+                                                  ) {
+                                                      return Promise.resolve();
+                                                  }
+                                                  return Promise.reject(
+                                                      new Error(t('errors:FEATURECODE-000100'))
+                                                  );
+                                              }
+                                          }
+                                      ]
+                                    : [])
                             ]}
                         >
                             <StyledFeaturesInput
@@ -205,7 +227,29 @@ export const ReviewFeatures = ({
                             label={feature.featureCode.name}
                             name={feature.featureCode.name}
                             rules={[
-                                { required: true, message: t('messages:error-message-empty-input') }
+                                {
+                                    required: true,
+                                    message: t('messages:error-message-empty-input')
+                                },
+                                ...(feature.featureCode.mask
+                                    ? [
+                                          {
+                                              validator: (_: any, value: any) => {
+                                                  if (
+                                                      !value ||
+                                                      new RegExp(feature.featureCode.mask).test(
+                                                          value
+                                                      )
+                                                  ) {
+                                                      return Promise.resolve();
+                                                  }
+                                                  return Promise.reject(
+                                                      new Error(t('errors:FEATURECODE-000100'))
+                                                  );
+                                              }
+                                          }
+                                      ]
+                                    : [])
                             ]}
                         >
                             <StyledFeaturesDatePicker
