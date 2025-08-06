@@ -463,7 +463,7 @@ const ListComponent = (props: IListProps) => {
 
     // #region DEFAULT PROPS
     const defaultProps = {
-        searchable: true,
+        searchable: props.isDragAndDroppable ? false : true,
         searchCriteria: {},
         extraColumns: [],
         actionColumns: [],
