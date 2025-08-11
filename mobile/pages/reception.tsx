@@ -332,12 +332,14 @@ const Reception: PageComponent = () => {
             {isLoading ? <UpperMobileSpinner></UpperMobileSpinner> : <></>}
             <div hidden={isLoading}>
                 {showSimilarLocations &&
-                storedObject['step50']?.data.currentPurchaseOrderLine &&
+                (storedObject['step40']?.data.currentPurchaseOrderLine ||
+                    storedObject['step50']?.data.currentPurchaseOrderLine) &&
                 (storedObject['step60']?.data.processedFeatures ||
                     storedObject['step60']?.data.feature === null) ? (
                     <SimilarLocations
                         currentPurchaseOrderLine={
-                            storedObject['step50'].data.currentPurchaseOrderLine
+                            storedObject['step40'].data.currentPurchaseOrderLine ??
+                            storedObject['step50']?.data.currentPurchaseOrderLine
                         }
                         currentFeatures={storedObject['step60'].data.processedFeatures ?? undefined}
                         locationIdToExclude={defaultReceptionLocation?.id ?? undefined}
