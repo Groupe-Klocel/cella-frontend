@@ -122,6 +122,7 @@ const ListComponent = (props: IListProps) => {
     const configs = state?.configs;
     const parameters = state?.parameters;
     const dispatch = useAppDispatch();
+    const [firstLoad, setFirstLoad] = useState<boolean>(true);
     const [rows, setRows] = useState<DataQueryType>();
     const [columns, setColumns] = useState<Array<any>>([]);
     const [selectCase, setSelectCase] = useState<string[]>([]);
@@ -602,10 +603,6 @@ const ListComponent = (props: IListProps) => {
             }
         });
 
-        console.log(
-            'AXC - ListComponentV2.tsx - ListComponent - updatedFilterFields:',
-            updatedFilterFields
-        );
         setFilterFields(updatedFilterFields);
     }, [userSettings, props.cumulSearchInfos, props.filterFields]);
     // handle cancelled or closed item
@@ -1115,11 +1112,7 @@ const ListComponent = (props: IListProps) => {
             reloadData();
         }, delay);
 
-        if (props.isDragAndDroppable) {
-            reloadData();
-        } else {
-            debouncedReload();
-        }
+        debouncedReload();
 
         // Cleanup function to cancel the debounce on unmount or dependency change
         return () => {
@@ -1715,6 +1708,7 @@ const ListComponent = (props: IListProps) => {
                         break;
                 }
             }
+            setFirstLoad(false);
         } else {
             deleteUserSettings();
         }
@@ -1765,7 +1759,7 @@ const ListComponent = (props: IListProps) => {
             _pagination.pageSize === pagination.itemsPerPage
         ) {
             setSort(tmp_array);
-            changeFilter(null, tmp_array, defaultPagination, null, selectCase, selectJoker, null);
+            changeFilter(null, tmp_array, pagination, null, selectCase, selectJoker, null);
         }
     };
 
@@ -2053,7 +2047,7 @@ const ListComponent = (props: IListProps) => {
                                         : undefined
                                 }
                                 tags={
-                                    !isLoading && rows?.results ? (
+                                    !firstLoad && rows?.results ? (
                                         props.searchable && (
                                             <>
                                                 {tagFormatter(search).map((info, index) => {
@@ -2179,35 +2173,29 @@ const ListComponent = (props: IListProps) => {
                                     ))}
                             </>
                         )}
-                        {!isLoading && rows?.results ? (
-                            rows?.results && rows?.results.length > 0 ? (
-                                <>
-                                    {props.actionButtons?.actionsComponent}
-                                    <AppTableV2
-                                        dataModel={props.dataModel}
-                                        columns={mergedColumns}
-                                        data={rows!.results}
-                                        pagination={pagination}
-                                        isLoading={isLoading}
-                                        setPagination={onChangePagination}
-                                        stickyActions={stickyActions}
-                                        onChange={handleTableChange}
-                                        hiddenColumns={hiddenListFields}
-                                        linkFields={linkFields}
-                                        filter={props.columnFilter}
-                                        sortInfos={sort}
-                                        isDragAndDroppable={props.isDragAndDroppable}
-                                        components={draggableComponent}
-                                        items={props.items}
-                                        isIndependentScrollable={props.isIndependentScrollable}
-                                        rowSelection={
-                                            props.checkbox ? props.rowSelection : undefined
-                                        }
-                                    />
-                                </>
-                            ) : (
-                                <Empty description={<span>{t('messages:no-data')}</span>} />
-                            )
+                        {!firstLoad && rows?.results ? (
+                            <>
+                                {props.actionButtons?.actionsComponent}
+                                <AppTableV2
+                                    dataModel={props.dataModel}
+                                    columns={mergedColumns}
+                                    data={rows?.results ?? []}
+                                    pagination={pagination}
+                                    isLoading={isLoading}
+                                    setPagination={onChangePagination}
+                                    stickyActions={stickyActions}
+                                    onChange={handleTableChange}
+                                    hiddenColumns={hiddenListFields}
+                                    linkFields={linkFields}
+                                    filter={props.columnFilter}
+                                    sortInfos={sort}
+                                    isDragAndDroppable={props.isDragAndDroppable}
+                                    components={draggableComponent}
+                                    items={props.items}
+                                    isIndependentScrollable={props.isIndependentScrollable}
+                                    rowSelection={props.checkbox ? props.rowSelection : undefined}
+                                />
+                            </>
                         ) : (
                             <ContentSpin />
                         )}
