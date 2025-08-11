@@ -105,7 +105,6 @@ const useList = (
         graphqlRequestClient
             .request(query, variables)
             .then((result: any) => {
-                console.log('AXC - crudHooks.tsx - .then - result:', result);
                 // Object.keys(result).forEach((element) => {
                 //     Object.keys(result[element]).forEach((key) => {
                 //         if (

@@ -27,7 +27,8 @@ import {
     TableFilter,
     WrapperStickyActions,
     PageTableContentWrapper,
-    DrawerItems
+    DrawerItems,
+    ContentSpin
 } from '@components';
 import {
     showWarning,
@@ -40,12 +41,12 @@ import {
     formatUTCLocaleDate,
     isStringDate
 } from '@helpers';
-import { Space, Button, Table, Typography } from 'antd';
+import { Space, Button, Table, Typography, Empty } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { debounce, isString, set } from 'lodash';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
-import { FC, useCallback, useEffect, useState, useRef, useMemo, Key } from 'react';
+import { FC, useCallback, useEffect, useState, useRef, useMemo, Key, use } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
@@ -135,9 +136,6 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         });
     }
 
-    // Memoize custom columns to avoid redundant computation
-    const customColumns = useMemo(() => setCustomColumnsProps(columns), [columns]);
-
     const [visibleColumnKeys, setVisibleColumnKeys] = useState<Key[]>(
         initialState
             ? initialState.visibleColumnKeys
@@ -145,9 +143,9 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     );
     const [fixedColumns, setFixedColumns] = useState<Key[]>(initialState?.fixedColumns ?? []);
     const [filteredColumns, setFilteredColumns] = useState<any[]>(
-        initialState?.filteredColumns ?? customColumns
+        initialState?.filteredColumns ?? columns
     );
-    const [tableColumns, setTableColumns] = useState<any[]>(customColumns);
+    const [tableColumns, setTableColumns] = useState<any[]>(columns);
 
     // Format data only when it changes
     useEffect(() => {
@@ -197,7 +195,6 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         };
         try {
             const queryInfo: any = await graphqlRequestClient.request(updateQuery, updateVariables);
-            console.log('AXC - AppTableV2.tsx - updateUserSettings - queryInfo:', queryInfo);
             dispatch({
                 type: 'SWITCH_USER_SETTINGS',
                 userSettings: state.userSettings.map((item: any) => {
@@ -643,6 +640,11 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                               }
                           }
                 }
+                locale={{
+                    emptyText: !isLoading ? (
+                        <Empty description={<span>{t('messages:no-data')}</span>} />
+                    ) : null
+                }}
                 rowSelection={rowSelection}
                 components={tableComponents}
                 tableLayout="fixed"

@@ -865,7 +865,7 @@ export const MovementModelV2: ModelType = {
             isDefaultHiddenList: true,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: 'Checkbox',
+            searchingFormat: 'Boolean',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
