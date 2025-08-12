@@ -66,7 +66,7 @@ const GoodsInsPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('common:goods-ins')} />
             <ListComponent
                 headerData={headerData}
                 dataModel={model}

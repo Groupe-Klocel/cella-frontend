@@ -83,7 +83,7 @@ const CumulatedStock: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('common:cumulated-stock')} />
             <HeaderContent title={`${t('common:cumulated-stock')}`} routes={itemRoutes} />
             <Form form={form} style={{ marginLeft: '15px' }}>
                 <Row>

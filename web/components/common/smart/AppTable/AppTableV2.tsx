@@ -147,6 +147,15 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     );
     const [tableColumns, setTableColumns] = useState<any[]>(columns);
 
+    useEffect(() => {
+        setFilteredColumns(columns);
+        setVisibleColumnKeys(
+            initialState
+                ? initialState.visibleColumnKeys
+                : allColumnKeys.filter((x) => !hiddenColumns.includes(x))
+        );
+    }, [columns]);
+
     // Format data only when it changes
     useEffect(() => {
         if (data) {
