@@ -513,7 +513,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
 
     // HU closure function
     const [isClosureLoading, setIsClosureLoading] = useState(false);
-    async function closeHU(CclInputs: any) {
+    async function closeHU(cycleCountLineIds: any) {
         setIsClosureLoading(true);
         const query = gql`
             mutation executeFunction($functionName: String!, $event: JSON!) {
@@ -527,7 +527,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
         const variables = {
             functionName: 'update_cycle_count_lines',
             event: {
-                input: CclInputs
+                input: { cycleCountLineIds }
             }
         };
 
@@ -697,7 +697,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 if (!storedObject['step22']?.data?.chosenLocation.huManagement) {
                     triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
                     closeLocation([currentCycleCountLineId]);
-                } else if (storedObject.step10?.data?.currentCycleCountLine?.handlingUnitStr) {
+                } else if (storedObject?.step30?.data?.handlingUnit) {
                     triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
                     closeHU([currentCycleCountLineId]);
                 } else {
