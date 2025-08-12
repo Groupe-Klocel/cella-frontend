@@ -180,7 +180,7 @@ const DeliveryPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('common:deliveries')} />
             <ListComponent
                 headerData={headerData}
                 dataModel={model}
