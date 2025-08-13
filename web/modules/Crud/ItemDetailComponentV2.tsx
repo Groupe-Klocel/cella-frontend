@@ -70,6 +70,7 @@ export interface ISingleItemProps {
     refetchSubList?: any;
     isCreateAMovement?: boolean;
     dataToCreateMovement?: any;
+    setSuccessDeleteResult?: any;
 }
 
 const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
@@ -313,6 +314,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
 
         if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
+            if (props.setSuccessDeleteResult) props.setSuccessDeleteResult(deleteResult);
             // Dispatch the delete action to the reducer
             if (
                 props.dataModel.endpoints.detail === 'config' ||
