@@ -51,8 +51,9 @@ const DeliveryPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [tableData, setTableData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<any>([]);
     const [refetch, setRefetch] = useState<boolean>(false);
     const headerData: HeaderData = {
         title: t('common:deliveries'),
@@ -79,8 +80,17 @@ const DeliveryPages: PageComponent = () => {
             });
         };
     };
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
-        setSelectedRowKeys(newSelectedRowKeys);
+    const onSelectChange = (newSelectedRowKeys: any) => {
+        selectedRowKeys.forEach((key: string) => {
+            if (!newSelectedRowKeys.includes(key) && tableData.map((d) => d.id).includes(key)) {
+                setSelectedRowKeys((prevKeys: React.Key[]) => prevKeys.filter((k) => k !== key));
+            }
+        });
+        newSelectedRowKeys.forEach((value: string) => {
+            if (!selectedRowKeys?.includes(value)) {
+                setSelectedRowKeys((prevKeys: React.Key[]) => [...prevKeys, value]);
+            }
+        });
     };
 
     // CUBING
@@ -92,7 +102,7 @@ const DeliveryPages: PageComponent = () => {
             onOk: async () => {
                 setIsCubingLoading(true);
                 const deliveries: Array<any> = [];
-                selectedRowKeys?.forEach((deliveryId) => {
+                selectedRowKeys?.forEach((deliveryId: 'string') => {
                     deliveries.push({ id: deliveryId });
                 });
 
@@ -170,13 +180,14 @@ const DeliveryPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('common:deliveries')} />
             <ListComponent
                 headerData={headerData}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 refetch={refetch}
+                setData={setTableData}
                 extraColumns={[
                     {
                         title: 'd:progress',

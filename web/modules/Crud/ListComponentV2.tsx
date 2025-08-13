@@ -18,9 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { SearchOutlined } from '@ant-design/icons';
-import { AppTableV2, ContentSpin, DraggableItem, HeaderContent } from '@components';
-import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
-import { useDrawerDispatch } from 'context/DrawerContext';
+import { AppTableV2, ContentSpin, DraggableItem, HeaderContent, DrawerItems } from '@components';
+import { Space, Form, Button, Empty, Alert, Badge, Tag, Spin } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
@@ -51,7 +50,7 @@ import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, isString } from 'lodash';
+import _, { debounce, filter, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
@@ -77,6 +76,7 @@ export interface IListProps {
     routeUpdatePage?: string;
     searchable?: boolean;
     searchCriteria?: any;
+    cumulSearchInfos?: any;
     setData?: any;
     refresh?: any;
     sortDefault?: any;
@@ -89,6 +89,7 @@ export interface IListProps {
     columnFilter?: boolean;
     itemperpage?: number;
     advancedFilters?: any;
+    functions?: any;
     //from here : props used for drag and/or drop handling
     items?: any;
     isDragAndDroppable?: boolean;
@@ -116,15 +117,34 @@ const ListComponent = (props: IListProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
-
+    const filterLanguage = router.locale;
     const state = useAppState();
+    const configs = state?.configs;
+    const parameters = state?.parameters;
     const dispatch = useAppDispatch();
-    const [switchReloadData, setSwitchReloadData] = useState<boolean>(false);
+    const [firstLoad, setFirstLoad] = useState<boolean>(true);
+    const [rows, setRows] = useState<DataQueryType>();
+    const [columns, setColumns] = useState<Array<any>>([]);
+    const [selectCase, setSelectCase] = useState<string[]>([]);
+    const [selectJoker, setSelectJoker] = useState<string[]>([]);
+    const [advancedFilters, setAdvancedFilters] = useState<any>(
+        props.advancedFilters
+            ? Array.isArray(props.advancedFilters)
+                ? props.advancedFilters
+                : [props.advancedFilters]
+            : []
+    );
+    const [userSettings, setUserSettings] = useState<any>(
+        state?.userSettings?.find((item: any) => {
+            return `${props.dataModel.resolverName}${router.pathname}` === item.code;
+        })
+    );
+    const newUserSettings =
+        state?.userSettings?.find((item: any) => {
+            return `${props.dataModel.resolverName}${router.pathname}` === item.code;
+        }) ?? null;
 
-    let userSettings = state?.userSettings?.find((item: any) => {
-        return `${props.dataModel.resolverName}${router.pathname}` === item.code;
-    });
-    // #region sorter / filter from userSettings
+    // #region sorter / pagination
 
     const savedSorters = userSettings?.valueJson?.sorter
         ? userSettings?.valueJson?.sorter
@@ -147,6 +167,38 @@ const ListComponent = (props: IListProps) => {
               : (savedSorters ?? props.sortDefault ?? sortParameter)
     );
 
+    const defaultPagination: newPaginationType = {
+        current: DEFAULT_PAGE_NUMBER,
+        itemsPerPage: props.itemperpage ?? DEFAULT_ITEMS_PER_PAGE
+    };
+
+    let defaultModelSort = null;
+    for (const key in props.dataModel.fieldsInfo) {
+        if (props.dataModel.fieldsInfo[key].hasOwnProperty('defaultSort')) {
+            defaultModelSort = {
+                field: key.replace(/{/g, '_').replace(/}/g, ''),
+                ascending: props.dataModel.fieldsInfo[key].defaultSort == 'ascending' ? true : false
+            };
+        }
+    }
+
+    const [pagination, setPagination] = useState<PaginationType>({
+        total: undefined,
+        current: userSettings?.valueJson?.pagination?.current ?? DEFAULT_PAGE_NUMBER,
+        itemsPerPage:
+            userSettings?.valueJson?.pagination?.itemsPerPage ??
+            props.itemperpage ??
+            DEFAULT_ITEMS_PER_PAGE
+    });
+
+    const adjustedPagination =
+        props.isDragSource &&
+        (pagination?.total ?? 1) / pagination?.itemsPerPage === pagination?.current - 1
+            ? pagination?.current > 1
+                ? pagination.current - 1
+                : pagination?.current
+            : pagination?.current;
+
     //this is to retrieve sort applied any time (used by drag and drop component)
     useEffect(() => {
         if (props.setAppliedSort) {
@@ -154,145 +206,134 @@ const ListComponent = (props: IListProps) => {
         }
     }, [sort]);
 
-    // only methode found to get the userSettings from the state inside the function
-    const userSettingsRef = useRef(userSettings);
-    const stateUserSettingsRef = useRef(state.userSettings);
+    // #endregion
 
-    useEffect(() => {
-        userSettingsRef.current = userSettings;
-    }, [userSettings]);
+    // #region create / update and delete user settings
 
-    useEffect(() => {
-        stateUserSettingsRef.current = state.userSettings;
-    }, [state.userSettings]);
+    async function updateUserSettings(
+        newFilter: any,
+        newSorting: any,
+        newPagination?: newPaginationType,
+        newAdvancedFilters?: any,
+        selectCase?: string[],
+        selectJoker?: string[],
+        newSubOptions?: any,
+        currentUserSettings?: any
+    ) {
+        const settings = currentUserSettings ?? userSettings; // use latest from state
 
-    const updateUserSettings = useCallback(
-        //newpagination = {current: number, itemsPerPage: number}
-        async (newFilter: any, newSorting: any, newPagination?: newPaginationType) => {
-            const currentUserSettings = userSettingsRef.current;
-            const currentStateUserSettings = stateUserSettingsRef.current;
-
-            if (newSorting === 'default') {
-                newSorting = currentUserSettings?.valueJson?.sorter ?? null;
+        const newsSettings = {
+            ...settings,
+            valueJson: {
+                ...settings?.valueJson,
+                filter: newFilter ?? settings?.valueJson?.filter,
+                advancedFilters: newAdvancedFilters ?? advancedFilters,
+                filterParameters: {
+                    selectCase: selectCase,
+                    selectJoker: selectJoker
+                },
+                sorter: newSorting ?? settings?.valueJson?.sorter ?? props.sortDefault ?? null,
+                pagination: newPagination ?? defaultPagination,
+                subOptions: newSubOptions ?? settings?.valueJson?.subOptions ?? undefined,
+                columnsWidth: settings?.valueJson?.columnsWidth ?? null
             }
-
-            if (newSorting === 'mandatorySort') {
-                newSorting = currentUserSettings?.valueJson?.sorter ?? props.sortDefault;
-            }
-
-            if (newPagination && newPagination.current) {
-                newPagination.current = 1;
-            }
-
-            const newsSettings = {
-                ...currentUserSettings,
-                valueJson: {
-                    ...currentUserSettings?.valueJson,
-                    filter: newFilter ?? currentUserSettings?.valueJson?.filter,
-                    sorter: newSorting ?? null,
-                    pagination: newPagination ?? currentUserSettings?.valueJson?.pagination
+        };
+        const updateQuery = gql`
+            mutation (
+                $warehouseWorkerSettingsId: String!
+                $input: UpdateWarehouseWorkerSettingInput!
+            ) {
+                updateWarehouseWorkerSetting(id: $warehouseWorkerSettingsId, input: $input) {
+                    id
+                    code
+                    valueJson
                 }
-            };
-            const updateQuery = gql`
-                mutation (
-                    $warehouseWorkerSettingsId: String!
-                    $input: UpdateWarehouseWorkerSettingInput!
-                ) {
-                    updateWarehouseWorkerSetting(id: $warehouseWorkerSettingsId, input: $input) {
-                        id
-                        code
-                        valueJson
-                    }
+            }
+        `;
+        const updateVariables = {
+            warehouseWorkerSettingsId: settings.id,
+            input: { valueJson: newsSettings.valueJson }
+        };
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(updateQuery, updateVariables);
+            dispatch({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: state?.userSettings.map((item: any) => {
+                    return item.id === queryInfo?.updateWarehouseWorkerSetting?.id
+                        ? queryInfo.updateWarehouseWorkerSetting
+                        : item;
+                })
+            });
+            setUserSettings(queryInfo.updateWarehouseWorkerSetting);
+            setPagination({
+                ...pagination,
+                current: newPagination?.current ?? pagination.current,
+                itemsPerPage: newPagination?.itemsPerPage ?? pagination.itemsPerPage
+            });
+        } catch (error) {
+            console.log('queryInfo update listComponent error', error);
+            showWarning(t('messages:config-save-error'));
+        }
+    }
+
+    async function createUsersSettings(
+        newFilter: any,
+        newSorting: any,
+        newPagination?: newPaginationType,
+        newAdvancedFilters?: any,
+        selectCase?: string[],
+        selectJoker?: string[],
+        newSubOptions?: any
+    ) {
+        if (newPagination && newPagination.current) {
+            newPagination.current = 1;
+        }
+        const newsSettings = {
+            code: `${props.dataModel.resolverName}${router.pathname}`,
+            warehouseWorkerId: state.user.id,
+            valueJson: {
+                filter: newFilter,
+                advancedFilters: newAdvancedFilters ?? advancedFilters,
+                filterParameters: {
+                    selectCase: selectCase,
+                    selectJoker: selectJoker
+                },
+                sorter: newSorting ?? props.sortDefault ?? null,
+                pagination: newPagination ?? defaultPagination,
+                subOptions: newSubOptions ?? undefined
+            }
+        };
+
+        const createQuery = gql`
+            mutation ($input: CreateWarehouseWorkerSettingInput!) {
+                createWarehouseWorkerSetting(input: $input) {
+                    id
+                    code
+                    valueJson
                 }
-            `;
-            const updateVariables = {
-                warehouseWorkerSettingsId: currentUserSettings.id,
-                input: { valueJson: newsSettings.valueJson }
-            };
-            try {
-                const queryInfo: any = await graphqlRequestClient.request(
-                    updateQuery,
-                    updateVariables
-                );
-                dispatch({
-                    type: 'SWITCH_USER_SETTINGS',
-                    userSettings: currentStateUserSettings.map((item: any) => {
-                        return item.id === queryInfo?.updateWarehouseWorkerSetting?.id
-                            ? queryInfo.updateWarehouseWorkerSetting
-                            : item;
-                    })
-                });
-                setSwitchReloadData((prev: boolean) => !prev);
-            } catch (error) {
-                console.log('queryInfo update listComponent error', error);
-                showWarning(t('messages:config-save-error'));
             }
-        },
-        [graphqlRequestClient, dispatch, sortParameter]
-    );
+        `;
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(createQuery, {
+                input: newsSettings
+            });
+            dispatch({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: [...state?.userSettings, queryInfo.createWarehouseWorkerSetting]
+            });
+            setUserSettings(queryInfo.createWarehouseWorkerSetting);
+            setPagination({
+                ...pagination,
+                current: newPagination?.current ?? pagination.current,
+                itemsPerPage: newPagination?.itemsPerPage ?? pagination.itemsPerPage
+            });
+        } catch (error) {
+            console.log('queryInfo create listComponent error', error);
+            showWarning(t('messages:config-save-error'));
+        }
+    }
 
-    const createUsersSettings = useCallback(
-        async (newFilter: any, newSorting: any, newPagination?: newPaginationType) => {
-            const currentUserSettings = userSettingsRef.current;
-            const currentStateUserSettings = stateUserSettingsRef.current;
-
-            if (newSorting === 'default') {
-                newSorting = currentUserSettings?.valueJson?.sorter ?? null;
-            }
-
-            if (newSorting === 'mandatorySort') {
-                newSorting = currentUserSettings?.valueJson?.sorter ?? props.sortDefault;
-            }
-
-            if (newPagination && newPagination.current) {
-                newPagination.current = 1;
-            }
-
-            const newsSettings = {
-                code: `${props.dataModel.resolverName}${router.pathname}`,
-                warehouseWorkerId: state.user.id,
-                valueJson: {
-                    filter: newFilter,
-                    sorter: newSorting,
-                    pagination: newPagination
-                }
-            };
-            const createQuery = gql`
-                mutation ($input: CreateWarehouseWorkerSettingInput!) {
-                    createWarehouseWorkerSetting(input: $input) {
-                        id
-                        code
-                        valueJson
-                    }
-                }
-            `;
-            try {
-                const queryInfo: any = await graphqlRequestClient.request(createQuery, {
-                    input: newsSettings
-                });
-                dispatch({
-                    type: 'SWITCH_USER_SETTINGS',
-                    userSettings: [
-                        ...currentStateUserSettings,
-                        queryInfo.createWarehouseWorkerSetting
-                    ]
-                });
-                setSwitchReloadData((prev: boolean) => !prev);
-            } catch (error) {
-                console.log('queryInfo create listComponent error', error);
-                showWarning(t('messages:config-save-error'));
-            }
-        },
-        [
-            props.dataModel.resolverName,
-            router.pathname,
-            state.user.id,
-            graphqlRequestClient,
-            dispatch
-        ]
-    );
-
-    const deleteUserSettings = useCallback(async () => {
+    async function deleteUserSettings() {
         if (!userSettings) {
             return;
         }
@@ -313,31 +354,117 @@ const ListComponent = (props: IListProps) => {
         setTimeout(() => {
             router.reload();
         }, 3000);
-    }, [userSettings, graphqlRequestClient, dispatch, state.userSettings]);
+    }
+
+    const debouncedUpdateUserSettings = useRef(
+        debounce(
+            (
+                newFilter: any,
+                newSorting: any,
+                newPagination?: newPaginationType,
+                advancedFilters?: any,
+                selectCase?: string[],
+                selectJoker?: string[],
+                newSubOptions?: any,
+                currentUserSettings?: any
+            ) => {
+                updateUserSettings(
+                    newFilter,
+                    newSorting,
+                    newPagination,
+                    advancedFilters,
+                    selectCase,
+                    selectJoker,
+                    newSubOptions,
+                    currentUserSettings
+                );
+            },
+            500 // ms, adjust as needed
+        )
+    ).current;
+
+    const debouncedCreateUsersSettings = useRef(
+        debounce(
+            (
+                newFilter: any,
+                newSorting: any,
+                newPagination?: newPaginationType,
+                advancedFilters?: any,
+                selectCase?: string[],
+                selectJoker?: string[],
+                newSubOptions?: any
+            ) => {
+                createUsersSettings(
+                    newFilter,
+                    newSorting,
+                    newPagination,
+                    advancedFilters,
+                    selectCase,
+                    selectJoker,
+                    newSubOptions
+                );
+            },
+            500
+        )
+    ).current;
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            debouncedUpdateUserSettings.cancel();
+            debouncedCreateUsersSettings.cancel();
+        };
+    }, []);
 
     const changeFilter = useCallback(
-        (filter: any, sorter: any, pagination?: newPaginationType) => {
-            const currentUserSettings = userSettingsRef.current;
-            if (currentUserSettings) {
-                updateUserSettings(filter, sorter, pagination);
+        (
+            newFilter: any = null,
+            newSorter: any = null,
+            newPagination?: newPaginationType,
+            newAdvancedFilters?: any,
+            newSelectCase?: string[],
+            newSelectJoker?: string[],
+            newSubOptions?: any
+        ) => {
+            // Always use the latest userSettings from state
+            if (userSettings) {
+                debouncedUpdateUserSettings(
+                    newFilter,
+                    newSorter,
+                    newPagination,
+                    newAdvancedFilters ?? advancedFilters,
+                    newSelectCase ?? selectCase,
+                    newSelectJoker ?? selectJoker,
+                    newSubOptions,
+                    newUserSettings // always use latest
+                );
             } else {
-                createUsersSettings(filter, sorter, pagination);
+                debouncedCreateUsersSettings(
+                    newFilter,
+                    newSorter,
+                    pagination,
+                    newAdvancedFilters,
+                    newSelectCase,
+                    newSelectJoker,
+                    newSubOptions
+                );
             }
         },
-        [updateUserSettings, createUsersSettings]
+        [
+            userSettings,
+            newUserSettings,
+            debouncedUpdateUserSettings,
+            debouncedCreateUsersSettings,
+            advancedFilters,
+            selectCase,
+            selectJoker,
+            pagination
+        ]
     );
-
-    // #endregion
-
-    const requestHeader = {
-        // 'X-API-fake': 'fake',
-        // "X-API-seed": "same",
-        authorization: graphqlRequestClient?.requestConfig?.headers?.authorization
-    };
 
     // #region DEFAULT PROPS
     const defaultProps = {
-        searchable: true,
+        searchable: props.isDragAndDroppable ? false : true,
         searchCriteria: {},
         extraColumns: [],
         actionColumns: [],
@@ -345,19 +472,21 @@ const ListComponent = (props: IListProps) => {
     };
     props = { ...defaultProps, ...props };
     // SearchForm in cookies
-    let searchCriterias: any = {};
+    const searchCriterias: any = Object.keys(props.searchCriteria).reduce(
+        (acc: any, key: string) => {
+            if (props.searchCriteria[key] !== undefined && props.searchCriteria[key] !== null) {
+                acc[key] =
+                    !Array.isArray(props.searchCriteria[key]) &&
+                    props.searchCriteria[key] !== 'String'
+                        ? [props.searchCriteria[key]]
+                        : props.searchCriteria[key];
+            }
+            return acc;
+        },
+        {}
+    );
     let resetForm = false;
     let showBadge = false;
-
-    searchCriterias = props.searchCriteria;
-
-    const mandatory_Filter = searchCriterias?.scope
-        ? `_${searchCriterias.scope}`
-        : searchCriterias?.category
-          ? `_${searchCriterias.category}`
-          : searchCriterias?.orderType
-            ? `_${searchCriterias.orderType}`
-            : '';
     // #endregion
 
     // #region extract data from modelV2
@@ -389,110 +518,96 @@ const ListComponent = (props: IListProps) => {
         (key) => props.dataModel.fieldsInfo[key].isDefaultHiddenList
     );
 
-    let filterFields = Object.entries(props.dataModel.fieldsInfo)
-        .filter(([, value]) => value.searchingFormat !== null)
-        .map(([key, value]) => ({
-            displayName: t(`d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`),
-            name: key.replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`).replace(/}/g, ''),
-            type: FormDataType[value.searchingFormat as keyof typeof FormDataType],
-            maxLength: value.maxLength ?? undefined,
-            config: value.config ?? undefined,
-            param: value.param ?? undefined,
-            optionTable: value.optionTable ?? undefined,
-            isMultipleSearch: value.isMultipleSearch ?? undefined,
-            initialValue: undefined
-        }));
+    const [filterFields, setFilterFields] = useState<any>(() =>
+        Object.entries(props.dataModel.fieldsInfo)
+            .filter(
+                ([key, value]) =>
+                    value.searchingFormat !== null ||
+                    Object.keys(props.searchCriteria).includes(key)
+            )
+            .map(([key, value]) => ({
+                displayName: t(
+                    `d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`
+                ),
+                name: key.replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`).replace(/}/g, ''),
+                type: FormDataType[value.searchingFormat as keyof typeof FormDataType],
+                maxLength: value.maxLength ?? undefined,
+                config: value.config ?? undefined,
+                configList: configs.filter((config: any) => config.scope === value.config),
+                param: value.param ?? undefined,
+                paramList: parameters.filter((param: any) => param.scope === value.param),
+                optionTable: value.optionTable ?? undefined,
+                isMultipleSearch: value.isMultipleSearch ?? undefined,
+                initialValue: undefined
+            }))
+    );
+    // Update filterFields if props.filterFields changes
+    useEffect(() => {
+        let updatedFilterFields = Object.entries(props.dataModel.fieldsInfo)
+            .filter(
+                ([key, value]) =>
+                    value.searchingFormat !== null ||
+                    Object.keys(props.searchCriteria).includes(key)
+            )
+            .map(([key, value]) => ({
+                displayName: t(
+                    `d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`
+                ),
+                name: key.replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`).replace(/}/g, ''),
+                type: FormDataType[value.searchingFormat as keyof typeof FormDataType],
+                maxLength: value.maxLength ?? undefined,
+                config: value.config ?? undefined,
+                configList: configs.filter((config: any) => config.scope === value.config),
+                param: value.param ?? undefined,
+                paramList: parameters.filter((param: any) => param.scope === value.param),
+                optionTable: value.optionTable ?? undefined,
+                isMultipleSearch: value.isMultipleSearch ?? undefined,
+                initialValue: undefined
+            }));
+        if (props.filterFields) {
+            updatedFilterFields = updatedFilterFields.map((field) => {
+                const matchedField = props.filterFields!.find((item) => item.name === field.name);
+                // Remove duplicate objects from subOptions array if present
+                const matchedFieldFiltered = {
+                    ...matchedField,
+                    subOptions: matchedField?.subOptions
+                        ? matchedField.subOptions.filter(
+                              (option: any, idx: number, arr: any[]) =>
+                                  arr.findIndex(
+                                      (o) => JSON.stringify(o) === JSON.stringify(option)
+                                  ) === idx
+                          )
+                        : undefined
+                };
+                return matchedFieldFiltered ? { ...field, ...matchedFieldFiltered } : field;
+            });
+        }
+        if (props.cumulSearchInfos) {
+            updatedFilterFields.push(props.cumulSearchInfos.filters);
+        }
+        const savedFilters = userSettings?.valueJson?.filter ?? undefined;
 
-    // handle cancelled or closed item
-    const [retrievedStatuses, setRetrievedStatuses] = useState<any>();
-    const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>();
-
-    const statusScope = filterFields.find((obj: any) => obj.name === 'status')?.config ?? null;
-    //#region handle scopes list (specific to config and param)
-    async function getStatusesList(scope: string) {
-        const query = gql`
-            query configs(
-                $filters: ConfigSearchFilters!
-                $advancedFilters: [ConfigAdvancedSearchFilters!]
-            ) {
-                configs(filters: $filters, advancedFilters: $advancedFilters) {
-                    results {
-                        value
-                        code
-                        translation
-                    }
-                }
-            }
-        `;
-        const variables = {
-            filters: { scope: scope },
-            advancedFilters: [
-                { filter: [{ searchType: 'DIFFERENT', field: { code: 2000 } }] },
-                { filter: [{ searchType: 'DIFFERENT', field: { code: 1005 } }] }
-            ]
+        const newSearchCriterias = {
+            ...savedFilters,
+            ...searchCriterias
         };
 
-        try {
-            const result = await graphqlRequestClient.request(query, variables);
-            setRetrievedStatuses(result.configs.results);
-            const statusField = filterFields.find((obj: any) => obj.name === 'status');
-            if (
-                statusField &&
-                JSON.stringify(statusField.initialValue) ===
-                    JSON.stringify(
-                        result.configs.results.map((status: any) => parseInt(status.code))
-                    )
-            ) {
-                setIsWithoutClosed(true);
+        updatedFilterFields = updatedFilterFields.map((item: any) => {
+            if (item.name in newSearchCriterias) {
+                return {
+                    ...item,
+                    initialValue: newSearchCriterias[item.name]
+                };
+            } else {
+                return item;
             }
-        } catch (error) {
-            console.log('error in retrieving statuses', error);
-        }
-    }
-
-    useEffect(() => {
-        if (statusScope) {
-            getStatusesList(statusScope);
-        }
-    }, []);
-    //#endregion
-
-    function addForcedFilter(addFilter: boolean) {
-        const currentSavedFilters = userSettings?.valueJson?.filter ?? {};
-        const newFilter = { ...currentSavedFilters };
-        const initialValues = { ...newFilter, ...props.searchCriteria };
-
-        if (addFilter && retrievedStatuses) {
-            newFilter.status = retrievedStatuses.map((status: any) => parseInt(status.code));
-            setPagination({
-                total: undefined,
-                current: DEFAULT_PAGE_NUMBER,
-                itemsPerPage: DEFAULT_ITEMS_PER_PAGE
-            });
-        } else {
-            delete newFilter.status;
-            filterFields = filterFields.map((item) => {
-                if (item.name in initialValues) {
-                    return {
-                        ...item,
-                        initialValue: initialValues[item.name]
-                    };
-                } else {
-                    return item;
-                }
-            });
-        }
-        changeFilter(newFilter, 'default', {
-            current: DEFAULT_PAGE_NUMBER,
-            itemsPerPage: DEFAULT_ITEMS_PER_PAGE
         });
-        showBadge = true;
-        setSwitchReloadData((prev: boolean) => !prev);
-    }
 
-    const btnName = isWithoutClosed
-        ? t('actions:with-closed-cancel-items')
-        : t('actions:without-closed-cancel-items');
+        setFilterFields(updatedFilterFields);
+    }, [userSettings, props.cumulSearchInfos, props.filterFields]);
+    // handle cancelled or closed item
+
+    const statusScope = filterFields.find((obj: any) => obj.name === 'status')?.config ?? null;
 
     // extract id, name and link from props.dataModel.fieldsInfo where link is not null
     const linkFields = Object.keys(props.dataModel.fieldsInfo)
@@ -501,17 +616,58 @@ const ListComponent = (props: IListProps) => {
             link: props.dataModel.fieldsInfo[key].link,
             name: key.replace(/{/g, '_').replace(/}/g, '')
         }));
+    //#endregion
 
-    // #endregion
+    // #region WITHOUT CLOSED ITEMS
+    const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>(false);
+    const btnName = t('actions:without-closed-cancel-items');
 
-    //check if there is something in props.filterFields and if yes, overwrite it in filterFields
-    if (props.filterFields) {
-        filterFields = filterFields.map((field) => {
-            const matchedField = props.filterFields!.find((item) => item.name === field.name);
-            return matchedField ? { ...field, ...matchedField } : field;
+    function addForcedFilter() {
+        setAdvancedFilters((prev: any) => {
+            if (
+                prev
+                    .map((item: any) => item.filter[0].field.status)
+                    .some((status: any) => status === 2000 || status === 1005)
+            ) {
+                const newAdvancedFilters = prev.filter(
+                    (item: any) =>
+                        item.filter[0].field.status !== 2000 && item.filter[0].field.status !== 1005
+                );
+                changeFilter(
+                    null,
+                    null,
+                    defaultPagination,
+                    newAdvancedFilters,
+                    selectCase,
+                    selectJoker,
+                    null
+                );
+                setIsWithoutClosed(false);
+                return newAdvancedFilters;
+            } else {
+                const newAdvancedFilters = [
+                    ...prev,
+                    { filter: [{ searchType: 'DIFFERENT', field: { status: 2000 } }] },
+                    { filter: [{ searchType: 'DIFFERENT', field: { status: 1005 } }] }
+                ];
+                changeFilter(
+                    null,
+                    null,
+                    defaultPagination,
+                    newAdvancedFilters,
+                    selectCase,
+                    selectJoker,
+                    null
+                );
+                setIsWithoutClosed(true);
+                return newAdvancedFilters;
+            }
         });
     }
 
+    // #endregion
+
+    // #region DELETE MUTATION
     const createMovement = async (dataToCreateMovement: any) => {
         const executeFunctionQuery = gql`
             mutation executeFunction($functionName: String!, $event: JSON!) {
@@ -538,12 +694,11 @@ const ListComponent = (props: IListProps) => {
             executeFunctionVariables
         );
     };
-    // #region DELETE MUTATION
     const {
         isLoading: deleteLoading,
         result: deleteResult,
         mutate: callDelete
-    } = useDelete(props.dataModel.endpoints.delete);
+    } = useDelete(props.dataModel.endpoints.delete, null, props.isCreateAMovement);
 
     useEffect(() => {
         if (props.triggerDelete && props.triggerDelete.idToDelete) {
@@ -719,94 +874,99 @@ const ListComponent = (props: IListProps) => {
     // #region SEARCH OPERATIONS
 
     if (props.searchable) {
-        const savedFilters = userSettings?.valueJson?.filter ?? undefined;
-
-        if (savedFilters) {
-            searchCriterias = { ...savedFilters, ...props.searchCriteria };
-            const initialValues = searchCriterias;
-
-            filterFields = filterFields.map((item) => {
-                if (item.name in initialValues) {
-                    return {
-                        ...item,
-                        initialValue: initialValues[item.name]
-                    };
-                } else {
-                    return item;
+        useEffect(() => {
+            if (userSettings && userSettings.valueJson?.filterParameters) {
+                setSelectCase(userSettings.valueJson.filterParameters.selectCase ?? []);
+                setSelectJoker(userSettings.valueJson.filterParameters.selectJoker ?? []);
+            }
+            if (userSettings && userSettings.valueJson?.advancedFilters) {
+                setAdvancedFilters(userSettings.valueJson.advancedFilters ?? []);
+                if (
+                    userSettings.valueJson.advancedFilters
+                        .map((item: any) => item.filter[0].field.status)
+                        .some((status: any) => status === 2000 || status === 1005)
+                ) {
+                    setIsWithoutClosed(true);
                 }
-            });
-            showBadge = true;
-        }
+            }
+            if (userSettings && userSettings.valueJson?.subOptions) {
+                setAllSubOptions(userSettings.valueJson.subOptions ?? {});
+            }
+        }, []);
+        showBadge = true;
     }
 
     const [search, setSearch] = useState(searchCriterias);
+    const [searchWithParams, setSearchWithParams] = useState<any>({});
+    const [allSubOptions, setAllSubOptions] = useState<any>([]);
 
     useEffect(() => {
-        if (JSON.stringify(search) !== JSON.stringify(searchCriterias)) {
-            if (props.isDragAndDroppable && props.isDragSource) {
-                setPagination({
-                    total: undefined,
-                    current: DEFAULT_PAGE_NUMBER,
-                    itemsPerPage: 10
-                });
-                changeFilter(searchCriterias, 'default', {
-                    current: DEFAULT_PAGE_NUMBER,
-                    itemsPerPage: 10
-                });
+        if (filterFields.length === 0) {
+            return;
+        }
+        if (filterFields.length > 0 && !resetForm) {
+            const newSearchCriterias: any = searchCriterias ?? {};
+            filterFields.forEach((field: any) => {
+                if (field.initialValue !== undefined && field.initialValue !== null) {
+                    if (field.isMultipleSearch) {
+                        newSearchCriterias[field.name] = Array.isArray(field.initialValue)
+                            ? field.initialValue
+                            : [field.initialValue];
+                    } else {
+                        newSearchCriterias[field.name] = field.initialValue;
+                    }
+                }
+            });
+            setSearch(newSearchCriterias);
+        }
+    }, [filterFields]);
+
+    if (props.cumulSearchInfos && 'handlingUnit_Category' in search) {
+        const HUCParameters = parameters?.filter(
+            (param: any) => param.scope === 'handling_unit_category'
+        );
+
+        const paramTexts = search?.handlingUnit_Category?.map((key: any) => {
+            const found = HUCParameters?.find(
+                (param: any) => parseInt(param.code) === parseInt(key)
+            );
+            return found.translation[`${filterLanguage}`] || found.value;
+        });
+
+        const transformed = {
+            handlingUnit_Category: Array.isArray(paramTexts) ? paramTexts.join(' / ') : paramTexts
+        };
+        props.cumulSearchInfos.data = transformed;
+    }
+
+    // #endregion
+
+    // #region Search Drawer
+
+    useEffect(() => {
+        let searchWithParamsInfos: { [key: string]: any } = {};
+
+        Object.entries(search).forEach(([key, value]) => {
+            let filterParams = '';
+            if (selectCase.includes(key)) {
+                filterParams = filterParams + '^';
             }
-            setSearch(searchCriterias);
-        }
-    }, [searchCriterias]);
+            if (selectJoker.includes(key)) {
+                filterParams = filterParams + '%';
+            }
+            if (filterParams !== '') {
+                searchWithParamsInfos[key] = [filterParams, value];
+            } else {
+                searchWithParamsInfos[key] =
+                    Array.isArray(value) && value.length === 1 ? value[0] : value;
+            }
+        });
 
-    //	Search Drawer
+        setSearchWithParams(searchWithParamsInfos);
+    }, [search, selectCase, selectJoker]);
+
     const [formSearch] = Form.useForm();
-
-    const dispatchDrawer = useDrawerDispatch();
-
-    const openSearchDrawer = useCallback(() => {
-        return dispatchDrawer({
-            size: 450,
-            type: 'OPEN_DRAWER',
-            title: 'actions:search',
-            comfirmButtonTitle: 'actions:search',
-            comfirmButton: true,
-            cancelButtonTitle: 'actions:reset',
-            cancelButton: true,
-            submit: true,
-            content: (
-                <ListFilters
-                    form={formSearch}
-                    columns={filterFields}
-                    handleSubmit={handleSubmit}
-                    resetForm={resetForm}
-                    allFieldsInitialValue={allFieldsInitialValue ?? undefined}
-                />
-            ),
-            onCancel: () => handleReset(),
-            onComfirm: () => handleSubmit()
-        });
-    }, [dispatchDrawer, filterFields]);
-
-    const closeDrawer = useCallback(
-        () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
-        [dispatchDrawer]
-    );
-
-    const handleReset = () => {
-        changeFilter({}, 'default', {
-            current: DEFAULT_PAGE_NUMBER,
-            itemsPerPage: DEFAULT_ITEMS_PER_PAGE
-        });
-        !props.searchCriteria ? setSearch({}) : setSearch({ ...props.searchCriteria });
-        setIsWithoutClosed(false);
-        allFieldsInitialValue = undefined;
-        resetForm = true;
-        for (const obj of filterFields) {
-            obj.initialValue = undefined;
-        }
-        closeDrawer();
-    };
-
+    const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
     let allFieldsInitialValue: any = undefined;
 
     const handleSubmit = () => {
@@ -815,14 +975,13 @@ const ListComponent = (props: IListProps) => {
             .then(() => {
                 // Here make api call of something else
                 const searchValues = formSearch.getFieldsValue(true);
-
                 const newSearchValues = {
                     ...searchValues,
-                    ...props.searchCriteria
+                    ...searchCriterias
                 };
 
                 showBadge = false;
-                const savedFilters: any = {};
+                let savedFilters: any = {};
                 if (newSearchValues) {
                     for (const [key, value] of Object.entries(newSearchValues)) {
                         if (
@@ -833,81 +992,106 @@ const ListComponent = (props: IListProps) => {
                             savedFilters[key] = value;
                         }
                     }
-
                     if (savedFilters.allFields) {
                         allFieldsInitialValue = savedFilters.allFields;
                     }
+                    const allSubOptionsFiltered = allSubOptions
+                        .map((item: any) => {
+                            const itemKey = Object.keys(item)[0];
+                            if (savedFilters[itemKey]) {
+                                return {
+                                    ...item,
+                                    [itemKey]: item[itemKey].filter((option: any) =>
+                                        savedFilters[itemKey].includes(option.key)
+                                    )
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(Boolean);
 
-                    setPagination({
-                        total: undefined,
-                        current: DEFAULT_PAGE_NUMBER,
-                        itemsPerPage: DEFAULT_ITEMS_PER_PAGE
-                    });
-                    changeFilter(savedFilters, 'default', {
-                        current: DEFAULT_PAGE_NUMBER,
-                        itemsPerPage: DEFAULT_ITEMS_PER_PAGE
-                    });
-
+                    changeFilter(
+                        savedFilters,
+                        null,
+                        defaultPagination,
+                        [],
+                        selectCase,
+                        selectJoker,
+                        allSubOptionsFiltered
+                    );
                     if (Object.keys(savedFilters).length > 0) {
                         showBadge = true;
                     }
-
-                    filterFields = filterFields.map((item) => {
-                        if (item.name in searchCriterias) {
-                            return {
-                                ...item,
-                                initialValue: searchCriterias[item.name]
-                            };
-                        } else {
-                            return item;
-                        }
-                    });
                 }
-
-                setSearch(savedFilters);
-                closeDrawer();
+                setIsSearchDrawerOpen(false);
             })
-            .catch((err: any) => showError(t('errors:DB-000111')));
+            .catch((err: any) => {
+                console.log('Error validating form:', err);
+                showError(t('errors:DB-000111'));
+            });
+    };
+
+    function isSelectCaseExptions() {
+        // because they are not in the resolver of the dictionary manageur
+        if (router.pathname.includes('roles') || router.pathname.includes('warehouse-workers')) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function drawerProps() {
+        return {
+            size: 450,
+            isOpen: isSearchDrawerOpen,
+            setIsOpen: setIsSearchDrawerOpen,
+            title: 'actions:search',
+            comfirmButtonTitle: 'actions:search',
+            comfirmButton: true,
+            cancelButtonTitle: 'actions:reset',
+            cancelButton: true,
+            submit: true,
+            content: (
+                <ListFilters
+                    form={formSearch}
+                    columns={filterFields}
+                    setAllSubOptions={setAllSubOptions}
+                    handleSubmit={handleSubmit}
+                    resetForm={resetForm}
+                    allFieldsInitialValue={allFieldsInitialValue ?? undefined}
+                    selectCase={!isSelectCaseExptions() ? selectCase : undefined}
+                    setSelectCase={!isSelectCaseExptions() ? setSelectCase : undefined}
+                    selectJoker={!isSelectCaseExptions() ? selectJoker : undefined}
+                    setSelectJoker={!isSelectCaseExptions() ? setSelectJoker : undefined}
+                />
+            ),
+            onCancel: () => handleReset(),
+            onComfirm: () => handleSubmit()
+        };
+    }
+
+    const handleReset = () => {
+        console.log('handleReset called');
+        changeFilter({}, null, defaultPagination, [], [], [], []);
+        setIsWithoutClosed(false);
+        setAdvancedFilters([]);
+        setSelectCase([]);
+        setSelectJoker([]);
+        formSearch.resetFields();
+        // Reset search criteria to empty object if no search criteria is provided
+        !searchCriterias ? setSearch({}) : setSearch({ ...searchCriterias });
+        allFieldsInitialValue = undefined;
+        resetForm = true;
+        for (const obj of filterFields) {
+            obj.initialValue = undefined;
+        }
+        setIsSearchDrawerOpen(false);
     };
 
     // #endregion
 
-    // #region DATATABLE
-    const [rows, setRows] = useState<DataQueryType>();
-    const [columns, setColumns] = useState<Array<any>>([]);
-
-    // for sort default value, decided order is : 1-value from cookies, 2-value from Model, 3-value from index.tsx
-    let defaultModelSort = null;
-    for (const key in props.dataModel.fieldsInfo) {
-        if (props.dataModel.fieldsInfo[key].hasOwnProperty('defaultSort')) {
-            defaultModelSort = {
-                field: key.replace(/{/g, '_').replace(/}/g, ''),
-                ascending: props.dataModel.fieldsInfo[key].defaultSort == 'ascending' ? true : false
-            };
-        }
-    }
-
-    const [pagination, setPagination] = useState<PaginationType>({
-        total: undefined,
-        current: userSettings?.valueJson?.pagination?.current ?? DEFAULT_PAGE_NUMBER,
-        itemsPerPage:
-            userSettings?.valueJson?.pagination?.itemsPerPage ??
-            props.itemperpage ??
-            DEFAULT_ITEMS_PER_PAGE
-    });
-
-    //first version of advancedFilters handling is for development purpose only
-    const advancedFilters = props.advancedFilters ?? null;
-    // this is to adjust pagination when the last item of the last page is dynamically removed (e.g. drag and drop)
-    const adjustedPagination =
-        props.isDragSource &&
-        (pagination?.total ?? 1) / pagination?.itemsPerPage === pagination?.current - 1
-            ? pagination?.current > 1
-                ? pagination.current - 1
-                : pagination?.current
-            : pagination?.current;
-
     // #region USELIST
+    const functions = props.functions ?? null;
     const {
         isLoading,
         data,
@@ -916,16 +1100,19 @@ const ListComponent = (props: IListProps) => {
         props.dataModel.resolverName,
         props.dataModel.endpoints.list,
         listFields,
-        search,
+        searchWithParams,
         adjustedPagination,
         pagination.itemsPerPage,
         sort,
         router.locale,
         defaultModelSort,
-        advancedFilters
+        advancedFilters,
+        functions
     );
 
     // #endregion
+
+    // #region RELOAD DATA
 
     useEffect(() => {
         // Time delay before reloading data
@@ -934,17 +1121,13 @@ const ListComponent = (props: IListProps) => {
             reloadData();
         }, delay);
 
-        if (props.isDragAndDroppable) {
-            reloadData();
-        } else {
-            debouncedReload();
-        }
+        debouncedReload();
 
         // Cleanup function to cancel the debounce on unmount or dependency change
         return () => {
             debouncedReload.cancel();
         };
-    }, [search, props.refetch, router.locale, switchReloadData, advancedFilters]);
+    }, [searchWithParams, props.refetch, router.locale]);
 
     // #endregion
 
@@ -998,6 +1181,13 @@ const ListComponent = (props: IListProps) => {
         });
     };
 
+    const stickyActions = {
+        export: {
+            active: props.dataModel.endpoints.export ? true : false,
+            function: () => exportData()
+        }
+    };
+
     useEffect(() => {
         if (exportLoading) {
             showInfo(t('messages:info-export-wip'));
@@ -1016,19 +1206,11 @@ const ListComponent = (props: IListProps) => {
 
     // #endregion
 
-    // #region TABLE ACTIONS
-    const stickyActions = {
-        export: {
-            active: props.dataModel.endpoints.export ? true : false,
-            function: () => exportData()
-        }
-    };
-
-    // make wrapper function to give child
+    // #region onChangePagination
     const onChangePagination = useCallback(
         (currentPage: number, itemsPerPage: number) => {
             // Re fetch data for new current page or items per page
-            changeFilter(null, 'mandatorySort', {
+            changeFilter(null, null, {
                 current: currentPage,
                 itemsPerPage: itemsPerPage
             });
@@ -1037,10 +1219,11 @@ const ListComponent = (props: IListProps) => {
                 current: currentPage,
                 itemsPerPage: itemsPerPage
             });
-            setSwitchReloadData((prev: boolean) => !prev);
         },
         [setPagination, rows]
     );
+
+    // #endregion
 
     // #region arrange data for dynamic display
     useEffect(() => {
@@ -1055,103 +1238,501 @@ const ListComponent = (props: IListProps) => {
                         totalPages: 1,
                         results: props.defaultEmptyList
                     };
-                } else {
-                    setSwitchReloadData((prev: boolean) => !prev);
                 }
             }
-
+            if (props.cumulSearchInfos && listData && listData['results']) {
+                listData.results = listData?.results.map((item: any) => ({
+                    ...item,
+                    ...(props.cumulSearchInfos.data || {})
+                }));
+            }
             if (listData && listData['results']) {
                 const result_list: Array<any> = [];
-                if (listData['results'].length > 0) {
-                    let sort_index = 1;
+                switch (props.dataModel.modelName) {
+                    case 'RecordHistoryDetail':
+                        if (listData['results'].length > 0) {
+                            let sort_index = 1;
 
-                    listData['results'] = listData['results'].map((item: any) => {
-                        const flatItem = flatten(item);
-                        return { ...flatItem, listDataCount: listData.count };
-                    });
-                    if (props.isDragAndDroppable && !props.isDragSource) {
-                        listData['results'] = listData['results'].map(
-                            (item: any, index: number) => {
-                                return { ...item, index };
-                            }
-                        );
-                        if (listData['results'].filter((e: any) => e.id !== 'null').length !== 0) {
-                            listData['results'] = [
-                                ...listData['results'],
-                                ...props.defaultEmptyList
-                            ];
-                        }
-                    }
-                    // iterate over the first result and get list of columns to define table structure
-                    listFields.forEach((column_name: any, index: number) => {
-                        if (column_name.includes('{')) {
-                            column_name = column_name.replaceAll('{', '_').replaceAll('}', '');
-                        }
-                        // Customize title name
-                        let title = `d:${column_name}`;
-                        if (displayedLabels && column_name in displayedLabels) {
-                            title = `d:${displayedLabels[column_name]}`;
-                        }
+                            listData['results'] = listData['results'].map((item: any) => {
+                                return flatten(item);
+                            });
 
-                        const row_data: any = {
-                            title: title,
-                            dataIndex: column_name,
-                            key: column_name,
-                            showSorterTooltip: false
-                        };
+                            let source = listData['results'][0];
+                            Object.keys(source).forEach((column_name: any) => {
+                                // Customize title name
+                                let title = `d:${column_name}`;
+                                if (displayedLabels && column_name in displayedLabels) {
+                                    title = `d:${displayedLabels[column_name]}`;
+                                }
 
-                        // if column is in sortable list add sorter property
-                        if (
-                            sortableFields.length > 0 &&
-                            sortableFields.includes(column_name) &&
-                            !props.triggerPriorityChange
-                        ) {
-                            row_data['sorter'] = { multiple: sort_index };
-                            row_data['showSorterTooltip'] = false;
-                            sort_index++;
-                        }
-
-                        //If default sort memorized or passed add defaultSortOrder
-                        if (sort) {
-                            sort.forEach((sorter: any) => {
-                                if (props.isDragAndDroppable) {
-                                    if (column_name === 'index') {
-                                        row_data['defaultSortOrder'] = 'ascend';
+                                // Specific to record_history
+                                const prefixesToCheck = ['d:objectAfter_', 'd:objectBefore_'];
+                                // Check if the title starts with any of the prefixes
+                                for (const prefix of prefixesToCheck) {
+                                    if (title.startsWith(prefix)) {
+                                        title = title.slice(prefix.length);
+                                        break;
                                     }
-                                } else if (sorter.field === column_name) {
-                                    row_data['defaultSortOrder'] = sorter.ascending
-                                        ? 'ascend'
-                                        : 'descend';
+                                }
+
+                                const row_data: any = {
+                                    title: title,
+                                    dataIndex: column_name,
+                                    key: column_name,
+                                    showSorterTooltip: false
+                                };
+
+                                // if column is in sortable list add sorter property
+                                if (
+                                    sortableFields.length > 0 &&
+                                    sortableFields.includes(column_name)
+                                ) {
+                                    row_data['sorter'] = { multiple: sort_index };
+                                    row_data['showSorterTooltip'] = false;
+                                    sort_index++;
+                                }
+
+                                //If default sort memorized or passed add defaultSortOrder
+                                if (sort) {
+                                    sort.forEach((sorter: any) => {
+                                        if (sorter.field === column_name) {
+                                            row_data['defaultSortOrder'] = sorter.ascending
+                                                ? 'ascend'
+                                                : 'descend';
+                                        }
+                                    });
+                                }
+
+                                // Hide fields if there is any hidden selected.
+                                if (
+                                    !excludedListFields ||
+                                    !excludedListFields.includes(row_data.key)
+                                ) {
+                                    result_list.push(row_data);
                                 }
                             });
                         }
 
-                        // Hide fields if there is any hidden selected.
-                        if (!excludedListFields || !excludedListFields.includes(row_data.key)) {
-                            result_list.push(row_data);
+                        // set columns to use in table
+                        setColumns(result_list);
+                        if (props.setData) props.setData(listData.results);
+                        //this is to initialize and keep data at a given time on parent component
+                        if (props.setInitialData) props.setInitialData(listData.results);
+                        if (
+                            !listData?.results[0]?.objectBefore_id &&
+                            !listData?.results[0]?.objectAfter_id
+                        ) {
+                            setRows({
+                                ...rows,
+                                results: [],
+                                count: rows?.count ?? 0,
+                                itemsPerPage: rows?.itemsPerPage ?? 10,
+                                totalPages: rows?.totalPages ?? 1
+                            });
+                        } else {
+                            setRows(listData);
                         }
-                    });
+
+                        setPagination({
+                            ...pagination,
+                            current: adjustedPagination,
+                            total: listData['count']
+                        });
+
+                        break;
+                    case 'RuleVersionConfigDetail':
+                        if (listData['results'].length > 0) {
+                            listData['results'] = listData['results'].map((item: any) => {
+                                if (item.ruleLineConfigurationOut) {
+                                    Object.entries(item.ruleLineConfigurationOut).forEach(
+                                        ([key, value]: any) => {
+                                            item.ruleLineConfigurationOut[key] = {
+                                                value: JSON.stringify(value.value)
+                                            };
+                                        }
+                                    );
+                                }
+                                if (item.ruleLineConfigurationIn) {
+                                    Object.entries(item.ruleLineConfigurationIn).forEach(
+                                        ([key, value]: any) => {
+                                            item.ruleLineConfigurationIn[key] = {
+                                                value: JSON.stringify(value.value),
+                                                operator: value.operator
+                                            };
+                                        }
+                                    );
+                                }
+                                const flatItem = flatten(item);
+                                return { ...flatItem, listDataCount: listData.count };
+                            });
+
+                            let new_column_list: any[] = [
+                                {
+                                    title: 'd:order',
+                                    dataIndex: 'order',
+                                    key: 'order',
+                                    showSorterTooltip: false
+                                }
+                            ];
+
+                            //Specific for display input/output elements of rule
+                            const newListData: any[] = [];
+
+                            listData['results'].map((result: any) => {
+                                const newElementListData: any = {};
+
+                                newElementListData['order'] = result['order'];
+                                newElementListData['id'] = result['id'];
+                                newElementListData['listDataCount'] = result['listDataCount'];
+
+                                // Input/output rule fields
+
+                                const operatorField: Record<string, any> = {};
+                                const valueFields: Record<string, any> = {};
+
+                                Object.keys(result).forEach((field: any) => {
+                                    const inputFields = field.split('_');
+                                    const valueType = inputFields[inputFields.length - 1];
+                                    if (valueType === 'operator') {
+                                        operatorField[field] = result[field];
+                                    }
+                                    if (valueType === 'value') {
+                                        valueFields[field] = result[field];
+                                    }
+                                });
+
+                                Object.keys(valueFields).forEach((valueField: any) => {
+                                    const inputFields = valueField.split('_');
+
+                                    const typeField = inputFields[0];
+                                    const value = inputFields
+                                        .slice(1, inputFields.length - 1)
+                                        .join('_');
+                                    const operator =
+                                        operatorField[typeField + '_' + value + '_operator'];
+                                    // Remove duplicate columns based on dataIndex before pushing new column
+                                    if (
+                                        !new_column_list.some(
+                                            (col) => col.dataIndex === typeField + '_' + value
+                                        )
+                                    ) {
+                                        new_column_list.push({
+                                            title:
+                                                value +
+                                                ' (' +
+                                                ((typeField.endsWith('In')
+                                                    ? t('d:input')
+                                                    : t('d:output')) +
+                                                    ')'),
+                                            dataIndex: typeField + '_' + value,
+                                            key: typeField + '_' + value,
+                                            showSorterTooltip: false
+                                        });
+                                    }
+
+                                    function isNotNull(value: any) {
+                                        if (
+                                            value === 'null' ||
+                                            value === null ||
+                                            value === undefined
+                                        ) {
+                                            return '';
+                                        } else {
+                                            return value;
+                                        }
+                                    }
+
+                                    if (typeField.endsWith('Out')) {
+                                        newElementListData[typeField + '_' + value] = isNotNull(
+                                            valueFields[valueField]
+                                        );
+                                    } else if (typeField.endsWith('In')) {
+                                        if (operator === '*') {
+                                            newElementListData[typeField + '_' + value] =
+                                                isNotNull(value) + ' ' + isNotNull(operator);
+                                        } else {
+                                            newElementListData[typeField + '_' + value] =
+                                                isNotNull(value) +
+                                                ' ' +
+                                                isNotNull(operator) +
+                                                ' ' +
+                                                isNotNull(valueFields[valueField]);
+                                        }
+                                    }
+                                });
+
+                                newListData.push(newElementListData);
+                                return null;
+                            });
+                            listData.results = newListData;
+                            setRows(listData);
+                            setColumns(new_column_list);
+                        }
+
+                        if (props.setData) props.setData(listData.results);
+                        setPagination({
+                            ...pagination,
+                            total: listData['count']
+                        });
+
+                        break;
+                    case 'RuleVersionDetailIn':
+                    case 'RuleVersionDetailOut':
+                        if (listData['results'].length > 0) {
+                            let sort_index = 1;
+
+                            listData['results'] = listData['results'].map((item: any) => {
+                                return flatten(item);
+                            });
+                            // Specific to rule_version
+                            // iterate over the first result and get list of columns to define table structure
+                            Object.keys(listData['results'][0]).forEach((column_name: any) => {
+                                // Customize title name
+
+                                let title = `d:${column_name}`;
+                                if (displayedLabels && column_name in displayedLabels) {
+                                    title = `d:${displayedLabels[column_name]}`;
+                                }
+
+                                const row_data: any = {
+                                    title: title,
+                                    dataIndex: column_name,
+                                    key: column_name,
+                                    showSorterTooltip: false
+                                };
+
+                                // if column is in sortable list add sorter property
+                                if (
+                                    sortableFields.length > 0 &&
+                                    sortableFields.includes(column_name)
+                                ) {
+                                    row_data['sorter'] = { multiple: sort_index };
+                                    row_data['showSorterTooltip'] = false;
+                                    sort_index++;
+                                }
+
+                                // Hide fields if there is any hidden selected.
+                                if (
+                                    !excludedListFields ||
+                                    !excludedListFields.includes(row_data.key)
+                                ) {
+                                    result_list.push(row_data);
+                                }
+                            });
+                        }
+
+                        // Specific to display columns for input/output parameters of json fields
+                        const new_result_list: any[] = [
+                            {
+                                title: 'd:parameterName',
+                                dataIndex: 'parameterName',
+                                key: 'parameterName',
+                                showSorterTooltip: false
+                            },
+                            {
+                                title: 'd:description',
+                                dataIndex: 'description',
+                                key: 'description',
+                                showSorterTooltip: false
+                            },
+                            {
+                                title: 'd:type',
+                                dataIndex: 'type',
+                                key: 'type',
+                                showSorterTooltip: false
+                            },
+                            {
+                                title: 'd:validationRule',
+                                dataIndex: 'validationRule',
+                                key: 'validationRule',
+                                showSorterTooltip: false
+                            }
+                        ];
+
+                        // set columns to use in table
+                        setColumns(new_result_list);
+                        // Specific to display columns for input/output parameters of json fields
+                        let newElementListData: any = {};
+                        const newListData: any[] = [];
+
+                        if (
+                            listData &&
+                            result_list[0].dataIndex !== 'ruleConfigurationIn' &&
+                            result_list[0].dataIndex !== 'ruleConfigurationOut'
+                        ) {
+                            Object.keys(listData.results[0]).forEach((key: any) => {
+                                newElementListData = {};
+                                const subKeys = key.split('_');
+                                const keyWithoutPrefixAndSuffix = subKeys.slice(1, -1).join('_');
+                                const lastElement =
+                                    newListData.length > 0
+                                        ? newListData[newListData.length - 1]
+                                        : null;
+
+                                if (
+                                    lastElement &&
+                                    lastElement['parameterName'] === keyWithoutPrefixAndSuffix
+                                ) {
+                                    lastElement[subKeys[subKeys.length - 1]] =
+                                        listData.results[0][key];
+                                } else {
+                                    newElementListData['parameterName'] = keyWithoutPrefixAndSuffix;
+                                    newElementListData[subKeys[subKeys.length - 1]] =
+                                        listData.results[0][key];
+                                    newListData.push(newElementListData);
+                                }
+                            });
+                            listData.results = newListData;
+                        }
+
+                        // set data for the table
+                        setRows(listData);
+                        if (props.setData) props.setData(listData.results);
+                        setPagination({
+                            ...pagination,
+                            total: listData['count']
+                        });
+
+                        break;
+                    default:
+                        if (listData['results'].length > 0) {
+                            let sort_index = 1;
+
+                            listData['results'] = listData['results'].map((item: any) => {
+                                const flatItem = flatten(item);
+                                Object.keys(flatItem).map((key: string) => {
+                                    if (key.startsWith('functionSum')) {
+                                        const newKey = key.split('_');
+                                        Object.assign(flatItem, {
+                                            [newKey[0]]: flatItem[key]
+                                        });
+                                        delete flatItem[key];
+                                    }
+                                });
+                                return { ...flatItem, listDataCount: listData.count };
+                            });
+                            if (props.isDragAndDroppable && !props.isDragSource) {
+                                listData['results'] = listData['results'].map(
+                                    (item: any, index: number) => {
+                                        return { ...item, index };
+                                    }
+                                );
+                                if (
+                                    listData['results'].filter((e: any) => e.id !== 'null')
+                                        .length !== 0
+                                ) {
+                                    listData['results'] = [
+                                        ...listData['results'],
+                                        ...props.defaultEmptyList
+                                    ];
+                                }
+                            }
+                            // iterate over the first result and get list of columns to define table structure
+                            listFields.forEach((column_name: any, index: number) => {
+                                if (column_name.includes('{')) {
+                                    column_name = column_name
+                                        .replaceAll('{', '_')
+                                        .replaceAll('}', '');
+                                }
+                                // Customize title name
+                                let title = `d:${column_name}`;
+                                if (displayedLabels && column_name in displayedLabels) {
+                                    title = `d:${displayedLabels[column_name]}`;
+                                }
+
+                                const row_data: any = {
+                                    title: title,
+                                    dataIndex: column_name,
+                                    key: column_name,
+                                    showSorterTooltip: false
+                                };
+
+                                // if column is in sortable list add sorter property
+                                if (
+                                    sortableFields.length > 0 &&
+                                    sortableFields.includes(column_name) &&
+                                    !props.triggerPriorityChange
+                                ) {
+                                    row_data['sorter'] = { multiple: sort_index };
+                                    row_data['showSorterTooltip'] = false;
+                                    sort_index++;
+                                }
+
+                                //If default sort memorized or passed add defaultSortOrder
+                                if (sort) {
+                                    sort.forEach((sorter: any) => {
+                                        if (props.isDragAndDroppable) {
+                                            if (column_name === 'index') {
+                                                row_data['defaultSortOrder'] = 'ascend';
+                                            }
+                                        } else if (sorter.field === column_name) {
+                                            row_data['defaultSortOrder'] = sorter.ascending
+                                                ? 'ascend'
+                                                : 'descend';
+                                        }
+                                    });
+                                }
+
+                                // Hide fields if there is any hidden selected.
+                                if (
+                                    !excludedListFields ||
+                                    !excludedListFields.includes(row_data.key)
+                                ) {
+                                    //Specific to Notifications
+                                    if (column_name === 'argument') {
+                                        result_list.push({
+                                            title: 'd:argument_id',
+                                            dataIndex: 'argument_id',
+                                            key: 'argument_id',
+                                            showSorterTooltip: false
+                                        });
+                                        result_list.push({
+                                            title: 'd:argument_sequenceId',
+                                            dataIndex: 'argument_sequenceId',
+                                            key: 'argument_sequenceId',
+                                            showSorterTooltip: false
+                                        });
+                                    } else {
+                                        result_list.push(row_data);
+                                    }
+                                }
+                            });
+                        }
+
+                        // set columns to use in table
+                        setColumns(result_list);
+
+                        // set data for the table
+                        setRows(listData);
+                        if (props.setData) props.setData(listData.results);
+                        //this is to initialize and keep data at a given time on parent component
+                        if (props.setInitialData) props.setInitialData(listData.results);
+
+                        setPagination({
+                            ...pagination,
+                            current: adjustedPagination,
+                            total: listData['count']
+                        });
+
+                        break;
                 }
-
-                // set columns to use in table
-                setColumns(result_list);
-
-                // set data for the table
-                setRows(listData);
-                if (props.setData) props.setData(listData.results);
-                //this is to initialize and keep data at a given time on parent component
-                if (props.setInitialData) props.setInitialData(listData.results);
-
-                setPagination({
-                    ...pagination,
-                    current: adjustedPagination,
-                    total: listData['count']
-                });
             }
+            setFirstLoad(false);
         } else {
             deleteUserSettings();
         }
-    }, [data, router]);
+    }, [
+        data,
+        userSettings,
+        props.dataModel.endpoints.list,
+        props?.cumulSearchInfos?.columns,
+        props.isDragAndDroppable,
+        props.isDragSource
+    ]);
+
+    // #endregion
+
+    // #region TABLE CHANGE HANDLER
 
     const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
         const newSorter = orderByFormater(sorter);
@@ -1187,16 +1768,13 @@ const ListComponent = (props: IListProps) => {
             _pagination.pageSize === pagination.itemsPerPage
         ) {
             setSort(tmp_array);
-            if (tmp_array.length > 0) {
-                changeFilter(null, tmp_array);
-            }
-            if (orderByFormater(sorter) === null) {
-                changeFilter(null, null);
-            }
+            changeFilter(null, tmp_array, pagination, null, selectCase, selectJoker, null);
         }
     };
 
-    //#region Date formatting
+    // #endregion
+
+    // #region Date formatting
     if (rows?.results && rows?.results.length > 0) {
         rows.results.forEach((row: any) => {
             Object.keys(row).forEach((key) => {
@@ -1225,9 +1803,199 @@ const ListComponent = (props: IListProps) => {
             });
         });
     }
-    const mergedColumns = [...props.actionColumns, ...props.extraColumns, ...columns];
+    const mergedColumns = [
+        ...props.actionColumns,
+        ...props.extraColumns,
+        ...columns,
+        ...(props?.cumulSearchInfos?.columns ? props.cumulSearchInfos.columns : [])
+    ];
 
-    //#region Drag and Drop management
+    // #endregion
+
+    // #region TAGS
+
+    function tagFormatter(searchForTags: any) {
+        const filterInfos = Object.keys(searchForTags)
+            .map((key) => {
+                if (
+                    searchForTags[key] === undefined ||
+                    searchForTags[key] === null ||
+                    Object.keys(searchCriterias).includes(key)
+                ) {
+                    return null;
+                }
+                if (filterFields.find((field: any) => field.name === key)?.config) {
+                    const listOfConfig = filterFields.find(
+                        (field: any) => field.name === key
+                    )?.configList;
+
+                    const textDisplay =
+                        listOfConfig
+                            ?.filter((item: any) =>
+                                searchForTags[key]?.includes(parseInt(item.code))
+                            )
+                            .map((item: any) => {
+                                return {
+                                    text: item?.translation?.[`${filterLanguage}`] || item.value,
+                                    code: item.code
+                                };
+                            }) || searchForTags[key];
+                    return { [key]: textDisplay };
+                }
+                if (filterFields.find((field: any) => field.name === key)?.param) {
+                    const listOfParam = filterFields.find(
+                        (field: any) => field.name === key
+                    )?.paramList;
+
+                    const textDisplay =
+                        listOfParam
+                            ?.filter((item: any) =>
+                                searchForTags[key]?.includes(parseInt(item.code))
+                            )
+                            .map((item: any) => {
+                                return {
+                                    text: item?.translation?.[`${filterLanguage}`] || item.value,
+                                    code: item.code
+                                };
+                            }) || searchForTags[key];
+                    return { [key]: textDisplay };
+                }
+                if (
+                    allSubOptions?.find(
+                        (item: any) =>
+                            item[filterFields.find((field: any) => field.name === key)?.name]
+                    )
+                ) {
+                    const textDisplay = allSubOptions
+                        ?.find(
+                            (item: any) =>
+                                item[filterFields.find((field: any) => field.name === key)?.name]
+                        )
+                        ?.[
+                            filterFields.find((field: any) => field.name === key)?.name
+                        ].filter((item: any) => searchForTags[key].includes(item.key));
+                    return { [key]: textDisplay };
+                }
+                if (filterFields.find((field: any) => field.name === key)?.type === 7) {
+                    // if type is 7, it means it is a date field
+                    return {
+                        [key]: searchForTags[key].map((date: any) => ({
+                            text: date ? new Date(date).toLocaleString(router.locale) : '*',
+                            code: date
+                        }))
+                    };
+                }
+                return { [key]: searchForTags[key] };
+            })
+            .filter(Boolean);
+
+        function findDisplayNameForKey(key: string) {
+            const field = filterFields.find((field: any) => field.name === key);
+            return field.displayName || field.name;
+        }
+
+        let allTags: any[] = [];
+        filterInfos.forEach((item: any) => {
+            Object.keys(item).forEach((key) => {
+                if (
+                    item[key] !== undefined &&
+                    item[key] !== null &&
+                    Array.isArray(item[key]) &&
+                    filterFields.find((field: any) => field.name === key)?.type !== 7
+                ) {
+                    item[key].forEach((value: any) => {
+                        if (value !== undefined && value !== null) {
+                            allTags.push({
+                                key: findDisplayNameForKey(key),
+                                value: value,
+                                originalKey: key
+                            });
+                        }
+                    });
+                } else if (
+                    item[key] !== undefined &&
+                    item[key] !== null &&
+                    Array.isArray(item[key]) &&
+                    filterFields.find((field: any) => field.name === key)?.type === 7
+                ) {
+                    allTags.push({
+                        key: findDisplayNameForKey(key),
+                        value: {
+                            text: (item[key][0]?.text ?? '-') + ' -> ' + (item[key][1]?.text ?? '-')
+                        },
+                        originalKey: key
+                    });
+                } else if (item[key] !== undefined && item[key] !== null) {
+                    allTags.push({
+                        key: findDisplayNameForKey(key),
+                        value: { text: item[key] },
+                        originalKey: key
+                    });
+                }
+            });
+        });
+        return allTags;
+    }
+
+    let tagColor: any = [];
+    const palette = [
+        'blue',
+        'green',
+        'orange',
+        'purple',
+        'red',
+        'cyan',
+        'magenta',
+        'gold',
+        'lime',
+        'volcano'
+    ];
+    tagFormatter(search).map((info, index) => {
+        if (tagColor.some((color: string) => Object.keys(color)[0] === info.key)) {
+            return tagColor.find((color: string) => Object.keys(color)[0] === info.key)[info.key];
+        } else {
+            tagColor.push({
+                [info.key]: palette[tagColor.length]
+            });
+            return palette[tagColor.length];
+        }
+    });
+
+    function onTagClose(e: any, info: any) {
+        e.preventDefault();
+        let newSearch = { ...search };
+        if (
+            Array.isArray(search[info.originalKey]) &&
+            filterFields.find((field: any) => field.name === info.originalKey)?.type !== 7
+        ) {
+            newSearch[info.originalKey] = search[info.originalKey].filter((item: any) => {
+                let infoToCompare = info.value.code ?? info.value.key ?? info.value;
+                if (typeof infoToCompare !== 'string') {
+                    infoToCompare = JSON.stringify(infoToCompare);
+                }
+                if (typeof item !== 'string') {
+                    item = JSON.stringify(item);
+                }
+                return item !== infoToCompare;
+            });
+            if (newSearch[info.originalKey].length === 0) {
+                delete newSearch[info.originalKey];
+            }
+            formSearch.setFieldsValue({
+                [info.originalKey]: newSearch[info.originalKey]
+            });
+        } else {
+            delete newSearch[info.originalKey];
+            formSearch.setFieldsValue({
+                [info.originalKey]: null
+            });
+        }
+        changeFilter(newSearch, null, defaultPagination, null, selectCase, selectJoker, null);
+    }
+
+    // #endregion
+
+    // #region Drag and Drop management
     let draggableComponent;
     if (props.isDragAndDroppable) {
         draggableComponent = {
@@ -1254,6 +2022,15 @@ const ListComponent = (props: IListProps) => {
         };
     }
     // #endregion
+
+    const badgeCount = filterFields.reduce((count: number, field: any) => {
+        if (field.type && field.initialValue) {
+            return count + 1; // Count all fields with a type
+        }
+        return count;
+    }, 0);
+
+    // #region return
     return (
         <>
             {permissions ? (
@@ -1268,6 +2045,7 @@ const ListComponent = (props: IListProps) => {
                     </>
                 ) : (
                     <>
+                        <DrawerItems {...drawerProps()} />
                         {props.headerData ? (
                             <HeaderContent
                                 title={props.headerData.title}
@@ -1277,13 +2055,41 @@ const ListComponent = (props: IListProps) => {
                                         ? () => router.push(props.headerData!.onBackRoute!)
                                         : undefined
                                 }
+                                tags={
+                                    !firstLoad && rows?.results ? (
+                                        props.searchable && (
+                                            <>
+                                                {tagFormatter(search).map((info, index) => {
+                                                    return (
+                                                        <Tag
+                                                            key={info.key + index}
+                                                            style={{ margin: '2px' }}
+                                                            color={(() => {
+                                                                return tagColor.find(
+                                                                    (color: string) =>
+                                                                        Object.keys(color)[0] ===
+                                                                        info.key
+                                                                )[info.key];
+                                                            })()}
+                                                            closable
+                                                            onClose={(e) => onTagClose(e, info)}
+                                                        >
+                                                            {`${info.key}: ${info.value.text ?? info.value}`}
+                                                        </Tag>
+                                                    );
+                                                })}
+                                            </>
+                                        )
+                                    ) : (
+                                        <Spin />
+                                    )
+                                }
                                 actionsRight={
                                     <Space>
                                         {statusScope ? (
                                             <Button
                                                 onClick={() => {
-                                                    addForcedFilter(!isWithoutClosed);
-                                                    setIsWithoutClosed(!isWithoutClosed);
+                                                    addForcedFilter();
                                                 }}
                                                 style={
                                                     isWithoutClosed
@@ -1304,22 +2110,24 @@ const ListComponent = (props: IListProps) => {
                                                 {showBadge ? (
                                                     <Badge
                                                         size="default"
-                                                        count={
-                                                            !mandatory_Filter
-                                                                ? Object.keys(search).length
-                                                                : Object.keys(search).length - 1
-                                                        }
+                                                        count={badgeCount}
                                                         color="blue"
                                                     >
                                                         <Button
                                                             icon={<SearchOutlined />}
-                                                            onClick={() => openSearchDrawer()}
+                                                            onClick={() => {
+                                                                formSearch.resetFields();
+                                                                setIsSearchDrawerOpen(true);
+                                                            }}
                                                         />
                                                     </Badge>
                                                 ) : (
                                                     <Button
                                                         icon={<SearchOutlined />}
-                                                        onClick={() => openSearchDrawer()}
+                                                        onClick={() => {
+                                                            formSearch.resetFields();
+                                                            setIsSearchDrawerOpen(true);
+                                                        }}
                                                     />
                                                 )}
                                             </>
@@ -1335,66 +2143,68 @@ const ListComponent = (props: IListProps) => {
                                 }
                             />
                         ) : (
-                            <></>
-                        )}
-                        {!isLoading && rows?.results ? (
-                            rows?.results && rows?.results.length > 0 ? (
-                                <>
-                                    {props.checkbox ? (
-                                        <>
-                                            {props.actionButtons ? (
-                                                props.actionButtons.actionsComponent
-                                            ) : (
-                                                <></>
-                                            )}
-                                            <AppTableV2
-                                                dataModel={props.dataModel}
-                                                columns={mergedColumns}
-                                                data={rows!.results}
-                                                pagination={pagination}
-                                                isLoading={isLoading}
-                                                setPagination={onChangePagination}
-                                                stickyActions={stickyActions}
-                                                onChange={handleTableChange}
-                                                hiddenColumns={hiddenListFields}
-                                                rowSelection={props.rowSelection}
-                                                linkFields={linkFields}
-                                                filter={props.columnFilter}
-                                                isDragAndDroppable={props.isDragAndDroppable}
-                                                components={draggableComponent}
-                                                items={props.items}
-                                                isIndependentScrollable={
-                                                    props.isIndependentScrollable
-                                                }
-                                            />
-                                        </>
+                            <>
+                                {props.searchable &&
+                                    (showBadge ? (
+                                        <div
+                                            style={{
+                                                float: 'right',
+                                                marginTop: -120,
+                                                marginRight: 20
+                                            }}
+                                        >
+                                            <Badge size="default" count={badgeCount} color="blue">
+                                                <Button
+                                                    icon={<SearchOutlined />}
+                                                    onClick={() => {
+                                                        formSearch.resetFields();
+                                                        setIsSearchDrawerOpen(true);
+                                                    }}
+                                                />
+                                            </Badge>
+                                        </div>
                                     ) : (
-                                        <>
-                                            <AppTableV2
-                                                dataModel={props.dataModel}
-                                                columns={mergedColumns}
-                                                data={rows!.results}
-                                                pagination={pagination}
-                                                isLoading={isLoading}
-                                                setPagination={onChangePagination}
-                                                stickyActions={stickyActions}
-                                                onChange={handleTableChange}
-                                                hiddenColumns={hiddenListFields}
-                                                linkFields={linkFields}
-                                                filter={props.columnFilter}
-                                                isDragAndDroppable={props.isDragAndDroppable}
-                                                components={draggableComponent}
-                                                items={props.items}
-                                                isIndependentScrollable={
-                                                    props.isIndependentScrollable
-                                                }
+                                        <div
+                                            style={{
+                                                float: 'right',
+                                                marginRight: 20,
+                                                marginTop: -120
+                                            }}
+                                        >
+                                            <Button
+                                                icon={<SearchOutlined />}
+                                                onClick={() => {
+                                                    formSearch.resetFields();
+                                                    setIsSearchDrawerOpen(true);
+                                                }}
                                             />
-                                        </>
-                                    )}
-                                </>
-                            ) : (
-                                <Empty description={<span>{t('messages:no-data')}</span>} />
-                            )
+                                        </div>
+                                    ))}
+                            </>
+                        )}
+                        {!firstLoad && rows?.results ? (
+                            <>
+                                {props.actionButtons?.actionsComponent}
+                                <AppTableV2
+                                    dataModel={props.dataModel}
+                                    columns={mergedColumns}
+                                    data={rows?.results ?? []}
+                                    pagination={pagination}
+                                    isLoading={isLoading}
+                                    setPagination={onChangePagination}
+                                    stickyActions={stickyActions}
+                                    onChange={handleTableChange}
+                                    hiddenColumns={hiddenListFields}
+                                    linkFields={linkFields}
+                                    filter={props.columnFilter}
+                                    sortInfos={sort}
+                                    isDragAndDroppable={props.isDragAndDroppable}
+                                    components={draggableComponent}
+                                    items={props.items}
+                                    isIndependentScrollable={props.isIndependentScrollable}
+                                    rowSelection={props.checkbox ? props.rowSelection : undefined}
+                                />
+                            </>
                         ) : (
                             <ContentSpin />
                         )}
@@ -1405,6 +2215,7 @@ const ListComponent = (props: IListProps) => {
             )}
         </>
     );
+    // #endregion
 };
 
 ListComponent.displayName = 'ListWithFilter';

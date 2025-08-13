@@ -34,7 +34,7 @@ import { FormDataType } from 'models/ModelsV2';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const ParameterPages: PageComponent = () => {
-    const { permissions } = useAppState();
+    const { permissions, parameters } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
@@ -60,18 +60,13 @@ const ParameterPages: PageComponent = () => {
     const [scopesList, setScopesList] = useState<any>();
 
     useEffect(() => {
-        if (listScopeParam) {
-            const newParameter: Array<any> = [];
-
-            const cData = listScopeParam?.data?.parameterScopes;
-            if (cData) {
-                cData.forEach((item) => {
-                    newParameter.push({ key: item.scope, text: item.scope });
-                });
-                setScopesList(newParameter);
-            }
+        if (parameters) {
+            const newParameter = parameters.map((item: { scope: any }) => {
+                return { key: item.scope, text: item.scope };
+            });
+            setScopesList(newParameter);
         }
-    }, [listScopeParam.data]);
+    }, [parameters]);
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
