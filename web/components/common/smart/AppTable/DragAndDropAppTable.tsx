@@ -25,10 +25,15 @@ import {
 } from '@ant-design/icons';
 import { TableFilter, WrapperStickyActions, PageTableContentWrapper } from '@components';
 import {
+    showWarning,
     getKeys,
     setCustomColumnsProps,
     checkKeyPresenceInArray,
-    formatDigitsForData
+    formatDigitsForData,
+    formatUTCLocaleDateTime,
+    isStringDateTime,
+    formatUTCLocaleDate,
+    isStringDate
 } from '@helpers';
 import { Space, Button, Table, Typography } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
@@ -36,13 +41,16 @@ import { isString } from 'lodash';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useCallback, useEffect, useState, useRef, Key } from 'react';
+import { useAppDispatch, useAppState } from 'context/AppContext';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 const { Column } = Table;
 const { Link } = Typography;
 
-export interface IAppTableV2HighLimitProps {
+export interface IDragAndDropAppTableProps {
     // Refactory to strong type
-    type: string;
+    dataModel: any;
     data: Array<any> | undefined;
     isLoading?: boolean;
     columns: any[]; //need to find what is wrong with this MyColumnType[],
@@ -61,9 +69,13 @@ export interface IAppTableV2HighLimitProps {
     hiddenColumns?: any;
     rowSelection?: any;
     linkFields?: any;
+    components?: any;
+    isDragAndDroppable?: boolean;
+    items?: any;
+    isIndependentScrollable?: boolean;
 }
 
-const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
+const DragAndDropAppTable: FC<IDragAndDropAppTableProps> = ({
     onChange,
     stickyActions,
     filter,
@@ -73,37 +85,34 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
     isLoading,
     pagination,
     setPagination,
-    type,
+    dataModel,
     hiddenColumns,
     rowSelection,
-    linkFields
-}: IAppTableV2HighLimitProps) => {
+    linkFields,
+    components,
+    isDragAndDroppable,
+    items,
+    isIndependentScrollable
+}: IDragAndDropAppTableProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     // get filter from cookies if exist
     const filterDrawerRef = useRef() as any | undefined;
     const allColumnKeys = getKeys(columns);
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const { graphqlRequestClient } = useAuth();
 
-    let initialState;
-
-    if (data) {
-        formatDigitsForData(data);
-    }
-    if (!hiddenColumns) {
-        hiddenColumns = [];
-    }
-
-    if (typeof window !== 'undefined') {
-        initialState = localStorage.getItem(`${type}-filter-table`)
-            ? JSON.parse(localStorage.getItem(`${type}-filter-table`)!)
-            : null;
-    }
+    const userSettings = state?.userSettings?.find((item: any) => {
+        return `${dataModel.resolverName}${router.pathname}` === item.code;
+    });
+    const initialState = userSettings?.valueJson?.visibleCollumns;
 
     if (initialState) {
         const storedArray = initialState.filteredColumns;
         const inputArray = checkKeyPresenceInArray('render', columns);
         const titleCheck = checkKeyPresenceInArray('title', columns);
-        const updatedStoredArr = storedArray.map((a: any) => {
+        storedArray.map((a: any) => {
             const exists = inputArray.find((b) => a.key == b.key);
             const titles = titleCheck.find((b) => a.key == b.key);
             if (exists) {
@@ -116,24 +125,122 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
         });
     }
 
-    const [onSave, setOnSave] = useState<boolean>(false);
-
     const [visibleColumnKeys, setVisibleColumnKeys] = useState<Key[]>(
-        initialState !== null
+        initialState
             ? initialState.visibleColumnKeys
             : allColumnKeys.filter((x) => {
                   return !hiddenColumns.includes(x);
               })
     );
-    const [fixedColumns, setFixedColumns] = useState<Key[]>(
-        initialState !== null ? initialState.fixedColumns : []
-    );
+    const [fixedColumns, setFixedColumns] = useState<Key[]>(initialState?.fixedColumns ?? []);
     const [filteredColumns, setFilteredColumns] = useState<any[]>(
-        initialState !== null ? initialState.filteredColumns : setCustomColumnsProps(columns)
+        initialState?.filteredColumns ?? setCustomColumnsProps(columns)
     );
-    const [tableColumns, setTableColumns] = useState<any[]>(
-        initialState !== null ? initialState.tableColumns : setCustomColumnsProps(columns)
-    );
+
+    const [tableColumns, setTableColumns] = useState<any[]>(setCustomColumnsProps(columns));
+
+    useEffect(() => {
+        setFilteredColumns(setCustomColumnsProps(columns));
+    }, [columns]);
+
+    if (data) {
+        formatDigitsForData(data);
+    }
+
+    const [onSave, setOnSave] = useState<boolean>(false);
+
+    const updateUserSettings = useCallback(async () => {
+        const newsSettings = {
+            ...userSettings,
+            valueJson: {
+                ...userSettings?.valueJson,
+                visibleCollumns: {
+                    filteredColumns: filteredColumns,
+                    tableColumns: tableColumns,
+                    visibleColumnKeys: visibleColumnKeys,
+                    fixedColumns: fixedColumns
+                }
+            }
+        };
+        const updateQuery = gql`
+            mutation (
+                $warehouseWorkerSettingsId: String!
+                $input: UpdateWarehouseWorkerSettingInput!
+            ) {
+                updateWarehouseWorkerSetting(id: $warehouseWorkerSettingsId, input: $input) {
+                    id
+                    code
+                    valueJson
+                }
+            }
+        `;
+        const updateVariables = {
+            warehouseWorkerSettingsId: userSettings.id,
+            input: { valueJson: newsSettings.valueJson }
+        };
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(updateQuery, updateVariables);
+            dispatch({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: state.userSettings.map((item: any) => {
+                    return item.id === queryInfo?.updateWarehouseWorkerSetting?.id
+                        ? queryInfo.updateWarehouseWorkerSetting
+                        : item;
+                })
+            });
+        } catch (error) {
+            console.log('queryInfo update appTableV2 error', error);
+            showWarning(t('messages:config-save-error'));
+        }
+    }, [visibleColumnKeys, fixedColumns, filteredColumns, tableColumns]);
+
+    const createUsersSettings = useCallback(async () => {
+        const newsSettings = {
+            valueJson: {
+                visibleCollumns: {
+                    filteredColumns: filteredColumns,
+                    tableColumns: tableColumns,
+                    visibleColumnKeys: visibleColumnKeys,
+                    fixedColumns: fixedColumns
+                }
+            },
+            code: `${dataModel.resolverName}${router.pathname}`,
+            warehouseWorkerId: state.user.id
+        };
+        const createQuery = gql`
+            mutation ($input: CreateWarehouseWorkerSettingInput!) {
+                createWarehouseWorkerSetting(input: $input) {
+                    id
+                    code
+                    valueJson
+                }
+            }
+        `;
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(createQuery, {
+                input: newsSettings
+            });
+            dispatch({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: [...state.userSettings, queryInfo.createWarehouseWorkerSetting]
+            });
+        } catch (error) {
+            console.log('queryInfo create appTableV2 error', error);
+            showWarning(t('messages:config-save-error'));
+        }
+    }, [visibleColumnKeys, fixedColumns, filteredColumns, tableColumns]);
+
+    useEffect(() => {
+        if (onSave) {
+            if (userSettings) {
+                updateUserSettings();
+            } else {
+                createUsersSettings();
+            }
+        }
+        setOnSave(false);
+        return () => {};
+    }, [onSave]);
 
     // #region links generation
     const renderLink = (text: string, record: any, dataIndex: string) => {
@@ -171,33 +278,16 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
             <CheckCircleOutlined style={{ color: 'green' }} />
         ) : text === false ? (
             <CloseSquareOutlined style={{ color: 'red' }} />
+        ) : isString(text) && isStringDateTime(text) ? (
+            formatUTCLocaleDateTime(text, router.locale)
+        ) : isString(text) && isStringDate(text) ? (
+            formatUTCLocaleDate(text, router.locale)
         ) : (
             text
         );
     const newTableColumns = columnWithLinks.map((e: any) =>
         e.render ? e : (e = { ...e, render: render })
     );
-
-    // Make each row checkable
-
-    // const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
-
-    // const rowSelection = {
-    //     selectedRowKeys,
-    //     onChange: (selectedRowKeys: Key[], record: any) => {
-    //         setSelectedRowKeys(selectedRowKeys);
-    //     }
-    // };
-
-    // give a deleteMutation to app table to know what data type should be deleted
-    // const deleteRecords = () => {
-    //     if (Array.isArray(selectedRowKeys) && selectedRowKeys.length) {
-    //         // trigger delete mutation
-    //         alert(`delete articles ${JSON.stringify(selectedRowKeys)}`);
-    //     } else {
-    //         showError(t('messages:action-impossible', { name: t('actions:delete') }));
-    //     }
-    // };
 
     // make wrapper function to give child
 
@@ -294,19 +384,16 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
         return () => {};
     }, [visibleColumnKeys, filteredColumns]);
 
-    useEffect(() => {
-        if (onSave) {
-            const news = JSON.stringify({
-                filteredColumns: filteredColumns,
-                tableColumns: tableColumns,
-                visibleColumnKeys: visibleColumnKeys,
-                fixedColumns: fixedColumns
-            });
-            localStorage.setItem(`${type}-filter-table`, news);
-        }
-        setOnSave(false);
-        return () => {};
-    }, [onSave]);
+    const dataSource = isDragAndDroppable
+        ? items!.map((item: any, index: number) => ({
+              ...item,
+              key: item.id,
+              index
+          }))
+        : data;
+
+    const insideScroll = { x: '100%', y: 400 };
+    const insideScrollPagination = { pageSize: dataSource.length, showSizeChanger: false };
 
     return (
         <PageTableContentWrapper>
@@ -337,46 +424,54 @@ const AppTableV2HighLimit: FC<IAppTableV2HighLimitProps> = ({
             </WrapperStickyActions>
             <Table
                 rowKey="id"
-                dataSource={data}
-                scroll={scroll}
+                dataSource={dataSource}
+                scroll={isIndependentScrollable ? insideScroll : scroll}
                 size="small"
                 loading={isLoading}
                 onChange={onChange}
                 // rowSelection={rowSelection}
                 pagination={
-                    pagination && {
-                        position: ['bottomRight'],
-                        total: pagination.total,
-                        current: pagination.current,
-                        pageSize: 100,
-                        onChange: (page, pageSize) => {
-                            handlePaginationChange(page, pageSize);
-                        }
-                    }
+                    isIndependentScrollable
+                        ? insideScrollPagination
+                        : pagination && {
+                              position: ['bottomRight'],
+                              total: pagination.total,
+                              current: pagination.current,
+                              pageSize: pagination.itemsPerPage,
+                              showSizeChanger: true,
+                              showTotal: (total, range) =>
+                                  `${range[0]}-${range[1]} sur ${total} éléments`,
+                              onChange: (page, pageSize) => {
+                                  handlePaginationChange(page, pageSize);
+                              }
+                          }
                 }
                 rowSelection={rowSelection}
+                components={components}
             >
-                {newTableColumns.map((c) => (
-                    <Column
-                        title={typeof c.title === 'string' ? t(c.title) : c.title}
-                        dataIndex={c.dataIndex}
-                        key={c.key}
-                        fixed={c.fixed}
-                        width={c.width}
-                        sorter={c.sorter}
-                        showSorterTooltip={c.showSorterTooltip}
-                        render={c.render}
-                        defaultSortOrder={c.defaultSortOrder}
-                    />
-                ))}
+                {newTableColumns.map((c, index) => {
+                    return (
+                        <Column
+                            title={typeof c.title === 'string' ? t(c.title) : c.title}
+                            dataIndex={c.dataIndex}
+                            key={c.key + index}
+                            fixed={c.fixed}
+                            width={c.width}
+                            sorter={c.sorter}
+                            showSorterTooltip={c.showSorterTooltip}
+                            render={c.render}
+                            defaultSortOrder={c.defaultSortOrder}
+                        />
+                    );
+                })}
             </Table>
         </PageTableContentWrapper>
     );
 };
 
-AppTableV2HighLimit.displayName = 'AppTableV2HighLimit';
+DragAndDropAppTable.displayName = 'DragAndDropAppTable';
 
-AppTableV2HighLimit.defaultProps = {
+DragAndDropAppTable.defaultProps = {
     stickyActions: {
         export: {
             active: false
@@ -387,4 +482,4 @@ AppTableV2HighLimit.defaultProps = {
     scroll: { x: '100%' }
 };
 
-export { AppTableV2HighLimit };
+export { DragAndDropAppTable };

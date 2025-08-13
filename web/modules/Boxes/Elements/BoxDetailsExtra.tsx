@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
-import { EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
+import { EditTwoTone, EyeTwoTone, LockTwoTone, DeleteOutlined } from '@ant-design/icons';
 import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space } from 'antd';
@@ -27,15 +27,16 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';
+import { HandlingUnitOutboundBarcodeModelV2 } from 'models/HandlingUnitOutboundBarcodeModelV2';
 import configs from '../../../../common/configs.json';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
 
 export interface IItemDetailsProps {
     boxId?: string | any;
-    huId?: string | any;
+    boxName?: string | any;
 }
 
-const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
+const BoxDetailsExtra = ({ boxId, boxName }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
     const { permissions } = useAppState();
@@ -43,8 +44,12 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
         permissions,
         Table.HandlingUnitContentOutbound
     );
+
+    const HUOBarcodeModes = getModesFromPermissions(permissions, Table.HandlingUnitOutboundBarcode);
+
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [barcodeIdToDelete, setBarcodeIdToDelete] = useState<string | undefined>();
 
     const [, setHandlingUnitContentOutboundsData] = useState<any>();
 
@@ -59,6 +64,24 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
         title: `${t('common:status-history')}`,
         routes: [],
         actionsComponent: null
+    };
+
+    const handlingUnitOutboundBarcodeHeaderData: HeaderData = {
+        title: t('common:handling-unit-outbound-barcodes'),
+        routes: [],
+        actionsComponent:
+            HUOBarcodeModes.length > 0 && HUOBarcodeModes.includes(ModeEnum.Create) ? (
+                <LinkButton
+                    title={t('actions:add2', {
+                        name: t('common:handling-unit-outbound-barcode')
+                    })}
+                    path={pathParamsFromDictionary('/boxes/barcode/add', {
+                        handlingUnitOutboundId: boxId,
+                        handlingUnitOutboundName: boxName
+                    })}
+                    type="primary"
+                />
+            ) : null
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -161,6 +184,80 @@ const BoxDetailsExtra = ({ boxId, huId }: IItemDetailsProps) => {
                         searchable={false}
                         setData={setHandlingUnitContentOutboundsData}
                         sortDefault={[{ field: 'created', ascending: true }]}
+                    />
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ handlingUnitOutboundId: boxId }}
+                        dataModel={HandlingUnitOutboundBarcodeModelV2}
+                        headerData={handlingUnitOutboundBarcodeHeaderData}
+                        routeDetailPage={'/boxes/barcode/:id'}
+                        searchable={true}
+                        triggerDelete={{
+                            idToDelete: barcodeIdToDelete,
+                            setIdToDelete: setBarcodeIdToDelete
+                        }}
+                        triggerSoftDelete={undefined}
+                        columnFilter={false}
+                        sortDefault={[{ field: 'created', ascending: true }]}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string }) => (
+                                    <Space>
+                                        {HUOBarcodeModes.length == 0 ||
+                                        !HUOBarcodeModes.includes(ModeEnum.Read) ? (
+                                            <></>
+                                        ) : (
+                                            <>
+                                                <LinkButton
+                                                    icon={<EyeTwoTone />}
+                                                    path={pathParamsFromDictionary(
+                                                        '/handling-unit-outbound-barcodes/[id]',
+                                                        {
+                                                            id: record.id
+                                                        }
+                                                    )}
+                                                />
+                                            </>
+                                        )}
+                                        {HUOBarcodeModes.length > 0 &&
+                                        HUOBarcodeModes.includes(ModeEnum.Update) &&
+                                        HandlingUnitOutboundBarcodeModelV2.isEditable ? (
+                                            <LinkButton
+                                                icon={<EditTwoTone />}
+                                                path={pathParamsFromDictionary(
+                                                    '/handling-unit-outbound-barcodes/edit/[id]',
+                                                    {
+                                                        id: record.id,
+                                                        boxId
+                                                    }
+                                                )}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {HUOBarcodeModes.length > 0 &&
+                                        HUOBarcodeModes.includes(ModeEnum.Delete) &&
+                                        HandlingUnitOutboundBarcodeModelV2.isDeletable ? (
+                                            <Button
+                                                icon={<DeleteOutlined />}
+                                                danger
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        record.id,
+                                                        setBarcodeIdToDelete,
+                                                        'delete'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
                     />
                     <Divider />
                 </>

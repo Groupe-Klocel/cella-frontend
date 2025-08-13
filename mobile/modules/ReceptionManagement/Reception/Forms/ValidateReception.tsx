@@ -81,7 +81,7 @@ export const ValidateReceptionForm = ({
         articleInfo.articleId = step50?.data?.chosenArticleLuBarcode.articleId;
         articleInfo.articleName = step50?.data?.chosenArticleLuBarcode.article.name;
     }
-    const poLine = step50?.data?.currentPurchaseOrderLine;
+    const poLines = step80?.data?.updatedPoLines;
     const isNewProductToUpdate = step50?.data?.isNewProductToUpdate;
     const features = step60?.data?.processedFeatures;
     const receivedQuantity = step80?.data?.movingQuantity;
@@ -104,7 +104,7 @@ export const ValidateReceptionForm = ({
             isHuToBeClosed,
             stockStatus,
             articleInfo,
-            poLine,
+            poLines,
             receivedQuantity,
             features,
             isNewProductToUpdate,
@@ -151,7 +151,15 @@ export const ValidateReceptionForm = ({
                 const { final_goodsIn, final_handling_unit, final_po, po_rounds } =
                     validateReceptionResult.executeFunction.output.output;
                 const step10Data = {
-                    purchaseOrder: final_po,
+                    purchaseOrder: {
+                        ...final_po,
+                        purchaseOrderLines: final_po.purchaseOrderLines.map((line: any) => ({
+                            ...line,
+                            blockingStatusText: purchaseOrder.purchaseOrderLines.find(
+                                (linePo: any) => linePo.blockingStatus === line.blockingStatus
+                            ).blockingStatusText
+                        }))
+                    },
                     goodsIns: po_rounds,
                     responseType: 'goodsIn'
                 };

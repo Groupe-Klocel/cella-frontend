@@ -30,6 +30,7 @@ export interface IHeaderContentProps {
     onBack?: any;
     actionsRight?: ReactNode;
     actionsLeft?: ReactNode;
+    tags?: ReactNode;
 }
 
 const HeaderContent: FC<IHeaderContentProps> = ({
@@ -38,7 +39,8 @@ const HeaderContent: FC<IHeaderContentProps> = ({
     routes,
     actionsRight,
     actionsLeft,
-    onBack
+    onBack,
+    tags
 }: IHeaderContentProps) => {
     return (
         <CustomPageHeader
@@ -47,6 +49,7 @@ const HeaderContent: FC<IHeaderContentProps> = ({
             onBack={onBack}
             subTitle={actionsLeft}
             extra={actionsRight}
+            tags={tags}
         >
             {children}
         </CustomPageHeader>

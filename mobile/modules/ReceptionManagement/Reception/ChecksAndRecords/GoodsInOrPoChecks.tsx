@@ -23,6 +23,9 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { Modal } from 'antd';
+import { useListParametersForAScopeQuery } from 'generated/graphql';
+import graphqlRequestClient from 'graphql/graphqlRequestClient';
+import { useRouter } from 'next/router';
 
 //TO BE REWORKED
 
@@ -34,6 +37,8 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const router = useRouter();
+    const { locale } = router;
 
     const {
         process,
@@ -45,6 +50,16 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
     } = dataToCheck;
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
+
+    const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'stock_statuses',
+        language: locale === 'en-US' ? 'en' : locale
+    });
+    console.log(
+        'AXC - GoodsInOrPoChecks.tsx - GoodsInOrPoChecks - stockStatusList:',
+        stockStatusList.data || []
+    );
+
     //ScanGoodsInPO-2: launch query for barcodes handling
     const [fetchResult, setFetchResult] = useState<any>();
     useEffect(() => {
@@ -84,7 +99,17 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
     useEffect(() => {
         const handleFetchResult = (fetchResult: any) => {
             setIsLoading(false);
-            const data = { ...fetchResult };
+            let data = { ...fetchResult };
+            data.purchaseOrder.purchaseOrderLines =
+                fetchResult.purchaseOrder.purchaseOrderLines.map((line: any) => {
+                    return {
+                        ...line,
+                        blockingStatusText:
+                            stockStatusList?.data?.listParametersForAScope?.find(
+                                (item) => parseInt(item.code) === line.blockingStatus
+                            )?.text || ''
+                    };
+                });
             setTriggerRender(!triggerRender);
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             storage.set(process, JSON.stringify(storedObject));

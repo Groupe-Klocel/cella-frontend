@@ -762,7 +762,7 @@ export const MovementModelV2: ModelType = {
         },
         finalQuantity: {
             isListRequested: true,
-            isDefaultHiddenList: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
             searchingFormat: 'Number',
@@ -865,7 +865,7 @@ export const MovementModelV2: ModelType = {
             isDefaultHiddenList: true,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: 'Checkbox',
+            searchingFormat: 'Boolean',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',

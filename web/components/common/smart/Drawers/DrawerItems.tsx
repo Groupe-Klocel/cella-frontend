@@ -22,10 +22,25 @@ import { useDrawerDispatch, useDrawerState } from 'context/DrawerContext';
 import React, { useCallback } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 
-const DrawerItems = () => {
+interface DrawerItemsProps {
+    size?: number | string;
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+    title: string;
+    cancelButton?: boolean;
+    comfirmButton?: boolean;
+    cancelButtonTitle?: string;
+    comfirmButtonTitle?: string;
+    content?: React.ReactNode;
+    onComfirm?: () => void;
+    onCancel?: () => void;
+}
+
+const DrawerItems: React.FC<DrawerItemsProps> = (props) => {
     const {
         size,
         isOpen,
+        setIsOpen,
         title,
         cancelButton,
         comfirmButton,
@@ -34,18 +49,18 @@ const DrawerItems = () => {
         content,
         onComfirm,
         onCancel
-    } = useDrawerState();
-
-    const dispatch = useDrawerDispatch();
-    const closeDrawer = useCallback(() => dispatch({ type: 'CLOSE_DRAWER' }), [dispatch]);
+    } = props;
 
     const { t } = useTranslation();
 
     return (
         <Drawer
-            onClose={closeDrawer}
+            onClose={() => {
+                setIsOpen(false);
+            }}
             open={isOpen}
             title={t(title)}
+            destroyOnClose={false}
             width={size}
             placement="right"
             motion={{
@@ -54,11 +69,11 @@ const DrawerItems = () => {
             extra={
                 <Space>
                     {cancelButton ? (
-                        <Button onClick={onCancel}>{t(cancelButtonTitle)} </Button>
+                        <Button onClick={onCancel}>{t(cancelButtonTitle ?? '')} </Button>
                     ) : null}
                     {comfirmButton ? (
                         <Button onClick={onComfirm} type="primary">
-                            {t(comfirmButtonTitle)}{' '}
+                            {t(comfirmButtonTitle ?? '')}{' '}
                         </Button>
                     ) : null}
                 </Space>
