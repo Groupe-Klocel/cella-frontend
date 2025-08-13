@@ -40,7 +40,6 @@ import { useAppState } from 'context/AppContext';
 import { GroupItemDetailList } from './submodules/GroupItemDetailList';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
-import { useAppDispatch } from 'context/AppContext';
 
 const { Link } = Typography;
 
@@ -79,7 +78,6 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     const router = useRouter();
     const [displayedGrouping, setDisplayedGrouping] = useState<any>();
     const { graphqlRequestClient } = useAuth();
-    const dispatchToReducer = useAppDispatch();
 
     // #region extract data from modelV2
     const detailFields = Object.keys(props.dataModel.fieldsInfo).filter(
@@ -314,16 +312,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
 
         if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
-            // Dispatch the delete action to the reducer
-            if (
-                props.dataModel.endpoints.detail === 'config' ||
-                props.dataModel.endpoints.detail === 'parameter'
-            ) {
-                dispatchToReducer({
-                    type: ('delete_' + props.dataModel.endpoints.list).toUpperCase(),
-                    [props.dataModel.endpoints.detail]: { id: props.triggerDelete.idToDelete }
-                });
-            }
+            if (props.setSuccessDeleteResult) props.setSuccessDeleteResult(deleteResult);
             router.push(`${pathAfterDelete}`);
             if (props.isCreateAMovement) {
                 try {
