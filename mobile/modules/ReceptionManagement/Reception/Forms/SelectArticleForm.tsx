@@ -68,12 +68,6 @@ export const SelectArticleForm = ({
             const data: { [label: string]: any } = {};
             data['isNewProductToUpdate'] = isNewProductToUpdate;
             data['chosenArticleLuBarcode'] = articleLuBarcodes[0];
-            data['currentPurchaseOrderLine'] = storedObject[
-                `step10`
-            ].data.purchaseOrder.purchaseOrderLines.find(
-                (purchaseOrderLine: any) =>
-                    purchaseOrderLine.articleId === articleLuBarcodes[0].articleId
-            );
             storedObject[`step${stepNumber}`] = {
                 ...storedObject[`step${stepNumber}`],
                 data
@@ -133,7 +127,7 @@ export const SelectArticleForm = ({
             data['isNewProductToUpdate'] = isNewProductToUpdate;
             data['currentPurchaseOrderLine'] = storedObject[
                 `step10`
-            ].data.purchaseOrder.purchaseOrderLines.find(
+            ].data.purchaseOrder.purchaseOrderLines.filter(
                 (purchaseOrderLine: any) => purchaseOrderLine.articleId === selectedArticle.id
             );
             storedObject[`step${stepNumber}`] = {
@@ -148,7 +142,7 @@ export const SelectArticleForm = ({
             data['isNewProductToUpdate'] = isNewProductToUpdate;
             data['currentPurchaseOrderLine'] = storedObject[
                 `step10`
-            ].data.purchaseOrder.purchaseOrderLines.find(
+            ].data.purchaseOrder.purchaseOrderLines.filter(
                 (purchaseOrderLine: any) => purchaseOrderLine.articleId === selectedArticle.id
             );
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
