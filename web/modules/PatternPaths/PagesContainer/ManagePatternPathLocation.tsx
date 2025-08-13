@@ -36,7 +36,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { PatternPathLocationInputModelV2 as inputModel } from 'models/PatternPathLocationInputModelV2';
 import { PatternPathLocationOutputModelV2 as outputModel } from 'models/PatternPathLocationOutputModelV2';
-import { ListComponent } from 'modules/Crud/ListComponentV2';
+import { DragAndDropListComponent } from 'modules/Crud/DragAndDropListComponent';
 import { gql } from 'graphql-request';
 import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
 import FiltersTable from 'components/common/smart/DragAndDrop/FiltersTable';
@@ -574,7 +574,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                                             </Button>
                                         }
                                     >
-                                        <ListComponent
+                                        <DragAndDropListComponent
                                             searchCriteria={filters}
                                             itemperpage={10}
                                             dataModel={inputModel}
@@ -623,7 +623,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
                                                 {t('actions:submit')}
                                             </Button>
                                         </div>
-                                        <ListComponent
+                                        <DragAndDropListComponent
                                             searchCriteria={{ patternPathId: id }}
                                             sortDefault={[{ field: 'order', ascending: true }]}
                                             itemperpage={1000000}

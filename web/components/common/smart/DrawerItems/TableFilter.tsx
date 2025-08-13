@@ -82,15 +82,6 @@ const TableFilter = forwardRef<TableFilterRef, ITableFilterProps>(
         const [fixedKeys, setFixedKeys] = useState<Key[]>(fixKeys);
         const [currentFilteredColumns, setCurrentFilteredColumns] = useState(columnsToFilter);
 
-        console.log(
-            'columnsToFilter',
-            columnsToFilter,
-            'visibleKeys',
-            visibleKeys,
-            'fixKeys',
-            fixKeys
-        );
-
         useImperativeHandle(ref, () => ({
             reset(keys: any, columns: any) {
                 setShowKeys(keys);
@@ -225,7 +216,7 @@ const TableFilter = forwardRef<TableFilterRef, ITableFilterProps>(
         const DraggableBodyRow = ({ className, style, ...restProps }: any) => {
             // function findIndex base on Table rowKey props and should always be a right array index
             const index = currentFilteredColumns.findIndex(
-                (x: { index: number }) => x.index === restProps['data-row-key']
+                (x: { dataIndex: number }) => x.dataIndex === restProps['data-row-key']
             );
             return <SortableItem className="sortableHelper" index={index} {...restProps} />;
         };
@@ -237,7 +228,7 @@ const TableFilter = forwardRef<TableFilterRef, ITableFilterProps>(
                     rowSelection={fixedSelection}
                     columns={columns}
                     dataSource={currentFilteredColumns.filter((e: any) => e.key !== 'actions')}
-                    rowKey="index"
+                    rowKey="dataIndex"
                     components={{
                         body: {
                             wrapper: DraggableContainer,

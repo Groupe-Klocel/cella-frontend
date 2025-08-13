@@ -36,7 +36,7 @@ interface CustomPageHeaderProps {
     extra?: React.ReactNode;
     avatar?: string;
     breadcrumb?: React.ReactNode;
-    tags?: TagType[];
+    tags?: any;
     footer?: React.ReactNode;
     children?: React.ReactNode;
 }
@@ -75,15 +75,7 @@ const CustomPageHeader: React.FC<CustomPageHeaderProps> = ({
                 </Space>
                 {extra && <div style={{ float: 'right' }}>{extra}</div>}
             </div>
-            {tags && (
-                <div style={{ marginBottom: '16px' }}>
-                    {tags.map((tag, index) => (
-                        <Tag key={index} color={tag.color}>
-                            {tag.text}
-                        </Tag>
-                    ))}
-                </div>
-            )}
+            {tags && <div style={{ marginBottom: '16px' }}>{tags}</div>}
             {children && <div style={{ marginBottom: '16px' }}>{children}</div>}
             {footer && <div>{footer}</div>}
         </div>

@@ -63,7 +63,6 @@ const MainLayout: FC<IMainLayoutProps> = ({ children }: IMainLayoutProps) => {
         [dispatchUserSettings, userSettings]
     );
 
-
     if (status !== 'loaded') {
         return <ScreenSpin />;
     }
@@ -85,7 +84,7 @@ const MainLayout: FC<IMainLayoutProps> = ({ children }: IMainLayoutProps) => {
                         </Layout.Sider>
                         <AppContent>{children}</AppContent>
                     </StyledMainLayout>
-                    <DrawerItems />
+                    {/* <DrawerItems /> */}
                 </DrawerProvider>
             </StyledMainLayout>
         </ProtectRoute>

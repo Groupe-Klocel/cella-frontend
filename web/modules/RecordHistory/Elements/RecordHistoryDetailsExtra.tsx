@@ -22,10 +22,7 @@ import { META_DEFAULTS } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider } from 'antd';
 import { useState } from 'react';
-import {
-    HeaderData,
-    RecordHistoryListComponent
-} from 'modules/RecordHistory/Elements/RecordHistoryListComponent';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { RecordHistoryDetailBeforeModelV2 as modelBefore } from 'models/RecordHistoryDetailBeforeModelV2';
 import { RecordHistoryDetailAfterModelV2 as modelAfter } from 'models/RecordHistoryDetailAfterModelV2';
 
@@ -54,7 +51,7 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
         <>
             <Divider />
             <AppHead title={META_DEFAULTS.title} />
-            <RecordHistoryListComponent
+            <ListComponent
                 searchCriteria={{ sequenceId: parseInt(sequenceId) }}
                 headerData={headerDataBefore}
                 dataModel={modelBefore}
@@ -63,7 +60,7 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
                 searchable={false}
             />
             <Divider />
-            <RecordHistoryListComponent
+            <ListComponent
                 searchCriteria={{ sequenceId: parseInt(sequenceId) }}
                 headerData={headerDataAfter}
                 dataModel={modelAfter}

@@ -56,7 +56,7 @@ const BoxPage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:boxes')} ${data?.name}`;
+    const pageTitle = `${t('common:box')} ${data?.name}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -151,7 +151,7 @@ const BoxPage: PageComponent = () => {
         <>
             <AppHead title={META_DEFAULTS.title} />
             <ItemDetailComponent
-                extraDataComponent={<BoxDetailsExtra boxId={id} />}
+                extraDataComponent={<BoxDetailsExtra boxId={id} boxName={data?.name} />}
                 id={id!}
                 headerData={headerData}
                 dataModel={model}
