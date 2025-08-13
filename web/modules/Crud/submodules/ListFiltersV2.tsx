@@ -45,10 +45,10 @@ export interface IGeneralSearchProps {
     handleSubmit?: any;
     resetForm?: boolean;
     allFieldsInitialValue?: string;
-    selectCase: string[];
-    setSelectCase: any;
-    selectJoker: string[];
-    setSelectJoker: any;
+    selectCase?: string[];
+    setSelectCase?: any;
+    selectJoker?: string[];
+    setSelectJoker?: any;
 }
 
 const ListFilters: FC<IGeneralSearchProps> = ({
@@ -370,12 +370,16 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                 <StringInput
                                     item={item}
                                     key={item.name + index}
-                                    filtersParameters={{
-                                        selectCase: selectCase,
-                                        setSelectCase: setSelectCase,
-                                        selectJoker: selectJoker,
-                                        setSelectJoker: setSelectJoker
-                                    }}
+                                    filtersParameters={
+                                        selectCase && selectJoker
+                                            ? {
+                                                  selectCase: selectCase,
+                                                  setSelectCase: setSelectCase,
+                                                  selectJoker: selectJoker,
+                                                  setSelectJoker: setSelectJoker
+                                              }
+                                            : undefined
+                                    }
                                 />
                             );
                         else if (item.type == FormDataType.TextArea)

@@ -44,13 +44,13 @@ import {
     isStringDate,
     formatUTCLocaleDate
 } from '@helpers';
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, filter, isString, set } from 'lodash';
+import _, { debounce, filter, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
@@ -1031,6 +1031,15 @@ const ListComponent = (props: IListProps) => {
             });
     };
 
+    function isSelectCaseExptions() {
+        // because they are not in the resolver of the dictionary manageur
+        if (router.pathname.includes('roles') || router.pathname.includes('warehouse-workers')) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     function drawerProps() {
         return {
             size: 450,
@@ -1050,10 +1059,10 @@ const ListComponent = (props: IListProps) => {
                     handleSubmit={handleSubmit}
                     resetForm={resetForm}
                     allFieldsInitialValue={allFieldsInitialValue ?? undefined}
-                    selectCase={selectCase}
-                    setSelectCase={setSelectCase}
-                    selectJoker={selectJoker}
-                    setSelectJoker={setSelectJoker}
+                    selectCase={!isSelectCaseExptions() ? selectCase : undefined}
+                    setSelectCase={!isSelectCaseExptions() ? setSelectCase : undefined}
+                    selectJoker={!isSelectCaseExptions() ? selectJoker : undefined}
+                    setSelectJoker={!isSelectCaseExptions() ? setSelectJoker : undefined}
                 />
             ),
             onCancel: () => handleReset(),
