@@ -547,6 +547,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 const newStoredObject = JSON.parse(storage.get(process) || '{}');
                 newStoredObject['currentStep'] = 30;
                 newStoredObject[`step10`] = storedObject[`step10`];
+                newStoredObject[`step22`] = storedObject[`step22`];
                 newStoredObject[`step20`] = storedObject[`step20`];
                 newStoredObject[`step25`] = storedObject[`step25`];
                 storage.set(process, JSON.stringify(newStoredObject));
