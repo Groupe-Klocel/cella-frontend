@@ -18,11 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { SettingOutlined } from '@ant-design/icons';
-import { Logo, ProfileMenu, UserSettings } from '@components';
+import { DrawerItems, Logo, ProfileMenu, UserSettings } from '@components';
 import { Col, Layout, Row } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
-import { useDrawerDispatch } from 'context/DrawerContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
@@ -48,13 +47,8 @@ const Header: FC = () => {
 
     const { graphqlRequestClient } = useAuth();
 
-    const dispatchDrawer = useDrawerDispatch();
-
-    const closeDrawer = useCallback(
-        () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
-        [dispatchDrawer]
-    );
     const { userSettings, user: userInfo, tempTheme } = useAppState();
+    const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
 
     const generalUserSettingsRef = useRef<any>(null);
     const tempThemeRef = useRef<any>(null);
@@ -127,37 +121,38 @@ const Header: FC = () => {
 
     const saveUserSettings = async () => {
         saveSettings();
-        closeDrawer();
+        setIsSearchDrawerOpen(false);
         switcher({
             theme: tempThemeRef.current ?? generalUserSettingsRef.current?.valueJson?.theme!
         });
     };
 
-    const openUserSettingsDrawer = useCallback(
-        () =>
-            dispatchDrawer({
-                type: 'OPEN_DRAWER',
-                title: 'menu:user-settings',
-                cancelButton: false,
-                comfirmButton: true,
-                comfirmButtonTitle: 'actions:save',
-                content: <UserSettings />,
-                onComfirm: () => saveUserSettings()
-            }),
-        [dispatchDrawer, saveUserSettings]
-    );
+    function drawerProps() {
+        return {
+            type: 'OPEN_DRAWER',
+            isOpen: isSearchDrawerOpen,
+            setIsOpen: setIsSearchDrawerOpen,
+            title: 'menu:user-settings',
+            cancelButton: false,
+            comfirmButton: true,
+            comfirmButtonTitle: 'actions:save',
+            content: <UserSettings />,
+            onComfirm: () => saveUserSettings()
+        };
+    }
 
     const profileMenuList = [
         {
             key: 'settings',
             title: t('menu:settings'),
             icon: <SettingOutlined />,
-            onClick: () => openUserSettingsDrawer()
+            onClick: () => setIsSearchDrawerOpen(true)
         }
     ];
 
     return (
         <StyledHeader>
+            <DrawerItems {...drawerProps()} />
             <Row wrap={false} align="middle">
                 <StyledCol flex="10vw">
                     <Link href="/" passHref>

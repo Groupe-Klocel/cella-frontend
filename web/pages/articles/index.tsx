@@ -144,7 +144,7 @@ const ArticlePages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('common:articles')} />
             <ListComponent
                 headerData={headerData}
                 dataModel={model}

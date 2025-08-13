@@ -361,6 +361,12 @@ const SideMenu: FC = () => {
                     label: (
                         <Link href="/handling-unit-content-features">{t('features-in-stock')}</Link>
                     )
+                },
+                getModesFromPermissions(permissions, Table.HandlingUnitContent).includes(
+                    ModeEnum.Read
+                ) && {
+                    key: 'stock-management-cumulated-stock',
+                    label: <Link href="/cumulated-stock">{t('cumulated-stock')}</Link>
                 }
             ].filter(Boolean)
         },

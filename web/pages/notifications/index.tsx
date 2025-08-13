@@ -25,11 +25,11 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { NotificationModelV2 as model } from 'models/NotificationModelV2';
-import { HeaderData } from 'modules/Crud/ListComponentV2';
+import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { notificationsRoutes as itemRoutes } from 'modules/Notifications/Static/notificationsRoutes';
-import { NotificationListComponent } from 'modules/Notifications/Elements/NotificationListComponent';
+
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const NotificationPages: PageComponent = () => {
@@ -62,7 +62,7 @@ const NotificationPages: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <NotificationListComponent
+            <ListComponent
                 headerData={headerData}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}

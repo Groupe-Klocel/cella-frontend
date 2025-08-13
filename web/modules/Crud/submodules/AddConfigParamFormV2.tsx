@@ -26,6 +26,7 @@ import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, useCreate } from '@helpers';
 import { FilterFieldType, ModelType } from 'models/ModelsV2';
 import { FormGroup } from './FormGroup';
+import { useAppDispatch } from 'context/AppContext';
 
 export interface IAddItemFormProps {
     dataModel: ModelType;
@@ -39,6 +40,7 @@ export const AddConfigParamForm: FC<IAddItemFormProps> = (props: IAddItemFormPro
     const { t } = useTranslation();
     const router = useRouter();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const dispatchToReducer = useAppDispatch();
 
     const [current, setCurrent] = useState(0);
     const [form] = Form.useForm();
@@ -91,9 +93,13 @@ export const AddConfigParamForm: FC<IAddItemFormProps> = (props: IAddItemFormPro
 
     useEffect(() => {
         if (!(createResult && createResult.data)) return;
-
         if (createResult.success) {
             setUnsavedChanges(false);
+            const formattedResult = createResult.data[props.dataModel.endpoints.create];
+            dispatchToReducer({
+                type: ('add_' + props.dataModel.endpoints.list).toUpperCase(),
+                [props.dataModel.endpoints.detail]: formattedResult
+            });
             router.push(
                 props.routeAfterSuccess.replace(
                     ':id',
