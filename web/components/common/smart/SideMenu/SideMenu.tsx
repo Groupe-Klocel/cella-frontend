@@ -252,92 +252,174 @@ const SideMenu: FC = () => {
                 // PACKAGINGS
                 getModesFromPermissions(permissions, Table.HandlingUnitModel).includes(
                     ModeEnum.Read
-                ) && {
-                    key: 'configuration-handling-unit-models',
-                    label: <Link href="/handling-unit-models">{t('handling-unit-models')}</Link>
-                },
-                getModesFromPermissions(permissions, Table.Equipment).includes(ModeEnum.Read) && {
-                    key: 'configuration-equipment',
-                    label: <Link href="/equipment">{t('equipment')}</Link>
-                },
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) && {
-                    key: 'configuration-stock-statuses',
-                    label: <Link href="/stock-statuses">{t('stock-statuses')}</Link>
-                },
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) && {
-                    key: 'configuration-business-management',
-                    label: t('business-management'),
-                    children: [
-                        {
-                            key: 'configuration-bank-accounts',
-                            label: <Link href="/bank-accounts">{t('bank-accounts')}</Link>
-                        },
-                        {
-                            key: 'configuration-currencies',
-                            label: <Link href="/currencies">{t('currencies')}</Link>
-                        },
-                        {
-                            key: 'configuration-payment-terms',
-                            label: <Link href="/payment-terms">{t('payment-terms')}</Link>
-                        },
-                        {
-                            key: 'configuration-payment-methods',
-                            label: <Link href="/payment-methods">{t('payment-methods')}</Link>
-                        },
-                        {
-                            key: 'configuration-vat-rates',
-                            label: <Link href="/vat-rates">{t('vat-rates')}</Link>
-                        },
-                        {
-                            key: 'configuration-price-types',
-                            label: <Link href="/price-types">{t('price-types')}</Link>
-                        }
-                    ]
-                },
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) && {
-                    key: 'configuration-shipping-modes',
-                    label: <Link href="/shipping-modes">{t('shipping-modes')}</Link>
-                },
+                ) &&
+                getModesFromPermissions(permissions, 'wm_handling-unit-models').includes(
+                    ModeEnum.Read
+                )
+                    ? {
+                          key: 'configuration-handling-unit-models',
+                          label: (
+                              <Link href="/handling-unit-models">{t('handling-unit-models')}</Link>
+                          )
+                      }
+                    : null,
+                // EQUIPMENT
+                getModesFromPermissions(permissions, Table.Equipment).includes(ModeEnum.Read) &&
+                getModesFromPermissions(permissions, 'wm_equipment').includes(ModeEnum.Read)
+                    ? {
+                          key: 'configuration-equipment',
+                          label: <Link href="/equipment">{t('equipment')}</Link>
+                      }
+                    : null,
+                // STOCK STATUSES
+                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
+                getModesFromPermissions(permissions, 'wm_stock-statuses').includes(ModeEnum.Read)
+                    ? {
+                          key: 'configuration-stock-statuses',
+                          label: <Link href="/stock-statuses">{t('stock-statuses')}</Link>
+                      }
+                    : null,
+                // BUSINESS MANAGEMENT
+                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
+                [
+                    'wm_bank-accounts',
+                    'wm_currencies',
+                    'wm_payment-terms',
+                    'wm_payment-methods',
+                    'wm_vat-rates',
+                    'wm_price-types'
+                ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read))
+                    ? {
+                          key: 'configuration-business-management',
+                          label: t('business-management'),
+                          children: [
+                              // BANK ACCOUNTS
+                              getModesFromPermissions(permissions, 'wm_bank-accounts').includes(
+                                  ModeEnum.Read
+                              ) && {
+                                  key: 'configuration-bank-accounts',
+                                  label: <Link href="/bank-accounts">{t('bank-accounts')}</Link>
+                              },
+                              // CURRENCIES
+                              getModesFromPermissions(permissions, 'wm_currencies').includes(
+                                  ModeEnum.Read
+                              ) && {
+                                  key: 'configuration-currencies',
+                                  label: <Link href="/currencies">{t('currencies')}</Link>
+                              },
+                              // PAYMENT TERMS
+                              getModesFromPermissions(permissions, 'wm_payment-terms').includes(
+                                  ModeEnum.Read
+                              ) && {
+                                  key: 'configuration-payment-terms',
+                                  label: <Link href="/payment-terms">{t('payment-terms')}</Link>
+                              },
+                              // PAYMENT METHODS
+                              getModesFromPermissions(permissions, 'wm_payment-methods').includes(
+                                  ModeEnum.Read
+                              ) && {
+                                  key: 'configuration-payment-methods',
+                                  label: <Link href="/payment-methods">{t('payment-methods')}</Link>
+                              },
+                              // VAT RATES
+                              getModesFromPermissions(permissions, 'wm_vat-rates').includes(
+                                  ModeEnum.Read
+                              ) && {
+                                  key: 'configuration-vat-rates',
+                                  label: <Link href="/vat-rates">{t('vat-rates')}</Link>
+                              },
+                              // PRICE TYPES
+                              getModesFromPermissions(permissions, 'wm_price-types').includes(
+                                  ModeEnum.Read
+                              ) && {
+                                  key: 'configuration-price-types',
+                                  label: <Link href="/price-types">{t('price-types')}</Link>
+                              }
+                          ]
+                      }
+                    : null,
+                // SHIPPING MODES
+                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
+                getModesFromPermissions(permissions, 'wm_shipping-modes').includes(ModeEnum.Read)
+                    ? {
+                          key: 'configuration-shipping-modes',
+                          label: <Link href="/shipping-modes">{t('shipping-modes')}</Link>
+                      }
+                    : null,
+                // ROUND CALCULATION PROFILES
                 getModesFromPermissions(permissions, Table.RoundCalculationProfile).includes(
                     ModeEnum.Read
-                ) && {
-                    key: 'configuration-round-calculation-profiles',
-                    label: (
-                        <Link href="/round-calculation-profiles">
-                            {t('round-calculation-profiles')}
-                        </Link>
-                    )
-                },
-                getModesFromPermissions(permissions, Table.StockOwner).includes(ModeEnum.Read) && {
-                    key: 'configuration-stock-owners',
-                    label: <Link href="/stock-owners">{t('stock-owners')}</Link>
-                },
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) && {
-                    key: 'configuration-return',
-                    label: t('returns'),
-                    children: [
-                        {
-                            key: 'configuration-action-codes',
-                            label: <Link href="/action-codes">{t('action-codes')}</Link>
-                        },
-                        {
-                            key: 'configuration-return-codes',
-                            label: <Link href="/return-codes">{t('return-codes')}</Link>
-                        }
-                    ]
-                },
-                getModesFromPermissions(permissions, Table.Rule).includes(ModeEnum.Read) && {
-                    key: 'configuration-rules',
-                    label: <Link href="/rules">{t('rules')}</Link>
-                },
-                getModesFromPermissions(permissions, Table.ThirdParty).includes(ModeEnum.Read) && {
-                    key: 'configuration-third-parties',
-                    label: <Link href="/third-parties">{t('third-parties')}</Link>
-                },
-                getModesFromPermissions(permissions, Table.Carrier).includes(ModeEnum.Read) && {
-                    key: 'configuration-carriers',
-                    label: <Link href="/carriers">{t('carriers')}</Link>
-                }
+                ) &&
+                getModesFromPermissions(permissions, 'wm_round-calculation-profiles').includes(
+                    ModeEnum.Read
+                )
+                    ? {
+                          key: 'configuration-round-calculation-profiles',
+                          label: (
+                              <Link href="/round-calculation-profiles">
+                                  {t('round-calculation-profiles')}
+                              </Link>
+                          )
+                      }
+                    : null,
+                // STOCK OWNER
+                getModesFromPermissions(permissions, Table.StockOwner).includes(ModeEnum.Read) &&
+                getModesFromPermissions(permissions, 'wm_stock-owners').includes(ModeEnum.Read)
+                    ? {
+                          key: 'configuration-stock-owners',
+                          label: <Link href="/stock-owners">{t('stock-owners')}</Link>
+                      }
+                    : null,
+                // RETURNS
+                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
+                ['wm_action-codes', 'wm_return-codes'].some((perm) =>
+                    getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+                )
+                    ? {
+                          key: 'configuration-return',
+                          label: t('returns'),
+                          children: [
+                              // ACTION CODES
+                              getModesFromPermissions(permissions, 'wm_action-codes').includes(
+                                  ModeEnum.Read
+                              ) && {
+                                  key: 'configuration-action-codes',
+                                  label: <Link href="/action-codes">{t('action-codes')}</Link>
+                              },
+                              // RETURN CODES
+                              getModesFromPermissions(permissions, 'wm_return-codes').includes(
+                                  ModeEnum.Read
+                              ) && {
+                                  key: 'configuration-return-codes',
+                                  label: <Link href="/return-codes">{t('return-codes')}</Link>
+                              }
+                          ]
+                      }
+                    : null,
+                // RULES
+                getModesFromPermissions(permissions, Table.Rule).includes(ModeEnum.Read) &&
+                getModesFromPermissions(permissions, 'wm_rules').includes(ModeEnum.Read)
+                    ? {
+                          key: 'configuration-rules',
+                          label: <Link href="/rules">{t('rules')}</Link>
+                      }
+                    : null,
+                // THIRD PARTIES
+                getModesFromPermissions(permissions, Table.ThirdParty).includes(ModeEnum.Read) &&
+                getModesFromPermissions(permissions, 'wm_third-parties').includes(ModeEnum.Read)
+                    ? {
+                          key: 'configuration-third-parties',
+                          label: <Link href="/third-parties">{t('third-parties')}</Link>
+                      }
+                    : null,
+                // CARRIERS
+                getModesFromPermissions(permissions, Table.Carrier).includes(ModeEnum.Read) &&
+                getModesFromPermissions(permissions, 'wm_carriers').includes(ModeEnum.Read)
+                    ? {
+                          key: 'configuration-carriers',
+                          label: <Link href="/carriers">{t('carriers')}</Link>
+                      }
+                    : null
             ].filter(Boolean)
         },
         // MENU ARTICLES
