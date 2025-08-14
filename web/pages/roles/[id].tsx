@@ -78,14 +78,24 @@ const RolePage: PageComponent = () => {
         actionsComponent: (
             <Space>
                 {permissionsModes.length > 0 && permissionsModes.includes(ModeEnum.Update) ? (
-                    <LinkButton
-                        title={t('common:permissions')}
-                        path={pathParamsFromDictionary('/roles/permissions/', {
-                            id,
-                            name: data?.name
-                        })}
-                        type="primary"
-                    />
+                    <>
+                        <LinkButton
+                            title={t('common:screenPermissions')}
+                            path={pathParamsFromDictionary('/roles/screen-permissions/', {
+                                id,
+                                name: data?.name
+                            })}
+                            type="primary"
+                        />
+                        <LinkButton
+                            title={t('common:permissions')}
+                            path={pathParamsFromDictionary('/roles/permissions/', {
+                                id,
+                                name: data?.name
+                            })}
+                            type="primary"
+                        />
+                    </>
                 ) : (
                     <></>
                 )}

@@ -23,14 +23,16 @@ import MainLayout from 'components/layouts/MainLayout';
 import { META_DEFAULTS } from '@helpers';
 import { Permissions } from 'modules/Roles/PageContainer/Permissions';
 import { useRouter } from 'next/router';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const PermissionsPage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation();
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('common:permissions')} />
             <Permissions roleId={router.query.id!} roleName={router.query.name!} />
         </>
     );

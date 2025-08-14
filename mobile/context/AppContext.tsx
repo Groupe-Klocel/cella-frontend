@@ -20,10 +20,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { stringToBoolean } from '@helpers';
 import { cookie } from 'helpers/utils/utils';
 import { createCtx } from './create-context';
+import { PermissionType } from 'generated/graphql';
 
 // init from cookies
 const userInfoStr = cookie.get('user') !== undefined ? cookie.get('user') : '{}';
 const userInitData = JSON.parse(userInfoStr!);
+
+type State = {
+    finish: boolean;
+    userSettings: any;
+    user: any;
+    translations: any;
+    permissions: Array<PermissionType> | undefined;
+};
 
 const initialState = {
     finish: false,
@@ -34,13 +43,14 @@ const initialState = {
         }
     ],
     user: userInitData,
-    translations: []
+    translations: [],
+    permissions: []
 };
 
-type State = typeof initialState;
 type Action = any;
 
 function reducer(state: State, action: Action) {
+    console.log('reducer', action);
     switch (action.type) {
         case 'SWITCH_USER_SETTINGS':
             return {
@@ -65,9 +75,19 @@ function reducer(state: State, action: Action) {
             };
         case 'SET_USER_INFO':
             cookie.set('user', JSON.stringify(action.user));
+            const allPermissions: Array<PermissionType> = [];
+            action.user.userRoles.forEach((userRole: any) => {
+                if (
+                    userRole.role.warehouseId == null ||
+                    userRole.role.warehouseId == action.user.warehouseId
+                ) {
+                    allPermissions.push(userRole.role.permissions);
+                }
+            });
             return {
                 ...state,
-                user: action.user
+                user: action.user,
+                permissions: allPermissions.flat()
             };
         case 'SET_TRANSLATIONS':
             return {
