@@ -705,20 +705,31 @@ const SideMenu: FC = () => {
             icon: <HourglassOutlined />,
             label: t('preparation-management'),
             children: [
-                getModesFromPermissions(permissions, Table.Load).includes(ModeEnum.Read) && {
-                    key: 'preparation-management-loads',
-                    label: <Link href="/loads">{t('loads')}</Link>
-                },
+                // LOADS
+                getModesFromPermissions(permissions, Table.Load).includes(ModeEnum.Read) &&
+                getModesFromPermissions(permissions, 'wm_loads').includes(ModeEnum.Read)
+                    ? {
+                          key: 'preparation-management-loads',
+                          label: <Link href="/loads">{t('loads')}</Link>
+                      }
+                    : null,
+                // BOX BARCODES
                 getModesFromPermissions(permissions, Table.HandlingUnitOutboundBarcode).includes(
                     ModeEnum.Read
-                ) && {
-                    key: 'preparation-management-handling-unit-outbound-barcodes',
-                    label: (
-                        <Link href="/handling-unit-outbound-barcodes">
-                            {t('handling-unit-outbound-barcodes')}
-                        </Link>
-                    )
-                },
+                ) &&
+                getModesFromPermissions(permissions, 'wm_handling-unit-outbound-barcodes').includes(
+                    ModeEnum.Read
+                )
+                    ? {
+                          key: 'preparation-management-handling-unit-outbound-barcodes',
+                          label: (
+                              <Link href="/handling-unit-outbound-barcodes">
+                                  {t('handling-unit-outbound-barcodes')}
+                              </Link>
+                          )
+                      }
+                    : null,
+                // BOXES
                 getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
                     ModeEnum.Read
                 ) && getModesFromPermissions(permissions, 'wm_boxes').includes(ModeEnum.Read)
