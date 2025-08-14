@@ -74,7 +74,6 @@ export const ScanForm = ({
     setFormData,
     mask
 }: IScanProps) => {
-    console.log('DLA - mask:', mask);
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
