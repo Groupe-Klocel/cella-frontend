@@ -88,7 +88,7 @@ const CurrenciesPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'currency' }}
                 headerData={headerData}

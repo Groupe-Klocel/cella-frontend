@@ -40,7 +40,7 @@ const AddHandlingUnitOutboundBarcodePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-handling-unit-outbound-barcode')} />
             <AddItemComponent
                 dataModel={HandlingUnitOutboundBarcodeModelV2}
                 headerComponent={

@@ -49,6 +49,7 @@ export const ScanLocation = ({
     showEmptyLocations,
     showSimilarLocations,
     triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
+    action1Trigger: { action1Trigger, setAction1Trigger },
     checkComponent,
     headerContent
 }: IScanLocationProps) => {
@@ -276,6 +277,7 @@ export const ScanLocation = ({
         locationInfos,
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
+        action1Trigger: { action1Trigger, setAction1Trigger },
         alternativeSubmitInput: storedObject?.step10?.data?.round.extraText1 ?? undefined,
         showSimilarLocations: { showSimilarLocations },
         setResetForm
@@ -293,6 +295,8 @@ export const ScanLocation = ({
                         triggerAlternativeSubmit1,
                         setTriggerAlternativeSubmit1
                     }}
+                    action1Trigger={{ action1Trigger, setAction1Trigger }}
+                    action1Label={t('actions:next')}
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     showEmptyLocations={showEmptyLocations}

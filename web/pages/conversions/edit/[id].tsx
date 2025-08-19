@@ -45,7 +45,7 @@ const EditConversionsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:conversions')}${data?.typeText}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

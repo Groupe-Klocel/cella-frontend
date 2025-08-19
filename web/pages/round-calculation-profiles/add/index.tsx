@@ -40,7 +40,7 @@ const AddRoundCalculationProfilePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-round-calculation-profile')} />
             <AddItemComponent
                 dataModel={RoundCalculationProfileModelV2}
                 headerComponent={

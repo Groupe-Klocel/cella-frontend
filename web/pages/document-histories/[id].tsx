@@ -110,7 +110,7 @@ const DocumentHistoryPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <DocumentHistoryDetailComponent
                 id={id!}
                 headerData={headerData}

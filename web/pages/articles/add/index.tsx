@@ -40,7 +40,7 @@ const AddArticlePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-article')} />
             <AddItemComponent
                 dataModel={ArticleModelV2}
                 headerComponent={

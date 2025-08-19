@@ -52,7 +52,7 @@ const HookConfigPage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:hook-config')} ${data?.name}`;
+    const pageTitle = `${t('common:hook-config')} - ${data?.name}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -110,7 +110,7 @@ const HookConfigPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={pageTitle} />
             <ItemDetailComponent
                 id={id!}
                 headerData={headerData}

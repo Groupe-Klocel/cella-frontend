@@ -169,7 +169,10 @@ const ListComponent = (props: IListProps) => {
 
     const defaultPagination: newPaginationType = {
         current: DEFAULT_PAGE_NUMBER,
-        itemsPerPage: props.itemperpage ?? DEFAULT_ITEMS_PER_PAGE
+        itemsPerPage:
+            userSettings?.valueJson?.pagination?.itemsPerPage ??
+            props.itemperpage ??
+            DEFAULT_ITEMS_PER_PAGE
     };
 
     let defaultModelSort = null;
@@ -602,6 +605,19 @@ const ListComponent = (props: IListProps) => {
                 return item;
             }
         });
+        updatedFilterFields.push({
+            name: 'allFields',
+            displayName: t('d:all-fields-search'),
+            type: FormDataType.String,
+            initialValue: newSearchCriterias.allFields ?? undefined,
+            config: undefined,
+            configList: [],
+            param: undefined,
+            paramList: [],
+            optionTable: undefined,
+            isMultipleSearch: false,
+            maxLength: undefined
+        });
 
         setFilterFields(updatedFilterFields);
     }, [userSettings, props.cumulSearchInfos, props.filterFields]);
@@ -967,7 +983,7 @@ const ListComponent = (props: IListProps) => {
 
     const [formSearch] = Form.useForm();
     const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
-    let allFieldsInitialValue: any = undefined;
+    let allFieldsInitialValue: any = userSettings?.valueJson?.filter?.allFields ?? undefined;
 
     const handleSubmit = () => {
         formSearch

@@ -117,7 +117,7 @@ const BoxesPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_BOX }}
                 headerData={headerData}

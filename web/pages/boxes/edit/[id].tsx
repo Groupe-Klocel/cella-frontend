@@ -46,7 +46,7 @@ const EditBoxPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:box')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

@@ -39,7 +39,7 @@ const AddLogisticUnitPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-logistic-unit-model')} />
             <AddItemComponent
                 dataModel={model}
                 headerComponent={

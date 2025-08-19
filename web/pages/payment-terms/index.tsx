@@ -88,7 +88,7 @@ const PaymentTermsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'payment_terms' }}
                 headerData={headerData}

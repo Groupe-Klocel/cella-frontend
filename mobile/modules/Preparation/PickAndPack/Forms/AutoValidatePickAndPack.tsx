@@ -174,9 +174,13 @@ export const AutoValidatePickAndPackForm = ({
                         if (step5.data && step10.roundNumber !== 1) {
                             storedObject['cuurrentStep'] = 10;
                             storedObject[`step5`] = { previousStep: 0, data: step5.data };
-                        } else {
+                            storedObject[`step10`] = { previousStep: 5 };
+                        } else if (step5.data && step10.roundNumber === 1) {
                             storedObject['currentStep'] = 5;
                             storedObject[`step5`] = { previousStep: 0 };
+                        } else {
+                            storedObject['currentStep'] = 10;
+                            storedObject[`step10`] = { previousStep: 0 };
                         }
                         storage.set(process, JSON.stringify(storedObject));
                         showSuccess(t('messages:pick-and-pack-round-finished'));

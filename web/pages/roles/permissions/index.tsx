@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { FC } from 'react';
 import { AppHead } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
-import { META_DEFAULTS } from '@helpers';
 import { Permissions } from 'modules/Roles/PageContainer/Permissions';
 import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';

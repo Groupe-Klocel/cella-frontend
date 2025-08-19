@@ -21,17 +21,18 @@ import { AppHead } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../../../components/layouts/MainLayout';
-import { META_DEFAULTS } from '@helpers';
 import { AddThirdPartyAddressContact } from 'modules/ThirdParties/PagesContainer/AddThirdPartyAddressContact';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddThirdPartyAddressPage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation('actions');
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('associate', { name: t('common:third-party-address-contact') })} />
             <AddThirdPartyAddressContact
                 thirdPartyId={router.query.thirdPartyId}
                 thirdPartyName={router.query.thirdPartyName}

@@ -119,7 +119,7 @@ const GoodsInLinePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 id={id!}
                 extraDataComponent={<GoodsInLineDetailsExtra roundLineId={id} />}
