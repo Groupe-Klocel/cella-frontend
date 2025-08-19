@@ -39,7 +39,7 @@ const ExcelImportPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('common:excel-imports')} />
             <ExcelImportComponent headerData={headerData} dataModel={model} />
         </>
     );

@@ -105,7 +105,7 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <DeliveriesManualAllocationModal
                 showModal={{
                     showDeliveriesManualAllocationModal,

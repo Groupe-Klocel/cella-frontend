@@ -72,7 +72,7 @@ const AddParameterExtraPage: PageComponent = () => {
           ];
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${router.query.parameterName} - ${t('actions:add-extra-infos')}`} />
             <HeaderContent
                 title={`${router.query.parameterName} - ${t('actions:add-extra-infos')}`}
                 routes={breadsCrumb}

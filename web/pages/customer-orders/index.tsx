@@ -368,7 +368,7 @@ const CustomerOrderPages: PageComponent = () => {
     };
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ orderType: configs.ORDER_TYPE_CUSTOMER_ORDER }}
                 headerData={headerData}

@@ -46,7 +46,7 @@ const EditArticlePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:articles')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

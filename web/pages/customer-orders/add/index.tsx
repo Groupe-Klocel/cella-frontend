@@ -42,7 +42,7 @@ const AddCustomerOrderPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add2', { name: t('common:customer-order') })} />
             <AddCustomerOrderComponent
                 dataModel={model}
                 headerComponent={

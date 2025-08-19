@@ -39,7 +39,7 @@ const AddHandlingUnitModelPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-handling-unit-model')} />
             <AddItemComponent
                 dataModel={model}
                 headerComponent={

@@ -48,7 +48,7 @@ const EditBlockPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:block')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 dataModel={BlockModelV2}

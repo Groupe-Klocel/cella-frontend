@@ -118,7 +118,7 @@ const ConfigurationPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={pageTitle} />
             <ItemDetailComponent
                 id={id!}
                 headerData={headerData}

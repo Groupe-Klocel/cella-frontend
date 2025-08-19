@@ -121,7 +121,7 @@ const ShippingUnitLinePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={
                     <ShippingUnitLineDetailsExtra contentId={data?.handlingUnitContentId} />

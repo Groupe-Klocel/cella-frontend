@@ -44,7 +44,6 @@ const ParameterDetailsExtra = ({ Id, details, url }: IItemDetailsProps) => {
     return (
         <>
             <Divider />
-            <AppHead title={META_DEFAULTS.title} />
             <ParameterListComponent
                 searchCriteria={{ Id: Id }}
                 details={details}

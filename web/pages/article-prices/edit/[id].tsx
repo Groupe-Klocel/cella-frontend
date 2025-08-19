@@ -45,7 +45,7 @@ const EditArticlePricePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:article-price')} ${data?.price}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

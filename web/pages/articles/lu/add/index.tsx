@@ -18,20 +18,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { AddArticleLogisticUnit } from 'modules/Articles/PagesContainer/AddArticleLogisticUnit';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddLogisticUnitPage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation('actions');
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('associate', { name: t('common:logistic-unit') })} />
             <AddArticleLogisticUnit
                 articleId={router.query.articleId}
                 articleName={router.query.articleName}

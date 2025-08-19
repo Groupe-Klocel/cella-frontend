@@ -18,22 +18,22 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import { EditRole } from 'modules/Roles/PageContainer/EditRole';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { RoleModelV2 } from 'models/RoleModelV2';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditRolePage: PageComponent = () => {
     const router = useRouter();
     const { id } = router.query;
-
+    const { t } = useTranslation();
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit')} ${t('common:role')}`} />
             <EditRole id={id!} dataModel={RoleModelV2} />
         </>
     );

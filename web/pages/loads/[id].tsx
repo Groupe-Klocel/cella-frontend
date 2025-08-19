@@ -325,7 +325,7 @@ const LoadsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={<LoadDetailsExtra loadId={id!} />}
                 headerData={headerData}

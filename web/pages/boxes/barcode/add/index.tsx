@@ -57,7 +57,11 @@ const AddEquipmentPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead
+                title={t('add2', {
+                    name: t('common:barcode')
+                })}
+            />
             <AddItemComponent
                 headerComponent={
                     <HeaderContent

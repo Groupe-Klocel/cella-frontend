@@ -39,7 +39,7 @@ const AddCurrencyPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-currency')} />
             <AddConfigParamComponent
                 dataModel={model}
                 headerComponent={

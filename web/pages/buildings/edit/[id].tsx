@@ -45,7 +45,7 @@ const EditBuildingPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:building')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

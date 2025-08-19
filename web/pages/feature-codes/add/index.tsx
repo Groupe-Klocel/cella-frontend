@@ -35,7 +35,7 @@ const AddFeatureCodePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-feature-code')} />
             <AddItemComponent
                 dataModel={FeatureCodeModelV2}
                 headerComponent={

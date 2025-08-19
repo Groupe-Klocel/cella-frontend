@@ -23,15 +23,17 @@ import MainLayout from 'components/layouts/MainLayout';
 import { EditArticleBarcode } from 'modules/Articles/PagesContainer/EditArticleBarcode';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditArticleBarcodePage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation();
     const { id } = router.query;
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit')} ${router.query.barcodeName}`} />
             <EditArticleBarcode router={router} id={id!} />
         </>
     );

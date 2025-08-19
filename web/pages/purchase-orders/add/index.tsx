@@ -44,7 +44,7 @@ const AddPurchaseOrderPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-purchase-order')} />
             <AddPurchaseOrder
                 dataModel={PurchaseOrderModelV2}
                 headerComponent={

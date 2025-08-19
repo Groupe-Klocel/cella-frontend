@@ -46,7 +46,7 @@ const EditStockOwnerPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:stock-owner')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

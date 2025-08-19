@@ -46,7 +46,7 @@ const EditFeatureCodePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:feature-code')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

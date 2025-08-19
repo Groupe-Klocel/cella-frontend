@@ -147,7 +147,7 @@ const PatternPage: PageComponent = () => {
     return (
         <>
             <>
-                <AppHead title={META_DEFAULTS.title} />
+                <AppHead title={headerData.title} />
                 <ItemDetailComponent
                     extraDataComponent={<PatternDetailsExtra id={id!} name={data?.name} />}
                     headerData={headerData}

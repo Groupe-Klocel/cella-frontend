@@ -17,9 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider } from 'antd';
 import { useState } from 'react';
 import { SchedulerConfigListComponent } from 'modules/SchedulerConfigs/Elements/SchedulerConfigListComponent';
@@ -32,7 +29,6 @@ export interface IItemDetailsProps {
 }
 
 const SchedulerConfigDetailsExtra = ({ Id, details }: IItemDetailsProps) => {
-    const { t } = useTranslation();
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
@@ -44,7 +40,6 @@ const SchedulerConfigDetailsExtra = ({ Id, details }: IItemDetailsProps) => {
     return (
         <>
             <Divider />
-            <AppHead title={META_DEFAULTS.title} />
             <SchedulerConfigListComponent
                 searchCriteria={{ Id: Id }}
                 details={details}

@@ -45,7 +45,7 @@ const EditParameterPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit-parameter')} ${data?.scope} - ${data?.code}`} />
             <EditConfigParamComponent
                 id={id!}
                 setData={setData}

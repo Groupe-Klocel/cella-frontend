@@ -46,7 +46,7 @@ const EditCreditPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:credit')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

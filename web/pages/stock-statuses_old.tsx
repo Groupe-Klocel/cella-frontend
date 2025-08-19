@@ -18,17 +18,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { StockStatuses } from '../modules/Stocks/PagesContainer/StockStatuses';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const StockStatusesPage: PageComponent = () => {
+    const { t } = useTranslation();
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('menu:stock-statuses')} />
             <StockStatuses />
         </>
     );

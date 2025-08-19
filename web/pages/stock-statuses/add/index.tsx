@@ -39,7 +39,7 @@ const AddStockStatusPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-stock-status')} />
             <AddConfigParamComponent
                 dataModel={ParameterModelV2}
                 headerComponent={
