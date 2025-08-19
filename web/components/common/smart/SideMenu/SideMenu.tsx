@@ -555,10 +555,12 @@ const SideMenu: FC = () => {
             'wm_goods-ins',
             'wm_handling-unit-contents',
             'wm_dummy-hu-generator',
-            'wm_cycle-counts-menu',
+            'wm_cycle-counts',
+            'wm_recommended-cycle-counts',
             'wm_movements',
             'wm_purchase-orders',
-            'wm_handling-unit-content-features'
+            'wm_handling-unit-content-features',
+            'wm_cumulated-stock'
         ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)) && {
             key: 'stock-management',
             icon: <ApartmentOutlined />,
@@ -596,7 +598,9 @@ const SideMenu: FC = () => {
                     : null,
                 // MENU CYCLE COUNTS
                 getModesFromPermissions(permissions, Table.CycleCount).includes(ModeEnum.Read) &&
-                getModesFromPermissions(permissions, 'wm_cycle-counts-menu').includes(ModeEnum.Read)
+                ['wm_cycle-counts', 'wm_recommended-cycle-counts'].some((perm) =>
+                    getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+                )
                     ? {
                           key: 'stock-management-cycle-counts',
                           label: t('cycle-counts'),
@@ -653,6 +657,16 @@ const SideMenu: FC = () => {
                                   {t('features-in-stock')}
                               </Link>
                           )
+                      }
+                    : null,
+                // CUMULATED STOCK
+                getModesFromPermissions(permissions, Table.HandlingUnitContent).includes(
+                    ModeEnum.Read
+                ) &&
+                getModesFromPermissions(permissions, 'wm_cumulated-stock').includes(ModeEnum.Read)
+                    ? {
+                          key: 'stock-management-cumulated-stock',
+                          label: <Link href="/cumulated-stock">{t('cumulated-stock')}</Link>
                       }
                     : null
             ].filter(Boolean)
