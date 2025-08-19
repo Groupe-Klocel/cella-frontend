@@ -50,7 +50,6 @@ const initialState = {
 type Action = any;
 
 function reducer(state: State, action: Action) {
-    console.log('reducer', action);
     switch (action.type) {
         case 'SWITCH_USER_SETTINGS':
             return {
@@ -73,8 +72,10 @@ function reducer(state: State, action: Action) {
                 isSettingMenuCollapsed: action.isSettingMenuCollapsed,
                 isSessionMenuCollapsed: action.isSettingMenuCollapsed
             };
-        case 'SET_USER_INFO':
-            cookie.set('user', JSON.stringify(action.user));
+        case 'SET_USER_INFO': {
+            saveUserInfo(action.user);
+            const userWithoutRole = JSON.parse(JSON.stringify(action.user));
+            delete userWithoutRole['userRoles'];
             const allPermissions: Array<PermissionType> = [];
             action.user.userRoles.forEach((userRole: any) => {
                 if (
@@ -86,9 +87,10 @@ function reducer(state: State, action: Action) {
             });
             return {
                 ...state,
-                user: action.user,
+                user: userWithoutRole,
                 permissions: allPermissions.flat()
             };
+        }
         case 'SET_TRANSLATIONS':
             return {
                 ...state,
@@ -98,6 +100,12 @@ function reducer(state: State, action: Action) {
             return state;
     }
 }
+
+const saveUserInfo = (user: any) => {
+    const tmpUser = JSON.parse(JSON.stringify(user));
+    delete tmpUser['userRoles'];
+    cookie.set('user', JSON.stringify(tmpUser));
+};
 
 const [useAppState, useAppDispatch, AppProvider] = createCtx(initialState, reducer);
 

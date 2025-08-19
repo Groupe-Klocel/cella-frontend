@@ -26,22 +26,29 @@ import {
     IS_FAKE,
     IS_SAME_SEED
 } from '@helpers';
-import { useAppDispatch } from 'context/AppContext';
 import {
     WarehouseLoginMutation,
     WarehouseLoginMutationVariables,
-    useWarehouseLoginMutation
+    useWarehouseLoginMutation,
+    useResetPasswordMutation,
+    ResetPasswordMutation,
+    ResetPasswordMutationVariables,
+    useChangePasswordMutation,
+    ChangePasswordMutation,
+    ChangePasswordMutationVariables
 } from 'generated/graphql';
 import { GraphQLClient } from 'graphql-request';
 import { useRouter } from 'next/router';
-import { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, FC, useContext, useEffect, useState } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 interface IAuthContext {
     isAuthenticated: boolean;
     user?: any;
     login: Function;
+    //IKI 20230227 : not used
     forgotPassword: Function;
+    //IKI 20230227 : not used
     resetPassword: Function;
     loading: boolean;
     logout: Function;
@@ -53,7 +60,6 @@ const AuthContext = createContext<IAuthContext>(undefined!);
 
 export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenType) => {
     const { t } = useTranslation();
-    const dispatchUser = useAppDispatch();
 
     const graphqlClient = new GraphQLClient(process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT as string);
 
@@ -61,6 +67,7 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
     const [user, setUser] = useState(null);
     const [graphqlRequestClient, setGraphqlRequestClient] = useState(graphqlClient);
     const [loading, setLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(!!user);
 
     // Get access token from cookies , decode it and set user
     useEffect(() => {
@@ -68,41 +75,77 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
             const token = cookie.get('token');
             if (token) {
                 setHeader(token);
-                if (token) {
-                    setHeader(token);
-                    const user = decodeJWT(token);
-                    if (user) setUser(user);
-                }
+                const user = decodeJWT(token);
+                if (user) setUser(user);
             }
             setLoading(false);
         }
         loadUserFromCookie();
     }, []);
 
-    const { mutate } = useWarehouseLoginMutation<Error>(graphqlRequestClient, {
+    const loginMutation = useWarehouseLoginMutation<Error>(graphqlRequestClient, {
         onSuccess: (
             data: WarehouseLoginMutation,
             _variables: WarehouseLoginMutationVariables,
-            _context: unknown
+            _context: any
         ) => {
             if (data?.warehouseLogin?.accessToken) {
-                cookie.set('token', data.warehouseLogin.accessToken);
-                // Set Bearer JWT token to the header for future request
-                setHeader(data.warehouseLogin.accessToken);
-                const user = decodeJWT(data.warehouseLogin.accessToken);
+                const token = data.warehouseLogin.accessToken;
+                cookie.set('token', token);
+                setHeader(token);
+                const user = decodeJWT(token);
+                console.log('decoded user = ', user);
                 setUser(user);
-                const userForReducer = {
-                    id: user.user_id,
-                    username: user.username,
-                    warehouseId: user.warehouseId
-                };
-                cookie.set('user', JSON.stringify(userForReducer));
+                setIsAuthenticated(true);
+                // Set Bearer JWT token to the header for future request
             } else {
                 showError(t('messages:error-login'));
             }
         },
         onError: (error) => {
-            showError(t('messages:error-login'));
+            showError(error.message);
+        }
+    });
+
+    //IKI 20230227 : not used
+    const resetMutation = useResetPasswordMutation<Error>(graphqlRequestClient, {
+        onSuccess: (
+            data: ResetPasswordMutation,
+            _variables: ResetPasswordMutationVariables,
+            _context: any
+        ) => {
+            if (data.resetPassword.__typename === 'ResetPasswordSuccess') {
+                showSuccess(data.resetPassword.message);
+            } else {
+                showError(data.resetPassword.message);
+            }
+            console.log(data);
+        },
+        onError: (error) => {
+            console.log(error);
+            showError(error.message);
+        }
+    });
+
+    //IKI 20230227 : not used
+    const changePasswordMutation = useChangePasswordMutation<Error>(graphqlRequestClient, {
+        onSuccess: (
+            data: ChangePasswordMutation,
+            _variables: ChangePasswordMutationVariables,
+            _context: any
+        ) => {
+            if (data?.changePassword.__typename === 'ChangePasswordSuccess') {
+                showSuccess(data.changePassword.message);
+                setTimeout(() => {
+                    router.replace('/login');
+                }, 1000);
+            } else {
+                showError(data.changePassword.message);
+            }
+        },
+        onError: (error) => {
+            console.log(error);
+            showError(error.message);
         }
     });
 
@@ -111,32 +154,42 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
         password,
         warehouseId = process.env.NEXT_PUBLIC_WAREHOUSE_ID as string
     }: WarehouseLoginMutationVariables) => {
+        const { mutate } = loginMutation;
         mutate({ username, password, warehouseId });
     };
 
+    //IKI 20230227 : not used
     const forgotPassword = async ({
         username,
+        callbackUrl,
         warehouseId = process.env.NEXT_PUBLIC_WAREHOUSE_ID
     }: any) => {
-        console.log('FORTGOT PASSWORD CHECK');
+        const { mutate } = resetMutation;
+        mutate({ email: username, callbackUrl: callbackUrl });
     };
 
+    //IKI 20230227 : not used
     const resetPassword = async ({
-        username,
+        token,
         password,
-        comfirmPassword,
+        confirmPassword,
         warehouseId = process.env.NEXT_PUBLIC_WAREHOUSE_ID
     }: any) => {
-        console.log('RESET PASSWORD CHECK');
+        // alert('RESET PASSWORD CHECK');
+        const { mutate } = changePasswordMutation;
+        mutate({ token: token, password: password, password2: confirmPassword });
     };
 
     const logout = () => {
         cookie.remove('token');
         cookie.remove('user');
-        setUser(null);
+        cookie.remove('permissions');
         // Remove Bearer JWT token from header
         setHeader('NOP');
+        setIsAuthenticated(false);
+        setUser(null);
         router.push('/login');
+        //router.reload();
     };
 
     let requestHeader;
@@ -179,7 +232,9 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
                 loading,
                 logout,
                 graphqlRequestClient,
+                //IKI 20230227 : not used
                 forgotPassword,
+                //IKI 20230227 : not used
                 resetPassword
             }}
         >
