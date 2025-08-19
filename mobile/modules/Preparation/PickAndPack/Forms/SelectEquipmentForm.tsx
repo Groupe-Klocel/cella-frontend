@@ -94,6 +94,8 @@ export const SelectEquipmentForm = ({
                     ) {
                         count
                         results {
+                            id
+                            assignedUser
                             equipmentId
                             equipment {
                                 id
@@ -114,21 +116,37 @@ export const SelectEquipmentForm = ({
                         ]
                     }
                 ],
-                itemsPerPage: 100,
-                functions: [{ function: 'count', fields: ['equipmentId'] }]
+                itemsPerPage: 100
+                // functions: [{ function: 'count', fields: ['equipmentId'] }]
             };
 
             const equipmentsList_result = await graphqlRequestClient.request(
                 equipmentsListFromGQL,
                 equipmentsListVariables
             );
-            const equipmentsList = equipmentsList_result?.rounds?.results.map(
-                (item: any) => item.equipment
-            );
+            let equipmentsList: any[] = [];
+            equipmentsList_result?.rounds?.results.forEach((item: any) => {
+                if (
+                    item.equipment &&
+                    equipmentsList.filter((e) => e.id === item.equipmentId).length > 0
+                ) {
+                    equipmentsList.forEach((equipment) => {
+                        if (equipment.id === item.equipmentId) {
+                            equipment.count += 1;
+                        }
+                    });
+                    return;
+                }
+                equipmentsList.push({
+                    id: item.equipmentId,
+                    name: item.equipment.name,
+                    count: 1
+                });
+            });
             setEquipments(
                 equipmentsList.map((item: any) => ({
                     key: item.id,
-                    text: item.name,
+                    text: item.name + ' (' + item.count + ')',
                     value: item.id
                 }))
             );
