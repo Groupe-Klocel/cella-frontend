@@ -54,8 +54,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
             ?.id;
     const handlingUnitContentId =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.id;
-    const ignoreHUContentIds = (storedObject.ignoreHUContentIds =
-        storedObject.ignoreHUContentIds || []);
+    const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
 
     // TYPED SAFE ALL
     useEffect(() => {
@@ -159,31 +158,28 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                 const newStoredObject = JSON.parse(storage.get(process) || '{}');
                 if (ignoreHUContentIds.length > 0) {
                     newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
+                } else {
+                    newStoredObject.ignoreHUContentIds = [];
                 }
                 const { updatedRound } = closeHUOsResult.executeFunction.output.output;
 
                 let remainingHUContentIds = updatedRound.roundAdvisedAddresses
                     .filter((raa: any) => {
-                        return !storedObject.ignoreHUContentIds.includes(raa.handlingUnitContentId);
+                        return !newStoredObject.ignoreHUContentIds.includes(
+                            raa.handlingUnitContentId
+                        );
                     })
-                    .filter((raa: any) => raa.quantity != 0)
-                    .sort((a: any, b: any) => {
-                        return a.roundOrderId - b.roundOrderId;
-                    });
+                    .filter((raa: any) => raa.quantity != 0);
                 if (remainingHUContentIds.length === 0) {
-                    storedObject.ignoreHUContentIds = [];
-                    remainingHUContentIds = updatedRound.roundAdvisedAddresses
-                        .filter((raa: any) => raa.quantity != 0)
-                        .sort((a: any, b: any) => {
-                            return a.roundOrderId - b.roundOrderId;
-                        });
+                    newStoredObject.ignoreHUContentIds = [];
+                    remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
+                        (raa: any) => raa.quantity != 0
+                    );
                 }
 
-                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses
-                    .filter((raa: any) => raa.quantity != 0)
-                    .sort((a: any, b: any) => {
-                        return a.roundOrderId - b.roundOrderId;
-                    });
+                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses.filter(
+                    (raa: any) => raa.quantity != 0
+                );
                 const data = {
                     proposedRoundAdvisedAddresses: roundAdvisedAddresses.filter(
                         (raa: any) =>
@@ -220,25 +216,17 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                 .filter((raa: any) => {
                     return !storedObject.ignoreHUContentIds.includes(raa.handlingUnitContentId);
                 })
-                .filter((raa: any) => raa.quantity != 0)
-                .sort((a: any, b: any) => {
-                    return a.roundOrderId - b.roundOrderId;
-                });
+                .filter((raa: any) => raa.quantity != 0);
             if (remainingHUContentIds.length === 0) {
                 storedObject.ignoreHUContentIds = [];
-                remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
-                    .filter((raa: any) => raa.quantity != 0)
-                    .sort((a: any, b: any) => {
-                        return a.roundOrderId - b.roundOrderId;
-                    });
+                remainingHUContentIds = storedObject[
+                    `step10`
+                ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
             }
             storedObject['step10'].data.proposedRoundAdvisedAddresses = storedObject[
                 `step10`
             ]?.data?.round.roundAdvisedAddresses
                 .filter((raa: any) => raa.quantity != 0)
-                .sort((a: any, b: any) => {
-                    return a.roundOrderId - b.roundOrderId;
-                })
                 .filter(
                     (raa: any) =>
                         raa.handlingUnitContentId ===

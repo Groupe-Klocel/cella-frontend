@@ -66,6 +66,7 @@ export const AutoValidatePickAndPackForm = ({
     // retrieve values for update contents/boxline and create movement
     const { step5, step10, step15, step30, step40, step50, step60, step70, step80 } = storedObject;
 
+    const initialIgnoreHUContentIds = storedObject.ignoreHUContentIds || [];
     const proposedRoundAdvisedAddresses = step10?.data?.proposedRoundAdvisedAddresses;
     const round = step10?.data?.round;
     const huName = step15?.data?.handlingUnit;
@@ -185,21 +186,32 @@ export const AutoValidatePickAndPackForm = ({
                         storage.set(process, JSON.stringify(storedObject));
                         showSuccess(t('messages:pick-and-pack-round-finished'));
                     } else {
+                        let ignoreHUContentIds = initialIgnoreHUContentIds || [];
+                        let remainingHUContentIds = updatedRound.roundAdvisedAddresses
+                            .filter((raa: any) => {
+                                return !ignoreHUContentIds.includes(raa.handlingUnitContentId);
+                            })
+                            .filter((raa: any) => raa.quantity != 0);
+
+                        if (remainingHUContentIds.length === 0) {
+                            ignoreHUContentIds = [];
+                            remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
+                                (raa: any) => raa.quantity != 0
+                            );
+                        }
+
                         const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses
                             .filter((raa: any) => raa.quantity != 0)
-                            .sort((a: any, b: any) => {
-                                return a.roundOrderId - b.roundOrderId;
-                            });
-                        //retrieve list of proposedRoundAdvisedAddresses for a given huc
-                        const raaForHUC = roundAdvisedAddresses.filter(
-                            (raa: any) =>
-                                raa.handlingUnitContentId ==
-                                roundAdvisedAddresses[0].handlingUnitContentId
-                        );
+                            .filter(
+                                (raa: any) =>
+                                    raa.handlingUnitContentId ===
+                                    remainingHUContentIds[0]?.handlingUnitContentId
+                            );
+
                         const data = {
                             proposedRoundAdvisedAddresses: updatedRound.equipment.checkPosition
-                                ? [raaForHUC[0]]
-                                : raaForHUC,
+                                ? [roundAdvisedAddresses[0]]
+                                : roundAdvisedAddresses,
                             pickAndPackType: updatedRound.equipment.checkPosition
                                 ? 'detail'
                                 : 'fullBox',
@@ -217,6 +229,7 @@ export const AutoValidatePickAndPackForm = ({
                         }
                         storedObject[`step10`] = { previousStep: step5 ? 5 : 0, data };
                         storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
+                        storedObject.ignoreHUContentIds = ignoreHUContentIds;
                         storage.set(process, JSON.stringify(storedObject));
                     }
                     setTriggerRender(!triggerRender);
