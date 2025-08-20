@@ -158,9 +158,27 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                 storage.remove(process);
                 const newStoredObject = JSON.parse(storage.get(process) || '{}');
                 if (ignoreHUContentIds.length > 0) {
-                    newStoredObject.ignoreRAAIds = ignoreHUContentIds;
+                    newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
                 }
                 const { updatedRound } = closeHUOsResult.executeFunction.output.output;
+
+                let remainingHUContentIds = updatedRound.roundAdvisedAddresses
+                    .filter((raa: any) => {
+                        return !storedObject.ignoreHUContentIds.includes(raa.handlingUnitContentId);
+                    })
+                    .filter((raa: any) => raa.quantity != 0)
+                    .sort((a: any, b: any) => {
+                        return a.roundOrderId - b.roundOrderId;
+                    });
+                if (remainingHUContentIds.length === 0) {
+                    storedObject.ignoreHUContentIds = [];
+                    remainingHUContentIds = updatedRound.roundAdvisedAddresses
+                        .filter((raa: any) => raa.quantity != 0)
+                        .sort((a: any, b: any) => {
+                            return a.roundOrderId - b.roundOrderId;
+                        });
+                }
+
                 const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses
                     .filter((raa: any) => raa.quantity != 0)
                     .sort((a: any, b: any) => {
@@ -170,7 +188,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                     proposedRoundAdvisedAddresses: roundAdvisedAddresses.filter(
                         (raa: any) =>
                             raa.handlingUnitContentId ==
-                            roundAdvisedAddresses[0].handlingUnitContentId
+                            remainingHUContentIds[0].handlingUnitContentId
                     ),
                     round: updatedRound,
                     pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
@@ -198,22 +216,26 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
         if (action1Trigger.action1Trigger) {
             action1Trigger.setAction1Trigger(false);
             storedObject.ignoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
-            let remainingHUContentIds = storedObject[
-                `step10`
-            ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => {
-                return !storedObject.ignoreHUContentIds.includes(raa.handlingUnitContentId);
-            });
-            if (remainingHUContentIds.length === 0) {
-                storedObject.ignoreHUContentIds = [];
-                remainingHUContentIds = storedObject[
-                    `step10`
-                ]?.data?.round.roundAdvisedAddresses.sort((a: any, b: any) => {
+            let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => {
+                    return !storedObject.ignoreHUContentIds.includes(raa.handlingUnitContentId);
+                })
+                .filter((raa: any) => raa.quantity != 0)
+                .sort((a: any, b: any) => {
                     return a.roundOrderId - b.roundOrderId;
                 });
+            if (remainingHUContentIds.length === 0) {
+                storedObject.ignoreHUContentIds = [];
+                remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+                    .filter((raa: any) => raa.quantity != 0)
+                    .sort((a: any, b: any) => {
+                        return a.roundOrderId - b.roundOrderId;
+                    });
             }
             storedObject['step10'].data.proposedRoundAdvisedAddresses = storedObject[
                 `step10`
             ]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => raa.quantity != 0)
                 .sort((a: any, b: any) => {
                     return a.roundOrderId - b.roundOrderId;
                 })

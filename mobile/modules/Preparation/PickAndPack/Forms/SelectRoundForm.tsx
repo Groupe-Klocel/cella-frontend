@@ -224,7 +224,9 @@ export const SelectRoundForm = ({
                         roundId
                         handlingUnitModelId
                     }
-                    roundAdvisedAddresses {
+                    roundAdvisedAddresses(
+                        orderBy: [{ fieldName: "roundOrderId", ascending: true }]
+                    ) {
                         id
                         roundOrderId
                         quantity
