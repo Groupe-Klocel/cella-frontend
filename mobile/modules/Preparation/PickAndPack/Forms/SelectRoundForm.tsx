@@ -368,11 +368,10 @@ export const SelectRoundForm = ({
 
         data['round'] = selectedRound.round;
         data['roundNumber'] = roundNumber;
-        const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
-            ?.filter((raa: any) => raa.quantity != 0)
-            .sort((a: any, b: any) => {
-                return a.roundOrderId - b.roundOrderId;
-            });
+
+        const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses?.filter(
+            (raa: any) => raa.quantity != 0
+        );
 
         if (roundAdvisedAddresses) {
             //retrieve list of proposedRoundAdvisedAddresses for a given huc
