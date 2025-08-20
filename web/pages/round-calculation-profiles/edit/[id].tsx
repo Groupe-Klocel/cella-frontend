@@ -45,7 +45,7 @@ const EditRoundCalculationProfilePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:round-calculation-profile')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

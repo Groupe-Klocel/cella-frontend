@@ -37,7 +37,7 @@ const AddHookConfigPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-hook-config')} />
             <AddItemComponent
                 dataModel={HookConfigModelV2}
                 headerComponent={

@@ -18,20 +18,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import { EditEquipment } from 'modules/Equipment/PagesContainer/EditEquipment';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditEquipmentPage: PageComponent = () => {
     const router = useRouter();
     const { id } = router.query;
+    const { t } = useTranslation();
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit')} ${t('menu:equipment')}`} />
             <EditEquipment router={router} id={id!} />
         </>
     );

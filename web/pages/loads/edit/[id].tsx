@@ -45,7 +45,7 @@ const EditLoadsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:load')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

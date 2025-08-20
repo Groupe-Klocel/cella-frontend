@@ -50,7 +50,6 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
     return (
         <>
             <Divider />
-            <AppHead title={META_DEFAULTS.title} />
             <ListComponent
                 searchCriteria={{ sequenceId: parseInt(sequenceId) }}
                 headerData={headerDataBefore}

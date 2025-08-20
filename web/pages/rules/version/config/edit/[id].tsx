@@ -20,19 +20,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
-import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { EditRuleVersionConfig } from 'modules/Rules/PageContainer/EditRuleVersionConfig';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditRuleVersionConfigPage: PageComponent = () => {
     const router = useRouter();
     const { id } = router.query;
+    const { t } = useTranslation();
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit')} ${t('common:rule-version-config')}`} />
             <EditRuleVersionConfig router={router} id={id!} />
         </>
     );

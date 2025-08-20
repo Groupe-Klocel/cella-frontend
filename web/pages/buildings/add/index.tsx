@@ -40,7 +40,7 @@ const AddBuildingPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-building')} />
             <AddItemComponent
                 dataModel={BuildingModelV2}
                 headerComponent={

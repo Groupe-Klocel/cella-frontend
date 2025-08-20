@@ -46,7 +46,7 @@ const EditParameterExtraPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:parameter')}${router.query.parameterName}`} />
             <HeaderContent
                 title={`${t('common:parameter')}${router.query.parameterName}`}
                 routes={breadsCrumb}

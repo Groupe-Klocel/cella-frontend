@@ -45,7 +45,7 @@ const EditCurrencyPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit-currency')} ${data?.value}`} />
             <EditConfigParamComponent
                 id={id!}
                 setData={setData}

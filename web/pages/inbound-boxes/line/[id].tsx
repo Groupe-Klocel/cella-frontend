@@ -125,7 +125,7 @@ const InboundBoxLinePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={<BoxLineDetailsExtra contentId={data?.handlingUnitContentId} />}
                 id={id!}

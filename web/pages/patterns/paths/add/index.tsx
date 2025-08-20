@@ -43,7 +43,7 @@ const AddPatternPathPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('associate', { name: t('common:pattern-path') })} />
             <AddItemComponent
                 headerComponent={
                     <HeaderContent

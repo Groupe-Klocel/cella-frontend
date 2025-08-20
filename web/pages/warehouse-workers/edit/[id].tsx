@@ -46,7 +46,7 @@ const EditWarehouseWorkerPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:warehouse-worker')} ${data?.username}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

@@ -45,7 +45,7 @@ const EditHandlingUnitOutboundBarcodePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:handling-unit-outbound-barcode')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

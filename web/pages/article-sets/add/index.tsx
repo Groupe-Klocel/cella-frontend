@@ -75,7 +75,7 @@ const AddArticleSetsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-article-set')} />
             <AddItemComponent
                 dataModel={ArticleSetModelV2}
                 headerComponent={

@@ -116,7 +116,7 @@ const GoodsInsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 id={id!}
                 extraDataComponent={<GoodsInDetailsExtra roundId={id} />}

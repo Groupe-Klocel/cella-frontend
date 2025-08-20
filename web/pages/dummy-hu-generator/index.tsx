@@ -18,17 +18,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { GenerateDummyHu } from 'modules/HandlingUnits/PagesContainer/GenerateDummyHU';
 import { FC } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const DummyHuGeneratorPage: PageComponent = () => {
+    const { t } = useTranslation();
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('menu:dummy-hu-generator')} />
             <GenerateDummyHu />
         </>
     );

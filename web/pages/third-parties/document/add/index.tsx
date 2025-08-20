@@ -21,29 +21,19 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
-import { ThirdPartyDocumentModelV2 } from 'models/ThirdPartyDocumentModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { addThirdPartyRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
-import { META_DEFAULTS } from '@helpers';
 import parameters from '../../../../../common/parameters.json';
 import { AddDocuments } from 'modules/ThirdParties/PagesContainer/AddDocuments';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddThirdPartyPage: PageComponent = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation('actions');
     const router = useRouter();
-
-    //enter between {} the default values for the form (for instance status "In progress"))
-    const defaultValues = {
-        category: parameters.CUSTOM_OBJECT_CATEGORY_THIRD_PARTY_DOCUMENT,
-        thirdPartyId: router.query.thirdPartyId
-    };
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('associate', { name: t('common:documents') })} />
             <AddDocuments
                 thirdPartyId={router.query.thirdPartyId}
                 thirdPartyName={router.query.thirdPartyName}

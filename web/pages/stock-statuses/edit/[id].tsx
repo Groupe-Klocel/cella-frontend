@@ -45,7 +45,7 @@ const EditStockStatusPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit-stock-status')} ${data?.value}`} />
             <EditConfigParamComponent
                 id={id!}
                 setData={setData}

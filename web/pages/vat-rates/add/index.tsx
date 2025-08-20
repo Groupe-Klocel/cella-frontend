@@ -39,7 +39,7 @@ const AddVatRatePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-vat-rate')} />
             <AddConfigParamComponent
                 dataModel={model}
                 headerComponent={

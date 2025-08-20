@@ -113,7 +113,7 @@ const EquipmentPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 headerData={headerData}
                 dataModel={EquipmentModelV2}

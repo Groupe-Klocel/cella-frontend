@@ -88,7 +88,7 @@ const VatRatesPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'vat_rate' }}
                 headerData={headerData}

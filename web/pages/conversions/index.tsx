@@ -86,7 +86,7 @@ const ConversionPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 headerData={headerData}
                 dataModel={model}

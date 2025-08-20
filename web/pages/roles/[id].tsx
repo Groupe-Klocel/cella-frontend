@@ -119,7 +119,7 @@ const RolePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 id={id!}
                 extraDataComponent={<RoleDetailsExtra roleId={id!} roleName={data?.name} />}
