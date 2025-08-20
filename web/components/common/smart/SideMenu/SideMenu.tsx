@@ -154,8 +154,8 @@ const SideMenu: FC = () => {
         },
         // CONFIGURATION
         [
-            'wm_building',
-            'wm_block',
+            'wm_buildings',
+            'wm_blocks',
             'wm_locations',
             'wm_patterns',
             'wm_pattern-paths',
@@ -183,8 +183,14 @@ const SideMenu: FC = () => {
             label: t('configuration'),
             children: [
                 // CARTOGRAPHY
-                ['wm_building', 'wm_block', 'wm_locations', 'wm_patterns', 'wm_pattern-paths'].some(
-                    (perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+                [
+                    'wm_buildings',
+                    'wm_blocks',
+                    'wm_locations',
+                    'wm_patterns',
+                    'wm_pattern-paths'
+                ].some((perm) =>
+                    getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
                 ) && {
                     key: 'configuration-cartography',
                     label: t('cartography'),
@@ -193,7 +199,7 @@ const SideMenu: FC = () => {
                         getModesFromPermissions(permissions, Table.Building).includes(
                             ModeEnum.Read
                         ) &&
-                        getModesFromPermissions(permissions, 'wm_building').includes(ModeEnum.Read)
+                        getModesFromPermissions(permissions, 'wm_buildings').includes(ModeEnum.Read)
                             ? {
                                   key: 'configuration-buildings',
                                   label: <Link href="/buildings">{t('buildings')}</Link>
@@ -201,7 +207,7 @@ const SideMenu: FC = () => {
                             : null,
                         // BLOCKS
                         getModesFromPermissions(permissions, Table.Block).includes(ModeEnum.Read) &&
-                        getModesFromPermissions(permissions, 'wm_block').includes(ModeEnum.Read)
+                        getModesFromPermissions(permissions, 'wm_blocks').includes(ModeEnum.Read)
                             ? {
                                   key: 'configuration-cartography-blocks',
                                   label: <Link href="/blocks">{t('blocks')}</Link>
