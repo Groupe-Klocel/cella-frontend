@@ -205,14 +205,23 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
             });
             if (remainingHUContentIds.length === 0) {
                 storedObject.ignoreHUContentIds = [];
-                remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses;
+                remainingHUContentIds = storedObject[
+                    `step10`
+                ]?.data?.round.roundAdvisedAddresses.sort((a: any, b: any) => {
+                    return a.roundOrderId - b.roundOrderId;
+                });
             }
             storedObject['step10'].data.proposedRoundAdvisedAddresses = storedObject[
                 `step10`
-            ]?.data?.round.roundAdvisedAddresses.filter(
-                (raa: any) =>
-                    raa.handlingUnitContentId === remainingHUContentIds[0]?.handlingUnitContentId
-            );
+            ]?.data?.round.roundAdvisedAddresses
+                .sort((a: any, b: any) => {
+                    return a.roundOrderId - b.roundOrderId;
+                })
+                .filter(
+                    (raa: any) =>
+                        raa.handlingUnitContentId ===
+                        remainingHUContentIds[0]?.handlingUnitContentId
+                );
             storage.set(process, JSON.stringify(storedObject));
             setTriggerRender(!triggerRender);
         }
