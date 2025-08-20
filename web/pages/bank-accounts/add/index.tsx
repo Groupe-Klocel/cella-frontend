@@ -39,7 +39,7 @@ const AddBankAccountPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-bank-account')} />
             <AddConfigParamComponent
                 dataModel={model}
                 headerComponent={

@@ -88,7 +88,7 @@ const StockStatusesPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'stock_statuses' }}
                 headerData={headerData}

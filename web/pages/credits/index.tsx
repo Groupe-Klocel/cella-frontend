@@ -94,7 +94,7 @@ const CreditPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ orderType: configs.ORDER_TYPE_CREDIT }}
                 headerData={headerData}

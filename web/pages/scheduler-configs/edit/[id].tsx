@@ -45,7 +45,7 @@ const EditSchedulerConfigsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:scheduler-configs')}${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

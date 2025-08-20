@@ -44,7 +44,7 @@ const AddSchedulerConfigArgumentPage: PageComponent = () => {
     ];
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:scheduler-config')}${router.query.schedulerConfigName}`} />
             <HeaderContent
                 title={`${t('common:scheduler-config')}${router.query.schedulerConfigName}`}
                 routes={breadsCrumb}

@@ -58,7 +58,7 @@ const AddConversionPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-content-feature')} />
             <AddFeatureComponent
                 dataModel={model}
                 headerComponent={

@@ -88,7 +88,7 @@ const FeatureTypesPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'feature_type' }}
                 headerData={headerData}

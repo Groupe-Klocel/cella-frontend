@@ -40,7 +40,7 @@ const AddStockOwnerPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-stock-owner')} />
             <AddStockOwner
                 dataModel={StockOwnerModelV2}
                 headerComponent={

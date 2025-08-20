@@ -45,7 +45,7 @@ const EditRulePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:rule')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

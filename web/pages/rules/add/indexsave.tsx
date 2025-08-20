@@ -36,7 +36,7 @@ const AddRulePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-rule')} />
             <AddItemComponent
                 dataModel={RuleModelV2}
                 headerComponent={

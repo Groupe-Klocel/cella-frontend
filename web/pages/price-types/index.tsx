@@ -88,7 +88,7 @@ const PriceTypesPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'price_type' }}
                 headerData={headerData}

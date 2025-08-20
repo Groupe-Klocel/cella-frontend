@@ -78,7 +78,7 @@ const ConversionPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('menu:dashboard')} />
             <HeaderContent title={t('menu:dashboard')} />
             {dashboard ? (
                 <div dangerouslySetInnerHTML={{ __html: dashboard }} />

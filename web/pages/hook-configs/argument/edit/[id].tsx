@@ -45,7 +45,7 @@ const EditHookConfigArgumentPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:hook-config')}${router.query.hookConfigName}`} />
             <HeaderContent
                 title={`${t('common:hook-config')}${router.query.hookConfigName}`}
                 routes={breadsCrumb}

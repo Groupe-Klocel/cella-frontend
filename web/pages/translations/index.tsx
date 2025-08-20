@@ -517,7 +517,7 @@ const Translation: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <HeaderContent
                 title={headerData.title}
                 routes={headerData.routes}

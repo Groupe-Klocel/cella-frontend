@@ -25,21 +25,19 @@ import { ItemDetailComponent } from 'modules/Crud/ItemDetailComponent';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const ReturnCodePage: PageComponent = () => {
-    const tableName = ParameterModel.tableName;
-
     const router = useRouter();
-
     const [data, setData] = useState<any>();
     const { id } = router.query;
+    const { t } = useTranslation();
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:return-code')}`} />
             <ItemDetailComponent
                 extraDataComponent={<ReturnCodeDetailsExtra returnCodeId={id!} />}
                 headerComponent={

@@ -196,7 +196,6 @@ const HandlingUnitContentDetailsExtra = ({
     return (
         <>
             <Divider />
-            <AppHead title={META_DEFAULTS.title} />
             <ListComponent
                 searchCriteria={{ handlingUnitContentId: handlingUnitContentId }}
                 headerData={headerData}

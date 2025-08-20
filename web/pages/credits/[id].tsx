@@ -195,7 +195,7 @@ const CreditPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={
                     <CreditDetailsExtra

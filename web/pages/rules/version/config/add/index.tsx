@@ -18,22 +18,22 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { AddRuleVersionConfig } from 'modules/Rules/PageContainer/AddRuleVersionConfig';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddRuleVersionConfigPage: PageComponent = () => {
     const router = useRouter();
-
+    const { t } = useTranslation('actions');
     const rule = JSON.parse(router?.query?.rule as string);
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('add2', { name: t('common:rule-version-config') })} />
             <AddRuleVersionConfig rule={rule} />
         </>
     );

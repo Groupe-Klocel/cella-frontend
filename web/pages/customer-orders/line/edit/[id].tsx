@@ -54,7 +54,7 @@ const EditCustomerOrderPage: PageComponent = () => {
     const pageTitle = `${data?.order_name} - ${t('common:line')} ${data?.lineNumber}`;
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={pageTitle} />
             <EditItemComponent
                 id={id!}
                 setData={setData}
