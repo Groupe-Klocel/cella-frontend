@@ -56,7 +56,7 @@ const HandlingUnitContentPage: PageComponent = () => {
         }
     ];
 
-    const pageTitle = `${t('common:handling-unit-content')} ${data?.handlingUnit_name} - ${
+    const pageTitle = `${t('common:handling-unit-content')} - ${data?.handlingUnit_name} - ${
         data?.article_name
     } x ${data?.quantity}`;
     // #endregions
@@ -162,7 +162,7 @@ const HandlingUnitContentPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={pageTitle} />
             <ItemDetailComponent
                 extraDataComponent={
                     <HandlingUnitContentDetailsExtra

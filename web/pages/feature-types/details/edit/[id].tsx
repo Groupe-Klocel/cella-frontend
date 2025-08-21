@@ -81,7 +81,11 @@ const EditFeatureTypeDetailPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead
+                title={`${t('common:features-types')} / ${t('common:feature-code')} / ${t(
+                    'actions:edit'
+                )} ${data?.featureTypeText}`}
+            />
             <EditItemComponent
                 id={id!}
                 setData={setData}

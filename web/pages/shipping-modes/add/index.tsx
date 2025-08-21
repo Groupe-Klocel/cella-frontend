@@ -39,7 +39,7 @@ const AddShippingModePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-shipping-mode')} />
             <AddConfigParamComponent
                 dataModel={ParameterModelV2}
                 headerComponent={

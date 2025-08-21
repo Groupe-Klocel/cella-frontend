@@ -38,7 +38,7 @@ const AddBlockPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-block')} />
             <AddItemComponent
                 dataModel={BlockModelV2}
                 headerComponent={

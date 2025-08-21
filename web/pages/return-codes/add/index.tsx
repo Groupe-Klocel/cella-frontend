@@ -21,14 +21,15 @@ import { AppHead } from '@components';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { AddReturnCode } from 'modules/ReturnCodes/PagesContainer/AddReturnCode';
-import { META_DEFAULTS } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddReturnCodePage: PageComponent = () => {
+    const { t } = useTranslation('actions');
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('add2', { name: t('menu:return-code') })} />
             <AddReturnCode />
         </>
     );

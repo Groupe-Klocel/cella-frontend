@@ -116,7 +116,7 @@ const CustomerOrderAddressPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 id={id!}
                 headerData={headerData}

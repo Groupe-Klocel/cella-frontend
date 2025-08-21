@@ -44,7 +44,6 @@ const HookConfigDetailsExtra = ({ Id, details }: IItemDetailsProps) => {
     return (
         <>
             <Divider />
-            <AppHead title={META_DEFAULTS.title} />
             <HookConfigListComponent
                 searchCriteria={{ Id: Id }}
                 details={details}

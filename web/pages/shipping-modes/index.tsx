@@ -88,7 +88,7 @@ const ShippingModesPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'shipping_mode' }}
                 headerData={headerData}

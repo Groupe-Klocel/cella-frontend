@@ -40,7 +40,7 @@ const AddCarrierPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-carrier')} />
             <AddCarrierComponent
                 dataModel={CarrierModelV2}
                 headerComponent={

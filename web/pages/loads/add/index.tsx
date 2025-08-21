@@ -123,7 +123,7 @@ const AddLoadPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add2', { name: t('common:load') })} />
             <AddLoadComponent
                 dataModel={LoadModelV2}
                 headerComponent={

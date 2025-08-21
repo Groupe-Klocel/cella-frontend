@@ -18,20 +18,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { AddHandlingUnitContent } from 'modules/HandlingUnits/PagesContainer/AddHandlingUnitContent';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddLogisticUnitPage: PageComponent = () => {
     const router = useRouter();
-
+    const { t } = useTranslation('actions');
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('add2', { name: t('common:handling-unit-content') })} />
             <AddHandlingUnitContent />
         </>
     );

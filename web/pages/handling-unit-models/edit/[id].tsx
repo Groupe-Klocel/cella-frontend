@@ -44,7 +44,7 @@ const EditHandlingUnitModelPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:handling-unit-model')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

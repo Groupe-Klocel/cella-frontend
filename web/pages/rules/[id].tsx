@@ -145,7 +145,7 @@ const RulePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={<RuleDetailsExtra ruleId={id} rule={data} />}
                 id={id!}

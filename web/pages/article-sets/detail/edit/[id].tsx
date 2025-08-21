@@ -89,7 +89,7 @@ const EditArticleSetDetailPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:edit-article-set-detail')} ${title}`} />
             <EditItemComponent
                 id={id!}
                 dataModel={ArticleSetDetailModelV2}

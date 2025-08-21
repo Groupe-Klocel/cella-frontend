@@ -23,15 +23,17 @@ import { FC } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { META_DEFAULTS } from '@helpers';
 import { AddThirdPartyAddress } from 'modules/ThirdParties/PagesContainer/AddThirdPartyAddress';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddThirdPartyAddressPage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation('actions');
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('associate', { name: t('common:third-party-address') })} />
             <AddThirdPartyAddress
                 thirdPartyId={router.query.thirdPartyId}
                 thirdPartyName={router.query.thirdPartyName}

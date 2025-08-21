@@ -39,7 +39,7 @@ const AddFeatureTypePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-feature-type')} />
             <AddConfigParamComponent
                 dataModel={ParameterModelV2}
                 headerComponent={

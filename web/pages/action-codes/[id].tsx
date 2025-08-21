@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import { ItemDetailComponent } from 'modules/Crud/ItemDetailComponent';
 import { ActionCodeDetailsExtra } from 'modules/ActionCodes/Elements/ActionCodeDetailsExtra';
 import { ActionCodeDetailsHeader } from 'modules/ActionCodes/Elements/ActionCodeDetailsHeader';
@@ -26,16 +25,18 @@ import { ParameterModel } from 'models/ParameterModel';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const ActionCodePage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation();
     const { id } = router.query;
     const [data, setData] = useState<any>();
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:code-action')} - ${data.value}`} />
             <ItemDetailComponent
                 extraDataComponent={<ActionCodeDetailsExtra actionCodeId={id!} />}
                 headerComponent={

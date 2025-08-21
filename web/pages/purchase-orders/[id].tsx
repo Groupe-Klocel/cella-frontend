@@ -88,94 +88,94 @@ const PurchaseOrderPage: PageComponent = () => {
         title: pageTitle,
         routes: breadCrumb,
         onBackRoute: rootPath,
-        actionsComponent:
-            data?.status !== configs.STOCK_OWNER_STATUS_CLOSED ? (
-                <Space>
-                    {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
-                        <LinkButton
-                            title={t('actions:edit')}
-                            path={`${rootPath}/edit/${id}`}
-                            type="primary"
-                        />
-                    ) : (
-                        <></>
-                    )}
-
-                    {modes.includes(ModeEnum.Read) ? (
-                        <Button
-                            type="primary"
-                            onClick={() => {
-                                setShowSinglePrintModal(true);
-                                setIdToPrint(data.id);
-                                setDocumentToPrint('K_OrderForm');
-                            }}
-                        >
-                            {t('actions:print-order-form')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                    {modes.includes(ModeEnum.Read) &&
-                    data?.status != configs.PURCHASE_ORDER_STATUS_CLOSED ? (
-                        <Button
-                            type="primary"
-                            onClick={() => {
-                                setShowSinglePrintModal(true);
-                                setIdToPrint(data.id);
-                                setDocumentToPrint('K_PurchaseOrder');
-                            }}
-                        >
-                            {t('actions:print-receipt')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 &&
-                    modes.includes(ModeEnum.Delete) &&
-                    model.isSoftDeletable &&
-                    data?.status < configs.PURCHASE_ORDER_STATUS_CLOSED &&
-                    !data?.purchaseOrderLines ? (
-                        <Button
-                            onClick={() => confirmAction(id as string, setIdToDisable)()}
-                            type="primary"
-                        >
-                            {t('actions:disable')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                    {modes.length > 0 &&
-                    modes.includes(ModeEnum.Delete) &&
-                    model.isDeletable &&
-                    data?.type !== configs.PURCHASE_ORDER_TYPE_L3 &&
-                    data?.type !== configs.PURCHASE_ORDER_TYPE_L3_RETURN &&
-                    // WARNING : if purchaseOrderLines exists, it means that there is no po line
-                    data?.purchaseOrderLines ? (
-                        <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
-                            {t('actions:delete')}
-                        </Button>
-                    ) : (
-                        <></>
-                    )}
-                    <SinglePrintModal
-                        showModal={{
-                            showSinglePrintModal,
-                            setShowSinglePrintModal
-                        }}
-                        dataToPrint={{ id: idToPrint, date: dateLocal }}
-                        documentName={documentToPrint!}
-                        documentReference={data?.name}
+        actionsComponent: (
+            <Space>
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                data?.status != configs.PURCHASE_ORDER_STATUS_CLOSED &&
+                model.isEditable ? (
+                    <LinkButton
+                        title={t('actions:edit')}
+                        path={`${rootPath}/edit/${id}`}
+                        type="primary"
                     />
-                </Space>
-            ) : (
-                <></>
-            )
+                ) : (
+                    <></>
+                )}
+
+                {modes.includes(ModeEnum.Read) &&
+                data?.status != configs.PURCHASE_ORDER_STATUS_CLOSED ? (
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            setShowSinglePrintModal(true);
+                            setIdToPrint(data.id);
+                            setDocumentToPrint('K_OrderForm');
+                        }}
+                    >
+                        {t('actions:print-order-form')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.includes(ModeEnum.Read) ? (
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            setShowSinglePrintModal(true);
+                            setIdToPrint(data.id);
+                            setDocumentToPrint('K_PurchaseOrder');
+                        }}
+                    >
+                        {t('actions:print-receipt')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isSoftDeletable &&
+                data?.status < configs.PURCHASE_ORDER_STATUS_CLOSED &&
+                !data?.purchaseOrderLines ? (
+                    <Button
+                        onClick={() => confirmAction(id as string, setIdToDisable)()}
+                        type="primary"
+                    >
+                        {t('actions:disable')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Delete) &&
+                model.isDeletable &&
+                data?.type !== configs.PURCHASE_ORDER_TYPE_L3 &&
+                data?.type !== configs.PURCHASE_ORDER_TYPE_L3_RETURN &&
+                // WARNING : if purchaseOrderLines exists, it means that there is no po line
+                data?.purchaseOrderLines ? (
+                    <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
+                        {t('actions:delete')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+                <SinglePrintModal
+                    showModal={{
+                        showSinglePrintModal,
+                        setShowSinglePrintModal
+                    }}
+                    dataToPrint={{ id: idToPrint, date: dateLocal }}
+                    documentName={documentToPrint!}
+                    documentReference={data?.name}
+                />
+            </Space>
+        )
     };
     // #endregion
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 id={id!}
                 headerData={headerData}

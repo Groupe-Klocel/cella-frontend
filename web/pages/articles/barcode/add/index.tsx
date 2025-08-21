@@ -23,15 +23,17 @@ import MainLayout from 'components/layouts/MainLayout';
 import { AddArticleBarcode } from 'modules/Articles/PagesContainer/AddArticleBarcode';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddBarcodePage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation('actions');
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('add2', { name: t('common:barcode') })} />
             <AddArticleBarcode
                 articleId={router.query.articleId}
                 articleName={router.query.articleName}

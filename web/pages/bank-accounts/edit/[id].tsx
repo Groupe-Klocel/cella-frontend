@@ -45,7 +45,7 @@ const EditBankAccountPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit-bank-account')} ${data?.value}`} />
             <EditConfigParamComponent
                 id={id!}
                 setData={setData}

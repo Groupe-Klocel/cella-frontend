@@ -44,7 +44,7 @@ const EditPatternPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:pattern')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 dataModel={model}

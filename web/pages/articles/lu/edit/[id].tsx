@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { EditArticleLogisticUnit } from 'modules/Articles/PagesContainer/EditArticleLogisticUnit';
 import { useRouter } from 'next/router';
@@ -28,10 +28,11 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditArticleLogisticUnitPage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation();
     const { id } = router.query;
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit')} ${router.query.name}`} />
             <EditArticleLogisticUnit router={router} id={id!} />
         </>
     );
