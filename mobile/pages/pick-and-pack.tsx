@@ -285,6 +285,7 @@ const PickAndPack: PageComponent = () => {
             !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
         ) {
             setToBePalletizedForBackEnd(false);
+            setToBePalletizedForHUModel(false);
         }
 
         if (
