@@ -20,55 +20,39 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { HeaderContent, MenuItem, NavButton } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getModesFromPermissions, useTranslationWithFallback as useTranslation } from '@helpers';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
+import { ModeEnum } from 'generated/graphql';
+import { useAppState } from 'context/AppContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
-
-const menuItemDatas = [
-    // {
-    //     title: 'menu:location-check',
-    //     path: '/'
-    // },
-    {
-        title: 'menu:article-info',
-        path: '/article-info'
-    },
-    {
-        title: 'menu:shipping-unit-box-info',
-        path: '/box-info'
-    },
-    {
-        title: 'menu:location-info',
-        path: '/location-info'
-    },
-    {
-        title: 'menu:hu-info',
-        path: '/hu-info'
-    }
-    // {
-    //     title: 'menu:box-check',
-    //     path: '/'
-    // },
-    // {
-    //     title: 'menu:equipment-check',
-    //     path: '/'
-    // },
-    // {
-    //     title: 'menu:set-unbuilding',
-    //     path: '/'
-    // },
-    // {
-    //     title: 'menu:set-building',
-    //     path: '/'
-    // },
-    // { title: 'menu:generate-sscc', path: '/sscc-generator' }
-];
 
 const MiscPage: PageComponent = () => {
     const { t } = useTranslation();
     const router = useRouter();
+    const { permissions } = useAppState();
+
+    const menuItemDatas = [
+        getModesFromPermissions(permissions, 'mobile_article-info').includes(ModeEnum.Read) && {
+            title: 'menu:article-info',
+            path: '/article-info'
+        },
+        getModesFromPermissions(permissions, 'mobile_shipping-unit-box-info').includes(
+            ModeEnum.Read
+        ) && {
+            title: 'menu:shipping-unit-box-info',
+            path: '/box-info'
+        },
+        getModesFromPermissions(permissions, 'mobile_location-info').includes(ModeEnum.Read) && {
+            title: 'menu:location-info',
+            path: '/location-info'
+        },
+        getModesFromPermissions(permissions, 'mobile_hu-info').includes(ModeEnum.Read) && {
+            title: 'menu:hu-info',
+            path: '/hu-info'
+        }
+    ].filter((item): item is { title: string; path: string } => Boolean(item));
 
     return (
         <>

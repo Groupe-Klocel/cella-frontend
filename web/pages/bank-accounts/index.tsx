@@ -88,7 +88,7 @@ const BankAccountsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'bank_account' }}
                 headerData={headerData}

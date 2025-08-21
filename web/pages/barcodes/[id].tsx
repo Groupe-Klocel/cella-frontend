@@ -132,7 +132,7 @@ const BarcodePage: PageComponent = () => {
     return (
         <>
             <>
-                <AppHead title={META_DEFAULTS.title} />
+                <AppHead title={headerData.title} />
                 <ItemDetailComponent
                     headerData={headerData}
                     id={id!}

@@ -42,15 +42,19 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
         locationInfos,
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1,
+        action1Trigger,
         alternativeSubmitInput,
         showSimilarLocations,
         setResetForm
     } = dataToCheck;
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
-    const handlingUnitContentId =
+    const handlingUnitContentArticleId =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
             ?.id;
+    const handlingUnitContentId =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.id;
+    const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
 
     // TYPED SAFE ALL
     useEffect(() => {
@@ -82,14 +86,15 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         return { id, name, barcode, level, handlingUnits, category };
                     }
                 );
-                if (handlingUnitContentId) {
+                if (handlingUnitContentArticleId) {
                     if (
                         data['locations'].filter(
                             (location: any) =>
                                 location.handlingUnits?.filter(
                                     (hu: any) =>
                                         hu.handlingUnitContents.filter(
-                                            (huc: any) => huc.article.id == handlingUnitContentId
+                                            (huc: any) =>
+                                                huc.article.id == handlingUnitContentArticleId
                                         ).length > 0
                                 ).length > 0
                         ).length === 0
@@ -151,17 +156,35 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                 const storedObject = JSON.parse(storage.get(process) || '{}');
                 storage.remove(process);
                 const newStoredObject = JSON.parse(storage.get(process) || '{}');
+                if (ignoreHUContentIds.length > 0) {
+                    newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
+                } else {
+                    newStoredObject.ignoreHUContentIds = [];
+                }
                 const { updatedRound } = closeHUOsResult.executeFunction.output.output;
-                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses
-                    .filter((raa: any) => raa.quantity != 0)
-                    .sort((a: any, b: any) => {
-                        return a.roundOrderId - b.roundOrderId;
-                    });
+
+                let remainingHUContentIds = updatedRound.roundAdvisedAddresses
+                    .filter((raa: any) => {
+                        return !newStoredObject.ignoreHUContentIds.includes(
+                            raa.handlingUnitContentId
+                        );
+                    })
+                    .filter((raa: any) => raa.quantity != 0);
+                if (remainingHUContentIds.length === 0) {
+                    newStoredObject.ignoreHUContentIds = [];
+                    remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
+                        (raa: any) => raa.quantity != 0
+                    );
+                }
+
+                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses.filter(
+                    (raa: any) => raa.quantity != 0
+                );
                 const data = {
                     proposedRoundAdvisedAddresses: roundAdvisedAddresses.filter(
                         (raa: any) =>
                             raa.handlingUnitContentId ==
-                            roundAdvisedAddresses[0].handlingUnitContentId
+                            remainingHUContentIds[0].handlingUnitContentId
                     ),
                     round: updatedRound,
                     pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
@@ -184,6 +207,35 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
             setIsHuClosureLoading(false);
         }
     }
+
+    useEffect(() => {
+        if (action1Trigger.action1Trigger) {
+            action1Trigger.setAction1Trigger(false);
+            storedObject.ignoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
+            let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => {
+                    return !storedObject.ignoreHUContentIds.includes(raa.handlingUnitContentId);
+                })
+                .filter((raa: any) => raa.quantity != 0);
+            if (remainingHUContentIds.length === 0) {
+                storedObject.ignoreHUContentIds = [];
+                remainingHUContentIds = storedObject[
+                    `step10`
+                ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
+            }
+            storedObject['step10'].data.proposedRoundAdvisedAddresses = storedObject[
+                `step10`
+            ]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => raa.quantity != 0)
+                .filter(
+                    (raa: any) =>
+                        raa.handlingUnitContentId ===
+                        remainingHUContentIds[0]?.handlingUnitContentId
+                );
+            storage.set(process, JSON.stringify(storedObject));
+            setTriggerRender(!triggerRender);
+        }
+    }, [action1Trigger]);
 
     useEffect(() => {
         if (triggerAlternativeSubmit1.triggerAlternativeSubmit1) {

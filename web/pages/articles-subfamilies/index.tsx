@@ -88,7 +88,7 @@ const ArticleSubFamilyPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ scope: 'article_subfamily' }}
                 headerData={headerData}

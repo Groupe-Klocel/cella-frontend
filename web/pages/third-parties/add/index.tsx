@@ -39,7 +39,7 @@ const AddThirdPartyPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-third-party')} />
             <AddItemComponent
                 dataModel={ThirdPartyModelV2}
                 headerComponent={

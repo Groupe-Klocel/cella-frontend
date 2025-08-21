@@ -42,6 +42,20 @@ function getKeys(data: Array<any>): React.Key[] {
     return keys;
 }
 
+const getModesFromPermissions = (permissions: any, tableName: string) => {
+    let modes: Array<string> = [];
+    if (permissions) {
+        permissions
+            .filter((p: any) => {
+                return p.table.toUpperCase() == tableName.toUpperCase();
+            })
+            .forEach((p: any) => {
+                modes.push(p.mode.toUpperCase());
+            });
+    }
+    return modes;
+};
+
 // Set index to each object in an array
 function setIndex(array: Array<any>): Array<any> {
     const arrayWithIndex = array.map((object: Object) => ({
@@ -366,6 +380,7 @@ export {
     removeDuplicatesAndSort,
     extractGivenConfigsParams,
     isNonUniqueAndMatches,
+    getModesFromPermissions,
     isStringDate,
     setUTCDateTime,
     formatLocaleDateTime,

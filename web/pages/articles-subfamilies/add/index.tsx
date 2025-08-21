@@ -39,7 +39,7 @@ const AddArticleSubFamilyPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-articles-subfamily')} />
             <AddConfigParamComponent
                 dataModel={SingleParameterModelV2}
                 headerComponent={

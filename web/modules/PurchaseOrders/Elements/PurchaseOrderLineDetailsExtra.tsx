@@ -49,7 +49,6 @@ const PurchaseOrderLineDetailsExtra = ({ purchaseOrderLineId, type }: IItemDetai
     return (
         <>
             <Divider />
-            <AppHead title={META_DEFAULTS.title} />
             <ListComponent
                 searchCriteria={{ purchaseOrderLineId: purchaseOrderLineId }}
                 dataModel={model}

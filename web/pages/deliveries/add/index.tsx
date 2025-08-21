@@ -44,7 +44,7 @@ const AddDeliveryPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-delivery')} />
             <AddItemComponent
                 dataModel={DeliveryModelV2}
                 headerComponent={

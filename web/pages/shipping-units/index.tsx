@@ -116,7 +116,7 @@ const ShippingUnitsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{ handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_PALLET }}
                 headerData={headerData}

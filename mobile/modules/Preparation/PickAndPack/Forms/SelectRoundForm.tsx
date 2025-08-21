@@ -96,12 +96,14 @@ export const SelectRoundForm = ({
             query rounds(
                 $filters: RoundSearchFilters
                 $orderBy: [RoundOrderByCriterion!]
+                $advancedFilters: [RoundAdvancedSearchFilters!]
                 $page: Int
                 $itemsPerPage: Int
             ) {
                 rounds(
                     filters: $filters
                     orderBy: $orderBy
+                    advancedFilters: $advancedFilters
                     page: $page
                     itemsPerPage: $itemsPerPage
                 ) {
@@ -121,6 +123,14 @@ export const SelectRoundForm = ({
 
         const roundsListVariables = {
             filters: { status: configsToFilterOn, equipment_Id: equipmentId },
+            advancedFilters: [
+                {
+                    filter: [
+                        { field: { assignedUser: ['**null**'] }, searchType: 'EQUAL' },
+                        { field: { assignedUser: [user.username] }, searchType: 'EQUAL' }
+                    ]
+                }
+            ],
             orderBy: null,
             page: 1,
             itemsPerPage: 100
@@ -214,7 +224,9 @@ export const SelectRoundForm = ({
                         roundId
                         handlingUnitModelId
                     }
-                    roundAdvisedAddresses {
+                    roundAdvisedAddresses(
+                        orderBy: [{ fieldName: "roundOrderId", ascending: true }]
+                    ) {
                         id
                         roundOrderId
                         quantity
@@ -356,11 +368,10 @@ export const SelectRoundForm = ({
 
         data['round'] = selectedRound.round;
         data['roundNumber'] = roundNumber;
-        const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
-            ?.filter((raa: any) => raa.quantity != 0)
-            .sort((a: any, b: any) => {
-                return a.roundOrderId - b.roundOrderId;
-            });
+
+        const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses?.filter(
+            (raa: any) => raa.quantity != 0
+        );
 
         if (roundAdvisedAddresses) {
             //retrieve list of proposedRoundAdvisedAddresses for a given huc

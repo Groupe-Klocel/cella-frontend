@@ -58,7 +58,11 @@ const AddEquipmentPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead
+                title={t('associate', {
+                    name: t('common:equipment')
+                })}
+            />
             <AddItemComponent
                 headerComponent={
                     <HeaderContent

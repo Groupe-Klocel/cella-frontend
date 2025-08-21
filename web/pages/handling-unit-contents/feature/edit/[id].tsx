@@ -71,7 +71,7 @@ const EditStockOwnerPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={pageTitle} />
             <EditFeatureComponent
                 id={id!}
                 setData={setData}

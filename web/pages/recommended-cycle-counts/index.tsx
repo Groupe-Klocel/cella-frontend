@@ -75,7 +75,7 @@ const CycleCountPages: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{
                     model: configs.CYCLE_COUNT_MODEL_RECOMMENDED,

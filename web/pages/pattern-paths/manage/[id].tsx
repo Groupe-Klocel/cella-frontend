@@ -18,21 +18,22 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import { ManagePatternPathLocation } from 'modules/PatternPaths/PagesContainer/ManagePatternPathLocation';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const ManagePatternPathLocationPage: PageComponent = () => {
     const router = useRouter();
+    const { t } = useTranslation();
     return (
         <DndProvider backend={HTML5Backend}>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('d:manage-locations')} `} />
             <ManagePatternPathLocation
                 router={router}
                 id={router.query.id!}

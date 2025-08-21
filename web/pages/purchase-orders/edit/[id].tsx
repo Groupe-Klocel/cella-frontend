@@ -21,18 +21,18 @@ import { AppHead } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { META_DEFAULTS } from '@helpers';
 import { EditPurchaseOrder } from 'modules/PurchaseOrders/PagesContainer/EditPurchaseOrder';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const EditPurchaseOrderPage: PageComponent = () => {
     const router = useRouter();
     const { id } = router.query;
-
+    const { t } = useTranslation();
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('actions:edit')} ${t('common:purchase-order')}`} />
             <EditPurchaseOrder router={router} id={id!} />
         </>
     );

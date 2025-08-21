@@ -55,7 +55,7 @@ const EditDeliveryPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={pageTitle} />
             <EditItemComponent
                 id={id!}
                 setData={setData}

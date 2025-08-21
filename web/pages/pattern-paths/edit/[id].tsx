@@ -43,7 +43,7 @@ const EditPatternPathsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={`${t('common:pattern-path')} ${data?.name}`} />
             <EditItemComponent
                 id={id!}
                 dataModel={model}

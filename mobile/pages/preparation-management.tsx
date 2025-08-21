@@ -20,46 +20,50 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { HeaderContent, MenuItem, NavButton } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getModesFromPermissions, useTranslationWithFallback as useTranslation } from '@helpers';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
+import { ModeEnum } from 'generated/graphql';
+import { useAppState } from 'context/AppContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
-
-const menuItemDatas = [
-    {
-        title: 'menu:round-picking',
-        path: '/round-picking'
-    },
-    {
-        title: 'menu:round-packing',
-        path: '/round-packing'
-    },
-    {
-        title: 'menu:pick-and-pack',
-        path: '/pick-and-pack'
-    },
-    {
-        title: 'common:box-checking',
-        path: '/box-checking'
-    },
-    {
-        title: 'menu:box-preparation',
-        path: '/box-preparation'
-    },
-    {
-        title: 'menu:palletization',
-        path: '/palletization'
-    },
-    {
-        title: 'menu:load',
-        path: '/loads'
-    }
-];
 
 const PreparationManagementPage: PageComponent = () => {
     const { t } = useTranslation();
     const router = useRouter();
+    const { permissions } = useAppState();
+
+    const menuItemDatas = [
+        getModesFromPermissions(permissions, 'mobile_round-picking').includes(ModeEnum.Read) && {
+            title: 'menu:round-picking',
+            path: '/round-picking'
+        },
+        getModesFromPermissions(permissions, 'mobile_round-packing').includes(ModeEnum.Read) && {
+            title: 'menu:round-packing',
+            path: '/round-packing'
+        },
+        getModesFromPermissions(permissions, 'mobile_pick-and-pack').includes(ModeEnum.Read) && {
+            title: 'menu:pick-and-pack',
+            path: '/pick-and-pack'
+        },
+        getModesFromPermissions(permissions, 'mobile_box-cheking').includes(ModeEnum.Read) && {
+            title: 'common:box-checking',
+            path: '/box-checking'
+        },
+        getModesFromPermissions(permissions, 'mobile_box-preparation').includes(ModeEnum.Read) && {
+            title: 'menu:box-preparation',
+            path: '/box-preparation'
+        },
+        getModesFromPermissions(permissions, 'mobile_palletization').includes(ModeEnum.Read) && {
+            title: 'menu:palletization',
+            path: '/palletization'
+        },
+        getModesFromPermissions(permissions, 'mobile_load').includes(ModeEnum.Read) && {
+            title: 'menu:load',
+            path: '/loads'
+        }
+    ].filter(Boolean) as { title: string; path: string }[];
+
     return (
         <>
             <HeaderContent

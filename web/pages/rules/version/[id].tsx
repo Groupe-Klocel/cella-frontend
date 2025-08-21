@@ -116,7 +116,7 @@ const RuleVersionPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={
                     <RuleVersionDetailsExtra rule={data} setRefetchRuleVersion={setRefetch} />

@@ -23,8 +23,6 @@ import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import configs from '../../../../common/configs.json';
-
-import { META_DEFAULTS } from '@helpers';
 import { AddCycleCount } from 'modules/CycleCounts/PagesContainer/AddCycleCount';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -38,7 +36,7 @@ const AddStockOwnerPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-cycle-count')} />
             <AddCycleCount />
         </>
     );

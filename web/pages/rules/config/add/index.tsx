@@ -18,19 +18,20 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { ConfigRule } from 'modules/Rules/PageContainer/ConfigRule';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AddConfigInRulePage: PageComponent = () => {
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
+    const { t } = useTranslation();
 
     const rule = JSON.parse(router?.query?.rule as string);
     const type = router?.query?.type as string;
@@ -67,7 +68,9 @@ const AddConfigInRulePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead
+                title={type === 'In' ? t('common:rule-config-in') : t('common:rule-config-out')}
+            />
             <ConfigRule rule={rule} type={type} ruleVersionToUpdate={ruleVersionToUpdate} />
         </>
     );

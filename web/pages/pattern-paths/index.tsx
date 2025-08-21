@@ -175,7 +175,7 @@ const PatternPathsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <ListComponent
                 refetch={refetch}
                 headerData={headerData}

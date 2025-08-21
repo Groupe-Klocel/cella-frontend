@@ -110,7 +110,7 @@ const NotificationPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={headerData.title} />
             <NotificationDetailComponent
                 id={id!}
                 headerData={headerData}

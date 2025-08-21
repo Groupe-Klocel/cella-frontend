@@ -39,7 +39,7 @@ const AddPaymentTermPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-payment-term')} />
             <AddConfigParamComponent
                 dataModel={model}
                 headerComponent={

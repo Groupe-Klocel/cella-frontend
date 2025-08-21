@@ -17,20 +17,27 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Welcome } from '@components';
-import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
+import { AppHead } from '@components';
+import MainLayout from 'components/layouts/MainLayout';
+import { ScreenPermissions } from 'modules/Roles/PageContainer/ScreenPermissions';
+import { useRouter } from 'next/router';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const BoxCheckingPage: PageComponent = () => {
+const PermissionsPage: PageComponent = () => {
+    const router = useRouter();
+    const { t } = useTranslation();
+
     return (
         <>
-            <Welcome text="You are on Box Checking Page" />
+            <AppHead title={t('common:screenPermissions')} />
+            <ScreenPermissions roleId={router.query.id!} roleName={router.query.name!} />
         </>
     );
 };
 
-BoxCheckingPage.layout = MainLayout;
+PermissionsPage.layout = MainLayout;
 
-export default BoxCheckingPage;
+export default PermissionsPage;

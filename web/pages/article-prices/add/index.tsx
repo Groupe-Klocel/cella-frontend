@@ -40,7 +40,7 @@ const AddArticlePricePage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-article-price')} />
             <AddItemComponent
                 dataModel={ArticlePriceModelV2}
                 headerComponent={

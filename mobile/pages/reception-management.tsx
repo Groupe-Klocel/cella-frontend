@@ -21,29 +21,39 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { HeaderContent, MenuItem, NavButton } from '@components';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { pathParamsFromDictionary, useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    getModesFromPermissions,
+    pathParamsFromDictionary,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
 import { useRouter } from 'next/router';
+import { ModeEnum } from 'generated/graphql';
+import { useAppState } from 'context/AppContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
-
-const menuItemDatas = [
-    {
-        title: 'menu:reception',
-        path: pathParamsFromDictionary('/reception', {
-            receptionType: 'normal'
-        })
-    },
-    {
-        title: 'menu:return-reception',
-        path: pathParamsFromDictionary('/reception', {
-            receptionType: 'return'
-        })
-    }
-];
 
 const ReceptionManagementPage: PageComponent = () => {
     const { t } = useTranslation();
     const router = useRouter();
+    const { permissions } = useAppState();
+
+    type MenuItemData = { title: string; path: { pathname: string; query: any } };
+
+    const menuItemDatas: MenuItemData[] = [
+        getModesFromPermissions(permissions, 'mobile_reception').includes(ModeEnum.Read) && {
+            title: 'menu:reception',
+            path: pathParamsFromDictionary('/reception', {
+                receptionType: 'normal'
+            })
+        },
+        getModesFromPermissions(permissions, 'mobile_return-reception').includes(ModeEnum.Read) && {
+            title: 'menu:return-reception',
+            path: pathParamsFromDictionary('/reception', {
+                receptionType: 'return'
+            })
+        }
+    ].filter((item): item is MenuItemData => Boolean(item));
+
     return (
         <>
             <HeaderContent

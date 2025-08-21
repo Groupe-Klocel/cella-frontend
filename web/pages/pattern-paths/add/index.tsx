@@ -59,7 +59,7 @@ const AddPatternPathPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={META_DEFAULTS.title} />
+            <AppHead title={t('actions:add-pattern-path')} />
             <AddItemComponent
                 dataModel={PatternPathModelV2}
                 headerComponent={
