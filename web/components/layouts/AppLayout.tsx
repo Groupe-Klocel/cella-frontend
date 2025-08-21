@@ -7,6 +7,7 @@ import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
 import { cookie, showError } from '@helpers';
 import { gql, GraphQLClient } from 'graphql-request';
 import { ScreenSpin } from '@components';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 const themes = {
     dark: `/dark-theme.css`,
@@ -20,8 +21,1602 @@ type AppLayoutProps = {
     Layout: any;
 };
 
+const authorizationList = [
+    {
+        route: '/action-codes/[id]',
+        permission: 'wm_action-codes',
+        mode: 'read'
+    },
+    {
+        route: '/action-codes/add',
+        permission: 'wm_action-codes',
+        mode: 'create'
+    },
+    {
+        route: '/action-codes/edit/[id]',
+        permission: 'wm_action-codes',
+        mode: 'update'
+    },
+    {
+        route: '/action-codes',
+        permission: 'wm_action-codes',
+        mode: 'read'
+    },
+    {
+        route: '/article-price-histories/[id]',
+        permission: 'wm_article-price-histories',
+        mode: 'read'
+    },
+    {
+        route: '/article-price-histories',
+        permission: 'wm_article-price-histories',
+        mode: 'read'
+    },
+    {
+        route: '/article-prices/[id]',
+        permission: 'wm_article-prices',
+        mode: 'read'
+    },
+    {
+        route: '/article-prices/add',
+        permission: 'wm_article-prices',
+        mode: 'create'
+    },
+    {
+        route: '/article-prices/edit/[id]',
+        permission: 'wm_article-prices',
+        mode: 'update'
+    },
+    {
+        route: '/article-prices',
+        permission: 'wm_article-prices',
+        mode: 'read'
+    },
+    {
+        route: '/article-sets/[id]',
+        permission: 'wm_article-sets',
+        mode: 'read'
+    },
+    {
+        route: '/article-sets/add',
+        permission: 'wm_article-sets',
+        mode: 'create'
+    },
+    {
+        route: '/article-sets/detail/[id]',
+        permission: 'wm_article-sets',
+        mode: 'read'
+    },
+    {
+        route: '/article-sets/detail/add',
+        permission: 'wm_article-sets',
+        mode: 'create'
+    },
+    {
+        route: '/article-sets/detail/edit/[id]',
+        permission: 'wm_article-sets',
+        mode: 'update'
+    },
+    {
+        route: '/article-sets/edit/[id]',
+        permission: 'wm_article-sets',
+        mode: 'update'
+    },
+    {
+        route: '/article-sets',
+        permission: 'wm_article-sets',
+        mode: 'read'
+    },
+    {
+        route: '/articles/[id]',
+        permission: 'wm_articles',
+        mode: 'read'
+    },
+    {
+        route: '/articles/add',
+        permission: 'wm_articles',
+        mode: 'create'
+    },
+    {
+        route: '/articles/barcode/[id]',
+        permission: 'wm_articles',
+        mode: 'read'
+    },
+    {
+        route: '/articles/barcode/add',
+        permission: 'wm_articles',
+        mode: 'create'
+    },
+    {
+        route: '/articles/barcode/edit/[id]',
+        permission: 'wm_articles',
+        mode: 'update'
+    },
+    {
+        route: '/articles/edit/[id]',
+        permission: 'wm_articles',
+        mode: 'update'
+    },
+    {
+        route: '/articles',
+        permission: 'wm_articles',
+        mode: 'read'
+    },
+    {
+        route: '/articles/lu/[id]',
+        permission: 'wm_articles',
+        mode: 'read'
+    },
+    {
+        route: '/articles/lu/add',
+        permission: 'wm_articles',
+        mode: 'create'
+    },
+    {
+        route: '/articles/lu/edit/[id]',
+        permission: 'wm_articles',
+        mode: 'update'
+    },
+    {
+        route: '/articles-families/[id]',
+        permission: 'wm_articles-families',
+        mode: 'read'
+    },
+    {
+        route: '/articles-families/add',
+        permission: 'wm_articles-families',
+        mode: 'create'
+    },
+    {
+        route: '/articles-families/edit/[id]',
+        permission: 'wm_articles-families',
+        mode: 'update'
+    },
+    {
+        route: '/articles-families',
+        permission: 'wm_articles-families',
+        mode: 'read'
+    },
+    {
+        route: '/articles-subfamilies/[id]',
+        permission: 'wm_articles-subfamilies',
+        mode: 'read'
+    },
+    {
+        route: '/articles-subfamilies/add',
+        permission: 'wm_articles-subfamilies',
+        mode: 'create'
+    },
+    {
+        route: '/articles-subfamilies/edit/[id]',
+        permission: 'wm_articles-subfamilies',
+        mode: 'update'
+    },
+    {
+        route: '/articles-subfamilies',
+        permission: 'wm_articles-subfamilies',
+        mode: 'read'
+    },
+    {
+        route: '/bank-accounts/[id]',
+        permission: 'wm_bank-accounts',
+        mode: 'read'
+    },
+    {
+        route: '/bank-accounts/add',
+        permission: 'wm_bank-accounts',
+        mode: 'create'
+    },
+    {
+        route: '/bank-accounts/edit/[id]',
+        permission: 'wm_bank-accounts',
+        mode: 'update'
+    },
+    {
+        route: '/bank-accounts',
+        permission: 'wm_bank-accounts',
+        mode: 'read'
+    },
+    {
+        route: '/barcodes/[id]',
+        permission: 'wm_barcodes',
+        mode: 'read'
+    },
+    {
+        route: '/barcodes/add',
+        permission: 'wm_barcodes',
+        mode: 'create'
+    },
+    {
+        route: '/barcodes/edit/[id]',
+        permission: 'wm_barcodes',
+        mode: 'update'
+    },
+    {
+        route: '/barcodes',
+        permission: 'wm_barcodes',
+        mode: 'read'
+    },
+    {
+        route: '/blacklisted-barcodes',
+        permission: 'wm_barcodes',
+        mode: 'read'
+    },
+    {
+        route: '/blocks/[id]',
+        permission: 'wm_blocks',
+        mode: 'read'
+    },
+    {
+        route: '/blocks/add',
+        permission: 'wm_blocks',
+        mode: 'create'
+    },
+    {
+        route: '/blocks/edit/[id]',
+        permission: 'wm_blocks',
+        mode: 'update'
+    },
+    {
+        route: '/blocks',
+        permission: 'wm_blocks',
+        mode: 'read'
+    },
+    {
+        route: '/blocks/location/[id]',
+        permission: 'wm_blocks',
+        mode: 'read'
+    },
+    {
+        route: '/blocks/location/add',
+        permission: 'wm_blocks',
+        mode: 'create'
+    },
+    {
+        route: '/blocks/location/edit/[id]',
+        permission: 'wm_blocks',
+        mode: 'update'
+    },
+    {
+        route: '/boxes/[id]',
+        permission: 'wm_boxes',
+        mode: 'read'
+    },
+    {
+        route: '/boxes/barcode/add',
+        permission: 'wm_boxes',
+        mode: 'create'
+    },
+    {
+        route: '/boxes/boxLine/[id]',
+        permission: 'wm_boxes',
+        mode: 'read'
+    },
+    {
+        route: '/boxes/boxLine/edit/[id]',
+        permission: 'wm_boxes',
+        mode: 'update'
+    },
+    {
+        route: '/boxes/boxLine/feature/[id]',
+        permission: 'wm_boxes',
+        mode: 'read'
+    },
+    {
+        route: '/boxes/edit/[id]',
+        permission: 'wm_boxes',
+        mode: 'update'
+    },
+    {
+        route: '/boxes',
+        permission: 'wm_boxes',
+        mode: 'read'
+    },
+    {
+        route: '/buildings/[id]',
+        permission: 'wm_buildings',
+        mode: 'read'
+    },
+    {
+        route: '/buildings/add',
+        permission: 'wm_buildings',
+        mode: 'create'
+    },
+    {
+        route: '/buildings/edit/[id]',
+        permission: 'wm_buildings',
+        mode: 'update'
+    },
+    {
+        route: '/buildings',
+        permission: 'wm_buildings',
+        mode: 'read'
+    },
+    {
+        route: '/carriers/[id]',
+        permission: 'wm_carriers',
+        mode: 'read'
+    },
+    {
+        route: '/carriers/add',
+        permission: 'wm_carriers',
+        mode: 'create'
+    },
+    {
+        route: '/carriers/edit/[id]',
+        permission: 'wm_carriers',
+        mode: 'update'
+    },
+    {
+        route: '/carriers',
+        permission: 'wm_carriers',
+        mode: 'read'
+    },
+    {
+        route: '/carriers/shipping-mode/[id]',
+        permission: 'wm_carriers',
+        mode: 'read'
+    },
+    {
+        route: '/carriers/shipping-mode/add',
+        permission: 'wm_carriers',
+        mode: 'create'
+    },
+    {
+        route: '/carriers/shipping-mode/edit/[id]',
+        permission: 'wm_carriers',
+        mode: 'update'
+    },
+    {
+        route: '/configurations/[id]',
+        permission: 'wm_configurations',
+        mode: 'read'
+    },
+    {
+        route: '/configurations/add',
+        permission: 'wm_configurations',
+        mode: 'create'
+    },
+    {
+        route: '/configurations/edit/[id]',
+        permission: 'wm_configurations',
+        mode: 'update'
+    },
+    {
+        route: '/configurations/extras/add',
+        permission: 'wm_configurations',
+        mode: 'create'
+    },
+    {
+        route: '/configurations/extras/edit/[id]',
+        permission: 'wm_configurations',
+        mode: 'update'
+    },
+    {
+        route: '/configurations',
+        permission: 'wm_configurations',
+        mode: 'read'
+    },
+    {
+        route: '/contents',
+        permission: 'wm_handling-unit-contents',
+        mode: 'read'
+    },
+    {
+        route: '/conversions/[id]',
+        permission: 'wm_conversions',
+        mode: 'read'
+    },
+    {
+        route: '/conversions/add',
+        permission: 'wm_conversions',
+        mode: 'create'
+    },
+    {
+        route: '/conversions/edit/[id]',
+        permission: 'wm_conversions',
+        mode: 'update'
+    },
+    {
+        route: '/conversions',
+        permission: 'wm_conversions',
+        mode: 'read'
+    },
+    {
+        route: '/credits/[id]',
+        permission: 'wm_credits',
+        mode: 'update'
+    },
+    {
+        route: '/credits/address/[id]',
+        permission: 'wm_credits',
+        mode: 'create'
+    },
+    {
+        route: '/credits/address/edit/[id]',
+        permission: 'wm_credits',
+        mode: 'create'
+    },
+    {
+        route: '/credits/edit/[id]',
+        permission: 'wm_credits',
+        mode: 'update'
+    },
+    {
+        route: '/credits',
+        permission: 'wm_credits',
+        mode: 'update'
+    },
+    {
+        route: '/credits/line/[id]',
+        permission: 'wm_credits',
+        mode: 'update'
+    },
+    {
+        route: '/credits/line/edit/[id]',
+        permission: 'wm_credits',
+        mode: 'update'
+    },
+    {
+        route: '/credits/line',
+        permission: 'wm_credits',
+        mode: 'update'
+    },
+    {
+        route: '/credits/paymentLine/[id]',
+        permission: 'wm_credits',
+        mode: 'update'
+    },
+    {
+        route: '/cumulated-stock',
+        permission: 'wm_cumulated-stock',
+        mode: 'read'
+    },
+    {
+        route: '/currencies/[id]',
+        permission: 'wm_currencies',
+        mode: 'read'
+    },
+    {
+        route: '/currencies/add',
+        permission: 'wm_currencies',
+        mode: 'create'
+    },
+    {
+        route: '/currencies/edit/[id]',
+        permission: 'wm_currencies',
+        mode: 'update'
+    },
+    {
+        route: '/currencies',
+        permission: 'wm_currencies',
+        mode: 'read'
+    },
+    {
+        route: '/customer-orders/[id]',
+        permission: 'wm_customer-orders',
+        mode: 'read'
+    },
+    {
+        route: '/customer-orders/add',
+        permission: 'wm_customer-orders',
+        mode: 'create'
+    },
+    {
+        route: '/customer-orders/address/[id]',
+        permission: 'wm_customer-orders',
+        mode: 'create'
+    },
+    {
+        route: '/customer-orders/address/add',
+        permission: 'wm_customer-orders',
+        mode: 'create'
+    },
+    {
+        route: '/customer-orders/address/edit/[id]',
+        permission: 'wm_customer-orders',
+        mode: 'create'
+    },
+    {
+        route: '/customer-orders/edit/[id]',
+        permission: 'wm_customer-orders',
+        mode: 'update'
+    },
+    {
+        route: '/customer-orders',
+        permission: 'wm_customer-orders',
+        mode: 'read'
+    },
+    {
+        route: '/customer-orders/line/[id]',
+        permission: 'wm_customer-orders',
+        mode: 'read'
+    },
+    {
+        route: '/customer-orders/line/add',
+        permission: 'wm_customer-orders',
+        mode: 'create'
+    },
+    {
+        route: '/customer-orders/line/edit/[id]',
+        permission: 'wm_customer-orders',
+        mode: 'update'
+    },
+    {
+        route: '/customer-orders/paymentLine/[id]',
+        permission: 'wm_customer-orders',
+        mode: 'read'
+    },
+    {
+        route: '/cycle-counts/[id]',
+        permission: 'wm_cycle-counts',
+        mode: 'read'
+    },
+    {
+        route: '/cycle-counts/add',
+        permission: 'wm_cycle-counts',
+        mode: 'create'
+    },
+    {
+        route: '/cycle-counts/cycle-count-errors/[id]',
+        permission: 'wm_cycle-counts',
+        mode: 'read'
+    },
+    {
+        route: '/cycle-counts/cycle-count-lines/[id]',
+        permission: 'wm_cycle-counts',
+        mode: 'read'
+    },
+    {
+        route: '/cycle-counts/cycle-count-movements/[id]',
+        permission: 'wm_cycle-counts',
+        mode: 'read'
+    },
+    {
+        route: '/cycle-counts',
+        permission: 'wm_cycle-counts',
+        mode: 'read'
+    },
+    {
+        route: '/dashboard',
+        permission: 'wm_dashboard',
+        mode: 'read'
+    },
+    {
+        route: '/deliveries/[id]',
+        permission: 'wm_deliveries',
+        mode: 'read'
+    },
+    {
+        route: '/deliveries/add',
+        permission: 'wm_deliveries',
+        mode: 'create'
+    },
+    {
+        route: '/deliveries/address/[id]',
+        permission: 'wm_deliveries',
+        mode: 'create'
+    },
+    {
+        route: '/deliveries/address/add',
+        permission: 'wm_deliveries',
+        mode: 'create'
+    },
+    {
+        route: '/deliveries/address/edit/[id]',
+        permission: 'wm_deliveries',
+        mode: 'create'
+    },
+    {
+        route: '/deliveries/edit/[id]',
+        permission: 'wm_deliveries',
+        mode: 'update'
+    },
+    {
+        route: '/deliveries',
+        permission: 'wm_deliveries',
+        mode: 'read'
+    },
+    {
+        route: '/deliveries/line/[id]',
+        permission: 'wm_deliveries',
+        mode: 'read'
+    },
+    {
+        route: '/deliveries/line/add',
+        permission: 'wm_deliveries',
+        mode: 'create'
+    },
+    {
+        route: '/deliveries/line/edit/[id]',
+        permission: 'wm_deliveries',
+        mode: 'update'
+    },
+    {
+        route: '/deliveries/manual-allocation',
+        permission: 'wm_deliveries',
+        mode: 'read'
+    },
+    {
+        route: '/deliveries/without-orders/[id]',
+        permission: 'wm_deliveries',
+        mode: 'read'
+    },
+    {
+        route: '/deliveries/without-orders',
+        permission: 'wm_deliveries',
+        mode: 'read'
+    },
+    {
+        route: '/document-histories/[id]',
+        permission: 'wm_document-histories',
+        mode: 'read'
+    },
+    {
+        route: '/document-histories',
+        permission: 'wm_document-histories',
+        mode: 'read'
+    },
+    {
+        route: '/dummy-hu-generator',
+        permission: 'wm_dummy-hu-generator',
+        mode: 'read'
+    },
+    {
+        route: '/equipment/[id]',
+        permission: 'wm_equipment',
+        mode: 'read'
+    },
+    {
+        route: '/equipment/add',
+        permission: 'wm_equipment',
+        mode: 'create'
+    },
+    {
+        route: '/equipment/details/[id]',
+        permission: 'wm_equipment',
+        mode: 'read'
+    },
+    {
+        route: '/equipment/details/add',
+        permission: 'wm_equipment',
+        mode: 'create'
+    },
+    {
+        route: '/equipment/details/edit/[id]',
+        permission: 'wm_equipment',
+        mode: 'update'
+    },
+    {
+        route: '/equipment/edit/[id]',
+        permission: 'wm_equipment',
+        mode: 'update'
+    },
+    {
+        route: '/equipment',
+        permission: 'wm_equipment',
+        mode: 'read'
+    },
+    {
+        route: '/excel-imports',
+        permission: 'wm_excel-imports',
+        mode: 'read'
+    },
+    {
+        route: '/feature-codes/[id]',
+        permission: 'wm_feature-codes',
+        mode: 'read'
+    },
+    {
+        route: '/feature-codes/add',
+        permission: 'wm_feature-codes',
+        mode: 'create'
+    },
+    {
+        route: '/feature-codes/edit/[id]',
+        permission: 'wm_feature-codes',
+        mode: 'update'
+    },
+    {
+        route: '/feature-codes',
+        permission: 'wm_feature-codes',
+        mode: 'read'
+    },
+    {
+        route: '/feature-types/[id]',
+        permission: 'wm_feature-types',
+        mode: 'read'
+    },
+    {
+        route: '/feature-types/add',
+        permission: 'wm_feature-types',
+        mode: 'create'
+    },
+    {
+        route: '/feature-types/details/[id]',
+        permission: 'wm_feature-types',
+        mode: 'read'
+    },
+    {
+        route: '/feature-types/details/add',
+        permission: 'wm_feature-types',
+        mode: 'create'
+    },
+    {
+        route: '/feature-types/details/edit/[id]',
+        permission: 'wm_feature-types',
+        mode: 'update'
+    },
+    {
+        route: '/feature-types/edit/[id]',
+        permission: 'wm_feature-types',
+        mode: 'update'
+    },
+    {
+        route: '/feature-types',
+        permission: 'wm_feature-types',
+        mode: 'read'
+    },
+    {
+        route: '/goods-ins/[id]',
+        permission: 'wm_goods-ins',
+        mode: 'read'
+    },
+    {
+        route: '/goods-ins',
+        permission: 'wm_goods-ins',
+        mode: 'read'
+    },
+    {
+        route: '/goods-ins/line/[id]',
+        permission: 'wm_goods-ins',
+        mode: 'read'
+    },
+    {
+        route: '/goods-ins/line/detail/[id]',
+        permission: 'wm_goods-ins',
+        mode: 'read'
+    },
+    {
+        route: '/handling-unit-content-features',
+        permission: 'wm_handling-unit-content-features',
+        mode: 'read'
+    },
+    {
+        route: '/handling-unit-contents/[id]',
+        permission: 'wm_handling-unit-contents',
+        mode: 'read'
+    },
+    {
+        route: '/handling-unit-contents/add',
+        permission: 'wm_handling-unit-contents',
+        mode: 'create'
+    },
+    {
+        route: '/handling-unit-contents/edit/[id]',
+        permission: 'wm_handling-unit-contents',
+        mode: 'update'
+    },
+    {
+        route: '/handling-unit-contents/feature/[id]',
+        permission: 'wm_handling-unit-contents',
+        mode: 'read'
+    },
+    {
+        route: '/handling-unit-contents/feature/add',
+        permission: 'wm_handling-unit-contents',
+        mode: 'create'
+    },
+    {
+        route: '/handling-unit-contents/feature/edit/[id]',
+        permission: 'wm_handling-unit-contents',
+        mode: 'update'
+    },
+    {
+        route: '/handling-unit-contents',
+        permission: 'wm_handling-unit-contents',
+        mode: 'read'
+    },
+    {
+        route: '/handling-unit-models/[id]',
+        permission: 'wm_handling-unit-models',
+        mode: 'read'
+    },
+    {
+        route: '/handling-unit-models/add',
+        permission: 'wm_handling-unit-models',
+        mode: 'create'
+    },
+    {
+        route: '/handling-unit-models/edit/[id]',
+        permission: 'wm_handling-unit-models',
+        mode: 'update'
+    },
+    {
+        route: '/handling-unit-models',
+        permission: 'wm_handling-unit-models',
+        mode: 'read'
+    },
+    {
+        route: '/handling-unit-outbound-barcodes/[id]',
+        permission: 'wm_handling-unit-outbound-barcodes',
+        mode: 'read'
+    },
+    {
+        route: '/handling-unit-outbound-barcodes/add',
+        permission: 'wm_handling-unit-outbound-barcodes',
+        mode: 'create'
+    },
+    {
+        route: '/handling-unit-outbound-barcodes/edit/[id]',
+        permission: 'wm_handling-unit-outbound-barcodes',
+        mode: 'update'
+    },
+    {
+        route: '/handling-unit-outbound-barcodes',
+        permission: 'wm_handling-unit-outbound-barcodes',
+        mode: 'read'
+    },
+    {
+        route: '/hook-configs/[id]',
+        permission: 'wm_hook-configs',
+        mode: 'read'
+    },
+    {
+        route: '/hook-configs/add',
+        permission: 'wm_hook-configs',
+        mode: 'create'
+    },
+    {
+        route: '/hook-configs/argument/add',
+        permission: 'wm_hook-configs',
+        mode: 'create'
+    },
+    {
+        route: '/hook-configs/argument/edit/[id]',
+        permission: 'wm_hook-configs',
+        mode: 'update'
+    },
+    {
+        route: '/hook-configs/edit/[id]',
+        permission: 'wm_hook-configs',
+        mode: 'update'
+    },
+    {
+        route: '/hook-configs',
+        permission: 'wm_hook-configs',
+        mode: 'read'
+    },
+    {
+        route: '/inbound-boxes/[id]',
+        permission: 'wm_inbound-boxes',
+        mode: 'read'
+    },
+    {
+        route: '/inbound-boxes/line/[id]',
+        permission: 'wm_inbound-boxes',
+        mode: 'read'
+    },
+    {
+        route: '/inbound-boxes/line/feature/[id]',
+        permission: 'wm_inbound-boxes',
+        mode: 'read'
+    },
+    {
+        route: '/loads/[id]',
+        permission: 'wm_loads',
+        mode: 'read'
+    },
+    {
+        route: '/loads/add',
+        permission: 'wm_loads',
+        mode: 'create'
+    },
+    {
+        route: '/loads/edit/[id]',
+        permission: 'wm_loads',
+        mode: 'update'
+    },
+    {
+        route: '/loads',
+        permission: 'wm_loads',
+        mode: 'read'
+    },
+    {
+        route: '/locations/[id]',
+        permission: 'wm_locations',
+        mode: 'read'
+    },
+    {
+        route: '/locations/add',
+        permission: 'wm_locations',
+        mode: 'create'
+    },
+    {
+        route: '/locations/delete',
+        permission: 'wm_locations',
+        mode: 'read'
+    },
+    {
+        route: '/locations/edit/[id]',
+        permission: 'wm_locations',
+        mode: 'update'
+    },
+    {
+        route: '/locations',
+        permission: 'wm_locations',
+        mode: 'read'
+    },
+    {
+        route: '/logistic-units/[id]',
+        permission: 'wm_logistic-units',
+        mode: 'read'
+    },
+    {
+        route: '/logistic-units/add',
+        permission: 'wm_logistic-units',
+        mode: 'create'
+    },
+    {
+        route: '/logistic-units/edit/[id]',
+        permission: 'wm_logistic-units',
+        mode: 'update'
+    },
+    {
+        route: '/logistic-units',
+        permission: 'wm_logistic-units',
+        mode: 'read'
+    },
+    {
+        route: '/manual-recubing',
+        permission: 'wm_manual-recubing',
+        mode: 'read'
+    },
+    {
+        route: '/movements/[id]',
+        permission: 'wm_movements',
+        mode: 'read'
+    },
+    {
+        route: '/movements',
+        permission: 'wm_movements',
+        mode: 'read'
+    },
+    {
+        route: '/notifications/[id]',
+        permission: 'wm_notifications',
+        mode: 'read'
+    },
+    {
+        route: '/notifications',
+        permission: 'wm_notifications',
+        mode: 'read'
+    },
+    {
+        route: '/parameters/[id]',
+        permission: 'wm_parameters',
+        mode: 'read'
+    },
+    {
+        route: '/parameters/add',
+        permission: 'wm_parameters',
+        mode: 'create'
+    },
+    {
+        route: '/parameters/edit/[id]',
+        permission: 'wm_parameters',
+        mode: 'update'
+    },
+    {
+        route: '/parameters/extras/add',
+        permission: 'wm_parameters',
+        mode: 'create'
+    },
+    {
+        route: '/parameters/extras/edit/[id]',
+        permission: 'wm_parameters',
+        mode: 'update'
+    },
+    {
+        route: '/parameters',
+        permission: 'wm_parameters',
+        mode: 'read'
+    },
+    {
+        route: '/pattern-paths/[id]',
+        permission: 'wm_pattern-paths',
+        mode: 'read'
+    },
+    {
+        route: '/pattern-paths/add',
+        permission: 'wm_pattern-paths',
+        mode: 'create'
+    },
+    {
+        route: '/pattern-paths/edit/[id]',
+        permission: 'wm_pattern-paths',
+        mode: 'update'
+    },
+    {
+        route: '/pattern-paths',
+        permission: 'wm_pattern-paths',
+        mode: 'read'
+    },
+    {
+        route: '/pattern-paths/manage/[id]',
+        permission: 'wm_pattern-paths',
+        mode: 'read'
+    },
+    {
+        route: '/patterns/[id]',
+        permission: 'wm_patterns',
+        mode: 'read'
+    },
+    {
+        route: '/patterns/add',
+        permission: 'wm_patterns',
+        mode: 'create'
+    },
+    {
+        route: '/patterns/edit/[id]',
+        permission: 'wm_patterns',
+        mode: 'update'
+    },
+    {
+        route: '/patterns',
+        permission: 'wm_patterns',
+        mode: 'read'
+    },
+    {
+        route: '/patterns/paths/add',
+        permission: 'wm_patterns',
+        mode: 'create'
+    },
+    {
+        route: '/payment-methods/[id]',
+        permission: 'wm_payment-methods',
+        mode: 'read'
+    },
+    {
+        route: '/payment-methods/add',
+        permission: 'wm_payment-methods',
+        mode: 'create'
+    },
+    {
+        route: '/payment-methods/edit/[id]',
+        permission: 'wm_payment-methods',
+        mode: 'update'
+    },
+    {
+        route: '/payment-methods',
+        permission: 'wm_payment-methods',
+        mode: 'read'
+    },
+    {
+        route: '/payment-terms/[id]',
+        permission: 'wm_payment-terms',
+        mode: 'read'
+    },
+    {
+        route: '/payment-terms/add',
+        permission: 'wm_payment-terms',
+        mode: 'create'
+    },
+    {
+        route: '/payment-terms/edit/[id]',
+        permission: 'wm_payment-terms',
+        mode: 'update'
+    },
+    {
+        route: '/payment-terms',
+        permission: 'wm_payment-terms',
+        mode: 'read'
+    },
+    {
+        route: '/payments/[id]',
+        permission: 'wm_payments',
+        mode: 'read'
+    },
+    {
+        route: '/payments',
+        permission: 'wm_payments',
+        mode: 'read'
+    },
+    {
+        route: '/payments/line/[id]',
+        permission: 'wm_payments',
+        mode: 'read'
+    },
+    {
+        route: '/payments/line/edit/[id]',
+        permission: 'wm_payments',
+        mode: 'update'
+    },
+    {
+        route: '/price-types/[id]',
+        permission: 'wm_price-types',
+        mode: 'read'
+    },
+    {
+        route: '/price-types/add',
+        permission: 'wm_price-types',
+        mode: 'create'
+    },
+    {
+        route: '/price-types/edit/[id]',
+        permission: 'wm_price-types',
+        mode: 'update'
+    },
+    {
+        route: '/price-types',
+        permission: 'wm_price-types',
+        mode: 'read'
+    },
+    {
+        route: '/purchase-orders/[id]',
+        permission: 'wm_purchase-orders',
+        mode: 'read'
+    },
+    {
+        route: '/purchase-orders/add',
+        permission: 'wm_purchase-orders',
+        mode: 'create'
+    },
+    {
+        route: '/purchase-orders/edit/[id]',
+        permission: 'wm_purchase-orders',
+        mode: 'update'
+    },
+    {
+        route: '/purchase-orders/feature/[id]',
+        permission: 'wm_purchase-orders',
+        mode: 'read'
+    },
+    {
+        route: '/purchase-orders',
+        permission: 'wm_purchase-orders',
+        mode: 'read'
+    },
+    {
+        route: '/purchase-orders/line/[id]',
+        permission: 'wm_purchase-orders',
+        mode: 'read'
+    },
+    {
+        route: '/purchase-orders/line/add',
+        permission: 'wm_purchase-orders',
+        mode: 'create'
+    },
+    {
+        route: '/purchase-orders/line/edit/[id]',
+        permission: 'wm_purchase-orders',
+        mode: 'update'
+    },
+    {
+        route: '/recommended-cycle-counts',
+        permission: 'wm_recommended-cycle-counts',
+        mode: 'read'
+    },
+    {
+        route: '/record-history/[id]',
+        permission: 'wm_record-history',
+        mode: 'read'
+    },
+    {
+        route: '/record-history',
+        permission: 'wm_record-history',
+        mode: 'read'
+    },
+    {
+        route: '/return-codes/[id]',
+        permission: 'wm_return-codes',
+        mode: 'read'
+    },
+    {
+        route: '/return-codes/add',
+        permission: 'wm_return-codes',
+        mode: 'create'
+    },
+    {
+        route: '/return-codes/edit/[id]',
+        permission: 'wm_return-codes',
+        mode: 'update'
+    },
+    {
+        route: '/return-codes',
+        permission: 'wm_return-codes',
+        mode: 'read'
+    },
+    {
+        route: '/roles/[id]',
+        permission: 'wm_roles',
+        mode: 'read'
+    },
+    {
+        route: '/roles/add',
+        permission: 'wm_roles',
+        mode: 'create'
+    },
+    {
+        route: '/roles/edit/[id]',
+        permission: 'wm_roles',
+        mode: 'update'
+    },
+    {
+        route: '/roles',
+        permission: 'wm_roles',
+        mode: 'read'
+    },
+    {
+        route: '/roles/permissions',
+        permission: 'wm_roles',
+        mode: 'read'
+    },
+    {
+        route: '/roles/warehouse-worker/add',
+        permission: 'wm_roles',
+        mode: 'create'
+    },
+    {
+        route: '/round-calculation-profiles/[id]',
+        permission: 'wm_round-calculation-profiles',
+        mode: 'read'
+    },
+    {
+        route: '/round-calculation-profiles/add',
+        permission: 'wm_round-calculation-profiles',
+        mode: 'create'
+    },
+    {
+        route: '/round-calculation-profiles/edit/[id]',
+        permission: 'wm_round-calculation-profiles',
+        mode: 'update'
+    },
+    {
+        route: '/round-calculation-profiles/equipment/add',
+        permission: 'wm_round-calculation-profiles',
+        mode: 'create'
+    },
+    {
+        route: '/round-calculation-profiles',
+        permission: 'wm_round-calculation-profiles',
+        mode: 'read'
+    },
+    {
+        route: '/rounds/[id]',
+        permission: 'wm_rounds',
+        mode: 'read'
+    },
+    {
+        route: '/rounds',
+        permission: 'wm_rounds',
+        mode: 'read'
+    },
+    {
+        route: '/rounds/line/[id]',
+        permission: 'wm_rounds',
+        mode: 'read'
+    },
+    {
+        route: '/rounds/line/detail/[id]',
+        permission: 'wm_rounds',
+        mode: 'read'
+    },
+    {
+        route: '/rules/[id]',
+        permission: 'wm_rules',
+        mode: 'read'
+    },
+    {
+        route: '/rules/add',
+        permission: 'wm_rules',
+        mode: 'create'
+    },
+    {
+        route: '/rules/add/indexsave',
+        permission: 'wm_rules',
+        mode: 'create'
+    },
+    {
+        route: '/rules/config/add',
+        permission: 'wm_rules',
+        mode: 'create'
+    },
+    {
+        route: '/rules/config/edit/[id]',
+        permission: 'wm_rules',
+        mode: 'update'
+    },
+    {
+        route: '/rules/edit/[id]',
+        permission: 'wm_rules',
+        mode: 'update'
+    },
+    {
+        route: '/rules',
+        permission: 'wm_rules',
+        mode: 'read'
+    },
+    {
+        route: '/rules/version/[id]',
+        permission: 'wm_rules',
+        mode: 'read'
+    },
+    {
+        route: '/rules/version/add',
+        permission: 'wm_rules',
+        mode: 'create'
+    },
+    {
+        route: '/rules/version/config/[id]',
+        permission: 'wm_rules',
+        mode: 'read'
+    },
+    {
+        route: '/rules/version/config/add',
+        permission: 'wm_rules',
+        mode: 'create'
+    },
+    {
+        route: '/rules/version/config/edit/[id]',
+        permission: 'wm_rules',
+        mode: 'update'
+    },
+    {
+        route: '/rules/version/edit/[id]',
+        permission: 'wm_rules',
+        mode: 'update'
+    },
+    {
+        route: '/scheduler-configs/[id]',
+        permission: 'wm_scheduler-configs',
+        mode: 'read'
+    },
+    {
+        route: '/scheduler-configs/add',
+        permission: 'wm_scheduler-configs',
+        mode: 'create'
+    },
+    {
+        route: '/scheduler-configs/argument/add',
+        permission: 'wm_scheduler-configs',
+        mode: 'create'
+    },
+    {
+        route: '/scheduler-configs/argument/edit/[id]',
+        permission: 'wm_scheduler-configs',
+        mode: 'update'
+    },
+    {
+        route: '/scheduler-configs/edit/[id]',
+        permission: 'wm_scheduler-configs',
+        mode: 'update'
+    },
+    {
+        route: '/scheduler-configs',
+        permission: 'wm_scheduler-configs',
+        mode: 'read'
+    },
+    {
+        route: '/shipping-modes/[id]',
+        permission: 'wm_shipping-modes',
+        mode: 'read'
+    },
+    {
+        route: '/shipping-modes/add',
+        permission: 'wm_shipping-modes',
+        mode: 'create'
+    },
+    {
+        route: '/shipping-modes/edit/[id]',
+        permission: 'wm_shipping-modes',
+        mode: 'update'
+    },
+    {
+        route: '/shipping-modes',
+        permission: 'wm_shipping-modes',
+        mode: 'read'
+    },
+    {
+        route: '/shipping-units/[id]',
+        permission: 'wm_shipping-units',
+        mode: 'read'
+    },
+    {
+        route: '/shipping-units/edit/[id]',
+        permission: 'wm_shipping-units',
+        mode: 'update'
+    },
+    {
+        route: '/shipping-units',
+        permission: 'wm_shipping-units',
+        mode: 'read'
+    },
+    {
+        route: '/shipping-units/line/[id]',
+        permission: 'wm_shipping-units',
+        mode: 'read'
+    },
+    {
+        route: '/shipping-units/line/edit/[id]',
+        permission: 'wm_shipping-units',
+        mode: 'update'
+    },
+    {
+        route: '/shipping-units/line/feature/[id]',
+        permission: 'wm_shipping-units',
+        mode: 'read'
+    },
+    {
+        route: '/status-history/[id]',
+        permission: 'wm_status-history',
+        mode: 'read'
+    },
+    {
+        route: '/status-history',
+        permission: 'wm_status-history',
+        mode: 'read'
+    },
+    {
+        route: '/stock-owners/[id]',
+        permission: 'wm_stock-owners',
+        mode: 'read'
+    },
+    {
+        route: '/stock-owners/add',
+        permission: 'wm_stock-owners',
+        mode: 'create'
+    },
+    {
+        route: '/stock-owners/edit/[id]',
+        permission: 'wm_stock-owners',
+        mode: 'update'
+    },
+    {
+        route: '/stock-owners',
+        permission: 'wm_stock-owners',
+        mode: 'read'
+    },
+    {
+        route: '/stock-statuses/[id]',
+        permission: 'wm_stock-statuses',
+        mode: 'read'
+    },
+    {
+        route: '/stock-statuses/add',
+        permission: 'wm_stock-statuses',
+        mode: 'create'
+    },
+    {
+        route: '/stock-statuses/edit/[id]',
+        permission: 'wm_stock-statuses',
+        mode: 'update'
+    },
+    {
+        route: '/stock-statuses',
+        permission: 'wm_stock-statuses',
+        mode: 'read'
+    },
+    {
+        route: '/stock-statuses_old',
+        permission: 'wm_stock-statuses',
+        mode: 'read'
+    },
+    {
+        route: '/third-parties/[id]',
+        permission: 'wm_third-parties',
+        mode: 'read'
+    },
+    {
+        route: '/third-parties/add',
+        permission: 'wm_third-parties',
+        mode: 'create'
+    },
+    {
+        route: '/third-parties/address/[id]',
+        permission: 'wm_third-parties',
+        mode: 'create'
+    },
+    {
+        route: '/third-parties/address/add',
+        permission: 'wm_third-parties',
+        mode: 'create'
+    },
+    {
+        route: '/third-parties/address/contact/[id]',
+        permission: 'wm_third-parties',
+        mode: 'create'
+    },
+    {
+        route: '/third-parties/address/contact/add',
+        permission: 'wm_third-parties',
+        mode: 'create'
+    },
+    {
+        route: '/third-parties/address/contact/edit/[id]',
+        permission: 'wm_third-parties',
+        mode: 'create'
+    },
+    {
+        route: '/third-parties/address/edit/[id]',
+        permission: 'wm_third-parties',
+        mode: 'create'
+    },
+    {
+        route: '/third-parties/document/[id]',
+        permission: 'wm_third-parties',
+        mode: 'read'
+    },
+    {
+        route: '/third-parties/document/add',
+        permission: 'wm_third-parties',
+        mode: 'create'
+    },
+    {
+        route: '/third-parties/edit/[id]',
+        permission: 'wm_third-parties',
+        mode: 'update'
+    },
+    {
+        route: '/third-parties',
+        permission: 'wm_third-parties',
+        mode: 'read'
+    },
+    {
+        route: '/translations',
+        permission: 'wm_translations',
+        mode: 'create'
+    },
+    {
+        route: '/vat-rates/[id]',
+        permission: 'wm_vat-rates',
+        mode: 'read'
+    },
+    {
+        route: '/vat-rates/add',
+        permission: 'wm_vat-rates',
+        mode: 'create'
+    },
+    {
+        route: '/vat-rates/edit/[id]',
+        permission: 'wm_vat-rates',
+        mode: 'update'
+    },
+    {
+        route: '/vat-rates',
+        permission: 'wm_vat-rates',
+        mode: 'read'
+    },
+    {
+        route: '/warehouse-workers/[id]',
+        permission: 'wm_warehouse-workers',
+        mode: 'read'
+    },
+    {
+        route: '/warehouse-workers/add',
+        permission: 'wm_warehouse-workers',
+        mode: 'create'
+    },
+    {
+        route: '/warehouse-workers/edit/[id]',
+        permission: 'wm_warehouse-workers',
+        mode: 'update'
+    },
+    {
+        route: '/warehouse-workers',
+        permission: 'wm_warehouse-workers',
+        mode: 'read'
+    },
+    {
+        route: '/warehouse-workers/role/add',
+        permission: 'wm_warehouse-workers',
+        mode: 'create'
+    }
+];
+
 const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) => {
-    const { userSettings, user } = useAppState();
+    const { userSettings, user, permissions } = useAppState();
+    const { t } = useTranslation();
     const router = useRouter();
     const dispatchUser = useAppDispatch();
     const [userSettingsLoading, setUserSettingsLoading] = useState<number>(0);
@@ -32,6 +1627,29 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             scrollableContainer.scrollTo(0, 0);
         }
     }, [router.asPath]);
+
+    useEffect(() => {
+        if (
+            router &&
+            permissions &&
+            authorizationList.filter((item) => item.route === router.pathname).length > 0 &&
+            authorizationList
+                .filter((item) => item.route === router.pathname)
+                .map((item) => {
+                    return permissions?.some(
+                        (permission) =>
+                            permission.table === item.permission && permission.mode === item.mode
+                    );
+                })
+                .filter((item) => item === true).length === 0
+        ) {
+            console.warn(
+                `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+            );
+            showError(t('errors:APP-000200'));
+            router.replace('/');
+        }
+    }, [router, permissions]);
 
     const token = cookie.get('token');
     const requestHeader = {
