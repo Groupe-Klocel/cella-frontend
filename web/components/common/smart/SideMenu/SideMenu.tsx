@@ -76,7 +76,6 @@ const SideMenu: FC = () => {
             label: t('administration'),
             children: [
                 // CONFIGS
-                getModesFromPermissions(permissions, Table.Config).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_configurations').includes(ModeEnum.Read)
                     ? {
                           key: 'administration-configurations',
@@ -92,7 +91,6 @@ const SideMenu: FC = () => {
                     label: t('access-management'),
                     children: [
                         // ROLES
-                        getModesFromPermissions(permissions, Table.Role).includes(ModeEnum.Read) &&
                         getModesFromPermissions(permissions, 'wm_roles').includes(ModeEnum.Read)
                             ? {
                                   key: 'administration-access-management-roles',
@@ -100,9 +98,6 @@ const SideMenu: FC = () => {
                               }
                             : null,
                         // USERS
-                        getModesFromPermissions(permissions, Table.WarehouseWorker).includes(
-                            ModeEnum.Read
-                        ) &&
                         getModesFromPermissions(permissions, 'wm_warehouse-workers').includes(
                             ModeEnum.Read
                         )
@@ -118,7 +113,6 @@ const SideMenu: FC = () => {
                     ].filter(Boolean)
                 },
                 // HOOK-CONFIGS
-                getModesFromPermissions(permissions, Table.HookConfig).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_hook-configs').includes(ModeEnum.Read)
                     ? {
                           key: 'administration-hook-configs',
@@ -126,7 +120,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // PARAMETERS
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_parameters').includes(ModeEnum.Read)
                     ? {
                           key: 'administration-parameters',
@@ -141,9 +134,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // SCHEDULER CONFIG
-                getModesFromPermissions(permissions, Table.SchedulerConfig).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_scheduler-configs').includes(ModeEnum.Read)
                     ? {
                           key: 'administration-scheduler-configs',
@@ -196,9 +186,6 @@ const SideMenu: FC = () => {
                     label: t('cartography'),
                     children: [
                         // BUILDINGS
-                        getModesFromPermissions(permissions, Table.Building).includes(
-                            ModeEnum.Read
-                        ) &&
                         getModesFromPermissions(permissions, 'wm_buildings').includes(ModeEnum.Read)
                             ? {
                                   key: 'configuration-buildings',
@@ -206,7 +193,6 @@ const SideMenu: FC = () => {
                               }
                             : null,
                         // BLOCKS
-                        getModesFromPermissions(permissions, Table.Block).includes(ModeEnum.Read) &&
                         getModesFromPermissions(permissions, 'wm_blocks').includes(ModeEnum.Read)
                             ? {
                                   key: 'configuration-cartography-blocks',
@@ -214,9 +200,6 @@ const SideMenu: FC = () => {
                               }
                             : null,
                         // LOCATIONS
-                        getModesFromPermissions(permissions, Table.Location).includes(
-                            ModeEnum.Read
-                        ) &&
                         getModesFromPermissions(permissions, 'wm_locations').includes(ModeEnum.Read)
                             ? {
                                   key: 'configuration-cartography-locations',
@@ -224,9 +207,6 @@ const SideMenu: FC = () => {
                               }
                             : null,
                         // PATTERNS
-                        getModesFromPermissions(permissions, Table.Pattern).includes(
-                            ModeEnum.Read
-                        ) &&
                         getModesFromPermissions(permissions, 'wm_patterns').includes(ModeEnum.Read)
                             ? {
                                   key: 'configuration-cartography-patterns',
@@ -234,9 +214,6 @@ const SideMenu: FC = () => {
                               }
                             : null,
                         // PATTERN PATHS
-                        getModesFromPermissions(permissions, Table.PatternPath).includes(
-                            ModeEnum.Read
-                        ) &&
                         getModesFromPermissions(permissions, 'wm_pattern-paths').includes(
                             ModeEnum.Read
                         )
@@ -248,7 +225,6 @@ const SideMenu: FC = () => {
                     ].filter(Boolean)
                 },
                 //CONVERSIONS
-                getModesFromPermissions(permissions, Table.Conversion).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_conversions').includes(ModeEnum.Read)
                     ? {
                           key: 'configuration-conversions',
@@ -256,9 +232,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // PACKAGINGS
-                getModesFromPermissions(permissions, Table.HandlingUnitModel).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_handling-unit-models').includes(
                     ModeEnum.Read
                 )
@@ -270,7 +243,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // EQUIPMENT
-                getModesFromPermissions(permissions, Table.Equipment).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_equipment').includes(ModeEnum.Read)
                     ? {
                           key: 'configuration-equipment',
@@ -278,7 +250,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // STOCK STATUSES
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_stock-statuses').includes(ModeEnum.Read)
                     ? {
                           key: 'configuration-stock-statuses',
@@ -286,7 +257,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // BUSINESS MANAGEMENT
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
                 [
                     'wm_bank-accounts',
                     'wm_currencies',
@@ -345,7 +315,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // SHIPPING MODES
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_shipping-modes').includes(ModeEnum.Read)
                     ? {
                           key: 'configuration-shipping-modes',
@@ -353,9 +322,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // ROUND CALCULATION PROFILES
-                getModesFromPermissions(permissions, Table.RoundCalculationProfile).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_round-calculation-profiles').includes(
                     ModeEnum.Read
                 )
@@ -369,7 +335,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // STOCK OWNER
-                getModesFromPermissions(permissions, Table.StockOwner).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_stock-owners').includes(ModeEnum.Read)
                     ? {
                           key: 'configuration-stock-owners',
@@ -377,7 +342,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // RETURNS
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
                 ['wm_action-codes', 'wm_return-codes'].some((perm) =>
                     getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
                 )
@@ -403,7 +367,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // RULES
-                getModesFromPermissions(permissions, Table.Rule).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_rules').includes(ModeEnum.Read)
                     ? {
                           key: 'configuration-rules',
@@ -411,7 +374,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // THIRD PARTIES
-                getModesFromPermissions(permissions, Table.ThirdParty).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_third-parties').includes(ModeEnum.Read)
                     ? {
                           key: 'configuration-third-parties',
@@ -419,7 +381,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // CARRIERS
-                getModesFromPermissions(permissions, Table.Carrier).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_carriers').includes(ModeEnum.Read)
                     ? {
                           key: 'configuration-carriers',
@@ -446,7 +407,6 @@ const SideMenu: FC = () => {
             label: t('articles'),
             children: [
                 // ARTICLES
-                getModesFromPermissions(permissions, Table.Article).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_articles').includes(ModeEnum.Read)
                     ? {
                           key: 'articles-articles',
@@ -454,7 +414,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // ARTICLE SETS
-                getModesFromPermissions(permissions, Table.ArticleSet).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_article-sets').includes(ModeEnum.Read)
                     ? {
                           key: 'articles-sets',
@@ -462,7 +421,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // ARTICLE FAMILIES
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_articles-families').includes(ModeEnum.Read)
                     ? {
                           key: 'articles-families',
@@ -470,7 +428,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // ARTICLE SUB-FAMILIES
-                getModesFromPermissions(permissions, Table.Parameter).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_articles-subfamilies').includes(
                     ModeEnum.Read
                 )
@@ -482,7 +439,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // BARCODES
-                getModesFromPermissions(permissions, Table.Barcode).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_barcodes').includes(ModeEnum.Read)
                     ? {
                           key: 'articles-barcodes',
@@ -490,7 +446,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // LOGISTIC UNIT MODELS
-                getModesFromPermissions(permissions, Table.LogisticUnit).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_logistic-units').includes(ModeEnum.Read)
                     ? {
                           key: 'articles-logistic-unit-models',
@@ -498,7 +453,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // ARTICLE PRICES
-                getModesFromPermissions(permissions, Table.ArticlePrice).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_article-prices').includes(ModeEnum.Read)
                     ? {
                           key: 'articles-article-prices',
@@ -506,9 +460,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // ARTICLE PRICE HISTORIES
-                getModesFromPermissions(permissions, Table.ArticlePriceHistory).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_article-price-histories').includes(
                     ModeEnum.Read
                 )
@@ -529,9 +480,6 @@ const SideMenu: FC = () => {
                     label: t('features'),
                     children: [
                         // FEATURE CODES
-                        getModesFromPermissions(permissions, Table.FeatureCode).includes(
-                            ModeEnum.Read
-                        ) &&
                         getModesFromPermissions(permissions, 'wm_feature-codes').includes(
                             ModeEnum.Read
                         )
@@ -541,9 +489,6 @@ const SideMenu: FC = () => {
                               }
                             : null,
                         // FEATURE TYPES
-                        getModesFromPermissions(permissions, Table.FeatureTypeDetail).includes(
-                            ModeEnum.Read
-                        ) &&
                         getModesFromPermissions(permissions, 'wm_feature-types').includes(
                             ModeEnum.Read
                         )
@@ -573,7 +518,6 @@ const SideMenu: FC = () => {
             label: t('stock-management'),
             children: [
                 // GOODS-INS
-                getModesFromPermissions(permissions, Table.Round).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_goods-ins').includes(ModeEnum.Read)
                     ? {
                           key: 'stock-management-goods-ins',
@@ -581,9 +525,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // CONTENTS
-                getModesFromPermissions(permissions, Table.HandlingUnitContent).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_handling-unit-contents').includes(
                     ModeEnum.Read
                 )
@@ -593,7 +534,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // HANDLING UNIT GENERATOR
-                getModesFromPermissions(permissions, Table.HandlingUnit).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_dummy-hu-generator').includes(
                     ModeEnum.Read
                 )
@@ -603,7 +543,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // MENU CYCLE COUNTS
-                getModesFromPermissions(permissions, Table.CycleCount).includes(ModeEnum.Read) &&
                 ['wm_cycle-counts', 'wm_recommended-cycle-counts'].some((perm) =>
                     getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
                 )
@@ -634,7 +573,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // MOVEMENTS
-                getModesFromPermissions(permissions, Table.Movement).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_movements').includes(ModeEnum.Read)
                     ? {
                           key: 'stock-management-movements',
@@ -642,7 +580,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // RECEPTIONS
-                getModesFromPermissions(permissions, Table.PurchaseOrder).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_purchase-orders').includes(ModeEnum.Read)
                     ? {
                           key: 'stock-management-purchase-orders',
@@ -650,9 +587,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // FEATURES IN STOCK
-                getModesFromPermissions(permissions, Table.HandlingUnitContentFeature).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_handling-unit-content-features').includes(
                     ModeEnum.Read
                 )
@@ -666,9 +600,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // CUMULATED STOCK
-                getModesFromPermissions(permissions, Table.HandlingUnitContent).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_cumulated-stock').includes(ModeEnum.Read)
                     ? {
                           key: 'stock-management-cumulated-stock',
@@ -686,7 +617,6 @@ const SideMenu: FC = () => {
             label: t('business-management'),
             children: [
                 // CREDITS
-                getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_credits').includes(ModeEnum.Read)
                     ? {
                           key: 'business-management-credits',
@@ -694,7 +624,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // CUSTOMER ORDERS
-                getModesFromPermissions(permissions, Table.Order).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_customer-orders').includes(ModeEnum.Read)
                     ? {
                           key: 'business-management-orders',
@@ -702,7 +631,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // PAYMENTS
-                getModesFromPermissions(permissions, Table.Payment).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_payments').includes(ModeEnum.Read)
                     ? {
                           key: 'business-management-payments',
@@ -726,7 +654,6 @@ const SideMenu: FC = () => {
             label: t('preparation-management'),
             children: [
                 // LOADS
-                getModesFromPermissions(permissions, Table.Load).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_loads').includes(ModeEnum.Read)
                     ? {
                           key: 'preparation-management-loads',
@@ -734,9 +661,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // BOX BARCODES
-                getModesFromPermissions(permissions, Table.HandlingUnitOutboundBarcode).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_handling-unit-outbound-barcodes').includes(
                     ModeEnum.Read
                 )
@@ -750,16 +674,13 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // BOXES
-                getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
-                    ModeEnum.Read
-                ) && getModesFromPermissions(permissions, 'wm_boxes').includes(ModeEnum.Read)
+                getModesFromPermissions(permissions, 'wm_boxes').includes(ModeEnum.Read)
                     ? {
                           key: 'preparation-management-boxes',
                           label: <Link href="/boxes">{t('boxes')}</Link>
                       }
                     : null,
                 // DELIVERIES
-                getModesFromPermissions(permissions, Table.Delivery).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_deliveries').includes(ModeEnum.Read)
                     ? {
                           key: 'preparation-management-deliveries',
@@ -767,7 +688,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // MANUAl ALLOCATION
-                getModesFromPermissions(permissions, Table.Delivery).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_manual-allocation').includes(ModeEnum.Read)
                     ? {
                           key: 'preparation-deliveries-manual-allocation',
@@ -779,9 +699,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // SHIPPING PALLETS
-                getModesFromPermissions(permissions, Table.HandlingUnitOutbound).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_shipping-units').includes(ModeEnum.Read)
                     ? {
                           key: 'preparation-management-shipping-units',
@@ -789,7 +706,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // ROUNDS
-                getModesFromPermissions(permissions, Table.Round).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_rounds').includes(ModeEnum.Read)
                     ? {
                           key: 'preparation-management-rounds',
@@ -812,7 +728,6 @@ const SideMenu: FC = () => {
             label: t('monitoring'),
             children: [
                 // HISTORY
-                getModesFromPermissions(permissions, Table.RecordHistory).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_record-history').includes(ModeEnum.Read)
                     ? {
                           key: 'monitoring-record-history',
@@ -820,9 +735,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // DOCUMENT HISTORIES
-                getModesFromPermissions(permissions, Table.DocumentHistory).includes(
-                    ModeEnum.Read
-                ) &&
                 getModesFromPermissions(permissions, 'wm_document-histories').includes(
                     ModeEnum.Read
                 )
@@ -832,7 +744,6 @@ const SideMenu: FC = () => {
                       }
                     : null,
                 // STATUS HISTORY
-                getModesFromPermissions(permissions, Table.StatusHistory).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_status-history').includes(ModeEnum.Read)
                     ? {
                           key: 'monitoring-status-history',
@@ -845,7 +756,6 @@ const SideMenu: FC = () => {
                     label: <Link href={bi_link}>{t('bi-solution')}</Link>
                 },
                 // NOTIFICATIONS
-                getModesFromPermissions(permissions, Table.Notification).includes(ModeEnum.Read) &&
                 getModesFromPermissions(permissions, 'wm_notifications').includes(ModeEnum.Read)
                     ? {
                           key: 'monitoring-notifications',
