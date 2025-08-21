@@ -57,8 +57,6 @@ const LanguageSelector: FC = () => {
 
     const dispatchUserSettings = useAppDispatch();
 
-    console.log('translations', translations);
-
     const generalUserSettings = userSettings?.find((item: any) => {
         return 'globalParametersMobile' === item.code;
     });
