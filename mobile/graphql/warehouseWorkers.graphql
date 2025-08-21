@@ -1,0 +1,138 @@
+# CELLA Frontend
+# Website and Mobile templates that can be used to communicate
+# with CELLA WMS APIs.
+# Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+query GetMyInfo {
+    me {
+        __typename
+        ... on WarehouseWorker {
+            id
+            password
+            username
+            warehouseId
+            resetPassword
+            userRoles {
+                roleId
+                role {
+                    id
+                    name
+                    permissions {
+                        id
+                        table
+                        mode
+                        roleId
+                    }
+                }
+            }
+        }
+
+        ... on IntegratorUser {
+            id
+            password
+            email
+            integratorId
+            integrator {
+                id
+                name
+                awsAccessKeyId
+                awsSecretAccessKey
+            }
+            userRoles {
+                roleId
+                role {
+                    id
+                    name
+                    permissions {
+                        id
+                        table
+                        mode
+                        roleId
+                    }
+                }
+            }
+            isAdmin
+        }
+    }
+}
+
+query GetWarehouseWorkers(
+    $filters: WarehouseWorkerSearchFilters
+    $orderBy: [WarehouseWorkerOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+) {
+    warehouseWorkers(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            username
+            email
+            warehouseId
+        }
+    }
+}
+mutation CreateWarehouseWorker($input: CreateWarehouseWorkerInput!) {
+    createWarehouseWorker(input: $input) {
+        id
+        email
+        username
+        warehouseId
+    }
+}
+
+mutation UpdateWarehouseWorker($id: String!, $input: UpdateWarehouseWorkerInput!) {
+    updateWarehouseWorker(id: $id, input: $input) {
+        id
+        email
+        username
+        warehouseId
+    }
+}
+
+mutation DeleteWarehouseWorker($id: String!) {
+    deleteWarehouseWorker(id: $id)
+}
+
+mutation ResetWarehouseWorkerPassword($id: String!) {
+    resetWarehouseWorkerPassword(id: $id) {
+        __typename
+        ... on ResetPasswordSuccess {
+            message
+        }
+        ... on ResetPasswordFailure {
+            message
+        }
+    }
+}
+
+mutation ChangeWarehouseWorkerPassword($id: String!, $password: String!, $password2: String!) {
+    changeWarehouseWorkerPassword(id: $id, password: $password, password2: $password2) {
+        __typename
+        ... on ChangePasswordSuccess {
+            message
+        }
+        ... on ChangePasswordFailure {
+            message
+        }
+    }
+}

@@ -20,10 +20,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { stringToBoolean } from '@helpers';
 import { cookie } from 'helpers/utils/utils';
 import { createCtx } from './create-context';
+import { PermissionType } from 'generated/graphql';
 
 // init from cookies
 const userInfoStr = cookie.get('user') !== undefined ? cookie.get('user') : '{}';
 const userInitData = JSON.parse(userInfoStr!);
+
+type State = {
+    finish: boolean;
+    userSettings: any;
+    user: any;
+    translations: any;
+    permissions: Array<PermissionType> | undefined;
+};
 
 const initialState = {
     finish: false,
@@ -34,10 +43,10 @@ const initialState = {
         }
     ],
     user: userInitData,
-    translations: []
+    translations: [],
+    permissions: []
 };
 
-type State = typeof initialState;
 type Action = any;
 
 function reducer(state: State, action: Action) {
@@ -63,12 +72,25 @@ function reducer(state: State, action: Action) {
                 isSettingMenuCollapsed: action.isSettingMenuCollapsed,
                 isSessionMenuCollapsed: action.isSettingMenuCollapsed
             };
-        case 'SET_USER_INFO':
-            cookie.set('user', JSON.stringify(action.user));
+        case 'SET_USER_INFO': {
+            saveUserInfo(action.user);
+            const userWithoutRole = JSON.parse(JSON.stringify(action.user));
+            delete userWithoutRole['userRoles'];
+            const allPermissions: Array<PermissionType> = [];
+            action.user.userRoles.forEach((userRole: any) => {
+                if (
+                    userRole.role.warehouseId == null ||
+                    userRole.role.warehouseId == action.user.warehouseId
+                ) {
+                    allPermissions.push(userRole.role.permissions);
+                }
+            });
             return {
                 ...state,
-                user: action.user
+                user: userWithoutRole,
+                permissions: allPermissions.flat()
             };
+        }
         case 'SET_TRANSLATIONS':
             return {
                 ...state,
@@ -78,6 +100,12 @@ function reducer(state: State, action: Action) {
             return state;
     }
 }
+
+const saveUserInfo = (user: any) => {
+    const tmpUser = JSON.parse(JSON.stringify(user));
+    delete tmpUser['userRoles'];
+    cookie.set('user', JSON.stringify(tmpUser));
+};
 
 const [useAppState, useAppDispatch, AppProvider] = createCtx(initialState, reducer);
 

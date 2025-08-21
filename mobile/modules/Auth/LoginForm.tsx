@@ -118,12 +118,14 @@ export const LoginForm = () => {
 
                     graphqlRequestClient.request(query).then((data: any) => {
                         if (data.me) {
-                            const user = data.me;
-                            delete user.__typename;
-                            delete user.password;
-                            setUserInfo(user);
-                            router.push('/');
-                            showSuccess(t('login-success'));
+                            setUserInfo(data.me);
+                            if (data.me.resetPassword === true) {
+                                router.push('/reset-password');
+                                showWarning(t('please-reset-password'));
+                            } else {
+                                router.push('/');
+                                showSuccess(t('login-success'));
+                            }
                         }
                     });
                 } catch (error) {

@@ -20,60 +20,58 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
 import { HeaderContent, MenuItem, NavButton } from '@components';
-import { pathParamsFromDictionary, useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    getModesFromPermissions,
+    pathParamsFromDictionary,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
+import { ModeEnum } from 'generated/graphql';
+import { useAppState } from 'context/AppContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
-
-const menuItemDatas = [
-    {
-        title: 'menu:reception-movement',
-        path: '/reception-movement'
-    },
-    {
-        title: 'menu:reception-content-movement',
-        path: pathParamsFromDictionary('/content-movement', {
-            originLocation: 'defaultReception'
-        })
-    },
-    {
-        title: 'menu:content-movement',
-        path: '/content-movement'
-    },
-    {
-        title: 'menu:hu-movement',
-        path: '/hu-movement'
-    },
-    // {
-    //     title: 'menu:pallet-movement',
-    //     path: '/pallet-movement'
-    // }
-    // {
-    //     title: 'menu:replenishment-movement',
-    //     path: '/'
-    // },
-    // {
-    //     title: 'menu:stock-init',
-    //     path: '/'
-    // },
-    {
-        title: 'menu:cycle-counts',
-        path: '/cycle-counts'
-    }
-    // {
-    //     title: 'menu:set-unbuilding',
-    //     path: '/'
-    // },
-    // {
-    //     title: 'menu:set-building',
-    //     path: '/'
-    // }
-];
 
 const StockManagementPage: PageComponent = () => {
     const { t } = useTranslation();
     const router = useRouter();
+    const { permissions } = useAppState();
+
+    type MenuItemData = { title: string; path: string | { pathname: string; query: any } };
+
+    const menuItemDatas: MenuItemData[] = [
+        getModesFromPermissions(permissions, 'mobile_reception-movement').includes(
+            ModeEnum.Read
+        ) && {
+            title: 'menu:reception-movement',
+            path: '/reception-movement'
+        },
+        getModesFromPermissions(permissions, 'mobile_reception-content-movement').includes(
+            ModeEnum.Read
+        ) && {
+            title: 'menu:reception-content-movement',
+            path: pathParamsFromDictionary('/content-movement', {
+                originLocation: 'defaultReception'
+            })
+        },
+        getModesFromPermissions(permissions, 'mobile_content-movement').includes(ModeEnum.Read) && {
+            title: 'menu:content-movement',
+            path: '/content-movement'
+        },
+        getModesFromPermissions(permissions, 'mobile_hu-movement').includes(ModeEnum.Read) && {
+            title: 'menu:hu-movement',
+            path: '/hu-movement'
+        },
+        // {
+        //     title: 'menu:replenishment-movement',
+        //     path: '/'
+        // },
+        getModesFromPermissions(permissions, 'mobile_cycle-counts').includes(ModeEnum.Read) && {
+            title: 'menu:cycle-counts',
+            path: '/cycle-counts'
+        }
+    ].filter(Boolean) as MenuItemData[];
+
     return (
         <>
             <HeaderContent

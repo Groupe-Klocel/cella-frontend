@@ -68,6 +68,7 @@ const PickAndPack: PageComponent = () => {
     const [articleToPropose, setArticleToPropose] = useState<string>();
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
     const [triggerHuClose, setTriggerHuClose] = useState<boolean>(false);
+    const [triggerNextRaa, setTriggerNextRaa] = useState<boolean>(false);
     const [isHuInProgress, setIsHuInProgress] = useState<boolean>(false);
     const [isAutoValidateLoading, setIsAutoValidateLoading] = useState<boolean>(false);
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
@@ -161,6 +162,9 @@ const PickAndPack: PageComponent = () => {
         storage.set(processName, JSON.stringify(storedObject));
     }
 
+    const proposedRoundAdvisedAddress =
+        storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0] || [];
+
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
         const object: { [k: string]: any } = {};
@@ -178,8 +182,6 @@ const PickAndPack: PageComponent = () => {
                 },
                 0
             );
-            const proposedRoundAdvisedAddress =
-                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0];
             object[t('common:round')] = round.name;
             object[t('common:total-picked-quantity')] =
                 totalProcessedQuantity + '/' + round.nbPickArticle;
@@ -273,29 +275,23 @@ const PickAndPack: PageComponent = () => {
     // retrieve location, article and qty to propose
     useEffect(() => {
         if (storedObject['step10']?.data?.proposedRoundAdvisedAddresses) {
-            setLocationToPropose(
-                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0].location?.name
-            );
-            setArticleToPropose(
-                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent
-                    ?.article?.name
-            );
+            setLocationToPropose(proposedRoundAdvisedAddress.location?.name);
+            setArticleToPropose(proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name);
         }
         if (
             storedObject['step10']?.data &&
-            !storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0].roundLineDetail
-                .handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.carrierShippingMode
-                ?.toBePalletized &&
+            !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
+                ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized &&
             !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
         ) {
             setToBePalletizedForBackEnd(false);
+            setToBePalletizedForHUModel(false);
         }
 
         if (
             storedObject['step10']?.data &&
-            !storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0].roundLineDetail
-                .handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.carrierShippingMode
-                ?.toBePalletized &&
+            !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
+                ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized &&
             storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
         ) {
             setToBePalletizedForHUModel(false);
@@ -399,22 +395,10 @@ const PickAndPack: PageComponent = () => {
             <div hidden={isLoading}>
                 {showSimilarLocations && storedObject['step10']?.data ? (
                     <SimilarPickingLocations
-                        articleId={
-                            storedObject['step10'].data.proposedRoundAdvisedAddresses[0]
-                                .handlingUnitContent.articleId
-                        }
-                        chosenContentId={
-                            storedObject['step10'].data.proposedRoundAdvisedAddresses[0]
-                                .handlingUnitContent.id
-                        }
-                        stockOwnerId={
-                            storedObject['step10'].data.proposedRoundAdvisedAddresses[0]
-                                .handlingUnitContent.stockOwnerId
-                        }
-                        stockStatus={
-                            storedObject['step10'].data.proposedRoundAdvisedAddresses[0]
-                                .handlingUnitContent.stockStatus
-                        }
+                        articleId={proposedRoundAdvisedAddress.handlingUnitContent.articleId}
+                        chosenContentId={proposedRoundAdvisedAddress.handlingUnitContent.id}
+                        stockOwnerId={proposedRoundAdvisedAddress.handlingUnitContent.stockOwnerId}
+                        stockStatus={proposedRoundAdvisedAddress.handlingUnitContent.stockStatus}
                     />
                 ) : (
                     <></>
@@ -481,11 +465,16 @@ const PickAndPack: PageComponent = () => {
                             triggerAlternativeSubmit1: triggerHuClose,
                             setTriggerAlternativeSubmit1: setTriggerHuClose
                         }}
+                        action1Trigger={{
+                            action1Trigger: triggerNextRaa,
+                            setAction1Trigger: setTriggerNextRaa
+                        }}
                         buttons={{
                             submitButton: true,
                             backButton: true,
                             alternativeSubmitButton1: isHuInProgress,
-                            locationButton: true
+                            locationButton: true,
+                            action1Button: true
                         }}
                         checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
                         showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
