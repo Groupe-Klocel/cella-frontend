@@ -138,6 +138,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     quantity
                     stockStatus
                     reservation
+                    lastTransactionId
                 }
             }
         `;
