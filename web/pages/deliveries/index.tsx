@@ -192,9 +192,10 @@ const DeliveryPages: PageComponent = () => {
                     {
                         title: 'd:progress',
                         key: 'progress',
-                        render: (record: { id: string; status: number }) => (
-                            <DeliveryProgressBar id={record.id} status={record.status} />
-                        )
+                        render: (record: { id: string; status: number }) => {
+                            return <DeliveryProgressBar id={record.id} status={record.status} />;
+                        },
+                        fixed: false
                     }
                 ]}
                 actionColumns={[
