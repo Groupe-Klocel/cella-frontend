@@ -132,15 +132,8 @@ const TableFilter = forwardRef<TableFilterRef, ITableFilterProps>(
                 let tempColumns = currentFilteredColumns;
                 tempColumns = currentFilteredColumns.map((obj: any) => {
                     // change fixed to true
-                    if (selectedRowKeys.some((r) => obj.index === r)) {
-                        if (obj.index === 0 || obj.index === 1) {
-                            return { ...obj, fixed: 'left' };
-                        } else if (
-                            obj.index === columnsToFilter.length - 1 ||
-                            obj.index === columnsToFilter.length - 2
-                        ) {
-                            return { ...obj, fixed: 'right' };
-                        }
+                    if (selectedRowKeys.some((r) => obj.dataIndex === r)) {
+                        return { ...obj, fixed: true };
                     } else {
                         return { ...obj, fixed: false };
                     }

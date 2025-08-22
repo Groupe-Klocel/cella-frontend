@@ -79,7 +79,7 @@ const DocumentHistoryPages: PageComponent = () => {
         }
         headers['Content-Type'] = 'application/x-www-form-urlencoded';
         const response = await fetch(
-            `http://api.labelary.com/v1/printers/${dpmm}/labels/${width}x${height}/0/`,
+            `https://api.labelary.com/v1/printers/${dpmm}/labels/${width}x${height}/0/`,
             {
                 method: 'POST',
                 headers: headers,
