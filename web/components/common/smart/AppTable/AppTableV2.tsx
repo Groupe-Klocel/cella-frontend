@@ -119,23 +119,6 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     );
     const initialState = userSettings?.valueJson?.visibleCollumns;
 
-    if (initialState) {
-        const storedArray = initialState.filteredColumns;
-        const inputArray = checkKeyPresenceInArray('render', columns);
-        const titleCheck = checkKeyPresenceInArray('title', columns);
-        storedArray.map((a: any) => {
-            const exists = inputArray.find((b) => a.key == b.key);
-            const titles = titleCheck.find((b) => a.key == b.key);
-            if (exists) {
-                a.render = exists.render;
-            }
-            if (titles) {
-                a.title = titles.title;
-            }
-            return a;
-        });
-    }
-
     const [visibleColumnKeys, setVisibleColumnKeys] = useState<Key[]>(
         initialState
             ? initialState.visibleColumnKeys
@@ -148,13 +131,29 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     const [tableColumns, setTableColumns] = useState<any[]>(columns);
 
     useEffect(() => {
-        setFilteredColumns(columns);
-        setVisibleColumnKeys(
-            initialState
-                ? initialState.visibleColumnKeys
-                : allColumnKeys.filter((x) => !hiddenColumns.includes(x))
-        );
-    }, [columns]);
+        if (initialState) {
+            const storedArray = initialState.filteredColumns;
+            console.log('AXC - AppTableV2.tsx - AppTableV2 - storedArray:', storedArray);
+            const inputArray = checkKeyPresenceInArray('render', columns);
+            const titleCheck = checkKeyPresenceInArray('title', columns);
+            storedArray.map((a: any) => {
+                const exists = inputArray.find((b) => a.key == b.key);
+                const titles = titleCheck.find((b) => a.key == b.key);
+                if (exists) {
+                    a.render = exists.render;
+                }
+                if (titles) {
+                    a.title = titles.title;
+                }
+                return a;
+            });
+
+            setFilteredColumns(storedArray);
+            setVisibleColumnKeys(initialState.visibleColumnKeys ?? visibleColumnKeys);
+            setFixedColumns(initialState.fixedColumns);
+            setTableColumns(storedArray);
+        }
+    }, [initialState]);
 
     // Format data only when it changes
     useEffect(() => {
