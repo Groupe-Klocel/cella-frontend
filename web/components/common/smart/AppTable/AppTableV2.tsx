@@ -149,9 +149,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
             });
 
             setFilteredColumns(storedArray);
-            setVisibleColumnKeys(
-                initialState.visibleColumnKeys.filter((x: Key) => !hiddenColumns.includes(x))
-            );
+            setVisibleColumnKeys(initialState.visibleColumnKeys ?? visibleColumnKeys);
             setFixedColumns(initialState.fixedColumns);
             setTableColumns(storedArray);
         }
