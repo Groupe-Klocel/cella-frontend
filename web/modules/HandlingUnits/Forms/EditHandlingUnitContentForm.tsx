@@ -38,6 +38,7 @@ import configs from '../../../../common/configs.json';
 
 import { FormOptionType } from 'models/Models';
 import { debounce } from 'lodash';
+import { gql } from 'graphql-request';
 
 interface IOption {
     value: string;
@@ -201,63 +202,63 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                         // call API for movement
                         const updatedHUC = updatedInfo.response.updatedHandlingUnitContent;
                         const updatedHU = updatedInfo.response.updatedHandlingUnit;
-                        const fetchMovementData = async () => {
-                            const resMovement = await fetch(`/api/create-movement/`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    trigger: 'updateContent',
-                                    originData: {
-                                        stockStatus: details.stockStatus,
-                                        reservation: details.reservation,
-                                        stockOwnerId: details.stockOwner?.id,
-                                        stockOwnerName: details.stockOwner?.name,
-                                        quantity: details.quantity,
-                                        articleId: details.articleId,
-                                        articleName: details.article?.name,
-                                        handlingUnitId: details.handlingUnitId,
-                                        handlingUnitName: details.handlingUnit?.name,
-                                        locationId: details.handlingUnit.locationId,
-                                        locationName: details.handlingUnit.location?.name,
-                                        handlingUnitContentId: details.id
-                                    },
-                                    destinationData: {
-                                        stockStatus: updatedHUC.stockStatus,
-                                        reservation: updatedHUC.reservation,
-                                        stockOwnerId: updatedHUC.stockOwner?.id,
-                                        stockOwnerName: updatedHUC.stockOwner?.name,
-                                        quantity: updatedHUC.quantity,
-                                        articleId: updatedHUC.article?.id,
-                                        articleName: updatedHUC.article?.name,
-                                        handlingUnitId: updatedHU.id,
-                                        handlingUnitName: updatedHU.name,
-                                        locationId: updatedHU.location?.id,
-                                        locationName: updatedHU.location?.name,
-                                        handlingUnitContentId: updatedHUC.id
-                                    }
-                                })
-                            });
-
-                            if (resMovement.ok) {
-                                router.push(`/handling-unit-contents/${details.id}`);
-                                showSuccess(t('messages:success-updated'));
+                        const executeFunctionQuery = gql`
+                            mutation executeFunction($functionName: String!, $event: JSON!) {
+                                executeFunction(functionName: $functionName, event: $event) {
+                                    status
+                                    output
+                                }
                             }
-                            if (!resMovement.ok) {
-                                const errorResponse = await resMovement.json();
-                                if (errorResponse.error.response.errors[0].extensions) {
-                                    showError(
-                                        t(
-                                            `errors:${errorResponse.error.response.errors[0].extensions.code}`
-                                        )
-                                    );
-                                } else {
-                                    showError(t('messages:error-update-data'));
+                        `;
+                        const movementInfos: { [key: string]: any } = {
+                            locationId: details?.handlingUnit?.locationId,
+                            locationName: details?.handlingUnit?.location.name,
+                            handlingUnitId: details?.handlingUnitId,
+                            handlingUnitName: details?.handlingUnit.name,
+                            handlingUnitContentId: details?.id,
+                            stockStatus: details?.stockStatus,
+                            reservation: details?.reservation,
+                            articleId: details?.articleId,
+                            articleName: details?.article.name,
+                            stockOwnerId: details?.stockOwnerId,
+                            stockOwnerName: details?.stockOwner.name,
+                            quantity: details?.quantity
+                        };
+                        let executeFunctionVariables = {
+                            functionName: 'create_movements',
+                            event: {
+                                input: {
+                                    content: movementInfos,
+                                    data: formData,
+                                    type: 'update',
+                                    lastTransactionId: updatedHUC?.lastTransactionId
                                 }
                             }
                         };
-                        fetchMovementData();
+
+                        const executeFunctionResult = await graphqlRequestClient.request(
+                            executeFunctionQuery,
+                            executeFunctionVariables
+                        );
+                        if (executeFunctionResult.executeFunction.status === 'ERROR') {
+                            showError(executeFunctionResult.executeFunction.output);
+                        } else if (
+                            executeFunctionResult.executeFunction.status === 'OK' &&
+                            executeFunctionResult.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(
+                                t(
+                                    `errors:${executeFunctionResult.executeFunction.output.output.code}`
+                                )
+                            );
+                            console.log(
+                                'Backend_message',
+                                executeFunctionResult.executeFunction.output.output
+                            );
+                        } else {
+                            router.push(`/handling-unit-contents/${details.id}`);
+                            showSuccess(t('messages:success-updated'));
+                        }
                     }
                     if (!res.ok) {
                         const errorResponse = await res.json();
