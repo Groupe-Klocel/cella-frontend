@@ -80,6 +80,9 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     const [displayedGrouping, setDisplayedGrouping] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const dispatchToReducer = useAppDispatch();
+    // Define pageName to retrieve screen permissions
+    const pageName = router.pathname.split('/').filter(Boolean)[0];
+    const permissionTableName = 'wm_' + pageName;
 
     // #region extract data from modelV2
     const detailFields = Object.keys(props.dataModel.fieldsInfo).filter(
@@ -298,7 +301,19 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
 
     useEffect(() => {
         if (props.triggerDelete && props.triggerDelete.idToDelete) {
-            callDelete(props.triggerDelete.idToDelete);
+            const deletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Delete
+            );
+            if (!deletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callDelete(props.triggerDelete.idToDelete);
+            }
         }
     }, [props.triggerDelete]);
 
@@ -349,9 +364,21 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
 
     useEffect(() => {
         if (props.triggerSoftDelete && props.triggerSoftDelete.idToDisable) {
-            callSoftDelete(props.triggerSoftDelete.idToDisable);
-            props.triggerSoftDelete.setIdToDisable(undefined);
-            props?.refetchSubList?.setRefetchSubList(true);
+            const softDeletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Update
+            );
+            if (!softDeletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callSoftDelete(props.triggerSoftDelete.idToDisable);
+                props.triggerSoftDelete.setIdToDisable(undefined);
+                props?.refetchSubList?.setRefetchSubList(true);
+            }
         }
     }, [props.triggerSoftDelete]);
 
