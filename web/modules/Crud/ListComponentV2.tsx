@@ -889,11 +889,23 @@ const ListComponent = (props: IListProps) => {
 
     useEffect(() => {
         if (props.triggerReopen && props.triggerReopen.reopenInfo) {
-            callReopen({
-                id: props.triggerReopen.reopenInfo.id,
-                input: { status: props.triggerReopen.reopenInfo.status }
-            });
-            props.triggerReopen.setReopenInfo(undefined);
+            const softDeletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Update
+            );
+            if (!softDeletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callReopen({
+                    id: props.triggerReopen.reopenInfo.id,
+                    input: { status: props.triggerReopen.reopenInfo.status }
+                });
+                props.triggerReopen.setReopenInfo(undefined);
+            }
         }
     }, [props.triggerReopen]);
 
