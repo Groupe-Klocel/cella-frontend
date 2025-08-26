@@ -605,7 +605,8 @@ const ListComponent = (props: IListProps) => {
                 return item;
             }
         });
-        updatedFilterFields.push({
+
+        updatedFilterFields.unshift({
             name: 'allFields',
             displayName: t('d:all-fields-search'),
             type: FormDataType.String,
