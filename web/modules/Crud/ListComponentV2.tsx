@@ -143,6 +143,9 @@ const ListComponent = (props: IListProps) => {
         state?.userSettings?.find((item: any) => {
             return `${props.dataModel.resolverName}${router.pathname}` === item.code;
         }) ?? null;
+    // Define pageName to retrieve screen permissions
+    const pageName = router.pathname.split('/').filter(Boolean)[0];
+    const permissionTableName = 'wm_' + pageName;
 
     // #region sorter / pagination
 
@@ -605,7 +608,8 @@ const ListComponent = (props: IListProps) => {
                 return item;
             }
         });
-        updatedFilterFields.push({
+
+        updatedFilterFields.unshift({
             name: 'allFields',
             displayName: t('d:all-fields-search'),
             type: FormDataType.String,
@@ -718,8 +722,20 @@ const ListComponent = (props: IListProps) => {
 
     useEffect(() => {
         if (props.triggerDelete && props.triggerDelete.idToDelete) {
-            callDelete(props.triggerDelete.idToDelete);
-            props.triggerDelete.setIdToDelete(undefined);
+            const deletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Delete
+            );
+            if (!deletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callDelete(props.triggerDelete.idToDelete);
+                props.triggerDelete.setIdToDelete(undefined);
+            }
         }
     }, [props.triggerDelete]);
 
@@ -759,8 +775,20 @@ const ListComponent = (props: IListProps) => {
 
     useEffect(() => {
         if (props.triggerSoftDelete && props.triggerSoftDelete.idToDisable) {
-            callSoftDelete(props.triggerSoftDelete.idToDisable);
-            props.triggerSoftDelete.setIdToDisable(undefined);
+            const softDeletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Update
+            );
+            if (!softDeletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callSoftDelete(props.triggerSoftDelete.idToDisable);
+                props.triggerSoftDelete.setIdToDisable(undefined);
+            }
         }
     }, [props.triggerSoftDelete]);
 
@@ -861,11 +889,23 @@ const ListComponent = (props: IListProps) => {
 
     useEffect(() => {
         if (props.triggerReopen && props.triggerReopen.reopenInfo) {
-            callReopen({
-                id: props.triggerReopen.reopenInfo.id,
-                input: { status: props.triggerReopen.reopenInfo.status }
-            });
-            props.triggerReopen.setReopenInfo(undefined);
+            const softDeletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Update
+            );
+            if (!softDeletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callReopen({
+                    id: props.triggerReopen.reopenInfo.id,
+                    input: { status: props.triggerReopen.reopenInfo.status }
+                });
+                props.triggerReopen.setReopenInfo(undefined);
+            }
         }
     }, [props.triggerReopen]);
 
