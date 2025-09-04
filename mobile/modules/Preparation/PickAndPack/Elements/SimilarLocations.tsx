@@ -173,7 +173,7 @@ export const SimilarPickingLocations = ({
         `;
         const sortByQuantity = {
             field: 'quantity',
-            ascending: false
+            ascending: true
         };
         const variables = {
             filters: filters,
@@ -214,7 +214,7 @@ export const SimilarPickingLocations = ({
                         locationId: e.handlingUnit.locationId,
                         locationName: e.handlingUnit.location.name,
                         quantity: e.quantity,
-                        type: 'Picking'
+                        category: e.handlingUnit.location.categoryText
                     });
                 });
             locData.sort(compare);
@@ -235,9 +235,9 @@ export const SimilarPickingLocations = ({
             key: 'quantity'
         },
         {
-            title: t('common:type'),
-            dataIndex: 'type',
-            key: 'type'
+            title: t('common:category'),
+            dataIndex: 'category',
+            key: 'category'
         }
     ];
 
