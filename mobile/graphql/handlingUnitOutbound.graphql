@@ -48,6 +48,10 @@ query GetAllBoxes(
             carrierShippingMode {
                 id
                 toBePalletized
+                shippingMode
+                carrier {
+                    name
+                }
             }
             deliveryId
             delivery {
