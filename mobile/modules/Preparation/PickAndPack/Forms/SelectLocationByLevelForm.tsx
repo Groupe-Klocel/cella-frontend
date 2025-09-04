@@ -300,10 +300,7 @@ export const SelectLocationByLevelForm = ({
                 setTempLocations([chosenLocation]);
                 setReload((prev) => !prev);
                 return true;
-            } else if (
-                location.category === configs.LOCATION_CATEGORY_PICKING &&
-                matchingHandlingUnitContent
-            ) {
+            } else if (matchingHandlingUnitContent) {
                 const proposedRaaIds = storedObject[
                     `step10`
                 ].data.proposedRoundAdvisedAddresses.map((raa: any) => raa.id);

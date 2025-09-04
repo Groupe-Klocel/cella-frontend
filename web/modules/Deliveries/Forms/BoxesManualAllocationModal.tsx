@@ -25,17 +25,17 @@ import { useRouter } from 'next/router';
 const { Option } = Select;
 const { Text } = Typography;
 
-export interface DeliveriesManualAllocationModalProps {
+export interface BoxesManualAllocationModalProps {
     showModal: any;
     selectedRowKeys: any;
     resetSelection: () => void;
 }
 
-const DeliveriesManualAllocationModal = ({
+const BoxesManualAllocationModal = ({
     showModal,
     selectedRowKeys,
     resetSelection
-}: DeliveriesManualAllocationModalProps) => {
+}: BoxesManualAllocationModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
@@ -44,7 +44,7 @@ const DeliveriesManualAllocationModal = ({
     const [orderData, setOrderData] = useState<any>();
     const [isCreationLoading, setIsCreationLoading] = useState<boolean>(false);
     const [equipments, setEquipments] = useState<any[]>([]);
-    const [deliveries, setDeliveries] = useState<any[]>([]);
+    const [boxes, setBoxes] = useState<any[]>([]);
 
     const getEquipments = async () => {
         const query = gql`
@@ -70,22 +70,19 @@ const DeliveriesManualAllocationModal = ({
         fetchEquipments();
     }, []);
 
-    const getDeliveries = async () => {
+    const getBoxes = async () => {
         const query = gql`
-            query deliveries($id: [String!]!, $itemsPerPage: Int) {
-                deliveries(filters: { id: $id }, itemsPerPage: $itemsPerPage) {
+            query handlingUnitOutbounds($id: [String!]!, $itemsPerPage: Int) {
+                handlingUnitOutbounds(filters: { id: $id }, itemsPerPage: $itemsPerPage) {
                     count
                     results {
                         id
-                        handlingUnitOutbounds {
+                        theoriticalWeight
+                        handlingUnit {
                             id
-                            theoriticalWeight
-                            handlingUnit {
-                                id
-                                length
-                                width
-                                height
-                            }
+                            length
+                            width
+                            height
                         }
                     }
                 }
@@ -97,18 +94,18 @@ const DeliveriesManualAllocationModal = ({
             itemsPerPage: 999
         };
 
-        const deliveries = await graphqlRequestClient.request(query, variables);
-        return deliveries.deliveries.results;
+        const boxes = await graphqlRequestClient.request(query, variables);
+        return boxes.handlingUnitOutbounds.results;
     };
 
     useEffect(() => {
-        const fetchDeliveries = async () => {
+        const fetchBoxes = async () => {
             if (selectedRowKeys && selectedRowKeys.length > 0) {
-                const results = await getDeliveries();
-                setDeliveries(results);
+                const results = await getBoxes();
+                setBoxes(results);
             }
         };
-        fetchDeliveries();
+        fetchBoxes();
     }, [selectedRowKeys]);
 
     const setFieldsValue = () => {
@@ -117,35 +114,29 @@ const DeliveriesManualAllocationModal = ({
 
     const handleCancel = () => {
         setIsCreationLoading(false);
-        showModal.setShowDeliveriesManualAllocationModal(false);
+        showModal.setShowBoxesManualAllocationModal(false);
         form.resetFields();
         setFieldsValue();
     };
 
-    const calculateTotalWeight = (deliveries: any[]) => {
-        const totalWeight = deliveries.reduce((totalWeight, curr) => {
-            const unitWeight = curr.handlingUnitOutbounds.reduce((unitAcc: number, unit: any) => {
-                if (unit.theoriticalWeight) {
-                    return unitAcc + unit.theoriticalWeight;
-                }
-                return unitAcc;
-            }, 0);
-            return totalWeight + unitWeight;
+    const calculateTotalWeight = (boxes: any[]) => {
+        const totalWeight = boxes.reduce((unitAcc: number, unit: any) => {
+            if (unit.theoriticalWeight) {
+                return unitAcc + unit.theoriticalWeight;
+            }
+            return unitAcc;
         }, 0);
         return Math.round((totalWeight / 1000) * 1000) / 1000; // 3 digits after comma
     };
 
-    const calculateTotalVolume = (deliveries: any[]) => {
-        const totalVolumeMm3 = deliveries.reduce((totalVolume, curr) => {
-            const unitVolume = curr.handlingUnitOutbounds.reduce((unitAcc: number, unit: any) => {
-                const { length, width, height } = unit.handlingUnit;
-                if (length && width && height) {
-                    const volume = length * width * height;
-                    return unitAcc + volume;
-                }
-                return unitAcc;
-            }, 0);
-            return totalVolume + unitVolume;
+    const calculateTotalVolume = (boxes: any[]) => {
+        const totalVolumeMm3 = boxes.reduce((unitAcc: number, unit: any) => {
+            const { length, width, height } = unit.handlingUnit;
+            if (length && width && height) {
+                const volume = length * width * height;
+                return unitAcc + volume;
+            }
+            return unitAcc;
         }, 0);
         return Math.round((totalVolumeMm3 / 1000000000) * 1000) / 1000; // 3 digits after comma
     };
@@ -159,10 +150,10 @@ const DeliveriesManualAllocationModal = ({
 
         console.log(form_value.equipments);
 
-        const allowedDeliveries = deliveries.map((deliveries: any) => deliveries.id);
+        const allowedBoxes = boxes.map((boxes: any) => boxes.id);
 
         const data = {
-            allowedDeliveries,
+            allowedBoxes,
             allowedEquipments
         };
 
@@ -216,15 +207,15 @@ const DeliveriesManualAllocationModal = ({
             console.log('executeFunctionError', error);
         } finally {
             setIsCreationLoading(false);
-            showModal.setShowDeliveriesManualAllocationModal(false);
+            showModal.setShowBoxesManualAllocationModal(false);
             form.resetFields();
         }
     };
 
     return (
         <Modal
-            title={t('actions:deliveries-manual-allocation-modal')}
-            open={showModal.showDeliveriesManualAllocationModal}
+            title={t('actions:manual-allocation')}
+            open={showModal.showBoxesManualAllocationModal}
             width={800}
             onCancel={handleCancel}
             onOk={handleAssign}
@@ -248,19 +239,17 @@ const DeliveriesManualAllocationModal = ({
                     </Select>
                 </Form.Item>
             </Form>
-            {deliveries != undefined && (
+            {boxes != undefined && (
                 <Text>
-                    {`${t('common:deliveries-count')} : ${deliveries.length}`}
+                    {`${t('common:number-of-boxes')} : ${boxes.length}`}
                     <br />
-                    {`${t('common:number-of-boxes')} : ${deliveries.reduce((acc, curr) => acc + curr.handlingUnitOutbounds.length, 0)}`}
+                    {`${t('common:total-volume')} : ${calculateTotalVolume(boxes)} m³`}
                     <br />
-                    {`${t('common:total-volume')} : ${calculateTotalVolume(deliveries)} m³`}
-                    <br />
-                    {`${t('common:weight')} : ${calculateTotalWeight(deliveries)} kg`}
+                    {`${t('common:weight')} : ${calculateTotalWeight(boxes)} kg`}
                 </Text>
             )}
         </Modal>
     );
 };
 
-export { DeliveriesManualAllocationModal };
+export { BoxesManualAllocationModal };

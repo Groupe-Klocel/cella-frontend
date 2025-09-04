@@ -39,6 +39,7 @@ import { useAppState } from 'context/AppContext';
 import configs from '../../../common/configs.json';
 import parameters from '../../../common/parameters.json';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
+import { BoxesManualAllocationModal } from 'modules/Deliveries/Forms/BoxesManualAllocationModal';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -52,6 +53,10 @@ const BoxesPage: PageComponent = () => {
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idsToPrint, setIdsToPrint] = useState<string[]>();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [showBoxesManualAllocationModal, setShowBoxesManualAllocationModal] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [refetch, setRefetch] = useState<boolean>(false);
+    const [commonStatus, setCommonStatus] = useState<boolean | undefined>(undefined);
 
     const headerData: HeaderData = {
         title: t('common:boxes'),
@@ -61,9 +66,14 @@ const BoxesPage: PageComponent = () => {
 
     const hasSelected = selectedRowKeys.length > 0;
 
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+    const onSelectChange = (newSelectedRowKeys: React.Key[], newSelectedRows: any) => {
         setSelectedRowKeys(newSelectedRowKeys);
+        const allSameStatus = newSelectedRows.every(
+            (item: any) => item.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_STARTED
+        );
+        setCommonStatus(allSameStatus);
     };
+
     const rowSelection = {
         selectedRowKeys,
         onChange: onSelectChange,
@@ -71,6 +81,11 @@ const BoxesPage: PageComponent = () => {
             disabled:
                 record.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? true : false
         })
+    };
+
+    const resetSelection = () => {
+        setSelectedRowKeys([]);
+        setRefetch(!refetch);
     };
 
     const actionButtons: ActionButtons = {
@@ -95,6 +110,18 @@ const BoxesPage: PageComponent = () => {
                                 disabled={!hasSelected}
                             >
                                 {t('actions:print')}
+                            </Button>
+                        </span>
+                        <span style={{ marginLeft: 16 }}>
+                            <Button
+                                type="primary"
+                                onClick={() => {
+                                    setShowBoxesManualAllocationModal(true);
+                                }}
+                                disabled={!hasSelected || !commonStatus}
+                                loading={loading}
+                            >
+                                {t('actions:manual-allocation')}
                             </Button>
                         </span>
                     </>
@@ -124,6 +151,7 @@ const BoxesPage: PageComponent = () => {
                 dataModel={model}
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}
+                refetch={refetch}
                 checkbox={true}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
@@ -144,8 +172,7 @@ const BoxesPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable &&
-                                record.status <
-                                    configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
+                                record.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOADED ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -207,6 +234,14 @@ const BoxesPage: PageComponent = () => {
                 }}
                 dataToPrint={{ boxes: idsToPrint }}
                 documentName="K_OutboundHandlingUnitLabel"
+            />
+            <BoxesManualAllocationModal
+                showModal={{
+                    showBoxesManualAllocationModal,
+                    setShowBoxesManualAllocationModal
+                }}
+                selectedRowKeys={selectedRowKeys}
+                resetSelection={resetSelection}
             />
         </>
     );
