@@ -163,7 +163,7 @@ export const SimilarLocations = ({
         `;
         const sortByQuantity = {
             field: 'quantity',
-            ascending: false
+            ascending: true
         };
         const variables = {
             filters: filters,
