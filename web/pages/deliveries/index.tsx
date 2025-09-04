@@ -215,7 +215,7 @@ const DeliveryPages: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isEditable &&
-                                record.status < configs.DELIVERY_STATUS_CANCELED ? (
+                                record.status < configs.DELIVERY_STATUS_LOADED ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}

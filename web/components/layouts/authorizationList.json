@@ -582,7 +582,7 @@
     {
         "route": "/deliveries/address/edit/[id]",
         "permission": "wm_deliveries",
-        "mode": "create"
+        "mode": "update"
     },
     {
         "route": "/deliveries/edit/[id]",
@@ -1512,12 +1512,12 @@
     {
         "route": "/third-parties/address/contact/edit/[id]",
         "permission": "wm_third-parties",
-        "mode": "create"
+        "mode": "update"
     },
     {
         "route": "/third-parties/address/edit/[id]",
         "permission": "wm_third-parties",
-        "mode": "create"
+        "mode": "update"
     },
     {
         "route": "/third-parties/document/[id]",

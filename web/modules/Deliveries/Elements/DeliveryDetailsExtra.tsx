@@ -38,6 +38,7 @@ import configs from '../../../../common/configs.json';
 import { useEffect, useState } from 'react';
 import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
+import { BoxesManualAllocationModal } from '../Forms/BoxesManualAllocationModal';
 
 const { Title } = Typography;
 
@@ -49,6 +50,7 @@ export interface IItemDetailsProps {
     stockOwnerName?: string | any;
     setShippingAddress?: any;
     refetchHUO?: any;
+    setRefetchHUO?: any;
 }
 
 const DeliveryDetailsExtra = ({
@@ -58,7 +60,8 @@ const DeliveryDetailsExtra = ({
     stockOwnerId,
     stockOwnerName,
     setShippingAddress,
-    refetchHUO
+    refetchHUO,
+    setRefetchHUO
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
@@ -78,8 +81,33 @@ const DeliveryDetailsExtra = ({
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [boxesIdsToPrint, setBoxesIdsToPrint] = useState<string[]>();
     const [boxesSelectedRowKeys, setBoxesSelectedRowKeys] = useState<React.Key[]>([]);
+    const [showBoxesManualAllocationModal, setShowBoxesManualAllocationModal] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [boxesCommonStatus, setBoxesCommonStatus] = useState<boolean | undefined>(undefined);
 
     const hasSelected = boxesSelectedRowKeys.length > 0;
+
+    const onSelectChange = (newSelectedRowKeys: React.Key[], newSelectedRows: any) => {
+        setBoxesSelectedRowKeys(newSelectedRowKeys);
+        const allSameStatus = newSelectedRows.every(
+            (item: any) => item.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_STARTED
+        );
+        setBoxesCommonStatus(allSameStatus);
+    };
+
+    const boxRowSelection = {
+        selectedRowKeys: boxesSelectedRowKeys,
+        onChange: onSelectChange,
+        getCheckboxProps: (record: any) => ({
+            disabled:
+                record.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? true : false
+        })
+    };
+
+    const boxesResetSelection = () => {
+        setBoxesSelectedRowKeys([]);
+        setRefetchHUO(!refetchHUO);
+    };
 
     const deliveryAddressHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:delivery-addresses') }),
@@ -128,7 +156,7 @@ const DeliveryDetailsExtra = ({
     const huOutboundHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:boxes') }),
         routes: [],
-        actionsComponent: <></>
+        actionsComponent: null
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -175,21 +203,21 @@ const DeliveryDetailsExtra = ({
                                 {t('actions:print')}
                             </Button>
                         </span>
+                        <span style={{ marginLeft: 16 }}>
+                            <Button
+                                type="primary"
+                                onClick={() => {
+                                    setShowBoxesManualAllocationModal(true);
+                                }}
+                                disabled={!hasSelected || !boxesCommonStatus}
+                                loading={loading}
+                            >
+                                {t('actions:manual-allocation')}
+                            </Button>
+                        </span>
                     </>
                 </>
             ) : null
-    };
-
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
-        setBoxesSelectedRowKeys(newSelectedRowKeys);
-    };
-    const boxRowSelection = {
-        boxesSelectedRowKeys,
-        onChange: onSelectChange,
-        getCheckboxProps: (record: any) => ({
-            disabled:
-                record.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? true : false
-        })
     };
 
     return (
@@ -421,6 +449,14 @@ const DeliveryDetailsExtra = ({
             {huOutboundModes.length > 0 && huOutboundModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
+                    <BoxesManualAllocationModal
+                        showModal={{
+                            showBoxesManualAllocationModal,
+                            setShowBoxesManualAllocationModal
+                        }}
+                        selectedRowKeys={boxesSelectedRowKeys}
+                        resetSelection={boxesResetSelection}
+                    />
                     <ListComponent
                         searchCriteria={{ deliveryId: deliveryId }}
                         dataModel={HandlingUnitOutboundModelV2}

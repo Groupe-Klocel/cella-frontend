@@ -114,6 +114,20 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                 key: isNumeric(item.code) ? parseInt(item.code) : item.code,
                 text: value
             });
+            Object.keys(result).forEach((scope) => {
+                result[scope].sort((a: any, b: any) => {
+                    const aIsNum = typeof a.key === 'number' || isNumeric(a.key);
+                    const bIsNum = typeof b.key === 'number' || isNumeric(b.key);
+
+                    if (aIsNum && bIsNum) {
+                        return Number(a.key) - Number(b.key);
+                    } else if (!aIsNum && !bIsNum) {
+                        return String(a.key).localeCompare(String(b.key));
+                    } else {
+                        return aIsNum ? -1 : 1;
+                    }
+                });
+            });
         });
 
         parameters.forEach((item: any) => {
@@ -127,6 +141,20 @@ const ListFilters: FC<IGeneralSearchProps> = ({
             result[item.scope].push({
                 key: isNumeric(item.code) ? parseInt(item.code) : item.code,
                 text: value
+            });
+            Object.keys(result).forEach((scope) => {
+                result[scope].sort((a: any, b: any) => {
+                    const aIsNum = typeof a.key === 'number' || isNumeric(a.key);
+                    const bIsNum = typeof b.key === 'number' || isNumeric(b.key);
+
+                    if (aIsNum && bIsNum) {
+                        return Number(a.key) - Number(b.key);
+                    } else if (!aIsNum && !bIsNum) {
+                        return String(a.key).localeCompare(String(b.key));
+                    } else {
+                        return aIsNum ? -1 : 1;
+                    }
+                });
             });
         });
 
