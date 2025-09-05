@@ -144,7 +144,7 @@ const Preparation: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(process);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setTriggerRender(!triggerRender);
@@ -152,7 +152,7 @@ const Preparation: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(process);
         setHeaderContent(false);
         setShowEmptyLocations(false);
     };

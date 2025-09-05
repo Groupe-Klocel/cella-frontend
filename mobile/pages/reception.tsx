@@ -273,7 +273,7 @@ const Reception: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(process);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setTriggerRender(!triggerRender);
@@ -281,7 +281,7 @@ const Reception: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(process);
         setHeaderContent(false);
         setShowEmptyLocations(false);
     };

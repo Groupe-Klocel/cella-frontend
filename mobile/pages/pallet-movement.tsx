@@ -89,7 +89,7 @@ const PalletMovement: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(process);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setTriggerRender(!triggerRender);
@@ -97,7 +97,7 @@ const PalletMovement: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(process);
         setHeaderContent(false);
         setShowEmptyLocations(false);
     };
