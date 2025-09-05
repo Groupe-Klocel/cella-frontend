@@ -96,13 +96,13 @@ const PalletizationInfo: PageComponent = () => {
     }, [triggerRender]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(process);
         setTriggerRender(!triggerRender);
     };
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(process);
     };
     useEffect(() => {
         const isHuToCreate = palletizationInfos[`step${workflow.expectedSteps[0]}`]?.data

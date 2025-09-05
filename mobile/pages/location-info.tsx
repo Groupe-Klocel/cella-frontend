@@ -22,7 +22,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { LsIsSecured, useHandlingUnits } from '@helpers';
+import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
@@ -32,8 +32,6 @@ import {
     SelectHandlingUnitForLocationForm,
     SelectContentForHandlingUnitForm
 } from '@CommonRadio';
-import { CheckFinalLocationPalletForm } from 'modules/StockManagement/Forms/CheckFinalLocationPalletForm';
-import { ValidatePalletMoveForm } from 'modules/StockManagement/Forms/ValidatePalletMove';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -101,7 +99,7 @@ const LocationInfo: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(process);
         setHeaderContent(false);
         //setShowEmptyLocations(false);
         setTriggerRender(!triggerRender);
@@ -109,7 +107,7 @@ const LocationInfo: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(process);
         setHeaderContent(false);
         //setShowEmptyLocations(false);
     };

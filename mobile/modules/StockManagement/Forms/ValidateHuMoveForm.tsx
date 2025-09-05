@@ -119,7 +119,7 @@ export const ValidateHuMoveForm = ({
                 setIsLoading(false);
             } else {
                 showSuccess(t('messages:movement-success'));
-                storage.removeAll();
+                storage.remove(process);
                 setHeaderContent(false);
                 setTriggerRender(!triggerRender);
                 setIsLoading(false);
