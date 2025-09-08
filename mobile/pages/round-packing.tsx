@@ -114,14 +114,14 @@ const RoundPacking: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.remove(process);
+        storage.remove(workflow.processName);
         setHeaderContent(false);
         setTriggerRender(!triggerRender);
     };
 
     const previousPage = () => {
         router.back();
-        storage.remove(process);
+        storage.remove(workflow.processName);
         setHeaderContent(false);
     };
 

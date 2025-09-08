@@ -292,7 +292,7 @@ const ContentMvmt: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.remove(process);
+        storage.remove(processName);
         setHeaderContent(false);
         setShowSimilarLocations(false);
         setShowEmptyLocations(false);
@@ -301,7 +301,7 @@ const ContentMvmt: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.remove(process);
+        storage.remove(processName);
         setHeaderContent(false);
         setShowSimilarLocations(false);
         setShowEmptyLocations(false);

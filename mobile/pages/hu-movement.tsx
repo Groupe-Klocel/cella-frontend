@@ -143,7 +143,7 @@ const HuMovement: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.remove(process);
+        storage.remove(processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setTriggerRender(!triggerRender);
@@ -151,7 +151,7 @@ const HuMovement: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.remove(process);
+        storage.remove(processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
     };

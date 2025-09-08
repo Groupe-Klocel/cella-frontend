@@ -170,14 +170,14 @@ const CycleCounts: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.remove(process);
+        storage.remove(processName);
         setHeaderContent(false);
         setTriggerRender(!triggerRender);
     };
 
     const previousPage = () => {
         router.back();
-        storage.remove(process);
+        storage.remove(processName);
         setHeaderContent(false);
     };
 
