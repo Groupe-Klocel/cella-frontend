@@ -301,7 +301,7 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
             ? {
                   title: 'actions:actions',
                   key: 'actions',
-                  render: (record: { id: string; order: number }) => (
+                  render: (value: any, record: { id: string; order: number }) => (
                       <Space>
                           <Button
                               onClick={() => {
@@ -325,10 +325,9 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
                                       });
                                   }
                               }}
-                              disabled={RuleVersionConfigData[0].listDataCount === record.order}
+                              disabled={value.listDataCount === record.order}
                               loading={
-                                  priorityStatus.id !== null &&
-                                  RuleVersionConfigData[0].listDataCount !== record.order
+                                  priorityStatus.id !== null && value.listDataCount !== record.order
                               }
                               icon={<CaretDownOutlined />}
                           />

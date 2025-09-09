@@ -1651,9 +1651,8 @@ const ListComponent = (props: IListProps) => {
 
                         break;
                     default:
+                        let sort_index = 1;
                         if (listData['results'].length > 0) {
-                            let sort_index = 1;
-
                             listData['results'] = listData['results'].map((item: any) => {
                                 const flatItem = flatten(item);
                                 Object.keys(flatItem).map((key: string) => {
@@ -1683,77 +1682,72 @@ const ListComponent = (props: IListProps) => {
                                     ];
                                 }
                             }
-                            // iterate over the first result and get list of columns to define table structure
-                            listFields.forEach((column_name: any, index: number) => {
-                                if (column_name.includes('{')) {
-                                    column_name = column_name
-                                        .replaceAll('{', '_')
-                                        .replaceAll('}', '');
-                                }
-                                // Customize title name
-                                let title = `d:${column_name}`;
-                                if (displayedLabels && column_name in displayedLabels) {
-                                    title = `d:${displayedLabels[column_name]}`;
-                                }
-
-                                const row_data: any = {
-                                    title: title,
-                                    dataIndex: column_name,
-                                    key: column_name,
-                                    showSorterTooltip: false
-                                };
-
-                                // if column is in sortable list add sorter property
-                                if (
-                                    sortableFields.length > 0 &&
-                                    sortableFields.includes(column_name) &&
-                                    !props.triggerPriorityChange
-                                ) {
-                                    row_data['sorter'] = { multiple: sort_index };
-                                    row_data['showSorterTooltip'] = false;
-                                    sort_index++;
-                                }
-
-                                //If default sort memorized or passed add defaultSortOrder
-                                if (sort) {
-                                    sort.forEach((sorter: any) => {
-                                        if (props.isDragAndDroppable) {
-                                            if (column_name === 'index') {
-                                                row_data['defaultSortOrder'] = 'ascend';
-                                            }
-                                        } else if (sorter.field === column_name) {
-                                            row_data['defaultSortOrder'] = sorter.ascending
-                                                ? 'ascend'
-                                                : 'descend';
-                                        }
-                                    });
-                                }
-
-                                // Hide fields if there is any hidden selected.
-                                if (
-                                    !excludedListFields ||
-                                    !excludedListFields.includes(row_data.key)
-                                ) {
-                                    //Specific to Notifications
-                                    if (column_name === 'argument') {
-                                        result_list.push({
-                                            title: 'd:argument_id',
-                                            dataIndex: 'argument_id',
-                                            key: 'argument_id',
-                                            showSorterTooltip: false
-                                        });
-                                        result_list.push({
-                                            title: 'd:argument_sequenceId',
-                                            dataIndex: 'argument_sequenceId',
-                                            key: 'argument_sequenceId',
-                                            showSorterTooltip: false
-                                        });
-                                    } else {
-                                        result_list.push(row_data);
-                                    }
-                                }
-                            });
                         }
+                        // iterate over the first result and get list of columns to define table structure
+                        listFields.forEach((column_name: any, index: number) => {
+                            if (column_name.includes('{')) {
+                                column_name = column_name.replaceAll('{', '_').replaceAll('}', '');
+                            }
+                            // Customize title name
+                            let title = `d:${column_name}`;
+                            if (displayedLabels && column_name in displayedLabels) {
+                                title = `d:${displayedLabels[column_name]}`;
+                            }
+
+                            const row_data: any = {
+                                title: title,
+                                dataIndex: column_name,
+                                key: column_name,
+                                showSorterTooltip: false
+                            };
+
+                            // if column is in sortable list add sorter property
+                            if (
+                                sortableFields.length > 0 &&
+                                sortableFields.includes(column_name) &&
+                                !props.triggerPriorityChange
+                            ) {
+                                row_data['sorter'] = { multiple: sort_index };
+                                row_data['showSorterTooltip'] = false;
+                                sort_index++;
+                            }
+
+                            //If default sort memorized or passed add defaultSortOrder
+                            if (sort) {
+                                sort.forEach((sorter: any) => {
+                                    if (props.isDragAndDroppable) {
+                                        if (column_name === 'index') {
+                                            row_data['defaultSortOrder'] = 'ascend';
+                                        }
+                                    } else if (sorter.field === column_name) {
+                                        row_data['defaultSortOrder'] = sorter.ascending
+                                            ? 'ascend'
+                                            : 'descend';
+                                    }
+                                });
+                            }
+
+                            // Hide fields if there is any hidden selected.
+                            if (!excludedListFields || !excludedListFields.includes(row_data.key)) {
+                                //Specific to Notifications
+                                if (column_name === 'argument') {
+                                    result_list.push({
+                                        title: 'd:argument_id',
+                                        dataIndex: 'argument_id',
+                                        key: 'argument_id',
+                                        showSorterTooltip: false
+                                    });
+                                    result_list.push({
+                                        title: 'd:argument_sequenceId',
+                                        dataIndex: 'argument_sequenceId',
+                                        key: 'argument_sequenceId',
+                                        showSorterTooltip: false
+                                    });
+                                } else {
+                                    result_list.push(row_data);
+                                }
+                            }
+                        });
 
                         // set columns to use in table
                         setColumns(result_list);
