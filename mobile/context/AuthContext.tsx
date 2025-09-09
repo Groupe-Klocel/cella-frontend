@@ -26,6 +26,7 @@ import {
     IS_FAKE,
     IS_SAME_SEED
 } from '@helpers';
+import { useAppDispatch } from 'context/AppContext';
 import {
     WarehouseLoginMutation,
     WarehouseLoginMutationVariables,
@@ -37,10 +38,11 @@ import {
     ChangePasswordMutation,
     ChangePasswordMutationVariables
 } from 'generated/graphql';
-import { GraphQLClient } from 'graphql-request';
+import { GraphQLClient, gql } from 'graphql-request';
 import { useRouter } from 'next/router';
-import { createContext, FC, useContext, useEffect, useState } from 'react';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
+import useTranslation from 'next-translate/useTranslation';
+import { useSession, signOut } from 'next-auth/react';
 
 interface IAuthContext {
     isAuthenticated: boolean;
@@ -53,34 +55,50 @@ interface IAuthContext {
     loading: boolean;
     logout: Function;
     graphqlRequestClient: any;
+    ssoLogin: any;
+    ssoConfig: any;
 }
 
 // refactoring need to typesafe https://react-typescript-cheatsheet.netlify.app/docs/basic/getting-started/context/
 const AuthContext = createContext<IAuthContext>(undefined!);
 
 export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenType) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation('global');
 
     const graphqlClient = new GraphQLClient(process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT as string);
 
+    const { data: session } = useSession();
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [graphqlRequestClient, setGraphqlRequestClient] = useState(graphqlClient);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(!!user);
+    const [ssoConfig, setSsoConfig] = useState<any>(null);
 
-    // Get access token from cookies , decode it and set user
+    // Get SSO configuration and get access token from cookies , decode it and set user
     useEffect(() => {
         async function loadUserFromCookie() {
             const token = cookie.get('token');
             if (token) {
                 setHeader(token);
-                const user = decodeJWT(token);
-                if (user) setUser(user);
+                if (token) {
+                    setHeader(token);
+                    const user = decodeJWT(token);
+                    if (user) setUser(user);
+                }
             }
             setLoading(false);
         }
         loadUserFromCookie();
+        async function ssoConfiguration() {
+            try {
+                const result = await ssoConfigurationQuery();
+                setSsoConfig(result);
+            } catch (error) {
+                console.log('Error or no SSO configuration :', error);
+            }
+        }
+        ssoConfiguration();
     }, []);
 
     const loginMutation = useWarehouseLoginMutation<Error>(graphqlRequestClient, {
@@ -106,6 +124,39 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
             showError(error.message);
         }
     });
+
+    const ssoConfigurationQuery = async () => {
+        let result;
+        try {
+            const warehouseSsoConfiguration = gql`
+                query ($warehouseId: ID!, $envSecret: String!) {
+                    warehouseSsoConfiguration(warehouseId: $warehouseId, secret: $envSecret) {
+                        type
+                        authUrl
+                        clientId
+                        clientSecret
+                        redirectUri
+                        tokenUrl
+                        disconnectUrl
+                        scope
+                    }
+                }
+            `;
+
+            const warehouseSsoConfigurationValue = {
+                warehouseId: process.env.NEXT_PUBLIC_WAREHOUSE_ID,
+                envSecret: process.env.NEXT_PUBLIC_SSO_SECRET
+            };
+
+            result = await graphqlRequestClient.request(
+                warehouseSsoConfiguration,
+                warehouseSsoConfigurationValue
+            );
+        } catch (error: any) {
+            showError(t(error.response.errors[0].extensions.code));
+        }
+        return result;
+    };
 
     //IKI 20230227 : not used
     const resetMutation = useResetPasswordMutation<Error>(graphqlRequestClient, {
@@ -158,7 +209,40 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
         mutate({ username, password, warehouseId });
     };
 
-    //IKI 20230227 : not used
+    const ssoLogin = async ({ token }: { token: string }) => {
+        const warehouseSsoLogin = gql`
+            mutation ($token: String!, $warehouseId: ID!) {
+                warehouseSsoLogin(token: $token, warehouseId: $warehouseId) {
+                    accessToken
+                }
+            }
+        `;
+        const warehouseSsoLoginValues = {
+            token: token,
+            warehouseId: process.env.NEXT_PUBLIC_WAREHOUSE_ID
+        };
+        try {
+            const result: { warehouseSsoLogin?: { accessToken?: string } } =
+                await graphqlRequestClient.request(warehouseSsoLogin, warehouseSsoLoginValues);
+
+            if (result?.warehouseSsoLogin?.accessToken) {
+                const token = result.warehouseSsoLogin.accessToken;
+                cookie.set('token', token);
+                setHeader(token);
+                const user = decodeJWT(token);
+                console.log('decoded user = ', user);
+                setUser(user);
+            } else {
+                showError(t('messages:error-login'));
+            }
+
+            return result;
+        } catch (error: any) {
+            showError(t(error.response.errors[0].extensions.code));
+            await signOut({ redirect: false });
+        }
+    };
+
     const forgotPassword = async ({
         username,
         callbackUrl,
@@ -180,14 +264,20 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
         mutate({ token: token, password: password, password2: confirmPassword });
     };
 
-    const logout = () => {
+    const logout = async () => {
         cookie.remove('token');
         cookie.remove('user');
         cookie.remove('permissions');
         // Remove Bearer JWT token from header
         setHeader('NOP');
         setIsAuthenticated(false);
+        if (session) {
+            await signOut({ redirect: false });
+        }
         setUser(null);
+        if (session && ssoConfig.warehouseSsoConfiguration.disconnectUrl) {
+            window.location.href = ssoConfig.warehouseSsoConfiguration.disconnectUrl;
+        }
         router.push('/login');
         //router.reload();
     };
@@ -235,7 +325,9 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
                 //IKI 20230227 : not used
                 forgotPassword,
                 //IKI 20230227 : not used
-                resetPassword
+                resetPassword,
+                ssoLogin,
+                ssoConfig
             }}
         >
             {children}
