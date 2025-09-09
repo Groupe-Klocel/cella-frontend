@@ -73,7 +73,11 @@ export const AddItemForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) => 
     }, [unsavedChanges]);
 
     const handleClickNext = () => {
-        form.validateFields()
+        const currentStepFields = props.addSteps[current]
+            .map((field) => field.name)
+            .filter(Boolean);
+
+        form.validateFields(currentStepFields)
             .then(() => {
                 // Here make api call of something else
                 setCurrent(current + 1);
