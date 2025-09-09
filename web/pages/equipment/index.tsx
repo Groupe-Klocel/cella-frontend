@@ -60,7 +60,7 @@ const EquipmentPage: PageComponent = () => {
         {
             title: 'actions:actions',
             key: 'actions',
-            render: (record: any) => (
+            render: (value: any, record: any) => (
                 <Space key={priorityStatus.id ?? 'none'}>
                     <LinkButton
                         icon={<EyeTwoTone />}
@@ -97,10 +97,10 @@ const EquipmentPage: PageComponent = () => {
                                         });
                                     }
                                 }}
-                                disabled={data[0].listDataCount === record.priority}
+                                disabled={value.listDataCount === record.priority}
                                 loading={
                                     priorityStatus.id !== null &&
-                                    data[0].listDataCount !== record.priority
+                                    value.listDataCount !== record.priority
                                 }
                                 icon={<CaretDownOutlined />}
                             />

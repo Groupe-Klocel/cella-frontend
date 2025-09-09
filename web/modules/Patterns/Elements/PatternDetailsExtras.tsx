@@ -169,11 +169,14 @@ const PatternDetailsExtra = ({ id, name }: IItemDetailsProps) => {
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: {
-                                    id: string;
-                                    patternPathId: string;
-                                    order: number;
-                                }) => (
+                                render: (
+                                    value: any,
+                                    record: {
+                                        id: string;
+                                        patternPathId: string;
+                                        order: number;
+                                    }
+                                ) => (
                                     <Space>
                                         {record.order === null ? (
                                             <></>
@@ -204,14 +207,10 @@ const PatternDetailsExtra = ({ id, name }: IItemDetailsProps) => {
                                                             });
                                                         }
                                                     }}
-                                                    disabled={
-                                                        patternPathLinksList[0].listDataCount ===
-                                                        record.order
-                                                    }
+                                                    disabled={value.listDataCount === record.order}
                                                     loading={
                                                         priorityStatus.id !== null &&
-                                                        patternPathLinksList[0].listDataCount !==
-                                                            record.order
+                                                        value.listDataCount !== record.order
                                                     }
                                                     icon={<CaretDownOutlined />}
                                                 />
