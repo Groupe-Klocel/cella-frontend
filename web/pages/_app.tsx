@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { META_DEFAULTS } from 'helpers/configs/misc';
 import 'antd/dist/reset.css';
-import { AppProvider, useAppState } from 'context/AppContext';
+import { AppProvider } from 'context/AppContext';
 import { AuthProvider } from 'context/AuthContext';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
 import type { AppProps } from 'next/app';
@@ -29,6 +29,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../styles/globals.css';
 import HomePage from 'pages';
 import AppLayout from '../components/layouts/AppLayout'; // Import the new AppLayout component
+import { SessionProvider } from 'next-auth/react';
 
 // Query should not invalidate until 5 secs
 const queryClient = new QueryClient({
@@ -43,7 +44,7 @@ type AppLayoutProps = AppProps & {
     Component: PageWithMainLayoutType;
 };
 
-const App = ({ Component, pageProps }: AppLayoutProps) => {
+const App = ({ Component, pageProps: { session, ...pageProps } }: AppLayoutProps) => {
     const getLayout = Component.getLayout ?? ((page) => page);
     const Layout = Component.layout ?? Fragment;
 
@@ -61,17 +62,19 @@ const App = ({ Component, pageProps }: AppLayoutProps) => {
                 />
             </Head>
             <QueryClientProvider client={queryClient}>
-                <AuthProvider>
-                    <AppProvider>
-                        <AppLayout
-                            Component={ComponentToRender}
-                            pageProps={pageProps}
-                            getLayout={getLayout}
-                            Layout={Layout}
-                        />
-                    </AppProvider>
-                </AuthProvider>
-                {/* <ReactQueryDevtools initialIsOpen={false} /> */}
+                <SessionProvider session={session}>
+                    <AuthProvider>
+                        <AppProvider>
+                            <AppLayout
+                                Component={ComponentToRender}
+                                pageProps={pageProps}
+                                getLayout={getLayout}
+                                Layout={Layout}
+                            />
+                        </AppProvider>
+                    </AuthProvider>
+                    {/* <ReactQueryDevtools initialIsOpen={false} /> */}
+                </SessionProvider>
             </QueryClientProvider>
         </>
     );
