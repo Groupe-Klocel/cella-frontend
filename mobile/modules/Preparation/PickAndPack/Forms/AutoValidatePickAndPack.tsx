@@ -79,8 +79,6 @@ export const AutoValidatePickAndPackForm = ({
     const movingQuantity = step70?.data?.movingQuantity;
     const huModel = step80?.data?.handlingUnitModel;
 
-    console.log(pickedHU, features, 'pickedHU, features');
-
     useEffect(() => {
         const onFinish = async () => {
             //check if assigned user is still good
@@ -176,7 +174,7 @@ export const AutoValidatePickAndPackForm = ({
                             storedObject['cuurrentStep'] = 10;
                             storedObject[`step5`] = { previousStep: 0, data: step5.data };
                             storedObject[`step10`] = { previousStep: 5 };
-                        } else if (step5.data && step10.roundNumber === 1) {
+                        } else if (step5.data && step10.data.roundNumber === 1) {
                             storedObject['currentStep'] = 5;
                             storedObject[`step5`] = { previousStep: 0 };
                         } else {
@@ -230,6 +228,7 @@ export const AutoValidatePickAndPackForm = ({
                         storedObject[`step10`] = { previousStep: step5 ? 5 : 0, data };
                         storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
                         storedObject.ignoreHUContentIds = ignoreHUContentIds;
+                        storedObject.currentStep = 20;
                         storage.set(process, JSON.stringify(storedObject));
                     }
                     setTriggerRender(!triggerRender);
