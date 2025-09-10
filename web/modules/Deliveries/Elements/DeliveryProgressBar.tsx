@@ -36,49 +36,40 @@ const DeliveryProgressBar = ({ id, status }: IDeliveryProgressBarProps) => {
         if (status == configs.DELIVERY_STATUS_DISPATCHED) {
             setValue(100);
         }
-        if (status <= configs.DELIVERY_STATUS_LOAD_CANCELLED) {
+        if (status <= configs.DELIVERY_STATUS_WAITING_DISPATCH_RECEIPT_NUMBER) {
             setValue(90);
         }
         if (status <= configs.DELIVERY_STATUS_LOAD_IN_PROGRESS) {
             setValue(80);
         }
-        if (status <= configs.DELIVERY_STATUS_TO_BE_LOADED) {
-            setValue(75);
-        }
         if (status <= configs.DELIVERY_STATUS_TO_BE_PALLETIZED) {
             setValue(70);
         }
         if (status <= configs.DELIVERY_STATUS_CHECKED) {
-            setValue(65);
-        }
-        if (status <= configs.DELIVERY_STATUS_TO_BE_CHECKED) {
             setValue(60);
         }
-        if (status <= configs.DELIVERY_STATUS_PREPARED) {
+        if (status <= configs.DELIVERY_STATUS_PRE_CHECKED) {
+            setValue(55);
+        }
+        if (status <= configs.DELIVERY_STATUS_TO_BE_CHECKED) {
             setValue(50);
         }
-        if (status <= configs.DELIVERY_STATUS_PACKING_IN_PROGRESS) {
+        if (status <= configs.DELIVERY_STATUS_PREPARED) {
             setValue(40);
         }
-        if (status <= configs.DELIVERY_STATUS_TO_BE_REPACKED) {
+        if (status <= configs.DELIVERY_STATUS_PACKING_IN_PROGRESS) {
             setValue(35);
         }
-        if (status <= configs.DELIVERY_STATUS_IN_PREPARATION) {
+        if (status <= configs.DELIVERY_STATUS_TO_BE_REPACKED) {
             setValue(30);
         }
-        if (status <= configs.DELIVERY_STATUS_STARTED) {
+        if (status <= configs.DELIVERY_STATUS_TO_BE_VERIFIED) {
             setValue(20);
         }
-        if (status <= configs.DELIVERY_STATUS_ESTIMATED) {
-            setValue(15);
-        }
-        if (status <= configs.DELIVERY_STATUS_TO_BE_ESTIMATED) {
+        if (status <= configs.DELIVERY_STATUS_STARTED) {
             setValue(10);
         }
-        if (status <= configs.DELIVERY_STATUS_CREATED) {
-            setValue(5);
-        }
-        if (status <= configs.DELIVERY_STATUS_CREATION_IN_PROGRESS) {
+        if (status <= configs.DELIVERY_STATUS_UPDATE_IN_PROGRESS) {
             setValue(0);
         }
     });
