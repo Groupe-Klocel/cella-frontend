@@ -163,7 +163,7 @@ const Reception: PageComponent = () => {
         return receptionParameters;
     };
 
-    const [isHuScannedAtEnd, setIsHuScannedAtEnd] = useState<boolean>(false);
+    const [isHuScannedAtEnd, setIsHuScannedAtEnd] = useState<boolean | undefined>(undefined);
     const [defaultReceptionLocation, setDefaultReceptionLocation] = useState<any>(null);
     const [availableQuantity, setAvailableQuantity] = useState<number | undefined>(undefined);
     useEffect(() => {
@@ -258,7 +258,7 @@ const Reception: PageComponent = () => {
             object[t('common:location-reception')] = chosenLocation.name;
         }
         if (
-            isHuScannedAtEnd &&
+            isHuScannedAtEnd === true &&
             storedObject['step100']?.data?.chosenLocation.huManagement &&
             storedObject['step110']?.data?.handlingUnit
         ) {
@@ -381,7 +381,9 @@ const Reception: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step20']?.data && !storedObject['step30']?.data ? (
+                {storedObject['step20']?.data &&
+                !storedObject['step30']?.data &&
+                isHuScannedAtEnd !== undefined ? (
                     <ScanHandlingUnit
                         process={processName}
                         stepNumber={30}
@@ -525,7 +527,9 @@ const Reception: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step100']?.data && !storedObject['step110']?.data ? (
+                {storedObject['step100']?.data &&
+                !storedObject['step110']?.data &&
+                isHuScannedAtEnd !== undefined ? (
                     <ScanHandlingUnit
                         process={processName}
                         stepNumber={110}
@@ -547,7 +551,7 @@ const Reception: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {storedObject['step110']?.data ? (
+                {storedObject['step110']?.data && isHuScannedAtEnd !== undefined ? (
                     <ValidateReceptionForm
                         process={processName}
                         stepNumber={120}
