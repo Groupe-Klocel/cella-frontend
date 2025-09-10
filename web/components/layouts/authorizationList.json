@@ -866,17 +866,17 @@
     },
     {
         "route": "/inbound-boxes/[id]",
-        "permission": "wm_inbound-boxes",
+        "permission": "wm_goods-ins",
         "mode": "read"
     },
     {
         "route": "/inbound-boxes/line/[id]",
-        "permission": "wm_inbound-boxes",
+        "permission": "wm_goods-ins",
         "mode": "read"
     },
     {
         "route": "/inbound-boxes/line/feature/[id]",
-        "permission": "wm_inbound-boxes",
+        "permission": "wm_goods-ins",
         "mode": "read"
     },
     {
