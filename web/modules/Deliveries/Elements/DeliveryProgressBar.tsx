@@ -18,70 +18,73 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Progress } from 'antd';
-import { ProgressBar } from 'components/common/dumb/ProgressBar/ProgressBar';
-import { useAuth } from 'context/AuthContext';
 import configs from '../../../../common/configs.json';
-import {
-    GetAllDeliveryLinesQuery,
-    GetAllPurchaseOrderLinesQuery,
-    GetPurchaseOrderLineByIdQuery,
-    useGetAllDeliveryLinesQuery,
-    useGetAllPurchaseOrderLinesQuery,
-    useGetPurchaseOrderLineByIdQuery
-} from 'generated/graphql';
-import { FC, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface IDeliveryProgressBarProps {
     id: string;
     status: number;
-    done?: number;
 }
 
-const DeliveryProgressBar = ({ id, status, done }: IDeliveryProgressBarProps) => {
+const DeliveryProgressBar = ({ id, status }: IDeliveryProgressBarProps) => {
     const [value, setValue] = useState(status == configs.PURCHASE_ORDER_STATUS_CLOSED ? 100 : 0);
-    const { graphqlRequestClient } = useAuth();
-
-    const { isLoading, data, error } = useGetAllDeliveryLinesQuery<GetAllDeliveryLinesQuery, Error>(
-        graphqlRequestClient,
-        {
-            filters: {
-                deliveryId: id as any
-            },
-            page: 1,
-            itemsPerPage: 100
-        }
-    );
 
     useEffect(() => {
-        if (data?.deliveryLines && !isLoading) {
-            let sumQty = 0;
-            let sumPreparedQty = 0;
-            data?.deliveryLines.results.forEach((deliveryline: any) => {
-                sumQty += deliveryline.quantityToBePicked;
-                sumPreparedQty += deliveryline.pickedQuantity + deliveryline.missingQuantity;
-            });
-
-            if (sumQty > 0) {
-                const v: number = (sumPreparedQty * 100) / sumQty;
-                const decimals = 1;
-                const factor = Math.pow(10, decimals || 0);
-                const roundedV = Math.round(v * factor) / factor;
-                setValue(roundedV);
-            } else {
-                setValue(0);
-            }
+        if (status == configs.DELIVERY_STATUS_CANCELED) {
+            setValue(100);
         }
-        if (done) {
-            setValue(done);
+        if (status == configs.DELIVERY_STATUS_DISPATCHED) {
+            setValue(100);
         }
-    }, [data]);
-
+        if (status <= configs.DELIVERY_STATUS_WAITING_DISPATCH_RECEIPT_NUMBER) {
+            setValue(90);
+        }
+        if (status <= configs.DELIVERY_STATUS_LOAD_IN_PROGRESS) {
+            setValue(80);
+        }
+        if (status <= configs.DELIVERY_STATUS_TO_BE_PALLETIZED) {
+            setValue(70);
+        }
+        if (status <= configs.DELIVERY_STATUS_CHECKED) {
+            setValue(60);
+        }
+        if (status <= configs.DELIVERY_STATUS_PRE_CHECKED) {
+            setValue(55);
+        }
+        if (status <= configs.DELIVERY_STATUS_TO_BE_CHECKED) {
+            setValue(50);
+        }
+        if (status <= configs.DELIVERY_STATUS_PREPARED) {
+            setValue(40);
+        }
+        if (status <= configs.DELIVERY_STATUS_PACKING_IN_PROGRESS) {
+            setValue(35);
+        }
+        if (status <= configs.DELIVERY_STATUS_TO_BE_REPACKED) {
+            setValue(30);
+        }
+        if (status <= configs.DELIVERY_STATUS_TO_BE_VERIFIED) {
+            setValue(20);
+        }
+        if (status <= configs.DELIVERY_STATUS_STARTED) {
+            setValue(10);
+        }
+        if (status <= configs.DELIVERY_STATUS_UPDATE_IN_PROGRESS) {
+            setValue(0);
+        }
+    });
     return (
         <Progress
             type="dashboard"
             percent={value}
             width={80}
-            status={status == configs.PURCHASE_ORDER_STATUS_CANCELED ? 'exception' : 'active'}
+            status={
+                status == configs.DELIVERY_STATUS_CANCELED
+                    ? 'exception'
+                    : status == configs.DELIVERY_STATUS_DISPATCHED
+                      ? 'success'
+                      : 'active'
+            }
         />
     );
 };

@@ -80,7 +80,7 @@ const LoadsPage: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(workflow.processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setTriggerRender(!triggerRender);
@@ -88,7 +88,7 @@ const LoadsPage: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(workflow.processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
     };
