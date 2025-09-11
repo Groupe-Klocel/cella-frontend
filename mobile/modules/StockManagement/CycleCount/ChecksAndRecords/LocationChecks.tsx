@@ -50,8 +50,9 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     useEffect(() => {
         if (scannedInfo && locationInfos.data) {
             if (locationInfos.data.locations?.count !== 0) {
-                const location = locationInfos.data?.locations?.results[0];
-                if (locationIdToCheck === location.id) {
+                const location = locationInfos.data?.locations?.results;
+                const foundLocation = location.find((loc: any) => loc.id === locationIdToCheck);
+                if (foundLocation) {
                     const data: { [label: string]: any } = {};
                     data['locations'] = locationInfos.data?.locations?.results.map(
                         ({
