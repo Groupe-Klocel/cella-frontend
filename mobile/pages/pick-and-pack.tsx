@@ -307,7 +307,7 @@ const PickAndPack: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setShowSimilarLocations(false);
@@ -316,7 +316,7 @@ const PickAndPack: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(processName);
         setHeaderContent(false);
         setShowSimilarLocations(false);
         setShowEmptyLocations(false);
