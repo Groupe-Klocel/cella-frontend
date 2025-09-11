@@ -173,7 +173,7 @@ export const SimilarPickingLocations = ({
         `;
         const sortByQuantity = {
             field: 'quantity',
-            ascending: false
+            ascending: true
         };
         const variables = {
             filters: filters,
@@ -195,15 +195,6 @@ export const SimilarPickingLocations = ({
     }, []);
 
     useEffect(() => {
-        function compare(a: any, b: any) {
-            if (a.locationName < b.locationName) {
-                return -1;
-            }
-            if (a.locationName > b.locationName) {
-                return 1;
-            }
-            return 0;
-        }
         if (similarLocations) {
             const locData: Array<any> = [];
             similarLocations?.handlingUnitContents?.results
@@ -211,13 +202,13 @@ export const SimilarPickingLocations = ({
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {
                     locData.push({
+                        key: e.id,
                         locationId: e.handlingUnit.locationId,
                         locationName: e.handlingUnit.location.name,
                         quantity: e.quantity,
-                        type: 'Picking'
+                        category: e.handlingUnit.location.categoryText
                     });
                 });
-            locData.sort(compare);
 
             setDisplayedLocations(locData);
         }
@@ -235,9 +226,9 @@ export const SimilarPickingLocations = ({
             key: 'quantity'
         },
         {
-            title: t('common:type'),
-            dataIndex: 'type',
-            key: 'type'
+            title: t('common:category'),
+            dataIndex: 'category',
+            key: 'category'
         }
     ];
 
