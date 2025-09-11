@@ -21,7 +21,6 @@ import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
-import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
 
 export interface IHandlingUnitChecksProps {
@@ -57,18 +56,26 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 const deliveryLine =
                     storedObject['step10'].data.proposedRoundAdvisedAddresses[0].roundLineDetail
                         .deliveryLine;
+                const filtersForContent = (content: any) =>
+                    content.articleId === deliveryLine.articleId &&
+                    content.stockOwnerId === deliveryLine.stockOwnerId &&
+                    content.stockStatus === deliveryLine.stockStatus &&
+                    content.reservation === deliveryLine.reservation &&
+                    content.quantity > 0;
                 if (
                     handlingUnitInfos.handlingUnits?.results[0].handlingUnitContents.some(
-                        (content: any) =>
-                            content.articleId === deliveryLine.articleId &&
-                            content.stockOwnerId === deliveryLine.stockOwnerId &&
-                            content.stockStatus === deliveryLine.stockStatus &&
-                            content.reservation === deliveryLine.reservation &&
-                            content.quantity > 0
+                        filtersForContent
                     )
                 ) {
                     const data: { [label: string]: any } = {};
-                    data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
+                    const filteredContents =
+                        handlingUnitInfos.handlingUnits?.results[0].handlingUnitContents.filter(
+                            filtersForContent
+                        );
+                    data['handlingUnit'] = {
+                        ...handlingUnitInfos.handlingUnits?.results[0],
+                        handlingUnitContents: filteredContents
+                    };
                     setTriggerRender(!triggerRender);
                     // specific to handle unique handling unit in selected location and back function for next step
                     if (!uniqueHU) {
