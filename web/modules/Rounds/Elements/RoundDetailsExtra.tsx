@@ -202,7 +202,7 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: any) => (
+                                render: (value: any, record: any) => (
                                     <Space>
                                         {record.roundOrderId === null ? (
                                             <></>
@@ -234,13 +234,11 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                                                         }
                                                     }}
                                                     disabled={
-                                                        RoundAdvisedAddressData[0].listDataCount ===
-                                                        record.roundOrderId
+                                                        value.listDataCount === record.roundOrderId
                                                     }
                                                     loading={
                                                         priorityStatus.id !== null &&
-                                                        RoundAdvisedAddressData[0].listDataCount !==
-                                                            record.roundOrderId
+                                                        value.listDataCount !== record.roundOrderId
                                                     }
                                                     icon={<CaretDownOutlined />}
                                                 />

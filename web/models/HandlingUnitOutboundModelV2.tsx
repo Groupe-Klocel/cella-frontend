@@ -204,7 +204,48 @@ export const HandlingUnitOutboundModelV2: ModelType = {
             param: null,
             isEditDisabled: true
         },
-        carrierId: {
+        'carrierShippingMode{carrierId}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: 'Dropdown',
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'carrier_name',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: '{"table": "Carrier", "fieldToDisplay": "name"}'
+        },
+        'carrierShippingMode{carrier{name}}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: 'carriers/shippingMode/carrierShippingModeId',
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'carrier_name',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        carrierShippingModeId: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: true,
@@ -223,9 +264,9 @@ export const HandlingUnitOutboundModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: '{"table": "Carrier", "fieldToDisplay": "name"}'
+            optionTable: '{"table": "CarrierShippingMode", "fieldToDisplay": "name"}'
         },
-        'carrier{name}': {
+        'carrierShippingMode{name}': {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,

@@ -83,7 +83,7 @@ const BoxPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOAD_IN_PROGRESS ? (
+                data?.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_LOADED ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/edit/${id}`}
