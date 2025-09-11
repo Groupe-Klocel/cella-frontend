@@ -19,10 +19,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
-import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
+import { LsIsSecured, showError } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export interface IScanHandlingUnitProps {
     process: string;
@@ -50,16 +50,35 @@ export const ScanHandlingUnit = ({
     const [handlingUnitInfos, setHandlingUnitInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const [uniqueHU, setUniqueHU] = useState<boolean>(false);
+    const { t } = useTranslation();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
         //automatically set handlingUnit when defaultValue is provided
         if (defaultValue) {
             // N.B.: in this case previous step is kept at its previous value
-            const data: { [label: string]: any } = {};
-            data['handlingUnit'] = defaultValue;
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            setTriggerRender(!triggerRender);
+            const deliveryLine =
+                storedObject['step10'].data.proposedRoundAdvisedAddresses[0].roundLineDetail
+                    .deliveryLine;
+            const filtersForContent = (content: any) =>
+                content.articleId === deliveryLine.articleId &&
+                content.stockOwnerId === deliveryLine.stockOwnerId &&
+                content.stockStatus === deliveryLine.stockStatus &&
+                content.reservation === deliveryLine.reservation &&
+                content.quantity > 0;
+            if (defaultValue.handlingUnitContents.some(filtersForContent)) {
+                const filteredContents =
+                    defaultValue.handlingUnitContents.filter(filtersForContent);
+                const data: { [label: string]: any } = {};
+                data['handlingUnit'] = {
+                    ...defaultValue,
+                    handlingUnitContents: filteredContents
+                };
+                storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+                setTriggerRender(!triggerRender);
+            } else {
+                showError(t('messages:wrong-article-stockOwner-stockStatus-or-reservation'));
+            }
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
@@ -69,6 +88,10 @@ export const ScanHandlingUnit = ({
     }, []);
 
     const chosenLocation = storedObject[`step25`]?.data?.chosenLocation;
+
+    const handlingUnitContentArticleId =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
+            ?.id;
 
     //handle when only one HU on location
     useEffect(() => {
@@ -90,92 +113,33 @@ export const ScanHandlingUnit = ({
                         results {
                             id
                             name
-                            type
-                            typeText
                             barcode
                             category
-                            categoryText
                             code
-                            parentHandlingUnitId
-                            parentHandlingUnit {
-                                id
-                                name
-                                type
-                                typeText
-                            }
-                            childrenHandlingUnits {
-                                id
-                                name
-                                type
-                                typeText
-                                barcode
-                                category
-                                categoryText
-                                code
-                                handlingUnitContents {
-                                    id
-                                    quantity
-                                    reservation
-                                    stockStatus
-                                    stockStatusText
-                                    stockOwnerId
-                                    handlingUnit {
-                                        id
-                                        name
-                                        locationId
-                                        location {
-                                            id
-                                            name
-                                        }
-                                    }
-                                    stockOwner {
-                                        id
-                                        name
-                                    }
-                                    articleId
-                                    article {
-                                        id
-                                        name
-                                        description
-                                        stockOwnerId
-                                        stockOwner {
-                                            name
-                                        }
-                                        baseUnitWeight
-                                        featureType
-                                    }
-                                }
-                            }
                             reservation
                             status
-                            stockOwnerId
-                            stockOwner {
-                                name
-                            }
                             locationId
                             location {
                                 name
-                                category
-                                categoryText
                             }
-                            handlingUnitContents {
+                            handlingUnitContents(
+                                    advancedFilters: {
+                                        filter: [
+                                            {
+                                                searchType: EQUAL
+                                                fieldName: "articleId"
+                                                searchedValues: "${handlingUnitContentArticleId}"
+                                            }
+                                        ]
+                                    }
+                                ) {
                                 id
                                 quantity
                                 reservation
                                 stockStatus
                                 stockStatusText
                                 stockOwnerId
-                                handlingUnit {
-                                    id
-                                    name
-                                    locationId
-                                    location {
-                                        id
-                                        name
-                                    }
-                                }
                                 stockOwner {
-                                    id
                                     name
                                 }
                                 articleId
@@ -183,11 +147,8 @@ export const ScanHandlingUnit = ({
                                     id
                                     name
                                     description
-                                    stockOwnerId
-                                    stockOwner {
-                                        name
-                                    }
                                     baseUnitWeight
+                                    featureType
                                 }
                                 articleLuBarcode {
                                     id
@@ -195,13 +156,11 @@ export const ScanHandlingUnit = ({
                                     article {
                                         name
                                         description
+                                        baseUnitWeight
+                                        featureType
                                     }
                                     barcodeId
                                     barcode {
-                                        name
-                                    }
-                                    stockOwnerId
-                                    stockOwner {
                                         name
                                     }
                                     articleLuId

@@ -272,11 +272,18 @@ const DeliveryPage: PageComponent = () => {
                                 // )
                             }
                             {/* EDIT button */}
-                            <LinkButton
-                                title={t('actions:edit')}
-                                path={`/deliveries/edit/${data?.id}`}
-                                type="primary"
-                            />
+                            {modes.length > 0 &&
+                            modes.includes(ModeEnum.Update) &&
+                            model.isEditable &&
+                            data?.status < configs.DELIVERY_STATUS_LOADED ? (
+                                <LinkButton
+                                    title={t('actions:edit')}
+                                    path={`/deliveries/edit/${data?.id}`}
+                                    type="primary"
+                                />
+                            ) : (
+                                <></>
+                            )}
                             {modes.length > 0 &&
                             modes.includes(ModeEnum.Read) &&
                             data?.status <= configs.DELIVERY_STATUS_CANCELED ? (
@@ -382,6 +389,7 @@ const DeliveryPage: PageComponent = () => {
                         stockOwnerId={data?.stockOwnerId}
                         setShippingAddress={setShippingAddress}
                         refetchHUO={refetchHUO}
+                        setRefetchHUO={setRefetchHUO}
                     />
                 }
                 id={id!}

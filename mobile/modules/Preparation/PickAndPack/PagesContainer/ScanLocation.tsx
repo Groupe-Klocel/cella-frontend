@@ -19,7 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useBoxes, useLocationIds } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
@@ -74,14 +73,9 @@ export const ScanLocation = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    // ScanLocation-2: launch query
-    // const locationInfos = useLocationIds(
-    //     { barcode: `${scannedInfo}` },
-    //     1,
-    //     100,
-    //     null,
-    //     router.locale
-    // );
+    const handlingUnitContentArticleId =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
+            ?.id;
 
     const getLocations = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
@@ -95,133 +89,47 @@ export const ScanLocation = ({
                             id
                             name
                             barcode
-                            aisle
-                            column
                             level
-                            position
-                            replenish
-                            blockId
-                            block {
-                                name
-                            }
-                            replenishType
-                            constraint
-                            comment
-                            baseUnitRotation
-                            allowCycleCountStockMin
                             category
-                            categoryText
-                            stockStatus
-                            stockStatusText
-                            status
-                            statusText
-                            handlingUnits {
-                                id
-                                name
-                                type
-                                typeText
-                                barcode
-                                category
-                                categoryText
-                                code
-                                parentHandlingUnitId
-                                parentHandlingUnit {
-                                    id
-                                    name
-                                    type
-                                    typeText
-                                }
-                                childrenHandlingUnits {
-                                    id
-                                    name
-                                    type
-                                    typeText
-                                    barcode
-                                    category
-                                    categoryText
-                                    code
-                                    handlingUnitContents {
-                                        id
-                                        quantity
-                                        reservation
-                                        stockStatus
-                                        stockStatusText
-                                        stockOwnerId
-                                        handlingUnit {
-                                            id
-                                            name
-                                            locationId
-                                            location {
-                                                id
-                                                name
-                                            }
-                                        }
-                                        stockOwner {
-                                            id
-                                            name
-                                        }
-                                        articleId
-                                        article {
-                                            id
-                                            name
-                                            stockOwnerId
-                                            stockOwner {
-                                                name
-                                            }
-                                            baseUnitWeight
-                                            featureType
-                                        }
-                                        handlingUnitContentFeatures {
-                                            id
-                                            featureCode {
-                                                name
-                                                unique
-                                            }
-                                            featureCodeId
-                                            value
-                                        }
+                            handlingUnits(
+                                advancedFilters: {
+                                    filter: {
+                                        searchType: SUPERIOR
+                                        fieldName: "autocountHandlingUnitContent"
+                                        searchedValues: "0"
                                     }
                                 }
-                                reservation
-                                status
-                                stockOwnerId
-                                stockOwner {
-                                    name
-                                }
+                            ) {
+                                id
+                                name
                                 locationId
                                 location {
                                     name
-                                    category
-                                    categoryText
                                 }
-                                handlingUnitContents {
+                                handlingUnitContents(
+                                    advancedFilters: {
+                                        filter: [
+                                            {
+                                                searchType: EQUAL
+                                                fieldName: "articleId"
+                                                searchedValues: "${handlingUnitContentArticleId}"
+                                            }
+                                        ]
+                                    }
+                                ) {
                                     id
                                     quantity
                                     reservation
                                     stockStatus
                                     stockStatusText
                                     stockOwnerId
-                                    handlingUnit {
-                                        id
-                                        name
-                                        locationId
-                                        location {
-                                            id
-                                            name
-                                        }
-                                    }
                                     stockOwner {
-                                        id
                                         name
                                     }
                                     articleId
                                     article {
                                         id
                                         name
-                                        stockOwnerId
-                                        stockOwner {
-                                            name
-                                        }
                                         baseUnitWeight
                                         featureType
                                     }

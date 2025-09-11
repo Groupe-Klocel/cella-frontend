@@ -107,6 +107,12 @@ export const EnterNumberForm = ({
                         max={max}
                         style={{ height: '25px', marginBottom: '5px' }}
                         onFocus={isSelected ? (e) => e.target.select() : undefined}
+                        // @ts-expect-error: this is to avoid scan on non numeric values but as TS expect number, we need to ignore it.
+                        parser={(value) => {
+                            if (!value) return '';
+                            if (!/^(-?[\d]+([.,]\d*)?)?$/.test(value)) return '';
+                            return value.replace(',', '.');
+                        }}
                         autoFocus
                     />
                 </StyledFormItem>
