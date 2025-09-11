@@ -24,9 +24,8 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { createCycleCountError, searchByIdInCCMs } from 'helpers/utils/crudFunctions/cycleCount';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
-import { set } from 'lodash';
 
 export interface IArticleOrFeatureChecksProps {
     dataToCheck: any;
@@ -513,53 +512,6 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
 
     // HU closure function
     const [isClosureLoading, setIsClosureLoading] = useState(false);
-    async function closeHU(cycleCountLineIds: any) {
-        setIsClosureLoading(true);
-        const query = gql`
-            mutation executeFunction($functionName: String!, $event: JSON!) {
-                executeFunction(functionName: $functionName, event: $event) {
-                    status
-                    output
-                }
-            }
-        `;
-
-        const variables = {
-            functionName: 'update_cycle_count_lines',
-            event: {
-                input: { cycleCountLineIds }
-            }
-        };
-
-        try {
-            const cc_result = await graphqlRequestClient.request(query, variables);
-            if (cc_result.executeFunction.status === 'ERROR') {
-                showError(cc_result.executeFunction.output);
-            } else if (
-                cc_result.executeFunction.status === 'OK' &&
-                cc_result.executeFunction.output.status === 'KO'
-            ) {
-                showError(t(`errors:${cc_result.executeFunction.output.output.code}`));
-                console.log('Backend_message', cc_result.executeFunction.output.output);
-            } else {
-                const storedObject = JSON.parse(storage.get(process) || '{}');
-                storage.remove(process);
-                const newStoredObject = JSON.parse(storage.get(process) || '{}');
-                newStoredObject['currentStep'] = 30;
-                newStoredObject[`step10`] = storedObject[`step10`];
-                newStoredObject[`step22`] = storedObject[`step22`];
-                newStoredObject[`step20`] = storedObject[`step20`];
-                newStoredObject[`step25`] = storedObject[`step25`];
-                storage.set(process, JSON.stringify(newStoredObject));
-                setTriggerRender(!triggerRender);
-            }
-            setIsClosureLoading(false);
-        } catch (error) {
-            showError(t('messages:error-executing-function'));
-            console.log('executeFunctionError', error);
-            setIsClosureLoading(false);
-        }
-    }
 
     // Location closure function (used if huManagement = false)
     async function closeLocation(cycleCountLineIds: any) {
@@ -698,12 +650,10 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 if (!storedObject['step22']?.data?.chosenLocation.huManagement) {
                     triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
                     closeLocation([currentCycleCountLineId]);
-                } else if (storedObject?.step30?.data?.handlingUnit) {
-                    triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
-                    closeHU([currentCycleCountLineId]);
                 } else {
+                    // behaviour on closeHU
                     for (
-                        let i = storedObject[`step${stepNumber}`].previousÒtep;
+                        let i = storedObject[`step${stepNumber}`].previousStep;
                         i <= stepNumber;
                         i++
                     ) {
