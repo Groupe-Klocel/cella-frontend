@@ -708,7 +708,7 @@ export const DeliveryModelV2: ModelType = {
             param: null,
             optionTable: '{"table": "CarrierShippingMode", "fieldToDisplay": "name"}',
             toBeEditDisabled:
-                '[{"table": "Delivery", "field": "status", "conditions": "value > prepared"}]'
+                '[{"table": "Delivery", "field": "status", "conditions": "value > loaded"}]'
         },
         'carrierShippingMode{name}': {
             isListRequested: true,
