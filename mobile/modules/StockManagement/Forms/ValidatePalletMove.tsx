@@ -81,7 +81,7 @@ export const ValidatePalletMoveForm = ({
         });
         if (res.ok) {
             showSuccess(t('messages:movement-success'));
-            storage.removeAll();
+            storage.remove(process);
             setHeaderContent(false);
             setTriggerRender(!triggerRender);
         } else {

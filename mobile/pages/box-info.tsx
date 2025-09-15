@@ -63,10 +63,19 @@ const BoxInfo: PageComponent = () => {
             const infoBox = boxInfo[`step${workflow.expectedSteps[0]}`]?.data?.handlingUnitOutbound;
 
             object[t('common:shipping-unit-box_abbr')] = infoBox.name;
-            object[t('common:order_abbr')] = infoBox.delivery.name;
+            {
+                infoBox.delivery ? (object[t('common:order_abbr')] = infoBox.delivery.name) : null;
+            }
             object[t('common:status')] = infoBox.statusText;
-            object[t('common:stock-owner_abbr')] = infoBox.handlingUnit.stockOwner.name;
-            object[t('common:handling-unit-model')] = infoBox.handlingUnitModel.name;
+            {
+                infoBox.stockOwner
+                    ? (object[t('common:stock-owner_abbr')] = infoBox.handlingUnit.stockOwner.name)
+                    : null;
+            }
+
+            object[t('common:handling-unit-model')] = infoBox.handlingUnitModel?.name;
+            object[t('common:carrier')] = infoBox.carrierShippingMode?.carrier?.name;
+            object[t('common:shipping-mode')] = infoBox.carrierShippingMode?.shippingMode;
         }
         setOriginDisplay(object);
         setFinalDisplay(object);
@@ -77,7 +86,7 @@ const BoxInfo: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(workflow.processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setTriggerRender(!triggerRender);
@@ -85,7 +94,7 @@ const BoxInfo: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(workflow.processName);
         setHeaderContent(false);
     };
 

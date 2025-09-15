@@ -232,6 +232,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         raa.handlingUnitContentId ===
                         remainingHUContentIds[0]?.handlingUnitContentId
                 );
+            showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
             storage.set(process, JSON.stringify(storedObject));
             setTriggerRender(!triggerRender);
         }

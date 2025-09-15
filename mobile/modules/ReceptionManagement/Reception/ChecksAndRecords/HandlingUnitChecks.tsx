@@ -56,12 +56,17 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 }
                 let isHUInGoodsIn = false;
                 if (goodsIn) {
-                    for (const roundLine of goodsIn.roundLines) {
-                        for (const details of roundLine.roundLineDetails) {
-                            for (const content of details.handlingUnitContentInbounds) {
-                                const handlingUnitId = content.handlingUnitContent.handlingUnitId;
-                                if (handlingUnitId.includes(huToCheck.id)) {
-                                    isHUInGoodsIn = true;
+                    if (goodsIn === 'to-be-created') {
+                        isHUInGoodsIn = true;
+                    } else {
+                        for (const roundLine of goodsIn.roundLines) {
+                            for (const details of roundLine.roundLineDetails) {
+                                for (const content of details.handlingUnitContentInbounds) {
+                                    const handlingUnitId =
+                                        content.handlingUnitContent.handlingUnitId;
+                                    if (handlingUnitId.includes(huToCheck.id)) {
+                                        isHUInGoodsIn = true;
+                                    }
                                 }
                             }
                         }
