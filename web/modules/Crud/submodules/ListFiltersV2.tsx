@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Form, Input, Button, InputNumber, Checkbox, Select, DatePicker, AutoComplete } from 'antd';
+import { Form, Input, Button, InputNumber, Checkbox, Select, DatePicker } from 'antd';
 import { RangePickerProps } from 'antd/lib/date-picker';
 import { debounce } from 'lodash';
 import moment from 'moment';
@@ -35,6 +35,7 @@ import { ContentSpin } from '@components';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'moment/locale/fr';
+import AutoComplete from './FormGroupAutoComplete';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { useAppState } from 'context/AppContext';
 
@@ -114,6 +115,20 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                 key: isNumeric(item.code) ? parseInt(item.code) : item.code,
                 text: value
             });
+            Object.keys(result).forEach((scope) => {
+                result[scope].sort((a: any, b: any) => {
+                    const aIsNum = typeof a.key === 'number' || isNumeric(a.key);
+                    const bIsNum = typeof b.key === 'number' || isNumeric(b.key);
+
+                    if (aIsNum && bIsNum) {
+                        return Number(a.key) - Number(b.key);
+                    } else if (!aIsNum && !bIsNum) {
+                        return String(a.key).localeCompare(String(b.key));
+                    } else {
+                        return aIsNum ? -1 : 1;
+                    }
+                });
+            });
         });
 
         parameters.forEach((item: any) => {
@@ -127,6 +142,20 @@ const ListFilters: FC<IGeneralSearchProps> = ({
             result[item.scope].push({
                 key: isNumeric(item.code) ? parseInt(item.code) : item.code,
                 text: value
+            });
+            Object.keys(result).forEach((scope) => {
+                result[scope].sort((a: any, b: any) => {
+                    const aIsNum = typeof a.key === 'number' || isNumeric(a.key);
+                    const bIsNum = typeof b.key === 'number' || isNumeric(b.key);
+
+                    if (aIsNum && bIsNum) {
+                        return Number(a.key) - Number(b.key);
+                    } else if (!aIsNum && !bIsNum) {
+                        return String(a.key).localeCompare(String(b.key));
+                    } else {
+                        return aIsNum ? -1 : 1;
+                    }
+                });
             });
         });
 
@@ -145,7 +174,10 @@ const ListFilters: FC<IGeneralSearchProps> = ({
 
     // #region handle options for dropdowns
     const optionsTables = columns
-        .filter((obj) => obj.hasOwnProperty('optionTable') && obj.optionTable !== undefined)
+        .filter(
+            (obj) =>
+                obj.hasOwnProperty('optionTable') && obj.optionTable !== undefined && obj.type !== 8
+        )
         .map((obj) => obj.optionTable);
 
     async function getOptions(
@@ -506,58 +538,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                                 </Form.Item>
                             );
                         } else if (item.type == FormDataType.AutoComplete)
-                            return (
-                                <Form.Item
-                                    label={
-                                        item.displayName ? item.displayName : t(`d:${item.name}`)
-                                    }
-                                    name={item.name}
-                                    key={item.name + index}
-                                    rules={item.rules!}
-                                    initialValue={
-                                        item?.initialValue ? item?.initialValue : undefined
-                                    }
-                                    normalize={(value) => (value ? value : undefined)}
-                                >
-                                    <AutoComplete
-                                        value={item.value}
-                                        filterOption={(inputValue, option) =>
-                                            (option?.value as string)
-                                                .toUpperCase()
-                                                .indexOf(inputValue.toUpperCase()) !== -1
-                                        }
-                                        onKeyUp={(e: any) => {
-                                            debounce(() => {
-                                                item.setName(e.target.value);
-                                            }, 3000);
-                                        }}
-                                        onSelect={(value, option) => {
-                                            item.setId(option.key);
-                                            item.setName(option.text);
-                                        }}
-                                        onChange={(data: string) => {
-                                            if (!data?.length) {
-                                                item.setName('');
-                                                item.setId('');
-                                            } else {
-                                                item.setName(data);
-                                            }
-                                        }}
-                                        allowClear
-                                    >
-                                        {item.subOptions?.map(
-                                            (option: FormOptionType, subIndex: number) => (
-                                                <AutoComplete.Option
-                                                    key={option.text + subIndex}
-                                                    value={option.text}
-                                                >
-                                                    {option.text}
-                                                </AutoComplete.Option>
-                                            )
-                                        )}
-                                    </AutoComplete>
-                                </Form.Item>
-                            );
+                            return <AutoComplete item={item} key={item.name} />;
                         else
                             return (
                                 <Form.Item
