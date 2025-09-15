@@ -216,13 +216,11 @@ const PickAndPack: PageComponent = () => {
             if (!storedObject['step50']?.data?.article) {
                 object[t('common:expected-article_abbr')] =
                     proposedRoundAdvisedAddress.handlingUnitContent.article?.name;
-                object[t('common:article-description')] =
-                    proposedRoundAdvisedAddress.handlingUnitContent.article?.description;
             } else {
                 object[t('common:article_abbr')] = storedObject['step50']?.data?.article.name;
-                object[t('common:article-description')] =
-                    storedObject['step50']?.data?.article.description;
             }
+            object[t('common:article-description')] =
+                proposedRoundAdvisedAddress.handlingUnitContent.article?.description;
             if (storedObject['step60']?.data?.processedFeatures) {
                 const processedFeatures = storedObject['step60']?.data?.processedFeatures;
                 const handling_unit_contents = storedObject[
@@ -309,7 +307,7 @@ const PickAndPack: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setShowSimilarLocations(false);
@@ -318,7 +316,7 @@ const PickAndPack: PageComponent = () => {
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(processName);
         setHeaderContent(false);
         setShowSimilarLocations(false);
         setShowEmptyLocations(false);

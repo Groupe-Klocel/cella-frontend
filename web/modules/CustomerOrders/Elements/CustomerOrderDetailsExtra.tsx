@@ -317,7 +317,10 @@ const CustomerOrderDetailsExtra = ({
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: { id: string; lineNumber: number }) => (
+                                render: (
+                                    value: any,
+                                    record: { id: string; lineNumber: number }
+                                ) => (
                                     <Space>
                                         {customerOrderLineModes.length == 0 ||
                                         !customerOrderLineModes.includes(ModeEnum.Read) ? (
@@ -365,13 +368,11 @@ const CustomerOrderDetailsExtra = ({
                                                         }
                                                     }}
                                                     disabled={
-                                                        customerOrderLinedata[0].listDataCount ===
-                                                        record.lineNumber
+                                                        value.listDataCount === record.lineNumber
                                                     }
                                                     loading={
                                                         priorityStatus.id !== null &&
-                                                        customerOrderLinedata[0].listDataCount !==
-                                                            record.lineNumber
+                                                        value.listDataCount !== record.lineNumber
                                                     }
                                                     icon={<CaretDownOutlined />}
                                                 />

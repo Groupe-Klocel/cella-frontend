@@ -163,7 +163,7 @@ export const SimilarLocations = ({
         `;
         const sortByQuantity = {
             field: 'quantity',
-            ascending: false
+            ascending: true
         };
         const variables = {
             filters: filters,
@@ -186,15 +186,6 @@ export const SimilarLocations = ({
     //end bloc
 
     useEffect(() => {
-        function compare(a: any, b: any) {
-            if (a.locationName < b.locationName) {
-                return -1;
-            }
-            if (a.locationName > b.locationName) {
-                return 1;
-            }
-            return 0;
-        }
         if (similarLocations) {
             const locData: Array<any> = [];
             similarLocations?.handlingUnitContents?.results
@@ -208,6 +199,7 @@ export const SimilarLocations = ({
                 .slice(0, nbMaxLocations)
                 .forEach((e: any) => {
                     locData.push({
+                        key: e.id,
                         locationId: e.handlingUnit.locationId,
                         locationName: e.handlingUnit.location.name,
                         quantity: e.quantity,
@@ -231,7 +223,6 @@ export const SimilarLocations = ({
                         type: 'Picking'
                     });
                 });
-            locData.sort(compare);
             setDisplayedLocations(locData);
         }
     }, [similarLocations, nbMaxLocations]);

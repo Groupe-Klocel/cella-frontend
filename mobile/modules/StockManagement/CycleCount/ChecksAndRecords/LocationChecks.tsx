@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { createCycleCountError } from 'helpers/utils/crudFunctions/cycleCount';
 import { useEffect } from 'react';
 
 export interface ILocationChecksProps {
@@ -49,30 +50,44 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     useEffect(() => {
         if (scannedInfo && locationInfos.data) {
             if (locationInfos.data.locations?.count !== 0) {
-                const data: { [label: string]: any } = {};
-                data['locations'] = locationInfos.data?.locations?.results.map(
-                    ({
-                        id,
-                        name,
-                        barcode,
-                        level,
-                        huManagement
-                    }: {
-                        id: string;
-                        name: string;
-                        barcode: string;
-                        level: string;
-                        huManagement: boolean;
-                    }) => {
-                        return { id, name, barcode, level, huManagement };
-                    }
-                );
+                const location = locationInfos.data?.locations?.results;
+                const foundLocation = location.find((loc: any) => loc.id === locationIdToCheck);
+                if (foundLocation) {
+                    const data: { [label: string]: any } = {};
+                    data['locations'] = locationInfos.data?.locations?.results.map(
+                        ({
+                            id,
+                            name,
+                            barcode,
+                            level,
+                            huManagement
+                        }: {
+                            id: string;
+                            name: string;
+                            barcode: string;
+                            level: string;
+                            huManagement: boolean;
+                        }) => {
+                            return { id, name, barcode, level, huManagement };
+                        }
+                    );
 
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
+                    setTriggerRender(!triggerRender);
+                    storedObject[`step${stepNumber}`] = {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    };
+                } else {
+                    createCycleCountError(
+                        currentCycleCountId,
+                        `Step ${stepNumber} - ${t(
+                            'messages:unexpected-scanned-item'
+                        )} - ${scannedInfo}`
+                    );
+                    showError(t('messages:unexpected-scanned-item'));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                }
             } else {
                 showError(t('messages:no-location'));
                 setResetForm(true);
