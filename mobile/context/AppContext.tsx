@@ -32,6 +32,22 @@ type State = {
     user: any;
     translations: any;
     permissions: Array<PermissionType> | undefined;
+    configs?: Array<{
+        translation: JSON | null;
+        scope: string;
+        code: string;
+        value: string;
+        id: string;
+        system: boolean;
+    }>;
+    parameters?: Array<{
+        translation: JSON | null;
+        scope: string;
+        code: string;
+        value: string;
+        id: string;
+        system: boolean;
+    }>;
 };
 
 const initialState = {
@@ -44,6 +60,8 @@ const initialState = {
     ],
     user: userInitData,
     translations: [],
+    configs: undefined,
+    parameters: undefined,
     permissions: []
 };
 
@@ -95,6 +113,60 @@ function reducer(state: State, action: Action) {
             return {
                 ...state,
                 translations: action.translations
+            };
+         case 'SET_CONFIGS':
+            return {
+                ...state,
+                configs: action.configs
+            };
+        case 'SET_PARAMETERS':
+            return {
+                ...state,
+                parameters: action.parameters
+            };
+        case 'ADD_CONFIGS':
+            return {
+                ...state,
+                configs: state.configs ? [...state.configs, action.config] : [action.config]
+            };
+        case 'ADD_PARAMETERS':
+            return {
+                ...state,
+                parameters: state.parameters
+                    ? [...state.parameters, action.parameter]
+                    : [action.parameter]
+            };
+        case 'UPDATE_CONFIGS':
+            const updatedConfigs = state.configs?.map((config) =>
+                config.id === action.config.id ? action.config : config
+            );
+            return {
+                ...state,
+                configs: updatedConfigs
+            };
+        case 'UPDATE_PARAMETERS':
+            const updatedParameters = state.parameters?.map((parameter) =>
+                parameter.id === action.parameter.id ? action.parameter : parameter
+            );
+            return {
+                ...state,
+                parameters: updatedParameters
+            };
+        case 'DELETE_CONFIGS':
+            const filteredConfigs = state.configs?.filter(
+                (config) => config.id !== action.config.id
+            );
+            return {
+                ...state,
+                configs: filteredConfigs
+            };
+        case 'DELETE_PARAMETERS':
+            const filteredParameters = state.parameters?.filter(
+                (parameter) => parameter.id !== action.parameter.id
+            );
+            return {
+                ...state,
+                parameters: filteredParameters
             };
         default:
             return state;
