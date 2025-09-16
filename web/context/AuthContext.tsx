@@ -81,7 +81,11 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
             if (token) {
                 setHeader(token);
                 const user = decodeJWT(token);
-                if (user) setUser(user);
+                if (user && user.exp && user.exp * 1000 < Date.now()) {
+                    logout();
+                } else if (user) {
+                    setUser(user);
+                }
             }
             setLoading(false);
         }
