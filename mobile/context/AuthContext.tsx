@@ -81,11 +81,8 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
             const token = cookie.get('token');
             if (token) {
                 setHeader(token);
-                if (token) {
-                    setHeader(token);
-                    const user = decodeJWT(token);
-                    if (user) setUser(user);
-                }
+                const user = decodeJWT(token);
+                if (user) setUser(user);
             }
             setLoading(false);
         }
