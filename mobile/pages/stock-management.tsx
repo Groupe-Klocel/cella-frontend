@@ -69,6 +69,10 @@ const StockManagementPage: PageComponent = () => {
         getModesFromPermissions(permissions, 'mobile_cycle-counts').includes(ModeEnum.Read) && {
             title: 'menu:cycle-counts',
             path: '/cycle-counts'
+        },
+        getModesFromPermissions(permissions, 'mobile_init-stock').includes(ModeEnum.Read) && {
+            title: 'menu:init-stock',
+            path: '/init-stock'
         }
     ].filter(Boolean) as MenuItemData[];
 
