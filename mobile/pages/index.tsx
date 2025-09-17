@@ -45,7 +45,8 @@ const HomePage: PageComponent = () => {
             'mobile_reception-content-movement',
             'mobile_content-movement',
             'mobile_hu-movement',
-            'mobile_cycle-counts'
+            'mobile_cycle-counts',
+            'mobile_init-stock'
         ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)) && {
             title: 'menu:stock-management',
             icon: <img src="/images/stock_management.svg" alt="stock_management" />,

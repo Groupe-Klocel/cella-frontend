@@ -38,6 +38,9 @@ export interface IEnterNumberFormProps {
     initialValue?: number;
     isSelected?: boolean;
     isCommentDisplayed?: boolean;
+    alternativeSubmitLabel1?: any;
+    triggerAlternativeSubmit1?: any;
+    style?: any;
 }
 
 export const EnterNumberForm = ({
@@ -52,13 +55,15 @@ export const EnterNumberForm = ({
     max,
     initialValue,
     isSelected,
-    isCommentDisplayed
+    isCommentDisplayed,
+    alternativeSubmitLabel1,
+    triggerAlternativeSubmit1,
+    style
 }: IEnterNumberFormProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const [form] = Form.useForm();
-
     // TYPED SAFE ALL
     //EnterNumberForm-1a: retrieve chosen level from select and set information
     const onFinish = (values: any) => {
@@ -95,6 +100,7 @@ export const EnterNumberForm = ({
                 scrollToFirstError
                 size="small"
                 form={form}
+                style={style}
             >
                 <StyledFormItem
                     label={label ? label : t('common:number')}
@@ -125,7 +131,19 @@ export const EnterNumberForm = ({
                         <TextArea allowClear></TextArea>
                     </StyledFormItem>
                 )}
-                <RadioButtons input={{ ...buttons }} output={{ onBack }}></RadioButtons>
+                <RadioButtons
+                    input={{
+                        ...buttons,
+                        triggerAlternativeSubmit1:
+                            triggerAlternativeSubmit1?.triggerAlternativeSubmit1
+                    }}
+                    alternativeSubmitLabel1={alternativeSubmitLabel1}
+                    output={{
+                        setTriggerAlternativeSubmit1:
+                            triggerAlternativeSubmit1?.setTriggerAlternativeSubmit1,
+                        onBack
+                    }}
+                ></RadioButtons>
             </StyledForm>
         </WrapperForm>
     );

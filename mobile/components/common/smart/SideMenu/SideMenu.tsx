@@ -161,6 +161,9 @@ const SideMenu: FC = () => {
                         <Link href="/recommended">{t('recommended')}</Link>
                     </Menu.Item>
                 </SubMenu>
+                <Menu.Item key="stock-management-init-stock">
+                    <Link href="/init-stock">{t('init-stock')}</Link>
+                </Menu.Item>
             </SubMenu>
 
             <SubMenu
