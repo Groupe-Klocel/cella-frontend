@@ -76,6 +76,7 @@ export const ScanLocation = ({
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
+        setResetForm,
         trigger: { triggerRender, setTriggerRender }
     };
 
