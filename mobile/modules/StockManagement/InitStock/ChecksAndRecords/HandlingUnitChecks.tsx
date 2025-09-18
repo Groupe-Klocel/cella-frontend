@@ -76,11 +76,10 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                     type,
                     status: configs.HANDLING_UNIT_STATUS_VALIDATED,
                     category: parameters.HANDLING_UNIT_CATEGORY_STOCK,
-                    locationId: storedObject['step10'].data.locations[0].id,
+                    locationId: storedObject['step15']?.data?.chosenLocation.id,
                     code: scannedInfo,
                     handlingUnitContents: []
                     //this will  have TBD in next steps:
-                    //code: storedObject['step30'].data?.handlingUnitModel?.code
                 };
 
                 const data: { [label: string]: any } = {};

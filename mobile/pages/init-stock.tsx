@@ -230,8 +230,8 @@ const InitStock: PageComponent = () => {
                         setTriggerAlternativeSubmit1
                     }}
                     enforcedValue={
-                        !storedObject['step10']?.data?.locations[0].huManagement
-                            ? storedObject['step10']?.data?.locations[0].name
+                        !storedObject['step15']?.data?.chosenLocation.huManagement
+                            ? storedObject['step15']?.data?.chosenLocation.name
                             : undefined
                     }
                     checkComponent={(data: any) => <HandlingUnitChecks dataToCheck={data} />}
