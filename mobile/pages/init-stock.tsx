@@ -45,6 +45,7 @@ import { ArticleChecks } from 'modules/StockManagement/InitStock/ChecksAndRecord
 import { SelectArticleByStockOwnerForm } from 'modules/StockManagement/InitStock/Forms/SelectArticleByStockOwner';
 import { ScanFeature } from 'modules/StockManagement/InitStock/PagesContainer/ScanFeature';
 import { FeatureChecks } from 'modules/StockManagement/InitStock/ChecksAndRecords/FeatureChecks';
+import { SelectLocationByLevelForm } from '@CommonRadio';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -61,6 +62,7 @@ const InitStock: PageComponent = () => {
 
     const processName = 'initStock';
     // step10-> Scan location
+    // step15-> Select location by level
     // step20 -> Scan HU
     // step30 -> Scan HU model
     // step40 -> Scan Article
@@ -93,15 +95,16 @@ const InitStock: PageComponent = () => {
 
     useEffect(() => {
         const object: { [k: string]: any } = {};
-        if (storedObject['step10']?.data) {
-            const location = storedObject['step10']?.data?.locations[0];
-            object[t('common:location')] = location?.name;
+
+        if (storedObject['step15']?.data?.chosenLocation) {
+            object[t('common:location_abbr')] = storedObject['step15']?.data?.chosenLocation.name;
         }
         if (
             storedObject['step10']?.data &&
+            storedObject['step15']?.data &&
             !storedObject['step10']?.data?.locations[0].huManagement
         ) {
-            const huName = storedObject['step10']?.data?.locations[0].name;
+            const huName = storedObject['step15']?.data?.chosenLocation.name;
             object[t('common:hu')] = huName;
         } else if (storedObject['step20']?.data) {
             storedObject['step20']?.data &&
@@ -151,14 +154,14 @@ const InitStock: PageComponent = () => {
     }, [originDisplay, finalDisplay, headerContent]);
 
     const onReset = () => {
-        storage.removeAll();
+        storage.remove(processName);
         setHeaderContent(false);
         setTriggerRender(!triggerRender);
     };
 
     const previousPage = () => {
         router.back();
-        storage.removeAll();
+        storage.remove(processName);
         setHeaderContent(false);
     };
     return (
@@ -200,7 +203,18 @@ const InitStock: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject['step10']?.data && !storedObject['step20']?.data ? (
+            {storedObject['step10']?.data && !storedObject['step15']?.data ? (
+                <SelectLocationByLevelForm
+                    process={processName}
+                    stepNumber={15}
+                    buttons={{ submitButton: true, backButton: true }}
+                    trigger={{ triggerRender, setTriggerRender }}
+                    locations={storedObject['step10'].data.locations}
+                ></SelectLocationByLevelForm>
+            ) : (
+                <></>
+            )}
+            {storedObject['step15']?.data && !storedObject['step20']?.data ? (
                 <ScanHandlingUnit
                     process={processName}
                     stepNumber={20}
