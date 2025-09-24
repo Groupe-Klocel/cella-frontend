@@ -5,11 +5,5 @@
     "login": "Log in",
     "error-message-empty-input": "Field must not be empty",
     "login-success": "You are now logged in",
-    "please-reset-password": "Please reset your password",
-    "SSO-000001": "No user found matching this email address",
-    "SSO-000002": "SSO login is required",
-    "SSO-000003": "The 'sso_metadata' field is required.",
-    "SSO-000004": "The 'sso_front_secret' field is missing or invalid.",
-    "SSO-000005": "The SSO token is invalid or has expired. Please log in again.",
-    "SSO-000006": "Unable to verify the SSO token. Please contact the administrator."
+    "please-reset-password": "Please reset your password"
 }

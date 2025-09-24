@@ -154,6 +154,28 @@ mutation CreateLocation($input: CreateLocationInput!) {
     }
 }
 
+mutation BulkCreateLocations($input: BulkCreateLocationsInput!) {
+    bulkCreateLocations(input: $input) {
+        id
+        name
+        barcode
+        aisle
+        column
+        level
+        position
+        replenish
+        blockId
+        block {
+            name
+        }
+        replenishType
+        constraint
+        comment
+        baseUnitRotation
+        allowCycleCountStockMin
+    }
+}
+
 mutation DeleteLocation($id: String!) {
     deleteLocation(id: $id)
 }

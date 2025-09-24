@@ -178,20 +178,20 @@ function decodeJWT(token: String) {
     return JSON.parse(jsonPayload);
 }
 
-const showSuccess = (messageText: string, duration?: number) => {
-    message.success(messageText, duration);
+const showSuccess = (messageText: string) => {
+    message.success(messageText);
 };
 
-const showInfo = (messageText: string, duration?: number) => {
-    message.info(messageText, duration);
+const showInfo = (messageText: string) => {
+    message.info(messageText);
 };
 
-const showError = (messageText: string, duration?: number) => {
-    message.error(messageText, duration);
+const showError = (messageText: string) => {
+    message.error(messageText);
 };
 
-const showWarning = (messageText: string, duration?: number) => {
-    message.warning(messageText, duration);
+const showWarning = (messageText: string) => {
+    message.warning(messageText);
 };
 
 const pathParams = (pathname: string, id: string) => {
