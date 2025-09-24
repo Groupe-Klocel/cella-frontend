@@ -143,103 +143,9 @@ const AppTable: FC<IAppTableProps> = ({
         e.render ? e : (e = { ...e, render: render })
     );
 
-    // Make each row checkable
-
-    // const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
-
-    // const rowSelection = {
-    //     selectedRowKeys,
-    //     onChange: (selectedRowKeys: Key[], record: any) => {
-    //         setSelectedRowKeys(selectedRowKeys);
-    //     }
-    // };
-
-    // give a deleteMutation to app table to know what data type should be deleted
-    // const deleteRecords = () => {
-    //     if (Array.isArray(selectedRowKeys) && selectedRowKeys.length) {
-    //         // trigger delete mutation
-    //         alert(`delete articles ${JSON.stringify(selectedRowKeys)}`);
-    //     } else {
-    //         showError(t('messages:action-impossible', { name: t('actions:delete') }));
-    //     }
-    // };
-
-    // make wrapper function to give child
-
-    const childSetVisibleColumnKeys = useCallback(
-        (val: any) => {
-            setVisibleColumnKeys(val);
-        },
-        [setVisibleColumnKeys]
-    );
-
-    // make wrapper function to give child
-    const childSetFixedColumns = useCallback(
-        (val: any) => {
-            setFixedColumns(val);
-        },
-        [setFixedColumns]
-    );
-
-    // make wrapper function to give child
-    const childSetTableColumns = useCallback(
-        (val: any) => {
-            setFilteredColumns(val);
-        },
-        [setFilteredColumns]
-    );
-
     const handlePaginationChange = (page: number, pageSize: number) => {
         setPagination(page, pageSize);
     };
-
-    const handleReset = () => {
-        const filteredKeys = allColumnKeys.filter((x) => {
-            return !hiddenColumns.includes(x);
-        });
-        setVisibleColumnKeys(filteredKeys);
-        setTableColumns(columns);
-        filterDrawerRef!.current.reset(filteredKeys, setCustomColumnsProps(columns));
-    };
-
-    const handleSave = () => {
-        setOnSave(true);
-        closeDrawer();
-    };
-
-    const dispatchDrawer = useDrawerDispatch();
-
-    const closeDrawer = useCallback(
-        () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
-        [dispatchDrawer]
-    );
-
-    const openFilterDrawer = useCallback(
-        () =>
-            dispatchDrawer({
-                size: 700,
-                type: 'OPEN_DRAWER',
-                title: 'actions:filter',
-                cancelButtonTitle: 'actions:reset',
-                cancelButton: true,
-                onCancel: () => handleReset(),
-                comfirmButtonTitle: 'actions:save',
-                comfirmButton: true,
-                onComfirm: () => handleSave(),
-                content: (
-                    <TableFilter
-                        ref={filterDrawerRef}
-                        columnsToFilter={filteredColumns}
-                        visibleKeys={visibleColumnKeys}
-                        fixKeys={fixedColumns}
-                        onSort={childSetTableColumns}
-                        onShowChange={childSetVisibleColumnKeys}
-                        onFixed={childSetFixedColumns}
-                    />
-                )
-            }),
-        [dispatchDrawer, visibleColumnKeys, filteredColumns]
-    );
 
     useEffect(() => {
         if (visibleColumnKeys) {
@@ -272,21 +178,6 @@ const AppTable: FC<IAppTableProps> = ({
         <PageTableContentWrapper>
             <WrapperStickyActions>
                 <Space direction="vertical">
-                    {/* {stickyActions?.delete && (
-                        <Button
-                            icon={<DeleteOutlined />}
-                            onClick={deleteRecords}
-                            type="primary"
-                            danger
-                        />
-                    )} */}
-                    {filter && (
-                        <Button
-                            type="primary"
-                            icon={<SettingOutlined />}
-                            onClick={() => openFilterDrawer()}
-                        />
-                    )}
                     {stickyActions?.export.active && (
                         <Button
                             icon={<FileExcelOutlined />}
