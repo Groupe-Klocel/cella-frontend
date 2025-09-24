@@ -311,7 +311,6 @@ const useCreate = (resolverName: string, queryName: string, fields: Array<string
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [result, setResult] = useState<any>({ data: null, success: false });
-    console.log('DLA - useCreate - result:', result);
 
     const mutate = (variables: any) => {
         setIsLoading(true);

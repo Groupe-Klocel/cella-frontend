@@ -98,22 +98,43 @@ const ListFilters: FC<IGeneralSearchProps> = ({
         }
     }, [resetForm]);
 
-    // #region handle configs/params options if any
     async function getConfigsAndParametersByScopes(
         columns: any[]
     ): Promise<{ [key: string]: any }> {
         const result: { [key: string]: any } = {};
-        configs.forEach((item: any) => {
-            if (!result[item.scope]) {
-                result[item.scope] = [];
-            }
-            const value =
-                filterLanguage && item.translation && item.translation[`${filterLanguage}`]
-                    ? item.translation[`${filterLanguage}`]
-                    : item.value;
-            result[item.scope].push({
-                key: isNumeric(item.code) ? parseInt(item.code) : item.code,
-                text: value
+        const configScopes = columns
+            .filter((obj) => obj.hasOwnProperty('config') && obj.config !== undefined)
+            .map((obj) => obj.config);
+
+        configs
+            .filter((item: any) => configScopes.includes(item.scope))
+            .forEach((item: any) => {
+                if (!result[item.scope]) {
+                    result[item.scope] = [];
+                }
+                const value =
+                    filterLanguage && item.translation && item.translation[`${filterLanguage}`]
+                        ? item.translation[`${filterLanguage}`]
+                        : item.value;
+                result[item.scope].push({
+                    key: isNumeric(item.code) ? parseInt(item.code) : item.code,
+                    text: value
+                });
+            });
+
+            Object.keys(result).forEach((scope) => {
+                result[scope].sort((a: any, b: any) => {
+                    const aIsNum = typeof a.key === 'number' || isNumeric(a.key);
+                    const bIsNum = typeof b.key === 'number' || isNumeric(b.key);
+
+                    if (aIsNum && bIsNum) {
+                        return Number(a.key) - Number(b.key);
+                    } else if (!aIsNum && !bIsNum) {
+                        return String(a.key).localeCompare(String(b.key));
+                    } else {
+                        return aIsNum ? -1 : 1;
+                    }
+                });
             });
             Object.keys(result).forEach((scope) => {
                 result[scope].sort((a: any, b: any) => {
@@ -131,17 +152,39 @@ const ListFilters: FC<IGeneralSearchProps> = ({
             });
         });
 
-        parameters.forEach((item: any) => {
-            if (!result[item.scope]) {
-                result[item.scope] = [];
-            }
-            const value =
-                filterLanguage && item.translation && item.translation[`${filterLanguage}`]
-                    ? item.translation[`${filterLanguage}`]
-                    : item.value;
-            result[item.scope].push({
-                key: isNumeric(item.code) ? parseInt(item.code) : item.code,
-                text: value
+        const paramScopes = columns
+            .filter((obj) => obj.hasOwnProperty('param') && obj.param !== undefined)
+            .map((obj) => obj.param);
+
+        parameters
+            .filter((item: any) => paramScopes.includes(item.scope))
+            .forEach((item: any) => {
+                if (!result[item.scope]) {
+                    result[item.scope] = [];
+                }
+                const value =
+                    filterLanguage && item.translation && item.translation[`${filterLanguage}`]
+                        ? item.translation[`${filterLanguage}`]
+                        : item.value;
+                result[item.scope].push({
+                    key: isNumeric(item.code) ? parseInt(item.code) : item.code,
+                    text: value
+                });
+            });
+
+            Object.keys(result).forEach((scope) => {
+                result[scope].sort((a: any, b: any) => {
+                    const aIsNum = typeof a.key === 'number' || isNumeric(a.key);
+                    const bIsNum = typeof b.key === 'number' || isNumeric(b.key);
+
+                    if (aIsNum && bIsNum) {
+                        return Number(a.key) - Number(b.key);
+                    } else if (!aIsNum && !bIsNum) {
+                        return String(a.key).localeCompare(String(b.key));
+                    } else {
+                        return aIsNum ? -1 : 1;
+                    }
+                });
             });
             Object.keys(result).forEach((scope) => {
                 result[scope].sort((a: any, b: any) => {
@@ -257,8 +300,6 @@ const ListFilters: FC<IGeneralSearchProps> = ({
 
     // #region add information to columns once available
     useEffect(() => {
-        form.resetFields();
-
         // Fix: Initialize tempAllSubOptions with correct typing
         const tempAllSubOptions: Array<{ [key: string]: any }> = [];
 
