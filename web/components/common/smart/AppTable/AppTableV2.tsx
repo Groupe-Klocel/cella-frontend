@@ -95,7 +95,6 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     pagination,
     setPagination,
     dataModel,
-    hiddenColumns,
     rowSelection,
     linkFields,
     components,
@@ -106,8 +105,6 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     const { t } = useTranslation();
     const router = useRouter();
     // get filter from cookies if exist
-    const filterDrawerRef = useRef() as any | undefined;
-    const allColumnKeys = getKeys(columns);
     const state = useAppState();
     const dispatch = useAppDispatch();
     const { graphqlRequestClient } = useAuth();
@@ -117,43 +114,13 @@ const AppTableV2: FC<IAppTableV2Props> = ({
             return `${dataModel.resolverName}${router.pathname}` === item.code;
         })
     );
-    const initialState = userSettings?.valueJson?.visibleCollumns;
 
-    const [visibleColumnKeys, setVisibleColumnKeys] = useState<Key[]>(
-        initialState
-            ? initialState.visibleColumnKeys
-            : allColumnKeys.filter((x) => !hiddenColumns.includes(x))
-    );
-    const [fixedColumns, setFixedColumns] = useState<Key[]>(initialState?.fixedColumns ?? []);
-    const [filteredColumns, setFilteredColumns] = useState<any[]>(
-        initialState?.filteredColumns ?? columns
-    );
-    const [tableColumns, setTableColumns] = useState<any[]>(columns);
-
-    useEffect(() => {
-        if (initialState) {
-            const storedArray = initialState.filteredColumns;
-            console.log('AXC - AppTableV2.tsx - AppTableV2 - storedArray:', storedArray);
-            const inputArray = checkKeyPresenceInArray('render', columns);
-            const titleCheck = checkKeyPresenceInArray('title', columns);
-            storedArray.map((a: any) => {
-                const exists = inputArray.find((b) => a.key == b.key);
-                const titles = titleCheck.find((b) => a.key == b.key);
-                if (exists) {
-                    a.render = exists.render;
-                }
-                if (titles) {
-                    a.title = titles.title;
-                }
-                return a;
-            });
-
-            setFilteredColumns(storedArray);
-            setVisibleColumnKeys(initialState.visibleColumnKeys ?? visibleColumnKeys);
-            setFixedColumns(initialState.fixedColumns);
-            setTableColumns(storedArray);
-        }
-    }, [initialState]);
+    let initialState = userSettings?.valueJson?.allCollumnsInfos;
+    if (initialState && columns.filter((col) => col.key === 'actions').length > 0) {
+        initialState = initialState?.filter((col: any) => col.key !== 'actions');
+        initialState = [columns.find((col) => col.key === 'actions'), ...initialState];
+    }
+    const [allCollumns, setAllCollumns] = useState<any[]>(initialState ?? columns);
 
     // Format data only when it changes
     useEffect(() => {
@@ -167,21 +134,13 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     async function updateUserSettings(
         columnsWidth?: any,
         newUserSettings?: any,
-        newFilteredColumns?: any,
-        newTableColumns?: any,
-        newVisibleColumnKeys?: any,
-        newFixedColumns?: any
+        allCollumnsInfos?: any
     ) {
         const newsSettings = {
             ...newUserSettings,
             valueJson: {
                 ...newUserSettings?.valueJson,
-                visibleCollumns: {
-                    filteredColumns: newFilteredColumns ?? filteredColumns,
-                    tableColumns: newTableColumns ?? tableColumns,
-                    visibleColumnKeys: newVisibleColumnKeys ?? visibleColumnKeys,
-                    fixedColumns: newFixedColumns ?? fixedColumns
-                },
+                allCollumnsInfos: allCollumnsInfos ?? allCollumns,
                 columnsWidth: columnsWidth ?? newUserSettings?.valueJson?.columnsWidth ?? {}
             }
         };
@@ -220,47 +179,19 @@ const AppTableV2: FC<IAppTableV2Props> = ({
 
     // 2. Debounce wrapper for updateUserSettings
     const debouncedUpdateUserSettings = useRef(
-        debounce(
-            (
-                columnsWidth: any,
-                newUserSettings?: any,
-                filteredColumns?: any,
-                tableColumns?: any,
-                visibleColumnKeys?: any,
-                fixedColumns?: any
-            ) => {
-                updateUserSettings(
-                    columnsWidth,
-                    newUserSettings,
-                    filteredColumns,
-                    tableColumns,
-                    visibleColumnKeys,
-                    fixedColumns
-                );
-            },
-            500
-        )
+        debounce((columnsWidth: any, newUserSettings?: any, allCollumnsInfos?: any) => {
+            updateUserSettings(columnsWidth, newUserSettings, allCollumnsInfos);
+        }, 500)
     ).current;
 
     // #endregion
 
     // #region createUsersSettings
 
-    async function createUsersSettings(
-        columnsWidth?: any,
-        newFilteredColumns?: any,
-        newTableColumns?: any,
-        newVisibleColumnKeys?: any,
-        newFixedColumns?: any
-    ) {
+    async function createUsersSettings(columnsWidth?: any, allCollumnsInfos?: any) {
         const newsSettings = {
             valueJson: {
-                visibleCollumns: {
-                    filteredColumns: newFilteredColumns ?? filteredColumns,
-                    tableColumns: newTableColumns ?? tableColumns,
-                    visibleColumnKeys: newVisibleColumnKeys ?? visibleColumnKeys,
-                    fixedColumns: newFixedColumns ?? fixedColumns
-                },
+                allCollumnsInfos: allCollumnsInfos ?? allCollumns,
                 columnsWidth: columnsWidth ?? {}
             },
             code: `${dataModel.resolverName}${router.pathname}`,
@@ -291,24 +222,9 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     }
 
     const debouncedCreateUsersSettings = useRef(
-        debounce(
-            (
-                columnsWidth: any,
-                filteredColumns?: any,
-                tableColumns?: any,
-                visibleColumnKeys?: any,
-                fixedColumns?: any
-            ) => {
-                createUsersSettings(
-                    columnsWidth,
-                    filteredColumns,
-                    tableColumns,
-                    visibleColumnKeys,
-                    fixedColumns
-                );
-            },
-            500
-        )
+        debounce((columnsWidth: any, allCollumnsInfos?: any) => {
+            createUsersSettings(columnsWidth, allCollumnsInfos);
+        }, 500)
     ).current;
 
     // #endregion
@@ -320,31 +236,11 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         };
     }, []);
 
-    function changeFilter(
-        columnWidths: any,
-        userSettings: any,
-        filteredColumns: any,
-        tableColumns: any,
-        visibleColumnKeys: any,
-        fixedColumns: any
-    ) {
+    function changeFilter(columnWidths: any, userSettings: any, allCollumnsInfos: any) {
         if (userSettings) {
-            debouncedUpdateUserSettings(
-                columnWidths,
-                userSettings,
-                filteredColumns,
-                tableColumns,
-                visibleColumnKeys,
-                fixedColumns
-            );
+            debouncedUpdateUserSettings(columnWidths, userSettings, allCollumnsInfos);
         } else {
-            debouncedCreateUsersSettings(
-                columnWidths,
-                filteredColumns,
-                tableColumns,
-                visibleColumnKeys,
-                fixedColumns
-            );
+            debouncedCreateUsersSettings(columnWidths, allCollumnsInfos);
         }
     }
 
@@ -365,7 +261,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         return text;
     };
 
-    const columnWithLinks = tableColumns.map((e: any) => {
+    const columnWithLinks = allCollumns.map((e: any) => {
         // if the column is in linkFields.name too, do the following
         const linkObject = linkFields.find((item: any) => item.name === e.dataIndex);
 
@@ -394,34 +290,6 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     const newTableColumns = columnWithLinks.map((e: any) =>
         e.render ? e : (e = { ...e, render: render })
     );
-    // make wrapper function to give child
-
-    const childSetVisibleColumnKeys = useCallback(
-        (val: any) => {
-            setVisibleColumnKeys(val);
-        },
-        [setVisibleColumnKeys]
-    );
-
-    // make wrapper function to give child
-    const childSetFixedColumns = useCallback(
-        (val: any) => {
-            setFixedColumns(val);
-        },
-        [setFixedColumns]
-    );
-
-    // make wrapper function to give child
-    const childSetTableColumns = useCallback(
-        (val: any) => {
-            const valWithoutDuplicates = val.filter(
-                (obj: any, index: number, self: any) =>
-                    index === self.findIndex((t: any) => t.key === obj.key)
-            );
-            setFilteredColumns(valWithoutDuplicates);
-        },
-        [setFilteredColumns]
-    );
 
     const handlePaginationChange = (page: number, pageSize: number) => {
         setPagination(page, pageSize);
@@ -430,24 +298,11 @@ const AppTableV2: FC<IAppTableV2Props> = ({
     const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
 
     const handleReset = () => {
-        const filteredKeys = allColumnKeys.filter((x) => {
-            return !hiddenColumns.includes(x);
-        });
-
-        setVisibleColumnKeys(filteredKeys);
-        setTableColumns(columnWithLinks);
-        filterDrawerRef!.current.reset(filteredKeys, setCustomColumnsProps(columns));
+        setAllCollumns(columns);
     };
 
     const handleSave = () => {
-        changeFilter(
-            filterDrawerRef!.current.columnWidths,
-            userSettings,
-            filteredColumns,
-            tableColumns,
-            visibleColumnKeys,
-            fixedColumns
-        );
+        changeFilter(undefined, userSettings, allCollumns);
         setIsSearchDrawerOpen(false);
     };
 
@@ -463,33 +318,12 @@ const AppTableV2: FC<IAppTableV2Props> = ({
             comfirmButtonTitle: 'actions:save',
             comfirmButton: true,
             content: (
-                <TableFilter
-                    ref={filterDrawerRef}
-                    columnsToFilter={filteredColumns}
-                    visibleKeys={visibleColumnKeys}
-                    fixKeys={fixedColumns}
-                    onSort={childSetTableColumns}
-                    onShowChange={childSetVisibleColumnKeys}
-                    onFixed={childSetFixedColumns}
-                />
+                <TableFilter allColumnsInfos={allCollumns} setAllColumnsInfos={setAllCollumns} />
             ),
             onComfirm: () => handleSave(),
             onCancel: () => handleReset()
         } as any;
     }
-
-    useEffect(() => {
-        if (visibleColumnKeys) {
-            if (visibleColumnKeys.length) {
-                const temp = filteredColumns.filter((f: any) => visibleColumnKeys.includes(f.key));
-                setTableColumns(temp);
-            } else {
-                setTableColumns(filteredColumns);
-            }
-        }
-
-        return () => {};
-    }, [visibleColumnKeys, filteredColumns]);
 
     const dataSource = isDragAndDroppable
         ? items!.map((item: any, index: number) => ({
@@ -581,10 +415,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                         [col.key]: Math.max(newWidth, 80)
                     },
                     userSettings,
-                    filteredColumns,
-                    tableColumns,
-                    visibleColumnKeys,
-                    fixedColumns
+                    allCollumns
                 );
             }
         })
@@ -660,6 +491,7 @@ const AppTableV2: FC<IAppTableV2Props> = ({
                 {resizableColumns.map((c) => {
                     return (
                         <Column
+                            hidden={c.hidden}
                             title={() => {
                                 return (
                                     <>
@@ -712,16 +544,5 @@ const AppTableV2: FC<IAppTableV2Props> = ({
 };
 
 AppTableV2.displayName = 'AppTableV2';
-
-AppTableV2.defaultProps = {
-    stickyActions: {
-        export: {
-            active: false
-        }
-        // delete: false
-    },
-    filter: true,
-    scroll: { x: '100%' }
-};
 
 export { AppTableV2 };
