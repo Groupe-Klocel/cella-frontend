@@ -225,20 +225,20 @@ function decodeJWT(token: string) {
     return JSON.parse(jsonPayload);
 }
 
-const showSuccess = (messageText: string, duration?: number) => {
-    message.success(messageText, duration);
+const showSuccess = (messageText: string) => {
+    message.success(messageText);
 };
 
-const showInfo = (messageText: string, duration?: number) => {
-    message.info(messageText, duration);
+const showInfo = (messageText: string) => {
+    message.info(messageText);
 };
 
-const showError = (messageText: string, duration?: number) => {
-    message.error(messageText, duration);
+const showError = (messageText: string) => {
+    message.error(messageText);
 };
 
-const showWarning = (messageText: string, duration?: number) => {
-    message.warning(messageText, duration);
+const showWarning = (messageText: string) => {
+    message.warning(messageText);
 };
 
 const pathParams = (pathname: string, id: string) => {
@@ -373,19 +373,7 @@ function formatUTCLocaleDate(date: any, locale: any) {
 }
 
 function removeDuplicatesAndSort(arr: any[]) {
-    return Array.from(new Set(arr)).sort((a, b) => {
-        const aNum = Number(a);
-        const bNum = Number(b);
-
-        const aIsNum = !isNaN(aNum);
-        const bIsNum = !isNaN(bNum);
-
-        if (aIsNum && bIsNum) {
-            return aNum - bNum; // Numeric sort
-        }
-
-        return String(a).localeCompare(String(b));
-    });
+    return Array.from(new Set(arr)).sort((a, b) => a - b);
 }
 
 function pascalToSnakeUpper(pascalCase: string): string {
@@ -523,6 +511,22 @@ function queryString(
         newSort = sort;
     }
 
+    // Sort fields to put relationships at the end
+    const sortedFields = fields.sort((a, b) => {
+        const matchA = a.match(/(.+){(.+)}/);
+        const matchB = b.match(/(.+){(.+)}/);
+
+        if (matchA && matchB) {
+            return 0;
+        } else if (matchA) {
+            return 1;
+        } else if (matchB) {
+            return -1;
+        } else {
+            return 0;
+        }
+    });
+
     const queryString = `query{
         ${queryName}(
             filters: ${search ? JSON.stringify(search).replace(/"(\w+)":/g, '$1:') : undefined}
@@ -535,7 +539,7 @@ function queryString(
             itemsPerPage
             totalPages
             results {
-                ${fields.join('\n')}
+                ${sortedFields.join('\n')}
             }
         }
     }`;

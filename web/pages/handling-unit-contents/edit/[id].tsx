@@ -33,7 +33,7 @@ const EditHandlingUnitPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={`${t('actions:edit')} ${t('common:handling-unit-content')}`} />
+            <AppHead title={`${t('actions:edit')} ${t('menu:equipment')}`} />
             <EditHandlingUnitContent id={id!} />
         </>
     );

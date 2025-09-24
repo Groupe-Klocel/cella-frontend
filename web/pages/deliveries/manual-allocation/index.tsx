@@ -153,7 +153,7 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
                 checkbox={true}
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}
-                itemperpage={1000}
+                itemperpage={200}
             />
         </>
     );

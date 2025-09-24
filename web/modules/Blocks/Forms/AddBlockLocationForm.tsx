@@ -23,8 +23,11 @@ import { Button, Checkbox, Divider, Form, Input, InputNumber, Modal, Select, Spa
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { useAuth } from 'context/AuthContext';
 import {
+    BulkCreateLocationsMutation,
+    BulkCreateLocationsMutationVariables,
     GetReplenishTypesConfigsQuery,
     GetRotationsParamsQuery,
+    useBulkCreateLocationsMutation,
     useGetReplenishTypesConfigsQuery,
     useGetRotationsParamsQuery,
     useListConfigsForAScopeQuery
@@ -33,7 +36,6 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';
-import { gql } from 'graphql-request';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -55,7 +57,6 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
     const [selectedReplenishType, setSelectedReplenishType] = useState<any>(null);
     const [categoriesTexts, setCategoriesTexts] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
-    const [createLoading, setCreateLoading] = useState(false);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -121,45 +122,25 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
         };
     }, [unsavedChanges]);
 
-    const bulkCreateLocation = async (formData: any) => {
-        const blockId = formData['input']['blockId'];
-        setCreateLoading(true);
-        try {
-            const query = gql`
-                mutation executeFunction($functionName: String!, $event: JSON!) {
-                    executeFunction(functionName: $functionName, event: $event) {
-                        status
-                        output
-                    }
-                }
-            `;
-            const variables = {
-                functionName: 'bulk_create_locations',
-                event: {
-                    ...formData
-                }
-            };
-
-            const response = await graphqlRequestClient.request(query, variables);
-
-            if (response.executeFunction.status === 'ERROR') {
-                showError(response.executeFunction.output);
-            } else if (
-                response.executeFunction.status === 'OK' &&
-                response.executeFunction.output.status === 'KO'
-            ) {
-                showError(t(`errors:${response.executeFunction.output.output.code}`));
-                console.log('Backend_message', response.executeFunction.output.output);
-            } else {
+    const { mutate, isPending: createLoading } = useBulkCreateLocationsMutation<Error>(
+        graphqlRequestClient,
+        {
+            onSuccess: (
+                data: BulkCreateLocationsMutation,
+                _variables: BulkCreateLocationsMutationVariables,
+                _context: any
+            ) => {
+                router.push(`/blocks/${props.blockId}`);
                 showSuccess(t('messages:success-created'));
-                router.push(`/blocks/${blockId}`);
+            },
+            onError: () => {
+                showError(t('messages:error-creating-data'));
             }
-            setCreateLoading(false);
-        } catch (error) {
-            showError(t('messages:error-executing-function'));
-            console.log('executeFunctionError', error);
-            setCreateLoading(false);
         }
+    );
+
+    const bulkCreateLocation = ({ input }: BulkCreateLocationsMutationVariables) => {
+        mutate({ input });
     };
 
     const onReplenishChange = (e: CheckboxChangeEvent) => {

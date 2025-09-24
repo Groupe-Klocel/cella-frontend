@@ -322,6 +322,55 @@ const DragAndDropAppTable: FC<IDragAndDropAppTableProps> = ({
         setPagination(page, pageSize);
     };
 
+    const handleReset = () => {
+        const filteredKeys = allColumnKeys.filter((x) => {
+            return !hiddenColumns.includes(x);
+        });
+
+        setVisibleColumnKeys(filteredKeys);
+        setTableColumns(columnWithLinks);
+        filterDrawerRef!.current.reset(filteredKeys, setCustomColumnsProps(columns));
+    };
+
+    const handleSave = () => {
+        setOnSave(true);
+        closeDrawer();
+    };
+
+    const dispatchDrawer = useDrawerDispatch();
+
+    const closeDrawer = useCallback(
+        () => dispatchDrawer({ type: 'CLOSE_DRAWER' }),
+        [dispatchDrawer]
+    );
+
+    const openFilterDrawer = useCallback(
+        () =>
+            dispatchDrawer({
+                size: 700,
+                type: 'OPEN_DRAWER',
+                title: 'actions:filter',
+                cancelButtonTitle: 'actions:reset',
+                cancelButton: true,
+                onCancel: () => handleReset(),
+                comfirmButtonTitle: 'actions:save',
+                comfirmButton: true,
+                onComfirm: () => handleSave(),
+                content: (
+                    <TableFilter
+                        ref={filterDrawerRef}
+                        columnsToFilter={filteredColumns}
+                        visibleKeys={visibleColumnKeys}
+                        fixKeys={fixedColumns}
+                        onSort={childSetTableColumns}
+                        onShowChange={childSetVisibleColumnKeys}
+                        onFixed={childSetFixedColumns}
+                    />
+                )
+            }),
+        [dispatchDrawer, visibleColumnKeys, filteredColumns]
+    );
+
     useEffect(() => {
         if (visibleColumnKeys) {
             if (visibleColumnKeys.length) {
@@ -350,6 +399,21 @@ const DragAndDropAppTable: FC<IDragAndDropAppTableProps> = ({
         <PageTableContentWrapper>
             <WrapperStickyActions>
                 <Space direction="vertical">
+                    {/* {stickyActions?.delete && (
+                        <Button
+                            icon={<DeleteOutlined />}
+                            onClick={deleteRecords}
+                            type="primary"
+                            danger
+                        />
+                    )} */}
+                    {filter && (
+                        <Button
+                            type="primary"
+                            icon={<SettingOutlined />}
+                            onClick={() => openFilterDrawer()}
+                        />
+                    )}
                     {stickyActions?.export.active && (
                         <Button
                             icon={<FileExcelOutlined />}

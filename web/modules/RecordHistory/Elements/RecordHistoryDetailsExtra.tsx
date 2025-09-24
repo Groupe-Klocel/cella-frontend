@@ -47,9 +47,6 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
         actionsComponent: null
     };
 
-    modelBefore.moreInfos = 'Before';
-    modelAfter.moreInfos = 'After';
-
     return (
         <>
             <Divider />

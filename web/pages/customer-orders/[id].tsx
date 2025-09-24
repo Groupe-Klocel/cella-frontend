@@ -167,7 +167,7 @@ const CustomerOrderPage: PageComponent = () => {
 
     // confirm and execute delivery creation function
     const [isCreateDeliveryLoading, setIsCreateDeliveryLoading] = useState(false);
-    const createDelivery = (orderIds: [string], isSingle: boolean = false) => {
+    const createDelivery = (orderIds: [string]) => {
         Modal.confirm({
             title: t('messages:create-delivery-confirm'),
             onOk: async () => {
@@ -183,10 +183,9 @@ const CustomerOrderPage: PageComponent = () => {
                 `;
 
                 const variables = {
-                    functionName: 'order_delivery',
+                    functionName: 'K_orderDelivery',
                     event: {
-                        orderIds,
-                        isSingleDelivery: isSingle
+                        orderIds
                     }
                 };
 

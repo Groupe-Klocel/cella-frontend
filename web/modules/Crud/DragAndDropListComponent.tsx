@@ -934,6 +934,7 @@ const DragAndDropListComponent = (props: IListProps) => {
         defaultModelSort,
         advancedFilters
     );
+    console.log('AXC - DragAndDropListComponent.tsx - data:', data);
 
     // #endregion
 

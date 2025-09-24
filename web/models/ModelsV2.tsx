@@ -90,7 +90,6 @@ export type ModelType = {
     isSoftDeletable: boolean;
     endpoints: EndpointsType;
     fieldsInfo: FieldsInfo;
-    moreInfos?: string;
 };
 
 export type idNameObjectType = {

@@ -86,6 +86,10 @@ export const EditConfigParamForm: FC<IEditItemFormProps> = (props: IEditItemForm
         if (!(updateResult && updateResult.data)) return;
 
         if (updateResult.success) {
+            console.log(
+                'AXC - EditConfigParamFormV2.tsx - updateResult:',
+                updateResult.data[props.dataModel.endpoints.update]
+            );
             setUnsavedChanges(false);
             dispatchToReducer({
                 type: ('update_' + props.dataModel.endpoints.list).toUpperCase(),

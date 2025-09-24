@@ -55,6 +55,10 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
         scope: 'stock_statuses',
         language: locale === 'en-US' ? 'en' : locale
     });
+    console.log(
+        'AXC - GoodsInOrPoChecks.tsx - GoodsInOrPoChecks - stockStatusList:',
+        stockStatusList.data || []
+    );
 
     //ScanGoodsInPO-2: launch query for barcodes handling
     const [fetchResult, setFetchResult] = useState<any>();

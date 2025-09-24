@@ -36,6 +36,7 @@ export interface IItemDetailsProps {
 }
 
 const RuleDetailsExtra = ({ ruleId, rule }: IItemDetailsProps) => {
+    console.log('AXC - RuleDetailsExtra.tsx - RuleDetailsExtra - rule:', rule);
     const { t } = useTranslation();
     const { permissions } = useAppState();
     const [idToDeleteVersion, setIdToDeleteVersion] = useState<string | undefined>();

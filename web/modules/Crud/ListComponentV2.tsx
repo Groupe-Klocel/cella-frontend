@@ -17,25 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import {
-    CheckCircleOutlined,
-    CloseSquareOutlined,
-    FileExcelOutlined,
-    ReloadOutlined,
-    SearchOutlined,
-    SettingOutlined
-} from '@ant-design/icons';
-import {
-    TableFilter,
-    ContentSpin,
-    DraggableItem,
-    HeaderContent,
-    DrawerItems,
-    PageTableContentWrapper,
-    WrapperStickyActions
-} from '@components';
-import { Space, Form, Button, Empty, Alert, Badge, Tag, Spin, Table, Typography } from 'antd';
-import { isNumeric, useTranslationWithFallback as useTranslation } from '@helpers';
+import { SearchOutlined } from '@ant-design/icons';
+import { AppTableV2, ContentSpin, DraggableItem, HeaderContent, DrawerItems } from '@components';
+import { Space, Form, Button, Empty, Alert, Badge, Tag, Spin } from 'antd';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
@@ -65,10 +50,9 @@ import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, filter, isString, set } from 'lodash';
+import _, { debounce, filter, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { log } from 'console';
 
 export type HeaderData = {
     title: string;
@@ -127,9 +111,6 @@ export interface newPaginationType {
     itemsPerPage: number;
 }
 
-const { Column } = Table;
-const { Link } = Typography;
-
 const ListComponent = (props: IListProps) => {
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
@@ -143,6 +124,7 @@ const ListComponent = (props: IListProps) => {
     const dispatch = useAppDispatch();
     const [firstLoad, setFirstLoad] = useState<boolean>(true);
     const [rows, setRows] = useState<DataQueryType>();
+    const [columns, setColumns] = useState<Array<any>>([]);
     const [selectCase, setSelectCase] = useState<string[]>([]);
     const [selectJoker, setSelectJoker] = useState<string[]>([]);
     const [advancedFilters, setAdvancedFilters] = useState<any>(
@@ -152,48 +134,18 @@ const ListComponent = (props: IListProps) => {
                 : [props.advancedFilters]
             : []
     );
-    const resolverName = props.dataModel.moreInfos
-        ? `${props.dataModel.resolverName}${props.dataModel.moreInfos}`
-        : props.dataModel.resolverName;
     const [userSettings, setUserSettings] = useState<any>(
         state?.userSettings?.find((item: any) => {
-            return `${resolverName}${router.pathname}` === item.code;
+            return `${props.dataModel.resolverName}${router.pathname}` === item.code;
         })
     );
-
-    let initialState = userSettings?.valueJson?.allColumnsInfos;
-    const [allColumns, setAllColumns] = useState<any[]>(initialState);
-    const [initialAllColumns, setInitialAllColumns] = useState<any[]>(initialState);
-
+    const newUserSettings =
+        state?.userSettings?.find((item: any) => {
+            return `${props.dataModel.resolverName}${router.pathname}` === item.code;
+        }) ?? null;
     // Define pageName to retrieve screen permissions
     const pageName = router.pathname.split('/').filter(Boolean)[0];
     const permissionTableName = 'wm_' + pageName;
-
-    // manage empty props
-    const defaultProps = {
-        searchable: props.isDragAndDroppable ? false : true,
-        searchCriteria: {},
-        extraColumns: [],
-        actionColumns: [],
-        columnFilter: true
-    };
-    props = { ...defaultProps, ...props };
-    // SearchForm in cookies
-    const searchCriterias: any = Object.keys(props.searchCriteria).reduce(
-        (acc: any, key: string) => {
-            if (props.searchCriteria[key] !== undefined && props.searchCriteria[key] !== null) {
-                acc[key] =
-                    !Array.isArray(props.searchCriteria[key]) &&
-                    props.searchCriteria[key] !== 'String'
-                        ? [props.searchCriteria[key]]
-                        : props.searchCriteria[key];
-            }
-            return acc;
-        },
-        {}
-    );
-    let resetForm = false;
-    let showBadge = false;
 
     // #region sorter / pagination
 
@@ -272,14 +224,9 @@ const ListComponent = (props: IListProps) => {
         selectCase?: string[],
         selectJoker?: string[],
         newSubOptions?: any,
-        newAllColumnsInfos?: any,
-        newColumnWidths?: any,
-        newState?: any
+        currentUserSettings?: any
     ) {
-        const settings =
-            newState?.userSettings?.find((item: any) => {
-                return `${resolverName}${router.pathname}` === item.code;
-            }) ?? userSettings; // use latest from state
+        const settings = currentUserSettings ?? userSettings; // use latest from state
 
         const newsSettings = {
             ...settings,
@@ -294,12 +241,9 @@ const ListComponent = (props: IListProps) => {
                 sorter: newSorting ?? settings?.valueJson?.sorter ?? props.sortDefault ?? null,
                 pagination: newPagination ?? defaultPagination,
                 subOptions: newSubOptions ?? settings?.valueJson?.subOptions ?? undefined,
-                allColumnsInfos: newAllColumnsInfos ?? settings?.valueJson?.allColumnsInfos ?? null,
-                columnsWidth: newColumnWidths ?? settings?.valueJson?.columnsWidth ?? null
+                columnsWidth: settings?.valueJson?.columnsWidth ?? null
             }
         };
-        delete newsSettings.valueJson.visibleColumns;
-
         const updateQuery = gql`
             mutation (
                 $warehouseWorkerSettingsId: String!
@@ -320,7 +264,7 @@ const ListComponent = (props: IListProps) => {
             const queryInfo: any = await graphqlRequestClient.request(updateQuery, updateVariables);
             dispatch({
                 type: 'SWITCH_USER_SETTINGS',
-                userSettings: newState?.userSettings.map((item: any) => {
+                userSettings: state?.userSettings.map((item: any) => {
                     return item.id === queryInfo?.updateWarehouseWorkerSetting?.id
                         ? queryInfo.updateWarehouseWorkerSetting
                         : item;
@@ -345,16 +289,13 @@ const ListComponent = (props: IListProps) => {
         newAdvancedFilters?: any,
         selectCase?: string[],
         selectJoker?: string[],
-        newSubOptions?: any,
-        newAllColumnsInfos?: any,
-        newColumnWidths?: any,
-        newState?: any
+        newSubOptions?: any
     ) {
         if (newPagination && newPagination.current) {
             newPagination.current = 1;
         }
         const newsSettings = {
-            code: `${resolverName}${router.pathname}`,
+            code: `${props.dataModel.resolverName}${router.pathname}`,
             warehouseWorkerId: state.user.id,
             valueJson: {
                 filter: newFilter,
@@ -365,9 +306,7 @@ const ListComponent = (props: IListProps) => {
                 },
                 sorter: newSorting ?? props.sortDefault ?? null,
                 pagination: newPagination ?? defaultPagination,
-                subOptions: newSubOptions ?? undefined,
-                allColumnsInfos: newAllColumnsInfos ?? allColumns ?? undefined,
-                columnsWidth: newColumnWidths ?? {}
+                subOptions: newSubOptions ?? undefined
             }
         };
 
@@ -386,7 +325,7 @@ const ListComponent = (props: IListProps) => {
             });
             dispatch({
                 type: 'SWITCH_USER_SETTINGS',
-                userSettings: [...newState?.userSettings, queryInfo.createWarehouseWorkerSetting]
+                userSettings: [...state?.userSettings, queryInfo.createWarehouseWorkerSetting]
             });
             setUserSettings(queryInfo.createWarehouseWorkerSetting);
             setPagination({
@@ -433,9 +372,7 @@ const ListComponent = (props: IListProps) => {
                 selectCase?: string[],
                 selectJoker?: string[],
                 newSubOptions?: any,
-                newAllColumnsInfos?: any,
-                newColumnWidths?: any,
-                newState?: any
+                currentUserSettings?: any
             ) => {
                 updateUserSettings(
                     newFilter,
@@ -445,9 +382,7 @@ const ListComponent = (props: IListProps) => {
                     selectCase,
                     selectJoker,
                     newSubOptions,
-                    newAllColumnsInfos,
-                    newColumnWidths,
-                    newState
+                    currentUserSettings
                 );
             },
             500 // ms, adjust as needed
@@ -463,10 +398,7 @@ const ListComponent = (props: IListProps) => {
                 advancedFilters?: any,
                 selectCase?: string[],
                 selectJoker?: string[],
-                newSubOptions?: any,
-                newAllColumnsInfos?: any,
-                newColumnWidths?: any,
-                newState?: any
+                newSubOptions?: any
             ) => {
                 createUsersSettings(
                     newFilter,
@@ -475,10 +407,7 @@ const ListComponent = (props: IListProps) => {
                     advancedFilters,
                     selectCase,
                     selectJoker,
-                    newSubOptions,
-                    newAllColumnsInfos,
-                    newColumnWidths,
-                    newState
+                    newSubOptions
                 );
             },
             500
@@ -493,7 +422,7 @@ const ListComponent = (props: IListProps) => {
         };
     }, []);
 
-    const handleUserSettings = useCallback(
+    const changeFilter = useCallback(
         (
             newFilter: any = null,
             newSorter: any = null,
@@ -501,9 +430,7 @@ const ListComponent = (props: IListProps) => {
             newAdvancedFilters?: any,
             newSelectCase?: string[],
             newSelectJoker?: string[],
-            newSubOptions?: any,
-            newAllColumnsInfos?: any,
-            newColumnWidths?: any
+            newSubOptions?: any
         ) => {
             // Always use the latest userSettings from state
             if (userSettings) {
@@ -515,9 +442,7 @@ const ListComponent = (props: IListProps) => {
                     newSelectCase ?? selectCase,
                     newSelectJoker ?? selectJoker,
                     newSubOptions,
-                    newAllColumnsInfos,
-                    newColumnWidths,
-                    state // always use latest
+                    newUserSettings // always use latest
                 );
             } else {
                 debouncedCreateUsersSettings(
@@ -527,16 +452,13 @@ const ListComponent = (props: IListProps) => {
                     newAdvancedFilters,
                     newSelectCase,
                     newSelectJoker,
-                    newSubOptions,
-                    newAllColumnsInfos,
-                    newColumnWidths,
-                    state // always use latest
+                    newSubOptions
                 );
             }
         },
         [
             userSettings,
-            state,
+            newUserSettings,
             debouncedUpdateUserSettings,
             debouncedCreateUsersSettings,
             advancedFilters,
@@ -546,6 +468,31 @@ const ListComponent = (props: IListProps) => {
         ]
     );
 
+    // #region DEFAULT PROPS
+    const defaultProps = {
+        searchable: props.isDragAndDroppable ? false : true,
+        searchCriteria: {},
+        extraColumns: [],
+        actionColumns: [],
+        columnFilter: true
+    };
+    props = { ...defaultProps, ...props };
+    // SearchForm in cookies
+    const searchCriterias: any = Object.keys(props.searchCriteria).reduce(
+        (acc: any, key: string) => {
+            if (props.searchCriteria[key] !== undefined && props.searchCriteria[key] !== null) {
+                acc[key] =
+                    !Array.isArray(props.searchCriteria[key]) &&
+                    props.searchCriteria[key] !== 'String'
+                        ? [props.searchCriteria[key]]
+                        : props.searchCriteria[key];
+            }
+            return acc;
+        },
+        {}
+    );
+    let resetForm = false;
+    let showBadge = false;
     // #endregion
 
     // #region extract data from modelV2
@@ -691,55 +638,6 @@ const ListComponent = (props: IListProps) => {
         }));
     //#endregion
 
-    // #region links generation
-    const renderLink = (text: string, record: any, dataIndex: string) => {
-        // retrieve the column data index
-        const linkObject = linkFields.find((item: any) => item.name === dataIndex);
-        if (!linkObject?.link) return text;
-        const suffix = linkObject.link.substring(linkObject.link.lastIndexOf('/') + 1);
-        //handle case where the suffix is at the end of a chain of characters
-        const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
-        const link = `${linkObject.link.replace(`/${suffix}`, '')}/${record[recordKey!]}`;
-        const completeLink = `${process.env.NEXT_PUBLIC_WMS_URL}/${
-            router.locale !== 'en-US' ? router.locale + '/' : ''
-        }${link}`;
-        if (linkObject) {
-            return <Link href={completeLink}>{text}</Link>;
-        }
-        return text;
-    };
-
-    const columnWithLinks = allColumns?.map((e: any) => {
-        // if the column is in linkFields.name too, do the following
-        const linkObject = linkFields.find((item: any) => item.name === e.dataIndex);
-
-        return linkObject
-            ? {
-                  ...e,
-                  render: (text: any, record: any) => renderLink(text, record, e.dataIndex),
-                  dataIndex: e.dataIndex
-              }
-            : e;
-    });
-
-    const render = (text: any) =>
-        text === true ? (
-            <CheckCircleOutlined style={{ color: 'green' }} />
-        ) : text === false ? (
-            <CloseSquareOutlined style={{ color: 'red' }} />
-        ) : isString(text) && isStringDateTime(text) ? (
-            formatUTCLocaleDateTime(text, router.locale)
-        ) : isString(text) && isStringDate(text) ? (
-            formatUTCLocaleDate(text, router.locale)
-        ) : (
-            text
-        );
-    const newTableColumns = columnWithLinks?.map((e: any) =>
-        e.render ? e : (e = { ...e, render: render })
-    );
-
-    // #endregion
-
     // #region WITHOUT CLOSED ITEMS
     const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>(false);
     const btnName = t('actions:without-closed-cancel-items');
@@ -749,15 +647,13 @@ const ListComponent = (props: IListProps) => {
             if (
                 prev
                     .map((item: any) => item.filter[0].field.status)
-                    .some((status: any) => status === 2000 || status === 1005 || status === 1600)
+                    .some((status: any) => status === 2000 || status === 1005)
             ) {
                 const newAdvancedFilters = prev.filter(
                     (item: any) =>
-                        item.filter[0].field.status !== 2000 &&
-                        item.filter[0].field.status !== 1005 &&
-                        item.filter[0].field.status !== 1600
+                        item.filter[0].field.status !== 2000 && item.filter[0].field.status !== 1005
                 );
-                handleUserSettings(
+                changeFilter(
                     null,
                     null,
                     defaultPagination,
@@ -772,10 +668,9 @@ const ListComponent = (props: IListProps) => {
                 const newAdvancedFilters = [
                     ...prev,
                     { filter: [{ searchType: 'DIFFERENT', field: { status: 2000 } }] },
-                    { filter: [{ searchType: 'DIFFERENT', field: { status: 1005 } }] },
-                    { filter: [{ searchType: 'DIFFERENT', field: { status: 1600 } }] }
+                    { filter: [{ searchType: 'DIFFERENT', field: { status: 1005 } }] }
                 ];
-                handleUserSettings(
+                changeFilter(
                     null,
                     null,
                     defaultPagination,
@@ -915,54 +810,6 @@ const ListComponent = (props: IListProps) => {
     }, [softDeleteResult]);
     // #endregion
 
-    // #region Enable (Re-Open)
-
-    const {
-        isLoading: enableLoading,
-        result: enableResult,
-        mutate: callReopen
-    } = useUpdate(props.dataModel.resolverName, props.dataModel.endpoints.update, listFields);
-
-    useEffect(() => {
-        if (props.triggerReopen && props.triggerReopen.reopenInfo) {
-            const softDeletePermission = permissions?.find(
-                (permission) =>
-                    permission.table === permissionTableName &&
-                    permission.mode.toUpperCase() === ModeEnum.Update
-            );
-            if (!softDeletePermission) {
-                console.warn(
-                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
-                );
-                showError(t('errors:APP-000200'));
-            } else {
-                callReopen({
-                    id: props.triggerReopen.reopenInfo.id,
-                    input: { status: props.triggerReopen.reopenInfo.status }
-                });
-                props.triggerReopen.setReopenInfo(undefined);
-            }
-        }
-    }, [props.triggerReopen]);
-
-    useEffect(() => {
-        if (enableLoading) {
-            showInfo(t('messages:info-enabling-wip'));
-        }
-    }, [enableLoading]);
-
-    useEffect(() => {
-        if (!(enableResult && enableResult.data)) return;
-
-        if (enableResult.success) {
-            showSuccess(t('messages:success-enabled'));
-            reloadData();
-        } else {
-            showError(t('messages:error-enabling-element'));
-        }
-    }, [enableResult]);
-    // #endregion
-
     // #region PRIORITY CHANGE MUTATION
 
     useEffect(() => {
@@ -1032,6 +879,54 @@ const ListComponent = (props: IListProps) => {
 
     // #endregion
 
+    // #region Enable (Re-Open)
+
+    const {
+        isLoading: enableLoading,
+        result: enableResult,
+        mutate: callReopen
+    } = useUpdate(props.dataModel.resolverName, props.dataModel.endpoints.update, listFields);
+
+    useEffect(() => {
+        if (props.triggerReopen && props.triggerReopen.reopenInfo) {
+            const softDeletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Update
+            );
+            if (!softDeletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callReopen({
+                    id: props.triggerReopen.reopenInfo.id,
+                    input: { status: props.triggerReopen.reopenInfo.status }
+                });
+                props.triggerReopen.setReopenInfo(undefined);
+            }
+        }
+    }, [props.triggerReopen]);
+
+    useEffect(() => {
+        if (enableLoading) {
+            showInfo(t('messages:info-enabling-wip'));
+        }
+    }, [enableLoading]);
+
+    useEffect(() => {
+        if (!(enableResult && enableResult.data)) return;
+
+        if (enableResult.success) {
+            showSuccess(t('messages:success-enabled'));
+            reloadData();
+        } else {
+            showError(t('messages:error-enabling-element'));
+        }
+    }, [enableResult]);
+    // #endregion
+
     // #region SEARCH OPERATIONS
 
     if (props.searchable) {
@@ -1045,9 +940,7 @@ const ListComponent = (props: IListProps) => {
                 if (
                     userSettings.valueJson.advancedFilters
                         .map((item: any) => item.filter[0].field.status)
-                        .some(
-                            (status: any) => status === 2000 || status === 1005 || status === 1600
-                        )
+                        .some((status: any) => status === 2000 || status === 1005)
                 ) {
                     setIsWithoutClosed(true);
                 }
@@ -1084,7 +977,6 @@ const ListComponent = (props: IListProps) => {
         }
     }, [filterFields]);
 
-    // Transform some search fields for better display in the CumulSearch screen
     if (props.cumulSearchInfos && 'handlingUnit_Category' in search) {
         const HUCParameters = parameters?.filter(
             (param: any) => param.scope === 'handling_unit_category'
@@ -1162,7 +1054,7 @@ const ListComponent = (props: IListProps) => {
                     const allSubOptionsFiltered = allSubOptions
                         .map((item: any) => {
                             const itemKey = Object.keys(item)[0];
-                            if (savedFilters[itemKey] && item[itemKey]) {
+                            if (savedFilters[itemKey]) {
                                 return {
                                     ...item,
                                     [itemKey]: item[itemKey].filter((option: any) =>
@@ -1174,7 +1066,7 @@ const ListComponent = (props: IListProps) => {
                         })
                         .filter(Boolean);
 
-                    handleUserSettings(
+                    changeFilter(
                         savedFilters,
                         null,
                         defaultPagination,
@@ -1236,7 +1128,7 @@ const ListComponent = (props: IListProps) => {
 
     const handleReset = () => {
         console.log('handleReset called');
-        handleUserSettings({}, null, defaultPagination, [], [], [], []);
+        changeFilter({}, null, defaultPagination, [], [], [], []);
         setIsWithoutClosed(false);
         setAdvancedFilters([]);
         setSelectCase([]);
@@ -1251,62 +1143,6 @@ const ListComponent = (props: IListProps) => {
         }
         setIsSearchDrawerOpen(false);
     };
-
-    // #endregion
-
-    // #region Columns Drawer
-
-    const [isColumnDrawerOpen, setIsColumnDrawerOpen] = useState<boolean>(false);
-
-    const handleColumnReset = () => {
-        setAllColumns(initialAllColumns);
-        handleUserSettings(
-            null,
-            null,
-            pagination,
-            null,
-            undefined,
-            undefined,
-            null,
-            initialAllColumns,
-            null
-        );
-        setIsColumnDrawerOpen(false);
-    };
-
-    const handleColumnSave = () => {
-        handleUserSettings(
-            null,
-            null,
-            pagination,
-            null,
-            undefined,
-            undefined,
-            null,
-            allColumns,
-            null
-        );
-        setIsColumnDrawerOpen(false);
-    };
-
-    function columnDrawerProps() {
-        return {
-            size: 700,
-            isOpen: isColumnDrawerOpen,
-            setIsOpen: setIsColumnDrawerOpen,
-            type: 'OPEN_DRAWER',
-            title: 'actions:filter',
-            cancelButtonTitle: 'actions:reset',
-            cancelButton: true,
-            comfirmButtonTitle: 'actions:save',
-            comfirmButton: true,
-            content: (
-                <TableFilter allColumnsInfos={allColumns} setAllColumnsInfos={setAllColumns} />
-            ),
-            onComfirm: () => handleColumnSave(),
-            onCancel: () => handleColumnReset()
-        } as any;
-    }
 
     // #endregion
 
@@ -1330,6 +1166,10 @@ const ListComponent = (props: IListProps) => {
         functions
     );
 
+    // #endregion
+
+    // #region RELOAD DATA
+
     useEffect(() => {
         // Time delay before reloading data
         const delay = 1000;
@@ -1348,91 +1188,45 @@ const ListComponent = (props: IListProps) => {
     // #endregion
 
     // #region EXPORT DATA
+    const exportFields = Object.keys(props.dataModel.fieldsInfo).filter((key) => {
+        const fieldInfo = props.dataModel.fieldsInfo[key];
+        return fieldInfo.isListRequested && !fieldInfo.isExcludedFromList;
+    });
+
+    const exportQueryString = queryString(
+        props.dataModel.endpoints.list,
+        exportFields,
+        search,
+        pagination.current,
+        pagination.itemsPerPage,
+        sort,
+        router.locale,
+        defaultModelSort
+    );
+
+    const columnNames: any = {};
+
+    listFields.forEach((field: any) => {
+        const matchText = field.match(/(.+)Text$/);
+        if (matchText) {
+            const originalField = matchText[1];
+            columnNames[field] = originalField;
+        }
+    });
+
+    exportFields.forEach((field: any) => {
+        const matchRelationship = field.match(/(.+){(.+)}/);
+        if (matchRelationship) {
+            const baseWord = matchRelationship[1];
+            const additionalWord = matchRelationship[2];
+            const newColumnName = `${baseWord}_${additionalWord}`;
+            columnNames[newColumnName] = field.replace(`{${additionalWord}}`, ` ${additionalWord}`);
+        }
+    });
 
     const { isLoading: exportLoading, result: exportResult, mutate } = useExport();
 
     const exportData = () => {
-        const exportFields = [
-            ...props.extraColumns,
-            ...(newTableColumns?.filter((col) => col.key !== 'actions') || [])
-        ]
-            .filter((col) => col.hidden !== true)
-            .map((col) => {
-                if (!col?.dataIndex?.includes('_')) {
-                    return col?.dataIndex;
-                }
-                return (
-                    col?.dataIndex?.split('_').join('{') +
-                    '}'.repeat(col?.dataIndex?.split('_').slice(1).length || 0)
-                );
-            });
-
-        const exportQueryString = queryString(
-            props.dataModel.endpoints.list,
-            exportFields,
-            search,
-            pagination.current,
-            pagination.itemsPerPage,
-            sort,
-            router.locale,
-            defaultModelSort
-        );
-
-        // Creation of columnNames for export
-        let columnNames: any = {};
-        const titleIndexMap: Record<string, number> = {};
-
-        // Base from allColumns
-        allColumns.forEach((col, index) => {
-            const translatedTitle = t(col.title);
-            columnNames[index] = {
-                title: translatedTitle,
-                keys: [col.dataIndex]
-            };
-            titleIndexMap[translatedTitle] = index;
-        });
-
-        // Add keys from rows
-        if (rows && rows.results && rows.results.length > 0) {
-            rows.results.forEach((result) => {
-                Object.keys(result).forEach((key) => {
-                    let title = `d:${key}`;
-                    if (displayedLabels && key in displayedLabels) {
-                        title = `d:${displayedLabels[key]}`;
-                    }
-                    const translatedTitle = t(title);
-
-                    // If the value is an array, we skip it for now
-                    if (!Array.isArray(result[key])) {
-                        // If the key is similar to an existing columnName, we add it to that column keys
-                        const similarColumns: any[] = Object.values(columnNames).filter(
-                            (column: any) =>
-                                column.keys.some((cnKey: any) => cnKey.startsWith(key + '_'))
-                        );
-
-                        if (similarColumns.length > 0) {
-                            for (const col of similarColumns) {
-                                col.keys.push(key);
-                            }
-                        }
-                        // If title does not exist in allColumns, we create it
-                        else {
-                            const newIndex = Object.keys(columnNames).length;
-                            columnNames[newIndex] = { title: translatedTitle, keys: [key] };
-                            titleIndexMap[translatedTitle] = newIndex;
-                        }
-                    }
-                });
-            });
-        }
-
-        // Sort by index if needed
-        const orderedColumns = Object.keys(columnNames)
-            .sort((a, b) => Number(a) - Number(b))
-            .map((idx) => columnNames[Number(idx)]);
-
-        columnNames = orderedColumns;
-
         const base64QueryString = Buffer.from(exportQueryString, 'binary').toString('base64');
         mutate({
             graphqlRequest: base64QueryString,
@@ -1472,7 +1266,7 @@ const ListComponent = (props: IListProps) => {
     const onChangePagination = useCallback(
         (currentPage: number, itemsPerPage: number) => {
             // Re fetch data for new current page or items per page
-            handleUserSettings(null, null, {
+            changeFilter(null, null, {
                 current: currentPage,
                 itemsPerPage: itemsPerPage
             });
@@ -1537,17 +1331,11 @@ const ListComponent = (props: IListProps) => {
                                     }
                                 }
 
-                                const isHidden =
-                                    hiddenListFields.includes(column_name) ||
-                                    excludedListFields.includes(column_name);
-
                                 const row_data: any = {
                                     title: title,
                                     dataIndex: column_name,
                                     key: column_name,
-                                    showSorterTooltip: false,
-                                    hidden: isHidden,
-                                    fixed: false
+                                    showSorterTooltip: false
                                 };
 
                                 // if column is in sortable list add sorter property
@@ -1582,8 +1370,7 @@ const ListComponent = (props: IListProps) => {
                         }
 
                         // set columns to use in table
-                        setAllColumns(initialState ?? result_list);
-                        setInitialAllColumns(result_list);
+                        setColumns(result_list);
                         if (props.setData) props.setData(listData.results);
                         //this is to initialize and keep data at a given time on parent component
                         if (props.setInitialData) props.setInitialData(listData.results);
@@ -1735,8 +1522,7 @@ const ListComponent = (props: IListProps) => {
                             });
                             listData.results = newListData;
                             setRows(listData);
-                            setAllColumns(initialState ?? new_column_list);
-                            setInitialAllColumns(result_list);
+                            setColumns(new_column_list);
                         }
 
                         if (props.setData) props.setData(listData.results);
@@ -1764,17 +1550,11 @@ const ListComponent = (props: IListProps) => {
                                     title = `d:${displayedLabels[column_name]}`;
                                 }
 
-                                const isHidden =
-                                    hiddenListFields.includes(column_name) ||
-                                    excludedListFields.includes(column_name);
-
                                 const row_data: any = {
                                     title: title,
                                     dataIndex: column_name,
                                     key: column_name,
-                                    showSorterTooltip: false,
-                                    hidden: isHidden,
-                                    fixed: false
+                                    showSorterTooltip: false
                                 };
 
                                 // if column is in sortable list add sorter property
@@ -1826,8 +1606,7 @@ const ListComponent = (props: IListProps) => {
                         ];
 
                         // set columns to use in table
-                        setAllColumns(initialState ?? new_result_list);
-                        setInitialAllColumns(new_result_list);
+                        setColumns(new_result_list);
                         // Specific to display columns for input/output parameters of json fields
                         let newElementListData: any = {};
                         const newListData: any[] = [];
@@ -1915,17 +1694,11 @@ const ListComponent = (props: IListProps) => {
                                 title = `d:${displayedLabels[column_name]}`;
                             }
 
-                            const isHidden =
-                                hiddenListFields.includes(column_name) ||
-                                excludedListFields.includes(column_name);
-
                             const row_data: any = {
                                 title: title,
                                 dataIndex: column_name,
                                 key: column_name,
-                                showSorterTooltip: false,
-                                hidden: isHidden,
-                                fixed: false
+                                showSorterTooltip: false
                             };
 
                             // if column is in sortable list add sorter property
@@ -1977,8 +1750,7 @@ const ListComponent = (props: IListProps) => {
                         });
 
                         // set columns to use in table
-                        setAllColumns(initialState ?? result_list);
-                        setInitialAllColumns(result_list);
+                        setColumns(result_list);
 
                         // set data for the table
                         setRows(listData);
@@ -2010,7 +1782,7 @@ const ListComponent = (props: IListProps) => {
 
     // #endregion
 
-    // #region TABLE CHANGE HANDLER (sort)
+    // #region TABLE CHANGE HANDLER
 
     const handleTableChange = async (_pagination: any, _filter: any, sorter: any) => {
         const newSorter = orderByFormater(sorter);
@@ -2046,40 +1818,9 @@ const ListComponent = (props: IListProps) => {
             _pagination.pageSize === pagination.itemsPerPage
         ) {
             setSort(tmp_array);
-            setAllColumns((prevColumns: any) => {
-                const updatedColumns = prevColumns.map((col: any) => {
-                    const sorterForCol = tmp_array.find((s) => s.field === col.dataIndex);
-                    if (sorterForCol) {
-                        return {
-                            ...col,
-                            defaultSortOrder: sorterForCol.ascending ? 'ascend' : 'descend'
-                        };
-                    } else {
-                        const { defaultSortOrder, ...rest } = col;
-                        return rest;
-                    }
-                });
-                handleUserSettings(
-                    null,
-                    tmp_array,
-                    pagination,
-                    null,
-                    selectCase,
-                    selectJoker,
-                    null,
-                    updatedColumns
-                );
-                return updatedColumns;
-            });
+            changeFilter(null, tmp_array, pagination, null, selectCase, selectJoker, null);
         }
     };
-
-    const badgeCount = filterFields.reduce((count: number, field: any) => {
-        if (field.type && field.initialValue) {
-            return count + 1; // Count all fields with a type
-        }
-        return count;
-    }, 0);
 
     // #endregion
 
@@ -2112,31 +1853,12 @@ const ListComponent = (props: IListProps) => {
             });
         });
     }
-
-    // #endregion
-
-    // #region merge columns
-
     const mergedColumns = [
         ...props.actionColumns,
         ...props.extraColumns,
-        ...(newTableColumns?.filter((col) => col.key !== 'actions') || []),
+        ...columns,
         ...(props?.cumulSearchInfos?.columns ? props.cumulSearchInfos.columns : [])
     ];
-
-    useEffect(() => {
-        if (initialAllColumns && initialAllColumns.length > allColumns.length) {
-            setAllColumns((prevColumns) => {
-                const updatedColumns = [...prevColumns];
-                initialAllColumns.forEach((initialCol) => {
-                    if (!prevColumns.some((col) => col.key === initialCol.key)) {
-                        updatedColumns.push(initialCol);
-                    }
-                });
-                return updatedColumns;
-            });
-        }
-    }, [initialAllColumns]);
 
     // #endregion
 
@@ -2160,9 +1882,7 @@ const ListComponent = (props: IListProps) => {
                     const textDisplay =
                         listOfConfig
                             ?.filter((item: any) =>
-                                searchForTags[key]?.includes(
-                                    isNumeric(item.code) ? parseInt(item.code) : item.code
-                                )
+                                searchForTags[key]?.includes(parseInt(item.code))
                             )
                             .map((item: any) => {
                                 return {
@@ -2320,7 +2040,7 @@ const ListComponent = (props: IListProps) => {
                 [info.originalKey]: null
             });
         }
-        handleUserSettings(newSearch, null, defaultPagination, null, selectCase, selectJoker, null);
+        changeFilter(newSearch, null, defaultPagination, null, selectCase, selectJoker, null);
     }
 
     // #endregion
@@ -2353,126 +2073,12 @@ const ListComponent = (props: IListProps) => {
     }
     // #endregion
 
-    // #region adjust columns for resizable
-
-    const dataSource = props.isDragAndDroppable
-        ? props.items!.map((item: any, index: number) => ({
-              ...item,
-              key: item.id,
-              index
-          }))
-        : (rows?.results ?? []);
-
-    const insideScroll = { x: '100%', y: 400 };
-    const insideScrollPagination = { pageSize: dataSource.length, showSizeChanger: false };
-
-    // 1. Add state for column widths
-    const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>({});
-
-    useEffect(() => {
-        setColumnWidths(() =>
-            mergedColumns?.reduce(
-                (acc, col) => {
-                    Object.keys(userSettings?.valueJson?.columnsWidth ?? {}).forEach((key) => {
-                        if (key === col.key) {
-                            acc[col.key] = userSettings.valueJson.columnsWidth[key];
-                        }
-                    });
-                    if (!acc[col.key]) {
-                        acc[col.key] = typeof col.width === 'number' ? col.width : 160;
-                    }
-                    return acc;
-                },
-                {} as { [key: string]: number }
-            )
-        );
-    }, [allColumns]); // Reset column widths when userSettings or dataModel changes
-    // 2. Custom header cell for resizing
-    const ResizableTitle = (props: any) => {
-        const { onResize, width, ...restProps } = props;
-        return (
-            <th
-                {...restProps}
-                style={{
-                    ...restProps.style,
-                    width,
-                    position: 'relative' // Ensure relative positioning for the resizer
-                }}
-            >
-                {restProps.children}
-                <div
-                    style={{
-                        position: 'absolute',
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: '5px',
-                        cursor: 'col-resize',
-                        userSelect: 'none',
-                        zIndex: 1,
-                        background: 'transparent'
-                    }}
-                    onMouseDown={(e) => {
-                        e.preventDefault();
-                        const startX = e.clientX;
-                        const startWidth = width;
-                        const onMouseMove = (moveEvent: MouseEvent) => {
-                            const newWidth = Math.max(startWidth + moveEvent.clientX - startX, 50);
-                            onResize(newWidth);
-                        };
-                        const onMouseUp = () => {
-                            document.removeEventListener('mousemove', onMouseMove);
-                            document.removeEventListener('mouseup', onMouseUp);
-                        };
-                        document.addEventListener('mousemove', onMouseMove);
-                        document.addEventListener('mouseup', onMouseUp);
-                    }}
-                />
-            </th>
-        );
-    };
-
-    // 3. Update columns with resizable header
-    const resizableColumns = mergedColumns.map((col: any) => ({
-        ...col,
-        width: columnWidths[col.key], // width is a number
-        onHeaderCell: (column: any) => ({
-            width: columnWidths[col.key],
-            onResize: (newWidth: number) => {
-                setColumnWidths((prev) => ({
-                    ...prev,
-                    [col.key]: Math.max(newWidth, 80) // minimum width
-                }));
-                handleUserSettings(
-                    null,
-                    null,
-                    pagination,
-                    null,
-                    undefined,
-                    undefined,
-                    null,
-                    allColumns,
-                    {
-                        ...columnWidths,
-                        [col.key]: Math.max(newWidth, 80)
-                    }
-                );
-            }
-        })
-    }));
-
-    // 4. Add custom components for header cell
-    const tableComponents = {
-        ...draggableComponent,
-        header: {
-            cell: ResizableTitle
+    const badgeCount = filterFields.reduce((count: number, field: any) => {
+        if (field.type && field.initialValue) {
+            return count + 1; // Count all fields with a type
         }
-    };
-
-    // Ensure scroll.x is always set for fixed table layout
-    const tableScroll = props.isIndependentScrollable ? insideScroll : { x: '100%' };
-
-    // #endregion
+        return count;
+    }, 0);
 
     // #region return
     return (
@@ -2490,7 +2096,6 @@ const ListComponent = (props: IListProps) => {
                 ) : (
                     <>
                         <DrawerItems {...drawerProps()} />
-                        <DrawerItems {...columnDrawerProps()} />
                         {props.headerData ? (
                             <HeaderContent
                                 title={props.headerData.title}
@@ -2561,6 +2166,7 @@ const ListComponent = (props: IListProps) => {
                                                         <Button
                                                             icon={<SearchOutlined />}
                                                             onClick={() => {
+                                                                formSearch.resetFields();
                                                                 setIsSearchDrawerOpen(true);
                                                             }}
                                                         />
@@ -2569,6 +2175,7 @@ const ListComponent = (props: IListProps) => {
                                                     <Button
                                                         icon={<SearchOutlined />}
                                                         onClick={() => {
+                                                            formSearch.resetFields();
                                                             setIsSearchDrawerOpen(true);
                                                         }}
                                                     />
@@ -2628,135 +2235,25 @@ const ListComponent = (props: IListProps) => {
                         {!firstLoad && rows?.results ? (
                             <>
                                 {props.actionButtons?.actionsComponent}
-                                <PageTableContentWrapper>
-                                    <DrawerItems {...drawerProps()} />
-                                    <WrapperStickyActions>
-                                        <Space direction="vertical">
-                                            {props.columnFilter && (
-                                                <Button
-                                                    type="primary"
-                                                    icon={<SettingOutlined />}
-                                                    onClick={() => setIsColumnDrawerOpen(true)}
-                                                />
-                                            )}
-                                            {stickyActions?.export.active && (
-                                                <Button
-                                                    icon={<FileExcelOutlined />}
-                                                    onClick={stickyActions?.export.function}
-                                                />
-                                            )}
-                                            <Button
-                                                icon={<ReloadOutlined />}
-                                                onClick={() => {
-                                                    reloadData();
-                                                }}
-                                            />
-                                        </Space>
-                                    </WrapperStickyActions>
-                                    <Table
-                                        rowKey="id"
-                                        dataSource={dataSource}
-                                        scroll={tableScroll}
-                                        size="small"
-                                        loading={isLoading}
-                                        onChange={handleTableChange}
-                                        pagination={
-                                            props.isIndependentScrollable
-                                                ? insideScrollPagination
-                                                : pagination && {
-                                                      position: ['bottomRight'],
-                                                      total: pagination.total,
-                                                      current: pagination.current,
-                                                      pageSize: pagination.itemsPerPage,
-                                                      showSizeChanger: true,
-                                                      showTotal: (total, range) =>
-                                                          `${range[0]}-${range[1]} sur ${total} éléments`,
-                                                      onChange: (page, pageSize) => {
-                                                          onChangePagination(page, pageSize);
-                                                      }
-                                                  }
-                                        }
-                                        locale={{
-                                            emptyText: !isLoading ? (
-                                                <Empty
-                                                    description={
-                                                        <span>{t('messages:no-data')}</span>
-                                                    }
-                                                />
-                                            ) : null
-                                        }}
-                                        rowSelection={
-                                            props.checkbox ? props.rowSelection : undefined
-                                        }
-                                        components={tableComponents}
-                                        tableLayout="fixed"
-                                    >
-                                        {resizableColumns.map((c) => {
-                                            return (
-                                                <Column
-                                                    hidden={c.hidden}
-                                                    title={() => {
-                                                        return (
-                                                            <>
-                                                                {typeof c.title === 'string'
-                                                                    ? t(c.title)
-                                                                    : c.title}
-                                                                {sort && (
-                                                                    <span
-                                                                        style={{
-                                                                            position: 'absolute',
-                                                                            right: 0,
-                                                                            top: 0,
-                                                                            transform:
-                                                                                'translateY(-10px) translateX(22.5px)',
-                                                                            color: '#1677ff',
-                                                                            opacity: 0.5,
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            height: '100%'
-                                                                        }}
-                                                                    >
-                                                                        {
-                                                                            sort
-                                                                                .map(
-                                                                                    (
-                                                                                        sortInfo: any,
-                                                                                        index: number
-                                                                                    ) => {
-                                                                                        if (
-                                                                                            sortInfo.field ===
-                                                                                            c.key
-                                                                                        ) {
-                                                                                            return `${index + 1}`;
-                                                                                        }
-                                                                                        return null;
-                                                                                    }
-                                                                                )
-                                                                                .filter(
-                                                                                    (item: any) =>
-                                                                                        item !==
-                                                                                        null
-                                                                                )[0]
-                                                                        }
-                                                                    </span>
-                                                                )}
-                                                            </>
-                                                        );
-                                                    }}
-                                                    dataIndex={c.dataIndex}
-                                                    key={c.key}
-                                                    fixed={c.fixed}
-                                                    width={c.width} // width is a number
-                                                    sorter={c.sorter}
-                                                    showSorterTooltip={c.showSorterTooltip}
-                                                    render={c.render}
-                                                    defaultSortOrder={c.defaultSortOrder}
-                                                    onHeaderCell={c.onHeaderCell}
-                                                />
-                                            );
-                                        })}
-                                    </Table>
-                                </PageTableContentWrapper>
+                                <AppTableV2
+                                    dataModel={props.dataModel}
+                                    columns={mergedColumns}
+                                    data={rows?.results ?? []}
+                                    pagination={pagination}
+                                    isLoading={isLoading}
+                                    setPagination={onChangePagination}
+                                    stickyActions={stickyActions}
+                                    onChange={handleTableChange}
+                                    hiddenColumns={hiddenListFields}
+                                    linkFields={linkFields}
+                                    filter={props.columnFilter}
+                                    sortInfos={sort}
+                                    isDragAndDroppable={props.isDragAndDroppable}
+                                    components={draggableComponent}
+                                    items={props.items}
+                                    isIndependentScrollable={props.isIndependentScrollable}
+                                    rowSelection={props.checkbox ? props.rowSelection : undefined}
+                                />
                             </>
                         ) : (
                             <ContentSpin />

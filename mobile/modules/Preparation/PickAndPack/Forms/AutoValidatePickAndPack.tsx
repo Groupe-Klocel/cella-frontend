@@ -171,7 +171,7 @@ export const AutoValidatePickAndPackForm = ({
                         validateFullBoxResult.executeFunction.output.output;
                     if (isRoundClosed) {
                         if (step5.data && step10.data.roundNumber !== 1) {
-                            storedObject['currentStep'] = 10;
+                            storedObject['cuurrentStep'] = 10;
                             storedObject[`step5`] = { previousStep: 0, data: step5.data };
                             storedObject[`step10`] = { previousStep: 5 };
                         } else if (step5.data && step10.data.roundNumber === 1) {
