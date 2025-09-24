@@ -18,27 +18,23 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { EditHandlingUnitContent } from 'modules/HandlingUnits/PagesContainer/EditHandlingUnitContent';
-import { useRouter } from 'next/router';
+import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
-import MainLayout from '../../../components/layouts/MainLayout';
+import { StockStatuses } from '../modules/Stocks/PagesContainer/StockStatuses';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditHandlingUnitPage: PageComponent = () => {
-    const router = useRouter();
-    const { id } = router.query;
+const StockStatusesPage: PageComponent = () => {
     const { t } = useTranslation();
-
     return (
         <>
-            <AppHead title={`${t('actions:edit')} ${t('menu:equipment')}`} />
-            <EditHandlingUnitContent id={id!} />
+            <AppHead title={t('menu:stock-statuses')} />
+            <StockStatuses />
         </>
     );
 };
 
-EditHandlingUnitPage.layout = MainLayout;
+StockStatusesPage.layout = MainLayout;
 
-export default EditHandlingUnitPage;
+export default StockStatusesPage;

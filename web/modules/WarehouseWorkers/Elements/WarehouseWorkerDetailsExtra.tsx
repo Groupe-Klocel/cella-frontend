@@ -31,7 +31,6 @@ import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { WarehouseWorkerUserRoleModelV2 } from 'models/WarehouseWorkerUserRoleModelV2';
-import { WarehouseWorkerStockOwnerModelV2 } from 'models/WarehouseWorkerStockOwnerModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
@@ -48,13 +47,8 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
     const { permissions } = useAppState();
     const userRoleModes = getModesFromPermissions(permissions, Table.UserRole);
     const RoleModes = getModesFromPermissions(permissions, Table.Role);
-    const [idToDeleteUserRole, setIdToDeleteUserRole] = useState<string | undefined>();
-    const [idToDisableUserRole, setIdToDisableUserRole] = useState<string | undefined>();
-    const [idToDeleteWarehouseWorkerStockOwner, setIdToDeleteWarehouseWorkerStockOwner] = useState<
-        string | undefined
-    >();
-    const [idToDisableWarehouseWorkerStockOwner, setIdToDisableWarehouseWorkerStockOwner] =
-        useState<string | undefined>();
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
     const UserRoleData: HeaderData = {
         title: t('common:associated-roles'),
@@ -71,55 +65,24 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
                 />
             ) : null
     };
-    const WarehouseWorkerStockOwnerData: HeaderData = {
-        title: t('common:warehouse-worker-stock-owners'),
-        routes: [],
-        actionsComponent:
-            userRoleModes.length > 0 && userRoleModes.includes(ModeEnum.Create) ? (
-                <LinkButton
-                    title={t('actions:add2', { name: t('common:warehouse-worker-stock-owners') })}
-                    path={pathParamsFromDictionary('/warehouse-worker-stock-owners/add', {
-                        id
-                    })}
-                    type="primary"
-                />
-            ) : null
-    };
+
     // Delete
     const {
-        isLoading: deleteLoadingUserRole,
-        result: deleteResultUserRole,
+        isLoading: deleteLoading,
+        result: deleteResult,
         mutate: deleteUserRole
     } = useDelete(WarehouseWorkerUserRoleModelV2.endpoints.delete);
 
     useEffect(() => {
-        if (!(deleteResultUserRole && deleteResultUserRole.data)) return;
+        if (!(deleteResult && deleteResult.data)) return;
 
-        if (deleteResultUserRole.success) {
+        if (deleteResult.success) {
             showSuccess(t('messages:success-deleted'));
             router.reload();
         } else {
             showError(t('messages:error-deleting-data'));
         }
-    }, [deleteResultUserRole]);
-
-    const {
-        isLoading: deleteLoadingWarehouseWorkerStockOwner,
-        result: deleteResultWarehouseWorkerStockOwner,
-        mutate: deleteWarehouseWorkerStockOwner
-    } = useDelete(WarehouseWorkerStockOwnerModelV2.endpoints.delete);
-
-    useEffect(() => {
-        if (!(deleteResultWarehouseWorkerStockOwner && deleteResultWarehouseWorkerStockOwner.data))
-            return;
-
-        if (deleteResultWarehouseWorkerStockOwner.success) {
-            showSuccess(t('messages:success-deleted'));
-            router.reload();
-        } else {
-            showError(t('messages:error-deleting-data'));
-        }
-    }, [deleteResultWarehouseWorkerStockOwner]);
+    }, [deleteResult]);
 
     return (
         <>
@@ -128,8 +91,8 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
                 searchCriteria={{ warehouseWorkerId: id, integratorUserId: null }}
                 dataModel={WarehouseWorkerUserRoleModelV2}
                 headerData={UserRoleData}
-                triggerDelete={{ idToDeleteUserRole, setIdToDeleteUserRole }}
-                triggerSoftDelete={{ idToDisableUserRole, setIdToDisableUserRole }}
+                triggerDelete={{ idToDelete, setIdToDelete }}
+                triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -156,63 +119,6 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
                                                     title: t('messages:delete-confirm'),
                                                     onOk: () => {
                                                         deleteUserRole(record.id);
-                                                    },
-
-                                                    okText: t('messages:confirm'),
-                                                    cancelText: t('messages:cancel')
-                                                })
-                                            }
-                                            danger
-                                        />
-                                    </>
-                                )}
-                            </Space>
-                        )
-                    }
-                ]}
-                searchable={false}
-            />
-            <ListComponent
-                searchCriteria={{ warehouseWorkerId: id }}
-                dataModel={WarehouseWorkerStockOwnerModelV2}
-                headerData={WarehouseWorkerStockOwnerData}
-                triggerDelete={{
-                    idToDeleteWarehouseWorkerStockOwner,
-                    setIdToDeleteWarehouseWorkerStockOwner
-                }}
-                triggerSoftDelete={{
-                    idToDisableWarehouseWorkerStockOwner,
-                    setIdToDisableWarehouseWorkerStockOwner
-                }}
-                actionColumns={[
-                    {
-                        title: 'actions:actions',
-                        key: 'actions',
-                        render: (record: { id: string; name: string }) => (
-                            <Space>
-                                {RoleModes.length > 0 && RoleModes.includes(ModeEnum.Read) ? (
-                                    <LinkButton
-                                        icon={<EyeTwoTone />}
-                                        path={pathParams(
-                                            `/warehouse-worker-stock-owners/[id]`,
-                                            record?.id
-                                        )}
-                                    />
-                                ) : (
-                                    <></>
-                                )}
-                                {userRoleModes.length == 0 ||
-                                !userRoleModes.includes(ModeEnum.Delete) ? (
-                                    <></>
-                                ) : (
-                                    <>
-                                        <Button
-                                            icon={<DeleteOutlined />}
-                                            onClick={() =>
-                                                Modal.confirm({
-                                                    title: t('messages:delete-confirm'),
-                                                    onOk: () => {
-                                                        deleteWarehouseWorkerStockOwner(record.id);
                                                     },
 
                                                     okText: t('messages:confirm'),

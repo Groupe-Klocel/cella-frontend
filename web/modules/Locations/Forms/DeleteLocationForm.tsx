@@ -31,7 +31,6 @@ import { SimpleGetAllBLocksQuery, useSimpleGetAllBLocksQuery } from 'generated/g
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 
 const { Option } = Select;
 
@@ -43,7 +42,6 @@ export const DeleteLocationForm = () => {
     const [locations, setLocations] = useState<DataQueryType>();
     const [current, setCurrent] = useState(0);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
-    const [createLoading, setCreateLoading] = useState(false);
 
     //To render simple blocks list for attached block selection (id and name without any filter)
     const blocksList = useSimpleGetAllBLocksQuery<Partial<SimpleGetAllBLocksQuery>, Error>(
@@ -62,7 +60,7 @@ export const DeleteLocationForm = () => {
     // Block to Aisle
     const [blockToSearch, setBlockToSearch] = useState<any>(null);
     const search = blockToSearch ? { blockId: blockToSearch! } : undefined;
-    const { data: locationsData } = useLocationIds(search, 1, 9999, null);
+    const { data: locationsData } = useLocationIds(search, 1, 1000, null);
 
     //set reference Locations list
     useEffect(() => {
@@ -187,51 +185,57 @@ export const DeleteLocationForm = () => {
     const bulkDeleteLocation = async () => {
         const formData = form.getFieldsValue(true);
 
-        const bulkDeleteLocation = async (formData: any) => {
-            const blockId = formData['input']['blockId'];
-            setCreateLoading(true);
-            try {
-                const query = gql`
-                    mutation executeFunction($functionName: String!, $event: JSON!) {
-                        executeFunction(functionName: $functionName, event: $event) {
-                            status
-                            output
-                        }
-                    }
-                `;
-                const variables = {
-                    functionName: 'bulk_delete_locations',
-                    event: {
-                        ...formData
-                    }
-                };
+        const selectedBlock = blocksList?.data?.blocks?.results.find((e: any) => {
+            return e.id == formData.blockId;
+        });
 
-                const response = await graphqlRequestClient.request(query, variables);
-
-                if (response.executeFunction.status === 'ERROR') {
-                    showError(response.executeFunction.output);
-                } else if (
-                    response.executeFunction.status === 'OK' &&
-                    response.executeFunction.output.status === 'KO'
-                ) {
-                    showError(t(`errors:${response.executeFunction.output.output.code}`));
-                    console.log('Backend_message', response.executeFunction.output.output);
-                } else {
-                    showSuccess(t('messages:success-deleted'));
-                    router.push(`/blocks/${blockId}`);
-                }
-                setCreateLoading(false);
-            } catch (error) {
-                showError(t('messages:error-executing-function'));
-                console.log('executeFunctionError', error);
-                setCreateLoading(false);
-            }
+        const originLocationInput = {
+            blockId: formData.blockId,
+            blockName: selectedBlock?.name,
+            aisle: formData.originAisle,
+            column: formData.originColumn,
+            level: formData.originLevel,
+            position: formData.originPosition
+        };
+        const finalLocationInput = {
+            blockId: formData.blockId,
+            blockName: selectedBlock?.name,
+            aisle: formData.finalAisle,
+            column: formData.finalColumn,
+            level: formData.finalLevel,
+            position: formData.finalPosition
         };
 
-        bulkDeleteLocation({
-            input: formData
+        const res = await fetch(`/api/locations/bulk-delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                blockId: formData.blockId,
+                originLocation: originLocationInput,
+                finalLocation: finalLocationInput
+            })
         });
+
+        const response = await res.json();
+
         setUnsavedChanges(false);
+
+        if (res.ok) {
+            // delete success
+            showSuccess(t('messages:success-deleted'));
+            router.push(`/locations/`);
+        } else {
+            // error
+            if (response.error.is_error) {
+                // specific error
+                showError(t(`errors:${response.error.code}`));
+            } else {
+                // generic error
+                showError(t('messages:error-delete-location-impossible'));
+            }
+        }
     };
 
     const handleClickNext = () => {
@@ -549,7 +553,7 @@ export const DeleteLocationForm = () => {
                         {steps.length > 1 && (
                             <Button onClick={handleClickBack}>{t('actions:back-step')}</Button>
                         )}
-                        <Button type="primary" loading={createLoading} onClick={bulkDeleteLocation}>
+                        <Button type="primary" onClick={() => bulkDeleteLocation()}>
                             {t('actions:submit')}
                         </Button>
                         <Button onClick={onCancel}>{t('actions:cancel')}</Button>

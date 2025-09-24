@@ -69,7 +69,6 @@ export const UserSettings: FC = () => {
     const theme = tempTheme ?? generalUserSettings?.valueJson?.theme;
 
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [isModalByScreenVisible, setIsModalByScreenVisible] = useState(false);
 
     const ResetUserConfigs = useCallback(async () => {
         const arrayOfIds = userSettings
@@ -114,33 +113,6 @@ export const UserSettings: FC = () => {
             ]
         });
         setIsModalVisible(false);
-        router.reload();
-    }, [userSettings, graphqlRequestClient]);
-
-    const ResetUserSettingByScreen = useCallback(async () => {
-        const userSettingToDelete = userSettings.filter((item: any) => {
-            return item.code.endsWith(router.pathname);
-        });
-        if (userSettingToDelete.length === 0) return setIsModalByScreenVisible(false);
-        const arrayOfIds = userSettingToDelete
-            .map((item: any) => item.id)
-            .filter(Boolean)
-            .filter((id: any, index: number, self: any) => self.indexOf(id) === index);
-        if (arrayOfIds.length === 0) return setIsModalByScreenVisible(false);
-        setIsModalByScreenVisible(false);
-        const deleteQuery = gql`
-            mutation ($ids: [String!]!) {
-                deleteWarehouseWorkerSettings(ids: $ids)
-            }
-        `;
-        const deleteVariables = {
-            ids: arrayOfIds
-        };
-        await graphqlRequestClient.request(deleteQuery, deleteVariables);
-        dispatchUserSettings({
-            type: 'SWITCH_USER_SETTINGS',
-            userSettings: userSettings.filter((item: any) => !arrayOfIds.includes(item.id))
-        });
         router.reload();
     }, [userSettings, graphqlRequestClient]);
 
@@ -235,31 +207,10 @@ export const UserSettings: FC = () => {
             </Row>
             <Divider orientation="left">{t('common:reset-settings')}</Divider>
             <Row justify="center">
-                <Button
-                    type="primary"
-                    style={{
-                        margin: '10px',
-                        height: 'auto',
-                        whiteSpace: 'normal'
-                    }}
-                    onClick={() => setIsModalByScreenVisible(true)}
-                >
-                    {t('actions:reset-settings')} {`(${t('common:this-screen-only')})`}
-                </Button>
                 <Button type="primary" danger onClick={() => setIsModalVisible(true)}>
                     {t('actions:reset-settings')}
                 </Button>
             </Row>
-            <Modal
-                title={t('common:confirm-reset')}
-                open={isModalByScreenVisible}
-                onOk={ResetUserSettingByScreen}
-                onCancel={() => setIsModalByScreenVisible(false)}
-                okText={t('actions:confirm')}
-                cancelText={t('actions:cancel')}
-            >
-                <p>{t('common:reset-warning')}</p>
-            </Modal>
             <Modal
                 title={t('common:confirm-reset')}
                 open={isModalVisible}

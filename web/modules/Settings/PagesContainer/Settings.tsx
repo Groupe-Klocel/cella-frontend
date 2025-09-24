@@ -17,28 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead } from '@components';
-import { EditHandlingUnitContent } from 'modules/HandlingUnits/PagesContainer/EditHandlingUnitContent';
-import { useRouter } from 'next/router';
-import { FC } from 'react';
-import MainLayout from '../../../components/layouts/MainLayout';
+import { HeaderContent } from '@components';
+import { settingsRoutes } from 'modules/Settings/Static/settingsRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { SettingsList } from 'modules/Settings/Elements/SettingsList';
 
-type PageComponent = FC & { layout: typeof MainLayout };
-
-const EditHandlingUnitPage: PageComponent = () => {
-    const router = useRouter();
-    const { id } = router.query;
-    const { t } = useTranslation();
-
+export const Settings = () => {
+    const { t } = useTranslation('common');
     return (
         <>
-            <AppHead title={`${t('actions:edit')} ${t('menu:equipment')}`} />
-            <EditHandlingUnitContent id={id!} />
+            <HeaderContent title={t('settings')} routes={settingsRoutes} />
+            <SettingsList />
         </>
     );
 };
-
-EditHandlingUnitPage.layout = MainLayout;
-
-export default EditHandlingUnitPage;

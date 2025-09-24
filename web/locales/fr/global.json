@@ -4,13 +4,6 @@
     "password": "Mot de passe",
     "login": "Connexion",
     "error-message-empty-input": "Le champ ne doit pas être vide",
-    "error-login": "Erreur de connexion",
     "login-success": "Vous êtes maintenant connecté",
-    "please-reset-password": "Veuillez réinitialiser votre mot de passe",
-    "SSO-000001": "Aucun utilisateur correspondant à cet e-mail n'a été trouvé",
-    "SSO-000002": "La connexion via SSO est requise",
-    "SSO-000003": "Le champ 'sso_metadata' est requis.",
-    "SSO-000004": "Le champ 'sso_front_secret' est absent ou invalide.",
-    "SSO-000005": "Le token SSO est invalide ou a expiré. Veuillez vous reconnecter.",
-    "SSO-000006": "Impossible de vérifier le token SSO. Veuillez contacter l'administrateur."
+    "please-reset-password": "Veuillez réinitialiser votre mot de passe"
 }

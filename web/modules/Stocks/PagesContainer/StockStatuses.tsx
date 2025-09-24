@@ -17,28 +17,28 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead } from '@components';
-import { EditHandlingUnitContent } from 'modules/HandlingUnits/PagesContainer/EditHandlingUnitContent';
-import { useRouter } from 'next/router';
-import { FC } from 'react';
-import MainLayout from '../../../components/layouts/MainLayout';
+import { HeaderContent } from '@components';
+import { stocksRoutes } from 'modules/Stocks/Static/stocksRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { StockStatusesList } from 'modules/Stocks/Elements/StockStatusesList';
+import { LinkButton } from 'components/common/dumb/Buttons/LinkButton';
 
-type PageComponent = FC & { layout: typeof MainLayout };
-
-const EditHandlingUnitPage: PageComponent = () => {
-    const router = useRouter();
-    const { id } = router.query;
+export const StockStatuses = () => {
     const { t } = useTranslation();
-
     return (
         <>
-            <AppHead title={`${t('actions:edit')} ${t('menu:equipment')}`} />
-            <EditHandlingUnitContent id={id!} />
+            <HeaderContent
+                title={t('menu:stock-statuses')}
+                routes={stocksRoutes}
+                actionsRight={
+                    <LinkButton
+                        title={t('actions:add-stock-status')}
+                        path="/add-stock-status"
+                        type="primary"
+                    />
+                }
+            />
+            <StockStatusesList />
         </>
     );
 };
-
-EditHandlingUnitPage.layout = MainLayout;
-
-export default EditHandlingUnitPage;

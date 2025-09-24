@@ -18,27 +18,23 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead } from '@components';
-import { EditHandlingUnitContent } from 'modules/HandlingUnits/PagesContainer/EditHandlingUnitContent';
-import { useRouter } from 'next/router';
+import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
-import MainLayout from '../../../components/layouts/MainLayout';
+import { BlacklistedBarcodes } from '../modules/Barcodes/PagesContainer/BlacklistedBarcodes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditHandlingUnitPage: PageComponent = () => {
-    const router = useRouter();
-    const { id } = router.query;
-    const { t } = useTranslation();
-
+const BlacklistedBarcodesPage: PageComponent = () => {
+    const { t } = useTranslation('menu');
     return (
         <>
-            <AppHead title={`${t('actions:edit')} ${t('menu:equipment')}`} />
-            <EditHandlingUnitContent id={id!} />
+            <AppHead title={t('blacklisted-barcodes')} />
+            <BlacklistedBarcodes />
         </>
     );
 };
 
-EditHandlingUnitPage.layout = MainLayout;
+BlacklistedBarcodesPage.layout = MainLayout;
 
-export default EditHandlingUnitPage;
+export default BlacklistedBarcodesPage;

@@ -201,7 +201,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [dispatchUser, user]);
 
     useEffect(() => {
-        if (user && user?.id) {
+        if (user?.id) {
             getUserSettings();
             getTranslations();
             getConfigs();
