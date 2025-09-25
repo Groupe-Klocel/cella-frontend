@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
-import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export interface IEnterCommentProps {
@@ -51,24 +50,12 @@ export const EnterComment = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
-    const router = useRouter();
-
-    //Pre-requisite: initialize current step
-    /*     useEffect(() => {
-        //check workflow direction and assign current step accordingly
-        if (storedObject.currentStep < stepNumber) {
-            storedObject[`step${stepNumber}`] = {
-                previousStep: storedObject.currentStep
-            };
-            storedObject.currentStep = stepNumber;
-        }
-        storage.set(process, JSON.stringify(storedObject));
-    }, []); */
 
     useEffect(() => {
         if (defaultValue) {
             // N.B.: in this case previous step is kept at its previous value
             const data: { [label: string]: any } = {};
+            setScannedInfo(undefined);
             data['comment'] = defaultValue;
             storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
             setTriggerRender(!triggerRender);
@@ -82,31 +69,30 @@ export const EnterComment = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-        resetForm
+        resetForm,
+        required: false
     };
 
     return (
         <>
-            <>
-                <ScanForm
-                    process={process}
-                    initValue={defaultValue}
-                    stepNumber={stepNumber}
-                    required={false}
-                    label={label}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ ...buttons }}
-                    setScannedInfo={setScannedInfo}
-                    resetForm={{ resetForm, setResetForm }}
-                    triggerAlternativeSubmit1={{
-                        triggerAlternativeSubmit1,
-                        setTriggerAlternativeSubmit1
-                    }}
-                    alternativeSubmitLabel1={t('actions:close')}
-                    headerContent={headerContent}
-                ></ScanForm>
-                {checkComponent(dataToCheck)}
-            </>
+            <ScanForm
+                process={process}
+                initValue={defaultValue}
+                stepNumber={stepNumber}
+                required={false}
+                label={label}
+                trigger={{ triggerRender, setTriggerRender }}
+                buttons={{ ...buttons }}
+                setScannedInfo={setScannedInfo}
+                resetForm={{ resetForm, setResetForm }}
+                triggerAlternativeSubmit1={{
+                    triggerAlternativeSubmit1,
+                    setTriggerAlternativeSubmit1
+                }}
+                alternativeSubmitLabel1={t('actions:close')}
+                headerContent={headerContent}
+            ></ScanForm>
+            {checkComponent(dataToCheck)}
         </>
     );
 };
