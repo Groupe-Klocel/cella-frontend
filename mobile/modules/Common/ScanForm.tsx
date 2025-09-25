@@ -88,7 +88,10 @@ export const ScanForm = ({
     //Scan-1a: retrieve value from input and set values for display
     const onFinish = (values: any) => {
         if (values.scannedItem) {
-            setScannedInfo(values.scannedItem.trim());
+            setScannedInfo((previousValue: string) => {
+                if (!previousValue) return values.scannedItem.trim();
+                return previousValue;
+            });
         } else {
             setScannedInfo('undefined');
         }
@@ -143,8 +146,10 @@ export const ScanForm = ({
     };
 
     const onChange = (e: any) => {
-        if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
-        if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
+        if (required) {
+            if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
+            if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
+        }
     };
 
     return (

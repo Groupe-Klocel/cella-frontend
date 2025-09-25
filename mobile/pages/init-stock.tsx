@@ -138,10 +138,7 @@ const InitStock: PageComponent = () => {
             const reservation = storedObject['step90']?.data?.reservation;
             object[t('d:reservation')] = reservation;
         }
-        if (
-            storedObject['step110']?.data &&
-            storedObject['step110']?.data?.comment !== 'undefined'
-        ) {
+        if (storedObject['step110']?.data && storedObject['step110']?.data?.comment) {
             const comment = storedObject['step110']?.data?.comment;
             object[t('common:comment')] = comment;
         }
