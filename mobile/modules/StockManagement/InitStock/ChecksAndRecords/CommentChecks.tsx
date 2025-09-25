@@ -35,7 +35,8 @@ export const CommentChecks = ({ dataToCheck }: ICommentChecksProps) => {
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         trigger: { triggerRender, setTriggerRender },
-        triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 }
+        triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
+        required
     } = dataToCheck;
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -44,8 +45,12 @@ export const CommentChecks = ({ dataToCheck }: ICommentChecksProps) => {
 
     useEffect(() => {
         if (scannedInfo) {
+            let commentInfo = scannedInfo;
+            if (!required && scannedInfo === 'undefined') {
+                commentInfo = null;
+            }
             const data: { [label: string]: any } = {};
-            data['comment'] = scannedInfo;
+            data['comment'] = commentInfo;
             storedObject[`step${stepNumber}`] = {
                 ...storedObject[`step${stepNumber}`],
                 data: data

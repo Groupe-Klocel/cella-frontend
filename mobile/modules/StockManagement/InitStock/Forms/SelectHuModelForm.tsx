@@ -232,10 +232,15 @@ export const SelectHuModelForm = ({
     };
 
     //SelectHuModel-2b: handle back to previous step settings
-    const onBack = () => {
+    const onBack = (enforcedPreviousStep?: number) => {
         setTriggerRender(!triggerRender);
-        delete storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].data;
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+        const previousStep =
+            enforcedPreviousStep ?? storedObject[`step${stepNumber}`]?.previousStep ?? 0;
+        for (let i = previousStep; i <= stepNumber; i++) {
+            delete storedObject[`step${i}`]?.data;
+        }
+
+        storedObject.currentStep = previousStep;
         storage.set(process, JSON.stringify(storedObject));
     };
 
