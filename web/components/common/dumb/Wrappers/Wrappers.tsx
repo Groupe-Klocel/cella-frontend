@@ -29,8 +29,8 @@ const WrapperStepContent = styled.div`
 `;
 const WrapperStickyActions = styled.div`
     position: absolute;
-    right: 0;
-    margin-right: 15px;
+    right: 0px;
+    top: 15px;
     align-self: flex-end;
 `;
 
@@ -82,7 +82,8 @@ const PageContentWrapper = styled.div`
     margin: 15px 30px;
 `;
 const PageTableContentWrapper = styled(Layout.Content)`
-    margin: 15px 40px 15px 15px;
+    padding: 15px 40px 15px 15px;
+    position: relative;
 `;
 export {
     PageContentWrapper,

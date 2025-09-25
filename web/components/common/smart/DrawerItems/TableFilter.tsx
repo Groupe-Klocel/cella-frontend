@@ -22,33 +22,14 @@ import { isVisible, MyColumnType, setCustomColumnsProps, showWarning } from '@he
 import { Button, Space, Table } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import {
-    FC,
-    Key,
-    useEffect,
-    useState,
-    forwardRef,
-    useImperativeHandle,
-    ClassAttributes,
-    HTMLAttributes,
-    ForwardedRef
-} from 'react';
+import { FC, Key, ClassAttributes, HTMLAttributes } from 'react';
 import { SortableContainer, SortableElement, SortableHandle } from 'react-sortable-hoc';
 import { arrayMoveImmutable } from 'array-move';
 import { MenuOutlined } from '@ant-design/icons';
-import { ColumnType } from 'antd/lib/table';
 
 export interface ITableFilterProps {
-    columnsToFilter: any; //need to find what is wrong with this MyColumnType[],
-    visibleKeys: Key[];
-    fixKeys: Key[];
-    onShowChange: Function;
-    onSort: Function;
-    onFixed: Function;
-}
-
-interface TableFilterRef {
-    reset: (keys: string[], columns: ColumnType<any>[]) => void;
+    allColumnsInfos: any; //need to find what is wrong with this MyColumnType[],
+    setAllColumnsInfos: Function;
 }
 
 interface Iindex {
@@ -72,167 +53,126 @@ const SortableBody = SortableContainer(
     ) => <tbody {...props} />
 );
 
-const TableFilter = forwardRef<TableFilterRef, ITableFilterProps>(
-    (
-        { columnsToFilter, visibleKeys, onShowChange, onSort, fixKeys, onFixed },
-        ref: ForwardedRef<TableFilterRef>
-    ) => {
-        const { t } = useTranslation();
-        const [showKeys, setShowKeys] = useState(visibleKeys);
-        const [fixedKeys, setFixedKeys] = useState<Key[]>(fixKeys);
-        const [currentFilteredColumns, setCurrentFilteredColumns] = useState(columnsToFilter);
+const TableFilter: FC<ITableFilterProps> = ({ allColumnsInfos, setAllColumnsInfos }) => {
+    const { t } = useTranslation();
 
-        useImperativeHandle(ref, () => ({
-            reset(keys: any, columns: any) {
-                setShowKeys(keys);
-                setFixedKeys([]);
-                setCurrentFilteredColumns(columns);
-            }
-        }));
-
-        useEffect(() => {
-            if (showKeys.length === 1 && showKeys[0] === 'actions') {
-                setShowKeys(visibleKeys);
-                onShowChange(visibleKeys);
-                showWarning(t('messages:filter_only_actions_visibles_warn'));
-            } else onShowChange(showKeys);
-
-            return () => {};
-        }, [onShowChange, showKeys]);
-
-        useEffect(() => {
-            onSort(
-                columnsToFilter
-                    ?.filter((e: any) => e.key === 'actions')
-                    .concat(currentFilteredColumns)
-            );
-            return () => {};
-        }, [onSort, currentFilteredColumns]);
-
-        useEffect(() => {
-            onFixed(fixedKeys);
-            return () => {};
-        }, [onFixed, fixedKeys]);
-
-        async function handleVisibleChange(key: Key) {
-            const tempList = [...showKeys];
-            if (tempList.includes(key)) {
-                const index = tempList.indexOf(key);
-                tempList.splice(index, 1);
-            } else {
-                tempList.push(key);
-            }
-            await setShowKeys(tempList);
-        }
-
-        // rowSelection object indicates the need for row selection
-        const fixedSelection = {
-            selectedRowKeys: fixedKeys,
-            onChange: (selectedRowKeys: Key[]) => {
-                let tempColumns = currentFilteredColumns;
-                tempColumns = currentFilteredColumns.map((obj: any) => {
-                    // change fixed to true
-                    if (selectedRowKeys.some((r) => obj.dataIndex === r)) {
-                        return { ...obj, fixed: true };
-                    } else {
-                        return { ...obj, fixed: false };
-                    }
-                });
-
-                setFixedKeys(selectedRowKeys);
-                setCurrentFilteredColumns(tempColumns);
-            },
-            getCheckboxProps: (record: MyColumnType) => ({
-                disabled: record?.disabled // Column configuration not to be checked
-            })
-        };
-
-        const columns = [
-            {
-                title: t('actions:fixed'),
-                key: 'fixed',
-                width: '1%' // width to minimum possible
-            },
-            {
-                title: t('actions:show-hide'),
-                key: 'show-hide',
-                render: (record: { title: string; key: Key }) => (
-                    <Space>
-                        <Button
-                            shape="circle"
-                            icon={
-                                isVisible(record.key, showKeys) ? (
-                                    <EyeTwoTone />
-                                ) : (
-                                    <EyeInvisibleTwoTone />
-                                )
-                            }
-                            onClick={() => handleVisibleChange(record.key)}
-                        />
-                        <Text>{t(record.title)}</Text>
-                    </Space>
-                )
-            },
-            {
-                title: t('actions:sort'),
-                dataIndex: 'sort',
-                width: 30,
-                className: 'drag-visible',
-                render: () => <DragHandle />
-            }
-        ];
-
-        const onSortEnd = ({ oldIndex, newIndex }: Iindex) => {
-            if (oldIndex !== newIndex) {
-                const newData = arrayMoveImmutable(
-                    [].concat(currentFilteredColumns),
-                    oldIndex,
-                    newIndex
-                ).filter((el) => !!el);
-
-                const newDataWithNewIndex = setCustomColumnsProps(newData);
-                setFixedKeys([]);
-                setCurrentFilteredColumns(newDataWithNewIndex);
-            }
-        };
-
-        const DraggableContainer = (props: any) => (
-            <SortableBody
-                useDragHandle
-                disableAutoscroll
-                helperClass="row-dragging"
-                onSortEnd={onSortEnd}
-                {...props}
-            />
-        );
-
-        const DraggableBodyRow = ({ className, style, ...restProps }: any) => {
-            // function findIndex base on Table rowKey props and should always be a right array index
-            const index = currentFilteredColumns.findIndex(
-                (x: { dataIndex: number }) => x.dataIndex === restProps['data-row-key']
-            );
-            return <SortableItem className="sortableHelper" index={index} {...restProps} />;
-        };
-
-        return (
-            <>
-                <Table
-                    pagination={false}
-                    rowSelection={fixedSelection}
-                    columns={columns}
-                    dataSource={currentFilteredColumns.filter((e: any) => e.key !== 'actions')}
-                    rowKey="dataIndex"
-                    components={{
-                        body: {
-                            wrapper: DraggableContainer,
-                            row: DraggableBodyRow
-                        }
-                    }}
-                />
-            </>
-        );
+    async function handleVisibleChange(key: Key) {
+        setAllColumnsInfos((prev: any) => {
+            const newState = prev.map((obj: any) => {
+                // change isVisible to true
+                if (obj.dataIndex === key) {
+                    return { ...obj, hidden: !obj.hidden };
+                }
+                return obj;
+            });
+            return newState;
+        });
     }
-);
+    // rowSelection object indicates the need for row selection
+    const fixedSelection = {
+        selectedRowKeys: allColumnsInfos
+            .filter((col: any) => col.fixed === true)
+            .map((el: any) => el.dataIndex),
+        onChange: (selectedRowKeys: Key[]) => {
+            let tempColumns = allColumnsInfos;
+            tempColumns = allColumnsInfos.map((obj: any) => {
+                // change fixed to true
+                if (selectedRowKeys.some((r) => obj.dataIndex === r)) {
+                    return { ...obj, fixed: true };
+                } else {
+                    return { ...obj, fixed: false };
+                }
+            });
+            setAllColumnsInfos(tempColumns);
+        },
+        getCheckboxProps: (record: MyColumnType) => ({
+            disabled: record?.disabled // Column configuration not to be checked
+        })
+    };
+
+    const columns = [
+        {
+            title: t('actions:fixed'),
+            key: 'fixed',
+            width: '1%' // width to minimum possible
+        },
+        {
+            title: t('actions:show-hide'),
+            key: 'show-hide',
+            render: (record: { title: string; key: Key }) => (
+                <Space>
+                    <Button
+                        shape="circle"
+                        icon={
+                            allColumnsInfos.filter((col: any) => col.dataIndex === record.key)[0]
+                                .hidden ? (
+                                <EyeInvisibleTwoTone />
+                            ) : (
+                                <EyeTwoTone />
+                            )
+                        }
+                        onClick={() => handleVisibleChange(record.key)}
+                    />
+                    <Text>{t(record.title)}</Text>
+                </Space>
+            )
+        },
+        {
+            title: t('actions:sort'),
+            dataIndex: 'sort',
+            width: 30,
+            className: 'drag-visible',
+            render: () => <DragHandle />
+        }
+    ];
+
+    const onSortEnd = ({ oldIndex, newIndex }: Iindex) => {
+        if (oldIndex !== newIndex) {
+            const newData = arrayMoveImmutable(
+                [].concat(allColumnsInfos),
+                oldIndex,
+                newIndex
+            ).filter((el) => !!el);
+            setAllColumnsInfos(newData);
+        }
+    };
+
+    const DraggableContainer = (props: any) => (
+        <SortableBody
+            useDragHandle
+            disableAutoscroll
+            helperClass="row-dragging"
+            onSortEnd={onSortEnd}
+            {...props}
+        />
+    );
+
+    const DraggableBodyRow = ({ className, style, ...restProps }: any) => {
+        // function findIndex base on Table rowKey props and should always be a right array index
+        const index = allColumnsInfos.findIndex(
+            (x: { dataIndex: number }) => x.dataIndex === restProps['data-row-key']
+        );
+        return <SortableItem className="sortableHelper" index={index} {...restProps} />;
+    };
+
+    return (
+        <>
+            <Table
+                pagination={false}
+                rowSelection={fixedSelection}
+                columns={columns}
+                dataSource={allColumnsInfos.filter((e: any) => e.key !== 'actions')}
+                rowKey="dataIndex"
+                components={{
+                    body: {
+                        wrapper: DraggableContainer,
+                        row: DraggableBodyRow
+                    }
+                }}
+            />
+        </>
+    );
+};
 
 TableFilter.displayName = 'TableFilter';
 
