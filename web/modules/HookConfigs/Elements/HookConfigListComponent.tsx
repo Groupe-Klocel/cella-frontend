@@ -522,8 +522,9 @@ const HookConfigListComponent = (props: IListProps) => {
             for (const [key, value] of Object.entries(rowsCopy[0])) {
                 const arg = key.split('_');
                 if (key.includes('argument_')) {
-                    jsonData.push({ index: `${i}`, key: `${arg[1]}`, value: `${value}` });
-                    stringJsonData += arg[1] + '=' + value + ',';
+                    const argKey = key.replace('argument_', '');
+                    jsonData.push({ index: `${i}`, key: argKey, value: `${value}` });
+                    stringJsonData += argKey + '=' + value + ',';
                     i++;
                 }
             }
