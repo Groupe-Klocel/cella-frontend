@@ -511,22 +511,6 @@ function queryString(
         newSort = sort;
     }
 
-    // Sort fields to put relationships at the end
-    const sortedFields = fields.sort((a, b) => {
-        const matchA = a.match(/(.+){(.+)}/);
-        const matchB = b.match(/(.+){(.+)}/);
-
-        if (matchA && matchB) {
-            return 0;
-        } else if (matchA) {
-            return 1;
-        } else if (matchB) {
-            return -1;
-        } else {
-            return 0;
-        }
-    });
-
     const queryString = `query{
         ${queryName}(
             filters: ${search ? JSON.stringify(search).replace(/"(\w+)":/g, '$1:') : undefined}
@@ -539,7 +523,7 @@ function queryString(
             itemsPerPage
             totalPages
             results {
-                ${sortedFields.join('\n')}
+                ${fields.join('\n')}
             }
         }
     }`;

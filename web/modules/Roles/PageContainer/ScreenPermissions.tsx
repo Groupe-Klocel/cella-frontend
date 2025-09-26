@@ -149,10 +149,6 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
     const [mobileTables, setMobileTables] = useState<any>();
     const [wmTables, setWmTables] = useState<any>();
     useEffect(() => {
-        console.log(
-            'AXC - ScreenPermissions.tsx - ScreenPermissions - tablesList:',
-            tablesList.data
-        );
         if (tablesList) {
             tablesList?.data?.listConfigsForAScope.sort(
                 (a, b) =>
