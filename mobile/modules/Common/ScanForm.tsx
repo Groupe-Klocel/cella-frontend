@@ -31,7 +31,7 @@ export interface IScanProps {
     label: string | undefined;
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
-    setScannedInfo: (value: string) => void;
+    setScannedInfo: (value: any) => void;
     showEmptyLocations?: any;
     showSimilarLocations?: any;
     resetForm: { [label: string]: any };
@@ -48,6 +48,8 @@ export interface IScanProps {
     getFormData?: boolean;
     setFormData?: (value: string) => void;
     mask?: string;
+    required?: boolean;
+    style?: any;
 }
 
 export const ScanForm = ({
@@ -72,7 +74,9 @@ export const ScanForm = ({
     isSelected,
     getFormData,
     setFormData,
-    mask
+    mask,
+    required = true,
+    style
 }: IScanProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -83,7 +87,14 @@ export const ScanForm = ({
     // TYPED SAFE ALL
     //Scan-1a: retrieve value from input and set values for display
     const onFinish = (values: any) => {
-        setScannedInfo(values.scannedItem.trim());
+        if (values.scannedItem) {
+            setScannedInfo((previousValue: string) => {
+                if (!previousValue) return values.scannedItem.trim();
+                return previousValue;
+            });
+        } else {
+            setScannedInfo('undefined');
+        }
     };
 
     // Scan-2: manage form reset in case of error
@@ -135,8 +146,10 @@ export const ScanForm = ({
     };
 
     const onChange = (e: any) => {
-        if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
-        if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
+        if (required) {
+            if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
+            if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
+        }
     };
 
     return (
@@ -150,13 +163,14 @@ export const ScanForm = ({
                 size="small"
                 form={form}
                 initialValues={{ scannedItem: initValue ? initValue : undefined }}
+                style={style}
             >
                 <StyledFormItem
                     label={label}
                     name="scannedItem"
                     rules={[
                         {
-                            required: true,
+                            required: required,
                             message: t('messages:error-message-empty-input')
                         },
                         ...(mask
