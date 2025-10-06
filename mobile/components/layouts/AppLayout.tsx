@@ -1,4 +1,4 @@
-import { cookie, showError } from '@helpers';
+import { cookie, showError, LsIsSecured } from '@helpers';
 import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useRouter } from 'next/router';
@@ -20,10 +20,24 @@ type AppLayoutProps = {
 };
 
 const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) => {
-    const { userSettings, user: userFromState } = useAppState();
+    const {
+        userSettings,
+        user: userFromState,
+        pickAndPack,
+        reception,
+        returnReception
+    } = useAppState();
     const router = useRouter();
+    const [storage, setStorage] = useState<any>(null);
     const dispatchUser = useAppDispatch();
     const [userSettingsLoading, setUserSettingsLoading] = useState<number>(0);
+
+    // Initialize secure storage on client side only
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setStorage(LsIsSecured());
+        }
+    }, []);
 
     const token = cookie.get('token');
     const user = userFromState ?? (cookie.get('user') ? JSON.parse(cookie.get('user')!) : {});
@@ -50,6 +64,59 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [generalUserSettings?.valueJson]);
 
     const theme = generalUserSettings?.valueJson?.theme ?? 'light';
+
+    // #region save RF in LS
+    const debounceTimeout = 1000; // 1 second delay
+
+    // Only run localStorage operations when storage is available
+    useEffect(() => {
+        if (storage && pickAndPack) {
+            const timer = setTimeout(() => {
+                storage.set('pickAndPack', JSON.stringify(pickAndPack));
+            }, debounceTimeout);
+            return () => clearTimeout(timer);
+        }
+    }, [pickAndPack, storage]);
+
+    useEffect(() => {
+        if (storage && reception) {
+            const timer = setTimeout(() => {
+                storage.set('reception', JSON.stringify(reception));
+            }, debounceTimeout);
+            return () => clearTimeout(timer);
+        }
+    }, [reception, storage]);
+
+    useEffect(() => {
+        if (storage && returnReception) {
+            const timer = setTimeout(() => {
+                storage.set('returnReception', JSON.stringify(returnReception));
+            }, debounceTimeout);
+            return () => clearTimeout(timer);
+        }
+    }, [returnReception, storage]);
+
+    useEffect(() => {
+        if (storage) {
+            dispatchUser({
+                type: 'UPDATE_BY_PROCESS',
+                processName: 'pickAndPack',
+                object: JSON.parse(storage.get('pickAndPack') || '{}')
+            });
+            dispatchUser({
+                type: 'UPDATE_BY_PROCESS',
+                processName: 'reception',
+                object: JSON.parse(storage.get('reception') || '{}')
+            });
+            dispatchUser({
+                type: 'UPDATE_BY_PROCESS',
+                processName: 'returnReception',
+                object: JSON.parse(storage.get('returnReception') || '{}')
+            });
+        }
+    }, [storage]);
+
+    // #endregion
 
     const getUserSettings = useCallback(async () => {
         const query = gql`

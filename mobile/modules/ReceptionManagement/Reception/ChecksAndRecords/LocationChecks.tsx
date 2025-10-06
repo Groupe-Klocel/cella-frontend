@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useEffect } from 'react';
 
 export interface ILocationChecksProps {
@@ -28,24 +29,24 @@ export interface ILocationChecksProps {
 
 export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
+    const state = useAppState();
+    const dispatch = useAppDispatch();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const storedObject = state[processName] || {};
 
     // TYPED SAFE ALL
     useEffect(() => {
+        const data: { [label: string]: any } = {};
         if (scannedInfo && locationInfos.data) {
             if (locationInfos.data.locations?.count !== 0) {
-                const data: { [label: string]: any } = {};
                 data['locations'] = locationInfos.data?.locations?.results.map(
                     ({
                         id,
@@ -79,7 +80,6 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                     }
                 );
 
-                setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
                     data
@@ -90,11 +90,17 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                 setScannedInfo(undefined);
             }
         }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
+        if (storedObject[`step${stepNumber}`] && Object.keys(data).length != 0) {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     }, [locationInfos]);
 

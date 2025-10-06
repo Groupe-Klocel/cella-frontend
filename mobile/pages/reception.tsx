@@ -22,25 +22,22 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import {
     EmptyLocations,
-    SelectLocationByLevelForm,
-    SelectStockStatusForm,
-    EnterQuantity,
-    ScanArticle,
-    ScanLocation
+    SelectLocationByLevelForm_reducer,
+    SelectStockStatusForm_reducer,
+    EnterQuantity_reducer,
+    ScanLocation_reducer
 } from '@CommonRadio';
 import { ValidateReceptionForm } from 'modules/ReceptionManagement/Reception/Forms/ValidateReception';
 import { QuantityChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/QuantityChecks';
-import { SelectGoodsInForm } from 'modules/ReceptionManagement/Reception/Forms/SelectGoodsInForm';
+
 import { ScanHandlingUnit } from 'modules/ReceptionManagement/Reception/PagesContainer/ScanHandlingUnit';
 import { HandlingUnitChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/HandlingUnitChecks';
 import { ArticleChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/ArticleChecks';
-import { ScanFeature } from 'modules/Common/Features/PagesContainer/ScanFeature';
 import { FeatureChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/FeatureChecks';
 import { LocationChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/LocationChecks';
 import { ScanGoodsInOrPo } from 'modules/ReceptionManagement/Reception/PagesContainer/ScanGoodsInOrPo';
@@ -50,20 +47,19 @@ import moment from 'moment';
 import { SimilarLocations } from 'modules/ReceptionManagement/Reception/Elements/SimilarLocations';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import { useAppDispatch, useAppState } from 'context/AppContext';
+import { SelectGoodsInForm } from 'modules/ReceptionManagement/Reception/Forms/SelectGoodsInForm';
+import { ScanArticle } from 'modules/ReceptionManagement/Reception/Forms/ScanArticle';
+import { ScanFeature } from 'modules/ReceptionManagement/Reception/Forms/ScanFeature';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const Reception: PageComponent = () => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
 
-    const [triggerRender, setTriggerRender] = useState<boolean>(true);
-    const [originDisplay, setOriginDisplay] = useState<any>({});
-    const [finalDisplay] = useState<any>({});
     const [headerContent, setHeaderContent] = useState<boolean>(false);
-    const [displayed, setDisplayed] = useState<any>({});
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
@@ -73,7 +69,7 @@ const Reception: PageComponent = () => {
     const { receptionType } = router.query;
 
     //define workflow parameters
-    const processName = receptionType === 'return' ? 'return-reception' : 'reception';
+    const processName = receptionType === 'return' ? 'returnReception' : 'reception';
 
     // [0] : 10-> Scan PO
     // [1] : 20 -> Select GoodsIn
@@ -87,7 +83,10 @@ const Reception: PageComponent = () => {
     // [9] : 100 -> Select location by level
     // [10] : 110 -> ScanHU (if scanHUAtEnd)
     // [11] : 120 -> Validate reception
-    const storedObject = JSON.parse(storage.get(processName) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+
+    const storedObject = state[processName] || {};
 
     console.log(`${processName}`, storedObject);
 
@@ -165,7 +164,7 @@ const Reception: PageComponent = () => {
 
     const [isHuScannedAtEnd, setIsHuScannedAtEnd] = useState<boolean | undefined>(undefined);
     const [defaultReceptionLocation, setDefaultReceptionLocation] = useState<any>(null);
-    const [availableQuantity, setAvailableQuantity] = useState<number | undefined>(undefined);
+    // const [availableQuantity, setAvailableQuantity] = useState<number | undefined>(undefined);
     useEffect(() => {
         async function fetchData() {
             const receptionParameters = await getParameters();
@@ -190,98 +189,88 @@ const Reception: PageComponent = () => {
     }, []);
     //#endregion
 
-    //initialize workflow on step 0
-    if (Object.keys(storedObject).length === 0) {
-        storedObject['step10'] = { previousStep: 0 };
-        storedObject['currentStep'] = 10;
-        storage.set(processName, JSON.stringify(storedObject));
+    //function to retrieve information to display in RadioInfosHeader
+    let availableQuantity: number | undefined = undefined;
+    const headerDisplay: { [k: string]: any } = {};
+    if (storedObject['step10']?.data?.purchaseOrder) {
+        const purchaseOrder = storedObject['step10']?.data?.purchaseOrder;
+        headerDisplay[t('common:purchase-order_abbr')] = purchaseOrder.name;
+        headerDisplay[t('common:supplier_abbr')] = purchaseOrder.supplier;
+    }
+    if (storedObject['step20']?.data?.chosenGoodsIn) {
+        const goodsIn = storedObject['step20']?.data?.chosenGoodsIn;
+        headerDisplay[t('common:goods-in')] = goodsIn.name ? goodsIn.name : t('common:new');
+    }
+    if (!isHuScannedAtEnd && storedObject['step30']?.data?.handlingUnit) {
+        const handlingUnit = storedObject['step30']?.data?.handlingUnit;
+        headerDisplay[t('common:hu')] = handlingUnit.barcode;
+    }
+    if (storedObject['step50']?.data?.chosenArticleLuBarcode) {
+        const articleLuBarcode = storedObject['step50']?.data?.chosenArticleLuBarcode;
+        headerDisplay[t('common:article_abbr')] =
+            articleLuBarcode.article.name + '-' + articleLuBarcode.article.description;
+    }
+    if (storedObject['step40']?.data?.currentPurchaseOrderLine) {
+        headerDisplay[t('common:stock-owner')] =
+            storedObject['step40']?.data?.currentPurchaseOrderLine[0]?.stockOwner?.name;
+        const quantityReceived = storedObject['step40']?.data?.currentPurchaseOrderLine.reduce(
+            (acc: number, line: any) => acc + (line.receivedQuantity || 0),
+            0
+        );
+        const quantityMax = storedObject['step40']?.data?.currentPurchaseOrderLine.reduce(
+            (acc: number, line: any) => acc + (line.quantityMax || 0),
+            0
+        );
+        availableQuantity = quantityMax - quantityReceived > 0 ? quantityMax - quantityReceived : 0;
+        headerDisplay[t('common:stock-status')] =
+            storedObject['step40']?.data?.currentPurchaseOrderLine[0]?.blockingStatusText;
+    }
+    if (storedObject['step60']?.data?.processedFeatures) {
+        const processedFeatures = storedObject['step60']?.data?.processedFeatures;
+        processedFeatures.map((feature: any) => {
+            headerDisplay[`${feature.featureCode.name}`] = !Array.isArray(feature.value)
+                ? feature.featureCode.dateType
+                    ? moment(feature.value).format('YYYY-MM-DD')
+                    : feature.value
+                : feature.value.map((value: any) => value).join(' / ');
+        });
+    }
+    if (storedObject['step70']?.data?.stockStatus) {
+        const stockStatus = storedObject['step70']?.data?.stockStatus;
+        headerDisplay[t('common:stock-status')] = stockStatus.text;
+    }
+    if (storedObject['step80']?.data?.movingQuantity) {
+        const movingQuantity = storedObject['step80']?.data?.movingQuantity;
+        headerDisplay[t('common:quantity')] = movingQuantity;
+    }
+    if (storedObject['step100']?.data?.chosenLocation) {
+        const chosenLocation = storedObject['step100']?.data?.chosenLocation;
+        headerDisplay[t('common:location-reception')] = chosenLocation.name;
+    }
+    if (
+        isHuScannedAtEnd === true &&
+        storedObject['step100']?.data?.chosenLocation.huManagement &&
+        storedObject['step110']?.data?.handlingUnit
+    ) {
+        const handlingUnit = storedObject['step110']?.data?.handlingUnit;
+        headerDisplay[t('common:hu')] = handlingUnit.barcode;
     }
 
-    //function to retrieve information to display in RadioInfosHeader
-    useEffect(() => {
-        const object: { [k: string]: any } = {};
-        if (storedObject['step10']?.data?.purchaseOrder) {
-            const purchaseOrder = storedObject['step10']?.data?.purchaseOrder;
-            object[t('common:purchase-order_abbr')] = purchaseOrder.name;
-            object[t('common:supplier_abbr')] = purchaseOrder.supplier;
-        }
-        if (storedObject['step20']?.data?.chosenGoodsIn) {
-            const goodsIn = storedObject['step20']?.data?.chosenGoodsIn;
-            object[t('common:goods-in')] = goodsIn.name ? goodsIn.name : t('common:new');
-        }
-        if (!isHuScannedAtEnd && storedObject['step30']?.data?.handlingUnit) {
-            const handlingUnit = storedObject['step30']?.data?.handlingUnit;
-            object[t('common:hu')] = handlingUnit.barcode;
-        }
-        if (storedObject['step50']?.data?.chosenArticleLuBarcode) {
-            const articleLuBarcode = storedObject['step50']?.data?.chosenArticleLuBarcode;
-            object[t('common:article_abbr')] =
-                articleLuBarcode.article.name + '-' + articleLuBarcode.article.description;
-        }
-        if (storedObject['step40']?.data?.currentPurchaseOrderLine) {
-            object[t('common:stock-owner')] =
-                storedObject['step40']?.data?.currentPurchaseOrderLine[0]?.stockOwner?.name;
-            const quantityReceived = storedObject['step40']?.data?.currentPurchaseOrderLine.reduce(
-                (acc: number, line: any) => acc + (line.receivedQuantity || 0),
-                0
-            );
-            const quantityMax = storedObject['step40']?.data?.currentPurchaseOrderLine.reduce(
-                (acc: number, line: any) => acc + (line.quantityMax || 0),
-                0
-            );
-            setAvailableQuantity(
-                quantityMax - quantityReceived > 0 ? quantityMax - quantityReceived : 0
-            );
-            object[t('common:stock-status')] =
-                storedObject['step40']?.data?.currentPurchaseOrderLine[0]?.blockingStatusText;
-        }
-        if (storedObject['step60']?.data?.processedFeatures) {
-            const processedFeatures = storedObject['step60']?.data?.processedFeatures;
-            processedFeatures.map((feature: any) => {
-                object[`${feature.featureCode.name}`] = !Array.isArray(feature.value)
-                    ? feature.featureCode.dateType
-                        ? moment(feature.value).format('YYYY-MM-DD')
-                        : feature.value
-                    : feature.value.map((value: any) => value).join(' / ');
-            });
-        }
-        if (storedObject['step70']?.data?.stockStatus) {
-            const stockStatus = storedObject['step70']?.data?.stockStatus;
-            object[t('common:stock-status')] = stockStatus.text;
-        }
-        if (storedObject['step80']?.data?.movingQuantity) {
-            const movingQuantity = storedObject['step80']?.data?.movingQuantity;
-            object[t('common:quantity')] = movingQuantity;
-        }
-        if (storedObject['step100']?.data?.chosenLocation) {
-            const chosenLocation = storedObject['step100']?.data?.chosenLocation;
-            object[t('common:location-reception')] = chosenLocation.name;
-        }
-        if (
-            isHuScannedAtEnd === true &&
-            storedObject['step100']?.data?.chosenLocation.huManagement &&
-            storedObject['step110']?.data?.handlingUnit
-        ) {
-            const handlingUnit = storedObject['step110']?.data?.handlingUnit;
-            object[t('common:hu')] = handlingUnit.barcode;
-        }
-        setOriginDisplay(object);
-    }, [triggerRender]);
-
-    useEffect(() => {
-        headerContent ? setDisplayed(originDisplay) : setDisplayed(originDisplay);
-    }, [originDisplay, finalDisplay, headerContent]);
-
     const onReset = () => {
-        storage.remove(processName);
+        dispatch({
+            type: 'DELETE_RF_PROCESS',
+            processName
+        });
         setHeaderContent(false);
         setShowEmptyLocations(false);
-        setTriggerRender(!triggerRender);
     };
 
     const previousPage = () => {
+        dispatch({
+            type: 'DELETE_RF_PROCESS',
+            processName
+        });
         router.back();
-        storage.remove(processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
     };
@@ -320,12 +309,12 @@ const Reception: PageComponent = () => {
                     </Space>
                 }
             />
-            {Object.keys(originDisplay).length === 0 && Object.keys(finalDisplay).length === 0 ? (
+            {Object.keys(headerDisplay).length === 0 ? (
                 <></>
             ) : (
                 <RadioInfosHeader
                     input={{
-                        displayed: displayed
+                        displayed: headerDisplay
                     }}
                 ></RadioInfosHeader>
             )}
@@ -350,10 +339,9 @@ const Reception: PageComponent = () => {
                 {showEmptyLocations && storedObject['step50']?.data ? <EmptyLocations /> : <></>}
                 {!storedObject['step10']?.data ? (
                     <ScanGoodsInOrPo
-                        process={processName}
+                        processName={processName}
                         stepNumber={10}
                         label={t('common:goodsIn-po')}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{ submitButton: true, backButton: false }}
                         checkComponent={(data: any) => <GoodsInOrPoChecks dataToCheck={data} />}
                         receptionType={receptionType}
@@ -363,9 +351,8 @@ const Reception: PageComponent = () => {
                 )}
                 {storedObject['step10']?.data && !storedObject['step20']?.data ? (
                     <SelectGoodsInForm
-                        process={processName}
+                        processName={processName}
                         stepNumber={20}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{
                             submitButton: true,
                             backButton: true,
@@ -385,10 +372,9 @@ const Reception: PageComponent = () => {
                 !storedObject['step30']?.data &&
                 isHuScannedAtEnd !== undefined ? (
                     <ScanHandlingUnit
-                        process={processName}
+                        processName={processName}
                         stepNumber={30}
                         label={t('common:handling-unit')}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{
                             submitButton: true,
                             backButton: true
@@ -401,10 +387,9 @@ const Reception: PageComponent = () => {
                 )}
                 {storedObject['step30']?.data && !storedObject['step40']?.data ? (
                     <ScanArticle
-                        process={processName}
+                        processName={processName}
                         stepNumber={40}
                         label={t('common:article')}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{
                             submitButton: true,
                             backButton: true
@@ -416,9 +401,8 @@ const Reception: PageComponent = () => {
                 )}
                 {storedObject['step40']?.data && !storedObject['step50']?.data ? (
                     <SelectArticleForm
-                        process={processName}
+                        processName={processName}
                         stepNumber={50}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{ submitButton: true, backButton: true }}
                         articleLuBarcodes={storedObject['step40'].data.articleLuBarcodes}
                     ></SelectArticleForm>
@@ -428,10 +412,9 @@ const Reception: PageComponent = () => {
                 {storedObject['step50']?.data &&
                 !(storedObject['step60']?.data?.remainingFeatures?.length === 0) ? (
                     <ScanFeature
-                        process={processName}
+                        processName={processName}
                         stepNumber={60}
                         label={t('common:feature-code')}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{
                             submitButton: true,
                             backButton: true
@@ -454,10 +437,9 @@ const Reception: PageComponent = () => {
                 )}
                 {storedObject['step60']?.data?.remainingFeatures?.length === 0 &&
                 !storedObject['step70']?.data ? (
-                    <SelectStockStatusForm
-                        process={processName}
+                    <SelectStockStatusForm_reducer
+                        processName={processName}
                         stepNumber={70}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{
                             submitButton: true,
                             backButton: true
@@ -467,16 +449,15 @@ const Reception: PageComponent = () => {
                                 ?.blockingStatus
                         }
                         isCommentDisplayed={true}
-                    ></SelectStockStatusForm>
+                    ></SelectStockStatusForm_reducer>
                 ) : (
                     <></>
                 )}
                 {storedObject['step70']?.data && !storedObject['step80']?.data ? (
-                    <EnterQuantity
-                        process={processName}
+                    <EnterQuantity_reducer
+                        processName={processName}
                         stepNumber={80}
                         buttons={{ submitButton: true, backButton: true }}
-                        trigger={{ triggerRender, setTriggerRender }}
                         defaultValue={
                             storedObject['step50'].data.chosenArticleLuBarcode.article.featureType
                                 ? storedObject['step60'].data.processedFeatures.reduce(
@@ -491,16 +472,15 @@ const Reception: PageComponent = () => {
                         availableQuantity={availableQuantity}
                         checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                         isCommentDisplayed={true}
-                    ></EnterQuantity>
+                    ></EnterQuantity_reducer>
                 ) : (
                     <></>
                 )}
                 {storedObject['step80']?.data && !storedObject['step90']?.data ? (
-                    <ScanLocation
-                        process={processName}
+                    <ScanLocation_reducer
+                        processName={processName}
                         stepNumber={90}
                         label={t('common:location-reception')}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{
                             submitButton: true,
                             backButton: true,
@@ -512,18 +492,17 @@ const Reception: PageComponent = () => {
                         showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
                         initValue={defaultReceptionLocation?.barcode}
                         checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
-                    ></ScanLocation>
+                    ></ScanLocation_reducer>
                 ) : (
                     <></>
                 )}
                 {storedObject['step90']?.data && !storedObject['step100']?.data ? (
-                    <SelectLocationByLevelForm
-                        process={processName}
+                    <SelectLocationByLevelForm_reducer
+                        processName={processName}
                         stepNumber={100}
                         buttons={{ submitButton: true, backButton: true }}
-                        trigger={{ triggerRender, setTriggerRender }}
                         locations={storedObject['step90'].data.locations}
-                    ></SelectLocationByLevelForm>
+                    ></SelectLocationByLevelForm_reducer>
                 ) : (
                     <></>
                 )}
@@ -531,10 +510,9 @@ const Reception: PageComponent = () => {
                 !storedObject['step110']?.data &&
                 isHuScannedAtEnd !== undefined ? (
                     <ScanHandlingUnit
-                        process={processName}
+                        processName={processName}
                         stepNumber={110}
                         label={t('common:handling-unit')}
-                        trigger={{ triggerRender, setTriggerRender }}
                         buttons={{
                             submitButton: true,
                             backButton: true
@@ -553,14 +531,13 @@ const Reception: PageComponent = () => {
                 )}
                 {storedObject['step110']?.data && isHuScannedAtEnd !== undefined ? (
                     <ValidateReceptionForm
-                        process={processName}
+                        processName={processName}
                         stepNumber={120}
                         buttons={{
                             submitButton: true,
                             backButton: true,
                             alternativeSubmitButton1: true
                         }}
-                        trigger={{ triggerRender, setTriggerRender }}
                         triggerAlternativeSubmit1={{
                             triggerAlternativeSubmit1: triggerHUClose,
                             setTriggerAlternativeSubmit1: setTriggerHUClose

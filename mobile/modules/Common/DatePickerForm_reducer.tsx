@@ -19,20 +19,24 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { LsIsSecured } from '@helpers';
-import { Form, Input } from 'antd';
+import { Form, DatePicker } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../common/configs.json';
 import CameraScanner from './CameraScanner';
+import { useRouter } from 'next/router';
+import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
+import en_US from 'antd/lib/date-picker/locale/en_US';
+import 'dayjs/locale/fr';
+import dayjs from 'dayjs';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
-export interface IScanProps {
-    process: string;
+export interface IDatePickerReducerProps {
+    processName: string;
     stepNumber: number;
     label: string | undefined;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
-    setScannedInfo: (value: any) => void;
+    setScannedInfo: (value: string) => void;
     showEmptyLocations?: any;
     showSimilarLocations?: any;
     resetForm: { [label: string]: any };
@@ -45,58 +49,41 @@ export interface IScanProps {
     action1Label?: any;
     action1Trigger?: any;
     initValue?: string;
-    isSelected?: boolean;
-    getFormData?: boolean;
-    setFormData?: (value: string) => void;
-    mask?: string;
-    required?: boolean;
-    style?: any;
 }
 
-export const ScanForm = ({
-    process,
+export const DatePickerForm_reducer = ({
+    processName,
     stepNumber,
     label,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     setScannedInfo,
     showEmptyLocations,
     showSimilarLocations,
     resetForm: { resetForm, setResetForm },
     headerContent,
-    levelOfBack,
     triggerAlternativeSubmit,
     alternativeSubmitLabel,
     triggerAlternativeSubmit1,
     alternativeSubmitLabel1,
     action1Label,
     action1Trigger,
-    initValue,
-    isSelected,
-    getFormData,
-    setFormData,
-    mask,
-    required = true,
-    style
-}: IScanProps) => {
+    initValue
+}: IDatePickerReducerProps) => {
     const { t } = useTranslation('common');
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
+    const router = useRouter();
 
     // TYPED SAFE ALL
     //Scan-1a: retrieve value from input and set values for display
     const onFinish = (values: any) => {
-        if (values.scannedItem) {
-            setScannedInfo((previousValue: string) => {
-                if (!previousValue) return values.scannedItem.trim();
-                return previousValue;
-            });
-        } else {
-            setScannedInfo('undefined');
-        }
+        setScannedInfo(values.scannedItem);
     };
+
+    dayjs.locale(router.locale === 'fr' ? 'fr' : 'en');
 
     // Scan-2: manage form reset in case of error
     useEffect(() => {
@@ -109,48 +96,21 @@ export const ScanForm = ({
 
     //Scan-1b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        if (levelOfBack == 2) {
-            for (
-                let i =
-                    storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`]
-                        .previousStep;
-                i <= stepNumber;
-                i++
-            ) {
-                delete storedObject[`step${i}`]?.data;
-            }
-            storedObject.currentStep =
-                storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
-            storage.set(process, JSON.stringify(storedObject));
-        }
-
-        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
-            delete storedObject[`step${i}`]?.data;
-        }
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
     };
 
     //optional: when camera is set to on
     useEffect(() => {
-        if (camData) {
-            form.setFieldsValue({ scannedItem: camData });
-        } else {
-            form.setFieldsValue({ scannedItem: initValue ? initValue : undefined });
-        }
-    }, [camData, initValue]);
+        form.setFieldsValue({ scannedItem: camData });
+    }, [camData]);
 
     const handleCleanData = () => {
         form.resetFields();
         setCamData(undefined);
-    };
-
-    const onChange = (e: any) => {
-        if (required) {
-            if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
-            if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
-        }
     };
 
     return (
@@ -163,40 +123,20 @@ export const ScanForm = ({
                 scrollToFirstError
                 size="small"
                 form={form}
-                initialValues={{ scannedItem: initValue ? initValue : undefined }}
-                style={style}
             >
                 <StyledFormItem
                     label={label}
                     name="scannedItem"
-                    rules={[
-                        {
-                            required: required,
-                            message: t('messages:error-message-empty-input')
-                        },
-                        ...(mask
-                            ? [
-                                  {
-                                      validator: (_: any, value: any) => {
-                                          if (!value || new RegExp(mask).test(value)) {
-                                              return Promise.resolve();
-                                          }
-                                          return Promise.reject(
-                                              new Error(t('errors:FEATURECODE-000100'))
-                                          );
-                                      }
-                                  }
-                              ]
-                            : [])
-                    ]}
-                    // initialValue={initValue ? initValue : undefined}
+                    rules={[{ required: true, message: t('messages:error-message-empty-input') }]}
+                    initialValue={initValue ? initValue : undefined}
                 >
-                    <Input
-                        style={{ height: '20px', marginBottom: '5px' }}
-                        onChange={onChange}
-                        autoFocus
-                        allowClear
-                        onFocus={isSelected ? (e) => e.target.select() : undefined}
+                    <DatePicker
+                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        picker="date"
+                        popupStyle={{
+                            maxHeight: '200px' // avoid the calendar to be hidden
+                        }}
                     />
                 </StyledFormItem>
                 {configs.SCAN_CAMERA_ACTIVATED === 1 ? (
