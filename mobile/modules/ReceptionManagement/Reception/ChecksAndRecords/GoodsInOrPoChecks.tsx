@@ -26,6 +26,8 @@ import { Modal } from 'antd';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
 import graphqlRequestClient from 'graphql/graphqlRequestClient';
 import { useRouter } from 'next/router';
+import { useAppDispatch, useAppState } from 'context/AppContext';
+import { gql } from 'graphql-request';
 
 //TO BE REWORKED
 
@@ -35,21 +37,23 @@ export interface IGoodsInOrPoChecksProps {
 
 export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
+    // const storage = LsIsSecured();
+    const state = useAppState();
+    const dispatch = useAppDispatch();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const router = useRouter();
     const { locale } = router;
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        trigger: { triggerRender, setTriggerRender },
         setResetForm,
         receptionType
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const storedObject = state[processName] || {};
+    // const storedObject = JSON.parse(storage.get(processName) || '{}');
 
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'stock_statuses',
@@ -58,33 +62,56 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
 
     //ScanGoodsInPO-2: launch query for barcodes handling
     const [fetchResult, setFetchResult] = useState<any>();
+
+    async function scanGoodsInOrPo(scannedItem: any) {
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'RF_scan_goods_in_or_po',
+            event: {
+                input: { scannedItem, receptionType }
+            }
+        };
+
+        try {
+            const result = await graphqlRequestClient.request(query, variables);
+            return result;
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+        }
+    }
+
     useEffect(() => {
         if (scannedInfo) {
             setIsLoading(true);
             const fetchData = async () => {
-                const res = await fetch(`/api/reception-management/scanGoodsInPO/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        scannedInfo,
-                        receptionType
-                    })
-                });
-                const response = await res.json();
-                setFetchResult(response.response);
-                if (!res.ok) {
-                    if (response.error.is_error) {
-                        // specific error
-                        showError(t(`errors:${response.error.code}`));
+                const response: any = await scanGoodsInOrPo(scannedInfo);
+                setFetchResult(response.executeFunction.output.response);
+                if (response.executeFunction.status === 'ERROR') {
+                    showError(response.executeFunction.output);
+                } else if (
+                    response.executeFunction.status === 'OK' &&
+                    response.executeFunction.output.status === 'KO'
+                ) {
+                    if (response.executeFunction.output.output.code === 'FAPI_000001') {
+                        showError(t('errors:FAPI_000001'));
+                    } else if (response.executeFunction.output.output.code === 'FAPI_000002') {
+                        showError(t('errors:FAPI_000002'));
                     } else {
-                        // generic error
-                        showError(t('messages:check-failed'));
+                        showError(t(`errors:${response.executeFunction.output.output.code}`));
+                        console.log('Backend_message', response.executeFunction.output.output);
                     }
                     setResetForm(true);
-                    setScannedInfo(undefined);
                     setIsLoading(false);
+                    setScannedInfo(undefined);
                 }
             };
             fetchData();
@@ -106,10 +133,15 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
                             )?.text || ''
                     };
                 });
-            setTriggerRender(!triggerRender);
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
+            // storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { ...storedObject[`step${stepNumber}`], data },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
+            // storage.set(processName, JSON.stringify(storedObject));
         };
         if (fetchResult) {
             setIsLoading(false);
