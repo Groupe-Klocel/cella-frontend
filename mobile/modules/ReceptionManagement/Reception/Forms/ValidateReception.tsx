@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 //SPECIFIC FOR RECEPTION
-//DESCRIPTION: retrieve information from local storage and validate them for database updates
+//DESCRIPTION: retrieve information from reducer and validate them for database updates
 
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
 import { showError, showSuccess, LsIsSecured } from '@helpers';
@@ -28,11 +28,11 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import parameters from '../../../../../common/parameters.json';
 import { useRouter } from 'next/router';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IValidateReceptionProps {
-    process: string;
+    processName: string;
     stepNumber: number;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     headerContent: { [label: string]: any };
     triggerAlternativeSubmit1?: any;
@@ -40,16 +40,16 @@ export interface IValidateReceptionProps {
 }
 
 export const ValidateReceptionForm = ({
-    process,
+    processName,
     stepNumber,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     triggerAlternativeSubmit1,
     isHuScannedAtEnd
 }: IValidateReceptionProps) => {
     const { t } = useTranslation('common');
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
     const [isHuToBeClosed, setIsHuToBeClosed] = useState<boolean>(false);
@@ -61,11 +61,14 @@ export const ValidateReceptionForm = ({
     useEffect(() => {
         if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
-            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-            storedObject.currentStep = stepNumber;
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName: processName,
+                stepName: `step${stepNumber}`,
+                object: { previousStep: storedObject.currentStep },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
-        storage.set(process, JSON.stringify(storedObject));
-        setTriggerRender(!triggerRender);
     }, []);
     // retrieve values for update locations/contents and create movement
     const { comment, step10, step20, step30, step50, step60, step70, step80, step100, step110 } =
@@ -145,9 +148,8 @@ export const ValidateReceptionForm = ({
                     validateReceptionResult.executeFunction.output.output
                 );
             } else {
-                storage.remove(process);
                 showSuccess(t('messages:reception-success'));
-                const storedObject: any = {};
+                const updatedObject: any = {};
                 const { final_goodsIn, final_handling_unit, final_po, po_rounds } =
                     validateReceptionResult.executeFunction.output.output;
                 const step10Data = {
@@ -169,30 +171,33 @@ export const ValidateReceptionForm = ({
                     isHuToCreate: false
                 };
 
-                storedObject[`step10`] = { previousStep: 0, data: step10Data };
-                storedObject[`step20`] = { data: step20Data };
-                storedObject['currentStep'] =
+                updatedObject[`step10`] = { previousStep: 0, data: step10Data };
+                updatedObject[`step20`] = { data: step20Data };
+                updatedObject['currentStep'] =
                     final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND ||
                     isHuScannedAtEnd
                         ? 40
                         : 30;
                 isHuScannedAtEnd
-                    ? ((storedObject[`step30`] = {
+                    ? ((updatedObject[`step30`] = {
                           data: { handlingUnit: 'huScannedAtEnd' }
                       }),
-                      (storedObject[`step40`] = {
+                      (updatedObject[`step40`] = {
                           previousStep: 10
                       }))
                     : final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND
-                      ? (storedObject[`step30`] = {
+                      ? (updatedObject[`step30`] = {
                             previousStep: 10,
                             data: step30Data
                         })
-                      : (storedObject[`step30`] = {
+                      : (updatedObject[`step30`] = {
                             previousStep: 10
                         });
-                storage.set(process, JSON.stringify(storedObject));
-                setTriggerRender(!triggerRender);
+                dispatch({
+                    type: 'UPDATE_BY_PROCESS',
+                    processName: processName,
+                    object: updatedObject
+                });
             }
             setIsLoading(false);
         } catch (error) {
@@ -218,12 +223,11 @@ export const ValidateReceptionForm = ({
 
     //ValidateReception-1b: handle back to previous - previous step settings (specific since check is automatic)
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
-            delete storedObject[`step${i}`]?.data;
-        }
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName: processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
     };
 
     return (

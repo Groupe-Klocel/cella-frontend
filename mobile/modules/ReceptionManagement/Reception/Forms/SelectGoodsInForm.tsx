@@ -20,20 +20,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '@helpers';
+import { showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import { useSimpleGetRoundsQuery, SimpleGetRoundsQuery } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ISelectGoodsInProps {
-    process: string;
+    processName: string;
     stepNumber: number;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     goodsIns: any;
     responseType: string;
@@ -41,9 +40,8 @@ export interface ISelectGoodsInProps {
 }
 
 export const SelectGoodsInForm = ({
-    process,
+    processName,
     stepNumber,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     goodsIns,
     responseType,
@@ -51,8 +49,9 @@ export const SelectGoodsInForm = ({
 }: ISelectGoodsInProps) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
 
     // TYPED SAFE ALL
     const [rounds, setRounds] = useState<Array<any>>();
@@ -80,23 +79,30 @@ export const SelectGoodsInForm = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
+        let objectUpdate: any = {
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            object: undefined,
+            customFields: undefined
+        };
         if (goodsIns) {
-            const data: { [label: string]: any } = {};
             if (goodsIns === 'to-be-created') {
-                data['chosenGoodsIn'] = goodsIns;
-                storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-                setTriggerRender(!triggerRender);
+                objectUpdate.object = {
+                    ...storedObject[`step${stepNumber}`],
+                    data: { chosenGoodsIn: goodsIns }
+                };
             } else if (goodsIns.length === 1 && responseType === 'goodsIn') {
-                data['chosenGoodsIn'] = goodsIns[0];
-                storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-                setTriggerRender(!triggerRender);
+                objectUpdate.object = {
+                    ...storedObject[`step${stepNumber}`],
+                    data: { chosenGoodsIn: goodsIns[0] }
+                };
             } else if (storedObject.currentStep < stepNumber) {
-                //check workflow direction and assign current step accordingly
-                storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-                storedObject.currentStep = stepNumber;
+                objectUpdate.object = { previousStep: storedObject.currentStep };
+                objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
             }
         }
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch(objectUpdate);
     }, []);
 
     useEffect(() => {
@@ -209,21 +215,26 @@ export const SelectGoodsInForm = ({
                         launchRoundsResult.executeFunction.output.output
                     );
                 } else {
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
-                    storage.set(process, JSON.stringify(storedObject));
-                    setTriggerRender(!triggerRender);
+                    dispatch({
+                        type: 'UPDATE_BY_STEP',
+                        processName,
+                        stepName: `step${stepNumber}`,
+                        object: { ...storedObject[`step${stepNumber}`], data },
+                        customFields: [{ key: 'currentStep', value: stepNumber }]
+                    });
                 }
             } catch (error) {
                 showError(t('messages:error-executing-function'));
                 console.log('executeFunctionError', error);
             }
         } else {
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { ...storedObject[`step${stepNumber}`], data },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     };
 
@@ -232,19 +243,27 @@ export const SelectGoodsInForm = ({
         if (triggerAlternativeSubmit1) {
             const data: { [label: string]: any } = {};
             data['chosenGoodsIn'] = 'to-be-created';
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            storage.set(process, JSON.stringify(storedObject));
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { ...storedObject[`step${stepNumber}`], data },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
             setTriggerAlternativeSubmit1(false);
-            setTriggerRender(!triggerRender);
         }
     }, [triggerAlternativeSubmit1]);
 
     //SelectGoodsIn-2b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        delete storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].data;
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
+        // delete storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].data;
+        // storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+        // storage.set(process, JSON.stringify(storedObject));
     };
 
     return (

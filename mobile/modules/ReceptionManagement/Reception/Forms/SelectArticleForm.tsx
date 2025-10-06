@@ -17,39 +17,45 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-//DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, showError } from '@helpers';
+import { showError } from '@helpers';
 import { Form, Modal, Select } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import CameraScanner from 'modules/Common/CameraScanner';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ISelectArticleProps {
-    process: string;
+    processName: string;
     stepNumber: number;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     articleLuBarcodes?: any;
     action1Trigger?: any;
 }
 
 export const SelectArticleForm = ({
-    process,
+    processName,
     stepNumber,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     action1Trigger,
     articleLuBarcodes
 }: ISelectArticleProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
     useEffect(() => {
+        let objectUpdate: any = {
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            object: undefined,
+            currentStep: undefined
+        };
         if (articleLuBarcodes.length === 1) {
             // N.B.: in this case previous step is kept at its previous value
             let isNewProductToUpdate = false;
@@ -65,20 +71,16 @@ export const SelectArticleForm = ({
                 });
             }
             isNewProductToUpdate = true;
-            const data: { [label: string]: any } = {};
-            data['isNewProductToUpdate'] = isNewProductToUpdate;
-            data['chosenArticleLuBarcode'] = articleLuBarcodes[0];
-            storedObject[`step${stepNumber}`] = {
+            objectUpdate.object = {
                 ...storedObject[`step${stepNumber}`],
-                data
+                data: { isNewProductToUpdate, chosenArticleLuBarcode: articleLuBarcodes[0] }
             };
-            setTriggerRender(!triggerRender);
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
-            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-            storedObject.currentStep = stepNumber;
+            objectUpdate.object = { previousStep: storedObject.currentStep };
+            objectUpdate.currentStep = stepNumber;
         }
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch(objectUpdate);
     }, []);
 
     //SelectArticle-1: retrieve articles
@@ -130,12 +132,13 @@ export const SelectArticleForm = ({
             ].data.purchaseOrder.purchaseOrderLines.filter(
                 (purchaseOrderLine: any) => purchaseOrderLine.articleId === selectedArticle.id
             );
-            storedObject[`step${stepNumber}`] = {
-                ...storedObject[`step${stepNumber}`],
-                data
-            };
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { ...storedObject[`step${stepNumber}`], data },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
             action1Trigger?.setAction1Trigger(false);
         } else {
             data['article'] = selectedArticle;
@@ -145,19 +148,24 @@ export const SelectArticleForm = ({
             ].data.purchaseOrder.purchaseOrderLines.filter(
                 (purchaseOrderLine: any) => purchaseOrderLine.articleId === selectedArticle.id
             );
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { ...storedObject[`step${stepNumber}`], data },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
             action1Trigger?.setAction1Trigger(false);
         }
     };
 
     //SelectArticle-2b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        delete storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].data;
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
     };
 
     return (
