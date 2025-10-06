@@ -19,32 +19,28 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
+import { useArticleLuBarcodeIds } from '@helpers';
 import { LsIsSecured } from '@helpers';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
-export interface IScanGoodsInOrPoProps {
+export interface IScanArticleProps {
     processName: string;
     stepNumber: number;
     label: string;
     buttons: { [label: string]: any };
     checkComponent: any;
-    receptionType?: string | string[];
 }
 
-export const ScanGoodsInOrPo = ({
+export const ScanArticle = ({
     processName,
     stepNumber,
     label,
     buttons,
-    checkComponent,
-    receptionType
-}: IScanGoodsInOrPoProps) => {
-    const { t } = useTranslation();
+    checkComponent
+}: IScanArticleProps) => {
     // const storage = LsIsSecured();
     const state = useAppState();
     const dispatch = useAppDispatch();
-    // const storedObject = JSON.parse(storage.get(processName) || '{}');
     const storedObject = state[processName] || {};
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
@@ -53,40 +49,44 @@ export const ScanGoodsInOrPo = ({
     useEffect(() => {
         //check workflow direction and assign current step accordingly
         if (storedObject.currentStep < stepNumber) {
-            // storedObject[`object`] = {
-            //     previousStep: storedObject.currentStep
-            // };
-            // storedObject.currentStep = stepNumber;
             dispatch({
                 type: 'UPDATE_BY_STEP',
-                processName,
+                processName: processName,
                 stepName: `step${stepNumber}`,
                 object: { previousStep: storedObject.currentStep },
                 customFields: [{ key: 'currentStep', value: stepNumber }]
             });
         }
-        // storage.set(processName, JSON.stringify(storedObject));
     }, []);
+
+    const articleLuBarcodesInfos = useArticleLuBarcodeIds(
+        { barcode_Name: `${scannedInfo}` },
+        1,
+        100,
+        null
+    );
 
     const dataToCheck = {
         processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        setResetForm,
-        receptionType
+        articleLuBarcodesInfos,
+        setResetForm
     };
 
     return (
         <>
-            <ScanForm_reducer
-                processName={processName}
-                stepNumber={stepNumber}
-                label={label}
-                buttons={{ ...buttons }}
-                setScannedInfo={setScannedInfo}
-                resetForm={{ resetForm, setResetForm }}
-            ></ScanForm_reducer>
-            {checkComponent(dataToCheck)}
+            <>
+                <ScanForm_reducer
+                    processName={processName}
+                    stepNumber={stepNumber}
+                    label={label}
+                    buttons={{ ...buttons }}
+                    setScannedInfo={setScannedInfo}
+                    resetForm={{ resetForm, setResetForm }}
+                ></ScanForm_reducer>
+                {checkComponent(dataToCheck)}
+            </>
         </>
     );
 };

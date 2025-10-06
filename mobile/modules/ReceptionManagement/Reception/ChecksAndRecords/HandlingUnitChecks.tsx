@@ -18,11 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import parameters from '../../../../../common/parameters.json';
 import configs from '../../../../../common/configs.json';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IHandlingUnitChecksProps {
     dataToCheck: any;
@@ -30,20 +31,22 @@ export interface IHandlingUnitChecksProps {
 
 export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
+    const state = useAppState();
+    const dispatch = useAppDispatch();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const storedObject = state[processName] || {};
+    // const storedObject = JSON.parse(storage.get(processName) || '{}');
     //ScanHU: manage information for persistence storage and front-end errors
     useEffect(() => {
+        const data: { [label: string]: any } = {};
         if (scannedInfo && handlingUnitInfos) {
             const goodsIn = storedObject['step20'].data.chosenGoodsIn;
             if (handlingUnitInfos.handlingUnits?.count !== 0) {
@@ -91,14 +94,8 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                     setScannedInfo(undefined);
                     return;
                 }
-                const data: { [label: string]: any } = {};
                 data['isHuToCreate'] = false;
                 data['handlingUnit'] = huToCheck;
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
             } else {
                 const type =
                     scannedInfo[0] == '0' || scannedInfo[0] == 'P'
@@ -116,22 +113,22 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                     //this will  have TBD in next steps:
                     // locationId: storedObject['step65'].data.chosenLocation.id,
                 };
-
-                const data: { [label: string]: any } = {};
                 data['isHuToCreate'] = true;
                 data['handlingUnit'] = handlingUnitToCreate;
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
             }
         }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
+
+        if (storedObject[`step${stepNumber}`] && Object.keys(data).length != 0) {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     }, [handlingUnitInfos]);
 

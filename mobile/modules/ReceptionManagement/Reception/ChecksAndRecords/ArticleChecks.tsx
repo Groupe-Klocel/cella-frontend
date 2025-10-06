@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useEffect } from 'react';
 
 export interface IArticleChecksProps {
@@ -28,20 +29,22 @@ export interface IArticleChecksProps {
 
 export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
+    const state = useAppState();
+    const dispatch = useAppDispatch();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         articleLuBarcodesInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
-    // ScanArticle: manage information for persistence storage and front-end errors
+    const storedObject = state[processName] || {};
+    // ScanArticle: manage information for persistence storage and
+    //  front-end errors
     useEffect(() => {
+        const data: { [label: string]: any } = {};
         if (scannedInfo && articleLuBarcodesInfos.data) {
             if (articleLuBarcodesInfos.data.articleLuBarcodes?.count !== 0) {
                 const articleLuBarcodes = articleLuBarcodesInfos.data.articleLuBarcodes?.results;
@@ -71,7 +74,6 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                     acc[key].push(curr);
                     return acc;
                 }, {});
-                console.log('groupedPOLines', groupedPOLines);
 
                 let firstPassSelectedPOLine: any = null;
                 let secondPassSelectedPOLine: any = null;
@@ -119,15 +121,9 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                         poLine.receivedQuantity < poLine.quantityMax
                 );
                 if (matchingArticleLuBarcodes.length > 0 && remainingPOLines.length > 0) {
-                    const data: { [label: string]: any } = {};
                     data['currentPurchaseOrderLine'] =
                         firstPassSelectedPOLine ?? secondPassSelectedPOLine;
                     data['articleLuBarcodes'] = matchingArticleLuBarcodes;
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
                 } else {
                     showError(t('messages:unexpected-scanned-item'));
                     setResetForm(true);
@@ -139,11 +135,17 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                 setScannedInfo(undefined);
             }
         }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
+        if (storedObject[`step${stepNumber}`] && Object.keys(data).length != 0) {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     }, [articleLuBarcodesInfos]);
 

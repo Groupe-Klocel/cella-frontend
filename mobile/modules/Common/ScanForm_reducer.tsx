@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured } from '@helpers';
 import { Form, Input } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
@@ -26,11 +25,10 @@ import configs from '../../../common/configs.json';
 import CameraScanner from './CameraScanner';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
-export interface IScanProps {
-    process: string;
+export interface IScanReducerProps {
+    processName: string;
     stepNumber: number;
     label: string | undefined;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     setScannedInfo: (value: any) => void;
     showEmptyLocations?: any;
@@ -53,18 +51,16 @@ export interface IScanProps {
     style?: any;
 }
 
-export const ScanForm = ({
-    process,
+export const ScanForm_reducer = ({
+    processName,
     stepNumber,
     label,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     setScannedInfo,
     showEmptyLocations,
     showSimilarLocations,
     resetForm: { resetForm, setResetForm },
     headerContent,
-    levelOfBack,
     triggerAlternativeSubmit,
     alternativeSubmitLabel,
     triggerAlternativeSubmit1,
@@ -78,13 +74,12 @@ export const ScanForm = ({
     mask,
     required = true,
     style
-}: IScanProps) => {
+}: IScanReducerProps) => {
     const { t } = useTranslation('common');
-    const storage = LsIsSecured();
     const state = useAppState();
     const dispatch = useAppDispatch();
 
-    const storedObject = state[process] || {};
+    const storedObject = state[processName] || {};
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
 
@@ -112,36 +107,11 @@ export const ScanForm = ({
 
     //Scan-1b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
         dispatch({
             type: 'ON_BACK',
-            processName: process,
+            processName,
             stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
         });
-        console.log(
-            'DLA - onBack - storedObject[`step${stepNumber}`].previousStep:',
-            storedObject[`step${stepNumber}`].previousStep
-        );
-        // if (levelOfBack == 2) {
-        //     for (
-        //         let i =
-        //             storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`]
-        //                 .previousStep;
-        //         i <= stepNumber;
-        //         i++
-        //     ) {
-        //         delete storedObject[`step${i}`]?.data;
-        //     }
-        //     storedObject.currentStep =
-        //         storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
-        //     storage.set(process, JSON.stringify(storedObject));
-        // }
-
-        // for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
-        //     delete storedObject[`step${i}`]?.data;
-        // }
-        // storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        // storage.set(process, JSON.stringify(storedObject));
     };
 
     //optional: when camera is set to on
@@ -201,7 +171,6 @@ export const ScanForm = ({
                               ]
                             : [])
                     ]}
-                    // initialValue={initValue ? initValue : undefined}
                 >
                     <Input
                         style={{ height: '20px', marginBottom: '5px' }}
