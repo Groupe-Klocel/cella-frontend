@@ -390,6 +390,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         let purchaseOrder = roundLineDetail.purchaseOrderLine.purchaseOrder;
                         if (!purchaseOrders.some((r) => r.id === purchaseOrder.id)) {
                             purchaseOrders.push(purchaseOrder);
+                            delete roundLineDetail.purchaseOrderLine.purchaseOrder;
                         }
                     });
                 });

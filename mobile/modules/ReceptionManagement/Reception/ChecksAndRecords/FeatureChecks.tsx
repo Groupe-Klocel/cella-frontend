@@ -18,10 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import dayjs from 'dayjs';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 //TO BE REWORKED
 
@@ -31,26 +32,27 @@ export interface IFeatureChecksProps {
 
 export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
+    const state = useAppState();
+    const dispatch = useAppDispatch();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         featuresToProcess,
         processedFeatures,
         currentFeatureCode,
-        trigger: { triggerRender, setTriggerRender },
         action1Trigger,
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const storedObject = state[processName] || {};
 
     // ScanArticle: manage information for persistence storage and front-end errors
     useEffect(() => {
         const tmp_processedFeatures = processedFeatures ?? [];
         let updatedFeaturesToProcess;
+        const data: { [label: string]: any } = {};
         if (scannedInfo && featuresToProcess && currentFeatureCode) {
             if (featuresToProcess.length > 0) {
                 const featureToUpdate = featuresToProcess.find((item: any) => {
@@ -130,16 +132,9 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                             });
                     }
                 }
-
-                const data: { [label: string]: any } = {};
                 data['remainingFeatures'] = updatedFeaturesToProcess;
                 data['processedFeatures'] = tmp_processedFeatures;
                 data['nextFeatureCode'] = updatedFeaturesToProcess[0]?.featureCode;
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
                 setResetForm(true);
                 setScannedInfo(undefined);
             } else {
@@ -152,29 +147,42 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
             storedObject[`step${stepNumber}`] &&
             Object.keys(storedObject[`step${stepNumber}`]).length != 0
         ) {
-            storage.set(process, JSON.stringify(storedObject));
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     }, [featuresToProcess, scannedInfo]);
 
     useEffect(() => {
+        let updatedData = {};
         if (action1Trigger.action1Trigger) {
-            const updatedData = { ...storedObject[`step${stepNumber}`].data };
-            updatedData['remainingFeatures'] = [];
-            updatedData['nextFeatureCode'] = undefined;
-            setTriggerRender(!triggerRender);
-            storedObject[`step${stepNumber}`] = {
-                ...storedObject[`step${stepNumber}`],
-                data: updatedData
+            const updatedData = {
+                ...storedObject[`step${stepNumber}`].data,
+                remainingFeatures: [],
+                nextFeatureCode: undefined
             };
             setResetForm(true);
             setScannedInfo(undefined);
             action1Trigger.setAction1Trigger(false);
         }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
+        if (storedObject[`step${stepNumber}`] && Object.keys(updatedData).length != 0) {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    data: updatedData
+                },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     }, [action1Trigger.action1Trigger]);
 

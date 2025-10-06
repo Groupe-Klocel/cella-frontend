@@ -17,42 +17,73 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { WrapperForm, ContentSpin } from '@components';
+import { LsIsSecured } from '@helpers';
+import { EnterNumberForm } from 'modules/Common/EnterNumberForm_reducer';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { useEffect } from 'react';
 
-export interface IQuantityChecksProps {
-    dataToCheck: any;
+export interface IEnterQuantityReducerProps {
+    processName: string;
+    stepNumber: number;
+    label?: string;
+    defaultValue?: number;
+    buttons: { [label: string]: any };
+    availableQuantity?: number;
+    checkComponent: any;
+    isCommentDisplayed?: boolean;
 }
 
-export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
+export const EnterQuantity_reducer = ({
+    processName,
+    stepNumber,
+    label,
+    defaultValue,
+    buttons,
+    availableQuantity,
+    checkComponent,
+    isCommentDisplayed
+}: IEnterQuantityReducerProps) => {
+    const { t } = useTranslation('common');
     const state = useAppState();
     const dispatch = useAppDispatch();
-
-    const {
-        processName,
-        stepNumber,
-        enteredInfo: { enteredInfo }
-    } = dataToCheck;
-
     const storedObject = state[processName] || {};
+    const [enteredInfo, setEnteredInfo] = useState<number>();
 
     // TYPED SAFE ALL
+    //Pre-requisite: initialize current step
     useEffect(() => {
-        const data: { [label: string]: any } = {};
-        if (enteredInfo) {
-            data['movingQuantity'] = enteredInfo;
+        let objectUpdate: any = {
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            object: undefined,
+            customFields: undefined
+        };
+        //automatically set movingQuantity when defaultValue is provided
+        if (defaultValue) {
+            // N.B.: in this case previous step is kept at its previous value
+            objectUpdate.object = {
+                ...storedObject[`step${stepNumber}`],
+                data: { movingQuantity: defaultValue }
+            };
             const originalPoLines = storedObject[`step40`]?.data?.currentPurchaseOrderLine || [];
-            let movingQuantity = enteredInfo;
+            let movingQuantity = defaultValue;
 
             // check every original PoLine and set the received quantity to match the quantity first and then the quantity max
             const updatedPoLinesFirstPass = originalPoLines.map((line: any) => {
-                if (line.receivedQuantity >= line.quantity) {
+                if (line.receivedQuantity === line.quantityMax) {
                     return line; // already fully received, skip
                 }
                 const receivedQuantity = line.receivedQuantity || 0;
                 const quantity = line.quantity || 0;
                 const quantityNeeded = quantity - receivedQuantity;
+                console.log(
+                    receivedQuantity,
+                    quantity,
+                    quantityNeeded,
+                    'Quantities: received, expected, needed'
+                );
 
                 if (quantityNeeded > 0) {
                     if (movingQuantity >= quantityNeeded) {
@@ -99,30 +130,50 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
                 });
             }
             const newPOLines = updatedPoLinesSecondPass ?? updatedPoLinesFirstPass;
-            data['updatedPoLines'] = newPOLines.filter(
+            objectUpdate.object.data.updatePoLines = newPOLines.filter(
                 (newPoline: any) =>
                     newPoline.receivedQuantity !==
                     originalPoLines.find((oldPoline: any) => oldPoline.id === newPoline.id)
                         ?.receivedQuantity
             );
+        } else if (storedObject.currentStep < stepNumber) {
+            //check workflow direction and assign current step accordingly
+            objectUpdate.object = { previousStep: storedObject.currentStep };
+            objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
-        if (storedObject[`step${stepNumber}`] && Object.keys(data).length != 0) {
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName,
-                stepName: `step${stepNumber}`,
-                object: {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                },
-                customFields: [{ key: 'currentStep', value: stepNumber }]
-            });
-        }
-    }, [enteredInfo]);
+        dispatch(objectUpdate);
+    }, []);
+
+    const dataToCheck = {
+        processName,
+        stepNumber,
+        enteredInfo: { enteredInfo, setEnteredInfo }
+    };
+
+    let rules: Array<any> = [{ required: true, message: t('messages:error-message-empty-input') }];
+    if (availableQuantity !== undefined && availableQuantity !== null) {
+        rules.push({
+            type: 'number',
+            max: availableQuantity,
+            message: t('messages:erroneous-quantity')
+        });
+    }
 
     return (
-        <WrapperForm>
-            {enteredInfo && !storedObject[`step${stepNumber}`]?.data ? <ContentSpin /> : <></>}
-        </WrapperForm>
+        <>
+            <EnterNumberForm
+                processName={processName}
+                stepNumber={stepNumber}
+                label={label}
+                buttons={{ ...buttons }}
+                setEnteredInfo={setEnteredInfo}
+                rules={rules}
+                min={1}
+                initialValue={1}
+                isSelected={true}
+                isCommentDisplayed={isCommentDisplayed}
+            ></EnterNumberForm>
+            {checkComponent(dataToCheck)}
+        </>
     );
 };
