@@ -130,7 +130,7 @@ export const ScanForm_reducer = ({
 
     const onChange = (e: any) => {
         if (required) {
-            if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
+            // if (form.getFieldsValue(true).scannedItem == '') form.resetFields();
             if (getFormData && setFormData) setFormData(form.getFieldsValue(true));
         }
     };

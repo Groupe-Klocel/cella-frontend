@@ -81,10 +81,7 @@ export const ScanForm = ({
 }: IScanProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
-    const state = useAppState();
-    const dispatch = useAppDispatch();
-
-    const storedObject = state[process] || {};
+    const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
 
@@ -113,35 +110,26 @@ export const ScanForm = ({
     //Scan-1b: handle back to previous step settings
     const onBack = () => {
         setTriggerRender(!triggerRender);
-        dispatch({
-            type: 'ON_BACK',
-            processName: process,
-            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
-        });
-        console.log(
-            'DLA - onBack - storedObject[`step${stepNumber}`].previousStep:',
-            storedObject[`step${stepNumber}`].previousStep
-        );
-        // if (levelOfBack == 2) {
-        //     for (
-        //         let i =
-        //             storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`]
-        //                 .previousStep;
-        //         i <= stepNumber;
-        //         i++
-        //     ) {
-        //         delete storedObject[`step${i}`]?.data;
-        //     }
-        //     storedObject.currentStep =
-        //         storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
-        //     storage.set(process, JSON.stringify(storedObject));
-        // }
+        if (levelOfBack == 2) {
+            for (
+                let i =
+                    storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`]
+                        .previousStep;
+                i <= stepNumber;
+                i++
+            ) {
+                delete storedObject[`step${i}`]?.data;
+            }
+            storedObject.currentStep =
+                storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].previousStep;
+            storage.set(process, JSON.stringify(storedObject));
+        }
 
-        // for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
-        //     delete storedObject[`step${i}`]?.data;
-        // }
-        // storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        // storage.set(process, JSON.stringify(storedObject));
+        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
+            delete storedObject[`step${i}`]?.data;
+        }
+        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+        storage.set(process, JSON.stringify(storedObject));
     };
 
     //optional: when camera is set to on
