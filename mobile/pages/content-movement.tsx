@@ -61,6 +61,7 @@ const ContentMvmt: PageComponent = () => {
     const [displayed, setDisplayed] = useState<any>({});
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
+    const [isRoundToBeChecked, setIsRoundToBeChecked] = useState<boolean>(false);
 
     const { originLocation: enforcedOriginLocation } = router.query;
 
@@ -93,7 +94,7 @@ const ContentMvmt: PageComponent = () => {
         storage.set(processName, JSON.stringify(storedObject));
     }
 
-    //origin Location handling
+    //origin parameters handling
     const getParameters = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
             query parameters($filters: ParameterSearchFilters) {
@@ -113,12 +114,12 @@ const ContentMvmt: PageComponent = () => {
 
         const variables = {
             filters: {
-                scope: 'inbound',
-                code: ['DEFAULT_RECEPTION_LOCATION']
+                scope: ['inbound', 'radio'],
+                code: ['DEFAULT_RECEPTION_LOCATION', 'MOVEMENT_CHECK_ROUND']
             }
         };
-        const receptionParameters = await graphqlRequestClient.request(query, variables);
-        return receptionParameters;
+        const parametersResults = await graphqlRequestClient.request(query, variables);
+        return parametersResults;
     };
 
     const getLocations = async (name: string): Promise<{ [key: string]: any } | undefined> => {
@@ -161,21 +162,27 @@ const ContentMvmt: PageComponent = () => {
         const variables = {
             filters: { name }
         };
-        const receptionParameters = await graphqlRequestClient.request(query, variables);
-        return receptionParameters;
+        const locationResults = await graphqlRequestClient.request(query, variables);
+        return locationResults;
     };
     const [defaultReceptionLocation, setDefaultReceptionLocation] = useState<any>(null);
     useEffect(() => {
         async function fetchData() {
-            const receptionParameters = await getParameters();
-            if (receptionParameters) {
-                const receptionParametersResults = receptionParameters.parameters.results;
-                const defaultReceptionLocation = receptionParametersResults.find(
+            const parametersResults = await getParameters();
+            if (parametersResults) {
+                const parameters = parametersResults.parameters.results;
+                const defaultReceptionLocation = parameters.find(
                     (param: any) => param.code === 'DEFAULT_RECEPTION_LOCATION'
+                ).value;
+                const movementRoundChecks = parameters.find(
+                    (param: any) => param.code === 'MOVEMENT_CHECK_ROUND'
                 ).value;
                 if (defaultReceptionLocation) {
                     const locations = await getLocations(defaultReceptionLocation);
                     setDefaultReceptionLocation(locations?.locations.results[0]);
+                }
+                if (movementRoundChecks) {
+                    setIsRoundToBeChecked(movementRoundChecks === '1' ? true : false);
                 }
             }
         }
@@ -397,7 +404,11 @@ const ContentMvmt: PageComponent = () => {
                         buttons={{ submitButton: true, backButton: true }}
                         trigger={{ triggerRender, setTriggerRender }}
                         locations={storedObject['step10'].data.locations}
-                        roundsCheck={true}
+                        roundsCheck={
+                            enforcedOriginLocation && enforcedOriginLocation === 'defaultReception'
+                                ? false
+                                : isRoundToBeChecked
+                        }
                         isOriginLocation={true}
                     ></SelectLocationByLevelForm>
                 ) : (
