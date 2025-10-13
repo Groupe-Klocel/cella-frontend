@@ -177,7 +177,7 @@ const ContentMvmt: PageComponent = () => {
                 const movementRoundChecks = parameters.find(
                     (param: any) => param.code === 'MOVEMENT_CHECK_ROUND'
                 ).value;
-                if (defaultReceptionLocation) {
+                if (defaultReceptionLocation && enforcedOriginLocation) {
                     const locations = await getLocations(defaultReceptionLocation);
                     setDefaultReceptionLocation(locations?.locations.results[0]);
                 }
@@ -186,12 +186,8 @@ const ContentMvmt: PageComponent = () => {
                 }
             }
         }
-        if (enforcedOriginLocation) {
-            fetchData();
-        }
+        fetchData();
     }, []);
-
-    console.log('defaultReceptionLocation', defaultReceptionLocation);
 
     //function to retrieve information to display in RadioInfosHeader before step 50
     useEffect(() => {
