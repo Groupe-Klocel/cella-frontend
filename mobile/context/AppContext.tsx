@@ -41,6 +41,8 @@ interface State {
     user: Record<string, any>;
     translations: any[];
     permissions: Array<PermissionType>;
+    configs: any[];
+    parameters?: any[];
     theme?: string;
     isSessionMenuCollapsed?: boolean;
     isSettingMenuCollapsed?: boolean;
@@ -58,6 +60,8 @@ type ActionTypes =
     | 'SWITCH_MENU_SETTING'
     | 'SET_USER_INFO'
     | 'SET_TRANSLATIONS'
+    | 'SET_CONFIGS'
+    | 'SET_PARAMETERS'
     | 'UPDATE_BY_STEP'
     | 'UPDATE_BY_PROCESS'
     | 'DELETE_RF_PROCESS'
@@ -106,6 +110,16 @@ interface TranslationsAction extends BaseAction {
     translations: any[];
 }
 
+interface ConfigsAction extends BaseAction {
+    type: 'SET_CONFIGS';
+    configs: any[];
+}
+
+interface ParametersAction extends BaseAction {
+    type: 'SET_PARAMETERS';
+    parameters?: any[];
+}
+
 interface UpdateStepAction extends BaseAction {
     type: 'UPDATE_BY_STEP';
     processName: string;
@@ -138,6 +152,8 @@ type Action =
     | MenuSettingAction
     | UserInfoAction
     | TranslationsAction
+    | ConfigsAction
+    | ParametersAction
     | UpdateStepAction
     | UpdateProcessAction
     | DeleteProcessAction
@@ -153,6 +169,8 @@ const initialState: State = {
     ],
     user: userInitData,
     translations: [],
+    configs: [],
+    parameters: [],
     permissions: [],
     pickAndPack: {},
     reception: {},
@@ -205,6 +223,16 @@ function reducer(state: State, action: Action): State {
             return {
                 ...state,
                 translations: action.translations
+            };
+        case 'SET_CONFIGS':
+            return {
+                ...state,
+                configs: action.configs
+            };
+        case 'SET_PARAMETERS':
+            return {
+                ...state,
+                parameters: action.parameters
             };
         case 'UPDATE_BY_STEP':
             let newStateByStep = { ...state };
@@ -264,14 +292,16 @@ function reducer(state: State, action: Action): State {
                 if (step === allStepToKeep[allStepToKeep.length - 1]) {
                     if (!newStateOnBack[action.processName][step]?.previousStep) {
                         delete newStateOnBack[action.processName][step];
+                        newStateOnBack[action.processName].currentStep = JSON.parse(
+                            step.split('step')[1]
+                        );
                     } else {
                         newStateOnBack[action.processName][step] = {
                             previousStep: newStateOnBack[action.processName][step].previousStep
                         };
+                        newStateOnBack[action.processName].currentStep =
+                            newStateOnBack[action.processName][step].previousStep;
                     }
-                    newStateOnBack[action.processName].currentStep = JSON.parse(
-                        step.split('step')[1]
-                    );
                 }
             });
             return newStateOnBack;

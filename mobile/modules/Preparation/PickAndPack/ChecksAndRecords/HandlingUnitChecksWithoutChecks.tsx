@@ -23,6 +23,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import configs from '../../../../../common/configs.json';
 import parameters from '../../../../../common/parameters.json';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IHandlingUnitChecksProps {
     dataToCheck: any;
@@ -30,26 +31,26 @@ export interface IHandlingUnitChecksProps {
 
 export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         uniqueHU,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
     console.log('handlingUnitInfos', handlingUnitInfos);
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     // TYPED SAFE ALL
 
     useEffect(() => {
+        let data: { [label: string]: any } = {};
         if (scannedInfo && handlingUnitInfos) {
-            const data: { [label: string]: any } = {};
             if (!handlingUnitInfos.handlingUnits?.results[0]) {
                 const type =
                     scannedInfo[0] == '0' || scannedInfo[0] == 'P'
@@ -59,29 +60,28 @@ export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitCh
                 data['handlingUnitType'] = type;
                 data['isHUToCreate'] = true;
                 // specific to handle unique handling unit in selected location and back function for next step
-                if (!uniqueHU) {
-                    storedObject[`step${stepNumber}`] = {
+                if (uniqueHU) {
+                    data = {
                         ...storedObject[`step${stepNumber}`],
                         data
                     };
-                } else {
                     storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-                    storedObject[`step${stepNumber}`] = {
-                        data
-                    };
+                } else {
                 }
             } else {
                 showError(t('messages:unexpected-scanned-item'));
                 setResetForm(true);
                 setScannedInfo(undefined);
             }
-            setTriggerRender(!triggerRender);
         }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
+        if (storedObject[`step${stepNumber}`] && Object.keys(data).length != 0) {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: data,
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     }, [handlingUnitInfos]);
 

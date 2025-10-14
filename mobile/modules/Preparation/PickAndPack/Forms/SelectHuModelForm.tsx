@@ -31,26 +31,26 @@ import parameters from '../../../../../common/parameters.json';
 import { ParametersQuery, useParametersQuery } from 'generated/graphql';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { gql } from 'graphql-request';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ISelectHuModelProps {
-    process: string;
+    processName: string;
     stepNumber: number;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     defaultValue?: any;
 }
 
 export const SelectHuModelForm = ({
-    process,
+    processName,
     stepNumber,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     defaultValue
 }: ISelectHuModelProps) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const router = useRouter();
     // TYPED SAFE ALL
     const [huModels, setHuModels] = useState<Array<any>>();
@@ -125,9 +125,16 @@ export const SelectHuModelForm = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
+        let objectUpdate: any = {
+            type: 'UPDATE_BY_STEP',
+            processName: processName,
+            stepName: `step${stepNumber}`,
+            object: undefined,
+            customFields: undefined
+        };
         const initialize = async () => {
             if (defaultValue) {
-                const data: { [label: string]: any } = {};
+                let data: { [label: string]: any } = {};
                 let defaultValueToSend;
                 if (defaultValue === 'defaultModel') {
                     const huModels = await getHUMs();
@@ -141,19 +148,12 @@ export const SelectHuModelForm = ({
                 }
 
                 data['handlingUnitModel'] = defaultValueToSend;
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
-                setTriggerRender(!triggerRender);
+                objectUpdate.object = { data };
             } else if (storedObject.currentStep < stepNumber) {
-                storedObject[`step${stepNumber}`] = {
-                    previousStep: storedObject.currentStep
-                };
-                storedObject.currentStep = stepNumber;
+                objectUpdate.object = { previousStep: storedObject.currentStep };
+                objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
             }
-
-            storage.set(process, JSON.stringify(storedObject));
+            dispatch(objectUpdate);
         };
 
         initialize();
@@ -208,17 +208,21 @@ export const SelectHuModelForm = ({
             return e.id == values.huModel;
         });
         data['handlingUnitModel'] = selectedHuModel;
-        storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-        storage.set(process, JSON.stringify(storedObject));
-        setTriggerRender(!triggerRender);
+        dispatch({
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            object: data
+        });
     };
 
     //SelectHuModel-2b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        delete storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].data;
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName: processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
     };
 
     return (

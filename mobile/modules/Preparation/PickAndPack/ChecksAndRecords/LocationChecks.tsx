@@ -18,13 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured, showSuccess } from '@helpers';
+import { showError, showSuccess } from '@helpers';
 import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useAuth } from 'context/AuthContext';
 import { Modal } from 'antd';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ILocationChecksProps {
     dataToCheck: any;
@@ -32,15 +33,13 @@ export interface ILocationChecksProps {
 
 export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
     const { graphqlRequestClient } = useAuth();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
-        trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1,
         action1Trigger,
         alternativeSubmitInput,
@@ -48,7 +47,10 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
+
     const handlingUnitContentArticleId =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
             ?.id;
@@ -105,21 +107,28 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         return;
                     }
                 }
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
                 showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
-                storage.set(process, JSON.stringify(storedObject));
+                console.log('data', data);
+                console.log('dispatch', {
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: `step${stepNumber}`,
+                    object: {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    }
+                });
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: `step${stepNumber}`,
+                    object: {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    }
+                });
             }
         }
-        // if (
-        //     storedObject[`step${stepNumber}`] &&
-        //     Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        // ) {
-        //     storage.set(process, JSON.stringify(storedObject));
-        // }
     }, [locationInfos]);
 
     const [isHuClosureLoading, setIsHuClosureLoading] = useState(false);
@@ -153,9 +162,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                 console.log('Backend_message', closeHUOsResult.executeFunction.output.output);
             } else {
                 showSuccess(t('messages:hu-ready-to-be-loaded'));
-                const storedObject = JSON.parse(storage.get(process) || '{}');
-                storage.remove(process);
-                const newStoredObject = JSON.parse(storage.get(process) || '{}');
+                const newStoredObject: any = storedObject;
                 if (ignoreHUContentIds.length > 0) {
                     newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
                 } else {
@@ -197,8 +204,11 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                 }
                 newStoredObject[`step10`] = { previousStep: storedObject[`step5`] ? 5 : 0, data };
                 delete newStoredObject['step10']['data']['currentShippingPallet'];
-                storage.set(process, JSON.stringify(newStoredObject));
-                setTriggerRender(!triggerRender);
+                dispatch({
+                    type: 'UPDATE_BY_PROCESS',
+                    processName,
+                    object: newStoredObject
+                });
             }
             setIsHuClosureLoading(false);
         } catch (error) {
@@ -211,19 +221,19 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     useEffect(() => {
         if (action1Trigger.action1Trigger) {
             action1Trigger.setAction1Trigger(false);
-            storedObject.ignoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
+            let newIgnoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
             let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
                 .filter((raa: any) => {
                     return !storedObject.ignoreHUContentIds.includes(raa.handlingUnitContentId);
                 })
                 .filter((raa: any) => raa.quantity != 0);
             if (remainingHUContentIds.length === 0) {
-                storedObject.ignoreHUContentIds = [];
+                newIgnoreHUContentIds = [];
                 remainingHUContentIds = storedObject[
                     `step10`
                 ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
             }
-            storedObject['step10'].data.proposedRoundAdvisedAddresses = storedObject[
+            const newProposedRoundAdvisedAddresses = storedObject[
                 `step10`
             ]?.data?.round.roundAdvisedAddresses
                 .filter((raa: any) => raa.quantity != 0)
@@ -233,8 +243,19 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         remainingHUContentIds[0]?.handlingUnitContentId
                 );
             showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step10`,
+                object: {
+                    ...storedObject[`step10`],
+                    data: {
+                        ...storedObject[`step10`]?.data,
+                        proposedRoundAdvisedAddresses: newProposedRoundAdvisedAddresses
+                    }
+                },
+                customFields: [{ key: 'ignoreHUContentIds', value: newIgnoreHUContentIds }]
+            });
         }
     }, [action1Trigger]);
 

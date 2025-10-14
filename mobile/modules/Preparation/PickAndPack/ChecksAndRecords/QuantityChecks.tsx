@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, ContentSpin } from '@components';
 import { LsIsSecured, showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useEffect } from 'react';
 
 export interface IQuantityChecksProps {
@@ -28,30 +29,27 @@ export interface IQuantityChecksProps {
 
 export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
 
     const {
-        process,
+        processName,
         stepNumber,
-        enteredInfo: { enteredInfo, setEnteredInfo },
-        trigger: { triggerRender, setTriggerRender }
+        enteredInfo: { enteredInfo, setEnteredInfo }
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     // TYPED SAFE ALL
     useEffect(() => {
         if (enteredInfo) {
             const data: { [label: string]: any } = {};
             data['movingQuantity'] = enteredInfo;
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
-        }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { data }
+            });
         }
     }, [enteredInfo]);
 
