@@ -19,10 +19,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Logo } from '@components';
 import { Button, Col, Layout, Row } from 'antd';
+import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import styled from 'styled-components';
-import { cookie, LsIsSecured, META_DEFAULTS } from '@helpers';
+import {
+    useTranslationWithFallback as useTranslation,
+    cookie,
+    LsIsSecured,
+    META_DEFAULTS,
+    decodeJWT,
+    showError
+} from '@helpers';
 import { LogoutOutlined, MenuOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import Text from 'antd/lib/typography/Text';
@@ -46,12 +54,57 @@ const StyledCol = styled(Col)`
 `;
 
 const Header: FC = () => {
-    const { logout } = useAuth();
+    const { t } = useTranslation();
+    const { user, logout } = useAuth();
     const storage = LsIsSecured();
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const [firstValue, setFirstValue] = useState<boolean>(false);
+    const state = useAppState();
+    const configs = state?.configs;
+    const sessionTimeoutNotificationConfig = configs?.find(
+        (item: any) => item.scope === 'session_timeout_notification'
+    );
 
     const handleHomeClick = () => {
         storage.removeAll();
     };
+
+    const token = cookie.get('token');
+    let interval: any;
+    let sessionTimeoutNotification: any;
+    let time = sessionTimeoutNotificationConfig
+        ? Number(sessionTimeoutNotificationConfig.value) * 60
+        : 0;
+
+    if (token && user && !sessionTimeoutNotification && !interval && !firstValue) {
+        const user = decodeJWT(token);
+        const expirationTime = user.exp * 1000;
+
+        if (time !== 0) {
+            sessionTimeoutNotification = setTimeout(
+                () => {
+                    showError(
+                        t('messages:session-timeout-notification', { time: Math.floor(time / 60) }),
+                        10
+                    );
+                },
+                expirationTime - Date.now() - time * 1000
+            );
+        }
+
+        const updateTimer = () => {
+            const diff = expirationTime - Date.now();
+            if (diff <= 0) {
+                clearInterval(interval);
+                setTimeLeft(0);
+                logout();
+            } else {
+                setTimeLeft(Math.floor(diff / 1000));
+            }
+        };
+        interval = setInterval(updateTimer, 1000);
+        setFirstValue(true);
+    }
 
     return (
         <StyledHeader>
@@ -66,6 +119,22 @@ const Header: FC = () => {
                         {META_DEFAULTS.title}
                     </Text>
                 </StyledCol>
+                {timeLeft !== null && timeLeft > 0 && timeLeft < time && (
+                    <StyledCol>
+                        <span
+                            style={{ cursor: 'pointer' }}
+                            onClick={() =>
+                                showError(
+                                    t('messages:session-timeout-notification', {
+                                        time: `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`
+                                    })
+                                )
+                            }
+                        >
+                            {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                        </span>
+                    </StyledCol>
+                )}
                 <StyledCol>
                     <LanguageSelector />
                 </StyledCol>

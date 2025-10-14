@@ -3,37 +3,33 @@ CELLA Frontend
 Website and Mobile templates that can be used to communicate
 with CELLA WMS APIs.
 Copyright (C) 2023 KLOCEL <contact@klocel.com>
-
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
-
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
-
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Table } from 'generated/graphql';
 import { ModelType } from './ModelsV2';
 
-export const WarehouseWorkerModelV2: ModelType = {
-    tableName: Table.WarehouseWorker,
-    resolverName: 'WarehouseWorker',
-    isEditable: true,
+export const WarehouseWorkerStockOwnerModelV2: ModelType = {
+    tableName: Table.WarehouseWorkerStockOwner,
+    resolverName: 'WarehouseWorkerStockOwner',
+    isEditable: false,
     isDeletable: true,
     isSoftDeletable: false,
 
     endpoints: {
-        detail: 'warehouseWorker',
-        list: 'warehouseWorkers',
-        create: 'createWarehouseWorker',
-        update: 'updateWarehouseWorker',
-        delete: 'deleteWarehouseWorker',
-        export: true
+        detail: 'warehouseWorkerStockOwner',
+        list: 'warehouseWorkerStockOwners',
+        create: 'createWarehouseWorkerStockOwner',
+        update: 'updateWarehouseWorkerStockOwner',
+        delete: 'deleteWarehouseWorkerStockOwner'
     },
 
     fieldsInfo: {
@@ -58,38 +54,17 @@ export const WarehouseWorkerModelV2: ModelType = {
             param: null,
             optionTable: null
         },
-        username: {
+        stockOwnerId: {
             isListRequested: true,
             isDefaultHiddenList: false,
-            isExcludedFromList: false,
-            isSortable: true,
+            isExcludedFromList: true,
+            isSortable: false,
             searchingFormat: 'String',
             isDetailRequested: true,
-            isExcludedFromDetail: false,
+            isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
-            addEditFormat: 'String',
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: true,
-            minRule: null,
-            maxRule: null,
-            config: null,
-            param: null,
-            optionTable: null
-        },
-        email: {
-            isListRequested: true,
-            isDefaultHiddenList: false,
-            isExcludedFromList: false,
-            isSortable: true,
-            searchingFormat: 'String',
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
-            detailGroup: null,
-            link: null,
-            addEditFormat: 'String',
+            addEditFormat: 'Dropdown',
             addEditStep: null,
             maxLength: null,
             displayName: null,
@@ -98,15 +73,15 @@ export const WarehouseWorkerModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable: null
+            optionTable: '{"table": "StockOwner", "fieldToDisplay": "name"}'
         },
-        password: {
-            isListRequested: false,
+        'stockOwner{name}': {
+            isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: false,
+            isSortable: true,
             searchingFormat: null,
-            isDetailRequested: false,
+            isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
             link: null,
@@ -114,29 +89,50 @@ export const WarehouseWorkerModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
-            isMandatory: true,
+            isMandatory: false,
             minRule: null,
             maxRule: null,
             config: null,
             param: null,
             optionTable: null
         },
-        tokenLifetime: {
+        warehouseWorkerId: {
             isListRequested: true,
             isDefaultHiddenList: false,
-            isExcludedFromList: false,
-            isSortable: true,
-            searchingFormat: 'Number',
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: 'String',
             isDetailRequested: true,
-            isExcludedFromDetail: false,
+            isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
-            addEditFormat: 'Number',
+            addEditFormat: null,
             addEditStep: null,
             maxLength: null,
             displayName: null,
             isMandatory: false,
-            minRule: -1,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: null
+        },
+        'warehouseWorker{username}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
             maxRule: null,
             config: null,
             param: null,
@@ -206,27 +202,6 @@ export const WarehouseWorkerModelV2: ModelType = {
             optionTable: null
         },
         modifiedBy: {
-            isListRequested: true,
-            isDefaultHiddenList: true,
-            isExcludedFromList: false,
-            isSortable: true,
-            searchingFormat: null,
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
-            detailGroup: null,
-            link: null,
-            addEditFormat: null,
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: false,
-            minRule: null,
-            maxRule: null,
-            config: null,
-            param: null,
-            optionTable: null
-        },
-        allowLoginWithoutSso: {
             isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,
