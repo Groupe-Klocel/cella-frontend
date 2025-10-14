@@ -17,19 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { ScanForm } from '@CommonRadio';
+import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanLocationProps {
-    process: string;
+    processName: string;
     stepNumber: number;
     label: string;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     showEmptyLocations?: any;
     showSimilarLocations?: any;
@@ -40,10 +39,9 @@ export interface IScanLocationProps {
 }
 
 export const ScanLocation = ({
-    process,
+    processName,
     stepNumber,
     label,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     showEmptyLocations,
     showSimilarLocations,
@@ -52,8 +50,9 @@ export const ScanLocation = ({
     checkComponent,
     headerContent
 }: IScanLocationProps) => {
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const router = useRouter();
@@ -63,14 +62,12 @@ export const ScanLocation = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        //check workflow direction and assign current step accordingly
-        if (storedObject.currentStep < stepNumber) {
-            storedObject[`step${stepNumber}`] = {
-                previousStep: storedObject.currentStep
-            };
-            storedObject.currentStep = stepNumber;
-        }
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            customFields: [{ key: 'currentStep', value: stepNumber }]
+        });
     }, []);
 
     const handlingUnitContentArticleId =
@@ -179,11 +176,10 @@ export const ScanLocation = ({
     }, [locationInfos]);
 
     const dataToCheck = {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
-        trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
         action1Trigger: { action1Trigger, setAction1Trigger },
         alternativeSubmitInput: storedObject?.step10?.data?.round.extraText1 ?? undefined,
@@ -193,28 +189,25 @@ export const ScanLocation = ({
 
     return (
         <>
-            <>
-                <ScanForm
-                    process={process}
-                    stepNumber={stepNumber}
-                    label={label}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    triggerAlternativeSubmit1={{
-                        triggerAlternativeSubmit1,
-                        setTriggerAlternativeSubmit1
-                    }}
-                    action1Trigger={{ action1Trigger, setAction1Trigger }}
-                    action1Label={t('actions:next')}
-                    buttons={{ ...buttons }}
-                    setScannedInfo={setScannedInfo}
-                    showEmptyLocations={showEmptyLocations}
-                    showSimilarLocations={showSimilarLocations}
-                    resetForm={{ resetForm, setResetForm }}
-                    headerContent={headerContent}
-                    alternativeSubmitLabel1={t('actions:close-shipping-hu')}
-                ></ScanForm>
-                {checkComponent(dataToCheck)}
-            </>
+            <ScanForm_reducer
+                processName={processName}
+                stepNumber={stepNumber}
+                label={label}
+                triggerAlternativeSubmit1={{
+                    triggerAlternativeSubmit1,
+                    setTriggerAlternativeSubmit1
+                }}
+                action1Trigger={{ action1Trigger, setAction1Trigger }}
+                action1Label={t('actions:next')}
+                buttons={{ ...buttons }}
+                setScannedInfo={setScannedInfo}
+                showEmptyLocations={showEmptyLocations}
+                showSimilarLocations={showSimilarLocations}
+                resetForm={{ resetForm, setResetForm }}
+                headerContent={headerContent}
+                alternativeSubmitLabel1={t('actions:close-shipping-hu')}
+            ></ScanForm_reducer>
+            {checkComponent(dataToCheck)}
         </>
     );
 };

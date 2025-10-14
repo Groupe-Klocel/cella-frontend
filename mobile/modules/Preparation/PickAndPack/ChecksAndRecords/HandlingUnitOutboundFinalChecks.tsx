@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useEffect } from 'react';
 
 export interface IHandlingUnitOutboundFinalChecksProps {
@@ -30,18 +31,18 @@ export const HandlingUnitOutboundFinalChecks = ({
     dataToCheck
 }: IHandlingUnitOutboundFinalChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitOutboundInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     // TYPED SAFE ALL
 
     useEffect(() => {
@@ -57,11 +58,18 @@ export const HandlingUnitOutboundFinalChecks = ({
                     const data: { [label: string]: any } = {};
                     data['handlingUnit'] =
                         handlingUnitOutboundInfos.handlingUnitOutbounds?.results[0].handlingUnit;
-                    setTriggerRender(!triggerRender);
-                    storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-                    storedObject[`step${stepNumber}`] = {
-                        data
-                    };
+                    dispatch({
+                        type: 'UPDATE_BY_STEP',
+                        processName,
+                        stepName: `step${stepNumber}`,
+                        object: data,
+                        customFields: [
+                            {
+                                key: 'currentStep',
+                                value: storedObject[`step${stepNumber}`].previousStep
+                            }
+                        ]
+                    });
                 } else {
                     showError(t('messages:wrong-handling-unit-outbound'));
                     setResetForm(true);
@@ -72,12 +80,6 @@ export const HandlingUnitOutboundFinalChecks = ({
                 setResetForm(true);
                 setScannedInfo(undefined);
             }
-        }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
         }
     }, [handlingUnitOutboundInfos]);
 

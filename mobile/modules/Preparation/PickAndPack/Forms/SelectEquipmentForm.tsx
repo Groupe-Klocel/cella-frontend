@@ -26,25 +26,24 @@ import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
-import moment from 'moment';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ISelectEquipementProps {
-    process: string;
+    processName: string;
     stepNumber: number;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
 }
 
 export const SelectEquipmentForm = ({
-    process,
+    processName,
     stepNumber,
-    trigger: { triggerRender, setTriggerRender },
     buttons
 }: ISelectEquipementProps) => {
     const { graphqlRequestClient, user } = useAuth();
     const { t } = useTranslation();
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
 
     // TYPED SAFE ALL
     const [equipments, setEquipments] = useState<any[]>([]);
@@ -72,9 +71,12 @@ export const SelectEquipmentForm = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        storedObject[`step${stepNumber}`] = { previousStep: 0 };
-        storedObject.currentStep = stepNumber;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            customFields: [{ key: 'currentStep', value: stepNumber }]
+        });
     }, []);
 
     useEffect(() => {
@@ -154,8 +156,6 @@ export const SelectEquipmentForm = ({
         fetchEquipmentsList();
     }, []);
 
-    console.log('equipments', equipments);
-
     //SelectRound-2a: retrieve chosen level from select and set information
     const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
@@ -170,21 +170,22 @@ export const SelectEquipmentForm = ({
         data['equipmentId'] = equipmentId;
         data['equipmentName'] = equipments.find((item) => item.key === equipmentId)?.text;
 
-        storedObject[`step${stepNumber}`] = {
-            ...storedObject[`step${stepNumber}`],
-            data
-        };
-
-        storage.set(process, JSON.stringify(storedObject));
-        setTriggerRender(!triggerRender);
+        dispatch({
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            object: { ...storedObject[`step${stepNumber}`], data },
+            customFields: [{ key: 'currentStep', value: stepNumber }]
+        });
     };
 
     //SelectRound-2b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        delete storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].data;
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
     };
 
     return (
