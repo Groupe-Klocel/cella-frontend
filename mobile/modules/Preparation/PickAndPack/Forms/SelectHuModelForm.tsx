@@ -212,7 +212,7 @@ export const SelectHuModelForm = ({
             type: 'UPDATE_BY_STEP',
             processName,
             stepName: `step${stepNumber}`,
-            object: data
+            object: { data, previousStep: storedObject[`step${stepNumber}`]?.previousStep }
         });
     };
 

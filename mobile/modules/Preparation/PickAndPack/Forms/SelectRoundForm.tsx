@@ -46,8 +46,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
     const storedObject = state[processName] || {};
 
     // TYPED SAFE ALL
-    const [rounds, setRounds] = useState<Array<any>>();
-    const [roundNumber, setRoundNumber] = useState<number>(0);
+    const [rounds, setRounds] = useState<Array<any>>([]);
 
     //camera scanner section
     const [form] = Form.useForm();
@@ -138,8 +137,6 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
             roundsListFromGQL,
             roundsListVariables
         );
-
-        setRoundNumber(roundsList_result?.rounds?.results.length || 0);
 
         return roundsList_result;
     };
@@ -369,7 +366,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
         }
 
         data['round'] = selectedRound.round;
-        data['roundNumber'] = roundNumber;
+        data['roundNumber'] = rounds.length;
 
         const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses?.filter(
             (raa: any) => raa.quantity != 0

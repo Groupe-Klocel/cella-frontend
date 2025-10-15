@@ -62,8 +62,6 @@ export const SelectLocationByLevelForm = ({
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
     const [popModal, setPopModal] = useState(0);
-    const [reload, setReload] = useState(false);
-    const [tempLocations, setTempLocations] = useState<any>(locations);
 
     const query = gql`
         query roundAdvisedAddresses($locationId: String!) {
@@ -108,7 +106,53 @@ export const SelectLocationByLevelForm = ({
         });
     };
 
-    async function changeLocation(
+    function selectLocation(newChosenLocation: any) {
+        // N.B.: in this case previous step is kept at its previous value
+        const data: { [label: string]: any } = {};
+
+        data.chosenLocation = newChosenLocation;
+
+        const variables = {
+            locationId: data['chosenLocation'].id
+        };
+        const nextStep = () => {
+            if (data['chosenLocation']?.handlingUnits?.length === 1) {
+                data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
+            }
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    data,
+                    ...(storedObject[`step${stepNumber}`]?.previousStep !== undefined && {
+                        previousStep: storedObject[`step${stepNumber}`].previousStep
+                    })
+                }
+            });
+        };
+        if (!roundsCheck) {
+            nextStep();
+        }
+        if (popModal === 2 && roundsCheck) {
+            graphqlRequestClient.request(query, variables).then((result: any) => {
+                if (result.roundAdvisedAddresses.count > 0) {
+                    Modal.confirm({
+                        title: t('messages:round-planned-for-location'),
+                        onOk: () => nextStep(),
+                        onCancel: () => onBack(),
+                        okText: t('messages:confirm'),
+                        cancelText: t('messages:cancel')
+                    });
+                } else {
+                    nextStep();
+                }
+            });
+        }
+        setPopModal((prev) => prev + 1);
+    }
+
+    async function changePRAA(
         location: any,
         matchingHandlingUnitContent: any,
         chosenLocation: any
@@ -258,7 +302,7 @@ export const SelectLocationByLevelForm = ({
         return true;
     }
 
-    async function checkChosenLocation(chosenLocation: any, data: any) {
+    function checkChosenLocation(chosenLocation: any) {
         if (chosenLocation) {
             const location = chosenLocation;
             const proposedRoundAdvisedAddress =
@@ -281,11 +325,12 @@ export const SelectLocationByLevelForm = ({
                 location.id === proposedRoundAdvisedAddress?.locationId &&
                 matchingHandlingUnitContent
             ) {
-                setTempLocations([chosenLocation]);
+                selectLocation(chosenLocation);
                 return true;
             } else if (matchingHandlingUnitContent) {
                 if (dontAskBeforeLocationChange) {
-                    await changeLocation(location, matchingHandlingUnitContent, chosenLocation);
+                    changePRAA(location, matchingHandlingUnitContent, chosenLocation);
+                    selectLocation(chosenLocation);
                     return true;
                 }
                 Modal.confirm({
@@ -294,21 +339,21 @@ export const SelectLocationByLevelForm = ({
                             {t('messages:change-picking-location-confirm')}
                         </span>
                     ),
-                    onOk: async () => {
+                    onOk: () => {
                         console.log('Change location confirmed');
-                        await changeLocation(location, matchingHandlingUnitContent, chosenLocation);
+                        changePRAA(location, matchingHandlingUnitContent, chosenLocation);
+                        selectLocation(chosenLocation);
                         //N.B.: in this case previous step is kept at its previous value
                         return true;
                     },
                     onCancel: () => {
-                        console.log('Reset');
+                        console.log('Reset', locations);
                         form.resetFields();
                         if (locations.length === 1) {
                             dispatch({
-                                type: 'UPDATE_BY_STEP',
+                                type: 'ON_BACK',
                                 processName: processName,
-                                stepName: `step20`,
-                                object: {}
+                                stepToReturn: 'step20'
                             });
                         }
                         showSimilarLocations.setShowSimilarLocations(false);
@@ -319,14 +364,12 @@ export const SelectLocationByLevelForm = ({
                     bodyStyle: { fontSize: '2px' }
                 });
             } else {
-                console.log('No matching handling unit content', chosenLocation, data);
                 showError(t('messages:unexpected-scanned-item'));
                 form.resetFields();
                 dispatch({
-                    type: 'UPDATE_BY_STEP',
+                    type: 'ON_BACK',
                     processName: processName,
-                    stepName: `step20`,
-                    object: {}
+                    stepToReturn: 'step20'
                 });
                 return false;
             }
@@ -336,50 +379,9 @@ export const SelectLocationByLevelForm = ({
     //Pre-requisite: initialize current step
     useEffect(() => {
         //automatically set chosenLocation when single location
-        console.log('AXC - SelectLocationByLevelForm.tsx - tempLocations:', tempLocations);
-        if (tempLocations) {
-            if (tempLocations.length === 1) {
-                // N.B.: in this case previous step is kept at its previous value
-                const data: { [label: string]: any } = {};
-
-                data.chosenLocation = tempLocations[0];
-
-                if (!checkChosenLocation(data['chosenLocation'], data)) return;
-
-                const variables = {
-                    locationId: data['chosenLocation'].id
-                };
-                const nextStep = () => {
-                    if (data['chosenLocation']?.handlingUnits?.length === 1) {
-                        data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
-                    }
-                    dispatch({
-                        type: 'UPDATE_BY_STEP',
-                        processName,
-                        stepName: `step${stepNumber}`,
-                        object: { data }
-                    });
-                };
-                if (!roundsCheck) {
-                    nextStep();
-                }
-                if (popModal === 2 && roundsCheck) {
-                    graphqlRequestClient.request(query, variables).then((result: any) => {
-                        if (result.roundAdvisedAddresses.count > 0) {
-                            Modal.confirm({
-                                title: t('messages:round-planned-for-location'),
-                                onOk: () => nextStep(),
-                                onCancel: () => onBack(),
-                                okText: t('messages:confirm'),
-                                cancelText: t('messages:cancel')
-                            });
-                        } else {
-                            nextStep();
-                        }
-                    });
-                }
-                setPopModal((prev) => prev + 1);
-                setTempLocations(locations);
+        if (locations) {
+            if (locations.length === 1) {
+                checkChosenLocation(locations[0]);
             } else if (storedObject.currentStep < stepNumber) {
                 //check workflow direction and assign current step accordingly
                 dispatch({
@@ -391,7 +393,7 @@ export const SelectLocationByLevelForm = ({
                 });
             }
         }
-    }, [reload]);
+    }, []);
 
     //SelectLocationByLevel-1: retrieve levels choices for select
     useEffect(() => {
@@ -413,13 +415,13 @@ export const SelectLocationByLevelForm = ({
     }, [locations]);
 
     //SelectLocationByLevel-2a: retrieve chosen level from select and set information
-    const onFinish = (values: any) => {
+    const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
         data['chosenLocation'] = locations?.find((e: any) => {
             return e.level == values.level;
         });
 
-        checkChosenLocation(data['chosenLocation'], data);
+        checkChosenLocation(data['chosenLocation']);
     };
 
     return (
