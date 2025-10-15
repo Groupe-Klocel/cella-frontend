@@ -271,6 +271,27 @@ export const CarrierShippingModeModelV2: ModelType = {
             param: null,
             optionTable: null
         },
+        partialDelivery: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'Boolean',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"logistic", "position":1}',
+            link: null,
+            addEditFormat: 'Checkbox',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: null
+        },
         managementMode: {
             isListRequested: true,
             isDefaultHiddenList: true,
