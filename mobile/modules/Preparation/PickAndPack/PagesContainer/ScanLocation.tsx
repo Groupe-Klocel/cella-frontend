@@ -66,7 +66,10 @@ export const ScanLocation = ({
             type: 'UPDATE_BY_STEP',
             processName,
             stepName: `step${stepNumber}`,
-            customFields: [{ key: 'currentStep', value: stepNumber }]
+            customFields: [
+                { key: 'currentStep', value: stepNumber },
+                { key: 'ignoreHUContentIds', value: [] }
+            ]
         });
     }, []);
 

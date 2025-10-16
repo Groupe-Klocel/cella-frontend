@@ -224,7 +224,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
             let newIgnoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
             let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
                 .filter((raa: any) => {
-                    return !storedObject.ignoreHUContentIds.includes(raa.handlingUnitContentId);
+                    return !newIgnoreHUContentIds.includes(raa.handlingUnitContentId);
                 })
                 .filter((raa: any) => raa.quantity != 0);
             if (remainingHUContentIds.length === 0) {
