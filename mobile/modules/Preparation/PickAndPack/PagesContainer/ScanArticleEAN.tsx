@@ -87,10 +87,6 @@ export const ScanArticleEAN = ({
     //Pre-requisite: initialize current step
     useEffect(() => {
         const fetchData = async () => {
-            console.log(
-                'AXC - ScanArticleEAN.tsx - fetchData - forceArticleScan:',
-                forceArticleScan
-            );
             if (contents.length === 1 && !forceArticleScan) {
                 // N.B.: in this case previous step is kept at its previous value
                 let data: { [label: string]: any } = {};

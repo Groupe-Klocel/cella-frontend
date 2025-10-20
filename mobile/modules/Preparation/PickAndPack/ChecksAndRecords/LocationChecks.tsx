@@ -108,16 +108,6 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                     }
                 }
                 showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
-                console.log('data', data);
-                console.log('dispatch', {
-                    type: 'UPDATE_BY_STEP',
-                    processName,
-                    stepName: `step${stepNumber}`,
-                    object: {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    }
-                });
                 dispatch({
                     type: 'UPDATE_BY_STEP',
                     processName,

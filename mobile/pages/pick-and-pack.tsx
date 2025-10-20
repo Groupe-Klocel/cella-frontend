@@ -302,13 +302,7 @@ const PickAndPack: PageComponent = () => {
     // retrieve location, article and qty to propose
     useEffect(() => {
         if (storedObject['step10']?.data?.proposedRoundAdvisedAddresses) {
-            setLocationToPropose(
-                proposedRoundAdvisedAddress.location?.name +
-                    ' / ' +
-                    t('common:quantity_abbr') +
-                    ': ' +
-                    proposedRoundAdvisedAddress.handlingUnitContent?.quantity
-            );
+            setLocationToPropose(proposedRoundAdvisedAddress.location?.name);
             setArticleToPropose(proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name);
         }
         if (
