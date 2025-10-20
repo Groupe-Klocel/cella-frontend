@@ -68,14 +68,19 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                           )
                       )
                     : contents;
-
+                const proposedRoundAdvisedAddressData =
+                    storedObject['step10'].data.proposedRoundAdvisedAddresses[0];
                 // Check if the scannedInfo is valid and if the currentFeatureCode is a date type
                 const checkNewFeatureExists = contentsFiltered.some((content: any) =>
-                    content.handlingUnitContentFeatures.some(
-                        (feature: any) =>
-                            feature.featureCode.id === currentFeatureCode.id &&
-                            feature.value === formattedScannedInfo &&
-                            content.quantity > 0
+                    content.handlingUnitContentFeatures.some((feature: any) =>
+                        proposedRoundAdvisedAddressData.handlingUnitContent.handlingUnitContentFeatures.some(
+                            (hucf: any) =>
+                                feature.featureCode.id === currentFeatureCode.id &&
+                                feature.value === formattedScannedInfo &&
+                                content.quantity > 0 &&
+                                hucf.featureCodeId === feature.featureCode.id &&
+                                hucf.value === feature.value
+                        )
                     )
                 );
 

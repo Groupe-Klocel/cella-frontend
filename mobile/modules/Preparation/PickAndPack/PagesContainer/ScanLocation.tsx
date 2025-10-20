@@ -57,6 +57,7 @@ export const ScanLocation = ({
     const [resetForm, setResetForm] = useState<boolean>(false);
     const router = useRouter();
     const [locationInfos, setLocationInfos] = useState<any>();
+    const [locationQuantity, setLocationQuantity] = useState<number>(0);
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
 
@@ -73,9 +74,11 @@ export const ScanLocation = ({
         });
     }, []);
 
-    const handlingUnitContentArticleId =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
-            ?.id;
+    const locationName =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location.name;
+
+    const PRAAHUCInfos =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent;
 
     const getLocations = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
@@ -112,7 +115,7 @@ export const ScanLocation = ({
                                             {
                                                 searchType: EQUAL
                                                 fieldName: "articleId"
-                                                searchedValues: "${handlingUnitContentArticleId}"
+                                                searchedValues: "${PRAAHUCInfos?.article?.id}"
                                             }
                                         ]
                                     }
@@ -162,11 +165,34 @@ export const ScanLocation = ({
 
     useEffect(() => {
         async function fetchData() {
-            const result = await getLocations(scannedInfo);
-            if (result) setLocationInfos(result);
+            const result = await getLocations(locationName || scannedInfo);
+            if (result) {
+                setLocationInfos(result);
+                const locations = result.locations?.results;
+                if (locations && locations.length > 0) {
+                    let totalQuantity = 0;
+                    locations.forEach((location: any) => {
+                        location.handlingUnits.forEach((hu: any) => {
+                            hu.handlingUnitContents.forEach((content: any) => {
+                                if (
+                                    PRAAHUCInfos.stockOwnerId === content.stockOwnerId &&
+                                    PRAAHUCInfos.stockStatus === content.stockStatus &&
+                                    PRAAHUCInfos.articleId === content.articleId &&
+                                    PRAAHUCInfos.reservation === content.reservation
+                                ) {
+                                    totalQuantity += content.quantity;
+                                }
+                            });
+                        });
+                    });
+                    setLocationQuantity(totalQuantity);
+                } else {
+                    setLocationQuantity(0);
+                }
+            }
         }
         fetchData();
-    }, [scannedInfo]);
+    }, [scannedInfo, locationName]);
 
     //ScanLocation-3: manage information for persistence storage and front-end errors
     useEffect(() => {
@@ -190,12 +216,15 @@ export const ScanLocation = ({
         setResetForm
     };
 
+    const newLabel =
+        label.split(')')[0] + ' / ' + t('common:quantity_abbr') + ': ' + locationQuantity + ')';
+
     return (
         <>
             <ScanForm_reducer
                 processName={processName}
                 stepNumber={stepNumber}
-                label={label}
+                label={newLabel}
                 triggerAlternativeSubmit1={{
                     triggerAlternativeSubmit1,
                     setTriggerAlternativeSubmit1
