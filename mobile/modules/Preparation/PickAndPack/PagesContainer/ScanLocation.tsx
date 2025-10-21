@@ -165,7 +165,7 @@ export const ScanLocation = ({
 
     useEffect(() => {
         async function fetchData() {
-            const result = await getLocations(locationName || scannedInfo);
+            const result = await getLocations(scannedInfo || locationName);
             if (result) {
                 setLocationInfos(result);
                 const locations = result.locations?.results;
