@@ -48,7 +48,10 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
                 type: 'UPDATE_BY_STEP',
                 processName,
                 stepName: `step${stepNumber}`,
-                object: { data }
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                }
             });
         }
     }, [enteredInfo]);

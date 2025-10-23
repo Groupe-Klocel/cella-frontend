@@ -62,7 +62,10 @@ export const HandlingUnitOutboundFinalChecks = ({
                         type: 'UPDATE_BY_STEP',
                         processName,
                         stepName: `step${stepNumber}`,
-                        object: data,
+                        object: {
+                            ...storedObject[`step${stepNumber}`],
+                            data
+                        },
                         customFields: [
                             {
                                 key: 'currentStep',
