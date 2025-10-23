@@ -80,82 +80,92 @@ export const ScanLocation = ({
     const PRAAHUCInfos =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent;
 
-    const getLocations = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
-        if (scannedInfo) {
-            const query = gql`
-                query GetLocationIds($filters: LocationSearchFilters) {
-                    locations(filters: $filters) {
-                        count
-                        itemsPerPage
-                        totalPages
-                        results {
+    const getLocations = async (
+        scannedInfo: any,
+        locationName: any
+    ): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query GetLocationIds($filters: LocationSearchFilters) {
+                locations(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        name
+                        barcode
+                        level
+                        category
+                        handlingUnits(
+                            advancedFilters: {
+                                filter: {
+                                    searchType: SUPERIOR
+                                    fieldName: "autocountHandlingUnitContent"
+                                    searchedValues: "0"
+                                }
+                            }
+                        ) {
                             id
                             name
-                            barcode
-                            level
-                            category
-                            handlingUnits(
+                            locationId
+                            location {
+                                name
+                            }
+                            handlingUnitContents(
                                 advancedFilters: {
-                                    filter: {
-                                        searchType: SUPERIOR
-                                        fieldName: "autocountHandlingUnitContent"
-                                        searchedValues: "0"
-                                    }
+                                    filter: [
+                                        {
+                                            searchType: EQUAL
+                                            fieldName: "articleId"
+                                            searchedValues: "${PRAAHUCInfos?.article?.id}"
+                                        }
+                                    ]
                                 }
                             ) {
                                 id
-                                name
-                                locationId
-                                location {
+                                quantity
+                                reservation
+                                stockStatus
+                                stockStatusText
+                                stockOwnerId
+                                stockOwner {
                                     name
                                 }
-                                handlingUnitContents(
-                                    advancedFilters: {
-                                        filter: [
-                                            {
-                                                searchType: EQUAL
-                                                fieldName: "articleId"
-                                                searchedValues: "${PRAAHUCInfos?.article?.id}"
-                                            }
-                                        ]
-                                    }
-                                ) {
+                                articleId
+                                article {
                                     id
-                                    quantity
-                                    reservation
-                                    stockStatus
-                                    stockStatusText
-                                    stockOwnerId
-                                    stockOwner {
-                                        name
-                                    }
-                                    articleId
-                                    article {
+                                    name
+                                    baseUnitWeight
+                                    featureType
+                                }
+                                handlingUnitContentFeatures {
+                                    id
+                                    featureCodeId
+                                    featureCode {
                                         id
                                         name
-                                        baseUnitWeight
-                                        featureType
+                                        unique
+                                        dateType
                                     }
-                                    handlingUnitContentFeatures {
-                                        id
-                                        featureCodeId
-                                        featureCode {
-                                            id
-                                            name
-                                            unique
-                                            dateType
-                                        }
-                                        value
-                                    }
+                                    value
                                 }
                             }
                         }
                     }
                 }
-            `;
-
+            }
+        `;
+        if (scannedInfo) {
             const variables = {
                 filters: { barcode: [`${scannedInfo}`] }
+            };
+            const locationInfos = await graphqlRequestClient.request(query, variables);
+
+            return locationInfos;
+        }
+        if (locationName) {
+            const variables = {
+                filters: { name: [`${locationName}`] }
             };
             const locationInfos = await graphqlRequestClient.request(query, variables);
 
@@ -165,7 +175,7 @@ export const ScanLocation = ({
 
     useEffect(() => {
         async function fetchData() {
-            const result = await getLocations(scannedInfo || locationName);
+            const result = await getLocations(scannedInfo, locationName);
             if (result) {
                 setLocationInfos(result);
                 const locations = result.locations?.results;
