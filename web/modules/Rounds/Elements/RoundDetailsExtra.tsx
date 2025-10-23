@@ -244,10 +244,11 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                                                 />
                                             </>
                                         )}
+                                        {/* No details page for RoundAdvisedAddress yet
                                         <LinkButton
                                             icon={<EyeTwoTone />}
                                             path={'/rounds/:id'.replace(':id', record.id)}
-                                        />
+                                        /> */}
                                     </Space>
                                 )
                             }

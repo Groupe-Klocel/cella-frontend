@@ -676,7 +676,7 @@ export const DeliveryModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"logistic", "position":1}',
-            link: 'carriers/shippingMode/carrierShippingModeId',
+            link: 'carriers/carrierId',
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,

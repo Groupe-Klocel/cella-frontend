@@ -22,6 +22,7 @@ import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import dayjs from 'dayjs';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IFeatureChecksProps {
     dataToCheck: any;
@@ -32,19 +33,20 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
     const storage = LsIsSecured();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         featuresToProcess,
         processedFeatures,
         currentFeatureCode,
         contents,
-        trigger: { triggerRender, setTriggerRender },
         action1Trigger,
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
 
     // ScanArticle: manage information for persistence storage and front-end errors
     useEffect(() => {
@@ -66,14 +68,19 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                           )
                       )
                     : contents;
-
+                const proposedRoundAdvisedAddressData =
+                    storedObject['step10'].data.proposedRoundAdvisedAddresses[0];
                 // Check if the scannedInfo is valid and if the currentFeatureCode is a date type
                 const checkNewFeatureExists = contentsFiltered.some((content: any) =>
-                    content.handlingUnitContentFeatures.some(
-                        (feature: any) =>
-                            feature.featureCode.id === currentFeatureCode.id &&
-                            feature.value === formattedScannedInfo &&
-                            content.quantity > 0
+                    content.handlingUnitContentFeatures.some((feature: any) =>
+                        proposedRoundAdvisedAddressData.handlingUnitContent.handlingUnitContentFeatures.some(
+                            (hucf: any) =>
+                                feature.featureCode.id === currentFeatureCode.id &&
+                                feature.value === formattedScannedInfo &&
+                                content.quantity > 0 &&
+                                hucf.featureCodeId === feature.featureCode.id &&
+                                hucf.value === feature.value
+                        )
                     )
                 );
 
@@ -106,11 +113,15 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                             (processed: any) => processed.featureCodeId === feature.featureCodeId
                         )
                 )?.featureCode;
-                setTriggerRender(!triggerRender);
-                storedObject[`step${stepNumber}`] = {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                };
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: `step${stepNumber}`,
+                    object: {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    }
+                });
                 setResetForm(true);
                 setScannedInfo(undefined);
             } else {
@@ -119,32 +130,24 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                 setScannedInfo(undefined);
             }
         }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
-        }
     }, [featuresToProcess, scannedInfo]);
 
     useEffect(() => {
         if (action1Trigger.action1Trigger) {
             const updatedData = { ...storedObject[`step${stepNumber}`].data };
             updatedData['nextFeatureCode'] = undefined;
-            setTriggerRender(!triggerRender);
-            storedObject[`step${stepNumber}`] = {
-                ...storedObject[`step${stepNumber}`],
-                data: updatedData
-            };
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    updatedData
+                }
+            });
             setResetForm(true);
             setScannedInfo(undefined);
             action1Trigger.setAction1Trigger(false);
-        }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
         }
     }, [action1Trigger.action1Trigger]);
 

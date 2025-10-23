@@ -30,28 +30,23 @@ import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
 import moment from 'moment';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ISelectRoundProps {
-    process: string;
+    processName: string;
     stepNumber: number;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
 }
 
-export const SelectRoundForm = ({
-    process,
-    stepNumber,
-    trigger: { triggerRender, setTriggerRender },
-    buttons
-}: ISelectRoundProps) => {
+export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRoundProps) => {
     const { graphqlRequestClient, user } = useAuth();
     const { t } = useTranslation();
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
 
     // TYPED SAFE ALL
-    const [rounds, setRounds] = useState<Array<any>>();
-    const [roundNumber, setRoundNumber] = useState<number>(0);
+    const [rounds, setRounds] = useState<Array<any>>([]);
 
     //camera scanner section
     const [form] = Form.useForm();
@@ -77,11 +72,13 @@ export const SelectRoundForm = ({
     //Pre-requisite: initialize current step
     useEffect(() => {
         if (storedObject.currentStep < stepNumber) {
-            //check workflow direction and assign current step accordingly
-            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-            storedObject.currentStep = stepNumber;
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
-        storage.set(process, JSON.stringify(storedObject));
     }, []);
 
     //SelectRound-1: retrieve rounds choices for select
@@ -140,8 +137,6 @@ export const SelectRoundForm = ({
             roundsListFromGQL,
             roundsListVariables
         );
-
-        setRoundNumber(roundsList_result?.rounds?.results.length || 0);
 
         return roundsList_result;
     };
@@ -260,7 +255,11 @@ export const SelectRoundForm = ({
                                 name
                             }
                             handlingUnitContentFeatures {
+                                id
+                                featureCodeId
                                 featureCode {
+                                    dateType
+                                    id
                                     name
                                     unique
                                 }
@@ -367,7 +366,7 @@ export const SelectRoundForm = ({
         }
 
         data['round'] = selectedRound.round;
-        data['roundNumber'] = roundNumber;
+        data['roundNumber'] = rounds.length;
 
         const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses?.filter(
             (raa: any) => raa.quantity != 0
@@ -423,30 +422,36 @@ export const SelectRoundForm = ({
                         launchRoundsResult.executeFunction.output.output
                     );
                 } else {
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
-                    storage.set(process, JSON.stringify(storedObject));
-                    setTriggerRender(!triggerRender);
+                    dispatch({
+                        type: 'UPDATE_BY_STEP',
+                        processName,
+                        stepName: `step${stepNumber}`,
+                        object: { ...storedObject[`step${stepNumber}`], data },
+                        customFields: [{ key: 'currentStep', value: stepNumber }]
+                    });
                 }
             } catch (error) {
                 showError(t('messages:error-executing-function'));
                 console.log('executeFunctionError', error);
             }
         } else {
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            storage.set(process, JSON.stringify(storedObject));
-            setTriggerRender(!triggerRender);
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { ...storedObject[`step${stepNumber}`], data },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     };
 
     //SelectRound-2b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        delete storedObject[`step${storedObject[`step${stepNumber}`].previousStep}`].data;
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
     };
 
     return (
