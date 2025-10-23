@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { ScanForm, DatePickerForm } from '@CommonRadio';
+import { ScanForm_reducer, DatePickerForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
@@ -26,12 +26,12 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanFeatureProps {
-    process: string;
+    processName: string;
     stepNumber: number;
     label: string;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     checkComponent: any;
     featureType?: any;
@@ -54,10 +54,9 @@ const WrapperFeature = styled.div`
 `;
 
 export const ScanFeature = ({
-    process,
+    processName,
     stepNumber,
     label,
-    trigger: { triggerRender, setTriggerRender },
     action1Trigger: { action1Trigger, setAction1Trigger },
     buttons,
     checkComponent,
@@ -66,8 +65,9 @@ export const ScanFeature = ({
     nextFeatureCode,
     dataInfos
 }: IScanFeatureProps) => {
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const router = useRouter();
@@ -81,24 +81,46 @@ export const ScanFeature = ({
         //check workflow direction and assign current step accordingly
         if (contents.length === 1 || featureType.length === 0) {
             // N.B.: in this case previous step is kept at its previous value
+            const proposedRoundAdvisedAddressData =
+                storedObject['step10'].data.proposedRoundAdvisedAddresses[0];
             const data: { [label: string]: any } = {};
             if (contents.length === 1) {
                 data['processedFeatures'] = contents[0].handlingUnitContentFeatures;
                 data['content'] = contents[0];
             } else {
-                data['processedFeatures'] = contents.find(
-                    (content: any) => content.articleId === articleLuBarcode.articleId
-                ).handlingUnitContentFeatures;
-                data['content'] = contents.find(
-                    (content: any) => content.articleId === articleLuBarcode.articleId
+                const matchedContent = contents.find(
+                    (content: any) =>
+                        content.articleId === articleLuBarcode.articleId &&
+                        proposedRoundAdvisedAddressData.handlingUnitContent.handlingUnitContentFeatures.every(
+                            (hucf: any) =>
+                                content.handlingUnitContentFeatures.some(
+                                    (feature: any) =>
+                                        feature.featureCode.id === hucf.featureCodeId &&
+                                        feature.value === hucf.value
+                                )
+                        )
                 );
+
+                data['content'] = matchedContent;
+                data['processedFeatures'] = matchedContent?.handlingUnitContentFeatures;
             }
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            setTriggerRender(!triggerRender);
-            storage.set(process, JSON.stringify(storedObject));
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { data }
+            });
             setScannedInfo(undefined);
             setResetForm(true);
             return;
+        } else {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { previousStep: storedObject.currentStep },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
     }, []);
 
@@ -117,14 +139,13 @@ export const ScanFeature = ({
     }, [nextFeatureCode]);
 
     const dataToCheck = {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         featuresToProcess: featureType,
         processedFeatures: processedFeatures,
         currentFeatureCode,
         contents,
-        trigger: { triggerRender, setTriggerRender },
         action1Trigger: { action1Trigger, setAction1Trigger },
         setResetForm
     };
@@ -149,27 +170,25 @@ export const ScanFeature = ({
         <WrapperFeature>
             <StyledTitle level={5}>{t('common:feature-codes-entry')}</StyledTitle>
             {!currentFeatureCode?.dateType ? (
-                <ScanForm
-                    process={process}
+                <ScanForm_reducer
+                    processName={processName}
                     stepNumber={stepNumber}
                     label={currentFeatureCode ? currentFeatureCode.name : label}
-                    trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ ...buttonsState }}
                     action1Trigger={{ action1Trigger, setAction1Trigger }}
                     action1Label={t('common:finish-features-entry')}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
-                ></ScanForm>
+                ></ScanForm_reducer>
             ) : (
-                <DatePickerForm
-                    process={process}
+                <DatePickerForm_reducer
+                    processName={processName}
                     stepNumber={stepNumber}
                     label={currentFeatureCode ? currentFeatureCode.name : label}
-                    trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
-                ></DatePickerForm>
+                ></DatePickerForm_reducer>
             )}
             {checkComponent(dataToCheck)}
         </WrapperFeature>

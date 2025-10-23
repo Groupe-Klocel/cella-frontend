@@ -22,6 +22,7 @@ import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import configs from '../../../../../common/configs.json';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IArticleChecksProps {
     dataToCheck: any;
@@ -32,17 +33,18 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
     const storage = LsIsSecured();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         contents,
         articleLuBarcodesInfos,
         featureTypeDetailsInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     // TYPED SAFE ALL
     // ScanBox-3: manage information for persistence storage and front-end errors
 
@@ -68,11 +70,15 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                     } else {
                         data['article']['featureType'] = [];
                     }
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
+                    dispatch({
+                        type: 'UPDATE_BY_STEP',
+                        processName,
+                        stepName: `step${stepNumber}`,
+                        object: {
+                            ...storedObject[`step${stepNumber}`],
+                            data
+                        }
+                    });
                 } else {
                     showError(t('messages:unexpected-scanned-item'));
                     setResetForm(true);
@@ -83,12 +89,6 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                 setResetForm(true);
                 setScannedInfo(undefined);
             }
-        }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
         }
     }, [articleLuBarcodesInfos]);
 

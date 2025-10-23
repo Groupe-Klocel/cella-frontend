@@ -17,19 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { ScanForm } from '@CommonRadio';
+import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanLocationProps {
-    process: string;
+    processName: string;
     stepNumber: number;
     label: string;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     showEmptyLocations?: any;
     showSimilarLocations?: any;
@@ -40,10 +39,9 @@ export interface IScanLocationProps {
 }
 
 export const ScanLocation = ({
-    process,
+    processName,
     stepNumber,
     label,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     showEmptyLocations,
     showSimilarLocations,
@@ -52,107 +50,122 @@ export const ScanLocation = ({
     checkComponent,
     headerContent
 }: IScanLocationProps) => {
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const router = useRouter();
     const [locationInfos, setLocationInfos] = useState<any>();
+    const [locationQuantity, setLocationQuantity] = useState<number>(0);
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        //check workflow direction and assign current step accordingly
-        if (storedObject.currentStep < stepNumber) {
-            storedObject[`step${stepNumber}`] = {
-                previousStep: storedObject.currentStep
-            };
-            storedObject.currentStep = stepNumber;
-        }
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            customFields: [
+                { key: 'currentStep', value: stepNumber },
+                { key: 'ignoreHUContentIds', value: [] }
+            ]
+        });
     }, []);
 
-    const handlingUnitContentArticleId =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
-            ?.id;
+    const locationName =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location.name;
 
-    const getLocations = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
-        if (scannedInfo) {
-            const query = gql`
-                query GetLocationIds($filters: LocationSearchFilters) {
-                    locations(filters: $filters) {
-                        count
-                        itemsPerPage
-                        totalPages
-                        results {
+    const PRAAHUCInfos =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent;
+
+    const getLocations = async (
+        scannedInfo: any,
+        locationName: any
+    ): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query GetLocationIds($filters: LocationSearchFilters) {
+                locations(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        name
+                        barcode
+                        level
+                        category
+                        handlingUnits(
+                            advancedFilters: {
+                                filter: {
+                                    searchType: SUPERIOR
+                                    fieldName: "autocountHandlingUnitContent"
+                                    searchedValues: "0"
+                                }
+                            }
+                        ) {
                             id
                             name
-                            barcode
-                            level
-                            category
-                            handlingUnits(
+                            locationId
+                            location {
+                                name
+                            }
+                            handlingUnitContents(
                                 advancedFilters: {
-                                    filter: {
-                                        searchType: SUPERIOR
-                                        fieldName: "autocountHandlingUnitContent"
-                                        searchedValues: "0"
-                                    }
+                                    filter: [
+                                        {
+                                            searchType: EQUAL
+                                            fieldName: "articleId"
+                                            searchedValues: "${PRAAHUCInfos?.article?.id}"
+                                        }
+                                    ]
                                 }
                             ) {
                                 id
-                                name
-                                locationId
-                                location {
+                                quantity
+                                reservation
+                                stockStatus
+                                stockStatusText
+                                stockOwnerId
+                                stockOwner {
                                     name
                                 }
-                                handlingUnitContents(
-                                    advancedFilters: {
-                                        filter: [
-                                            {
-                                                searchType: EQUAL
-                                                fieldName: "articleId"
-                                                searchedValues: "${handlingUnitContentArticleId}"
-                                            }
-                                        ]
-                                    }
-                                ) {
+                                articleId
+                                article {
                                     id
-                                    quantity
-                                    reservation
-                                    stockStatus
-                                    stockStatusText
-                                    stockOwnerId
-                                    stockOwner {
-                                        name
-                                    }
-                                    articleId
-                                    article {
+                                    name
+                                    baseUnitWeight
+                                    featureType
+                                }
+                                handlingUnitContentFeatures {
+                                    id
+                                    featureCodeId
+                                    featureCode {
                                         id
                                         name
-                                        baseUnitWeight
-                                        featureType
+                                        unique
+                                        dateType
                                     }
-                                    handlingUnitContentFeatures {
-                                        id
-                                        featureCodeId
-                                        featureCode {
-                                            id
-                                            name
-                                            unique
-                                            dateType
-                                        }
-                                        value
-                                    }
+                                    value
                                 }
                             }
                         }
                     }
                 }
-            `;
-
+            }
+        `;
+        if (scannedInfo) {
             const variables = {
                 filters: { barcode: [`${scannedInfo}`] }
+            };
+            const locationInfos = await graphqlRequestClient.request(query, variables);
+
+            return locationInfos;
+        }
+        if (locationName) {
+            const variables = {
+                filters: { name: [`${locationName}`] }
             };
             const locationInfos = await graphqlRequestClient.request(query, variables);
 
@@ -162,11 +175,34 @@ export const ScanLocation = ({
 
     useEffect(() => {
         async function fetchData() {
-            const result = await getLocations(scannedInfo);
-            if (result) setLocationInfos(result);
+            const result = await getLocations(scannedInfo, locationName);
+            if (result) {
+                setLocationInfos(result);
+                const locations = result.locations?.results;
+                if (locations && locations.length > 0) {
+                    let totalQuantity = 0;
+                    locations.forEach((location: any) => {
+                        location.handlingUnits.forEach((hu: any) => {
+                            hu.handlingUnitContents.forEach((content: any) => {
+                                if (
+                                    PRAAHUCInfos.stockOwnerId === content.stockOwnerId &&
+                                    PRAAHUCInfos.stockStatus === content.stockStatus &&
+                                    PRAAHUCInfos.articleId === content.articleId &&
+                                    PRAAHUCInfos.reservation === content.reservation
+                                ) {
+                                    totalQuantity += content.quantity;
+                                }
+                            });
+                        });
+                    });
+                    setLocationQuantity(totalQuantity);
+                } else {
+                    setLocationQuantity(0);
+                }
+            }
         }
         fetchData();
-    }, [scannedInfo]);
+    }, [scannedInfo, locationName]);
 
     //ScanLocation-3: manage information for persistence storage and front-end errors
     useEffect(() => {
@@ -179,11 +215,10 @@ export const ScanLocation = ({
     }, [locationInfos]);
 
     const dataToCheck = {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
-        trigger: { triggerRender, setTriggerRender },
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
         action1Trigger: { action1Trigger, setAction1Trigger },
         alternativeSubmitInput: storedObject?.step10?.data?.round.extraText1 ?? undefined,
@@ -191,30 +226,30 @@ export const ScanLocation = ({
         setResetForm
     };
 
+    const newLabel =
+        label.split(')')[0] + ' / ' + t('common:quantity_abbr') + ': ' + locationQuantity + ')';
+
     return (
         <>
-            <>
-                <ScanForm
-                    process={process}
-                    stepNumber={stepNumber}
-                    label={label}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    triggerAlternativeSubmit1={{
-                        triggerAlternativeSubmit1,
-                        setTriggerAlternativeSubmit1
-                    }}
-                    action1Trigger={{ action1Trigger, setAction1Trigger }}
-                    action1Label={t('actions:next')}
-                    buttons={{ ...buttons }}
-                    setScannedInfo={setScannedInfo}
-                    showEmptyLocations={showEmptyLocations}
-                    showSimilarLocations={showSimilarLocations}
-                    resetForm={{ resetForm, setResetForm }}
-                    headerContent={headerContent}
-                    alternativeSubmitLabel1={t('actions:close-shipping-hu')}
-                ></ScanForm>
-                {checkComponent(dataToCheck)}
-            </>
+            <ScanForm_reducer
+                processName={processName}
+                stepNumber={stepNumber}
+                label={newLabel}
+                triggerAlternativeSubmit1={{
+                    triggerAlternativeSubmit1,
+                    setTriggerAlternativeSubmit1
+                }}
+                action1Trigger={{ action1Trigger, setAction1Trigger }}
+                action1Label={t('actions:next')}
+                buttons={{ ...buttons }}
+                setScannedInfo={setScannedInfo}
+                showEmptyLocations={showEmptyLocations}
+                showSimilarLocations={showSimilarLocations}
+                resetForm={{ resetForm, setResetForm }}
+                headerContent={headerContent}
+                alternativeSubmitLabel1={t('actions:close-shipping-hu')}
+            ></ScanForm_reducer>
+            {checkComponent(dataToCheck)}
         </>
     );
 };

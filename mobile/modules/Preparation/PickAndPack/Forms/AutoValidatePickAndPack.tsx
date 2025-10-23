@@ -27,11 +27,11 @@ import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IAutoValidatePickAndPackProps {
-    process: string;
+    processName: string;
     stepNumber: number;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     headerContent: { [label: string]: any };
     toBePalletized: boolean;
@@ -39,17 +39,17 @@ export interface IAutoValidatePickAndPackProps {
 }
 
 export const AutoValidatePickAndPackForm = ({
-    process,
+    processName,
     stepNumber,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     headerContent: { setHeaderContent },
     toBePalletized,
     autoValidateLoading: { isAutoValidateLoading, setIsAutoValidateLoading }
 }: IAutoValidatePickAndPackProps) => {
     const { t } = useTranslation('common');
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const { graphqlRequestClient, user } = useAuth();
 
     // TYPED SAFE ALL
@@ -57,11 +57,14 @@ export const AutoValidatePickAndPackForm = ({
     useEffect(() => {
         if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
-            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-            storedObject.currentStep = stepNumber;
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName: processName,
+                stepName: `step${stepNumber}`,
+                object: { previousStep: storedObject.currentStep },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
-        storage.set(process, JSON.stringify(storedObject));
-        setTriggerRender(!triggerRender);
     }, []);
     // retrieve values for update contents/boxline and create movement
     const { step5, step10, step15, step30, step40, step50, step60, step70, step80 } = storedObject;
@@ -162,7 +165,6 @@ export const AutoValidatePickAndPackForm = ({
                     onBack();
                     setIsAutoValidateLoading(false);
                 } else {
-                    storage.remove(process);
                     showSuccess(t('messages:picked-and-packed-successfully'));
                     console.log(validateFullBoxResult.executeFunction.output.output, 'output');
 
@@ -181,7 +183,11 @@ export const AutoValidatePickAndPackForm = ({
                             storedObject['currentStep'] = 10;
                             storedObject[`step10`] = { previousStep: 0 };
                         }
-                        storage.set(process, JSON.stringify(storedObject));
+                        dispatch({
+                            type: 'UPDATE_BY_PROCESS',
+                            processName: processName,
+                            object: storedObject
+                        });
                         showSuccess(t('messages:pick-and-pack-round-finished'));
                     } else {
                         let ignoreHUContentIds = initialIgnoreHUContentIds || [];
@@ -206,7 +212,15 @@ export const AutoValidatePickAndPackForm = ({
                                     remainingHUContentIds[0]?.handlingUnitContentId
                             );
 
-                        const data = {
+                        interface DataType {
+                            proposedRoundAdvisedAddresses: any;
+                            pickAndPackType: string;
+                            round: any;
+                            currentShippingPalletId: any;
+                            roundNumber?: number;
+                        }
+
+                        const data: DataType = {
                             proposedRoundAdvisedAddresses: updatedRound.equipment.checkPosition
                                 ? [roundAdvisedAddresses[0]]
                                 : roundAdvisedAddresses,
@@ -216,6 +230,9 @@ export const AutoValidatePickAndPackForm = ({
                             round: updatedRound,
                             currentShippingPalletId: updatedRound.extraText1
                         };
+                        if (step10.roundNumber) {
+                            data['roundNumber'] = step10.roundNumber;
+                        }
                         const dataStep15 = {
                             handlingUnit: huName,
                             handlingUnitType: huType,
@@ -229,9 +246,12 @@ export const AutoValidatePickAndPackForm = ({
                         storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
                         storedObject.ignoreHUContentIds = ignoreHUContentIds;
                         storedObject.currentStep = 20;
-                        storage.set(process, JSON.stringify(storedObject));
+                        dispatch({
+                            type: 'UPDATE_BY_PROCESS',
+                            processName: processName,
+                            object: storedObject
+                        });
                     }
-                    setTriggerRender(!triggerRender);
                 }
                 setIsAutoValidateLoading(false);
             } catch (error) {
@@ -246,12 +266,11 @@ export const AutoValidatePickAndPackForm = ({
 
     //AutoValidatePickAndPack-1b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
-            delete storedObject[`step${i}`]?.data;
-        }
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName: processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
     };
 
     return <WrapperForm>{isAutoValidateLoading ? <ContentSpin /> : <></>}</WrapperForm>;
