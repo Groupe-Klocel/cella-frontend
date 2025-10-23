@@ -78,15 +78,6 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                         ...handlingUnitInfos.handlingUnits?.results[0],
                         handlingUnitContents: filteredContents
                     };
-                    // specific to handle unique handling unit in selected location and back function for next step
-                    if (!uniqueHU) {
-                        data = {
-                            ...storedObject[`step${stepNumber}`],
-                            data
-                        };
-                    } else {
-                        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-                    }
                 } else {
                     showError(t('messages:wrong-article-stockOwner-stockStatus-or-reservation'));
                     setResetForm(true);
@@ -103,7 +94,10 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 type: 'UPDATE_BY_STEP',
                 processName: processName,
                 stepName: `step${stepNumber}`,
-                object: data,
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                },
                 customFields: [{ key: 'currentStep', value: stepNumber }]
             });
             // storage.set(process, JSON.stringify(storedObject));
