@@ -212,7 +212,15 @@ export const AutoValidatePickAndPackForm = ({
                                     remainingHUContentIds[0]?.handlingUnitContentId
                             );
 
-                        const data = {
+                        interface DataType {
+                            proposedRoundAdvisedAddresses: any;
+                            pickAndPackType: string;
+                            round: any;
+                            currentShippingPalletId: any;
+                            roundNumber?: number;
+                        }
+
+                        const data: DataType = {
                             proposedRoundAdvisedAddresses: updatedRound.equipment.checkPosition
                                 ? [roundAdvisedAddresses[0]]
                                 : roundAdvisedAddresses,
@@ -222,6 +230,9 @@ export const AutoValidatePickAndPackForm = ({
                             round: updatedRound,
                             currentShippingPalletId: updatedRound.extraText1
                         };
+                        if (step10.roundNumber) {
+                            data['roundNumber'] = step10.roundNumber;
+                        }
                         const dataStep15 = {
                             handlingUnit: huName,
                             handlingUnitType: huType,

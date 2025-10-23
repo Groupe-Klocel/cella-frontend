@@ -286,9 +286,8 @@ export const SelectLocationByLevelForm = ({
             if (raaResults?.roundAdvisedAddresses?.count > 0) {
                 const step10Data = storedObject.step10.data;
                 const newStep10Data = {
-                    round: step10Data.round,
-                    proposedRoundAdvisedAddresses: raaResults?.roundAdvisedAddresses?.results,
-                    pickAndPackType: step10Data.pickAndPackType
+                    ...step10Data,
+                    proposedRoundAdvisedAddresses: raaResults?.roundAdvisedAddresses?.results
                 };
                 showSimilarLocations.setShowSimilarLocations(false);
                 dispatch({
