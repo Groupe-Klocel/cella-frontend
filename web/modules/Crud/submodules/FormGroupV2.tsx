@@ -21,7 +21,7 @@ import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, ModelType } from '../../../models/ModelsV2';
 import { DraggerInput } from 'components/common/smart/Form/MainInputs/DraggerInput';
 import { useRouter } from 'next/router';
-import AutoComplete from './FormGroupAutoComplete';
+import AutoComplete from '../../../components/common/smart/Form/MainInputs/AutoCompleteInput';
 import 'moment/locale/fr';
 import NumberInput from 'components/common/smart/Form/MainInputs/NumberInput';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';

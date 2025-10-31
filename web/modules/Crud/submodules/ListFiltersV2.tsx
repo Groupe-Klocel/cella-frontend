@@ -35,7 +35,7 @@ import { ContentSpin } from '@components';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'moment/locale/fr';
-import AutoComplete from './FormGroupAutoComplete';
+import AutoComplete from '../../../components/common/smart/Form/MainInputs/AutoCompleteInput';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import NumberInput from 'components/common/smart/Form/MainInputs/NumberInput';
 import TextAreaInput from 'components/common/smart/Form/MainInputs/TextAreaInput';

@@ -126,7 +126,13 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
             <ListComponent
                 headerData={headerData}
                 dataModel={model}
-                searchCriteria={{ status: configs.DELIVERY_STATUS_ESTIMATED }}
+                searchCriteria={{
+                    status: Number(
+                        configs.find(
+                            (c: any) => c.scope === 'delivery_status' && c.value === 'Estimated'
+                        )?.code
+                    )
+                }}
                 advancedFilters={autocountFilter}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}

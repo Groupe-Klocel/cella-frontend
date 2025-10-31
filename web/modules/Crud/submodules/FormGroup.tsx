@@ -26,7 +26,7 @@ import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/M
 import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';
 import { DraggerInput } from 'components/common/smart/Form/MainInputs/DraggerInput';
 import { useRouter } from 'next/router';
-import AutoComplete from './FormGroupAutoComplete';
+import AutoComplete from '../../../components/common/smart/Form/MainInputs/AutoCompleteInput';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'moment/locale/fr';

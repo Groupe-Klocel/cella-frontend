@@ -23,7 +23,7 @@ import { debounce } from 'lodash';
 import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState, useEffect, useCallback } from 'react';
-import { FilterFieldType } from '../../../models/Models';
+import { FilterFieldType } from '../../../../../models/Models';
 import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 
@@ -54,7 +54,7 @@ interface AutoCompleteValueType {
 }
 
 const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
-    const { item, key } = props;
+    const { item } = props;
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
