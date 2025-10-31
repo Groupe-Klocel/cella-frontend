@@ -17,10 +17,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useEffect } from 'react';
+import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { WarehouseWorkerStockOwnerModelV2 } from 'models/WarehouseWorkerStockOwnerModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { warehouseWorkerStockOwnersRoutes } from 'modules/WarehouseWorkerStockOwners/Static/warehouseWorkerStockOwnersRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -40,7 +40,7 @@ const WarehouseWorkerStockOwner: PageComponent = () => {
     return (
         <>
             <AppHead title={META_DEFAULTS.title} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={WarehouseWorkerStockOwnerModelV2}
                 headerComponent={
                     <HeaderContent
