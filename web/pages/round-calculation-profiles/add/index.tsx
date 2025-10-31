@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { RoundCalculationProfileModelV2 } from 'models/RoundCalculationProfileModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addRoundCalculationProfileRoutes } from 'modules/RoundCalculationProfiles/Static/roundCalculationProfilesRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -41,7 +41,7 @@ const AddRoundCalculationProfilePage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-round-calculation-profile')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={RoundCalculationProfileModelV2}
                 headerComponent={
                     <HeaderContent

@@ -23,7 +23,7 @@ import { FC } from 'react';
 import { META_DEFAULTS } from '@helpers';
 import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { addPatternRoutes } from 'modules/Patterns/Static/patternsRoutes';
 import { PatternModelV2 as model } from 'models/PatternModelV2';
 import configs from '../../../../common/configs.json';
@@ -40,7 +40,7 @@ const AddPatternPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('add2', { name: t('common:pattern') })} />
-            <AddItemComponent
+            <AddEditItemComponent
                 headerComponent={
                     <HeaderContent
                         title={t('add2', { name: t('common:pattern') })}

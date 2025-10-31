@@ -19,25 +19,31 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC } from 'react';
 import CaseJokerButton from '../SubInputs/CaseJokerButton';
 
-export interface IDraggerInputProps {
+{
+    /* <Form.Item
+    name={item.name}
+    label={item.displayName ? item.displayName : t(`d:${item.name}`)}
+    key={item.name}
+    rules={getRulesWithNoSpacesValidator(item.rules!, t('messages:error-space'))}
+    normalize={(value) => (value ? value : undefined)}
+>
+    <Input.Password disabled={item.disabled ? true : false} />
+</Form.Item>; */
+}
+
+export interface IDraggerPasswordInputProps {
     item: {
         name: string;
         displayName?: string;
         initialValue?: string;
         maxLength?: number;
-        disabled?: boolean;
         rules?: any[];
+        disabled?: boolean;
     };
     key?: string;
-    filtersParameters?: {
-        selectCase: string[];
-        setSelectCase: React.Dispatch<React.SetStateAction<string[]>>;
-        selectJoker: string[];
-        setSelectJoker: React.Dispatch<React.SetStateAction<string[]>>;
-    };
 }
 
-const StringInput: FC<IDraggerInputProps> = ({ item, filtersParameters }) => {
+const PasswordInput: FC<IDraggerPasswordInputProps> = ({ item }) => {
     const { t } = useTranslation();
 
     return (
@@ -48,25 +54,11 @@ const StringInput: FC<IDraggerInputProps> = ({ item, filtersParameters }) => {
             initialValue={item?.initialValue ? item?.initialValue : undefined}
             rules={item.rules!}
         >
-            <Input
-                maxLength={item.maxLength ? item.maxLength : 100}
-                disabled={item.disabled ? true : false}
-                suffix={
-                    filtersParameters && (
-                        <CaseJokerButton
-                            item={item}
-                            selectCase={filtersParameters.selectCase}
-                            setSelectCase={filtersParameters.setSelectCase}
-                            selectJoker={filtersParameters.selectJoker}
-                            setSelectJoker={filtersParameters.setSelectJoker}
-                        />
-                    )
-                }
-            />
+            <Input.Password disabled={item.disabled ? true : false} />
         </Form.Item>
     );
 };
 
-StringInput.displayName = 'StringInput';
+PasswordInput.displayName = 'PasswordInput';
 
-export default StringInput;
+export default PasswordInput;

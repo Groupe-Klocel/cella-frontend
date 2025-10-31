@@ -19,20 +19,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { META_DEFAULTS, useBuildings } from '@helpers';
-import { FormDataType, FormOptionType } from 'models/Models';
-import { useListParametersForAScopeQuery } from 'generated/graphql';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { blocksRoutes } from 'modules/Blocks/Static/blocksRoutes';
 import { BlockModelV2 } from 'models/BlockModelV2';
-import { useAuth } from 'context/AuthContext';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditBlockPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, BlockModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditBlockPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -49,8 +56,9 @@ const EditBlockPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:block')} ${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 dataModel={BlockModelV2}
                 setData={setData}
                 headerComponent={

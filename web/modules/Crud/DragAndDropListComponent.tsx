@@ -395,7 +395,7 @@ const DragAndDropListComponent = (props: IListProps) => {
         (key) => props.dataModel.fieldsInfo[key].isDefaultHiddenList
     );
 
-    let filterFields = Object.entries(props.dataModel.fieldsInfo)
+    let filterFields: any = Object.entries(props.dataModel.fieldsInfo)
         .filter(([, value]) => value.searchingFormat !== null)
         .map(([key, value]) => ({
             displayName: t(`d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`),
@@ -477,7 +477,7 @@ const DragAndDropListComponent = (props: IListProps) => {
             });
         } else {
             delete newFilter.status;
-            filterFields = filterFields.map((item) => {
+            filterFields = filterFields.map((item: any) => {
                 if (item.name in initialValues) {
                     return {
                         ...item,
@@ -512,7 +512,7 @@ const DragAndDropListComponent = (props: IListProps) => {
 
     //check if there is something in props.filterFields and if yes, overwrite it in filterFields
     if (props.filterFields) {
-        filterFields = filterFields.map((field) => {
+        filterFields = filterFields.map((field: any) => {
             const matchedField = props.filterFields!.find((item) => item.name === field.name);
             return matchedField ? { ...field, ...matchedField } : field;
         });
@@ -731,7 +731,7 @@ const DragAndDropListComponent = (props: IListProps) => {
             searchCriterias = { ...savedFilters, ...props.searchCriteria };
             const initialValues = searchCriterias;
 
-            filterFields = filterFields.map((item) => {
+            filterFields = filterFields.map((item: any) => {
                 if (item.name in initialValues) {
                     return {
                         ...item,
@@ -784,8 +784,6 @@ const DragAndDropListComponent = (props: IListProps) => {
                     form={formSearch}
                     columns={filterFields}
                     handleSubmit={handleSubmit}
-                    resetForm={resetForm}
-                    allFieldsInitialValue={allFieldsInitialValue ?? undefined}
                     selectCase={selectCase}
                     setSelectCase={setSelectCase}
                     selectJoker={selectJoker}
@@ -862,7 +860,7 @@ const DragAndDropListComponent = (props: IListProps) => {
                         showBadge = true;
                     }
 
-                    filterFields = filterFields.map((item) => {
+                    filterFields = filterFields.map((item: any) => {
                         if (item.name in searchCriterias) {
                             return {
                                 ...item,

@@ -15,29 +15,52 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Form, Input } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    useTranslationWithFallback as useTranslation,
+    getRulesWithNoSpacesValidator
+} from '@helpers';
 import { FC } from 'react';
-import CaseJokerButton from '../SubInputs/CaseJokerButton';
 
-export interface IDraggerInputProps {
+// return (
+//     <Form.Item
+//         name={item.name}
+//         label={item.displayName ? item.displayName : t(`d:${item.name}`)}
+//         key={item.name}
+//         normalize={(value) => (value ? value : undefined)}
+//         initialValue={item?.initialValue ? item?.initialValue : undefined}
+//     >
+//         <Input.TextArea maxLength={item.maxLength ? item.maxLength : 100} allowClear />
+//     </Form.Item>
+// );
+
+{
+    /* <Form.Item
+    name={item.name}
+    label={item.displayName ? item.displayName : t(`d:${item.name}`)}
+    key={item.name}
+    rules={getRulesWithNoSpacesValidator(item.rules!, t('messages:error-space'))}
+    normalize={(value) => (value ? value : undefined)}
+>
+    <Input.TextArea
+        disabled={item.disabled ? true : false}
+        maxLength={item.maxLength ? item.maxLength : undefined}
+    />
+</Form.Item>; */
+}
+
+export interface IDraggerTextAreaInputProps {
     item: {
         name: string;
         displayName?: string;
         initialValue?: string;
         maxLength?: number;
-        disabled?: boolean;
         rules?: any[];
+        disabled?: boolean;
     };
     key?: string;
-    filtersParameters?: {
-        selectCase: string[];
-        setSelectCase: React.Dispatch<React.SetStateAction<string[]>>;
-        selectJoker: string[];
-        setSelectJoker: React.Dispatch<React.SetStateAction<string[]>>;
-    };
 }
 
-const StringInput: FC<IDraggerInputProps> = ({ item, filtersParameters }) => {
+const TextAreaInput: FC<IDraggerTextAreaInputProps> = ({ item }) => {
     const { t } = useTranslation();
 
     return (
@@ -46,27 +69,17 @@ const StringInput: FC<IDraggerInputProps> = ({ item, filtersParameters }) => {
             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
             normalize={(value) => (value ? value : undefined)}
             initialValue={item?.initialValue ? item?.initialValue : undefined}
-            rules={item.rules!}
+            rules={getRulesWithNoSpacesValidator(item.rules!, t('messages:error-space'))}
         >
-            <Input
+            <Input.TextArea
                 maxLength={item.maxLength ? item.maxLength : 100}
+                allowClear
                 disabled={item.disabled ? true : false}
-                suffix={
-                    filtersParameters && (
-                        <CaseJokerButton
-                            item={item}
-                            selectCase={filtersParameters.selectCase}
-                            setSelectCase={filtersParameters.setSelectCase}
-                            selectJoker={filtersParameters.selectJoker}
-                            setSelectJoker={filtersParameters.setSelectJoker}
-                        />
-                    )
-                }
             />
         </Form.Item>
     );
 };
 
-StringInput.displayName = 'StringInput';
+TextAreaInput.displayName = 'TextAreaInput';
 
-export default StringInput;
+export default TextAreaInput;

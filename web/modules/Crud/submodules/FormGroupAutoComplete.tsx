@@ -30,6 +30,7 @@ import { useAuth } from 'context/AuthContext';
 export interface IFormGroupProps {
     item: FilterFieldType;
     key: string;
+    setAllSubOptions?: any;
 }
 
 interface OptionTableType {
@@ -59,14 +60,11 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
 
     const [autoCompleteValue, setAutoCompleteValue] = useState<AutoCompleteValueType>(item as any);
     const [filteredOptions, setFilteredOptions] = useState<any>({});
-    const optionTable =
-        typeof autoCompleteValue?.optionTable === 'string'
-            ? JSON.parse(autoCompleteValue.optionTable)
-            : {};
+    const optionTable: any = autoCompleteValue?.optionTable ?? {};
 
     useEffect(() => {
         async function fetchData() {
-            const tableName = optionTable.table;
+            const tableName = optionTable?.table;
 
             const queryName = tableName
                 ? pluralize(tableName.charAt(0).toLowerCase() + tableName.slice(1))
@@ -113,9 +111,36 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
 
             const options = await graphqlRequestClient.request(query, variables);
 
-            console.log(options);
-
             setAutoCompleteValue({ ...autoCompleteValue, subOptions: options[queryName].results });
+            if (props.setAllSubOptions) {
+                props.setAllSubOptions((prev: any) => {
+                    const existingIndex = prev.findIndex((obj: any) =>
+                        obj.hasOwnProperty(item.name)
+                    );
+                    const newValue = options[queryName].results.map((v: any) => {
+                        return {
+                            key: v.id,
+                            text: v[optionTable.fieldToDisplay]
+                        };
+                    });
+                    if (existingIndex !== -1) {
+                        const newArray = [...prev];
+                        // Merge and remove duplicates by 'key'
+                        const merged = [
+                            ...newArray[existingIndex][autoCompleteValue.name as string],
+                            ...newValue
+                        ];
+                        const unique = merged.filter(
+                            (item, idx, arr) => arr.findIndex((i) => i.key === item.key) === idx
+                        );
+                        newArray[existingIndex] = {
+                            [autoCompleteValue.name as string]: unique
+                        };
+                        return newArray;
+                    }
+                    return [...prev, { [autoCompleteValue.name as string]: newValue }];
+                });
+            }
         }
         fetchData();
     }, [filteredOptions]);
@@ -140,16 +165,13 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                     : t(`d:${autoCompleteValue.name}`)
             }
             name={autoCompleteValue.name}
-            rules={getRulesWithNoSpacesValidator(
-                autoCompleteValue.rules!,
-                t('messages:error-space')
-            )}
             initialValue={autoCompleteValue.initialValue}
             normalize={(value) => (value ? value : undefined)}
         >
             <Select
                 showSearch
                 value={autoCompleteValue.value}
+                mode="multiple"
                 filterOption={false}
                 onSearch={handleSearch}
                 allowClear

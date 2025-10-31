@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { HandlingUnitOutboundBarcodeModelV2 } from 'models/HandlingUnitOutboundBarcodeModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addHandlingUnitOutboundBarcodeRoutes } from 'modules/HandlingUnitOutboundBarcodes/Static/handlingUnitOutboundBarcodesRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -41,7 +41,7 @@ const AddHandlingUnitOutboundBarcodePage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-handling-unit-outbound-barcode')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={HandlingUnitOutboundBarcodeModelV2}
                 headerComponent={
                     <HeaderContent
