@@ -18,17 +18,28 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, ContentSpin, HeaderContent } from '@components';
-import { META_DEFAULTS, useTranslationWithFallback as useTranslation } from '@helpers';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { PatternPathModelV2 as model } from 'models/PatternPathModelV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { patternPathsRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditPatternPathsPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, model);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditPatternPathsPage: PageComponent = (props) => {
     const router = useRouter();
     const { t } = useTranslation();
     const { id } = router.query;
@@ -44,8 +55,9 @@ const EditPatternPathsPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:pattern-path')} ${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 dataModel={model}
                 setData={setData}
                 headerComponent={

@@ -22,14 +22,24 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { SchedulerConfigModelV2 } from 'models/SchedulerConfigModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { schedulerConfigsRoutes } from 'modules/SchedulerConfigs/Static/schedulerConfigsRoutes';
-import { META_DEFAULTS } from '@helpers';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditSchedulerConfigsPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, SchedulerConfigModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditSchedulerConfigsPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -45,9 +55,10 @@ const EditSchedulerConfigsPage: PageComponent = () => {
 
     return (
         <>
-            <AppHead title={`${t('common:scheduler-configs')}${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AppHead title={`${t('common:scheduler-configs')} ${data?.name}`} />
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={SchedulerConfigModelV2}
                 headerComponent={

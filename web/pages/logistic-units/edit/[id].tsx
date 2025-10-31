@@ -22,14 +22,24 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { LogisticUnitModelV2 } from 'models/LogisticUnitModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { logisticUnitsRoutes } from 'modules/LogisticUnits/Static/logisticUnitsRoutes';
-import { META_DEFAULTS } from '@helpers';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditLogisticUnitPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, LogisticUnitModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditLogisticUnitPage: PageComponent = (props) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { id } = router.query;
@@ -45,8 +55,9 @@ const EditLogisticUnitPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:logistic-units')} ${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={LogisticUnitModelV2}
                 headerComponent={

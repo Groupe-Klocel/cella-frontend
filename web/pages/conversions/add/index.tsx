@@ -23,7 +23,7 @@ import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import configs from '../../../../common/configs.json';
 import { ConversionModelV2 } from 'models/ConversionModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addConversionRoutes } from 'modules/Conversions/Static/conversionsRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -41,7 +41,7 @@ const AddConversionPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-conversion')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={ConversionModelV2}
                 headerComponent={
                     <HeaderContent

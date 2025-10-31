@@ -19,18 +19,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ArticleSetModelV2 } from 'models/ArticleSetModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { articleSetsRoutes } from 'modules/ArticleSets/Static/articleSetRoutes';
-import { META_DEFAULTS } from '@helpers';
-import { FormDataType, FormOptionType } from 'models/Models';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditArticleSetPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, ArticleSetModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditArticleSetPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -47,8 +56,9 @@ const EditArticleSetPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:set')} ${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={ArticleSetModelV2}
                 headerComponent={

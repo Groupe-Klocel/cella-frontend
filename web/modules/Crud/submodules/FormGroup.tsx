@@ -24,7 +24,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/Models';
 import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';
-import { DraggerInput } from 'components/common/smart/Form/DraggerInput';
+import { DraggerInput } from 'components/common/smart/Form/MainInputs/DraggerInput';
 import { useRouter } from 'next/router';
 import AutoComplete from './FormGroupAutoComplete';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
