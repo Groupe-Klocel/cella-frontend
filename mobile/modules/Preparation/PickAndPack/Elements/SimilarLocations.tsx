@@ -33,13 +33,15 @@ export interface ISimilarLocationsProps {
     chosenContentId: string;
     stockOwnerId?: string;
     stockStatus?: number;
+    reservation?: string;
 }
 
 export const SimilarPickingLocations = ({
     articleId,
     chosenContentId,
     stockOwnerId,
-    stockStatus
+    stockStatus,
+    reservation
 }: ISimilarLocationsProps) => {
     const { t } = useTranslation();
     const router = useRouter();
@@ -50,6 +52,7 @@ export const SimilarPickingLocations = ({
     const defaultFilter = { articleId: `${articleId}` };
     const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
     const stockStatusFilter = stockStatus ? { stockStatus: stockStatus } : undefined;
+    const reservationFilter = reservation ? { reservation: `${reservation}` } : undefined;
     const categoryFilter = {
         handlingUnit_Category: parameters.HANDLING_UNIT_CATEGORY_STOCK,
         handlingUnit_Location_Category: configs.LOCATION_CATEGORY_PICKING
@@ -58,6 +61,7 @@ export const SimilarPickingLocations = ({
         ...defaultFilter,
         ...stockOwnerFilter,
         ...stockStatusFilter,
+        ...reservationFilter,
         ...categoryFilter
     };
     const [similarLocations, setSimilarLocationsInfos] = useState<any>();
@@ -87,7 +91,7 @@ export const SimilarPickingLocations = ({
             }
         };
         const locationsNumber = await graphqlRequestClient.request(query, variables);
-        return locationsNumber.parameters.results[0].value;
+        return locationsNumber.parameters.results[0]?.value;
     };
 
     useEffect(() => {

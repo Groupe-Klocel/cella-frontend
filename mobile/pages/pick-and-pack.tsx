@@ -385,13 +385,19 @@ const PickAndPack: PageComponent = () => {
                 <>
                     {showSimilarLocations && storedObject['step10']?.data ? (
                         <SimilarPickingLocations
-                            articleId={proposedRoundAdvisedAddress.handlingUnitContent.articleId}
+                            articleId={
+                                proposedRoundAdvisedAddress.roundLineDetail.deliveryLine.articleId
+                            }
                             chosenContentId={proposedRoundAdvisedAddress.handlingUnitContent.id}
                             stockOwnerId={
-                                proposedRoundAdvisedAddress.handlingUnitContent.stockOwnerId
+                                proposedRoundAdvisedAddress.roundLineDetail.deliveryLine
+                                    .stockOwnerId
                             }
                             stockStatus={
-                                proposedRoundAdvisedAddress.handlingUnitContent.stockStatus
+                                proposedRoundAdvisedAddress.roundLineDetail.deliveryLine.stockStatus
+                            }
+                            reservation={
+                                proposedRoundAdvisedAddress.roundLineDetail.deliveryLine.reservation
                             }
                         />
                     ) : (
