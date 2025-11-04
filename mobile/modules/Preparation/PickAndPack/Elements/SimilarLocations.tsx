@@ -52,7 +52,10 @@ export const SimilarPickingLocations = ({
     const defaultFilter = { articleId: `${articleId}` };
     const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
     const stockStatusFilter = stockStatus ? { stockStatus: stockStatus } : undefined;
-    const reservationFilter = reservation ? { reservation: `${reservation}` } : undefined;
+    const reservationFilter = reservation
+        ? { reservation: `${reservation}` }
+        : { reservation: '**null**' };
+
     const categoryFilter = {
         handlingUnit_Category: parameters.HANDLING_UNIT_CATEGORY_STOCK,
         handlingUnit_Location_Category: configs.LOCATION_CATEGORY_PICKING
@@ -64,6 +67,7 @@ export const SimilarPickingLocations = ({
         ...reservationFilter,
         ...categoryFilter
     };
+
     const [similarLocations, setSimilarLocationsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
 
