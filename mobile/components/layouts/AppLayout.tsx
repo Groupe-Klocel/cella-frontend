@@ -177,12 +177,74 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         }
     }, [dispatchUser, userFromState]);
 
+    const getConfigs = useCallback(async () => {
+        const query = gql`
+            query {
+                configs(filters: {}, itemsPerPage: 999999999) {
+                    count
+                    results {
+                        id
+                        translation
+                        scope
+                        code
+                        value
+                        system
+                    }
+                }
+            }
+        `;
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(query);
+            dispatchUser({
+                type: 'SET_CONFIGS',
+                configs: queryInfo.configs.results
+            });
+            setUserSettingsLoading((prev) => prev + 1);
+        } catch (error) {
+            console.log('error', error);
+            showError('Error while fetching configs');
+            setUserSettingsLoading((prev) => prev + 1);
+        }
+    }, [dispatchUser, user]);
+
+    const getParameters = useCallback(async () => {
+        const query = gql`
+            query {
+                parameters(filters: {}, itemsPerPage: 999999999) {
+                    count
+                    results {
+                        id
+                        translation
+                        scope
+                        code
+                        value
+                        system
+                    }
+                }
+            }
+        `;
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(query);
+            dispatchUser({
+                type: 'SET_PARAMETERS',
+                parameters: queryInfo.parameters.results
+            });
+            setUserSettingsLoading((prev) => prev + 1);
+        } catch (error) {
+            console.log('error', error);
+            showError('Error while fetching parameters');
+            setUserSettingsLoading((prev) => prev + 1);
+        }
+    }, [dispatchUser, user]);
+
     useEffect(() => {
-        if (user.id) {
+        if (user && user?.id) {
             getUserSettings();
             getTranslations();
+            getConfigs();
+            getParameters();
         } else {
-            setUserSettingsLoading(2);
+            setUserSettingsLoading(4);
         }
     }, [user]);
 
@@ -192,7 +254,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         }
     }, [lang]);
 
-    if (userSettingsLoading < 2) {
+    if (userSettingsLoading < 4) {
         return <ScreenSpin />;
     }
     return (

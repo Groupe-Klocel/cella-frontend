@@ -31,6 +31,7 @@ import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../styles/globals.css';
 import AppLayout from 'components/layouts/AppLayout';
+import { SessionProvider } from 'next-auth/react';
 
 const themes = {
     dark: `/dark-theme.css`,
@@ -50,7 +51,7 @@ type AppLayoutProps = AppProps & {
     Component: PageWithMainLayoutType;
 };
 
-const App = ({ Component, pageProps }: AppLayoutProps) => {
+const App = ({ Component, pageProps: { session, ...pageProps } }: AppLayoutProps) => {
     const getLayout = Component.getLayout ?? ((page) => page);
     const Layout = Component.layout ?? Fragment;
 
@@ -64,16 +65,19 @@ const App = ({ Component, pageProps }: AppLayoutProps) => {
                 />
             </Head>
             <QueryClientProvider client={queryClient}>
-                <AuthProvider>
-                    <AppProvider>
-                        <AppLayout
-                            Component={Component}
-                            pageProps={pageProps}
-                            getLayout={getLayout}
-                            Layout={Layout}
-                        />
-                    </AppProvider>
-                </AuthProvider>
+                <SessionProvider session={session}>
+                    <AuthProvider>
+                        <AppProvider>
+                            <AppLayout
+                                Component={Component}
+                                pageProps={pageProps}
+                                getLayout={getLayout}
+                                Layout={Layout}
+                            />
+                        </AppProvider>
+                    </AuthProvider>
+                    {/* <ReactQueryDevtools initialIsOpen={false} /> */}
+                </SessionProvider>
             </QueryClientProvider>
         </>
     );

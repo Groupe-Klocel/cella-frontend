@@ -28,6 +28,7 @@ import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { warehouseWorkersRoutes as itemRoutes } from 'modules/WarehouseWorkers/Static/warehouseWorkersRoutes';
 import { Button, Modal, Space } from 'antd';
+import { gql } from 'graphql-request';
 import {
     DeleteWarehouseWorkerMutation,
     DeleteWarehouseWorkerMutationVariables,
@@ -121,6 +122,46 @@ const WarehouseWorkerPage: PageComponent = () => {
         });
     };
 
+    // ALLOW LOGIN WITHOUT SSO
+    const [loadingAllowLoginWithoutSso, setLoadingAllowLoginWithoutSso] = useState(false);
+    const AllowLoginWithoutSso = async (id: string) => {
+        setLoadingAllowLoginWithoutSso(true);
+        const warehouseWorkerMutation = gql`
+            mutation ($id: String!, $input: UpdateWarehouseWorkerInput!) {
+                updateWarehouseWorker(id: $id, input: $input) {
+                    id
+                }
+            }
+        `;
+
+        let AllowLoginWithoutSsoValue;
+
+        if (data?.allowLoginWithoutSso === false || data?.allowLoginWithoutSso == null) {
+            AllowLoginWithoutSsoValue = {
+                id: id,
+                input: {
+                    allowLoginWithoutSso: true
+                }
+            };
+        } else if (data?.allowLoginWithoutSso === true) {
+            AllowLoginWithoutSsoValue = {
+                id: id,
+                input: {
+                    allowLoginWithoutSso: false
+                }
+            };
+        }
+
+        const result = await graphqlRequestClient.request(
+            warehouseWorkerMutation,
+            AllowLoginWithoutSsoValue
+        );
+        setLoadingAllowLoginWithoutSso(false);
+        router.reload();
+
+        return result;
+    };
+
     // DELETE MUTATION
     const { mutate: DeleteWarehouseWorkerMutate, isPending: DeleteLoading } =
         useDeleteWarehouseWorkerMutation<Error>(graphqlRequestClient, {
@@ -181,6 +222,16 @@ const WarehouseWorkerPage: PageComponent = () => {
                             onClick={() => ResetWarehouseWorkerPassword({ id: data?.id })}
                         >
                             {t('actions:reset-password')}
+                        </Button>
+                        <Button
+                            type={data?.allowLoginWithoutSso}
+                            danger={data?.allowLoginWithoutSso}
+                            onClick={() => AllowLoginWithoutSso(data?.id)}
+                            loading={loadingAllowLoginWithoutSso}
+                        >
+                            {data?.allowLoginWithoutSso
+                                ? t('actions:disable-login-without-sso')
+                                : t('actions:allow-login-without-sso')}
                         </Button>
                     </>
                 ) : (
