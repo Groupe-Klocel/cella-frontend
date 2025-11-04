@@ -307,7 +307,7 @@ export const SelectLocationByLevelForm = ({
             const proposedRoundAdvisedAddress =
                 storedObject[`step10`]?.data?.proposedRoundAdvisedAddresses?.[0];
             const { articleId, stockOwnerId, stockStatus, reservation } =
-                proposedRoundAdvisedAddress?.handlingUnitContent || {};
+                proposedRoundAdvisedAddress?.roundLineDetail?.deliveryLine || {};
 
             const matchingHandlingUnitContent = location.handlingUnits
                 ?.flatMap((unit: any) => unit.handlingUnitContents)
