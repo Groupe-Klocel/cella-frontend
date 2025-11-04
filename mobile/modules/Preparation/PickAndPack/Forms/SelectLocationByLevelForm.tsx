@@ -210,6 +210,7 @@ export const SelectLocationByLevelForm = ({
                                     }
                                     baseUnitWeight
                                     featureType
+                                    description
                                 }
                                 stockOwnerId
                                 stockOwner {
