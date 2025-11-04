@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { PatternPathModelV2 } from 'models/PatternPathModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addPatternPathRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
 import { META_DEFAULTS, usePatternPaths } from '@helpers';
@@ -60,7 +60,7 @@ const AddPatternPathPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-pattern-path')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={PatternPathModelV2}
                 headerComponent={
                     <HeaderContent

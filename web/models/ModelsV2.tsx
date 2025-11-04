@@ -50,6 +50,8 @@ export type FilterFieldType = {
     displayName?: string;
     type: FormDataType;
     numberPrecision?: number;
+    rulesInfos?: any;
+    extraRules?: any;
     rules?: Array<FormRuleType>;
     disabled?: boolean;
     subOptions?: Array<FormOptionType>;
@@ -61,9 +63,13 @@ export type FilterFieldType = {
     maxLength?: number;
     min?: number;
     max?: number;
-    config?: string;
-    param?: string;
-    optionTable?: string;
+    config?: { [key: string]: any };
+    param?: { [key: string]: any };
+    optionTable?: {
+        table: string;
+        fieldToDisplay: string;
+        filtersToApply?: { [key: string]: any };
+    };
     isMultipleSearch?: boolean;
 };
 

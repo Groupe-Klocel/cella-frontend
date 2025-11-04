@@ -23,7 +23,7 @@ import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import configs from '../../../../common/configs.json';
 import { HookConfigModelV2 } from 'models/HookConfigModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addHookConfigRoutes } from 'modules/HookConfigs/Static/hookConfigsRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -38,7 +38,7 @@ const AddHookConfigPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-hook-config')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={HookConfigModelV2}
                 headerComponent={
                     <HeaderContent

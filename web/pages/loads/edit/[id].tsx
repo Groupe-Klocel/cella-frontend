@@ -22,14 +22,24 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { LoadModelV2 } from 'models/LoadModelV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { META_DEFAULTS } from '@helpers';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { loadsRoutes } from 'modules/Loads/Static/LoadsRoutes';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditLoadsPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, LoadModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditLoadsPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -46,8 +56,9 @@ const EditLoadsPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:load')} ${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={LoadModelV2}
                 headerComponent={

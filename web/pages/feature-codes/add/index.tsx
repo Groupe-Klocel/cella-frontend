@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { FeatureCodeModelV2 } from 'models/FeatureCodeModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addFeatureCodeRoutes } from 'modules/FeatureCodes/Static/featureCodesRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -36,7 +36,7 @@ const AddFeatureCodePage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-feature-code')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={FeatureCodeModelV2}
                 headerComponent={
                     <HeaderContent
