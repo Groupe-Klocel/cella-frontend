@@ -20,17 +20,28 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { META_DEFAULTS, useArticles, useArticleSets } from '@helpers';
-import { FormDataType, FormOptionType } from 'models/Models';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useArticles, useArticleSets } from '@helpers';
+import { FormOptionType } from 'models/Models';
 import MainLayout from 'components/layouts/MainLayout';
 import { articleSetsRoutes } from 'modules/ArticleSets/Static/articleSetRoutes';
 import { ArticleSetDetailModelV2 } from 'models/ArticleSetDetailModelV2';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditArticleSetDetailPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, ArticleSetDetailModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditArticleSetDetailPage: PageComponent = (props) => {
     const { t } = useTranslation();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
 
@@ -90,8 +101,9 @@ const EditArticleSetDetailPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:edit-article-set-detail')} ${title}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 dataModel={ArticleSetDetailModelV2}
                 setData={setData}
                 headerComponent={
@@ -101,36 +113,6 @@ const EditArticleSetDetailPage: PageComponent = () => {
                         onBack={() => router.back()}
                     />
                 }
-                editSteps={[
-                    [
-                        {
-                            name: 'articleSetId',
-                            type: FormDataType.Dropdown,
-                            subOptions: articleSet,
-                            rules: [{ required: true, message: errorMessageEmptyInput }],
-                            disabled: true
-                        },
-                        {
-                            name: 'stockOwnerId',
-                            displayName: t('d:stockOwner'),
-                            type: FormDataType.Dropdown,
-                            subOptions: stockOwnerOptions,
-                            rules: [{ required: true, message: errorMessageEmptyInput }],
-                            disabled: true
-                        },
-                        {
-                            name: 'articleId',
-                            displayName: t('d:article'),
-                            type: FormDataType.Dropdown,
-                            rules: [{ required: true, message: errorMessageEmptyInput }],
-                            subOptions: article
-                        },
-                        {
-                            name: 'quantity',
-                            type: FormDataType.Number
-                        }
-                    ]
-                ]}
                 routeAfterSuccess={`/article-sets/detail/:id`}
             />
         </>

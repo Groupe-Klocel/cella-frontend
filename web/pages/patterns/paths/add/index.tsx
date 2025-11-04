@@ -23,7 +23,7 @@ import { FC } from 'react';
 import { META_DEFAULTS } from '@helpers';
 import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { addPatternRoutes } from 'modules/Patterns/Static/patternsRoutes';
 import { PatternPathLink_PatternModelV2 as model } from 'models/PatternPathLink_PatternModelV2';
 
@@ -44,7 +44,7 @@ const AddPatternPathPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('associate', { name: t('common:pattern-path') })} />
-            <AddItemComponent
+            <AddEditItemComponent
                 headerComponent={
                     <HeaderContent
                         title={t('associate', { name: t('common:pattern-path') })}

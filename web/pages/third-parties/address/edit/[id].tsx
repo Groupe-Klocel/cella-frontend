@@ -19,18 +19,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { ThirdPartyAddressModelV2 as model } from 'models/ThirdPartyAddressModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { thirdPartiesRoutes as itemRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
-import { META_DEFAULTS } from '@helpers';
-import { FormDataType, FormOptionType } from 'models/Models';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditThirdPartyAddressPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, model);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditThirdPartyAddressPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -59,8 +68,9 @@ const EditThirdPartyAddressPage: PageComponent = () => {
     return (
         <>
             <AppHead title={pageTitle} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={model}
                 headerComponent={

@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS } from '@helpers';
 import { BlockModelV2 } from 'models/BlockModelV2';
@@ -39,7 +39,7 @@ const AddBlockPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-block')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={BlockModelV2}
                 headerComponent={
                     <HeaderContent

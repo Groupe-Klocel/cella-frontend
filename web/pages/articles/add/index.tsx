@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ArticleModelV2 } from 'models/ArticleModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addArticleRoutes } from 'modules/Articles/Static/articlesRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -41,7 +41,7 @@ const AddArticlePage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-article')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={ArticleModelV2}
                 headerComponent={
                     <HeaderContent

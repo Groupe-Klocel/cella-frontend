@@ -22,15 +22,24 @@ import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { CarrierShippingModeModelV2 as model } from 'models/CarrierShippingModeModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { carriersRoutes as itemRoutes } from 'modules/Carriers/Static/carriersRoutes';
-import { META_DEFAULTS } from '@helpers';
-import { FormDataType, FormOptionType } from 'models/Models';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditCarrierPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, model);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditCarrierPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -57,8 +66,9 @@ const EditCarrierPage: PageComponent = () => {
     return (
         <>
             <AppHead title={pageTitle} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={model}
                 headerComponent={

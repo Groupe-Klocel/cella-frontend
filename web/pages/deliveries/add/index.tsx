@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { DeliveryModelV2 } from 'models/DeliveryModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addDeliveryRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -45,7 +45,7 @@ const AddDeliveryPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-delivery')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={DeliveryModelV2}
                 headerComponent={
                     <HeaderContent
