@@ -27,10 +27,13 @@ import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
 import router from 'next/router';
 import { useCallback, useEffect } from 'react';
+import { useSession, signIn } from 'next-auth/react';
 
 export const LoginForm = () => {
     const { t } = useTranslation('global');
-    const { login, graphqlRequestClient, isAuthenticated } = useAuth();
+    const { login, graphqlRequestClient, isAuthenticated, ssoLogin, ssoConfig } = useAuth();
+    const { data: session, status } = useSession();
+
     // TEXTS TRANSLATION
 
     const welcome = t('welcome');
@@ -54,9 +57,13 @@ export const LoginForm = () => {
 
     const [form] = Form.useForm();
     useEffect(() => {
+        console.log('if isAuthenticated');
         if (isAuthenticated) {
+            console.log('isAuthenticated', isAuthenticated);
             const token = cookie.get('token');
+            console.log('if token');
             if (token) {
+                console.log('token', token);
                 try {
                     const query = gql`
                         query GetMyInfo {
@@ -114,12 +121,15 @@ export const LoginForm = () => {
                     `;
 
                     graphqlRequestClient.request(query).then((data: any) => {
+                        console.log('if data.me');
                         if (data.me) {
+                            console.log('data.me', data.me);
                             setUserInfo(data.me);
                             if (data.me.resetPassword === true) {
                                 router.push('/reset-password');
                                 showWarning(t('please-reset-password'));
                             } else {
+                                console.log('redirect to /');
                                 router.push('/');
                                 showSuccess(t('login-success'));
                             }
@@ -131,6 +141,15 @@ export const LoginForm = () => {
             }
         }
     }, [isAuthenticated]);
+
+    useEffect(() => {
+        if (status === 'authenticated' && session) {
+            ssoLogin({
+                token: session.jwtToken,
+                metadata: ssoConfig.warehouseSsoConfiguration.metadata
+            });
+        }
+    }, [ssoConfig]);
 
     const onFinish = (values: any) => {
         login({
@@ -175,6 +194,22 @@ export const LoginForm = () => {
                         <Button type="primary" htmlType="submit">
                             {loginButton}
                         </Button>
+                        {ssoConfig &&
+                            ssoConfig.warehouseSsoConfiguration.type &&
+                            ssoConfig.warehouseSsoConfiguration.authUrl &&
+                            ssoConfig.warehouseSsoConfiguration.clientId &&
+                            ssoConfig.warehouseSsoConfiguration.clientSecret &&
+                            ssoConfig.warehouseSsoConfiguration.redirectUri &&
+                            ssoConfig.warehouseSsoConfiguration.tokenUrl &&
+                            ssoConfig.warehouseSsoConfiguration.scope && (
+                                <Button
+                                    type="default"
+                                    onClick={() => signIn('oidc')}
+                                    style={{ marginLeft: '10px' }}
+                                >
+                                    SSO
+                                </Button>
+                            )}
                     </Form.Item>
                 </StyledForm>
             </WrapperLogin>
