@@ -35,7 +35,9 @@ import { ModeEnum, Table } from 'generated/graphql';
 import { ArticleLuBarcodeModelV2 } from 'models/ArticleLuBarcodeModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { ArticleLuModelV2 } from 'models/ArticleLuModelV2';
+import { ArticleExtrasModelV2 } from 'models/ArticleExtrasModelV2';
 import configs from '../../../../common/configs.json';
+import { ArticleExtrasListComponent } from './ArticleExtrasListComponent';
 
 const { Title } = Typography;
 
@@ -45,6 +47,8 @@ export interface IItemDetailsProps {
     articleStatus?: number | any;
     stockOwnerId?: string | any;
     stockOwnerName?: string | any;
+    isExtrasDisplayed?: boolean | any;
+    details: any;
 }
 
 const ArticleDetailsExtra = ({
@@ -52,7 +56,8 @@ const ArticleDetailsExtra = ({
     articleName,
     articleStatus,
     stockOwnerId,
-    stockOwnerName
+    stockOwnerName,
+    isExtrasDisplayed
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
@@ -62,10 +67,12 @@ const ArticleDetailsExtra = ({
     const [articleLuIdToDelete, setArticleLuIdToDelete] = useState<string | undefined>();
 
     const { permissions } = useAppState();
+    const articleModes = getModesFromPermissions(permissions, Table.Article);
     const articleLuModes = getModesFromPermissions(permissions, Table.ArticleLu);
     const articleLuBarcodeModes = getModesFromPermissions(permissions, Table.ArticleLuBarcode);
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
 
     const articleLuHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:logistic-units') }),
@@ -122,6 +129,27 @@ const ArticleDetailsExtra = ({
 
     return (
         <>
+            {articleModes.length > 0 &&
+            articleModes.includes(ModeEnum.Read) &&
+            isExtrasDisplayed ? (
+                <>
+                    <Divider />
+                    <ArticleExtrasListComponent
+                        searchCriteria={{ id: articleId }}
+                        articleId={articleId}
+                        articleName={articleName}
+                        articleStatus={articleStatus}
+                        stockOwnerName={stockOwnerName}
+                        dataModel={ArticleExtrasModelV2}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        searchable={false}
+                        refresh={true}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
             {articleLuModes.length > 0 && articleLuModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
