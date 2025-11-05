@@ -48,6 +48,7 @@ import { useAppState } from 'context/AppContext';
 export interface IGeneralSearchProps {
     form: any;
     columns: Array<FilterFieldType>;
+    defaultSubOptions?: any;
     allSubOptions?: any;
     setAllSubOptions?: any;
     handleSubmit?: any;
@@ -60,6 +61,7 @@ export interface IGeneralSearchProps {
 const ListFilters: FC<IGeneralSearchProps> = ({
     form,
     columns,
+    defaultSubOptions,
     allSubOptions,
     setAllSubOptions,
     handleSubmit,
@@ -134,6 +136,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                             <SelectInput
                                 item={item}
                                 key={item.name + index}
+                                defaultSubOptions={defaultSubOptions}
                                 setAllSubOptions={setAllSubOptions}
                                 mode="multiple"
                             />

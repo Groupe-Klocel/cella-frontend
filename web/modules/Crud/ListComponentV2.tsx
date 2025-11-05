@@ -96,7 +96,7 @@ export interface IListProps {
     setData?: any;
     refresh?: any;
     sortDefault?: any;
-    filterFields?: Array<FilterFieldType>;
+    defaultSubOptions?: any;
     checkbox?: boolean;
     actionButtons?: ActionButtons;
     rowSelection?: any;
@@ -658,7 +658,7 @@ const ListComponent = (props: IListProps) => {
         });
 
         setFilterFields(updatedFilterFields);
-    }, [userSettings, props.cumulSearchInfos, props.filterFields]);
+    }, [userSettings, props.cumulSearchInfos]);
     // handle cancelled or closed item
 
     const statusScope = filterFields.find((obj: any) => obj.name === 'status')?.config ?? null;
@@ -1034,7 +1034,7 @@ const ListComponent = (props: IListProps) => {
                 }
             }
             if (userSettings && userSettings.valueJson?.subOptions) {
-                setAllSubOptions(userSettings.valueJson.subOptions ?? {});
+                setAllSubOptions(userSettings.valueJson.subOptions ?? []);
             }
         }, []);
         showBadge = true;
@@ -1196,6 +1196,7 @@ const ListComponent = (props: IListProps) => {
                 <ListFilters
                     form={formSearch}
                     columns={filterFields}
+                    defaultSubOptions={props.defaultSubOptions}
                     allSubOptions={allSubOptions}
                     setAllSubOptions={setAllSubOptions}
                     handleSubmit={handleSubmit}

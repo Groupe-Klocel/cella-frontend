@@ -19,18 +19,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import { getModesFromPermissions, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
-import { ModeEnum, useGetParameterScopesQuery } from 'generated/graphql';
+import { ModeEnum } from 'generated/graphql';
 import { ParameterModelV2 as model } from 'models/ParameterModelV2';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import { parametersRoutes as itemRoutes } from 'modules/Parameters/Static/ParametersRoutes';
-import { useAuth } from 'context/AuthContext';
-import { FormDataType } from 'models/ModelsV2';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const ParameterPages: PageComponent = () => {
@@ -40,7 +38,6 @@ const ParameterPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
-    const { graphqlRequestClient } = useAuth();
 
     const headerData: HeaderData = {
         title: t('common:parameters'),
@@ -55,18 +52,9 @@ const ParameterPages: PageComponent = () => {
             ) : null
     };
 
-    // specific to params view
-    const listScopeParam = useGetParameterScopesQuery(graphqlRequestClient);
-    const [scopesList, setScopesList] = useState<any>();
-
-    useEffect(() => {
-        if (parameters) {
-            const newParameter = parameters.map((item: { scope: any }) => {
-                return { key: item.scope, text: item.scope };
-            });
-            setScopesList(newParameter);
-        }
-    }, [parameters]);
+    const scopesList = Array.from(new Set(parameters.map((parameter: any) => parameter.scope))).map(
+        (scope) => ({ key: scope as string, text: scope as string })
+    );
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
@@ -89,11 +77,9 @@ const ParameterPages: PageComponent = () => {
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
-                filterFields={[
+                defaultSubOptions={[
                     {
-                        name: 'scope',
-                        type: FormDataType.Dropdown,
-                        subOptions: scopesList
+                        scope: scopesList
                     }
                 ]}
                 actionColumns={[
