@@ -45,8 +45,10 @@ export interface IDraggerSelectProps {
         param?: { [key: string]: any };
         scope?: string;
         type?: number;
+        filterConfigParam?: any;
     };
     key?: string;
+    defaultSubOptions?: any;
     setAllSubOptions?: any;
     setValues?: any;
     setFormInfos?: any;
@@ -56,6 +58,7 @@ export interface IDraggerSelectProps {
 const SelectInput: FC<IDraggerSelectProps> = ({
     item,
     setValues,
+    defaultSubOptions,
     setAllSubOptions,
     mode,
     setFormInfos
@@ -170,6 +173,53 @@ const SelectInput: FC<IDraggerSelectProps> = ({
     }
 
     useEffect(() => {
+        const defaultOptionsForItem = defaultSubOptions
+            ? defaultSubOptions.find((obj: any) => obj.hasOwnProperty(item.name))?.[item.name]
+            : null;
+        if (defaultOptionsForItem) {
+            setSubOptions(defaultOptionsForItem);
+            setParentSubOptions(defaultOptionsForItem);
+            return;
+        }
+        let filteredParameters = parameters;
+        let filteredConfigs = configs;
+        if (item.filterConfigParam && !item.initialValue) {
+            const isExcluded = item.filterConfigParam.values.split('[')[0] === '!';
+            const filterConfigParam = JSON.parse('[' + item.filterConfigParam.values.split('[')[1]);
+            if (isExcluded) {
+                filteredParameters = parameters.filter(
+                    (param: any) =>
+                        !filterConfigParam.includes(
+                            isNumeric(param[item.filterConfigParam.field])
+                                ? parseInt(param[item.filterConfigParam.field])
+                                : param[item.filterConfigParam.field]
+                        )
+                );
+                filteredConfigs = configs.filter(
+                    (config: any) =>
+                        !filterConfigParam.includes(
+                            isNumeric(config[item.filterConfigParam.field])
+                                ? parseInt(config[item.filterConfigParam.field])
+                                : config[item.filterConfigParam.field]
+                        )
+                );
+            } else {
+                filteredParameters = parameters.filter((param: any) =>
+                    filterConfigParam.includes(
+                        isNumeric(param[item.filterConfigParam.field])
+                            ? parseInt(param[item.filterConfigParam.field])
+                            : param[item.filterConfigParam.field]
+                    )
+                );
+                filteredConfigs = configs.filter((config: any) =>
+                    filterConfigParam.includes(
+                        isNumeric(config[item.filterConfigParam.field])
+                            ? parseInt(config[item.filterConfigParam.field])
+                            : config[item.filterConfigParam.field]
+                    )
+                );
+            }
+        }
         switch (true) {
             case !!item.optionTable: {
                 const optionTable = item.optionTable;
@@ -186,7 +236,7 @@ const SelectInput: FC<IDraggerSelectProps> = ({
             }
             case !!item.config: {
                 const configFilters = item.config;
-                const inputsConfigs = configs
+                const inputsConfigs = filteredConfigs
                     .map((item: any) => {
                         if (configFilters !== item.scope) return;
                         const value =
@@ -210,7 +260,7 @@ const SelectInput: FC<IDraggerSelectProps> = ({
             }
             case !!item.param: {
                 const paramsFilters = item.param;
-                const inputsParams = parameters
+                const inputsParams = filteredParameters
                     .map((item: any) => {
                         if (paramsFilters !== item.scope) return;
                         const value =

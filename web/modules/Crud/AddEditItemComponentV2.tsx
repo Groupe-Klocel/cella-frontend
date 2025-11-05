@@ -103,8 +103,9 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                                   ? props.initialProps.initialData?.[key]
                                   : undefined,
                           optionTable: props.dataModel.fieldsInfo[key].optionTable ?? undefined,
-                          filterConfigParam:
-                              props.dataModel.fieldsInfo[key].filterConfigParam ?? undefined
+                          filterConfigParam: props.dataModel.fieldsInfo[key].filterConfigParam
+                              ? JSON.parse(props.dataModel.fieldsInfo[key].filterConfigParam)
+                              : undefined
                       }
                     : null;
             })
@@ -287,10 +288,7 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
 
     // #region region handle options for dropdowns
     const optionsTables = itemComponent
-        .filter(
-            (obj) =>
-                obj.hasOwnProperty('optionTable') && obj.optionTable !== undefined && obj.type !== 8
-        )
+        .filter((obj) => obj.hasOwnProperty('optionTable') && obj.optionTable !== undefined)
         .map((obj) => {
             return { field: obj.name, optionTable: JSON.parse(obj.optionTable), type: obj.type };
         });
@@ -309,11 +307,7 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
         ) {
             const processedOptionsTables = () =>
                 itemComponent.map((obj) => {
-                    if (
-                        obj.hasOwnProperty('optionTable') &&
-                        obj.optionTable !== undefined &&
-                        obj.type !== 8
-                    ) {
+                    if (obj.hasOwnProperty('optionTable') && obj.optionTable !== undefined) {
                         const filtersToApply = JSON.parse(obj.optionTable).filtersToApply;
                         if (!filtersToApply) {
                             return {
