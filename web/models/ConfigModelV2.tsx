@@ -129,7 +129,7 @@ export const ConfigModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: 'Dropdown',
+            searchingFormat: 'Boolean',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
