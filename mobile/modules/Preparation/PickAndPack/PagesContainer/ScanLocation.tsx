@@ -78,8 +78,9 @@ export const ScanLocation = ({
     const locationName =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location.name;
 
-    const PRAAHUCInfos =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent;
+    const PRAADeliveryLineInfos =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.roundLineDetail
+            ?.deliveryLine;
 
     const getLocations = async (
         scannedInfo: any,
@@ -118,7 +119,7 @@ export const ScanLocation = ({
                                         {
                                             searchType: EQUAL
                                             fieldName: "articleId"
-                                            searchedValues: "${PRAAHUCInfos?.article?.id}"
+                                            searchedValues: "${PRAADeliveryLineInfos?.articleId}"
                                         }
                                     ]
                                 }
@@ -186,10 +187,10 @@ export const ScanLocation = ({
                         location.handlingUnits.forEach((hu: any) => {
                             hu.handlingUnitContents.forEach((content: any) => {
                                 if (
-                                    PRAAHUCInfos.stockOwnerId === content.stockOwnerId &&
-                                    PRAAHUCInfos.stockStatus === content.stockStatus &&
-                                    PRAAHUCInfos.articleId === content.articleId &&
-                                    PRAAHUCInfos.reservation === content.reservation
+                                    PRAADeliveryLineInfos.stockOwnerId === content.stockOwnerId &&
+                                    PRAADeliveryLineInfos.stockStatus === content.stockStatus &&
+                                    PRAADeliveryLineInfos.articleId === content.articleId &&
+                                    PRAADeliveryLineInfos.reservation === content.reservation
                                 ) {
                                     totalQuantity += content.quantity;
                                 }
