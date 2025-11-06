@@ -325,7 +325,6 @@ const SelectInput: FC<IDraggerSelectProps> = ({
         <Form.Item
             name={item.name}
             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
-            normalize={(value) => (value ? value : undefined)}
             initialValue={item?.initialValue}
             rules={item.rules!}
             hidden={subOptions ? false : true}
