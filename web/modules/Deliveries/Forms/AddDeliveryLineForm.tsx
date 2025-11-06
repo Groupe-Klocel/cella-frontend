@@ -98,7 +98,12 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     }, [deliveryLines]);
 
     // to render autocompleted articles list
-    const articleData = useArticles({ name: `${articleName}%` }, 1, 100, null);
+    const articleData = useArticles(
+        { name: `${articleName}%`, stockOwnerId: props.stockOwnerId },
+        1,
+        100,
+        null
+    );
 
     useEffect(() => {
         const formValue = form.getFieldsValue(true);
