@@ -38,6 +38,7 @@ export const EditArticleExtraForm: FC<ISingleItemProps> = ({ detailFields }: ISi
     const id = router.query.id;
     const extraData: any = router.query.extraData;
     const extra_key: any = router.query.extra_key;
+    const extra_rawKey: any = router.query.extra_rawKey;
     const extra_value: any = router.query.extra_value;
     const [extraInput, setExtraInput] = useState<any>();
 
@@ -107,8 +108,8 @@ export const EditArticleExtraForm: FC<ISingleItemProps> = ({ detailFields }: ISi
                 const input_tmp: any = {};
 
                 const new_element: any = {};
-                new_element[formData.key] = formData.value;
-                input_tmp['extras'] = Object.assign(new_element, extraInput);
+                new_element[extra_rawKey] = formData.value;
+                input_tmp['extras'] = Object.assign(extraInput, new_element);
                 updateArticleExtra({
                     id: id,
                     input: { ...input_tmp }
