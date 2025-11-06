@@ -124,44 +124,47 @@ const ArticleExtrasListComponent = (props: IListProps) => {
             {
                 title: 'actions:actions',
                 key: 'actions',
-                render: (record: { id: string; status: number; index: number; key: string }) => (
-                    <Space>
-                        {modes.length > 0 &&
-                        modes.includes(ModeEnum.Update) &&
-                        props.dataModel.isEditable ? (
-                            <LinkButton
-                                icon={<EditTwoTone />}
-                                path={pathParamsFromDictionary(`${rootPath}/extras/edit/[id]`, {
-                                    id: id,
-                                    articleName: props.articleName,
-                                    extraData,
-                                    extra_key: newRows[record.index]?.key,
-                                    extra_value: newRows[record.index]?.value
-                                })}
-                            />
-                        ) : (
-                            <></>
-                        )}
-                        {modes.length > 0 &&
-                        modes.includes(ModeEnum.Delete) &&
-                        props.dataModel.isDeletable ? (
-                            <Button
-                                icon={<DeleteOutlined />}
-                                danger
-                                onClick={() =>
-                                    confirmDelete(
-                                        id,
+                render: (record: { id: string; status: number; index: number; key: string }) => {
+                    return (
+                        <Space>
+                            {modes.length > 0 &&
+                            modes.includes(ModeEnum.Update) &&
+                            props.dataModel.isEditable ? (
+                                <LinkButton
+                                    icon={<EditTwoTone />}
+                                    path={pathParamsFromDictionary(`${rootPath}/extras/edit/[id]`, {
+                                        id: id,
+                                        articleName: props.articleName,
                                         extraData,
-                                        newRows[record.index]['key'],
-                                        newRows[record.index]['value']
-                                    )()
-                                }
-                            ></Button>
-                        ) : (
-                            <></>
-                        )}
-                    </Space>
-                )
+                                        extra_key: newRows[record.index]?.key,
+                                        extra_rawKey: newRows[record.index]?.rawKey,
+                                        extra_value: newRows[record.index]?.value
+                                    })}
+                                />
+                            ) : (
+                                <></>
+                            )}
+                            {modes.length > 0 &&
+                            modes.includes(ModeEnum.Delete) &&
+                            props.dataModel.isDeletable ? (
+                                <Button
+                                    icon={<DeleteOutlined />}
+                                    danger
+                                    onClick={() =>
+                                        confirmDelete(
+                                            id,
+                                            extraData,
+                                            newRows[record.index]['rawKey'],
+                                            newRows[record.index]['value']
+                                        )()
+                                    }
+                                ></Button>
+                            ) : (
+                                <></>
+                            )}
+                        </Space>
+                    );
+                }
             }
         ]
     };
@@ -516,6 +519,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                     jsonData.push({
                         index: `${i}`,
                         key: t(`d:${argKey}`),
+                        rawKey: `${argKey}`,
                         value: `${value}`
                     });
                     stringJsonData += argKey + '=' + value + ',';
