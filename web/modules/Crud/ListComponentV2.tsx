@@ -1712,6 +1712,14 @@ const ListComponent = (props: IListProps) => {
                             setRows(listData);
                             setAllColumns(initialState ?? new_column_list);
                             setInitialAllColumns(result_list);
+                        } else {
+                            setRows({
+                                ...rows,
+                                results: [],
+                                count: rows?.count ?? 0,
+                                itemsPerPage: rows?.itemsPerPage ?? 10,
+                                totalPages: rows?.totalPages ?? 1
+                            });
                         }
 
                         if (props.setData) props.setData(listData.results);
@@ -2476,7 +2484,7 @@ const ListComponent = (props: IListProps) => {
                                         : undefined
                                 }
                                 tags={
-                                    !firstLoad && rows?.results ? (
+                                    !firstLoad && rows ? (
                                         props.searchable && (
                                             <>
                                                 {tagFormatter(search).map((info, index) => {
@@ -2600,7 +2608,7 @@ const ListComponent = (props: IListProps) => {
                                     ))}
                             </>
                         )}
-                        {!firstLoad && rows?.results ? (
+                        {!firstLoad && rows ? (
                             <>
                                 {props.actionButtons?.actionsComponent}
                                 <PageTableContentWrapper>
