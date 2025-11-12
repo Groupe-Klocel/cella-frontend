@@ -21,9 +21,9 @@ import { AppHead, LinkButton } from '@components';
 import { ArticleModelV2 as model } from 'models/ArticleModelV2';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSuccess } from '@helpers';
+import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { articlesRoutes as itemRoutes } from 'modules/Articles/Static/articlesRoutes';
@@ -36,7 +36,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const ArticlePage: PageComponent = () => {
     const router = useRouter();
-    const { permissions } = useAppState();
+    const { parameters, permissions } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -54,6 +54,16 @@ const ArticlePage: PageComponent = () => {
     ];
 
     const pageTitle = `${t('common:article')} ${data?.name}`;
+
+    const isExtrasDisplayed = Object.keys(data || {}).some((key) => key.startsWith('extras_'))
+        ? true
+        : false;
+
+    const isExtraInformationButtonDisplayed =
+        parameters?.find((param: any) => param.code === 'ALLOW_EXTRA_INFORMATION').value == 1
+            ? true
+            : false;
+
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -82,6 +92,27 @@ const ArticlePage: PageComponent = () => {
         };
     };
 
+    const [extraData, setExtraData] = useState<string>('');
+    useEffect(() => {
+        const rowsCopy = Object.entries(data || {})
+            .filter(([key]) => key.startsWith('extras_'))
+            .map(([key, value]) => ({ [key]: value }));
+        if (Object.entries(rowsCopy).length !== 0) {
+            let i = 0;
+            let stringJsonData = '';
+            for (const obj of rowsCopy) {
+                for (const [key, value] of Object.entries(obj)) {
+                    if (key.includes('extras_')) {
+                        const argKey = key.replace('extras_', '');
+                        stringJsonData += argKey + '=' + value + ',';
+                        i++;
+                    }
+                }
+            }
+            setExtraData(stringJsonData);
+        }
+    }, [data]);
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -94,6 +125,22 @@ const ArticlePage: PageComponent = () => {
                             title={t('actions:edit')}
                             path={`${rootPath}/edit/${id}`}
                             type="primary"
+                        />
+                    ) : (
+                        <></>
+                    )}
+                    {modes.length > 0 &&
+                    modes.includes(ModeEnum.Update) &&
+                    model.isEditable &&
+                    isExtraInformationButtonDisplayed ? (
+                        <LinkButton
+                            title={t('menu:add-extra-information')}
+                            type="primary"
+                            path={pathParamsFromDictionary(`${rootPath}/extras/add`, {
+                                id: id,
+                                articleName: data?.name,
+                                extraData
+                            })}
                         />
                     ) : (
                         <></>
@@ -144,10 +191,12 @@ const ArticlePage: PageComponent = () => {
                 extraDataComponent={
                     <ArticleDetailsExtra
                         articleId={id}
+                        details={data}
                         articleName={data?.name}
                         articleStatus={data?.status}
                         stockOwnerName={data?.stockOwner_name}
                         stockOwnerId={data?.stockOwnerId}
+                        isExtrasDisplayed={isExtrasDisplayed}
                     />
                 }
                 headerData={headerData}

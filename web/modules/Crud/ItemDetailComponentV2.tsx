@@ -200,10 +200,21 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
 
     useEffect(() => {
         if (detail?.data && detail?.data[props.dataModel.endpoints.detail]) {
-            let flattenedData = flatten(detail.data[props.dataModel.endpoints.detail]);
+            // Remove empty objects (e.g. extras) from detail?.data[props.dataModel.endpoints.detail]
+            const detailObj = detail.data[props.dataModel.endpoints.detail];
+            Object.keys(detailObj).forEach((key) => {
+                if (
+                    typeof detailObj[key] === 'object' &&
+                    detailObj[key] !== null &&
+                    Object.keys(detailObj[key]).length === 0
+                ) {
+                    delete detailObj[key];
+                }
+            });
 
-            if (props.setData)
-                props.setData(flatten(detail.data[props.dataModel.endpoints.detail]));
+            let flattenedData = flatten(detailObj);
+
+            if (props.setData) props.setData(flatten(detailObj));
             // detect if linkfields.name is part of flattenedData keys and replace it if yes
             const keys = Object.keys(flattenedData); // get all the keys in flattenedData
             const linksList: Array<any> = [];
