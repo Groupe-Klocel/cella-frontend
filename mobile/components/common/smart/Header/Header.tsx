@@ -79,17 +79,16 @@ const Header: FC = () => {
     if (token && user && !sessionTimeoutNotification && !interval && !firstValue) {
         const user = decodeJWT(token);
         const expirationTime = user.exp * 1000;
+        const delay = expirationTime - Date.now() - time * 1000;
+        console.log('Session timeout notification will be shown in:', delay, 'ms');
 
-        if (time !== 0) {
-            sessionTimeoutNotification = setTimeout(
-                () => {
-                    showError(
-                        t('messages:session-timeout-notification', { time: Math.floor(time / 60) }),
-                        10
-                    );
-                },
-                expirationTime - Date.now() - time * 1000
-            );
+        if (delay > 0 && !sessionTimeoutNotification && time > 0) {
+            sessionTimeoutNotification = setTimeout(() => {
+                showError(
+                    t('messages:session-timeout-notification', { time: Math.floor(time / 60) }),
+                    10
+                );
+            }, delay);
         }
 
         const updateTimer = () => {
