@@ -186,7 +186,7 @@ export const DeliveryLineModelV2: ModelType = {
             optionTable:
                 '{"table": "Article", "fieldToDisplay": "name","filtersToApply": {"stockOwnerId":"stockOwnerId"}}',
             toBeEditDisabled:
-                '[{"table": "DeliveryLine","field": "status","conditions": "value >= started"}]'
+                '[{"table": "DeliveryLine","field": "status","conditions": "value >= started", "scope": "delivery_status"}]'
         },
         'article{name}': {
             isListRequested: true,

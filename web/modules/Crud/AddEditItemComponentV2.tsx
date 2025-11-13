@@ -126,6 +126,7 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
 
     async function checkDisable(id: String, toBeDisabled: any) {
         const tableToCheck = toBeDisabled[0].table;
+        const scopeToCheck = toBeDisabled[0]?.scope;
         const fieldToCheck = toBeDisabled[0].field;
         let conditions = toBeDisabled[0].conditions;
         const queryName = pluralize(tableToCheck.charAt(0).toLowerCase() + tableToCheck.slice(1));
@@ -179,7 +180,8 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                     configs.find((conf: any) => {
                         return (
                             conf.scope ===
-                                `${tableToCheck.toLowerCase()}_${fieldToCheck.toLowerCase()}` &&
+                                (scopeToCheck ??
+                                    `${pascalToSnakeUpper(tableToCheck).toLowerCase()}_${pascalToSnakeUpper(fieldToCheck).toLowerCase()}`) &&
                             conf.value.toLowerCase() ===
                                 condition.valueToCompare.split('_').join(' ').toLowerCase()
                         );
