@@ -35,17 +35,23 @@ import { ContentSpin } from '@components';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'moment/locale/fr';
-import AutoComplete from './FormGroupAutoComplete';
+import AutoComplete from '../../../components/common/smart/Form/MainInputs/AutoCompleteInput';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
+import NumberInput from 'components/common/smart/Form/MainInputs/NumberInput';
+import TextAreaInput from 'components/common/smart/Form/MainInputs/TextAreaInput';
+import SelectInput from 'components/common/smart/Form/MainInputs/SelectInput';
+import DatePickerInput from 'components/common/smart/Form/MainInputs/DatePickerInput';
+import RangePickerInput from 'components/common/smart/Form/MainInputs/RangePickerInput';
+import CheckboxInput from 'components/common/smart/Form/MainInputs/CheckboxInput';
 import { useAppState } from 'context/AppContext';
 
 export interface IGeneralSearchProps {
     form: any;
     columns: Array<FilterFieldType>;
+    defaultSubOptions?: any;
+    allSubOptions?: any;
     setAllSubOptions?: any;
     handleSubmit?: any;
-    resetForm?: boolean;
-    allFieldsInitialValue?: string;
     selectCase?: string[];
     setSelectCase?: any;
     selectJoker?: string[];
@@ -55,283 +61,33 @@ export interface IGeneralSearchProps {
 const ListFilters: FC<IGeneralSearchProps> = ({
     form,
     columns,
+    defaultSubOptions,
+    allSubOptions,
     setAllSubOptions,
     handleSubmit,
-    resetForm,
-    allFieldsInitialValue,
     selectCase,
     setSelectCase,
     selectJoker,
     setSelectJoker
 }: IGeneralSearchProps) => {
-    const { t } = useTranslation();
-    const { RangePicker } = DatePicker;
     const router = useRouter();
-    const state = useAppState();
-    const configs = state?.configs;
-    const parameters = state?.parameters;
-    const [columnsInfos, setColumnsInfos] = useState<any>();
-    const { graphqlRequestClient } = useAuth();
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
-    const [configParamOptionsList, setConfigParamOptionsList] = useState<any>();
-    const [optionsList, setOptionsList] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    let numberOfSubOptions = 0;
+    columns.forEach((column) => {
+        if (
+            column.type === FormDataType.AutoComplete ||
+            column.type === FormDataType.Dropdown ||
+            column.type === FormDataType.Boolean
+        ) {
+            numberOfSubOptions += 1;
+        }
+    });
+
+    if (numberOfSubOptions === allSubOptions?.length && isLoading) {
+        setIsLoading(false);
+    }
 
     moment.locale(router.locale);
-
-    const localeData = moment.localeData();
-    const localeDateTimeFormat =
-        localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
-
-    const onChange = (value: RangePickerProps['value'], dateString: [string, string] | string) => {
-        console.log('Selected Time: ', value);
-        console.log('Formatted Selected Time: ', dateString);
-    };
-
-    const onOk = (value: RangePickerProps['value']) => {
-        console.log('onOk: ', value);
-    };
-
-    useEffect(() => {
-        if (resetForm) {
-            form.resetFields();
-        }
-    }, [resetForm]);
-
-    // #region handle configs/params options if any
-    async function getConfigsAndParametersByScopes(
-        columns: any[]
-    ): Promise<{ [key: string]: any }> {
-        const result: { [key: string]: any } = {};
-        const configScopes = columns
-            .filter((obj) => obj.hasOwnProperty('config') && obj.config !== undefined)
-            .map((obj) => obj.config);
-
-        configs
-            .filter((item: any) => configScopes.includes(item.scope))
-            .forEach((item: any) => {
-                if (!result[item.scope]) {
-                    result[item.scope] = [];
-                }
-                const value =
-                    filterLanguage && item.translation && item.translation[`${filterLanguage}`]
-                        ? item.translation[`${filterLanguage}`]
-                        : item.value;
-                result[item.scope].push({
-                    key: isNumeric(item.code) ? parseInt(item.code) : item.code,
-                    text: value
-                });
-            });
-
-        const paramScopes = columns
-            .filter((obj) => obj.hasOwnProperty('param') && obj.param !== undefined)
-            .map((obj) => obj.param);
-
-        parameters
-            .filter((item: any) => paramScopes.includes(item.scope))
-            .forEach((item: any) => {
-                if (!result[item.scope]) {
-                    result[item.scope] = [];
-                }
-                const value =
-                    filterLanguage && item.translation && item.translation[`${filterLanguage}`]
-                        ? item.translation[`${filterLanguage}`]
-                        : item.value;
-                result[item.scope].push({
-                    key: isNumeric(item.code) ? parseInt(item.code) : item.code,
-                    text: value
-                });
-            });
-
-        return result;
-    }
-
-    useEffect(() => {
-        const fetchData = async () => {
-            const configParamOptions = await getConfigsAndParametersByScopes(columns);
-            if (configParamOptions) {
-                setConfigParamOptionsList(configParamOptions);
-            }
-        };
-        fetchData();
-    }, []);
-
-    // #region handle options for dropdowns
-    const optionsTables = columns
-        .filter(
-            (obj) =>
-                obj.hasOwnProperty('optionTable') && obj.optionTable !== undefined && obj.type !== 8
-        )
-        .map((obj) => obj.optionTable);
-
-    async function getOptions(
-        tableName: string | undefined,
-        fieldToDisplay: string | undefined
-    ): Promise<{ [key: string]: any } | undefined> {
-        if (tableName && fieldToDisplay) {
-            const queryName = pluralize(tableName.charAt(0).toLowerCase() + tableName.slice(1));
-            const queriedFields: any = ['id', `${fieldToDisplay}`];
-            const query = gql`
-        query CustomListQuery(
-            $filters: ${tableName}SearchFilters
-            $orderBy: [${tableName}OrderByCriterion!]
-            $page: Int!
-            $itemsPerPage: Int!
-            $language: String = "en"
-        ) {
-            ${queryName}(
-                filters: $filters
-                orderBy: $orderBy
-                page: $page
-                itemsPerPage: $itemsPerPage
-                language: $language
-            ) {
-                count
-                results {
-                    ${queriedFields.join(', ')}
-                }
-            }
-        }
-    `;
-            const variables = {
-                filters: {},
-                orderBy: null,
-                page: 1,
-                itemsPerPage: 100000
-            };
-            const options = await graphqlRequestClient.request(query, variables);
-            const result: { [key: string]: any } = {};
-
-            options[queryName].results.forEach((item: any) => {
-                if (!result[tableName]) {
-                    result[tableName] = [];
-                }
-                result[tableName].push({
-                    key: item.id,
-                    text: item[`${fieldToDisplay}`]
-                });
-            });
-
-            return result;
-        }
-        return;
-    }
-
-    useEffect(() => {
-        async function fetchData() {
-            const promises = optionsTables.map((element) =>
-                getOptions(JSON.parse(element!).table, JSON.parse(element!).fieldToDisplay)
-            );
-            const options = await Promise.all(promises);
-            const optionsObject: { [key: string]: any } = {};
-
-            options.forEach((item: any) => {
-                if (item) {
-                    const key = Object.keys(item)[0];
-                    optionsObject[key] = item[key];
-                }
-            });
-            if (Object.keys(optionsObject).length > 0) {
-                setOptionsList(optionsObject);
-            }
-        }
-        fetchData();
-    }, []);
-    // #endregion
-
-    // #region add information to columns once available
-    useEffect(() => {
-        // Fix: Initialize tempAllSubOptions with correct typing
-        const tempAllSubOptions: Array<{ [key: string]: any }> = [];
-
-        const tmp_columns = columns.map((e) => {
-            if (optionsList) {
-                if (e.optionTable) {
-                    if (setAllSubOptions) {
-                        tempAllSubOptions.push({
-                            [e.name]:
-                                optionsList[
-                                    `${JSON.parse(e.optionTable).table}` as keyof typeof optionsList
-                                ]
-                        });
-                    }
-                    return {
-                        ...e,
-                        subOptions:
-                            optionsList[
-                                `${JSON.parse(e.optionTable).table}` as keyof typeof optionsList
-                            ],
-                        ...(e.isMultipleSearch ? { mode: 'multiple' } : {})
-                    };
-                }
-            }
-            if (e.type === 2) {
-                if (setAllSubOptions) {
-                    tempAllSubOptions.push({
-                        [e.name]: [
-                            {
-                                key: true,
-                                text: t('common:bool-yes')
-                            },
-                            {
-                                key: false,
-                                text: t('common:bool-no')
-                            }
-                        ]
-                    });
-                }
-                return {
-                    ...e,
-                    type: 4,
-                    subOptions: [
-                        {
-                            key: true,
-                            text: t('common:bool-yes')
-                        },
-                        {
-                            key: false,
-                            text: t('common:bool-no')
-                        }
-                    ]
-                };
-            }
-            if (configParamOptionsList) {
-                if (e.config || e.param) {
-                    if (setAllSubOptions) {
-                        tempAllSubOptions.push({
-                            [e.name]:
-                                configParamOptionsList[
-                                    `${e.config}` as keyof typeof configParamOptionsList
-                                ] ||
-                                configParamOptionsList[
-                                    `${e.param}` as keyof typeof configParamOptionsList
-                                ]
-                        });
-                    }
-                    return {
-                        ...e,
-                        subOptions: e.config
-                            ? configParamOptionsList[
-                                  `${e.config}` as keyof typeof configParamOptionsList
-                              ]
-                            : configParamOptionsList[
-                                  `${e.param}` as keyof typeof configParamOptionsList
-                              ],
-                        ...(e.isMultipleSearch ? { mode: 'multiple' } : {})
-                    };
-                }
-            }
-            return e;
-        });
-
-        columns.filter((e) => e.optionTable || e.config || e.param || e.type === 2).length ===
-        tempAllSubOptions.length
-            ? (setAllSubOptions(tempAllSubOptions),
-              setColumnsInfos(tmp_columns),
-              setIsLoading(false))
-            : null;
-    }, [configParamOptionsList, optionsList, columns]);
-    // #endregion
 
     //enter key for form validation
     const handleKeyPress = (event: any) => {
@@ -342,201 +98,66 @@ const ListFilters: FC<IGeneralSearchProps> = ({
 
     return (
         <>
-            {!isLoading ? (
-                <Form
-                    form={form}
-                    layout="vertical"
-                    name="control-hooks"
-                    onKeyPress={handleKeyPress}
-                >
-                    {/* <Form.Item
-                        name={'allFields'}
-                        label={t('d:all-fields-search')}
-                        key={'allFields'}
-                        normalize={(value) => (value ? value : undefined)}
-                        initialValue={allFieldsInitialValue ? allFieldsInitialValue : undefined}
-                    >
-                        <Input allowClear />
-                    </Form.Item> */}
-                    {columnsInfos?.map((item: FilterFieldType, index: number) => {
-                        if (item.type === FormDataType.Number)
-                            return (
-                                <Form.Item
-                                    name={item.name}
-                                    label={
-                                        item.displayName ? item.displayName : t(`d:${item.name}`)
-                                    }
-                                    key={item.name + index}
-                                    rules={item.rules!}
-                                    normalize={(value) => (value ? value : undefined)}
-                                    initialValue={
-                                        item?.initialValue ? item?.initialValue : undefined
-                                    }
-                                >
-                                    <InputNumber
-                                        style={{ width: '100%' }}
-                                        precision={item.numberPrecision}
-                                    />
-                                </Form.Item>
-                            );
-                        else if (item.type == FormDataType.String)
-                            return (
-                                <StringInput
-                                    item={item}
-                                    key={item.name + index}
-                                    filtersParameters={
-                                        selectCase && selectJoker
-                                            ? {
-                                                  selectCase: selectCase,
-                                                  setSelectCase: setSelectCase,
-                                                  selectJoker: selectJoker,
-                                                  setSelectJoker: setSelectJoker
-                                              }
-                                            : undefined
-                                    }
-                                />
-                            );
-                        else if (item.type == FormDataType.TextArea)
-                            return (
-                                <Form.Item
-                                    name={item.name}
-                                    label={
-                                        item.displayName ? item.displayName : t(`d:${item.name}`)
-                                    }
-                                    key={item.name + index}
-                                    normalize={(value) => (value ? value : undefined)}
-                                    initialValue={
-                                        item?.initialValue ? item?.initialValue : undefined
-                                    }
-                                >
-                                    <Input.TextArea
-                                        maxLength={item.maxLength ? item.maxLength : 100}
-                                        allowClear
-                                    />
-                                </Form.Item>
-                            );
-                        else if (item.type == FormDataType.Dropdown)
-                            return (
-                                <Form.Item
-                                    label={
-                                        item.displayName ? item.displayName : t(`d:${item.name}`)
-                                    }
-                                    name={item.name}
-                                    rules={item.rules!}
-                                    key={item.name + index}
-                                    initialValue={
-                                        item?.initialValue ? item?.initialValue : undefined
-                                    }
-                                >
-                                    <Select
-                                        disabled={item.disabled ? true : false}
-                                        // mode={item.mode ? item.mode : false}
-                                        mode="multiple"
-                                        allowClear
-                                        showSearch
-                                        filterOption={(inputValue, option) =>
-                                            option!.props.children
-                                                .toUpperCase()
-                                                .indexOf(inputValue.toUpperCase()) !== -1
-                                        }
-                                    >
-                                        {item.subOptions?.map(
-                                            (option: FormOptionType, selectIndex: number) => (
-                                                <Select.Option
-                                                    key={option.text + selectIndex}
-                                                    value={option.key}
-                                                >
-                                                    {option.text}
-                                                </Select.Option>
-                                            )
-                                        )}
-                                    </Select>
-                                </Form.Item>
-                            );
-                        else if (item.type == FormDataType.Calendar)
-                            return (
-                                <Form.Item
-                                    name={item.name}
-                                    label={
-                                        item.displayName ? item.displayName : t(`d:${item.name}`)
-                                    }
-                                    key={item.name + index}
-                                    rules={item.rules!}
-                                    normalize={(value) => (value ? value : undefined)}
-                                    initialValue={
-                                        item?.initialValue ? dayjs(item?.initialValue) : undefined
-                                    }
-                                >
-                                    <DatePicker
-                                        format={localeDateTimeFormat}
-                                        locale={router.locale === 'fr' ? fr_FR : en_US}
-                                        showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-                                        allowClear
-                                    />
-                                </Form.Item>
-                            );
-                        else if (item.type == FormDataType.CalendarRange) {
-                            let startDate = null;
-                            let endDate = null;
-                            if (item.initialValue && item.initialValue[0])
-                                startDate = dayjs(item.initialValue[0]);
-                            if (item.initialValue && item.initialValue[1])
-                                endDate = dayjs(item.initialValue[1]);
-
-                            return (
-                                <Form.Item
-                                    name={item.name}
-                                    label={
-                                        item.displayName ? item.displayName : t(`d:${item.name}`)
-                                    }
-                                    key={item.name + index}
-                                    rules={item.rules!}
-                                    normalize={(value) => (value ? value : undefined)}
-                                    initialValue={
-                                        item?.initialValue
-                                            ? [
-                                                  item.initialValue[0]
-                                                      ? dayjs(item.initialValue[0])
-                                                      : null,
-                                                  item.initialValue[1]
-                                                      ? dayjs(item.initialValue[1])
-                                                      : null
-                                              ]
-                                            : undefined
-                                    }
-                                >
-                                    <RangePicker
-                                        showTime={{ format: 'HH:mm' }}
-                                        format={localeDateTimeFormat}
-                                        locale={router.locale === 'fr' ? fr_FR : en_US}
-                                        value={[null, null]}
-                                        allowEmpty={[true, true]}
-                                        onChange={onChange}
-                                        onOk={onOk}
-                                        placeholder={[t('common:start-date'), t('common:end-date')]}
-                                        allowClear
-                                        defaultValue={[startDate, endDate]}
-                                    />
-                                </Form.Item>
-                            );
-                        } else if (item.type == FormDataType.AutoComplete)
-                            return <AutoComplete item={item} key={item.name} />;
-                        else
-                            return (
-                                <Form.Item
-                                    name={item.name}
-                                    valuePropName="checked"
-                                    initialValue={item.initialValue ? item.initialValue : false}
-                                    key={item.name + index}
-                                >
-                                    <Checkbox>{t(`d:${item.name}`)}</Checkbox>
-                                </Form.Item>
-                            );
-                    })}
-                </Form>
-            ) : (
-                <ContentSpin />
-            )}
+            {isLoading && <ContentSpin />}
+            <Form
+                hidden={isLoading}
+                form={form}
+                layout="vertical"
+                name="control-hooks"
+                onKeyUp={handleKeyPress}
+            >
+                {columns?.map((item: FilterFieldType, index: number) => {
+                    if (item.type === FormDataType.Number) {
+                        return <NumberInput item={item} key={item.name + index} />;
+                    } else if (item.type == FormDataType.String) {
+                        return (
+                            <StringInput
+                                item={item}
+                                key={item.name + index}
+                                filtersParameters={
+                                    selectCase && selectJoker
+                                        ? {
+                                              selectCase: selectCase,
+                                              setSelectCase: setSelectCase,
+                                              selectJoker: selectJoker,
+                                              setSelectJoker: setSelectJoker
+                                          }
+                                        : undefined
+                                }
+                            />
+                        );
+                    } else if (item.type == FormDataType.TextArea) {
+                        return <TextAreaInput item={item} key={item.name + index} />;
+                    } else if (
+                        item.type == FormDataType.Dropdown ||
+                        item.type == FormDataType.Boolean
+                    ) {
+                        return (
+                            <SelectInput
+                                item={item}
+                                key={item.name + index}
+                                defaultSubOptions={defaultSubOptions}
+                                setAllSubOptions={setAllSubOptions}
+                                mode="multiple"
+                            />
+                        );
+                    } else if (item.type == FormDataType.Calendar) {
+                        return <DatePickerInput item={item} key={item.name + index} />;
+                    } else if (item.type == FormDataType.CalendarRange) {
+                        return <RangePickerInput item={item} key={item.name + index} />;
+                    } else if (item.type == FormDataType.AutoComplete) {
+                        return (
+                            <AutoComplete
+                                item={item}
+                                key={item.name}
+                                setAllSubOptions={setAllSubOptions}
+                            />
+                        );
+                    } else if (item.type == FormDataType.CheckBox) {
+                        return <CheckboxInput item={item} key={item.name + index} />;
+                    }
+                })}
+            </Form>
         </>
     );
 };

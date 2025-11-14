@@ -22,14 +22,24 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { PaymentLineModelV2 } from 'models/PaymentLineModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { paymentsRoutes as itemRoutes } from 'modules/Payments/Static/paymentsRoutes';
-import { META_DEFAULTS } from '@helpers';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditPaymentLinePage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, PaymentLineModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditPaymentLinePage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -56,8 +66,9 @@ const EditPaymentLinePage: PageComponent = () => {
     return (
         <>
             <AppHead title={pageTitle} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={PaymentLineModelV2}
                 headerComponent={

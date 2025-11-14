@@ -22,7 +22,12 @@ import { DrawerItems, Logo, ProfileMenu, UserSettings } from '@components';
 import { Col, Layout, Row } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    useTranslationWithFallback as useTranslation,
+    decodeJWT,
+    showError,
+    cookie
+} from '@helpers';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
@@ -42,10 +47,16 @@ const StyledCol = styled(Col)`
 
 const Header: FC = () => {
     const { t } = useTranslation();
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const { switcher } = useThemeSwitcher();
-
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const [firstValue, setFirstValue] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
+    const state = useAppState();
+    const configs = state?.configs;
+    const sessionTimeoutNotificationConfig = configs?.find(
+        (item: any) => item.scope === 'session_timeout_notification'
+    );
 
     const { userSettings, user: userInfo, tempTheme } = useAppState();
     const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
@@ -150,6 +161,43 @@ const Header: FC = () => {
         }
     ];
 
+    const token = cookie.get('token');
+    let interval: any;
+    let sessionTimeoutNotification: any;
+    let time = sessionTimeoutNotificationConfig
+        ? Number(sessionTimeoutNotificationConfig.value) * 60
+        : 0;
+
+    if (token && user && !sessionTimeoutNotification && !interval && !firstValue) {
+        const user = decodeJWT(token);
+        const expirationTime = user.exp * 1000;
+
+        if (time !== 0) {
+            sessionTimeoutNotification = setTimeout(
+                () => {
+                    showError(
+                        t('messages:session-timeout-notification', { time: Math.floor(time / 60) }),
+                        10
+                    );
+                },
+                expirationTime - Date.now() - time * 1000
+            );
+        }
+
+        const updateTimer = () => {
+            const diff = expirationTime - Date.now();
+            if (diff <= 0) {
+                clearInterval(interval);
+                setTimeLeft(0);
+                logout();
+            } else {
+                setTimeLeft(Math.floor(diff / 1000));
+            }
+        };
+        interval = setInterval(updateTimer, 1000);
+        setFirstValue(true);
+    }
+
     return (
         <StyledHeader>
             <DrawerItems {...drawerProps()} />
@@ -159,7 +207,23 @@ const Header: FC = () => {
                         <Logo width={45} />
                     </Link>
                 </StyledCol>
-                <StyledCol flex="0 1 auto" offset={8}>
+                <StyledCol flex="0 1 auto">
+                    {timeLeft !== null && timeLeft > 0 && timeLeft < time && (
+                        <span
+                            style={{ cursor: 'pointer' }}
+                            onClick={() =>
+                                showError(
+                                    t('messages:session-timeout-notification', {
+                                        time: `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`
+                                    })
+                                )
+                            }
+                        >
+                            {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                        </span>
+                    )}
+                </StyledCol>
+                <StyledCol flex="0 1 auto">
                     <ProfileMenu username={user.username} profileMenu={profileMenuList} />
                 </StyledCol>
             </Row>

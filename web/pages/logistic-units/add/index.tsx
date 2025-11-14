@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { LogisticUnitModelV2 as model } from 'models/LogisticUnitModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addLogisticUnitRoutes } from 'modules/LogisticUnits/Static/logisticUnitsRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -40,7 +40,7 @@ const AddLogisticUnitPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-logistic-unit-model')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={model}
                 headerComponent={
                     <HeaderContent

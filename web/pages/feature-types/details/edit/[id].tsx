@@ -19,29 +19,31 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { META_DEFAULTS, useFeatureCodes } from '@helpers';
-import { FormDataType, FormOptionType } from 'models/Models';
-import { useListParametersForAScopeQuery } from 'generated/graphql';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { FeatureTypeDetailModelV2 } from 'models/FeatureTypeDetailModelV2';
 import { featureTypesRoutes } from 'modules/FeatureTypes/Static/featureTypesRoutes';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useAuth } from 'context/AuthContext';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditFeatureTypeDetailPage: PageComponent = () => {
-    const { graphqlRequestClient } = useAuth();
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, FeatureTypeDetailModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditFeatureTypeDetailPage: PageComponent = (props) => {
     const { t } = useTranslation();
-    const errorMessageEmptyInput = t('messages:error-message-empty-input');
-    const [featureTexts, setFeatureTexts] = useState<Array<FormOptionType>>();
     const router = useRouter();
-    const [sidOptions, setSIdOptions] = useState<Array<FormOptionType>>([]);
     const [data, setData] = useState<any>();
-    const featureCodeData = useFeatureCodes({}, 1, 100, null);
-    const { id, featureType } = router.query;
+    const { id } = router.query;
 
     const breadsCrumb = [
         ...featureTypesRoutes,
@@ -52,33 +54,6 @@ const EditFeatureTypeDetailPage: PageComponent = () => {
         }
     ];
 
-    const featureTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'feature_type'
-    });
-    useEffect(() => {
-        if (featureTextList) {
-            const newFeatureTexts: Array<FormOptionType> = [];
-
-            const cData = featureTextList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newFeatureTexts.push({ key: parseInt(item.code), text: item.text });
-                });
-                setFeatureTexts(newFeatureTexts);
-            }
-        }
-    }, [featureTextList.data]);
-
-    useEffect(() => {
-        if (featureCodeData.data) {
-            const newIdOpts: Array<FormOptionType> = [];
-            featureCodeData.data.featureCodes?.results.forEach(({ id, name }) => {
-                newIdOpts.push({ text: name!, key: id! });
-            });
-            setSIdOptions(newIdOpts);
-        }
-    }, [featureCodeData.data]);
-
     return (
         <>
             <AppHead
@@ -86,8 +61,9 @@ const EditFeatureTypeDetailPage: PageComponent = () => {
                     'actions:edit'
                 )} ${data?.featureTypeText}`}
             />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={FeatureTypeDetailModelV2}
                 headerComponent={

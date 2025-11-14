@@ -22,14 +22,24 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ThirdPartyModelV2 } from 'models/ThirdPartyModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { thirdPartiesRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
-import { META_DEFAULTS } from '@helpers';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditThirdPartyPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, ThirdPartyModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditThirdPartyPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -46,8 +56,9 @@ const EditThirdPartyPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:third-party')} ${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={ThirdPartyModelV2}
                 headerComponent={

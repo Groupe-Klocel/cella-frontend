@@ -21,7 +21,7 @@ import { AppHead, HeaderContent, WrapperForm } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS, useArticleIds, useStockOwnerIds } from '@helpers';
 import { FormDataType, FormOptionType } from 'models/Models';
@@ -76,7 +76,7 @@ const AddArticleSetsPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-article-set')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={ArticleSetModelV2}
                 headerComponent={
                     <HeaderContent
@@ -85,36 +85,6 @@ const AddArticleSetsPage: PageComponent = () => {
                         onBack={() => router.push(`/article-sets`)}
                     />
                 }
-                addSteps={[
-                    [
-                        {
-                            name: 'stockOwnerId',
-                            displayName: t('d:stockOwner'),
-                            type: FormDataType.Dropdown,
-                            subOptions: sidOptions,
-                            rules: [{ required: true, message: errorMessageEmptyInput }]
-                        },
-                        {
-                            name: 'name',
-                            type: FormDataType.String,
-                            rules: [{ required: true, message: errorMessageEmptyInput }]
-                        },
-                        {
-                            name: 'articleId',
-                            displayName: t('d:Article'),
-                            type: FormDataType.AutoComplete,
-                            value: articleName,
-                            subOptions: articlesOptions,
-                            setName: setArticleName,
-                            setId: setArticleId,
-                            rules: [{ required: true, message: errorMessageEmptyInput }]
-                        },
-                        {
-                            name: 'comment',
-                            type: FormDataType.TextArea
-                        }
-                    ]
-                ]}
                 routeAfterSuccess={`/article-sets/:id`}
             />
         </>

@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { HandlingUnitModelModelV2 as model } from 'models/HandlingUnitModelModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addHandlingUnitModelRoutes } from 'modules/HandlingUnitModels/Static/handlingUnitModelsRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -40,7 +40,7 @@ const AddHandlingUnitModelPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-handling-unit-model')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={model}
                 headerComponent={
                     <HeaderContent

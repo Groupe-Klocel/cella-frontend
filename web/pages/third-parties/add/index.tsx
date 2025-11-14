@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ThirdPartyModelV2 } from 'models/ThirdPartyModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addThirdPartyRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -40,7 +40,7 @@ const AddThirdPartyPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-third-party')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={ThirdPartyModelV2}
                 headerComponent={
                     <HeaderContent

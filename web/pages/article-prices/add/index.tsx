@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { ArticlePriceModelV2 } from 'models/ArticlePriceModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addArticlePriceRoutes } from 'modules/ArticlePrices/Static/articlePricesRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -41,7 +41,7 @@ const AddArticlePricePage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-article-price')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={ArticlePriceModelV2}
                 headerComponent={
                     <HeaderContent

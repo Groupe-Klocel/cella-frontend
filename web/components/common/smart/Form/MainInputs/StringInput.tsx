@@ -25,6 +25,8 @@ export interface IDraggerInputProps {
         displayName?: string;
         initialValue?: string;
         maxLength?: number;
+        disabled?: boolean;
+        rules?: any[];
     };
     key?: string;
     filtersParameters?: {
@@ -44,10 +46,11 @@ const StringInput: FC<IDraggerInputProps> = ({ item, filtersParameters }) => {
             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
             normalize={(value) => (value ? value : undefined)}
             initialValue={item?.initialValue ? item?.initialValue : undefined}
+            rules={item.rules!}
         >
             <Input
                 maxLength={item.maxLength ? item.maxLength : 100}
-                allowClear
+                disabled={item.disabled ? true : false}
                 suffix={
                     filtersParameters && (
                         <CaseJokerButton

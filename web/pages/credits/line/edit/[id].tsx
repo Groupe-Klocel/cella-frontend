@@ -20,16 +20,26 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { CreditLineModelV2 } from 'models/CreditLineModelV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { META_DEFAULTS } from '@helpers';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { creditsRoutes } from 'modules/Credits/Static/creditsRoutes';
 import MainLayout from 'components/layouts/MainLayout';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditCreditLinePage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, CreditLineModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditCreditLinePage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -48,8 +58,9 @@ const EditCreditLinePage: PageComponent = () => {
     return (
         <>
             <AppHead title={pageTitle} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={CreditLineModelV2}
                 headerComponent={

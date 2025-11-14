@@ -43,7 +43,7 @@ export interface IAddItemFormProps {
     routeOnCancel?: string;
 }
 
-const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
+const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
@@ -82,6 +82,6 @@ const AddItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
     );
 };
 
-AddItemComponent.displayName = 'AddItemComponent';
+AddEditItemComponent.displayName = 'AddEditItemComponent';
 
-export { AddItemComponent };
+export { AddEditItemComponent };
