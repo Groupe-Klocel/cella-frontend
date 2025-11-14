@@ -40,6 +40,8 @@ import { ScanFinalHandlingUnit } from 'modules/StockManagement/HuMovement/PagesC
 import { ScanHuOrLocation } from 'modules/StockManagement/Forms/ScanHuOrLocationForm';
 import { HuOrLocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HuOrLocationChecks';
 import { ValidateHuMoveForm } from 'modules/StockManagement/Forms/ValidateHuMoveForm';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -47,6 +49,7 @@ const HuMovement: PageComponent = () => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const router = useRouter();
+    const { graphqlRequestClient } = useAuth();
     const [triggerRender, setTriggerRender] = useState<boolean>(true);
     const [originDisplay, setOriginDisplay] = useState<any>({});
     const [finalDisplay, setFinalDisplay] = useState<any>({});
@@ -57,6 +60,7 @@ const HuMovement: PageComponent = () => {
     const [action1Trigger, setAction1Trigger] = useState<boolean>(false);
     const processName = 'huMvt';
     const storedObject = JSON.parse(storage.get(processName) || '{}');
+    const [isRoundToBeChecked, setIsRoundToBeChecked] = useState<boolean>(false);
 
     //Step10: Scan Location (origin)
     //Step15: Select Location by Level
@@ -74,6 +78,50 @@ const HuMovement: PageComponent = () => {
         storedObject['currentStep'] = 10;
         storage.set(processName, JSON.stringify(storedObject));
     }
+
+    //origin parameters handling
+    const getParameters = async (): Promise<{ [key: string]: any } | undefined> => {
+        const query = gql`
+            query parameters($filters: ParameterSearchFilters) {
+                parameters(filters: $filters) {
+                    count
+                    itemsPerPage
+                    totalPages
+                    results {
+                        id
+                        scope
+                        code
+                        value
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: {
+                scope: 'radio',
+                code: ['MOVEMENT_CHECK_ROUND']
+            }
+        };
+        const parametersResults = await graphqlRequestClient.request(query, variables);
+        return parametersResults;
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const parametersResults = await getParameters();
+            if (parametersResults) {
+                const parameters = parametersResults.parameters.results;
+                const movementRoundChecks = parameters.find(
+                    (param: any) => param.code === 'MOVEMENT_CHECK_ROUND'
+                ).value;
+                if (movementRoundChecks) {
+                    setIsRoundToBeChecked(movementRoundChecks === '1' ? true : false);
+                }
+            }
+        }
+        fetchData();
+    }, []);
 
     //function to retrieve information to display in RadioInfosHeader before step 20
     useEffect(() => {
@@ -225,7 +273,7 @@ const HuMovement: PageComponent = () => {
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     locations={storedObject['step10'].data.locations}
-                    roundsCheck={true}
+                    roundsCheck={isRoundToBeChecked}
                     isOriginLocation={true}
                 ></SelectLocationByLevelForm>
             ) : (

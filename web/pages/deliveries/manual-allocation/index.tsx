@@ -25,7 +25,6 @@ import { DeliveryModelV2 as model } from 'models/DeliveryModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
-import configs from '../../../../common/configs.json';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { useAuth } from 'context/AuthContext';
 import { DeliveryProgressBar } from 'modules/Deliveries/Elements/DeliveryProgressBar';
@@ -33,7 +32,7 @@ import { DeliveriesManualAllocationModal } from 'modules/Deliveries/Forms/Delive
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const DeliveriesManualAllocationPages: PageComponent = () => {
-    const { permissions } = useAppState();
+    const { permissions, configs } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
@@ -51,6 +50,16 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
     };
     const autocountFilter = {
         filter: [{ field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }]
+    };
+
+    const deliveryStatusEstimated = parseInt(
+        configs.filter((c: any) => c.scope === 'delivery_status' && c.value === 'Estimated')[0]
+            ?.code
+    );
+
+    model.fieldsInfo.id = {
+        ...model.fieldsInfo.id,
+        optionTable: `{"table": "Delivery", "fieldToDisplay": "name","filtersToApply": {"status":${deliveryStatusEstimated}}}`
     };
 
     const onSelectChange = (newSelectedRowKeys: any) => {
@@ -117,7 +126,13 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
             <ListComponent
                 headerData={headerData}
                 dataModel={model}
-                searchCriteria={{ status: configs.DELIVERY_STATUS_ESTIMATED }}
+                searchCriteria={{
+                    status: Number(
+                        configs.find(
+                            (c: any) => c.scope === 'delivery_status' && c.value === 'Estimated'
+                        )?.code
+                    )
+                }}
                 advancedFilters={autocountFilter}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}

@@ -22,6 +22,7 @@ import { showError, LsIsSecured } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import parameters from '../../../../../common/parameters.json';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IHandlingUnitChecksProps {
     dataToCheck: any;
@@ -32,19 +33,21 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
     const storage = LsIsSecured();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         uniqueHU,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     // TYPED SAFE ALL
 
     useEffect(() => {
+        let data: { [label: string]: any } = {};
         if (scannedInfo && handlingUnitInfos) {
             if (
                 handlingUnitInfos.handlingUnits?.count !== 0 &&
@@ -67,7 +70,6 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                         filtersForContent
                     )
                 ) {
-                    const data: { [label: string]: any } = {};
                     const filteredContents =
                         handlingUnitInfos.handlingUnits?.results[0].handlingUnitContents.filter(
                             filtersForContent
@@ -76,19 +78,6 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                         ...handlingUnitInfos.handlingUnits?.results[0],
                         handlingUnitContents: filteredContents
                     };
-                    setTriggerRender(!triggerRender);
-                    // specific to handle unique handling unit in selected location and back function for next step
-                    if (!uniqueHU) {
-                        storedObject[`step${stepNumber}`] = {
-                            ...storedObject[`step${stepNumber}`],
-                            data
-                        };
-                    } else {
-                        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-                        storedObject[`step${stepNumber}`] = {
-                            data
-                        };
-                    }
                 } else {
                     showError(t('messages:wrong-article-stockOwner-stockStatus-or-reservation'));
                     setResetForm(true);
@@ -100,11 +89,18 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 setScannedInfo(undefined);
             }
         }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
+        if (storedObject[`step${stepNumber}`] && Object.keys(data).length != 0) {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName: processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    ...storedObject[`step${stepNumber}`],
+                    data
+                },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
+            // storage.set(process, JSON.stringify(storedObject));
         }
     }, [handlingUnitInfos]);
 

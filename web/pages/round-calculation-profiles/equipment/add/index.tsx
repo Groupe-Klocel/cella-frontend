@@ -23,7 +23,7 @@ import { FC } from 'react';
 import { META_DEFAULTS } from '@helpers';
 import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { roundCalculationProfilesRoutes } from 'modules/RoundCalculationProfiles/Static/roundCalculationProfilesRoutes';
 import { RoundCalculationProfileEquipmentModelV2 as model } from 'models/RoundCalculationProfileEquipmentModelV2';
 
@@ -63,7 +63,7 @@ const AddEquipmentPage: PageComponent = () => {
                     name: t('common:equipment')
                 })}
             />
-            <AddItemComponent
+            <AddEditItemComponent
                 headerComponent={
                     <HeaderContent
                         title={t('associate', {

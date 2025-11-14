@@ -21,16 +21,25 @@ import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-
 import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { META_DEFAULTS } from '@helpers';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditBoxPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, model);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditBoxPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -47,8 +56,9 @@ const EditBoxPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:box')} ${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={model}
                 headerComponent={

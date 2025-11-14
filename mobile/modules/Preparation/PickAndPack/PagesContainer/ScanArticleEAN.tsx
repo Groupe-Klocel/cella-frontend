@@ -17,17 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { ScanForm } from '@CommonRadio';
+import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanArticleEANProps {
-    process: string;
+    processName: string;
     stepNumber: number;
     label: string;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     forceArticleScan?: boolean;
     checkComponent: any;
@@ -35,17 +34,17 @@ export interface IScanArticleEANProps {
 }
 
 export const ScanArticleEAN = ({
-    process,
+    processName,
     stepNumber,
     label,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     forceArticleScan,
     checkComponent,
     contents
 }: IScanArticleEANProps) => {
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [articleLuBarcodesInfos, setArticleLuBarcodesInfos] = useState<any>();
@@ -104,17 +103,23 @@ export const ScanArticleEAN = ({
                 } else {
                     data['article']['featureType'] = [];
                 }
-                storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-                setTriggerRender(!triggerRender);
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: `step${stepNumber}`,
+                    object: { data }
+                });
             }
             // check workflow direction and assign current step accordingly
             else if (storedObject.currentStep < stepNumber) {
-                storedObject[`step${stepNumber}`] = {
-                    previousStep: storedObject.currentStep
-                };
-                storedObject.currentStep = stepNumber;
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName: processName,
+                    stepName: `step${stepNumber}`,
+                    object: { previousStep: storedObject.currentStep },
+                    customFields: [{ key: 'currentStep', value: stepNumber }]
+                });
             }
-            storage.set(process, JSON.stringify(storedObject));
         };
 
         fetchData();
@@ -185,30 +190,26 @@ export const ScanArticleEAN = ({
     }, [scannedInfo]);
 
     const dataToCheck = {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         contents,
         articleLuBarcodesInfos,
         featureTypeDetailsInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     };
 
     return (
         <>
-            <>
-                <ScanForm
-                    process={process}
-                    stepNumber={stepNumber}
-                    label={label}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ ...buttons }}
-                    setScannedInfo={setScannedInfo}
-                    resetForm={{ resetForm, setResetForm }}
-                ></ScanForm>
-                {checkComponent(dataToCheck)}
-            </>
+            <ScanForm_reducer
+                processName={processName}
+                stepNumber={stepNumber}
+                label={label}
+                buttons={{ ...buttons }}
+                setScannedInfo={setScannedInfo}
+                resetForm={{ resetForm, setResetForm }}
+            ></ScanForm_reducer>
+            {checkComponent(dataToCheck)}
         </>
     );
 };

@@ -781,10 +781,7 @@ const SideMenu: FC = () => {
             icon: <ExportOutlined />,
             label: t('logout'),
             onClick: () => logout()
-        },
-        {
-            key: 'end'
-        } // Need an empty item for scroll behavior
+        }
     ].filter(Boolean) as ItemType<MenuItemType>[];
 
     return <StyledMenu mode="inline" className="menu" items={menuItems} />;

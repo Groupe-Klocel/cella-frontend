@@ -96,7 +96,7 @@ export interface IListProps {
     setData?: any;
     refresh?: any;
     sortDefault?: any;
-    filterFields?: Array<FilterFieldType>;
+    defaultSubOptions?: any;
     checkbox?: boolean;
     actionButtons?: ActionButtons;
     rowSelection?: any;
@@ -192,7 +192,6 @@ const ListComponent = (props: IListProps) => {
         },
         {}
     );
-    let resetForm = false;
     let showBadge = false;
 
     // #region sorter / pagination
@@ -619,28 +618,10 @@ const ListComponent = (props: IListProps) => {
                 configList: configs.filter((config: any) => config.scope === value.config),
                 param: value.param ?? undefined,
                 paramList: parameters.filter((param: any) => param.scope === value.param),
-                optionTable: value.optionTable ?? undefined,
+                optionTable: value.optionTable ? JSON.parse(value.optionTable) : undefined,
                 isMultipleSearch: value.isMultipleSearch ?? undefined,
                 initialValue: undefined
             }));
-        if (props.filterFields) {
-            updatedFilterFields = updatedFilterFields.map((field) => {
-                const matchedField = props.filterFields!.find((item) => item.name === field.name);
-                // Remove duplicate objects from subOptions array if present
-                const matchedFieldFiltered = {
-                    ...matchedField,
-                    subOptions: matchedField?.subOptions
-                        ? matchedField.subOptions.filter(
-                              (option: any, idx: number, arr: any[]) =>
-                                  arr.findIndex(
-                                      (o) => JSON.stringify(o) === JSON.stringify(option)
-                                  ) === idx
-                          )
-                        : undefined
-                };
-                return matchedFieldFiltered ? { ...field, ...matchedFieldFiltered } : field;
-            });
-        }
         if (props.cumulSearchInfos) {
             updatedFilterFields.push(props.cumulSearchInfos.filters);
         }
@@ -677,7 +658,7 @@ const ListComponent = (props: IListProps) => {
         });
 
         setFilterFields(updatedFilterFields);
-    }, [userSettings, props.cumulSearchInfos, props.filterFields]);
+    }, [userSettings, props.cumulSearchInfos]);
     // handle cancelled or closed item
 
     const statusScope = filterFields.find((obj: any) => obj.name === 'status')?.config ?? null;
@@ -1053,7 +1034,7 @@ const ListComponent = (props: IListProps) => {
                 }
             }
             if (userSettings && userSettings.valueJson?.subOptions) {
-                setAllSubOptions(userSettings.valueJson.subOptions ?? {});
+                setAllSubOptions(userSettings.valueJson.subOptions ?? []);
             }
         }, []);
         showBadge = true;
@@ -1067,7 +1048,7 @@ const ListComponent = (props: IListProps) => {
         if (filterFields.length === 0) {
             return;
         }
-        if (filterFields.length > 0 && !resetForm) {
+        if (filterFields.length > 0) {
             const newSearchCriterias: any = searchCriterias ?? {};
             filterFields.forEach((field: any) => {
                 if (field.initialValue !== undefined && field.initialValue !== null) {
@@ -1131,7 +1112,6 @@ const ListComponent = (props: IListProps) => {
 
     const [formSearch] = Form.useForm();
     const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
-    let allFieldsInitialValue: any = userSettings?.valueJson?.filter?.allFields ?? undefined;
 
     const handleSubmit = () => {
         formSearch
@@ -1155,9 +1135,6 @@ const ListComponent = (props: IListProps) => {
                         ) {
                             savedFilters[key] = value;
                         }
-                    }
-                    if (savedFilters.allFields) {
-                        allFieldsInitialValue = savedFilters.allFields;
                     }
                     const allSubOptionsFiltered = allSubOptions
                         .map((item: any) => {
@@ -1219,10 +1196,10 @@ const ListComponent = (props: IListProps) => {
                 <ListFilters
                     form={formSearch}
                     columns={filterFields}
+                    defaultSubOptions={props.defaultSubOptions}
+                    allSubOptions={allSubOptions}
                     setAllSubOptions={setAllSubOptions}
                     handleSubmit={handleSubmit}
-                    resetForm={resetForm}
-                    allFieldsInitialValue={allFieldsInitialValue ?? undefined}
                     selectCase={!isSelectCaseExptions() ? selectCase : undefined}
                     setSelectCase={!isSelectCaseExptions() ? setSelectCase : undefined}
                     selectJoker={!isSelectCaseExptions() ? selectJoker : undefined}
@@ -1244,8 +1221,6 @@ const ListComponent = (props: IListProps) => {
         formSearch.resetFields();
         // Reset search criteria to empty object if no search criteria is provided
         !searchCriterias ? setSearch({}) : setSearch({ ...searchCriterias });
-        allFieldsInitialValue = undefined;
-        resetForm = true;
         for (const obj of filterFields) {
             obj.initialValue = undefined;
         }
@@ -1737,6 +1712,14 @@ const ListComponent = (props: IListProps) => {
                             setRows(listData);
                             setAllColumns(initialState ?? new_column_list);
                             setInitialAllColumns(result_list);
+                        } else {
+                            setRows({
+                                ...rows,
+                                results: [],
+                                count: rows?.count ?? 0,
+                                itemsPerPage: rows?.itemsPerPage ?? 10,
+                                totalPages: rows?.totalPages ?? 1
+                            });
                         }
 
                         if (props.setData) props.setData(listData.results);
@@ -2075,7 +2058,7 @@ const ListComponent = (props: IListProps) => {
     };
 
     const badgeCount = filterFields.reduce((count: number, field: any) => {
-        if (field.type && field.initialValue) {
+        if (field.initialValue) {
             return count + 1; // Count all fields with a type
         }
         return count;
@@ -2152,6 +2135,22 @@ const ListComponent = (props: IListProps) => {
                 ) {
                     return null;
                 }
+                if (
+                    allSubOptions?.find(
+                        (item: any) =>
+                            item[filterFields.find((field: any) => field.name === key)?.name]
+                    )
+                ) {
+                    const textDisplay = allSubOptions
+                        ?.find(
+                            (item: any) =>
+                                item[filterFields.find((field: any) => field.name === key)?.name]
+                        )
+                        ?.[
+                            filterFields.find((field: any) => field.name === key)?.name
+                        ].filter((item: any) => searchForTags[key].includes(item.key));
+                    return { [key]: textDisplay };
+                }
                 if (filterFields.find((field: any) => field.name === key)?.config) {
                     const listOfConfig = filterFields.find(
                         (field: any) => field.name === key
@@ -2188,22 +2187,6 @@ const ListComponent = (props: IListProps) => {
                                     code: item.code
                                 };
                             }) || searchForTags[key];
-                    return { [key]: textDisplay };
-                }
-                if (
-                    allSubOptions?.find(
-                        (item: any) =>
-                            item[filterFields.find((field: any) => field.name === key)?.name]
-                    )
-                ) {
-                    const textDisplay = allSubOptions
-                        ?.find(
-                            (item: any) =>
-                                item[filterFields.find((field: any) => field.name === key)?.name]
-                        )
-                        ?.[
-                            filterFields.find((field: any) => field.name === key)?.name
-                        ].filter((item: any) => searchForTags[key].includes(item.key));
                     return { [key]: textDisplay };
                 }
                 if (filterFields.find((field: any) => field.name === key)?.type === 7) {
@@ -2501,7 +2484,7 @@ const ListComponent = (props: IListProps) => {
                                         : undefined
                                 }
                                 tags={
-                                    !firstLoad && rows?.results ? (
+                                    !firstLoad && rows ? (
                                         props.searchable && (
                                             <>
                                                 {tagFormatter(search).map((info, index) => {
@@ -2625,7 +2608,7 @@ const ListComponent = (props: IListProps) => {
                                     ))}
                             </>
                         )}
-                        {!firstLoad && rows?.results ? (
+                        {!firstLoad && rows ? (
                             <>
                                 {props.actionButtons?.actionsComponent}
                                 <PageTableContentWrapper>

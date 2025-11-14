@@ -21,16 +21,25 @@ import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { StockOwnerModelV2 } from 'models/StockOwnerModelV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { META_DEFAULTS } from '@helpers';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { stockOwnerRoutes } from 'modules/StockOwners/Static/stockOwnersRoutes';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditStockOwnerPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, StockOwnerModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditStockOwnerPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -47,8 +56,9 @@ const EditStockOwnerPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('common:stock-owner')} ${data?.name}`} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={StockOwnerModelV2}
                 headerComponent={

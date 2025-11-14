@@ -167,7 +167,7 @@ const RoundPages: PageComponent = () => {
             }
         `;
         const variables = {
-            functionName: 'K_updateRoundsStatus',
+            functionName: 'update_rounds_status',
             event: { input: { rounds: rounds, status: configs.ROUND_STATUS_STARTED } }
         };
         try {

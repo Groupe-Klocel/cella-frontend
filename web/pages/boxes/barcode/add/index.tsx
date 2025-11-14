@@ -23,7 +23,7 @@ import { FC } from 'react';
 import { META_DEFAULTS } from '@helpers';
 import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { HandlingUnitOutboundBarcode_BoxesModelV2 as model } from 'models/HandlingUnitOutboundBarcode_BoxesModelV2';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 
@@ -62,7 +62,7 @@ const AddEquipmentPage: PageComponent = () => {
                     name: t('common:barcode')
                 })}
             />
-            <AddItemComponent
+            <AddEditItemComponent
                 headerComponent={
                     <HeaderContent
                         title={t('add2', {

@@ -17,33 +17,33 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { ScanForm } from '@CommonRadio';
+import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanFinalHandlingUnitOutboundProps {
-    process: string;
+    processName: string;
     stepNumber: number;
     label: string;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     checkComponent: any;
     defaultValue?: any;
 }
 
 export const ScanFinalHandlingUnitOutbound = ({
-    process,
+    processName,
     stepNumber,
     label,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     checkComponent,
     defaultValue
 }: IScanFinalHandlingUnitOutboundProps) => {
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [handlingUnitOutboundInfos, setHandlingUnitOutboundInfos] = useState<any>();
@@ -53,18 +53,24 @@ export const ScanFinalHandlingUnitOutbound = ({
     //Pre-requisite: initialize current step
     useEffect(() => {
         //automatically set handlingUnit when defaultValue is provided
+        let objectUpdate: any = {
+            type: 'UPDATE_BY_STEP',
+            processName: processName,
+            stepName: `step${stepNumber}`,
+            object: undefined,
+            customFields: undefined
+        };
         if (defaultValue) {
             // N.B.: in this case previous step is kept at its previous value
             const data: { [label: string]: any } = {};
             data['handlingUnit'] = defaultValue;
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            setTriggerRender(!triggerRender);
+            objectUpdate.object = { data };
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
-            storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-            storedObject.currentStep = stepNumber;
+            objectUpdate.object = { previousStep: storedObject.currentStep };
+            objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch(objectUpdate);
     }, []);
 
     // ScanFinalHandlingUnitOutbound-2: launch query
@@ -114,28 +120,24 @@ export const ScanFinalHandlingUnitOutbound = ({
     }, [scannedInfo]);
 
     const dataToCheck = {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitOutboundInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     };
 
     return (
         <>
-            <>
-                <ScanForm
-                    process={process}
-                    stepNumber={stepNumber}
-                    label={label}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ ...buttons }}
-                    setScannedInfo={setScannedInfo}
-                    resetForm={{ resetForm, setResetForm }}
-                ></ScanForm>
-                {checkComponent(dataToCheck)}
-            </>
+            <ScanForm_reducer
+                processName={processName}
+                stepNumber={stepNumber}
+                label={label}
+                buttons={{ ...buttons }}
+                setScannedInfo={setScannedInfo}
+                resetForm={{ resetForm, setResetForm }}
+            ></ScanForm_reducer>
+            {checkComponent(dataToCheck)}
         </>
     );
 };

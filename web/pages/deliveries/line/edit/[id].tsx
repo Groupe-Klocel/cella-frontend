@@ -22,19 +22,37 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { DeliveryLineModelV2 } from 'models/DeliveryLineModelV2';
-import { EditItemComponent } from 'modules/Crud/EditItemComponentV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
-import { META_DEFAULTS } from '@helpers';
+import { GetServerSideProps } from 'next';
 
-type PageComponent = FC & { layout: typeof MainLayout };
+interface PageProps {
+    id: string;
+    initialData?: any;
+    DeliveryLineModelV2: any;
+    error?: boolean;
+    errorMessage?: string;
+}
 
-const EditDeliveryPage: PageComponent = () => {
+type PageComponent = FC<PageProps> & { layout: typeof MainLayout };
+
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, DeliveryLineModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditDeliveryPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
     const [data, setData] = useState<any>();
-    const { id, deliveryName } = router.query;
+    const { id } = router.query;
 
     const deliveryDetailBreadCrumb = [
         ...itemRoutes,
@@ -56,8 +74,9 @@ const EditDeliveryPage: PageComponent = () => {
     return (
         <>
             <AppHead title={pageTitle} />
-            <EditItemComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={DeliveryLineModelV2}
                 headerComponent={

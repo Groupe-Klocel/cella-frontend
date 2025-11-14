@@ -175,67 +175,14 @@ export const SelectGoodsInForm = ({
         const selectedRound = await graphqlRequestClient.request(query, variables);
 
         data['chosenGoodsIn'] = selectedRound.round;
-        const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses
-            ?.filter((raa: any) => raa.quantity != 0)
-            .sort((a: any, b: any) => {
-                return a.roundOrderId - b.roundOrderId;
-            });
 
-        if (roundAdvisedAddresses) {
-            data['proposedRoundAdvisedAddress'] = roundAdvisedAddresses[0];
-        }
-
-        if (selectedRound?.status == configs.ROUND_STATUS_STARTED) {
-            const query = gql`
-                mutation executeFunction($functionName: String!, $event: JSON!) {
-                    executeFunction(functionName: $functionName, event: $event) {
-                        status
-                        output
-                    }
-                }
-            `;
-
-            let roundIds = rounds?.map((item) => ({ id: item.key }));
-
-            const variables = {
-                functionName: 'K_updateRoundsStatus',
-                event: { input: { rounds: roundIds, status: configs.ROUND_STATUS_IN_PREPARATION } }
-            };
-            try {
-                const launchRoundsResult = await graphqlRequestClient.request(query, variables);
-                if (launchRoundsResult.executeFunction.status === 'ERROR') {
-                    showError(launchRoundsResult.executeFunction.output);
-                } else if (
-                    launchRoundsResult.executeFunction.status === 'OK' &&
-                    launchRoundsResult.executeFunction.output.status === 'KO'
-                ) {
-                    showError(t(`errors:${launchRoundsResult.executeFunction.output.output.code}`));
-                    console.log(
-                        'Backend_message',
-                        launchRoundsResult.executeFunction.output.output
-                    );
-                } else {
-                    dispatch({
-                        type: 'UPDATE_BY_STEP',
-                        processName,
-                        stepName: `step${stepNumber}`,
-                        object: { ...storedObject[`step${stepNumber}`], data },
-                        customFields: [{ key: 'currentStep', value: stepNumber }]
-                    });
-                }
-            } catch (error) {
-                showError(t('messages:error-executing-function'));
-                console.log('executeFunctionError', error);
-            }
-        } else {
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName,
-                stepName: `step${stepNumber}`,
-                object: { ...storedObject[`step${stepNumber}`], data },
-                customFields: [{ key: 'currentStep', value: stepNumber }]
-            });
-        }
+        dispatch({
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            object: { ...storedObject[`step${stepNumber}`], data },
+            customFields: [{ key: 'currentStep', value: stepNumber }]
+        });
     };
 
     //Set goodsIn to new one when button is clicked

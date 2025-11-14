@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { BuildingModelV2 } from 'models/BuildingModelV2';
-import { AddItemComponent } from 'modules/Crud/AddItemComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addBuildingRoutes } from 'modules/Buildings/Static/buildingsRoutes';
 import { META_DEFAULTS } from '@helpers';
@@ -41,7 +41,7 @@ const AddBuildingPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-building')} />
-            <AddItemComponent
+            <AddEditItemComponent
                 dataModel={BuildingModelV2}
                 headerComponent={
                     <HeaderContent
