@@ -28,29 +28,31 @@ import CameraScanner from 'modules/Common/CameraScanner';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../../../common/configs.json';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ISelectLocationByLevelProps {
-    process: string;
+    processName: string;
     stepNumber: number;
-    trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     showSimilarLocations?: any;
     locations: Array<any>;
     roundsCheck?: boolean;
+    dontAskBeforeLocationChange?: boolean;
 }
 
 export const SelectLocationByLevelForm = ({
-    process,
+    processName,
     stepNumber,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
     showSimilarLocations,
     locations,
-    roundsCheck
+    roundsCheck,
+    dontAskBeforeLocationChange
 }: ISelectLocationByLevelProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const { graphqlRequestClient } = useAuth();
 
     // TYPED SAFE ALL
@@ -60,8 +62,6 @@ export const SelectLocationByLevelForm = ({
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
     const [popModal, setPopModal] = useState(0);
-    const [reload, setReload] = useState(false);
-    const [tempLocations, setTempLocations] = useState<any>(locations);
 
     const query = gql`
         query roundAdvisedAddresses($locationId: String!) {
@@ -99,22 +99,216 @@ export const SelectLocationByLevelForm = ({
 
     //SelectLocationByLevel-2b: handle back to previous step settings
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        for (let i = storedObject[`step${stepNumber}`]?.previousStep ?? 0; i <= stepNumber; i++) {
-            delete storedObject[`step${i}`]?.data;
-        }
-        storedObject.currentStep = storedObject[`step${stepNumber}`]?.previousStep ?? 0;
-        storage.set(process, JSON.stringify(storedObject));
+        dispatch({
+            type: 'ON_BACK',
+            processName: processName,
+            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+        });
     };
 
-    function checkChosenLocation(chosenLocation: any, data: any) {
+    function selectLocation(newChosenLocation: any) {
+        // N.B.: in this case previous step is kept at its previous value
+        const data: { [label: string]: any } = {};
+
+        data.chosenLocation = newChosenLocation;
+
+        const variables = {
+            locationId: data['chosenLocation'].id
+        };
+        const nextStep = () => {
+            if (data['chosenLocation']?.handlingUnits?.length === 1) {
+                data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
+            }
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: {
+                    data,
+                    ...(storedObject[`step${stepNumber}`]?.previousStep !== undefined && {
+                        previousStep: storedObject[`step${stepNumber}`].previousStep
+                    })
+                }
+            });
+        };
+        if (!roundsCheck) {
+            nextStep();
+        }
+        if (popModal === 2 && roundsCheck) {
+            graphqlRequestClient.request(query, variables).then((result: any) => {
+                if (result.roundAdvisedAddresses.count > 0) {
+                    Modal.confirm({
+                        title: t('messages:round-planned-for-location'),
+                        onOk: () => nextStep(),
+                        onCancel: () => onBack(),
+                        okText: t('messages:confirm'),
+                        cancelText: t('messages:cancel')
+                    });
+                } else {
+                    nextStep();
+                }
+            });
+        }
+        setPopModal((prev) => prev + 1);
+    }
+
+    async function changePRAA(
+        location: any,
+        matchingHandlingUnitContent: any,
+        chosenLocation: any
+    ) {
+        const proposedRaaIds = storedObject[`step10`].data.proposedRoundAdvisedAddresses.map(
+            (raa: any) => raa.id
+        );
+        //check whether the modal is already visible before opening it again and avoid useEffect re-rendering
+        const updateRoundAdvisedAddressesMutation = gql`
+            mutation updateRoundAdvisedAddresses(
+                $ids: [String!]!
+                $input: UpdateRoundAdvisedAddressInput!
+            ) {
+                updateRoundAdvisedAddresses(ids: $ids, input: $input)
+            }
+        `;
+        const updateRoundAdvisedAddressesVariables = {
+            ids: proposedRaaIds,
+            input: {
+                locationId: location.id,
+                handlingUnitContentId: matchingHandlingUnitContent.id
+            }
+        };
+        const updateRoundAdvisedAddressesResponse = await graphqlRequestClient.request(
+            updateRoundAdvisedAddressesMutation,
+            updateRoundAdvisedAddressesVariables
+        );
+        if (updateRoundAdvisedAddressesResponse.updateRoundAdvisedAddresses) {
+            const raaQuery = gql`
+                query roundAdvisedAddresses($filters: RoundAdvisedAddressSearchFilters!) {
+                    roundAdvisedAddresses(filters: $filters) {
+                        count
+                        results {
+                            id
+                            roundOrderId
+                            quantity
+                            status
+                            statusText
+                            locationId
+                            location {
+                                name
+                            }
+                            handlingUnitContentId
+                            handlingUnitContent {
+                                quantity
+                                reservation
+                                stockStatus
+                                articleId
+                                article {
+                                    id
+                                    name
+                                    stockOwnerId
+                                    stockOwner {
+                                        name
+                                    }
+                                    baseUnitWeight
+                                    featureType
+                                    description
+                                }
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                                handlingUnitContentFeatures {
+                                    featureCode {
+                                        name
+                                        unique
+                                    }
+                                    featureCodeId
+                                    value
+                                }
+                                handlingUnitId
+                                handlingUnit {
+                                    id
+                                    name
+                                    barcode
+                                    status
+                                    statusText
+                                    type
+                                    typeText
+                                    category
+                                    categoryText
+                                    stockOwnerId
+                                    stockOwner {
+                                        name
+                                    }
+                                }
+                            }
+                            roundLineDetailId
+                            roundLineDetail {
+                                status
+                                statusText
+                                quantityToBeProcessed
+                                handlingUnitContentOutbounds {
+                                    id
+                                    handlingUnitOutbound {
+                                        id
+                                        name
+                                    }
+                                }
+                                processedQuantity
+                                roundLineId
+                                roundLine {
+                                    lineNumber
+                                    articleId
+                                    status
+                                    statusText
+                                }
+                                deliveryLineId
+                                deliveryLine {
+                                    id
+                                    stockOwnerId
+                                    deliveryId
+                                    stockStatus
+                                    stockStatusText
+                                    reservation
+                                    articleId
+                                }
+                            }
+                        }
+                    }
+                }
+            `;
+
+            const raaVariables = {
+                filters: {
+                    id: proposedRaaIds
+                }
+            };
+
+            const raaResults = await graphqlRequestClient.request(raaQuery, raaVariables);
+            if (raaResults?.roundAdvisedAddresses?.count > 0) {
+                const step10Data = storedObject.step10.data;
+                const newStep10Data = {
+                    ...step10Data,
+                    proposedRoundAdvisedAddresses: raaResults?.roundAdvisedAddresses?.results
+                };
+                showSimilarLocations.setShowSimilarLocations(false);
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName: processName,
+                    stepName: `step10`,
+                    object: { data: newStep10Data }
+                });
+            }
+        }
+        return true;
+    }
+
+    function checkChosenLocation(chosenLocation: any) {
         if (chosenLocation) {
             const location = chosenLocation;
-            const storedObject = JSON.parse(storage.get(process) || '{}');
             const proposedRoundAdvisedAddress =
                 storedObject[`step10`]?.data?.proposedRoundAdvisedAddresses?.[0];
             const { articleId, stockOwnerId, stockStatus, reservation } =
-                proposedRoundAdvisedAddress?.handlingUnitContent || {};
+                proposedRoundAdvisedAddress?.roundLineDetail?.deliveryLine || {};
 
             const matchingHandlingUnitContent = location.handlingUnits
                 ?.flatMap((unit: any) => unit.handlingUnitContents)
@@ -131,194 +325,38 @@ export const SelectLocationByLevelForm = ({
                 location.id === proposedRoundAdvisedAddress?.locationId &&
                 matchingHandlingUnitContent
             ) {
-                setTempLocations([chosenLocation]);
-                setReload((prev) => !prev);
+                selectLocation(chosenLocation);
                 return true;
             } else if (matchingHandlingUnitContent) {
-                const proposedRaaIds = storedObject[
-                    `step10`
-                ].data.proposedRoundAdvisedAddresses.map((raa: any) => raa.id);
+                if (dontAskBeforeLocationChange) {
+                    changePRAA(location, matchingHandlingUnitContent, chosenLocation);
+                    selectLocation(chosenLocation);
+                    return true;
+                }
                 Modal.confirm({
                     title: (
                         <span style={{ fontSize: '14px' }}>
                             {t('messages:change-picking-location-confirm')}
                         </span>
                     ),
-                    onOk: async () => {
-                        //check whether the modal is already visible before opening it again and avoid useEffect re-rendering
-                        const updateRoundAdvisedAddressesMutation = gql`
-                            mutation updateRoundAdvisedAddresses(
-                                $ids: [String!]!
-                                $input: UpdateRoundAdvisedAddressInput!
-                            ) {
-                                updateRoundAdvisedAddresses(ids: $ids, input: $input)
-                            }
-                        `;
-                        const updateRoundAdvisedAddressesVariables = {
-                            ids: proposedRaaIds,
-                            input: {
-                                locationId: location.id,
-                                handlingUnitContentId: matchingHandlingUnitContent.id
-                            }
-                        };
-                        const updateRoundAdvisedAddressesResponse =
-                            await graphqlRequestClient.request(
-                                updateRoundAdvisedAddressesMutation,
-                                updateRoundAdvisedAddressesVariables
-                            );
-                        if (updateRoundAdvisedAddressesResponse.updateRoundAdvisedAddresses) {
-                            const raaQuery = gql`
-                                query roundAdvisedAddresses(
-                                    $filters: RoundAdvisedAddressSearchFilters!
-                                ) {
-                                    roundAdvisedAddresses(filters: $filters) {
-                                        count
-                                        results {
-                                            id
-                                            roundOrderId
-                                            quantity
-                                            status
-                                            statusText
-                                            locationId
-                                            location {
-                                                name
-                                            }
-                                            handlingUnitContentId
-                                            handlingUnitContent {
-                                                quantity
-                                                reservation
-                                                stockStatus
-                                                articleId
-                                                article {
-                                                    id
-                                                    name
-                                                    stockOwnerId
-                                                    stockOwner {
-                                                        name
-                                                    }
-                                                    baseUnitWeight
-                                                    featureType
-                                                }
-                                                stockOwnerId
-                                                stockOwner {
-                                                    name
-                                                }
-                                                handlingUnitContentFeatures {
-                                                    featureCode {
-                                                        name
-                                                        unique
-                                                    }
-                                                    featureCodeId
-                                                    value
-                                                }
-                                                handlingUnitId
-                                                handlingUnit {
-                                                    id
-                                                    name
-                                                    barcode
-                                                    status
-                                                    statusText
-                                                    type
-                                                    typeText
-                                                    category
-                                                    categoryText
-                                                    stockOwnerId
-                                                    stockOwner {
-                                                        name
-                                                    }
-                                                }
-                                            }
-                                            roundLineDetailId
-                                            roundLineDetail {
-                                                status
-                                                statusText
-                                                quantityToBeProcessed
-                                                handlingUnitContentOutbounds {
-                                                    id
-                                                    handlingUnitOutbound {
-                                                        id
-                                                        name
-                                                    }
-                                                }
-                                                processedQuantity
-                                                roundLineId
-                                                roundLine {
-                                                    lineNumber
-                                                    articleId
-                                                    status
-                                                    statusText
-                                                }
-                                                deliveryLineId
-                                                deliveryLine {
-                                                    id
-                                                    stockOwnerId
-                                                    deliveryId
-                                                    stockStatus
-                                                    stockStatusText
-                                                    reservation
-                                                    articleId
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            `;
-
-                            const raaVariables = {
-                                filters: {
-                                    id: proposedRaaIds
-                                }
-                            };
-
-                            const raaResults = await graphqlRequestClient.request(
-                                raaQuery,
-                                raaVariables
-                            );
-                            if (raaResults?.roundAdvisedAddresses?.count > 0) {
-                                const data: { [label: string]: any } = {};
-                                const step10Data = storedObject.step10.data;
-                                storage.remove(process);
-                                const newStoredObject = JSON.parse(storage.get(process) || '{}');
-                                newStoredObject['currentStep'] = 20;
-                                newStoredObject[`step5`] = {
-                                    ...storedObject.step5
-                                };
-                                const newStep10Data = {
-                                    round: step10Data.round,
-                                    proposedRoundAdvisedAddresses:
-                                        raaResults?.roundAdvisedAddresses?.results,
-                                    pickAndPackType: step10Data.pickAndPackType
-                                };
-                                newStoredObject[`step10`] = {
-                                    previousStep: 0,
-                                    data: newStep10Data
-                                };
-                                if (storedObject.step15) {
-                                    newStoredObject[`step15`] = storedObject.step15;
-                                }
-                                newStoredObject[`step20`] = {
-                                    ...storedObject.step20,
-                                    previousStep: storedObject.step15 ? 15 : 10,
-                                    data
-                                };
-                                showSimilarLocations.setShowSimilarLocations(false);
-                                storage.set(process, JSON.stringify(newStoredObject));
-                                setTempLocations([chosenLocation]);
-                                setReload((prev) => !prev);
-                            }
-                        }
+                    onOk: () => {
+                        console.log('Change location confirmed');
+                        changePRAA(location, matchingHandlingUnitContent, chosenLocation);
+                        selectLocation(chosenLocation);
+                        //N.B.: in this case previous step is kept at its previous value
                         return true;
                     },
                     onCancel: () => {
-                        console.log('Reset');
+                        console.log('Reset', locations);
                         form.resetFields();
                         if (locations.length === 1) {
-                            storedObject[`step20`] = {};
-                            storage.set(process, JSON.stringify(storedObject));
+                            dispatch({
+                                type: 'ON_BACK',
+                                processName: processName,
+                                stepToReturn: 'step20'
+                            });
                         }
-                        setTriggerRender(!triggerRender);
                         showSimilarLocations.setShowSimilarLocations(false);
-                        setReload((prev) => !prev);
                         return false;
                     },
                     okText: t('messages:confirm'),
@@ -326,13 +364,13 @@ export const SelectLocationByLevelForm = ({
                     bodyStyle: { fontSize: '2px' }
                 });
             } else {
-                console.log('No matching handling unit content', chosenLocation, data);
                 showError(t('messages:unexpected-scanned-item'));
                 form.resetFields();
-                const newStoredObject = JSON.parse(storage.get(process) || '{}');
-                newStoredObject[`step20`] = {};
-                storage.set(process, JSON.stringify(newStoredObject));
-                setTriggerRender(!triggerRender);
+                dispatch({
+                    type: 'ON_BACK',
+                    processName: processName,
+                    stepToReturn: 'step20'
+                });
                 return false;
             }
         }
@@ -341,57 +379,21 @@ export const SelectLocationByLevelForm = ({
     //Pre-requisite: initialize current step
     useEffect(() => {
         //automatically set chosenLocation when single location
-        if (tempLocations) {
-            if (tempLocations.length === 1) {
-                // N.B.: in this case previous step is kept at its previous value
-                const data: { [label: string]: any } = {};
-
-                data.chosenLocation = tempLocations[0];
-
-                if (!checkChosenLocation(data['chosenLocation'], data)) return;
-
-                const variables = {
-                    locationId: data['chosenLocation'].id
-                };
-                const nextStep = () => {
-                    if (data['chosenLocation']?.handlingUnits?.length === 1) {
-                        data['handlingUnit'] = data['chosenLocation']?.handlingUnits[0];
-                    }
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
-                    storage.set(process, JSON.stringify(storedObject));
-                    setTriggerRender(!triggerRender);
-                };
-                if (!roundsCheck) {
-                    nextStep();
-                }
-                if (popModal === 2 && roundsCheck) {
-                    graphqlRequestClient.request(query, variables).then((result: any) => {
-                        if (result.roundAdvisedAddresses.count > 0) {
-                            Modal.confirm({
-                                title: t('messages:round-planned-for-location'),
-                                onOk: () => nextStep(),
-                                onCancel: () => onBack(),
-                                okText: t('messages:confirm'),
-                                cancelText: t('messages:cancel')
-                            });
-                        } else {
-                            nextStep();
-                        }
-                    });
-                }
-                setPopModal((prev) => prev + 1);
-                setTempLocations(locations);
+        if (locations) {
+            if (locations.length === 1) {
+                checkChosenLocation(locations[0]);
             } else if (storedObject.currentStep < stepNumber) {
                 //check workflow direction and assign current step accordingly
-                storedObject[`step${stepNumber}`] = { previousStep: storedObject.currentStep };
-                storedObject.currentStep = stepNumber;
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName: processName,
+                    stepName: `step${stepNumber}`,
+                    object: { previousStep: storedObject.currentStep },
+                    customFields: [{ key: 'currentStep', value: stepNumber }]
+                });
             }
-            storage.set(process, JSON.stringify(storedObject));
         }
-    }, [reload]);
+    }, []);
 
     //SelectLocationByLevel-1: retrieve levels choices for select
     useEffect(() => {
@@ -413,13 +415,13 @@ export const SelectLocationByLevelForm = ({
     }, [locations]);
 
     //SelectLocationByLevel-2a: retrieve chosen level from select and set information
-    const onFinish = (values: any) => {
+    const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
         data['chosenLocation'] = locations?.find((e: any) => {
             return e.level == values.level;
         });
 
-        checkChosenLocation(data['chosenLocation'], data);
+        checkChosenLocation(data['chosenLocation']);
     };
 
     return (

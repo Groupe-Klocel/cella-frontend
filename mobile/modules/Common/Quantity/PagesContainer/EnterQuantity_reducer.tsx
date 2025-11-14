@@ -32,6 +32,7 @@ export interface IEnterQuantityReducerProps {
     availableQuantity?: number;
     checkComponent: any;
     isCommentDisplayed?: boolean;
+    initialValueType?: number;
 }
 
 export const EnterQuantity_reducer = ({
@@ -42,7 +43,8 @@ export const EnterQuantity_reducer = ({
     buttons,
     availableQuantity,
     checkComponent,
-    isCommentDisplayed
+    isCommentDisplayed,
+    initialValueType
 }: IEnterQuantityReducerProps) => {
     const { t } = useTranslation('common');
     const state = useAppState();
@@ -169,7 +171,13 @@ export const EnterQuantity_reducer = ({
                 setEnteredInfo={setEnteredInfo}
                 rules={rules}
                 min={1}
-                initialValue={1}
+                initialValue={
+                    initialValueType == 1
+                        ? 1
+                        : initialValueType == 2
+                          ? availableQuantity
+                          : undefined
+                }
                 isSelected={true}
                 isCommentDisplayed={isCommentDisplayed}
             ></EnterNumberForm>

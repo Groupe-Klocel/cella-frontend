@@ -251,7 +251,7 @@ export const SelectRoundForm = ({
             let roundIds = rounds?.map((item) => ({ id: item.key }));
 
             const variables = {
-                functionName: 'K_updateRoundsStatus',
+                functionName: 'update_rounds_status',
                 event: { input: { rounds: roundIds, status: configs.ROUND_STATUS_IN_PREPARATION } }
             };
             try {
