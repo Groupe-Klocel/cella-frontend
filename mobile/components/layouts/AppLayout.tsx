@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
 import { gql, GraphQLClient } from 'graphql-request';
 import { ScreenSpin } from '@components';
+import MessagePositionManager from 'components/common/dumb/Message/MessagePositionManager';
 
 const themes = {
     dark: `/dark-theme.css`,
@@ -259,6 +260,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }
     return (
         <ThemeSwitcherProvider defaultTheme={theme} themeMap={themes}>
+            <MessagePositionManager />
             <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
         </ThemeSwitcherProvider>
     );
