@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ContentSpin, DetailsList, HeaderContent } from '@components';
-import { Alert, Layout, Space, Typography } from 'antd';
+import { Alert, Button, Layout, Space, Typography } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
@@ -41,12 +41,21 @@ import { GroupItemDetailList } from './submodules/GroupItemDetailList';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useAppDispatch } from 'context/AppContext';
+import { ReloadOutlined } from '@ant-design/icons';
 
 const { Link } = Typography;
 
 const StyledPageContent = styled(Layout.Content)`
-    margin: 15px 30px;
-    padding: 20px;
+    padding: 15px 40px 15px 15px;
+    margin: 0px 15px;
+    position: relative;
+`;
+
+const WrapperStickyActions = styled.div`
+    position: absolute;
+    right: 0px;
+    top: 50px;
+    align-self: flex-end;
 `;
 
 export type HeaderData = {
@@ -127,12 +136,11 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     // #region
 
     const [detailData, setDetailData] = useState<any>(null);
-    const { detail, reload: reloadData } = useDetail(
-        props.id,
-        props.dataModel.endpoints.detail,
-        detailFields,
-        router.locale
-    );
+    const {
+        isLoading,
+        detail,
+        reload: reloadData
+    } = useDetail(props.id, props.dataModel.endpoints.detail, detailFields, router.locale);
 
     const tmp_titles = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].detailGroup !== null)
@@ -532,9 +540,19 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
                         )}
 
                         <StyledPageContent>
-                            {!detail.isLoading ? (
+                            {!isLoading ? (
                                 detailData ? (
                                     <>
+                                        <WrapperStickyActions>
+                                            <Space direction="vertical">
+                                                <Button
+                                                    icon={<ReloadOutlined />}
+                                                    onClick={() => {
+                                                        reloadData();
+                                                    }}
+                                                />
+                                            </Space>
+                                        </WrapperStickyActions>
                                         {displayedDetailsGroups.length > 0 && displayedGrouping ? (
                                             <GroupItemDetailList
                                                 displayedFieldGroup={displayedGrouping}
