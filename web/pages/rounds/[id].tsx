@@ -202,6 +202,20 @@ const RoundPage: PageComponent = () => {
             <Space>
                 {data?.status !== configs.ROUND_STATUS_CLOSED ? (
                     <>
+                        {data?.status === roundsStatusEstimated ? (
+                            <span style={{ marginLeft: 16 }}>
+                                <Button
+                                    type="primary"
+                                    onClick={startRounds}
+                                    disabled={data?.status !== roundsStatusEstimated}
+                                    loading={startRoundLoading}
+                                >
+                                    {t('actions:startRound')}
+                                </Button>
+                            </span>
+                        ) : (
+                            <></>
+                        )}
                         {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                             <LinkButton
                                 title={t('actions:edit')}
