@@ -584,8 +584,8 @@ const useSoftDelete = (queryName: string) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
-    const query = gql`mutation ${queryName}($id: String!) {
-        ${queryName}(id: $id)
+    const query = gql`mutation ${queryName}($id: String! $isHardDelete: Boolean) {
+        ${queryName}(id: $id, isHardDelete: $isHardDelete)
       }`;
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -596,7 +596,8 @@ const useSoftDelete = (queryName: string) => {
             setIsLoading(true);
             graphqlRequestClient
                 .request(query, {
-                    id: id
+                    id: id,
+                    isHardDelete: false
                 })
                 .then((result: any) => {
                     setIsLoading(false);
