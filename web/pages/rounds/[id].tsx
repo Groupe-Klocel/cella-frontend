@@ -23,7 +23,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions, showSuccess } from '@helpers';
+import { getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
@@ -38,7 +38,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const RoundPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions } = useAppState();
+    const { permissions, configs } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -48,6 +48,7 @@ const RoundPage: PageComponent = () => {
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idsToPrint, setIdsToPrint] = useState<string[]>();
     const [refetch, setRefetch] = useState(false);
+    const [startRoundLoading, setStartRoundLoading] = useState(false);
     const { graphqlRequestClient } = useAuth();
 
     // #region to customize information
@@ -59,6 +60,13 @@ const RoundPage: PageComponent = () => {
     ];
 
     const pageTitle = `${t('common:round')} ${data?.name}`;
+
+    const roundsStatusEstimated = parseInt(
+        configs.filter((c: any) => c.scope === 'round_status' && c.value === 'Estimated')[0]?.code
+    );
+    const roundsStatusStarted = parseInt(
+        configs.filter((c: any) => c.scope === 'round_status' && c.value === 'Started')[0]?.code
+    );
 
     //This specific request is to sort boxes according to raa order
     const getRoundWithSortedRaa = async () => {
@@ -147,6 +155,45 @@ const RoundPage: PageComponent = () => {
         });
     }
 
+    const startRounds = async () => {
+        setStartRoundLoading(true);
+        const rounds = id ? [{ id: id }] : [];
+
+        //TODO: Call mutation
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+        const variables = {
+            functionName: 'update_rounds_status',
+            event: { input: { rounds: rounds, status: roundsStatusStarted } }
+        };
+        try {
+            const launchRoundsResult = await graphqlRequestClient.request(query, variables);
+            if (launchRoundsResult.executeFunction.status === 'ERROR') {
+                showError(launchRoundsResult.executeFunction.output);
+            } else if (
+                launchRoundsResult.executeFunction.status === 'OK' &&
+                launchRoundsResult.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${launchRoundsResult.executeFunction.output.output.code}`));
+                console.log('Backend_message', launchRoundsResult.executeFunction.output.output);
+            } else {
+                showSuccess(t('messages:success-round-start'));
+                setRefetch(true);
+            }
+            setStartRoundLoading(false);
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+            setStartRoundLoading(false);
+        }
+    };
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -155,6 +202,20 @@ const RoundPage: PageComponent = () => {
             <Space>
                 {data?.status !== configs.ROUND_STATUS_CLOSED ? (
                     <>
+                        {data?.status === roundsStatusEstimated ? (
+                            <span style={{ marginLeft: 16 }}>
+                                <Button
+                                    type="primary"
+                                    onClick={startRounds}
+                                    disabled={data?.status !== roundsStatusEstimated}
+                                    loading={startRoundLoading}
+                                >
+                                    {t('actions:startRound')}
+                                </Button>
+                            </span>
+                        ) : (
+                            <></>
+                        )}
                         {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                             <LinkButton
                                 title={t('actions:edit')}
