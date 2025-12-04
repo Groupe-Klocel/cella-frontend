@@ -289,7 +289,7 @@ const HookConfigListComponent = (props: IListProps) => {
                                 showError(t('messages:error-deleting-data'));
                             }
                         } else {
-                            router.push(`/hook-configs`);
+                            reloadData();
                             showSuccess(t('messages:success-deleted'));
                         }
                     };
