@@ -288,7 +288,7 @@ const DocumentHistoryDetailComponent: FC<ISingleItemProps> = (props: ISingleItem
         isLoading: softDeleteLoading,
         result: softDeleteResult,
         mutate: callSoftDelete
-    } = useSoftDelete(props.dataModel.endpoints.softDelete!);
+    } = useSoftDelete(props.dataModel.endpoints.delete!);
 
     useEffect(() => {
         if (props.triggerSoftDelete && props.triggerSoftDelete.idToDisable) {

@@ -95,7 +95,8 @@ const BoxPage: PageComponent = () => {
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
-                statusForCancelation.HUO.includes(data?.status) ? (
+                statusForCancelation.HUO.includes(data?.status) &&
+                data?.deliveryId !== null ? (
                     <Button
                         type="primary"
                         danger

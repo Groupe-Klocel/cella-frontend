@@ -72,12 +72,22 @@ const DeliveriesManualAllocationModal = ({
 
     const getDeliveries = async () => {
         const query = gql`
-            query deliveries($id: [String!]!, $itemsPerPage: Int) {
+            query deliveries($id: [String!]!, $itemsPerPage: Int!) {
                 deliveries(filters: { id: $id }, itemsPerPage: $itemsPerPage) {
                     count
                     results {
                         id
-                        handlingUnitOutbounds {
+                        handlingUnitOutbounds(
+                            advancedFilters: {
+                                filter: [
+                                    {
+                                        searchType: DIFFERENT
+                                        fieldName: "status"
+                                        searchedValues: "2000"
+                                    }
+                                ]
+                            }
+                        ) {
                             id
                             theoriticalWeight
                             handlingUnit {

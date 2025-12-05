@@ -65,6 +65,7 @@ const Reception: PageComponent = () => {
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
     const [requestNewGoodsIn, setRequestNewGoodsIn] = useState<boolean>(false);
     const [triggerHUClose, setTriggerHUClose] = useState<boolean>(false);
+    const [quantityDefaultValue, setQuantityDefaultValue] = useState<number>();
 
     const { receptionType } = router.query;
 
@@ -111,7 +112,11 @@ const Reception: PageComponent = () => {
         const variables = {
             filters: {
                 scope: 'inbound',
-                code: ['DEFAULT_RECEPTION_LOCATION', 'RECEPTION_SCAN_HU']
+                code: [
+                    'DEFAULT_RECEPTION_LOCATION',
+                    'RECEPTION_SCAN_HU',
+                    'RECEPTION_DEFAULT_QUANTITY'
+                ]
             }
         };
         const receptionParameters = await graphqlRequestClient.request(query, variables);
@@ -183,6 +188,20 @@ const Reception: PageComponent = () => {
                     const locations = await getLocations(defaultReceptionLocation);
                     setDefaultReceptionLocation(locations?.locations.results[0]);
                 }
+                const receptionDefaultQuantity = receptionParametersResults.find(
+                    (param: any) => param.code === 'RECEPTION_DEFAULT_QUANTITY'
+                )?.value;
+                // Set quantity default value based on parameter 1=1, 2=Max, else undefined
+                setQuantityDefaultValue(() => {
+                    switch (receptionDefaultQuantity) {
+                        case '1':
+                            return 1;
+                        case '2':
+                            return 2;
+                        default:
+                            return 0;
+                    }
+                });
             }
         }
         fetchData();
@@ -471,6 +490,7 @@ const Reception: PageComponent = () => {
                         }
                         availableQuantity={availableQuantity}
                         checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
+                        initialValueType={quantityDefaultValue}
                         isCommentDisplayed={true}
                     ></EnterQuantity_reducer>
                 ) : (

@@ -155,8 +155,10 @@ const useDetail = (id: string, queryName: string, fields: Array<string>, languag
         }
     }`;
 
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [detail, setDetail] = useState<any>({ isLoading: true, data: [], error: false });
     const reload = () => {
+        setIsLoading(true);
         const variables = {
             id: id,
             language: language
@@ -173,6 +175,7 @@ const useDetail = (id: string, queryName: string, fields: Array<string>, languag
                 //     });
                 // });
                 setDetail({ isLoading: false, data: result, error: false });
+                setIsLoading(false);
             })
             .catch((error: any) => {
                 if (error.response && error.response.errors[0].extensions) {
@@ -182,9 +185,10 @@ const useDetail = (id: string, queryName: string, fields: Array<string>, languag
                     console.log(error);
                 }
                 setDetail({ isLoading: false, error: true });
+                setIsLoading(false);
             });
     };
-    return { detail, reload };
+    return { isLoading, detail, reload };
 };
 
 /**
@@ -580,8 +584,8 @@ const useSoftDelete = (queryName: string) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
-    const query = gql`mutation ${queryName}($id: String!) {
-        ${queryName}(id: $id)
+    const query = gql`mutation ${queryName}($id: String! $isHardDelete: Boolean) {
+        ${queryName}(id: $id, isHardDelete: $isHardDelete)
       }`;
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -592,7 +596,8 @@ const useSoftDelete = (queryName: string) => {
             setIsLoading(true);
             graphqlRequestClient
                 .request(query, {
-                    id: id
+                    id: id,
+                    isHardDelete: false
                 })
                 .then((result: any) => {
                     setIsLoading(false);
