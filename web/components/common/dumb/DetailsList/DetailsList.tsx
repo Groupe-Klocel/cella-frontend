@@ -55,7 +55,7 @@ const DetailsList: FC<IDetailsListProps> = ({
             {groupTitle ? <Title level={5}>{t(`common:${groupTitle}`)}</Title> : <></>}
             <Descriptions
                 style={
-                    groupTitle ? { marginTop: '10px', marginBottom: '20px' } : { marginTop: '50px' }
+                    groupTitle ? { marginTop: '10px', marginBottom: '20px' } : { marginTop: '35px' }
                 }
                 column={2}
                 size="small"

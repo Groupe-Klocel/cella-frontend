@@ -159,7 +159,11 @@ const BoxesPage: PageComponent = () => {
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: { id: string; status: number }) => (
+                        render: (record: {
+                            id: string;
+                            status: number;
+                            deliveryId: string | null;
+                        }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
@@ -183,7 +187,8 @@ const BoxesPage: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable &&
-                                statusForCancelation.HUO.includes(record?.status) ? (
+                                statusForCancelation.HUO.includes(record?.status) &&
+                                record?.deliveryId !== null ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>
