@@ -43,7 +43,7 @@ export const LoginForm = () => {
     const loginButton = t('login');
     const errorMessageUsername = t('error-message-empty-input');
     const errorMessagePassword = t('error-message-empty-input');
-    const { user } = useAppState();
+    const { user, interval, logoutTimeout } = useAppState();
 
     const dispatchUser = useAppDispatch();
     const setUserInfo = useCallback(
@@ -140,11 +140,22 @@ export const LoginForm = () => {
     useEffect(() => {
         if (status === 'authenticated' && session) {
             ssoLogin({
-                token: session.jwtToken,
-                metadata: ssoConfig.warehouseSsoConfiguration.metadata
+                token: session.jwtToken
             });
         }
-    }, [ssoConfig]);
+    }, [status, session]);
+
+    useEffect(() => {
+        if (interval != null) {
+            clearInterval(interval);
+            dispatchUser({ type: 'SET_INTERVAL', interval: null });
+        }
+
+        if (logoutTimeout != null) {
+            clearTimeout(logoutTimeout);
+            dispatchUser({ type: 'SET_LOGOUT_TIMEOUT', timeout: null });
+        }
+    }, []);
 
     const onFinish = (values: any) => {
         login({ username: values.username, password: values.password });

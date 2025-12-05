@@ -42,7 +42,7 @@ interface State {
     translations: any[];
     permissions: Array<PermissionType>;
     configs: any[];
-    parameters?: any[];
+    parameters: any[];
     theme?: string;
     isSessionMenuCollapsed?: boolean;
     isSettingMenuCollapsed?: boolean;
@@ -65,7 +65,9 @@ type ActionTypes =
     | 'UPDATE_BY_STEP'
     | 'UPDATE_BY_PROCESS'
     | 'DELETE_RF_PROCESS'
-    | 'ON_BACK';
+    | 'ON_BACK'
+    | 'SET_INTERVAL'
+    | 'SET_LOGOUT_TIMEOUT';
 
 interface BaseAction {
     type: ActionTypes;
@@ -117,7 +119,7 @@ interface ConfigsAction extends BaseAction {
 
 interface ParametersAction extends BaseAction {
     type: 'SET_PARAMETERS';
-    parameters?: any[];
+    parameters: any[];
 }
 
 interface UpdateStepAction extends BaseAction {
@@ -145,6 +147,16 @@ interface OnBackAction extends BaseAction {
     stepToReturn: string;
 }
 
+interface SetIntervalAction extends BaseAction {
+    type: 'SET_INTERVAL';
+    interval?: ReturnType<typeof setInterval> | null;
+}
+
+interface SetLogoutTimeoutAction extends BaseAction {
+    type: 'SET_LOGOUT_TIMEOUT';
+    timeout?: ReturnType<typeof setTimeout> | null;
+}
+
 type Action =
     | UserSettingsAction
     | ThemeAction
@@ -157,7 +169,9 @@ type Action =
     | UpdateStepAction
     | UpdateProcessAction
     | DeleteProcessAction
-    | OnBackAction;
+    | OnBackAction
+    | SetIntervalAction
+    | SetLogoutTimeoutAction;
 
 const initialState: State = {
     finish: false,
@@ -234,6 +248,10 @@ function reducer(state: State, action: Action): State {
                 ...state,
                 parameters: action.parameters
             };
+        case 'SET_INTERVAL':
+            return { ...state, interval: action.interval ?? null };
+        case 'SET_LOGOUT_TIMEOUT':
+            return { ...state, logoutTimeout: action.timeout ?? null };
         case 'UPDATE_BY_STEP':
             let newStateByStep = { ...state };
             newStateByStep = {
