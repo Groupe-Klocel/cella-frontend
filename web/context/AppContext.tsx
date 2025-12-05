@@ -54,6 +54,8 @@ type State = {
         id: string;
         system: boolean;
     }>;
+    interval?: number;
+    logoutTimeout?: number;
 };
 
 const initialState: State = {
@@ -139,6 +141,10 @@ function reducer(state: State, action: Action) {
                 ...state,
                 parameters: action.parameters
             };
+        case 'SET_INTERVAL':
+            return { ...state, interval: action.interval ?? null };
+        case 'SET_LOGOUT_TIMEOUT':
+            return { ...state, logoutTimeout: action.timeout ?? null };
         case 'ADD_CONFIGS':
             return {
                 ...state,
