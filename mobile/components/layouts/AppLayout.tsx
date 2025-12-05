@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
 import { gql, GraphQLClient } from 'graphql-request';
 import { ScreenSpin } from '@components';
+import MessagePositionManager from 'components/common/dumb/Message/MessagePositionManager';
 
 const themes = {
     dark: `/dark-theme.css`,
@@ -25,12 +26,19 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         user: userFromState,
         pickAndPack,
         reception,
-        returnReception
+        returnReception,
+        translations,
+        configs,
+        parameters
     } = useAppState();
     const router = useRouter();
     const [storage, setStorage] = useState<any>(null);
     const dispatchUser = useAppDispatch();
-    const [userSettingsLoading, setUserSettingsLoading] = useState<number>(0);
+    const [userSettingsLoading, setUserSettingsLoading] = useState<boolean>(false);
+    const [getUserSettingsQuery, setGetUserSettingsQuery] = useState<boolean>(false);
+    const [getTranslationSettingsQuery, setGetTranslationSettingsQuery] = useState<boolean>(false);
+    const [getConfigSettingsQuery, setGetConfigSettingsQuery] = useState<boolean>(false);
+    const [getParameterSettingsQuery, setGetParameterSettingsQuery] = useState<boolean>(false);
 
     // Initialize secure storage on client side only
     useEffect(() => {
@@ -133,19 +141,29 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         const variables = {
             warehouseWorkerId: user.id
         };
-        const queryInfo: any = await graphqlRequestClient.request(query, variables);
-        const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
-            (item: any) => item.code === 'globalParametersMobile'
-        );
-        const newSettings = containsTestCode
-            ? queryInfo.warehouseWorkerSettings.results
-            : [...queryInfo.warehouseWorkerSettings.results, ...userSettings];
-        setLang(newSettings[0].valueJson.lang);
-        dispatchUser({
-            type: 'SWITCH_USER_SETTINGS',
-            userSettings: newSettings
-        });
-        setUserSettingsLoading((prev) => prev + 1);
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(query, variables);
+
+            if (queryInfo.warehouseWorkerSettings.results.length > 0) {
+                setGetUserSettingsQuery(true);
+            }
+
+            const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
+                (item: any) => item.code === 'globalParametersMobile'
+            );
+
+            const newSettings = containsTestCode
+                ? queryInfo.warehouseWorkerSettings.results
+                : [...queryInfo.warehouseWorkerSettings.results, ...userSettings];
+            setLang(newSettings[0].valueJson.lang);
+            dispatchUser({
+                type: 'SWITCH_USER_SETTINGS',
+                userSettings: newSettings
+            });
+        } catch (error) {
+            console.log('error', error);
+            showError('Error while fetching user settings');
+        }
     }, [dispatchUser, userFromState]);
 
     const getTranslations = useCallback(async () => {
@@ -169,11 +187,10 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 type: 'SET_TRANSLATIONS',
                 translations: queryInfo.translations.results
             });
-            setUserSettingsLoading((prev) => prev + 1);
         } catch (error) {
             console.log('error', error);
             showError('Error while fetching translations');
-            setUserSettingsLoading((prev) => prev + 1);
+            setGetTranslationSettingsQuery(true);
         }
     }, [dispatchUser, userFromState]);
 
@@ -199,11 +216,10 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 type: 'SET_CONFIGS',
                 configs: queryInfo.configs.results
             });
-            setUserSettingsLoading((prev) => prev + 1);
         } catch (error) {
             console.log('error', error);
             showError('Error while fetching configs');
-            setUserSettingsLoading((prev) => prev + 1);
+            setGetConfigSettingsQuery(true);
         }
     }, [dispatchUser, user]);
 
@@ -229,24 +245,43 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 type: 'SET_PARAMETERS',
                 parameters: queryInfo.parameters.results
             });
-            setUserSettingsLoading((prev) => prev + 1);
         } catch (error) {
             console.log('error', error);
             showError('Error while fetching parameters');
-            setUserSettingsLoading((prev) => prev + 1);
+            setGetParameterSettingsQuery(true);
         }
     }, [dispatchUser, user]);
 
     useEffect(() => {
-        if (user && user?.id) {
+        if (user && user?.id && router.pathname !== '/login') {
             getUserSettings();
             getTranslations();
             getConfigs();
             getParameters();
         } else {
-            setUserSettingsLoading(4);
+            if (router.pathname === '/login') {
+                setUserSettingsLoading(false);
+                setGetUserSettingsQuery(false);
+            }
         }
-    }, [user]);
+    }, [user, router.pathname]);
+
+    useEffect(() => {
+        if (
+            (getTranslationSettingsQuery || translations?.length > 0) &&
+            (getConfigSettingsQuery || configs?.length > 0) &&
+            (getParameterSettingsQuery || parameters?.length > 0)
+        ) {
+            if (
+                (getUserSettingsQuery && userSettings.length > 1) ||
+                (!getUserSettingsQuery && userSettings.length == 1)
+            ) {
+                setUserSettingsLoading(true);
+            }
+        } else {
+            setUserSettingsLoading(false);
+        }
+    }, [user, translations, configs, parameters, getUserSettingsQuery, userSettings]);
 
     useEffect(() => {
         if (lang) {
@@ -254,11 +289,17 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         }
     }, [lang]);
 
-    if (userSettingsLoading < 4) {
+    if (
+        userSettingsLoading === false &&
+        router.pathname !== '/login' &&
+        router.pathname !== '/reset-password' &&
+        user?.id != null
+    ) {
         return <ScreenSpin />;
     }
     return (
         <ThemeSwitcherProvider defaultTheme={theme} themeMap={themes}>
+            <MessagePositionManager />
             <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
         </ThemeSwitcherProvider>
     );
