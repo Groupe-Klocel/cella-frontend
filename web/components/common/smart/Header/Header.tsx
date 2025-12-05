@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { SettingOutlined } from '@ant-design/icons';
 import { DrawerItems, Logo, ProfileMenu, UserSettings } from '@components';
 import { Col, Layout, Row } from 'antd';
-import { useAppState } from 'context/AppContext';
+import { useAppState, useAppDispatch } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import {
     useTranslationWithFallback as useTranslation,
@@ -53,6 +53,8 @@ const Header: FC = () => {
     const [firstValue, setFirstValue] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
     const state = useAppState();
+    const { interval, logoutTimeout } = state;
+    const dispatchHeader = useAppDispatch();
     const configs = state?.configs;
     const sessionTimeoutNotificationConfig = configs?.find(
         (item: any) => item.scope === 'session_timeout_notification'
@@ -162,42 +164,70 @@ const Header: FC = () => {
     ];
 
     const token = cookie.get('token');
-    let interval: any;
-    let sessionTimeoutNotification: any;
-    let time = sessionTimeoutNotificationConfig
+    const delayNotificationBeforeLogout = sessionTimeoutNotificationConfig
         ? Number(sessionTimeoutNotificationConfig.value) * 60
         : 0;
 
-    if (token && user && !sessionTimeoutNotification && !interval && !firstValue) {
+    if (token && user && !interval && !firstValue) {
         const user = decodeJWT(token);
-        const expirationTime = user.exp * 1000;
-
-        if (time !== 0) {
-            sessionTimeoutNotification = setTimeout(
-                () => {
-                    showError(
-                        t('messages:session-timeout-notification', { time: Math.floor(time / 60) }),
-                        10
-                    );
-                },
-                expirationTime - Date.now() - time * 1000
-            );
-        }
+        const tokenExpirationTime = user.exp * 1000;
+        const logoutWarningDelay =
+            tokenExpirationTime - Date.now() - delayNotificationBeforeLogout * 1000;
+        console.log('Session timeout notification will be shown in:', logoutWarningDelay, 'ms');
 
         const updateTimer = () => {
-            const diff = expirationTime - Date.now();
+            const diff = tokenExpirationTime - Date.now();
+            console.log('🚀 ~ updateTimer ~ diff:', diff);
             if (diff <= 0) {
-                clearInterval(interval);
+                if (state.interval) {
+                    clearInterval(state.interval);
+                    dispatchHeader({ type: 'SET_INTERVAL', interval: null });
+                }
+                if (state.logoutTimeout) {
+                    clearTimeout(state.logoutTimeout);
+                    dispatchHeader({ type: 'SET_LOGOUT_TIMEOUT', timeout: null });
+                }
                 setTimeLeft(0);
                 logout();
             } else {
                 setTimeLeft(Math.floor(diff / 1000));
             }
         };
-        interval = setInterval(updateTimer, 1000);
+
+        // Ajouter une validation pour éviter les délais aberrants
+        if (
+            delayNotificationBeforeLogout > 0 &&
+            logoutWarningDelay > 0 &&
+            logoutWarningDelay < 86400000
+        ) {
+            // Maximum 24 heures (86400000 ms)
+
+            if (state.logoutTimeout) {
+                clearTimeout(state.logoutTimeout);
+                dispatchHeader({ type: 'SET_LOGOUT_TIMEOUT', timeout: null });
+            }
+
+            const timeout = setTimeout(() => {
+                showError(
+                    t('messages:session-timeout-notification', {
+                        time: Math.floor(delayNotificationBeforeLogout / 60)
+                    }),
+                    10
+                );
+                const newInterval = setInterval(updateTimer, 1000);
+                dispatchHeader({ type: 'SET_INTERVAL', interval: newInterval });
+            }, logoutWarningDelay);
+
+            dispatchHeader({ type: 'SET_LOGOUT_TIMEOUT', timeout });
+        } else {
+            console.log('Délai trop grand pas de notification configurée:', {
+                delayNotificationBeforeLogout,
+                logoutWarningDelay
+            });
+        }
+
         setFirstValue(true);
     }
-
     return (
         <StyledHeader>
             <DrawerItems {...drawerProps()} />
@@ -208,20 +238,22 @@ const Header: FC = () => {
                     </Link>
                 </StyledCol>
                 <StyledCol flex="0 1 auto">
-                    {timeLeft !== null && timeLeft > 0 && timeLeft < time && (
-                        <span
-                            style={{ cursor: 'pointer' }}
-                            onClick={() =>
-                                showError(
-                                    t('messages:session-timeout-notification', {
-                                        time: `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`
-                                    })
-                                )
-                            }
-                        >
-                            {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-                        </span>
-                    )}
+                    {timeLeft !== null &&
+                        timeLeft > 0 &&
+                        timeLeft < delayNotificationBeforeLogout && (
+                            <span
+                                style={{ cursor: 'pointer' }}
+                                onClick={() =>
+                                    showError(
+                                        t('messages:session-timeout-notification', {
+                                            time: `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`
+                                        })
+                                    )
+                                }
+                            >
+                                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                            </span>
+                        )}
                 </StyledCol>
                 <StyledCol flex="0 1 auto">
                     <ProfileMenu username={user.username} profileMenu={profileMenuList} />
