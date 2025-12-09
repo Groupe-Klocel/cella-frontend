@@ -29,7 +29,8 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         returnReception,
         translations,
         configs,
-        parameters
+        parameters,
+        movementToProcess
     } = useAppState();
     const router = useRouter();
     const [storage, setStorage] = useState<any>(null);
@@ -105,6 +106,15 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [returnReception, storage]);
 
     useEffect(() => {
+        if (storage && movementToProcess) {
+            const timer = setTimeout(() => {
+                storage.set('movementToProcess', JSON.stringify(movementToProcess));
+            }, debounceTimeout);
+            return () => clearTimeout(timer);
+        }
+    }, [movementToProcess, storage]);
+
+    useEffect(() => {
         if (storage) {
             dispatchUser({
                 type: 'UPDATE_BY_PROCESS',
@@ -120,6 +130,11 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 type: 'UPDATE_BY_PROCESS',
                 processName: 'returnReception',
                 object: JSON.parse(storage.get('returnReception') || '{}')
+            });
+            dispatchUser({
+                type: 'UPDATE_BY_PROCESS',
+                processName: 'movementToProcess',
+                object: JSON.parse(storage.get('movementToProcess') || '{}')
             });
         }
     }, [storage]);
