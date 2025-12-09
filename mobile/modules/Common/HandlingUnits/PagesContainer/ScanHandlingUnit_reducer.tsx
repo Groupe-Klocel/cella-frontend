@@ -19,41 +19,36 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useLocationIds } from '@helpers';
-import { useRouter } from 'next/router';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
-export interface IScanLocationReducerProps {
+export interface IScanHandlingUnitReducerProps {
     processName: string;
     stepNumber: number;
     label: string;
     buttons: { [label: string]: any };
-    showEmptyLocations?: any;
-    showSimilarLocations?: any;
     checkComponent: any;
-    headerContent?: any;
-    initValue?: string;
     defaultValue?: any;
+    enforcedValue?: any;
 }
 
-export const ScanLocation_reducer = ({
+export const ScanHandlingUnit_reducer = ({
     processName,
     stepNumber,
     label,
     buttons,
-    showEmptyLocations,
-    showSimilarLocations,
     checkComponent,
-    headerContent,
-    initValue,
-    defaultValue
-}: IScanLocationReducerProps) => {
+    defaultValue,
+    enforcedValue
+}: IScanHandlingUnitReducerProps) => {
+    const [scannedInfo, setScannedInfo] = useState<string>();
+    const [resetForm, setResetForm] = useState<boolean>(false);
+    const [handlingUnitInfos, setHandlingUnitInfos] = useState<any>();
+    const { graphqlRequestClient } = useAuth();
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
-    const [scannedInfo, setScannedInfo] = useState<string>();
-    const [resetForm, setResetForm] = useState<boolean>(false);
-    const router = useRouter();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -64,44 +59,76 @@ export const ScanLocation_reducer = ({
             object: undefined,
             customFields: undefined
         };
+        //automatically set handlingUnit when defaultValue is provided
         if (defaultValue) {
             // N.B.: in this case previous step is kept at its previous value
             objectUpdate.object = {
                 ...storedObject[`step${stepNumber}`],
-                data: { locations: [defaultValue] }
+                data: { handlingUnit: defaultValue }
             };
-            //check workflow direction and assign current step accordingly
+        } else if (enforcedValue) {
+            setScannedInfo(enforcedValue);
         } else if (storedObject.currentStep < stepNumber) {
+            //check workflow direction and assign current step accordingly
             objectUpdate.object = { previousStep: storedObject.currentStep };
             objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
         dispatch(objectUpdate);
-    }, [defaultValue]);
+    }, []);
 
-    // ScanLocation-2: launch query
-    const locationInfos = useLocationIds(
-        { barcode: `${scannedInfo}` },
-        1,
-        100,
-        null,
-        router.locale
-    );
+    // ScanHandlingUnit-2: launch query
+    const getHU = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
+        if (scannedInfo) {
+            const query = gql`
+                query handlingUnits($filters: HandlingUnitSearchFilters) {
+                    handlingUnits(filters: $filters) {
+                        count
+                        itemsPerPage
+                        totalPages
+                        results {
+                            id
+                            name
+                            type
+                            typeText
+                            barcode
+                            category
+                            categoryText
+                            code
+                            reservation
+                            status
+                            locationId
+                        }
+                    }
+                }
+            `;
 
-    //ScanLocation-3: manage information for persistence storage and front-end errors
+            const variables = {
+                filters: {
+                    barcode: [`${scannedInfo}`]
+                }
+            };
+            const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
+            return handlingUnitInfos;
+        }
+    };
+
     useEffect(() => {
-        if (locationInfos.data) {
-            if (locationInfos.data.locations?.count !== 0) {
-                showEmptyLocations?.setShowEmptyLocations(false);
-                showSimilarLocations?.setShowSimilarLocations(false);
+        async function fetchData() {
+            const result = await getHU(scannedInfo);
+            if (result) {
+                setHandlingUnitInfos(result);
+            } else {
+                setHandlingUnitInfos(undefined);
             }
         }
-    }, [locationInfos]);
+        fetchData();
+    }, [scannedInfo]);
 
     const dataToCheck = {
         processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        locationInfos,
+        handlingUnitInfos,
         setResetForm
     };
 
@@ -114,12 +141,7 @@ export const ScanLocation_reducer = ({
                     label={label}
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
-                    showEmptyLocations={showEmptyLocations}
-                    showSimilarLocations={showSimilarLocations}
                     resetForm={{ resetForm, setResetForm }}
-                    headerContent={headerContent}
-                    initValue={initValue}
-                    isSelected={true}
                 ></ScanForm_reducer>
                 {checkComponent(dataToCheck)}
             </>
