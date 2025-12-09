@@ -43,8 +43,8 @@ const StockManagementPage: PageComponent = () => {
         getModesFromPermissions(permissions, 'mobile_reception-movement').includes(
             ModeEnum.Read
         ) && {
-            title: 'menu:reception-movement',
-            path: '/reception-movement'
+            title: 'menu:movement-to-process',
+            path: '/movement-to-process'
         },
         getModesFromPermissions(permissions, 'mobile_reception-content-movement').includes(
             ModeEnum.Read
