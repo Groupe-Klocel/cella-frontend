@@ -119,7 +119,11 @@ import {
     useGetCarrierShippingModeIdsQuery,
     GetCarrierShippingModeIdsQuery,
     useSimpleGetAllCarrierShippingModesQuery,
-    SimpleGetAllCarrierShippingModesQuery
+    SimpleGetAllCarrierShippingModesQuery,
+    useGetHandlingUnitsQuery,
+    GetHandlingUnitsQuery,
+    useGetAllHandlingUnitContentsQuery,
+    GetAllHandlingUnitContentsQuery
 } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import parameters from '../../../common/parameters.json';
@@ -1366,6 +1370,64 @@ const useHandlingUnitModelIds = (search: any, page: number, itemsPerPage: number
     return handlingUnitModel;
 };
 
+const useGetHandlingUnits = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+
+    const sortByDate = {
+        field: 'name',
+        ascending: true
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const handlingUnits = useGetHandlingUnitsQuery<Partial<GetHandlingUnitsQuery>, Error>(
+        graphqlRequestClient,
+        {
+            filters: search,
+            orderBy: newSort,
+            page: page,
+            itemsPerPage: itemsPerPage
+        }
+    );
+
+    return handlingUnits;
+};
+const useGetHandlingUnitContents = (search: any, page: number, itemsPerPage: number, sort: any) => {
+    const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+
+    const sortByDate = {
+        field: 'created',
+        ascending: false
+    };
+
+    let newSort;
+
+    if (sort === null) {
+        newSort = sortByDate;
+    } else {
+        newSort = sort;
+    }
+
+    const hucs = useGetAllHandlingUnitContentsQuery<
+        Partial<GetAllHandlingUnitContentsQuery>,
+        Error
+    >(graphqlRequestClient, {
+        filters: search,
+        orderBy: newSort,
+        page: page,
+        itemsPerPage: itemsPerPage,
+        language: router.locale
+    });
+
+    return hucs;
+};
 const useBlockIds = (search: any, page: number, itemsPerPage: number, sort: any) => {
     const { graphqlRequestClient } = useAuth();
 
@@ -1725,5 +1787,7 @@ export {
     useRuleVersionIds,
     useRuleVersionConfigIds,
     useOrderLineIds,
-    useGetCarrierShippingModes
+    useGetCarrierShippingModes,
+    useGetHandlingUnits,
+    useGetHandlingUnitContents
 };

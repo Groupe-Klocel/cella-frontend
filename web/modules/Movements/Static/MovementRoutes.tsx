@@ -29,6 +29,14 @@ export const movementsRoutes = [
     }
 ];
 
+export const addMovementRoutes = [
+    ...movementsRoutes,
+    {
+        path: '/add-movement',
+        breadcrumbName: 'actions:add-movement'
+    }
+];
+
 // export const movementsSubRoutes = [
 //     ...movementsRoutes,
 //     {
