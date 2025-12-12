@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useArticleLuBarcodeIds } from '@helpers';
+import { getLastStepWithPreviousStep, useArticleLuBarcodeIds } from '@helpers';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanArticle_reducerProps {
@@ -43,6 +43,7 @@ export const ScanArticle_reducer = ({
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
 
+    const dynamicStepNumber = getLastStepWithPreviousStep(storedObject);
     //Pre-requisite: initialize current step
     useEffect(() => {
         //check workflow direction and assign current step accordingly
@@ -51,7 +52,7 @@ export const ScanArticle_reducer = ({
                 type: 'UPDATE_BY_STEP',
                 processName: processName,
                 stepName: `step${stepNumber}`,
-                object: { previousStep: storedObject.currentStep },
+                object: { previousStep: dynamicStepNumber },
                 customFields: [{ key: 'currentStep', value: stepNumber }]
             });
         }

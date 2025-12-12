@@ -176,10 +176,20 @@ const MovementToProcess: PageComponent = () => {
 
         // Quantity - validée après step60 (movingQuantity) pour les mouvements non-fullHU
         if (!isFullHuMoving) {
+            const movingQuantity = storedObject['step60']?.data?.movingQuantity;
+            const totalQuantity = movement?.quantity;
+            const isPartialQuantity = movingQuantity && movingQuantity < totalQuantity;
+
             headerDisplay[t('common:quantity')] = (
                 <span>
-                    {movement?.quantity}
-                    {storedObject['step60']?.data?.movingQuantity ? checkIcon : null}
+                    {isPartialQuantity ? `${movingQuantity} / ${totalQuantity}` : totalQuantity}
+                    {movingQuantity ? (
+                        isPartialQuantity ? (
+                            <span style={{ color: '#fa8c16', marginLeft: '5px' }}>⚠️</span>
+                        ) : (
+                            checkIcon
+                        )
+                    ) : null}
                 </span>
             );
         }
