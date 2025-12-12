@@ -116,7 +116,10 @@ export const AddMovementForm = () => {
         const transferMovementCode = findCodeByScope(parameters, 'movement_code', 'transfer');
         const priorities = parameters
             .filter((item: any) => item.scope === 'priority')
-            .map((item: any) => ({ key: parseInt(item.code), value: item.value }))
+            .map((item: any) => ({
+                key: parseInt(item.code),
+                value: item.translation?.[filterLanguage!] || item.value
+            }))
             .sort((a: any, b: any) => a.key - b.key);
 
         return {
@@ -220,6 +223,17 @@ export const AddMovementForm = () => {
             form.setFieldsValue({
                 ...formValue,
                 originalHandlingUnitName: selectedHU.text
+            });
+        }
+    };
+
+    const onFinalHuChange = (e: any) => {
+        const selectedHU = finalHUOptions?.find((hu: any) => hu.key === e);
+        if (selectedHU) {
+            const formValue = form.getFieldsValue(true);
+            form.setFieldsValue({
+                ...formValue,
+                finalHandlingUnitName: selectedHU.text
             });
         }
     };
@@ -556,8 +570,10 @@ export const AddMovementForm = () => {
             .then(() => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
+                console.log('DLA - onFinish - formData:', formData);
 
                 const formDataWithStr = addStrToKeys(formData);
+                console.log('DLA - onFinish - formDataWithStr:', formDataWithStr);
                 formDataWithStr['articleIdStr'] = aId;
                 formDataWithStr.model = parseInt(configsParamsCodes.normalMovementModel);
                 formDataWithStr.code = parseInt(configsParamsCodes.transferMovementCode);
@@ -978,6 +994,13 @@ export const AddMovementForm = () => {
                                                 .indexOf(input.toLowerCase()) >= 0
                                         }
                                         disabled={finalHUOptions.length === 0}
+                                        onChange={onFinalHuChange}
+                                        onClear={() => {
+                                            form.setFieldsValue({
+                                                finalHandlingUnitId: undefined,
+                                                finalHandlingUnitName: undefined
+                                            });
+                                        }}
                                     >
                                         {finalHUOptions?.map((finalHu: any) => (
                                             <Option key={finalHu.key} value={finalHu.key}>

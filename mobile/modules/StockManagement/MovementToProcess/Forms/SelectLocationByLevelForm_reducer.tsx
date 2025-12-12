@@ -174,7 +174,10 @@ export const SelectLocationByLevelForm_reducer = ({
             onBack(storedObject.currentStep);
             return;
         }
-        if (expectedLocationId && expectedLocationId !== locations[0].id) {
+        if (
+            expectedLocationId &&
+            !locations.some((location) => location.id === expectedLocationId)
+        ) {
             showError(t('messages:unexpected-scanned-item'));
             onBack(storedObject.currentStep);
             return;

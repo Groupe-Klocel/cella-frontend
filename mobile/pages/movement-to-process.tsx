@@ -454,7 +454,11 @@ const MovementToProcess: PageComponent = () => {
                         stepNumber={80}
                         label={t('common:handling-unit-final')}
                         buttons={{ submitButton: true, backButton: true }}
-                        defaultValue={isFullHuMoving ? 'isFullHuMoving' : undefined}
+                        defaultValue={
+                            isFullHuMoving && !movement.finalHandlingUnitIdStr
+                                ? 'isFullHuMoving'
+                                : undefined
+                        }
                         enforcedValue={
                             !storedObject['step75']?.data?.chosenLocation.huManagement
                                 ? storedObject['step75']?.data?.chosenLocation.name
