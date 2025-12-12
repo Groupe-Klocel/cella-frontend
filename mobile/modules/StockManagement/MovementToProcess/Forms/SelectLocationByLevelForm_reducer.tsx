@@ -174,12 +174,10 @@ export const SelectLocationByLevelForm_reducer = ({
             onBack(storedObject.currentStep);
             return;
         }
-        if (
-            expectedLocationId &&
-            !locations.some((location) => location.id === expectedLocationId)
-        ) {
+        if (expectedLocationId && data['chosenLocation'].id !== expectedLocationId) {
             showError(t('messages:unexpected-scanned-item'));
             onBack(storedObject.currentStep);
+            console.log("pourquoi tu t'arrêtes pas?");
             return;
         }
         if (data['chosenLocation']?.handlingUnits?.length === 1) {
