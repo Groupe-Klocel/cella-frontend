@@ -29,7 +29,8 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         returnReception,
         translations,
         configs,
-        parameters
+        parameters,
+        movementToProcess
     } = useAppState();
     const router = useRouter();
     const [storage, setStorage] = useState<any>(null);
