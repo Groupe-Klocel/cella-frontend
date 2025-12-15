@@ -19,14 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import {
-    getModesFromPermissions,
-    META_DEFAULTS,
-    pathParams,
-    showError,
-    showSuccess,
-    showWarning
-} from '@helpers';
+import { getModesFromPermissions, pathParams, showError, showSuccess, showWarning } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -34,19 +27,17 @@ import { ModeEnum } from 'generated/graphql';
 import { RoundModelV2 as model } from 'models/RoundModelV2';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
-// import { BulkEditRoundsRenderModal } from 'modules/Rounds/Forms/BulkEditRoundsModal';
-import { AssignRoundsModal } from 'modules/Rounds/Forms/AssignRoundsModal';
+import { ManageAssignmentModal } from 'components/common/smart/Modals/ManageAssignmentModal';
 import { EditPriorityRoundsModal } from 'modules/Rounds/Forms/EditPriorityRoundsModal';
 import { ConfirmRoundCalculationModal } from 'modules/Rounds/Forms/ConfirmRoundCalculation';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
-import configs from '../../../common/configs.json';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const RoundPages: PageComponent = () => {
-    const { permissions } = useAppState();
+    const { permissions, configs, parameters } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
@@ -55,15 +46,48 @@ const RoundPages: PageComponent = () => {
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [startRoundLoading, setStartRoundLoading] = useState(false);
-    const [assignRoundsLoading, setAssignRoundsLoading] = useState(false);
-    const [unassignRoundsLoading, setUnassignRoundsLoading] = useState(false);
     const [editPriorityRoundsLoading, setEditPriorityRoundsLoading] = useState(false);
-    const [showAssignRoundsModal, setShowAssignRoundsModal] = useState(false);
+    const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
     const [showEditPriorityRoundsModal, setShowEditPriorityRoundsModal] = useState(false);
     const [showConfirmRoundCalculationModal, setShowConfirmRoundCalculationModal] = useState(false);
     const { graphqlRequestClient } = useAuth();
+    const [allSelectedHaveValidStatusForAssignment, setAllSelectedHaveValidStatusForAssignment] =
+        useState(false);
+    const [assignmentManagementLoading, setAssignmentManagementLoading] = useState(false);
+    const [selectionState, setSelectionState] = useState<'none' | 'assign' | 'unassign' | 'mixed'>(
+        'none'
+    );
+    const [allSelectedHaveCorrectStatus, setAllSelectedHaveCorrectStatus] = useState(false);
+    const [allSelectedCanBeStartRounds, setAllSelectedCanBeStartRounds] = useState(false);
+    const [allCanBeEdited, setAllCanBeEdited] = useState(false);
+    const [selectedRoundsHaveUser, setSelectedRoundsHaveUser] = useState(false);
 
     const [isRoundCalculationLoading, setIsRoundCalculationLoading] = useState(false);
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScope = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+        const estimatedStatusCode = findCodeByScope(configs, 'round_status', 'Estimated');
+        const startedStatusCode = findCodeByScope(configs, 'round_status', 'Started');
+        const pasDeStockDisponibleStatusCode = findCodeByScope(
+            configs,
+            'round_status',
+            'Pas de stock disponible'
+        );
+        const inPreparationStatusCode = findCodeByScope(configs, 'round_status', 'In preparation');
+
+        return {
+            estimatedStatusCode,
+            startedStatusCode,
+            pasDeStockDisponibleStatusCode,
+            inPreparationStatusCode
+        };
+    }, [configs, parameters]);
+
     const roundCalculation = async (input: string | null) => {
         setIsRoundCalculationLoading(true);
         const query = gql`
@@ -160,7 +184,9 @@ const RoundPages: PageComponent = () => {
             `;
             const variables = {
                 functionName: 'update_rounds_status',
-                event: { input: { rounds: rounds, status: configs.ROUND_STATUS_STARTED } }
+                event: {
+                    input: { rounds: rounds, status: Number(configsParamsCodes.startedStatusCode) }
+                }
             };
             try {
                 const launchRoundsResult = await graphqlRequestClient.request(query, variables);
@@ -188,7 +214,7 @@ const RoundPages: PageComponent = () => {
         };
 
         const hasNoStockSelected = selectedRows.some(
-            (row) => row.status === configs.ROUND_STATUS_PAS_DE_STOCK_DISPONIBLE
+            (row) => row.status === Number(configsParamsCodes.pasDeStockDisponibleStatusCode)
         );
 
         if (hasNoStockSelected) {
@@ -234,25 +260,123 @@ const RoundPages: PageComponent = () => {
         }
     };
 
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+    const onSelectChange = (newSelectedRowKeys: React.Key[], newSelectedRows: any[]) => {
         setSelectedRowKeys(newSelectedRowKeys);
+        setSelectedRows(newSelectedRows);
+        checkSelectedRowsStatus(newSelectedRowKeys as string[]);
     };
+
     const rowSelection = {
         selectedRowKeys,
-        onChange: (keys: any, rows: any) => {
-            setSelectedRowKeys(keys);
-            setSelectedRows(rows);
-        },
+        onChange: (keys: React.Key[], rows: any[]) => onSelectChange(keys, rows),
         getCheckboxProps: (record: any) => ({
-            disabled: ![
-                configs.ROUND_STATUS_ESTIMATED,
-                configs.ROUND_STATUS_PAS_DE_STOCK_DISPONIBLE
-            ].includes(record.status)
+            name: record.name
         })
     };
 
     const resetSelection = () => {
         setSelectedRowKeys([]);
+    };
+
+    const checkSelectedRowsStatus = async (selectedIds: any[]) => {
+        if (selectedIds.length === 0) {
+            setAllSelectedHaveCorrectStatus(false);
+            setAllSelectedCanBeStartRounds(false);
+            setAllCanBeEdited(false);
+            setSelectedRoundsHaveUser(false);
+            setSelectionState('none');
+            setAllSelectedHaveValidStatusForAssignment(false);
+            return;
+        }
+
+        const query = gql`
+            query rounds($filters: RoundSearchFilters) {
+                rounds(filters: $filters, itemsPerPage: 1000) {
+                    results {
+                        id
+                        status
+                        assignedUser
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            filters: { id: selectedIds }
+        };
+
+        try {
+            const result = await graphqlRequestClient.request(query, variables);
+            const selectedRounds = result.rounds.results;
+
+            const allHaveCorrectStatus = selectedRounds.every(
+                (round: any) => round.status === parseInt(configsParamsCodes.startedStatusCode)
+            );
+
+            const allCanBeEdited = selectedRounds.every((round: any) => {
+                const status = round.status;
+                const pasDeStockDisponible = parseInt(
+                    configsParamsCodes.pasDeStockDisponibleStatusCode
+                );
+                const estimated = parseInt(configsParamsCodes.estimatedStatusCode);
+                const startedStatusCode = parseInt(configsParamsCodes.startedStatusCode);
+                const inPreparationStatusCode = parseInt(
+                    configsParamsCodes.inPreparationStatusCode
+                );
+                return (
+                    status == startedStatusCode ||
+                    status == inPreparationStatusCode ||
+                    status == estimated ||
+                    status == pasDeStockDisponible
+                );
+            });
+
+            // Check status to allow modify priority
+            const allCanBeStartRounds = selectedRounds.every((round: any) => {
+                const status = round.status;
+                const estimated = parseInt(configsParamsCodes.estimatedStatusCode);
+                const pasDeStockDisponible = parseInt(
+                    configsParamsCodes.pasDeStockDisponibleStatusCode
+                );
+                return status == pasDeStockDisponible || status == estimated;
+            });
+
+            // Check status to allow Assignment/Unassignment
+            const allHaveValidStatusForAssignment = selectedRounds.every((round: any) => {
+                const status = round.status;
+                const startedStatusCode = parseInt(configsParamsCodes.startedStatusCode);
+                const inPreparationStatusCode = parseInt(
+                    configsParamsCodes.inPreparationStatusCode
+                );
+                return status == startedStatusCode || status == inPreparationStatusCode;
+            });
+
+            // Check selected movements have assigned user or not
+            const roundsWithUser = selectedRounds.filter((round: any) => round.assignedUser);
+            const hasRoundsWithUser = roundsWithUser.length > 0;
+            const hasRoundsWithoutUser = roundsWithUser.length < selectedRounds.length;
+            // Handle assignment state with priority to unassignment if at least one movement has a user
+            const hasUsersToProcess = hasRoundsWithUser;
+            const newSelectionState: 'assign' | 'unassign' | 'mixed' =
+                hasRoundsWithUser && hasRoundsWithoutUser
+                    ? 'mixed'
+                    : hasRoundsWithUser
+                      ? 'unassign'
+                      : 'assign';
+
+            setAllSelectedHaveCorrectStatus(allHaveCorrectStatus);
+            setAllSelectedCanBeStartRounds(allCanBeStartRounds);
+            setAllCanBeEdited(allCanBeEdited);
+            setSelectedRoundsHaveUser(hasUsersToProcess);
+            setSelectionState(newSelectionState);
+            setAllSelectedHaveValidStatusForAssignment(allHaveValidStatusForAssignment);
+        } catch (error) {
+            console.error('Error checking movement status:', error);
+            setAllSelectedHaveCorrectStatus(false);
+            setAllSelectedCanBeStartRounds(false);
+            setAllCanBeEdited(false);
+            setSelectedRoundsHaveUser(false);
+        }
     };
 
     const actionButtons: ActionButtons = {
@@ -271,7 +395,7 @@ const RoundPages: PageComponent = () => {
                             <Button
                                 type="primary"
                                 onClick={startRounds}
-                                disabled={!hasSelected}
+                                disabled={!hasSelected || !allSelectedCanBeStartRounds}
                                 loading={startRoundLoading}
                             >
                                 {t('actions:startRounds')}
@@ -280,57 +404,27 @@ const RoundPages: PageComponent = () => {
                         <span style={{ marginLeft: 16 }}>
                             <Button
                                 type="primary"
-                                onClick={() => setShowAssignRoundsModal(true)}
-                                disabled={!hasSelected}
-                                loading={assignRoundsLoading}
+                                onClick={() => setShowManageAssignmentModal(true)}
+                                disabled={!hasSelected || !allSelectedHaveValidStatusForAssignment}
+                                loading={assignmentManagementLoading}
                             >
-                                {t('actions:assignRounds')}
-                            </Button>
-                        </span>
-                        <span style={{ marginLeft: 16 }}>
-                            <Button
-                                type="primary"
-                                onClick={() => updateRounds({ assignedUser: null }, setUnassignRoundsLoading)}
-                                disabled={!hasSelected}
-                                loading={unassignRoundsLoading}
-                            >
-                                {t('actions:unassignRounds')}
+                                {selectionState === 'unassign'
+                                    ? t('actions:unassign-users')
+                                    : selectionState === 'mixed'
+                                      ? t('actions:unassign-users')
+                                      : t('actions:assign-user')}
                             </Button>
                         </span>
                         <span style={{ marginLeft: 16 }}>
                             <Button
                                 type="primary"
                                 onClick={() => setShowEditPriorityRoundsModal(true)}
-                                disabled={!hasSelected}
+                                disabled={!hasSelected || !allCanBeEdited}
                                 loading={editPriorityRoundsLoading}
                             >
                                 {t('actions:editPriorityRounds')}
                             </Button>
                         </span>
-                        {/* N.B.: commented for later enhancement since it requires additional development to work with round launching on selected rows
-                        <span style={{ marginLeft: 16 }}>
-                            <Button
-                                type="primary"
-                                onClick={() => {
-                                    setShowModal(true);
-                                }}
-                                disabled={!hasSelected}
-                                loading={loading}
-                            >
-                                {t('actions:edit')}
-                            </Button>
-                        </span>
-                        <BulkEditRoundsRenderModal
-                            open={showModal}
-                            rows={rowSelection}
-                            showhideModal={() => {
-                                setShowModal(!showModal);
-                            }}
-                            refetch={refetch}
-                            setRefetch={() => {
-                                setRefetch(!refetch);
-                            }}
-                        /> */}
                     </>
                 </>
             ) : null
@@ -339,13 +433,15 @@ const RoundPages: PageComponent = () => {
     return (
         <>
             <AppHead title={headerData.title} />
-            <AssignRoundsModal
+            <ManageAssignmentModal
                 showModal={{
-                    showAssignRoundsModal,
-                    setShowAssignRoundsModal
+                    showManageAssignmentModal,
+                    setShowManageAssignmentModal
                 }}
-                updateRounds={updateRounds}
-                loading={setAssignRoundsLoading}
+                updateFunction={updateRounds}
+                loading={setAssignmentManagementLoading}
+                userAssigned={selectedRoundsHaveUser ? 'at least one user' : undefined}
+                additionalInfoToUpdate={{}}
             />
             <EditPriorityRoundsModal
                 showModal={{
