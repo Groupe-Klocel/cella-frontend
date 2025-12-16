@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import { HandlingUnitContentInboundModelV2 as model } from 'models/HandlingUnitContentInboundModelV2';
+import { HandlingUnitContentInboundModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';

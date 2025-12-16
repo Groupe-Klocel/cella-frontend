@@ -28,7 +28,7 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 // import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
-import { FeaturesListModelV2 as model } from 'models/FeaturesListModelV2';
+import { FeaturesListModelV2 as model } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

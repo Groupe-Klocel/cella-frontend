@@ -51,7 +51,7 @@ import { useRouter } from 'next/router';
 import { EditableCell } from 'modules/Translations/Elements/EditableCell';
 import { EditableRow } from 'modules/Translations/Elements/EditableRow';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { TranslationModelV2 } from 'models/TranslationModelV2';
+import { TranslationModelV2 } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

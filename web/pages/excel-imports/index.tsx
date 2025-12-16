@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead } from '@components';
 import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
-import { NotificationModelV2 as model } from 'models/NotificationModelV2';
+import { NotificationModelV2 as model } from '@helpers';
 import { HeaderData } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC } from 'react';

@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { MovementModelV2 } from 'models/MovementModelV2';
+import { MovementModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { AddMovement } from 'modules/Movements/PagesContainer/AddMovement';

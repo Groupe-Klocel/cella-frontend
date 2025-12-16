@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { BarcodeOutlined } from '@ant-design/icons';
 import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { META_DEFAULTS, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
-import { BarcodeModelV2 as model } from 'models/BarcodeModelV2';
+import { BarcodeModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { barcodesRoutes as itemRoutes } from 'modules/Barcodes/Static/barcodesRoutes';
 import { useRouter } from 'next/router';

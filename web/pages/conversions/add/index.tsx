@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import configs from '../../../../common/configs.json';
-import { ConversionModelV2 } from 'models/ConversionModelV2';
+import { ConversionModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addConversionRoutes } from 'modules/Conversions/Static/conversionsRoutes';

@@ -80,6 +80,7 @@ export const ScanArticleEAN = ({
                                 id
                                 name
                                 description
+                                genericArticleComment
                                 baseUnitWeight
                                 stockOwnerId
                                 stockOwner {

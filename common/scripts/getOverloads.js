@@ -36,6 +36,7 @@ const ignoredFolders = [
   ".github",
   "pagesModels",
   "locales",
+  "modelsSpe",
 ];
 
 const ignoredRoutes = [];

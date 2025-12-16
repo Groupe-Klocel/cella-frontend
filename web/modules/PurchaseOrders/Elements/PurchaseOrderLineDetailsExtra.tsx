@@ -25,7 +25,7 @@ import { Divider, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { PurchaseOrderLineFeatureModelV2 as model } from 'models/PurchaseOrderLineFeatureModelV2';
+import { PurchaseOrderLineFeatureModelV2 as model } from '@helpers';
 import { purchaseOrdersRoutes as itemRoutes } from 'modules/PurchaseOrders/Static/purchaseOrdersRoutes';
 
 export interface IItemDetailsProps {

@@ -25,7 +25,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { configurationsRoutes } from 'modules/Configurations/Static/configurationRoutes';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { EditConfigParamComponent } from 'modules/Crud/EditConfigParamComponentV2';
-import { ConfigModelV2 } from 'models/ConfigModelV2';
+import { ConfigModelV2 } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

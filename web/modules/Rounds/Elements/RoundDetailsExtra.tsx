@@ -32,13 +32,13 @@ import {
     useUpdateRoundAdvisedAddressMutation
 } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
-import { RoundAdvisedAddressModelV2 } from 'models/RoundAdvisedAddressModelV2';
+import { HandlingUnitOutboundModelV2 } from '@helpers';
+import { RoundAdvisedAddressModelV2 } from '@helpers';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { RoundLineModelV2 } from 'models/RoundLineModelV2';
-import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { RoundLineModelV2 } from '@helpers';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 
 const { Title } = Typography;
 

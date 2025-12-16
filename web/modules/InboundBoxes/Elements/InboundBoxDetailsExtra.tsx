@@ -26,9 +26,9 @@ import { useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { HandlingUnitContentInboundModelV2 } from 'models/HandlingUnitContentInboundModelV2';
+import { HandlingUnitContentInboundModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
-import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 
 export interface IItemDetailsProps {
     boxId?: string | any;

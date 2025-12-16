@@ -247,6 +247,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                                     name
                                 }
                                 description
+                                genericArticleComment
                                 baseUnitWeight
                                 featureType
                             }

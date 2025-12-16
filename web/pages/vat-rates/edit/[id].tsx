@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { SingleParameterModelV2 as model } from 'models/SingleParameterModelV2';
+import { SingleParameterModelV2 as model } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { vatRatesRoutes as itemRoutes } from 'modules/VatRates/Static/vatRatesRoutes';
 import { META_DEFAULTS } from '@helpers';

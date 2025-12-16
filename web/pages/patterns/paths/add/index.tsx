@@ -25,7 +25,7 @@ import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { addPatternRoutes } from 'modules/Patterns/Static/patternsRoutes';
-import { PatternPathLink_PatternModelV2 as model } from 'models/PatternPathLink_PatternModelV2';
+import { PatternPathLink_PatternModelV2 as model } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

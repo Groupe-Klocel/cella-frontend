@@ -30,8 +30,8 @@ import {
 import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import { WarehouseWorkerUserRoleModelV2 } from 'models/WarehouseWorkerUserRoleModelV2';
-import { WarehouseWorkerStockOwnerModelV2 } from 'models/WarehouseWorkerStockOwnerModelV2';
+import { WarehouseWorkerUserRoleModelV2 } from '@helpers';
+import { WarehouseWorkerStockOwnerModelV2 } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';

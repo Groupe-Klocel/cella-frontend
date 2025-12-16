@@ -25,11 +25,11 @@ import { Button, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { PurchaseOrderLineModelV2 } from 'models/PurchaseOrderLineModelV2';
-import { MovementModelV2 } from 'models/MovementModelV2';
+import { PurchaseOrderLineModelV2 } from '@helpers';
+import { MovementModelV2 } from '@helpers';
 import { useState } from 'react';
 import configs from '../../../../common/configs.json';
-import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 //import { PurchaseOrderLineDetailsExtra } from './PurchaseOrderLineDetailsExtra';
 
 export interface IItemDetailsProps {

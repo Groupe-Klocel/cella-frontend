@@ -26,7 +26,7 @@ import { useArticles, useArticleSets } from '@helpers';
 import { FormOptionType } from 'models/Models';
 import MainLayout from 'components/layouts/MainLayout';
 import { articleSetsRoutes } from 'modules/ArticleSets/Static/articleSetRoutes';
-import { ArticleSetDetailModelV2 } from 'models/ArticleSetDetailModelV2';
+import { ArticleSetDetailModelV2 } from '@helpers';
 import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };

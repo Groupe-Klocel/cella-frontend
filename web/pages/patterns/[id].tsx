@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
 import { META_DEFAULTS, getModesFromPermissions, showError, showInfo, showSuccess } from '@helpers';
-import { PatternModelV2 as model } from 'models/PatternModelV2';
+import { PatternModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { PatternDetailsExtra } from 'modules/Patterns/Elements/PatternDetailsExtras';
 import { patternsRoutes as itemRoutes } from 'modules/Patterns/Static/patternsRoutes';

@@ -47,7 +47,7 @@ import {
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
-import { LoadModelV2 as model } from 'models/LoadModelV2';
+import { LoadModelV2 as model } from '@helpers';
 import { loadsRoutes as itemRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import configs from '../../../common/configs.json';
 import { useRouter } from 'next/router';

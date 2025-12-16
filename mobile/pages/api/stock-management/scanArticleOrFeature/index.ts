@@ -87,6 +87,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                             id
                             name
                             description
+                            genericArticleComment
                             stockOwnerId
                             stockOwner {
                                 id
@@ -142,6 +143,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         id
                         name
                         description
+                        genericArticleComment
                         stockOwnerId
                         stockOwner {
                             id
@@ -188,6 +190,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             article: {
                 articleId,
                 description: article.description,
+                genericArticleComment: article.genericArticleComment,
                 name: article.name,
                 stockOwnerId: article?.stockOwnerId,
                 stockOwner: article?.stockOwner

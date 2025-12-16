@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ParameterModelV2 } from 'models/ParameterModelV2';
+import { ParameterModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { stocksRoutes } from 'modules/Stocks/Static/stocksRoutes';
 import { META_DEFAULTS } from '@helpers';

@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -67,7 +67,7 @@ const RoundPicking: PageComponent = () => {
 
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
-        const object: { [k: string]: any } = {};
+        let object: { [k: string]: any } = {};
         if (
             storedObject[`step${workflow.expectedSteps[0]}`]?.data?.round &&
             storedObject[`step${workflow.expectedSteps[0]}`]?.data?.proposedRoundAdvisedAddress
@@ -93,6 +93,7 @@ const RoundPicking: PageComponent = () => {
                 storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
             object[t('common:handling-unit_abbr')] = handlingUnit.name;
         }
+        object = getMoreInfos(object, storedObject, workflow.processName, t);
         setOriginDisplay(object);
         setFinalDisplay(object);
     }, [triggerRender]);
