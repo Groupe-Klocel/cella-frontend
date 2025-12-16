@@ -27,6 +27,16 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                     supplierArticleCode: article?.genericArticleComment,
                     articleName: article?.name
                 };
+            } else {
+                const proposedRoundAdvisedAddress =
+                    storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0];
+                if (proposedRoundAdvisedAddress?.handlingUnitContent?.article) {
+                    const article = proposedRoundAdvisedAddress.handlingUnitContent.article;
+                    return {
+                        supplierArticleCode: article?.genericArticleComment,
+                        articleName: article?.name
+                    };
+                }
             }
             break;
         case 'reception':
