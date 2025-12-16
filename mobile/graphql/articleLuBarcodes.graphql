@@ -37,6 +37,7 @@ query GetArticleLuBarcodeIds(
                 id
                 name
                 description
+                genericArticleComment
                 newProduct
                 featureType
             }

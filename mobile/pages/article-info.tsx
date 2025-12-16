@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -62,7 +62,7 @@ const ArticleInfo: PageComponent = () => {
 
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
-        const object: { [k: string]: any } = {};
+        let object: { [k: string]: any } = {};
 
         if (articleInfo[`step${workflow.expectedSteps[0]}`]?.data?.resType === 'serialNumber') {
             const serialNumber =
@@ -83,6 +83,7 @@ const ArticleInfo: PageComponent = () => {
                 ? (object[t('common:barcode')] = chosenArticleLuBarcode.barcode.name)
                 : undefined;
         }
+        object = getMoreInfos(object, articleInfo, workflow.processName, t);
         setOriginDisplay(object);
         setFinalDisplay(object);
     }, [triggerRender]);

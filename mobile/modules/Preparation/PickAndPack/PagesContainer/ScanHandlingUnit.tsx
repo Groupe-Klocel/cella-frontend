@@ -155,6 +155,7 @@ export const ScanHandlingUnit = ({
                                     id
                                     name
                                     description
+                                    genericArticleComment
                                     baseUnitWeight
                                     featureType
                                 }

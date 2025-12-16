@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
@@ -210,7 +210,7 @@ const Reception: PageComponent = () => {
 
     //function to retrieve information to display in RadioInfosHeader
     let availableQuantity: number | undefined = undefined;
-    const headerDisplay: { [k: string]: any } = {};
+    let headerDisplay: { [k: string]: any } = {};
     if (storedObject['step10']?.data?.purchaseOrder) {
         const purchaseOrder = storedObject['step10']?.data?.purchaseOrder;
         headerDisplay[t('common:purchase-order_abbr')] = purchaseOrder.name;
@@ -274,6 +274,7 @@ const Reception: PageComponent = () => {
         const handlingUnit = storedObject['step110']?.data?.handlingUnit;
         headerDisplay[t('common:hu')] = handlingUnit.barcode;
     }
+    headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
 
     const onReset = () => {
         dispatch({
