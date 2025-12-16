@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
@@ -198,7 +198,7 @@ const PickAndPack: PageComponent = () => {
         storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0] || [];
 
     //function to retrieve information to display in RadioInfosHeader
-    const headerDisplay: { [k: string]: any } = {};
+    let headerDisplay: { [k: string]: any } = {};
     if (storedObject['step5']?.data?.equipmentName) {
         headerDisplay[t('common:equipment')] = storedObject['step5']?.data?.equipmentName;
     }
@@ -297,6 +297,7 @@ const PickAndPack: PageComponent = () => {
                     0
                 );
         }
+        headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
     }
 
     // retrieve location, article and qty to propose

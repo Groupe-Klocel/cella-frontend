@@ -158,6 +158,7 @@ export const SelectRoundForm = ({
                             article {
                                 id
                                 name
+                                genericArticleComment
                                 stockOwnerId
                                 stockOwner {
                                     name

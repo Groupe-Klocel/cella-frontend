@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -73,7 +73,7 @@ const Preparation: PageComponent = () => {
 
     //function to retrieve information to display in RadioInfosHeader before step 50
     useEffect(() => {
-        const object: { [k: string]: any } = {};
+        let object: { [k: string]: any } = {};
         if (storedObject?.currentStep <= 50) {
             setHeaderContent(false);
         }
@@ -111,6 +111,7 @@ const Preparation: PageComponent = () => {
             object[t('common:article_abbr')] =
                 movingQuantity + ' x ' + articleLuBarcode.article.name;
         }
+        object = getMoreInfos(object, storedObject, workflow.processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 

@@ -36,6 +36,7 @@ query GetAllArticles(
             description
             name
             additionalDescription
+            genericArticleComment
             supplierName
             translation
             length
@@ -77,6 +78,7 @@ query GetArticleById($id: String!, $language: String = "en") {
         description
         name
         additionalDescription
+        genericArticleComment
         supplierName
         translation
         length
