@@ -21,7 +21,7 @@ import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
-import { CreditLineModelV2 } from 'models/CreditLineModelV2';
+import { CreditLineModelV2 } from '@helpers';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { creditsRoutes } from 'modules/Credits/Static/creditsRoutes';
 import MainLayout from 'components/layouts/MainLayout';

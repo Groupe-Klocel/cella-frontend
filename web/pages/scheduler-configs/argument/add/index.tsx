@@ -24,7 +24,7 @@ import { AddSchedulerConfigArgument } from 'modules/SchedulerConfigs/PageContain
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { SchedulerConfigModelV2 as model } from 'models/SchedulerConfigModelV2';
+import { SchedulerConfigModelV2 as model } from '@helpers';
 import { schedulerConfigsRoutes } from 'modules/SchedulerConfigs/Static/schedulerConfigsRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };

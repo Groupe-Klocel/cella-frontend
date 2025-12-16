@@ -32,10 +32,10 @@ import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
-import { ArticleLuBarcodeModelV2 } from 'models/ArticleLuBarcodeModelV2';
+import { ArticleLuBarcodeModelV2 } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { ArticleLuModelV2 } from 'models/ArticleLuModelV2';
-import { ArticleExtrasModelV2 } from 'models/ArticleExtrasModelV2';
+import { ArticleLuModelV2 } from '@helpers';
+import { ArticleExtrasModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { ArticleExtrasListComponent } from './ArticleExtrasListComponent';
 

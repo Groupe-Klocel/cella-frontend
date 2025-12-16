@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { PatternPathModelV2 } from 'models/PatternPathModelV2';
+import { PatternPathModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addPatternPathRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';

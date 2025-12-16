@@ -29,7 +29,7 @@ import { META_DEFAULTS, getModesFromPermissions, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { ModeEnum } from 'generated/graphql';
-import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
+import { HandlingUnitOutboundModelV2 as model } from '@helpers';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';

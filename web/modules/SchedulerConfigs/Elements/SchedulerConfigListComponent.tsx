@@ -49,7 +49,7 @@ import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { schedulerConfigsRoutes as itemRoutes } from 'modules/SchedulerConfigs/Static/schedulerConfigsRoutes';
-import { SchedulerConfigDetailModelV2 as model } from 'models/SchedulerConfigDetailModelV2';
+import { SchedulerConfigDetailModelV2 as model } from '@helpers';
 import { isString } from 'lodash';
 
 export type HeaderData = {

@@ -21,7 +21,7 @@ import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
+import { HandlingUnitOutboundModelV2 as model } from '@helpers';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';

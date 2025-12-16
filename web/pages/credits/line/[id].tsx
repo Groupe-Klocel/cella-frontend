@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { CreditLineModelV2 as model } from 'models/CreditLineModelV2';
+import { CreditLineModelV2 as model } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { ModeEnum } from 'generated/graphql';

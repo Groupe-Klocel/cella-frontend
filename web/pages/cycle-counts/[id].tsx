@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions, showError, showSuccess } from '@helpers';
-import { CycleCountModelV2 as model } from 'models/CycleCountModelV2';
+import { CycleCountModelV2 as model } from '@helpers';
 import { CycleCountDetailsExtra } from 'modules/CycleCounts/Elements/CycleCountDetailsExtra';
 import { cycleCountsRoutes as itemRoutes } from 'modules/CycleCounts/Static/cycleCountsRoutes';
 import { useAppState } from 'context/AppContext';

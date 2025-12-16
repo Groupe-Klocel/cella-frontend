@@ -21,7 +21,7 @@ import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { LoadModelV2 } from 'models/LoadModelV2';
+import { LoadModelV2 } from '@helpers';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { loadsRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';

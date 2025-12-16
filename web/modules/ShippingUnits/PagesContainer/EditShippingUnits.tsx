@@ -30,7 +30,7 @@ import { getModesFromPermissions, showError, useDetail } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { shippingUnitsRoutes } from 'modules/ShippingUnits/Static/shippingUnitsRoutes';
 import { EditShippingUnitsForm } from '../Forms/EditShippingUnitsForm';
-import { HandlingUnitOutboundModelV2 as model } from 'models/HandlingUnitOutboundModelV2';
+import { HandlingUnitOutboundModelV2 as model } from '@helpers';
 
 const StyledPageContent = styled(Layout.Content)`
     margin: 0px 30px 50px 30px;

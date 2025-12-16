@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import { ArticleSetDetailModelV2 as model } from 'models/ArticleSetDetailModelV2';
+import { ArticleSetDetailModelV2 as model } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { articleSetsRoutes as itemRoutes } from 'modules/ArticleSets/Static/articleSetRoutes';

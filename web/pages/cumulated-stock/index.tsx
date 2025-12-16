@@ -16,18 +16,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { FC, useEffect, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
-import { META_DEFAULTS } from '@helpers';
 import { ListComponent } from 'modules/Crud/ListComponentV2';
 import { AppHead, HeaderContent } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { cumulatedStockRoutes as itemRoutes } from 'modules/CumulatedStock/static/cumulatedStockRoutes';
-import { HandlingUnitContentsCumulatedModelV2 as model } from 'models/HandlingUnitContentsCumulatedModelV2';
+import { HandlingUnitContentsCumulatedModelV2 as model } from '@helpers';
 import { Col, Form, Row, Select } from 'antd';
+import { injectedModel } from 'helpers/utils/InjectedModel';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const CumulatedStock: PageComponent = () => {
     const { t } = useTranslation();
+    const [HandlingUnitContentsCumulatedModel, setHandlingUnitContentsCumulatedModel] =
+        useState<any>(model);
     const functionSum = [{ function: 'sum', fields: ['quantity'] }];
     const [form] = Form.useForm();
 
@@ -35,26 +37,121 @@ const CumulatedStock: PageComponent = () => {
     const [criteriaSelected, setCriteriaSelected] = useState<string[]>([]);
     const [refetch, setRefetch] = useState<boolean>(false);
 
+    const stockStatus = {
+        isListRequested: true,
+        searchingFormat: 'Dropdown',
+        isDefaultHiddenList: false,
+        isExcludedFromList: true,
+        isSortable: true,
+        isDetailRequested: true,
+        isExcludedFromDetail: true,
+        detailGroup: null,
+        link: null,
+        addEditFormat: 'Dropdown',
+        addEditStep: null,
+        maxLength: null,
+        displayName: null,
+        isMandatory: true,
+        minRule: null,
+        maxRule: null,
+        config: null,
+        param: 'stock_statuses',
+        optionTable: null
+    };
+
+    const stockStatusText = {
+        isListRequested: true,
+        isDefaultHiddenList: false,
+        isExcludedFromList: false,
+        isSortable: true,
+        searchingFormat: null,
+        isDetailRequested: true,
+        isExcludedFromDetail: false,
+        detailGroup: null,
+        link: null,
+        addEditFormat: null,
+        addEditStep: null,
+        maxLength: null,
+        displayName: null,
+        isMandatory: false,
+        minRule: null,
+        maxRule: null,
+        config: null,
+        param: null,
+        optionTable: null
+    };
+
+    const stockOwnerId = {
+        isListRequested: true,
+        searchingFormat: 'Dropdown',
+        isDefaultHiddenList: false,
+        isExcludedFromList: true,
+        isSortable: true,
+        isDetailRequested: true,
+        isExcludedFromDetail: true,
+        detailGroup: null,
+        link: null,
+        addEditFormat: null,
+        addEditStep: null,
+        maxLength: null,
+        displayName: 'stockOwner',
+        isMandatory: false,
+        minRule: null,
+        maxRule: null,
+        config: null,
+        param: null,
+        optionTable: '{"table": "StockOwner", "fieldToDisplay": "name"}',
+        isEditDisabled: true
+    };
+
+    const stockOwnerName = {
+        isListRequested: true,
+        isDefaultHiddenList: false,
+        isExcludedFromList: false,
+        isSortable: true,
+        searchingFormat: null,
+        isDetailRequested: true,
+        isExcludedFromDetail: false,
+        detailGroup: null,
+        link: 'stock-owners/stockOwnerId',
+        addEditFormat: null,
+        addEditStep: null,
+        maxLength: null,
+        displayName: null,
+        isMandatory: false,
+        minRule: null,
+        maxRule: null,
+        config: null,
+        param: null,
+        optionTable: null
+    };
+
     useEffect(() => {
         if (criteriaSelected.length >= 0) {
-            if (criteriaSelected.includes('stockStatus')) {
-                model.fieldsInfo.stockStatus.isListRequested = true;
-                model.fieldsInfo.stockStatusText.isListRequested = true;
-                model.fieldsInfo.stockStatus.searchingFormat = 'Dropdown';
-            } else {
-                model.fieldsInfo.stockStatus.isListRequested = false;
-                model.fieldsInfo.stockStatusText.isListRequested = false;
-                model.fieldsInfo.stockStatus.searchingFormat = null;
-            }
-            if (criteriaSelected.includes('stockOwner')) {
-                model.fieldsInfo.stockOwnerId.isListRequested = true;
-                model.fieldsInfo['stockOwner{name}'].isListRequested = true;
-                model.fieldsInfo.stockOwnerId.searchingFormat = 'Dropdown';
-            } else {
-                model.fieldsInfo.stockOwnerId.isListRequested = false;
-                model.fieldsInfo['stockOwner{name}'].isListRequested = false;
-                model.fieldsInfo.stockOwnerId.searchingFormat = null;
-            }
+            setHandlingUnitContentsCumulatedModel(
+                injectedModel(model, 'HANDLING_UNIT_CONTENT_CUMULATED', [
+                    [
+                        null,
+                        'stockStatus',
+                        criteriaSelected.includes('stockStatus') ? stockStatus : {}
+                    ],
+                    [
+                        null,
+                        'stockStatusText',
+                        criteriaSelected.includes('stockStatus') ? stockStatusText : {}
+                    ],
+                    [
+                        null,
+                        'stockOwnerId',
+                        criteriaSelected.includes('stockOwner') ? stockOwnerId : {}
+                    ],
+                    [
+                        null,
+                        'stockOwner{name}',
+                        criteriaSelected.includes('stockOwner') ? stockOwnerName : {}
+                    ]
+                ])
+            );
         }
         setRefetch(!refetch);
     }, [criteriaSelected]);
@@ -110,7 +207,7 @@ const CumulatedStock: PageComponent = () => {
                 </Row>
             </Form>
             <ListComponent
-                dataModel={model}
+                dataModel={HandlingUnitContentsCumulatedModel}
                 cumulSearchInfos={category}
                 functions={functionSum}
                 triggerDelete={undefined}

@@ -23,7 +23,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState, FC } from 'react';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
-import { HookConfigModelV2 as model } from 'models/HookConfigModelV2';
+import { HookConfigModelV2 as model } from '@helpers';
 export interface ISingleItemProps {
     detailFields: string | any;
 }

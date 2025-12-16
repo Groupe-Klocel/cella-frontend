@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
-import { RecordHistoryModelV2 as model } from 'models/RecordHistoryModelV2';
+import { RecordHistoryModelV2 as model } from '@helpers';
 import {
     HeaderData,
     ItemDetailComponent

@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { PurchaseOrderModelV2 } from 'models/PurchaseOrderModelV2';
+import { PurchaseOrderModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addPurchaseOrderRoutes } from 'modules/PurchaseOrders/Static/purchaseOrdersRoutes';
 import { META_DEFAULTS } from '@helpers';

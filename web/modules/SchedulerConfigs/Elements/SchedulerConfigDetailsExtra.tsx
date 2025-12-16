@@ -20,8 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Divider } from 'antd';
 import { useState } from 'react';
 import { SchedulerConfigListComponent } from 'modules/SchedulerConfigs/Elements/SchedulerConfigListComponent';
-import { SchedulerConfigDetailModelV2 as argument } from 'models/SchedulerConfigDetailModelV2';
-import { SchedulerConfigModelV2 as model } from 'models/SchedulerConfigModelV2';
+import { SchedulerConfigDetailModelV2 as argument } from '@helpers';
+import { SchedulerConfigModelV2 as model } from '@helpers';
 
 export interface IItemDetailsProps {
     Id?: string | any;

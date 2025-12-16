@@ -35,7 +35,7 @@ import {
     ModeEnum,
     useDeleteWarehouseWorkerMutation
 } from 'generated/graphql';
-import { WarehouseWorkerModelV2 as model } from 'models/WarehouseWorkerModelV2';
+import { WarehouseWorkerModelV2 as model } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';

@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useMemo, useState } from 'react';
-import { EquipmentModelV2 } from 'models/EquipmentModelV2';
+import { EquipmentModelV2 } from '@helpers';
 import { equipmentRoutes } from 'modules/Equipment/Static/equipmentRoutes';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 
