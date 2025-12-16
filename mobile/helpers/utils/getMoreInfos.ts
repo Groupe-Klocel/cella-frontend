@@ -25,9 +25,10 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                         .article;
                 return {
                     supplierArticleCode: article?.genericArticleComment,
-                    article: article?.name
+                    articleName: article?.name
                 };
             }
+            break;
         case 'reception':
         case 'receptionReturn':
             if (storedObject[`step50`]?.data) {
@@ -38,6 +39,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                     articleName: `${receptionArticle?.name}-${receptionArticle?.description}`
                 };
             }
+            break;
         case 'articleInfo':
             if (storedObject[`step20`]?.data) {
                 const articleInfoArticle =
@@ -51,6 +53,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                         ')'
                 };
             }
+            break;
         case 'roundPicking':
             const proposedRoundAdvisedAddress =
                 storedObject['step10']?.data?.proposedRoundAdvisedAddress;
@@ -59,6 +62,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                 supplierArticleCode: roundPickingArticle?.genericArticleComment,
                 articleName: roundPickingArticle?.name
             };
+            break;
         case 'roundPacking':
             if (storedObject[`step30`]?.data) {
                 const roundPackingArticle = storedObject[`step30`]?.data?.article;
@@ -71,6 +75,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                     articleName: roundPackingArticleName
                 };
             }
+            break;
         case 'contentMvtReception':
         case 'contentMvt':
             if (storedObject[`step35`]?.data) {
@@ -87,6 +92,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                     articleName: contentMvtArticleName
                 };
             }
+            break;
         case 'boxPreparation':
             if (storedObject[`step30`]?.data) {
                 const articleLuBarcode = storedObject[`step30`]?.data?.articleLuBarcode;
@@ -95,6 +101,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                     articleName: articleLuBarcode.article.name
                 };
             }
+            break;
         case 'cycleCounts':
             if (storedObject[`step55`]?.data) {
                 const article = storedObject['step55']?.data?.article;
@@ -114,6 +121,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                     articleName: cycleCountArticleName
                 };
             }
+            break;
         case 'huMvt':
             if (storedObject['step20']?.data) {
                 const originalHu = storedObject['step20']?.data?.handlingUnit;
@@ -128,6 +136,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                             : null
                 };
             }
+            break;
         case 'initStock':
             if (storedObject['step40']?.data) {
                 const article = storedObject['step40']?.data?.articleLuBarcodesInfos[0].article;
@@ -136,6 +145,7 @@ function findSupplierArticleCode(processName: string, storedObject: any) {
                     articleName: article?.name
                 };
             }
+            break;
         // Add more cases here for different process names if needed
         default:
             return { supplierArticleCode: null, articleName: null };
@@ -147,9 +157,11 @@ export function getMoreInfos(headerDisplay: any, storedObject: any, processName:
         return headerDisplay;
     }
     // #region Add Supplier Article Code
-    const { supplierArticleCode, articleName } = findSupplierArticleCode(processName, storedObject);
+    const { supplierArticleCode, articleName } = findSupplierArticleCode(
+        processName,
+        storedObject
+    ) ?? { supplierArticleCode: null, articleName: null };
     // Insert supplierArticleCode just under the value Article name
-    console.log('🚀 ~ getMoreInfos ~ articleName:', supplierArticleCode, articleName);
     if (articleName) {
         const entries = Object.entries(headerDisplay);
         const targetIndex = entries.findIndex(([key, value]) => value === articleName);
