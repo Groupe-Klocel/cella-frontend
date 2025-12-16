@@ -25,7 +25,7 @@ import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { LoadModelV2 as model } from 'models/LoadModelV2';
+import { LoadModelV2 as model } from '@helpers';
 import { loadsRoutes as itemRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';

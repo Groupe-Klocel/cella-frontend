@@ -23,8 +23,8 @@ import useTranslation from 'next-translate/useTranslation';
 import { Divider } from 'antd';
 import { useState } from 'react';
 import { ParameterListComponent } from 'modules/Parameters/Elements/ParameterListComponent';
-import { ParameterExtrasModelV2 as extras } from 'models/ParameterExtrasModelV2';
-import { ParameterModelV2 as model } from 'models/ParameterModelV2';
+import { ParameterExtrasModelV2 as extras } from '@helpers';
+import { ParameterModelV2 as model } from '@helpers';
 
 export interface IItemDetailsProps {
     Id?: string | any;

@@ -22,5 +22,6 @@ export * from './types/types';
 export * from './utils/constant';
 export * from './utils/utils';
 export * from './utils/TranslationFromDB';
+export * from './utils/getMoreInfos';
 export * from './configs/env';
 export * from './configs/misc';

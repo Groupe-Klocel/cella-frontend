@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ConversionModelV2 } from 'models/ConversionModelV2';
+import { ConversionModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { conversionsRoutes } from 'modules/Conversions/Static/conversionsRoutes';

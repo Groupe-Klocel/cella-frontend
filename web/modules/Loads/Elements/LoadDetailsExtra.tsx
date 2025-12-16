@@ -23,8 +23,8 @@ import { pathParams } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider } from 'antd';
 import { ListComponent, HeaderData } from 'modules/Crud/ListComponentV2';
-import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
-import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { HandlingUnitOutboundModelV2 } from '@helpers';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 
 export interface IItemDetailsProps {
     loadId?: string | any;

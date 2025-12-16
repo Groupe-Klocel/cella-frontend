@@ -26,7 +26,7 @@ import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { InputMaybe, Scalars } from 'generated/graphql';
 import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
-import { HookConfigModelV2 as model } from 'models/HookConfigModelV2';
+import { HookConfigModelV2 as model } from '@helpers';
 export interface ISingleItemProps {
     detailFields: any;
 }

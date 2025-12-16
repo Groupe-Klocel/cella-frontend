@@ -25,7 +25,7 @@ import { Divider, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { HandlingUnitContentFeatureModelV2 } from 'models/HandlingUnitContentFeatureModelV2';
+import { HandlingUnitContentFeatureModelV2 } from '@helpers';
 import { useState } from 'react';
 
 export interface IItemDetailsProps {

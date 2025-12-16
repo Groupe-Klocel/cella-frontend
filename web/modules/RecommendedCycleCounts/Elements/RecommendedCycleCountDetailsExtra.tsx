@@ -28,7 +28,7 @@ import {
 import { Button, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { CycleCountLineModelV2 } from 'models/CycleCountLineModelV2';
+import { CycleCountLineModelV2 } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useState } from 'react';

@@ -32,10 +32,10 @@ import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { RuleVersionConfigDetailModelV2 as modelLineConf } from 'models/RuleVersionConfigDetailModelV2';
+import { RuleVersionConfigDetailModelV2 as modelLineConf } from '@helpers';
 import { useEffect, useState, useMemo } from 'react';
-import { RuleVersionDetailInModelV2 as modelConfIn } from 'models/RuleVersionDetailInModelV2';
-import { RuleVersionDetailOutModelV2 as modelConfOut } from 'models/RuleVersionDetailOutModelV2';
+import { RuleVersionDetailInModelV2 as modelConfIn } from '@helpers';
+import { RuleVersionDetailOutModelV2 as modelConfOut } from '@helpers';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 

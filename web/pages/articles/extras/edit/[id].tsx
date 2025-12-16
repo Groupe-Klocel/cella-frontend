@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import { EditArticleExtraForm } from 'modules/Articles/Forms/EditArticleExtraForm';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { ArticleExtrasModelV2 as model } from 'models/ArticleExtrasModelV2';
+import { ArticleExtrasModelV2 as model } from '@helpers';
 import { articlesRoutes } from 'modules/Articles/Static/articlesRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };

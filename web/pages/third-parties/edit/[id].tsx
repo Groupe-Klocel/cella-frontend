@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { ThirdPartyModelV2 } from 'models/ThirdPartyModelV2';
+import { ThirdPartyModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { thirdPartiesRoutes } from 'modules/ThirdParties/Static/thirdPartiesRoutes';

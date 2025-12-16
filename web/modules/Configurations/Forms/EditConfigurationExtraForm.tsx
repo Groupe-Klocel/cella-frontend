@@ -24,7 +24,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState, FC } from 'react';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
-import { ConfigModelV2 as model } from 'models/ConfigModelV2';
+import { ConfigModelV2 as model } from '@helpers';
 export interface ISingleItemProps {
     detailFields: any;
 }

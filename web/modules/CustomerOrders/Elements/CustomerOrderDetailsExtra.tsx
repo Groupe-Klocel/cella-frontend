@@ -33,12 +33,12 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useEffect, useState } from 'react';
-import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
-import { CustomerOrderLineModelV2 } from 'models/CustomerOrderLineModelV2';
-import { CustomerOrderAddressModelV2 } from 'models/CustomerOrderAddressModelV2';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
+import { CustomerOrderLineModelV2 } from '@helpers';
+import { CustomerOrderAddressModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
-import { PaymentLineModelV2 } from 'models/PaymentLineModelV2';
-import { DeliveryModelV2 } from 'models/DeliveryModelV2';
+import { PaymentLineModelV2 } from '@helpers';
+import { DeliveryModelV2 } from '@helpers';
 
 export interface IItemDetailsProps {
     orderId?: string | any;

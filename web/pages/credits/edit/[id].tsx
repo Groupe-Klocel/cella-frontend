@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
-import { CreditModelV2 } from 'models/CreditModelV2';
+import { CreditModelV2 } from '@helpers';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { creditsRoutes } from 'modules/Credits/Static/creditsRoutes';
 import { GetServerSideProps } from 'next';

@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import { BlockModelV2 as model } from 'models/BlockModelV2';
+import { BlockModelV2 as model } from '@helpers';
 import { BlockDetailsExtra } from 'modules/Blocks/Elements/BlockDetailsExtra';
 import { blocksRoutes as itemRoutes } from 'modules/Blocks/Static/blocksRoutes';
 import { useAppState } from 'context/AppContext';

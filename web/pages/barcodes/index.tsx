@@ -35,7 +35,7 @@ import { Space, Button, Modal } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { BarcodeModelV2 as model } from 'models/BarcodeModelV2';
+import { BarcodeModelV2 as model } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { barcodesRoutes as itemRoutes } from 'modules/Barcodes/Static/barcodesRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';

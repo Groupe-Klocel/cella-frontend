@@ -23,7 +23,7 @@ import MainLayout from '../../../../components/layouts/MainLayout';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { ConfigModelV2 as model } from 'models/ConfigModelV2';
+import { ConfigModelV2 as model } from '@helpers';
 import { configurationsRoutes } from 'modules/Configurations/Static/configurationRoutes';
 import { EditConfigurationExtraForm } from 'modules/Configurations/Forms/EditConfigurationExtraForm';
 

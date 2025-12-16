@@ -34,7 +34,7 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { RoundLineDetailModelV2 } from 'models/RoundLineDetailModelV2';
+import { RoundLineDetailModelV2 } from '@helpers';
 
 const { Title } = Typography;
 

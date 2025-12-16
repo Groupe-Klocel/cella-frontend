@@ -225,6 +225,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                         }
                                         article {
                                             description
+                                            genericArticleComment
                                             name
                                             featureTypeText
                                             baseUnitWeight
