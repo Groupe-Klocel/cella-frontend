@@ -40,7 +40,7 @@ import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { ModeEnum, useListConfigsForAScopeQuery } from 'generated/graphql';
 import { FormOptionType } from 'models/Models';
-import { PatternPathModelV2 as model } from 'models/PatternPathModelV2';
+import { PatternPathModelV2 as model } from '@helpers';
 import { patternPathsRoutes as itemRoutes } from 'modules/PatternPaths/Static/patternPathRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';

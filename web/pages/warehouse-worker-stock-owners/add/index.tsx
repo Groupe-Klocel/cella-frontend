@@ -19,7 +19,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { WarehouseWorkerStockOwnerModelV2 } from 'models/WarehouseWorkerStockOwnerModelV2';
+import { WarehouseWorkerStockOwnerModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import useTranslation from 'next-translate/useTranslation';
 import { warehouseWorkerStockOwnersRoutes } from 'modules/WarehouseWorkerStockOwners/Static/warehouseWorkerStockOwnersRoutes';

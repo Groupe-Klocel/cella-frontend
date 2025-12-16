@@ -38,7 +38,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useState } from 'react';
-import { RoundCalculationProfileEquipmentModelV2 } from 'models/RoundCalculationProfileEquipmentModelV2';
+import { RoundCalculationProfileEquipmentModelV2 } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 

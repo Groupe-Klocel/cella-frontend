@@ -23,8 +23,8 @@ import useTranslation from 'next-translate/useTranslation';
 import { Divider } from 'antd';
 import { useState } from 'react';
 import { ConfigurationListComponent } from 'modules/Configurations/Elements/ConfigurationListComponent';
-import { ConfigModelV2 as model } from 'models/ConfigModelV2';
-import { ConfigExtrasModelV2 as extras } from 'models/ConfigExtrasModelV2';
+import { ConfigModelV2 as model } from '@helpers';
+import { ConfigExtrasModelV2 as extras } from '@helpers';
 
 export interface IItemDetailsProps {
     Id?: string | any;

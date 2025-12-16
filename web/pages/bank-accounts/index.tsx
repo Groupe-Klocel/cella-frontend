@@ -24,7 +24,7 @@ import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, useGetParameterScopesQuery } from 'generated/graphql';
-import { SingleParameterModelV2 as model } from 'models/SingleParameterModelV2';
+import { SingleParameterModelV2 as model } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';

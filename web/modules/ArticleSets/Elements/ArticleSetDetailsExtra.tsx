@@ -37,7 +37,7 @@ import {
     useDeleteArticleSetDetailMutation
 } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { ArticleSetDetailModelV2 } from 'models/ArticleSetDetailModelV2';
+import { ArticleSetDetailModelV2 } from '@helpers';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { useState } from 'react';

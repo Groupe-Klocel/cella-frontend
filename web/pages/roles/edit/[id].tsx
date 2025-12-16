@@ -22,7 +22,7 @@ import { EditRole } from 'modules/Roles/PageContainer/EditRole';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { RoleModelV2 } from 'models/RoleModelV2';
+import { RoleModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };

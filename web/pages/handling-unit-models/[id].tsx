@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { HandlingUnitModelDetailsExtra } from 'modules/HandlingUnitModels/Elements/HandlingUnitModelDetailsExtra';
-import { HandlingUnitModelModelV2 as model } from 'models/HandlingUnitModelModelV2';
+import { HandlingUnitModelModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { Button, Modal, Space } from 'antd';

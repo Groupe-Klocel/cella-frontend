@@ -26,8 +26,8 @@ import { useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { ListComponent } from 'modules/Crud/ListComponentV2';
-import { PatternPathLocationModelV2 } from 'models/PatternPathLocationModelV2';
-import { PatternPathLink_PatternPathModelV2 } from 'models/PatternPathLink_PatternPathModelV2';
+import { PatternPathLocationModelV2 } from '@helpers';
+import { PatternPathLink_PatternPathModelV2 } from '@helpers';
 
 const { Title } = Typography;
 

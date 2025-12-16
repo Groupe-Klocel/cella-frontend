@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { FeatureCodeModelV2 } from 'models/FeatureCodeModelV2';
+import { FeatureCodeModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { featureCodesRoutes } from 'modules/FeatureCodes/Static/featureCodesRoutes';

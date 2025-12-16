@@ -25,7 +25,7 @@ import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS, useArticleIds, useStockOwnerIds } from '@helpers';
 import { FormDataType, FormOptionType } from 'models/Models';
-import { ArticleSetModelV2 } from 'models/ArticleSetModelV2';
+import { ArticleSetModelV2 } from '@helpers';
 import { addSetRoutes } from 'modules/ArticleSets/Static/articleSetRoutes';
 import configs from '../../../../common/configs.json';
 

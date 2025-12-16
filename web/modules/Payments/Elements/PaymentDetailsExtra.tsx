@@ -27,7 +27,7 @@ import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';
-import { PaymentLineModelV2 } from 'models/PaymentLineModelV2';
+import { PaymentLineModelV2 } from '@helpers';
 
 export interface IItemDetailsProps {
     paymentId?: string | any;

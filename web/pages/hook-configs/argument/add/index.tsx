@@ -24,7 +24,7 @@ import { AddHookConfigArgument } from 'modules/HookConfigs/PageContainer/AddHook
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { HookConfigModelV2 as model } from 'models/HookConfigModelV2';
+import { HookConfigModelV2 as model } from '@helpers';
 import { hookConfigsRoutes } from 'modules/HookConfigs/Static/hookConfigsRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };

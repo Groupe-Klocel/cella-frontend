@@ -24,7 +24,7 @@ import { EditParameterExtraForm } from 'modules/Parameters/Forms/EditParameterEx
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { ParameterModelV2 as model } from 'models/ParameterModelV2';
+import { ParameterModelV2 as model } from '@helpers';
 import { parametersRoutes } from 'modules/Parameters/Static/ParametersRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };
