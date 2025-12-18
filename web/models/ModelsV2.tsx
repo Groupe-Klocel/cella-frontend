@@ -76,12 +76,12 @@ export type FilterFieldType = {
 // Used for defining endpoints inside ModelType
 export type EndpointsType = {
     list: string;
-    export?: boolean;
+    export?: boolean | null;
     detail: string;
     create: string;
     update: string;
     delete: string;
-    softDelete?: string;
+    softDelete?: string | null;
 };
 export type CustomizedTitlesType = {
     [key: string]: string;
