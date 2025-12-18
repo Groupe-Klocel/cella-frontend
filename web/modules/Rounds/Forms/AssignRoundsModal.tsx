@@ -3,17 +3,21 @@ CELLA Frontend
 Website and Mobile templates that can be used to communicate
 with CELLA WMS APIs.
 Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
+
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
+
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Form, Modal, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
@@ -24,14 +28,10 @@ import { gql } from 'graphql-request';
 export interface AssignRoundsModalProps {
     showModal: any;
     updateRounds: (input: any, setLoading: (loading: boolean) => void) => Promise<void>;
-    loading : any;
+    loading: any;
 }
 
-const AssignRoundsModal = ({
-    showModal,
-    updateRounds,
-    loading
-}: AssignRoundsModalProps) => {
+const AssignRoundsModal = ({ showModal, updateRounds, loading }: AssignRoundsModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const { graphqlRequestClient } = useAuth();
@@ -54,7 +54,10 @@ const AssignRoundsModal = ({
     const getWarehouseWorkers = async () => {
         const query = gql`
             query warehouseWorkers {
-                warehouseWorkers(itemsPerPage: 1000, orderBy: { field: "username", ascending: true }) {
+                warehouseWorkers(
+                    itemsPerPage: 1000
+                    orderBy: { field: "username", ascending: true }
+                ) {
                     results {
                         id
                         username
@@ -83,7 +86,7 @@ const AssignRoundsModal = ({
         try {
             const formData = await form.validateFields();
             setIsEditLoading(true);
-            await updateRounds({ assignedUser: formData.warehouseWorker },loading);
+            await updateRounds({ assignedUser: formData.warehouseWorker }, loading);
             showModal.setShowAssignRoundsModal(false);
             form.resetFields();
             setIsEditLoading(false);
