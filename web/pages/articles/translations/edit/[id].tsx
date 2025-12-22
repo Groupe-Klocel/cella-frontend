@@ -21,14 +21,14 @@ import { AppHead, HeaderContent } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
+import { EditArticleTranslationsForm } from 'modules/Articles/Forms/EditArticleTranslationsForm';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { ArticleExtrasModelV2 as model } from '@helpers';
+import { ArticleExtrasModelV2 as model } from 'models/ArticleExtrasModelV2';
 import { articlesRoutes } from 'modules/Articles/Static/articlesRoutes';
-import { AddArticleExtraForm } from 'modules/Articles/Forms/AddArticleExtraForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const AddArticleExtraPage: PageComponent = () => {
+const EditArticleExtraPage: PageComponent = () => {
     const router = useRouter();
     const { t } = useTranslation();
     // #region extract data from modelV2
@@ -38,22 +38,25 @@ const AddArticleExtraPage: PageComponent = () => {
     const breadsCrumb = [
         ...articlesRoutes,
         {
-            breadcrumbName: `${router.query.articleName} / ${t('menu:add-extra-information')}`
+            breadcrumbName: `${router.query.articleName} / ${t('actions:edit') + ' ' + t('common:label-translations')}`
         }
     ];
+
     return (
         <>
-            <AppHead title={`${t('common:extra-information')} ${router.query.articleName}`} />
+            <AppHead
+                title={`${t('actions:edit') + ' ' + t('common:label-translations')} ${router.query.articleName}`}
+            />
             <HeaderContent
-                title={`${t('common:extra-information')} ${router.query.articleName}`}
+                title={`${t('actions:edit') + ' ' + t('common:label-translations')} ${router.query.articleName}`}
                 routes={breadsCrumb}
                 onBack={() => router.push(`/articles/${router.query.id}`)}
             />
-            <AddArticleExtraForm detailFields={detailFields} />
+            <EditArticleTranslationsForm detailFields={detailFields} />
         </>
     );
 };
 
-AddArticleExtraPage.layout = MainLayout;
+EditArticleExtraPage.layout = MainLayout;
 
-export default AddArticleExtraPage;
+export default EditArticleExtraPage;
