@@ -27,7 +27,7 @@ import { ModeEnum } from 'generated/graphql';
 import { MovementModelV2 as model } from '@helpers';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { movementsRoutes as itemRoutes } from 'modules/Movements/Static/MovementRoutes';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
@@ -41,7 +41,9 @@ const MovementPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
-    const [selectedRowKeys, setSelectedRowKeys] = useState<any>([]);
+    const [tableData, setTableData] = useState<any[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+    console.log('AXC - index.tsx - MovementPages - selectedRowKeys:', selectedRowKeys);
     const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
     const [assignmentManagementLoading, setAssignmentManagementLoading] = useState(false);
     const [selectedMovementsHaveUser, setSelectedMovementsHaveUser] = useState(false);
@@ -104,10 +106,24 @@ const MovementPages: PageComponent = () => {
         };
     };
 
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
-        setSelectedRowKeys(newSelectedRowKeys);
-        checkSelectedRowsStatus(newSelectedRowKeys as string[]);
+    const onSelectChange = (newSelectedRowKeys: string[]) => {
+        selectedRowKeys.forEach((key: string) => {
+            if (!newSelectedRowKeys.includes(key) && tableData.map((d) => d.id).includes(key)) {
+                setSelectedRowKeys((prevKeys: string[]) => prevKeys.filter((k) => k !== key));
+            }
+        });
+        newSelectedRowKeys.forEach((value: string) => {
+            if (!selectedRowKeys?.includes(value)) {
+                setSelectedRowKeys((prevKeys: string[]) => [...prevKeys, value]);
+            }
+        });
     };
+
+    useEffect(() => {
+        if (selectedRowKeys && selectedRowKeys.length > 0) {
+            checkSelectedRowsStatus(selectedRowKeys);
+        }
+    }, [selectedRowKeys]);
 
     const rowSelection = {
         selectedRowKeys,
@@ -126,10 +142,6 @@ const MovementPages: PageComponent = () => {
             title: t('messages:cancel'),
             onOk: async () => {
                 setIsMovementCancelLoading(true);
-                const movementIds: Array<any> = [];
-                selectedRowKeys?.forEach((movementId: 'string') => {
-                    movementIds.push(movementId);
-                });
 
                 const deleteMutation = gql`
                     mutation deleteMovements($ids: [String!]!, $isHardDelete: Boolean!) {
@@ -138,7 +150,7 @@ const MovementPages: PageComponent = () => {
                 `;
 
                 const variables = {
-                    ids: movementIds,
+                    ids: selectedRowKeys,
                     isHardDelete: false
                 };
 
@@ -165,10 +177,6 @@ const MovementPages: PageComponent = () => {
             title: t('messages:validate-movement'),
             onOk: async () => {
                 setIsMovementConfirmLoading(true);
-                const movementIds: Array<any> = [];
-                selectedRowKeys?.forEach((movementId: 'string') => {
-                    movementIds.push(movementId);
-                });
 
                 const updateMutation = gql`
                     mutation updateMovements($ids: [String!]!, $input: UpdateMovementInput!) {
@@ -177,7 +185,7 @@ const MovementPages: PageComponent = () => {
                 `;
 
                 const variables = {
-                    ids: movementIds,
+                    ids: selectedRowKeys,
                     input: {
                         status: parseInt(configsParamsCodes.processingInCourseStatusCode)
                     }
@@ -406,6 +414,7 @@ const MovementPages: PageComponent = () => {
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}
                 refetch={refetch}
+                setData={setTableData}
                 checkbox={true}
                 actionColumns={[
                     {
