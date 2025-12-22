@@ -87,7 +87,7 @@ export interface IListProps {
     stockOwnerName?: string;
 }
 
-const ArticleExtrasListComponent = (props: IListProps) => {
+const ArticleTranslationsListComponent = (props: IListProps) => {
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
@@ -95,10 +95,10 @@ const ArticleExtrasListComponent = (props: IListProps) => {
     const router = useRouter();
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const id = props.articleId;
-    const [extraData, setExtraData] = useState<string | undefined>();
+    const [translationData, setTranslationData] = useState<string | undefined>();
     const [newRows, setNewRows] = useState<Array<any>>([]);
     const headerData: HeaderData = {
-        title: t('common:extras-information'),
+        title: t('common:label-translations'),
         routes: [],
         actionsComponent: (
             <Space>
@@ -106,10 +106,10 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                     <LinkButton
                         title={t('actions:add')}
                         type="primary"
-                        path={pathParamsFromDictionary(`${rootPath}/extras/add`, {
+                        path={pathParamsFromDictionary(`${rootPath}/translations/add`, {
                             id: id,
                             articleName: props.articleName,
-                            extraData
+                            translationData
                         })}
                     />
                 ) : (
@@ -128,7 +128,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                 key: string;
                 rawKey: string;
                 value: string;
-                extraData: string;
+                translationsData: string;
             }) => {
                 return (
                     <Space>
@@ -137,14 +137,17 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                         props.dataModel.isEditable ? (
                             <LinkButton
                                 icon={<EditTwoTone />}
-                                path={pathParamsFromDictionary(`${rootPath}/extras/edit/[id]`, {
-                                    id: id,
-                                    articleName: props.articleName,
-                                    extraData: record.extraData,
-                                    extra_key: record.key,
-                                    extra_rawKey: record.rawKey,
-                                    extra_value: record.value
-                                })}
+                                path={pathParamsFromDictionary(
+                                    `${rootPath}/translations/edit/[id]`,
+                                    {
+                                        id: id,
+                                        articleName: props.articleName,
+                                        translationData: record.translationsData,
+                                        translation_key: record.key,
+                                        translation_rawKey: record.rawKey,
+                                        translation_value: record.value
+                                    }
+                                )}
                             />
                         ) : (
                             <></>
@@ -156,7 +159,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                                 icon={<DeleteOutlined />}
                                 danger
                                 onClick={() => {
-                                    confirmDelete(id, record.extraData, record.rawKey);
+                                    confirmDelete(id, record.translationsData, record.rawKey);
                                 }}
                             />
                         ) : (
@@ -275,19 +278,19 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                     }
                 });
 
-                input_tmp['extras'] = Object.assign({}, jsonData);
+                input_tmp['translation'] = Object.assign({}, jsonData);
                 const query = gql`
                     mutation UpdateArticle($id: String!, $input: UpdateArticleInput!) {
                         updateArticle(id: $id, input: $input) {
                             id
-                            extras
+                            translation
                         }
                     }
                 `;
                 const cleanArgumentVariables = {
                     id,
                     input: {
-                        extras: {}
+                        translation: {}
                     }
                 };
 
@@ -539,8 +542,8 @@ const ArticleExtrasListComponent = (props: IListProps) => {
 
             // Première passe : construire extraData
             for (const [key, value] of Object.entries(rowsCopy[0])) {
-                if (key.includes('extras_')) {
-                    const argKey = key.replace('extras_', '');
+                if (key.includes('translation_')) {
+                    const argKey = key.replace('translation_', '');
                     stringJsonData += argKey + '=' + value + ',';
                 }
             }
@@ -548,23 +551,23 @@ const ArticleExtrasListComponent = (props: IListProps) => {
             // Deuxième passe : construire jsonData avec extraData inclus
             for (const [key, value] of Object.entries(rowsCopy[0])) {
                 const arg = key.split('_');
-                if (key.includes('extras_')) {
-                    const argKey = key.replace('extras_', '');
+                if (key.includes('translation_')) {
+                    const argKey = key.replace('translation_', '');
                     jsonData.push({
                         index: `${i}`,
-                        key: t(`d:${argKey}`),
+                        key: `${argKey}`,
                         rawKey: `${argKey}`,
                         value: `${value}`,
-                        extraData: stringJsonData // Inclure extraData dans chaque record
+                        translationsData: stringJsonData // Inclure extraData dans chaque record
                     });
                     i++;
                 }
             }
-            setExtraData(stringJsonData);
+            setTranslationData(stringJsonData);
         }
         const newColumns = [
             // { title: t('d:index'), dataIndex: 'index', key: 'index', showSorterTooltip: false },
-            { title: t('d:key'), dataIndex: 'key', key: 'key', showSorterTooltip: false },
+            { title: t('common:language'), dataIndex: 'key', key: 'key', showSorterTooltip: false },
             { title: t('d:value'), dataIndex: 'value', key: 'value', showSorterTooltip: false }
         ];
 
@@ -700,5 +703,5 @@ const ArticleExtrasListComponent = (props: IListProps) => {
     );
 };
 
-ArticleExtrasListComponent.displayName = 'ListWithFilter';
-export { ArticleExtrasListComponent };
+ArticleTranslationsListComponent.displayName = 'ListWithFilter';
+export { ArticleTranslationsListComponent };

@@ -27,6 +27,7 @@ import { ArticlePriceHistoryModelV2 as _ArticlePriceHistoryModelV2 } from '../..
 import { ArticlePriceModelV2 as _ArticlePriceModelV2 } from '../../models/ArticlePriceModelV2';
 import { ArticleSetDetailModelV2 as _ArticleSetDetailModelV2 } from '../../models/ArticleSetDetailModelV2';
 import { ArticleSetModelV2 as _ArticleSetModelV2 } from '../../models/ArticleSetModelV2';
+import { ArticleTranslationsModelV2 as _ArticleTranslationsModelV2 } from '../../models/ArticleTranslationsModelV2';
 import { BarcodeModelV2 as _BarcodeModelV2 } from '../../models/BarcodeModelV2';
 import { BlockModelV2 as _BlockModelV2 } from '../../models/BlockModelV2';
 import { BuildingModelV2 as _BuildingModelV2 } from '../../models/BuildingModelV2';
@@ -136,6 +137,10 @@ export const ArticleSetDetailModelV2 = injectedModel(
     'ArticleSetDetailSpeModel'
 );
 export const ArticleSetModelV2 = injectedModel(_ArticleSetModelV2, 'ArticleSetSpeModel');
+export const ArticleTranslationsModelV2 = injectedModel(
+    _ArticleTranslationsModelV2,
+    'ArticleTranslationsSpeModel'
+);
 export const BarcodeModelV2 = injectedModel(_BarcodeModelV2, 'BarcodeSpeModel');
 export const BlockModelV2 = injectedModel(_BlockModelV2, 'BlockSpeModel');
 export const BuildingModelV2 = injectedModel(_BuildingModelV2, 'BuildingSpeModel');
