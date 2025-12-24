@@ -22,9 +22,9 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { ArticleExtrasModelV2 as model } from '@helpers';
+import { ArticleTranslationsModelV2 as model } from 'models/ArticleTranslationsModelV2';
 import { articlesRoutes } from 'modules/Articles/Static/articlesRoutes';
-import { AddArticleExtraForm } from 'modules/Articles/Forms/AddArticleExtraForm';
+import { AddArticleTranslationsForm } from 'modules/Articles/Forms/AddArticleTranslationsForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -38,18 +38,20 @@ const AddArticleExtraPage: PageComponent = () => {
     const breadsCrumb = [
         ...articlesRoutes,
         {
-            breadcrumbName: `${router.query.articleName} / ${t('menu:add-extra-information')}`
+            breadcrumbName: `${router.query.articleName} / ${t('actions:add') + ' ' + t('common:label-translations')}`
         }
     ];
     return (
         <>
-            <AppHead title={`${t('common:extra-information')} ${router.query.articleName}`} />
+            <AppHead
+                title={`${t('actions:add') + ' ' + t('common:label-translations')} ${router.query.articleName}`}
+            />
             <HeaderContent
-                title={`${t('common:extra-information')} ${router.query.articleName}`}
+                title={`${t('actions:add') + ' ' + t('common:label-translations')} ${router.query.articleName}`}
                 routes={breadsCrumb}
                 onBack={() => router.push(`/articles/${router.query.id}`)}
             />
-            <AddArticleExtraForm detailFields={detailFields} />
+            <AddArticleTranslationsForm detailFields={detailFields} />
         </>
     );
 };

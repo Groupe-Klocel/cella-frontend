@@ -38,6 +38,8 @@ import { ArticleLuModelV2 } from '@helpers';
 import { ArticleExtrasModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { ArticleExtrasListComponent } from './ArticleExtrasListComponent';
+import { ArticleTranslationsListComponent } from './ArticleTranslationsListComponent';
+import { ArticleTranslationsModelV2 } from '@helpers';
 
 const { Title } = Typography;
 
@@ -48,6 +50,7 @@ export interface IItemDetailsProps {
     stockOwnerId?: string | any;
     stockOwnerName?: string | any;
     isExtrasDisplayed?: boolean | any;
+    isTranslationsDisplayed?: boolean | any;
     details: any;
 }
 
@@ -57,7 +60,8 @@ const ArticleDetailsExtra = ({
     articleStatus,
     stockOwnerId,
     stockOwnerName,
-    isExtrasDisplayed
+    isExtrasDisplayed,
+    isTranslationsDisplayed
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
@@ -131,9 +135,29 @@ const ArticleDetailsExtra = ({
         <>
             {articleModes.length > 0 &&
             articleModes.includes(ModeEnum.Read) &&
-            isExtrasDisplayed ? (
+            isTranslationsDisplayed ? (
                 <>
                     <Divider />
+                    <ArticleTranslationsListComponent
+                        searchCriteria={{ id: articleId }}
+                        articleId={articleId}
+                        articleName={articleName}
+                        articleStatus={articleStatus}
+                        stockOwnerName={stockOwnerName}
+                        dataModel={ArticleTranslationsModelV2}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        searchable={false}
+                        refresh={true}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
+            {articleModes.length > 0 &&
+            articleModes.includes(ModeEnum.Read) &&
+            isExtrasDisplayed ? (
+                <>
                     <ArticleExtrasListComponent
                         searchCriteria={{ id: articleId }}
                         articleId={articleId}
@@ -152,7 +176,6 @@ const ArticleDetailsExtra = ({
             )}
             {articleLuModes.length > 0 && articleLuModes.includes(ModeEnum.Read) ? (
                 <>
-                    <Divider />
                     <ListComponent
                         searchCriteria={{ articleId: articleId }}
                         dataModel={ArticleLuModelV2}
