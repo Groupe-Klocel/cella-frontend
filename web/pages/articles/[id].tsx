@@ -59,6 +59,12 @@ const ArticlePage: PageComponent = () => {
         ? true
         : false;
 
+    const isTranslationsDisplayed = Object.keys(data || {}).some((key) =>
+        key.startsWith('translation_')
+    )
+        ? true
+        : false;
+
     const isExtraInformationButtonDisplayed =
         parameters?.find((param: any) => param.code === 'ALLOW_EXTRA_INFORMATION').value == 1
             ? true
@@ -113,6 +119,27 @@ const ArticlePage: PageComponent = () => {
         }
     }, [data]);
 
+    const [translations, setTranslations] = useState<string>('');
+    useEffect(() => {
+        const rowsCopy = Object.entries(data || {})
+            .filter(([key]) => key.startsWith('translation_'))
+            .map(([key, value]) => ({ [key]: value }));
+        if (Object.entries(rowsCopy).length !== 0) {
+            let i = 0;
+            let stringJsonData = '';
+            for (const obj of rowsCopy) {
+                for (const [key, value] of Object.entries(obj)) {
+                    if (key.includes('translation_')) {
+                        const argKey = key.replace('translation_', '');
+                        stringJsonData += argKey + '=' + value + ',';
+                        i++;
+                    }
+                }
+            }
+            setTranslations(stringJsonData);
+        }
+    }, [data]);
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -133,15 +160,26 @@ const ArticlePage: PageComponent = () => {
                     modes.includes(ModeEnum.Update) &&
                     model.isEditable &&
                     isExtraInformationButtonDisplayed ? (
-                        <LinkButton
-                            title={t('menu:add-extra-information')}
-                            type="primary"
-                            path={pathParamsFromDictionary(`${rootPath}/extras/add`, {
-                                id: id,
-                                articleName: data?.name,
-                                extraData
-                            })}
-                        />
+                        <>
+                            <LinkButton
+                                title={t('menu:add-extra-information')}
+                                type="primary"
+                                path={pathParamsFromDictionary(`${rootPath}/extras/add`, {
+                                    id: id,
+                                    articleName: data?.name,
+                                    extraData
+                                })}
+                            />
+                            <LinkButton
+                                title={t('actions:add') + ' ' + t('common:label-translations')}
+                                type="primary"
+                                path={pathParamsFromDictionary(`${rootPath}/translations/add`, {
+                                    id: id,
+                                    articleName: data?.name,
+                                    translationData: translations
+                                })}
+                            />
+                        </>
                     ) : (
                         <></>
                     )}
@@ -197,6 +235,7 @@ const ArticlePage: PageComponent = () => {
                         stockOwnerName={data?.stockOwner_name}
                         stockOwnerId={data?.stockOwnerId}
                         isExtrasDisplayed={isExtrasDisplayed}
+                        isTranslationsDisplayed={isTranslationsDisplayed}
                     />
                 }
                 headerData={headerData}
