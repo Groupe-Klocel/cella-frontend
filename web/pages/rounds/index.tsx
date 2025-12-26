@@ -70,6 +70,12 @@ const RoundPages: PageComponent = () => {
                     item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
             )?.code;
         };
+         const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
         const estimatedStatusCode = findCodeByScope(configs, 'round_status', 'Estimated');
         const startedStatusCode = findCodeByScope(configs, 'round_status', 'Started');
         const pasDeStockDisponibleStatusCode = findCodeByScope(
@@ -77,13 +83,19 @@ const RoundPages: PageComponent = () => {
             'round_status',
             'Pas de stock disponible'
         );
+        const roundCategoryOutboundCode = findCodeByScopeAndValue(
+            configs,
+            'round_category',
+            'Outbound'
+        );
         const inPreparationStatusCode = findCodeByScope(configs, 'round_status', 'In preparation');
 
         return {
             estimatedStatusCode,
             startedStatusCode,
             pasDeStockDisponibleStatusCode,
-            inPreparationStatusCode
+            inPreparationStatusCode,
+            roundCategoryOutboundCode
         };
     }, [configs, parameters]);
 
@@ -475,7 +487,7 @@ const RoundPages: PageComponent = () => {
                 setData={setTableData}
                 refetch={refetch}
                 checkbox={true}
-                searchCriteria={{ category: configs.ROUND_CATEGORY_OUTBOUND }}
+                searchCriteria={{ category: configsParamsCodes.roundCategoryOutboundCode }}
                 actionColumns={[
                     {
                         title: 'actions:actions',
