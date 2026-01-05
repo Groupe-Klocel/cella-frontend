@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { LsIsSecured } from '@helpers';
 import { EnterNumberForm } from 'modules/Common/EnterNumberForm_reducer';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
@@ -33,6 +32,7 @@ export interface IEnterQuantityReducerProps {
     checkComponent: any;
     isCommentDisplayed?: boolean;
     initialValueType?: number;
+    autoValidate1Quantity?: boolean;
 }
 
 export const EnterQuantity_reducer = ({
@@ -44,7 +44,8 @@ export const EnterQuantity_reducer = ({
     availableQuantity,
     checkComponent,
     isCommentDisplayed,
-    initialValueType
+    initialValueType,
+    autoValidate1Quantity
 }: IEnterQuantityReducerProps) => {
     const { t } = useTranslation('common');
     const state = useAppState();
@@ -53,6 +54,14 @@ export const EnterQuantity_reducer = ({
     const [enteredInfo, setEnteredInfo] = useState<number>();
 
     // TYPED SAFE ALL
+    // Define initial value according to prioritized parameters sent
+    const tmpInitialValue = (() => {
+        if (autoValidate1Quantity && availableQuantity !== 1) {
+            return initialValueType === 2 ? availableQuantity : undefined;
+        }
+        return initialValueType == 1 ? 1 : initialValueType == 2 ? availableQuantity : undefined;
+    })();
+
     //Pre-requisite: initialize current step
     useEffect(() => {
         let objectUpdate: any = {
@@ -138,11 +147,17 @@ export const EnterQuantity_reducer = ({
                     originalPoLines.find((oldPoline: any) => oldPoline.id === newPoline.id)
                         ?.receivedQuantity
             );
+        } else if (autoValidate1Quantity && tmpInitialValue === 1) {
+            objectUpdate.object = {
+                ...storedObject[`step${stepNumber}`],
+                data: { movingQuantity: 1 }
+            };
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             objectUpdate.object = { previousStep: storedObject.currentStep };
             objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
+
         dispatch(objectUpdate);
     }, []);
 
@@ -171,13 +186,7 @@ export const EnterQuantity_reducer = ({
                 setEnteredInfo={setEnteredInfo}
                 rules={rules}
                 min={1}
-                initialValue={
-                    initialValueType == 1
-                        ? 1
-                        : initialValueType == 2
-                          ? availableQuantity
-                          : undefined
-                }
+                initialValue={tmpInitialValue}
                 isSelected={true}
                 isCommentDisplayed={isCommentDisplayed}
             ></EnterNumberForm>

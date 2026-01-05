@@ -30,6 +30,11 @@ export interface ISimilarLocationsV2Props {
     stockOwnerId?: string;
     stockStatus?: number;
     reservation?: string;
+    processName?: string;
+    isEmptyLocations?: boolean;
+    isEmptyWithHU?: boolean;
+    orderBy?: any;
+    features?: any;
 }
 
 export const SimilarLocationsV2 = ({
@@ -37,22 +42,17 @@ export const SimilarLocationsV2 = ({
     originalContentId,
     stockOwnerId,
     stockStatus,
-    reservation
+    reservation,
+    processName,
+    isEmptyLocations,
+    isEmptyWithHU,
+    orderBy,
+    features
 }: ISimilarLocationsV2Props) => {
     const { t } = useTranslation();
     const [similarLocations, setSimilarLocationsV2Infos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const { parameters } = useAppState();
-    const defaultFilter = { articleId: `${articleId}` };
-    const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
-    const stockStatusFilter = stockStatus ? { stockStatus: stockStatus } : undefined;
-    const reservationFilter = reservation ? { reservation: reservation } : undefined;
-    const filters = {
-        ...defaultFilter,
-        ...stockOwnerFilter,
-        ...stockStatusFilter,
-        ...reservationFilter
-    };
 
     const configsParamsCodes = useMemo(() => {
         const findValueByScopeAndCode = (items: any[], scope: string, code: string) => {
@@ -66,22 +66,75 @@ export const SimilarLocationsV2 = ({
             findValueByScopeAndCode(
                 parameters,
                 'similar_locations',
-                'movement-to-process_nb-results-picking'
+                `${processName}_nb-results-picking`
             )
         );
+        console.log('nbPicking', nbPicking);
         const nbStock = parseInt(
             findValueByScopeAndCode(
                 parameters,
                 'similar_locations',
-                'movement-to-process_nb-results-stock'
+                `${processName}_nb-results-stock`
             )
         );
-
+        console.log('nbStock', nbStock);
+        const cumulativeParam = parseInt(
+            findValueByScopeAndCode(parameters, 'similar_locations', `${processName}_cumulative`)
+        );
+        console.log('cumulativeParam', cumulativeParam);
+        const similarFeatures = parseInt(
+            findValueByScopeAndCode(
+                parameters,
+                'similar_locations',
+                `${processName}_similar-features`
+            )
+        );
+        console.log('similarFeatures', similarFeatures);
         return {
             nbPicking,
-            nbStock
+            nbStock,
+            cumulativeParam,
+            similarFeatures
         };
     }, [parameters]);
+
+    const isFilteredByFeatures = configsParamsCodes.similarFeatures === 1;
+    console.log('isFilteredByFeatures:', isFilteredByFeatures, 'features:', features);
+
+    const transformFeatures = (rawFeatures: any) => {
+        if (!rawFeatures || !Array.isArray(rawFeatures)) return undefined;
+        return rawFeatures.map((feature: any) => ({
+            featureCodeId: feature.featureCode?.id,
+            value: feature.value
+        }));
+    };
+
+    const defaultFilter = { articleId: `${articleId}` };
+    const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
+    const stockStatusFilter = stockStatus ? { stockStatus: stockStatus } : undefined;
+    const reservationFilter = reservation ? { reservation: reservation } : undefined;
+    const cumulativeFilter =
+        configsParamsCodes.cumulativeParam === 1 ? { isCumulativeLocations: true } : undefined;
+    const emptyLocationsFilter = isEmptyLocations
+        ? { isEmptyLocations: isEmptyLocations }
+        : undefined;
+    const emptyWithHUFilter = isEmptyWithHU ? { isEmptyWithHU: isEmptyWithHU } : undefined;
+    const orderByFilter = orderBy ? { orderBy: orderBy } : undefined;
+    const featureFilter =
+        isFilteredByFeatures && features
+            ? { similarFeatures: transformFeatures(features) }
+            : undefined;
+    const filters = {
+        ...defaultFilter,
+        ...stockOwnerFilter,
+        ...stockStatusFilter,
+        ...reservationFilter,
+        ...cumulativeFilter,
+        ...emptyLocationsFilter,
+        ...emptyWithHUFilter,
+        ...orderByFilter,
+        ...featureFilter
+    };
 
     //bloc
     async function retrieveSimilarLocations() {
@@ -105,6 +158,7 @@ export const SimilarLocationsV2 = ({
                 }
             }
         };
+
         try {
             const result = await graphqlRequestClient.request(query, variables);
             return result;
