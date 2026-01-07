@@ -49,7 +49,7 @@ import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { hookConfigsRoutes as itemRoutes } from 'modules/HookConfigs/Static/hookConfigsRoutes';
-import { HookConfigDetailArgumentModelV2 as model } from 'models/HookConfigDetailArgumentModelV2';
+import { HookConfigDetailArgumentModelV2 as model } from '@helpers';
 import { isString } from 'lodash';
 
 export type HeaderData = {

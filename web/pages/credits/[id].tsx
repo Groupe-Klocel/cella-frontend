@@ -24,7 +24,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { CreditModelV2 as model } from 'models/CreditModelV2';
+import { CreditModelV2 as model } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { ModeEnum } from 'generated/graphql';

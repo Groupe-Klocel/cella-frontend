@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
-import { FeatureTypeDetailModelV2 } from 'models/FeatureTypeDetailModelV2';
+import { FeatureTypeDetailModelV2 } from '@helpers';
 import { featureTypesRoutes } from 'modules/FeatureTypes/Static/featureTypesRoutes';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { GetServerSideProps } from 'next';

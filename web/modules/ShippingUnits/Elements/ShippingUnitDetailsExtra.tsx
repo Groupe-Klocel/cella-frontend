@@ -26,11 +26,11 @@ import { useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';
+import { HandlingUnitContentOutboundModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
-import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
-import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { HandlingUnitOutboundModelV2 } from '@helpers';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 
 export interface IItemDetailsProps {
     shippingUnitId?: string | any;

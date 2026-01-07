@@ -64,8 +64,13 @@ query GetAllHandlingUnitContents(
                 name
                 description
             }
+            stockOwnerId
+            stockOwner {
+                name
+            }
             quantity
             stockStatus
+            stockStatusText
             reservation
             created
             createdBy
@@ -92,12 +97,14 @@ query GetHandlingUnitContentById($id: String!) {
         }
         articleId
         article {
+            id
             name
             description
         }
         quantity
         autocountHandlingUnitContentFeature
         stockStatus
+        stockStatusText
         reservation
         stockOwner {
             id
@@ -107,6 +114,31 @@ query GetHandlingUnitContentById($id: String!) {
         createdBy
         modified
         modifiedBy
+    }
+}
+
+query GetHandlingUnits(
+    $filters: HandlingUnitSearchFilters
+    $orderBy: [HandlingUnitOrderByCriterion!]
+    $page: Int!
+    $itemsPerPage: Int!
+    $language: String
+) {
+    handlingUnits(
+        filters: $filters
+        orderBy: $orderBy
+        page: $page
+        itemsPerPage: $itemsPerPage
+        language: $language
+    ) {
+        count
+        itemsPerPage
+        totalPages
+        results {
+            id
+            name
+            status
+        }
     }
 }
 

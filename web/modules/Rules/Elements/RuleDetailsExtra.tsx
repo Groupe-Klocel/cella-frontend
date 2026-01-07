@@ -26,7 +26,7 @@ import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { RuleVersionModelV2 } from 'models/RuleVersionModelV2';
+import { RuleVersionModelV2 } from '@helpers';
 import { useState } from 'react';
 import config from '../../../../common/configs.json';
 

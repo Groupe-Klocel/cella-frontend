@@ -21,16 +21,16 @@ import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import {
-    EmptyLocations,
     SelectLocationByLevelForm_reducer,
     SelectStockStatusForm_reducer,
     EnterQuantity_reducer,
-    ScanLocation_reducer
+    ScanLocation_reducer,
+    SimilarLocationsV2
 } from '@CommonRadio';
 import { ValidateReceptionForm } from 'modules/ReceptionManagement/Reception/Forms/ValidateReception';
 import { QuantityChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/QuantityChecks';
@@ -44,7 +44,6 @@ import { ScanGoodsInOrPo } from 'modules/ReceptionManagement/Reception/PagesCont
 import { GoodsInOrPoChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/GoodsInOrPoChecks';
 import { SelectArticleForm } from 'modules/ReceptionManagement/Reception/Forms/SelectArticleForm';
 import moment from 'moment';
-import { SimilarLocations } from 'modules/ReceptionManagement/Reception/Elements/SimilarLocations';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
@@ -210,7 +209,7 @@ const Reception: PageComponent = () => {
 
     //function to retrieve information to display in RadioInfosHeader
     let availableQuantity: number | undefined = undefined;
-    const headerDisplay: { [k: string]: any } = {};
+    let headerDisplay: { [k: string]: any } = {};
     if (storedObject['step10']?.data?.purchaseOrder) {
         const purchaseOrder = storedObject['step10']?.data?.purchaseOrder;
         headerDisplay[t('common:purchase-order_abbr')] = purchaseOrder.name;
@@ -274,6 +273,7 @@ const Reception: PageComponent = () => {
         const handlingUnit = storedObject['step110']?.data?.handlingUnit;
         headerDisplay[t('common:hu')] = handlingUnit.barcode;
     }
+    headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
 
     const onReset = () => {
         dispatch({
@@ -344,18 +344,38 @@ const Reception: PageComponent = () => {
                     storedObject['step50']?.data.currentPurchaseOrderLine) &&
                 (storedObject['step60']?.data.processedFeatures ||
                     storedObject['step60']?.data.feature === null) ? (
-                    <SimilarLocations
-                        currentPurchaseOrderLine={
-                            storedObject['step40'].data.currentPurchaseOrderLine ??
-                            storedObject['step50']?.data.currentPurchaseOrderLine
+                    <SimilarLocationsV2
+                        articleId={
+                            storedObject['step50']?.data.chosenArticleLuBarcode.articleId ??
+                            storedObject['step40'].data.currentPurchaseOrderLine[0].articleId
                         }
-                        currentFeatures={storedObject['step60'].data.processedFeatures ?? undefined}
-                        locationIdToExclude={defaultReceptionLocation?.id ?? undefined}
+                        stockOwnerId={
+                            storedObject['step40'].data.currentPurchaseOrderLine[0].stockOwnerId
+                        }
+                        stockStatus={
+                            storedObject['step70']?.data?.stockStatus
+                                ? storedObject['step70'].data.stockStatus.id
+                                : storedObject['step40'].data.currentPurchaseOrderLine[0]
+                                      .blockingStatus
+                        }
+                        processName={'reception'}
+                        features={storedObject['step60']?.data?.processedFeatures}
                     />
                 ) : (
                     <></>
                 )}
-                {showEmptyLocations && storedObject['step50']?.data ? <EmptyLocations /> : <></>}
+                {showEmptyLocations && storedObject['step50']?.data ? (
+                    <SimilarLocationsV2
+                        isEmptyLocations={true}
+                        articleId={
+                            storedObject['step50']?.data.chosenArticleLuBarcode.articleId ??
+                            storedObject['step40'].data.currentPurchaseOrderLine[0].articleId
+                        }
+                        processName={'reception'}
+                    />
+                ) : (
+                    <></>
+                )}
                 {!storedObject['step10']?.data ? (
                     <ScanGoodsInOrPo
                         processName={processName}

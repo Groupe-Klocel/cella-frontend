@@ -23,7 +23,7 @@ import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
-import { HandlingUnitContentOutboundModelV2 } from 'models/HandlingUnitContentOutboundModelV2';
+import { HandlingUnitContentOutboundModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { GetServerSideProps } from 'next';
 

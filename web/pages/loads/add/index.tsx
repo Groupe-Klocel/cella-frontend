@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { LoadModelV2 } from 'models/LoadModelV2';
+import { LoadModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS, showError, showSuccess } from '@helpers';
 import configs from '../../../../common/configs.json';

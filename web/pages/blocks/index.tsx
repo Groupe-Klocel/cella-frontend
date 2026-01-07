@@ -28,7 +28,7 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { blocksRoutes as itemRoutes } from 'modules/Blocks/Static/blocksRoutes';
-import { BlockModelV2 as model } from 'models/BlockModelV2';
+import { BlockModelV2 as model } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 

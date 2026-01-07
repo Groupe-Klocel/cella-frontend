@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -92,7 +92,7 @@ const CycleCounts: PageComponent = () => {
 
     //function to retrieve information to display in RadioInfosHeader
     useEffect(() => {
-        const object: { [k: string]: any } = {};
+        let object: { [k: string]: any } = {};
         if (storedObject['step10']?.data?.cycleCount) {
             const cycleCount = storedObject['step10']?.data?.cycleCount;
             object[t('common:cycle-count')] = cycleCount.name;
@@ -161,7 +161,7 @@ const CycleCounts: PageComponent = () => {
                 object[t('common:article')] = movingQuantity + ' x ' + article.name;
             }
         }
-
+        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender, isAutoValidateLoading]);
 

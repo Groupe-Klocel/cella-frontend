@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
-import { PatternPathModelV2 as model } from 'models/PatternPathModelV2';
+import { PatternPathModelV2 as model } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';

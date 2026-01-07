@@ -36,8 +36,23 @@ const DetailsList: FC<IDetailsListProps> = ({ details }: IDetailsListProps) => {
                             </Typography>
                         </Col>
                         <Col span={17}>
-                            <Typography style={{ color: 'black', fontSize: '10px' }}>
-                                {details[key]}
+                            <Typography
+                                style={{
+                                    color:
+                                        typeof details[key] === 'object' && details[key]?.highlight
+                                            ? 'red'
+                                            : 'black',
+                                    fontSize: '10px',
+                                    fontWeight:
+                                        typeof details[key] === 'object' && details[key]?.highlight
+                                            ? 'bold'
+                                            : 'normal'
+                                }}
+                            >
+                                {typeof details[key] === 'object' &&
+                                details[key]?.value !== undefined
+                                    ? details[key].value
+                                    : details[key]}
                             </Typography>
                         </Col>
                     </Row>

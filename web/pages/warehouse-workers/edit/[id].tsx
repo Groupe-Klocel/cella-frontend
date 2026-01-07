@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
-import { WarehouseWorkerModelV2 } from 'models/WarehouseWorkerModelV2';
+import { WarehouseWorkerModelV2 } from '@helpers';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { warehouseWorkersRoutes } from 'modules/WarehouseWorkers/Static/warehouseWorkersRoutes';
 import { GetServerSideProps } from 'next';

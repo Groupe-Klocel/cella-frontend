@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import configs from '../../../../common/configs.json';
-import { HookConfigModelV2 } from 'models/HookConfigModelV2';
+import { HookConfigModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addHookConfigRoutes } from 'modules/HookConfigs/Static/hookConfigsRoutes';

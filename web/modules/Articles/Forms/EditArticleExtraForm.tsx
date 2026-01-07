@@ -24,7 +24,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState, FC } from 'react';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, useUpdate } from '@helpers';
-import { ArticleExtrasModelV2 as model } from 'models/ArticleExtrasModelV2';
+import { ArticleExtrasModelV2 as model } from '@helpers';
 export interface ISingleItemProps {
     detailFields: any;
 }

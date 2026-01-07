@@ -23,7 +23,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import { CycleCountErrorModelV2 as model } from 'models/CycleCountErrorModelV2';
+import { CycleCountErrorModelV2 as model } from '@helpers';
 import { cycleCountsRoutes as itemRoutes } from 'modules/CycleCounts/Static/cycleCountsRoutes';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';

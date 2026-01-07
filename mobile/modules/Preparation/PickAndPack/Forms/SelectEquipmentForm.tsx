@@ -3,27 +3,29 @@ CELLA Frontend
 Website and Mobile templates that can be used to communicate
 with CELLA WMS APIs.
 Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
+
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
+
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '@helpers';
+import { showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import { useSimpleGetRoundsQuery, SimpleGetRoundsQuery } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
-import configs from '../../../../../common/configs.json';
+import { useEffect, useMemo, useState } from 'react';
 import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { useAppDispatch, useAppState } from 'context/AppContext';
@@ -40,6 +42,7 @@ export const SelectEquipmentForm = ({
     buttons
 }: ISelectEquipementProps) => {
     const { graphqlRequestClient, user } = useAuth();
+    const { configs } = useAppState();
     const { t } = useTranslation();
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -68,6 +71,27 @@ export const SelectEquipmentForm = ({
         setCamData(undefined);
     };
     // end camera scanner section
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScope = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+        const roundStatusStarted = parseInt(findCodeByScope(configs, 'round_status', 'Started'));
+        const roundStatusInPreparation = parseInt(
+            findCodeByScope(configs, 'round_status', 'In preparation')
+        );
+
+        const pickAndPackType = parseInt(findCodeByScope(configs, 'round_type', 'Pick And Pack'));
+
+        return {
+            roundStatusStarted,
+            roundStatusInPreparation,
+            pickAndPackType
+        };
+    }, [configs]);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -109,7 +133,13 @@ export const SelectEquipmentForm = ({
             `;
 
             const equipmentsListVariables = {
-                filters: { status: [400, 455] },
+                filters: {
+                    status: [
+                        configsParamsCodes.roundStatusStarted,
+                        configsParamsCodes.roundStatusInPreparation
+                    ],
+                    type: configsParamsCodes.pickAndPackType
+                },
                 advancedFilters: [
                     {
                         filter: [

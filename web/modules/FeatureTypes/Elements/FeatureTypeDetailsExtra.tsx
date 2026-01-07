@@ -25,8 +25,8 @@ import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { FeatureTypeDetailModelV2 } from 'models/FeatureTypeDetailModelV2';
-import { ArticleModelV2 } from 'models/ArticleModelV2';
+import { FeatureTypeDetailModelV2 } from '@helpers';
+import { ArticleModelV2 } from '@helpers';
 import { useState } from 'react';
 
 const { Title } = Typography;

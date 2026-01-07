@@ -17,48 +17,27 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+import { Alert, Layout } from 'antd';
 import { ContentSpin, HeaderContent } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
-import { Alert, Layout } from 'antd';
+import { addMovementRoutes } from '../Static/MovementRoutes';
 import { useRouter } from 'next/router';
-import { articlesRoutes } from '../Static/articlesRoutes';
-import { AddArticleExtraForm } from '../Forms/AddArticleExtraForm';
 import { useAppState } from 'context/AppContext';
 import { getModesFromPermissions } from '@helpers';
 import { ModeEnum, Table } from 'generated/graphql';
+import { AddMovementForm } from '../Forms/AddMovementForm';
 
 const StyledPageContent = styled(Layout.Content)`
     margin: 15px 30px;
 `;
 
-export interface ISingleItemProps {
-    articleId: string | any;
-    articleName: string | any;
-    detailFields: string | any;
-}
-
-const AddArticleExtra = (props: ISingleItemProps) => {
+export const AddMovement = () => {
     const { t } = useTranslation('actions');
     const router = useRouter();
 
-    const articlesExtras = [
-        ...articlesRoutes,
-        {
-            breadcrumbName: `${props.articleName}`,
-            path: '/extras/' + props.articleId
-        }
-    ];
-
-    const breadsCrumb = [
-        ...articlesExtras,
-        {
-            breadcrumbName: t('add2', { name: t('common:extra-information') })
-        }
-    ];
-
     const { permissions } = useAppState();
-    const modes = getModesFromPermissions(permissions, Table.RuleVersion);
+    const modes = getModesFromPermissions(permissions, Table.Location);
 
     return (
         <>
@@ -74,8 +53,13 @@ const AddArticleExtra = (props: ISingleItemProps) => {
                     </>
                 ) : (
                     <>
+                        <HeaderContent
+                            title={t('actions:add2', { name: t('common:movement') })}
+                            routes={addMovementRoutes}
+                            onBack={() => router.push(`/movements`)}
+                        />
                         <StyledPageContent>
-                            <AddArticleExtraForm detailFields={props.detailFields} />
+                            <AddMovementForm />
                         </StyledPageContent>
                     </>
                 )
@@ -85,5 +69,3 @@ const AddArticleExtra = (props: ISingleItemProps) => {
         </>
     );
 };
-
-export { AddArticleExtra };

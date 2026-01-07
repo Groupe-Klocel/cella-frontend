@@ -354,6 +354,22 @@ const pathParamsFromDictionary = (pathname: string, values: any) => {
     return { pathname: pathname, query: values };
 };
 
+// Helper function to find the last step with previousStep property
+const getLastStepWithPreviousStep = (storedObject: Record<string, any>) => {
+    let lastStepNumber = 0;
+
+    Object.keys(storedObject).forEach((key) => {
+        if (key.startsWith('step') && storedObject[key]?.previousStep) {
+            const stepNumber = parseInt(key.replace('step', ''));
+            if (stepNumber > lastStepNumber) {
+                lastStepNumber = stepNumber;
+            }
+        }
+    });
+
+    return lastStepNumber;
+};
+
 export {
     isEmpty,
     pathParams,
@@ -390,5 +406,6 @@ export {
     formatLocaleDate,
     formatUTCLocaleDate,
     getDatesDifference,
-    pathParamsFromDictionary
+    pathParamsFromDictionary,
+    getLastStepWithPreviousStep
 };

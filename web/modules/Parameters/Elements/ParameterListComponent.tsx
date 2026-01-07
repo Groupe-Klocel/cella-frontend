@@ -45,7 +45,7 @@ import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { parametersRoutes as itemRoutes } from 'modules/Parameters/Static/ParametersRoutes';
-import { ParameterExtrasModelV2 as model } from 'models/ParameterExtrasModelV2';
+import { ParameterExtrasModelV2 as model } from '@helpers';
 
 export type HeaderData = {
     title: string;

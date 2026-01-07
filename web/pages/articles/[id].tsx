@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton } from '@components';
-import { ArticleModelV2 as model } from 'models/ArticleModelV2';
+import { ArticleModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
@@ -56,6 +56,12 @@ const ArticlePage: PageComponent = () => {
     const pageTitle = `${t('common:article')} ${data?.name}`;
 
     const isExtrasDisplayed = Object.keys(data || {}).some((key) => key.startsWith('extras_'))
+        ? true
+        : false;
+
+    const isTranslationsDisplayed = Object.keys(data || {}).some((key) =>
+        key.startsWith('translation_')
+    )
         ? true
         : false;
 
@@ -113,6 +119,27 @@ const ArticlePage: PageComponent = () => {
         }
     }, [data]);
 
+    const [translations, setTranslations] = useState<string>('');
+    useEffect(() => {
+        const rowsCopy = Object.entries(data || {})
+            .filter(([key]) => key.startsWith('translation_'))
+            .map(([key, value]) => ({ [key]: value }));
+        if (Object.entries(rowsCopy).length !== 0) {
+            let i = 0;
+            let stringJsonData = '';
+            for (const obj of rowsCopy) {
+                for (const [key, value] of Object.entries(obj)) {
+                    if (key.includes('translation_')) {
+                        const argKey = key.replace('translation_', '');
+                        stringJsonData += argKey + '=' + value + ',';
+                        i++;
+                    }
+                }
+            }
+            setTranslations(stringJsonData);
+        }
+    }, [data]);
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -133,15 +160,26 @@ const ArticlePage: PageComponent = () => {
                     modes.includes(ModeEnum.Update) &&
                     model.isEditable &&
                     isExtraInformationButtonDisplayed ? (
-                        <LinkButton
-                            title={t('menu:add-extra-information')}
-                            type="primary"
-                            path={pathParamsFromDictionary(`${rootPath}/extras/add`, {
-                                id: id,
-                                articleName: data?.name,
-                                extraData
-                            })}
-                        />
+                        <>
+                            <LinkButton
+                                title={t('menu:add-extra-information')}
+                                type="primary"
+                                path={pathParamsFromDictionary(`${rootPath}/extras/add`, {
+                                    id: id,
+                                    articleName: data?.name,
+                                    extraData
+                                })}
+                            />
+                            <LinkButton
+                                title={t('actions:add') + ' ' + t('common:label-translations')}
+                                type="primary"
+                                path={pathParamsFromDictionary(`${rootPath}/translations/add`, {
+                                    id: id,
+                                    articleName: data?.name,
+                                    translationData: translations
+                                })}
+                            />
+                        </>
                     ) : (
                         <></>
                     )}
@@ -197,6 +235,7 @@ const ArticlePage: PageComponent = () => {
                         stockOwnerName={data?.stockOwner_name}
                         stockOwnerId={data?.stockOwnerId}
                         isExtrasDisplayed={isExtrasDisplayed}
+                        isTranslationsDisplayed={isTranslationsDisplayed}
                     />
                 }
                 headerData={headerData}

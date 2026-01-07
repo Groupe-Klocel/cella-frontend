@@ -23,12 +23,12 @@ import { getModesFromPermissions, pathParams } from '@helpers';
 import { Divider, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { CycleCountLineModelV2 } from 'models/CycleCountLineModelV2';
-import { CycleCountMovementModelV2 } from 'models/CycleCountMovementModelV2';
+import { CycleCountLineModelV2 } from '@helpers';
+import { CycleCountMovementModelV2 } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import configs from '../../../../common/configs.json';
-import { CycleCountErrorModelV2 } from 'models/CycleCountErrorModelV2';
+import { CycleCountErrorModelV2 } from '@helpers';
 
 export interface IItemDetailsProps {
     cycleCountId?: string | any;

@@ -23,8 +23,8 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider } from 'antd';
 import { useState } from 'react';
 import { HookConfigListComponent } from 'modules/HookConfigs/Elements/HookConfigListComponent';
-import { HookConfigDetailArgumentModelV2 as argument } from 'models/HookConfigDetailArgumentModelV2';
-import { HookConfigModelV2 as model } from 'models/HookConfigModelV2';
+import { HookConfigDetailArgumentModelV2 as argument } from '@helpers';
+import { HookConfigModelV2 as model } from '@helpers';
 
 export interface IItemDetailsProps {
     Id?: string | any;

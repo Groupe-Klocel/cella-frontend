@@ -26,7 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useState } from 'react';
-import { GoodsInLineDetailModelV2 } from 'models/GoodsInLineDetailModelV2';
+import { GoodsInLineDetailModelV2 } from '@helpers';
 
 export interface IItemDetailsProps {
     roundLineId?: string | any;

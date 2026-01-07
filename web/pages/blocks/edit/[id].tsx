@@ -24,7 +24,7 @@ import MainLayout from '../../../components/layouts/MainLayout';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { blocksRoutes } from 'modules/Blocks/Static/blocksRoutes';
-import { BlockModelV2 } from 'models/BlockModelV2';
+import { BlockModelV2 } from '@helpers';
 import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };

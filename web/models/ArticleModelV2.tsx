@@ -282,26 +282,6 @@ export const ArticleModelV2: ModelType = {
             config: null,
             param: null
         },
-        translation: {
-            isListRequested: true,
-            isDefaultHiddenList: true,
-            isExcludedFromList: false,
-            isSortable: false,
-            searchingFormat: 'String',
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
-            detailGroup: '{"label":"translation", "position":3}',
-            link: null,
-            addEditFormat: null,
-            addEditStep: null,
-            maxLength: null,
-            displayName: null,
-            isMandatory: false,
-            minRule: null,
-            maxRule: null,
-            config: null,
-            param: null
-        },
         length: {
             isListRequested: true,
             isDefaultHiddenList: true,
@@ -971,6 +951,26 @@ export const ArticleModelV2: ModelType = {
             param: null
         },
         extras: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        translation: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,

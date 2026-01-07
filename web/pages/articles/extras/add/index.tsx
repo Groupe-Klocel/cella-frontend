@@ -22,9 +22,9 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { ArticleExtrasModelV2 as model } from 'models/ArticleExtrasModelV2';
+import { ArticleExtrasModelV2 as model } from '@helpers';
 import { articlesRoutes } from 'modules/Articles/Static/articlesRoutes';
-import { AddArticleExtra } from 'modules/Articles/PagesContainer/AddArticleExtra';
+import { AddArticleExtraForm } from 'modules/Articles/Forms/AddArticleExtraForm';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -49,11 +49,7 @@ const AddArticleExtraPage: PageComponent = () => {
                 routes={breadsCrumb}
                 onBack={() => router.push(`/articles/${router.query.id}`)}
             />
-            <AddArticleExtra
-                articleId={router.query.id}
-                articleName={router.query.articleName}
-                detailFields={detailFields}
-            />
+            <AddArticleExtraForm detailFields={detailFields} />
         </>
     );
 };
