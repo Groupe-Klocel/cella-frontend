@@ -27,8 +27,7 @@ import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import {
-    SimilarLocations,
-    EmptyLocations,
+    SimilarLocationsV2,
     SelectLocationByLevelForm,
     SelectArticleByStockOwnerForm,
     SelectContentForArticleForm,
@@ -366,18 +365,24 @@ const ContentMvmt: PageComponent = () => {
             <div hidden={isLoading}>
                 {showSimilarLocations &&
                 storedObject['step35'].data.chosenArticleLuBarcode.articleId ? (
-                    <SimilarLocations
+                    <SimilarLocationsV2
                         articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
-                        chosenContentId={storedObject['step40'].data.chosenContent.id}
+                        originalContentId={storedObject['step40'].data.chosenContent.id}
                         stockOwnerId={storedObject['step40'].data.chosenContent.stockOwnerId}
                         stockStatus={storedObject['step40'].data.chosenContent.stockStatus}
+                        processName={'contentMvt'}
                     />
                 ) : (
                     <></>
                 )}
                 {showEmptyLocations &&
                 storedObject['step35'].data.chosenArticleLuBarcode.articleId ? (
-                    <EmptyLocations withAvailableHU={true} />
+                    <SimilarLocationsV2
+                        isEmptyLocations={true}
+                        articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
+                        processName={'contentMvt'}
+                        isEmptyWithHU={true}
+                    />
                 ) : (
                     <></>
                 )}

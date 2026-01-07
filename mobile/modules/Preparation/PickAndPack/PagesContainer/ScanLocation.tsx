@@ -19,10 +19,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    getLastStepWithPreviousStep,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanLocationProps {
@@ -36,6 +38,8 @@ export interface IScanLocationProps {
     headerContent?: any;
     triggerAlternativeSubmit1?: any;
     action1Trigger?: any;
+    enforcedValue?: string;
+    forceLocation?: any;
 }
 
 export const ScanLocation = ({
@@ -48,14 +52,15 @@ export const ScanLocation = ({
     triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
     action1Trigger: { action1Trigger, setAction1Trigger },
     checkComponent,
-    headerContent
+    headerContent,
+    enforcedValue,
+    forceLocation: { tmpForceLocation, setTmpforceLocation }
 }: IScanLocationProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
-    const router = useRouter();
     const [locationInfos, setLocationInfos] = useState<any>();
     const [locationQuantity, setLocationQuantity] = useState<number>(0);
     const { graphqlRequestClient } = useAuth();
@@ -63,16 +68,27 @@ export const ScanLocation = ({
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        dispatch({
+        let objectUpdate: any = {
             type: 'UPDATE_BY_STEP',
             processName,
             stepName: `step${stepNumber}`,
-            object: { previousStep: storedObject.currentStep },
-            customFields: [
+            object: undefined,
+            customFields: undefined
+        };
+        if (enforcedValue) {
+            setScannedInfo(enforcedValue);
+        } else if (storedObject.currentStep < stepNumber || tmpForceLocation) {
+            //check workflow direction and assign current step accordingly
+            objectUpdate.object = {
+                previousStep: getLastStepWithPreviousStep(storedObject)
+            };
+            objectUpdate.customFields = [
                 { key: 'currentStep', value: stepNumber },
                 { key: 'ignoreHUContentIds', value: [] }
-            ]
-        });
+            ];
+            setTmpforceLocation(true);
+        }
+        dispatch(objectUpdate);
     }, []);
 
     const locationName =
@@ -225,6 +241,7 @@ export const ScanLocation = ({
         action1Trigger: { action1Trigger, setAction1Trigger },
         alternativeSubmitInput: storedObject?.step10?.data?.round.extraText1 ?? undefined,
         showSimilarLocations: { showSimilarLocations },
+        forceLocation: { setTmpforceLocation },
         setResetForm
     };
 
