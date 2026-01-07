@@ -128,7 +128,11 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                     ]
                 }
             ],
-            orderBy: null,
+            orderBy: [
+                { field: 'assignedUser', ascending: true },
+                { field: 'priority', ascending: false },
+                { field: 'expectedDeliveryDate', ascending: false }
+            ],
             page: 1,
             itemsPerPage: 100
         };
@@ -146,7 +150,6 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
             try {
                 const roundsList = await fetchRoundsList();
                 const cData = roundsList?.rounds?.results;
-                console.log('cData', cData);
                 if (cData) {
                     const assignedToUser: Array<any> = [];
                     const notAssignedToUser: Array<any> = [];
@@ -166,14 +169,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                         }
                     });
 
-                    const sortedAssignedToUser = assignedToUser.sort((a, b) =>
-                        a.text.localeCompare(b.text)
-                    );
-                    const sortedNotAssignedToUser = notAssignedToUser.sort((a, b) =>
-                        a.text.localeCompare(b.text)
-                    );
-
-                    setRounds([...sortedAssignedToUser, ...sortedNotAssignedToUser]);
+                    setRounds([...assignedToUser, ...notAssignedToUser]);
                 }
             } catch (error) {
                 console.error('Error fetching rounds list:', error);
@@ -229,7 +225,11 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                         statusText
                         locationId
                         location {
+                            id
                             name
+                            barcode
+                            level
+                            category
                         }
                         handlingUnitContentId
                         handlingUnitContent {
@@ -304,6 +304,11 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                             roundLine {
                                 lineNumber
                                 articleId
+                                article {
+                                    id
+                                    name
+                                    description
+                                }
                                 status
                                 statusText
                             }

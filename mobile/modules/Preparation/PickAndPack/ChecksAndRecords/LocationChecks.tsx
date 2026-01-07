@@ -26,6 +26,7 @@ import configs from '../../../../../common/configs.json';
 import { useAuth } from 'context/AuthContext';
 import { Modal } from 'antd';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import { set } from 'lodash';
 
 export interface ILocationChecksProps {
     dataToCheck: any;
@@ -44,7 +45,8 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
         action1Trigger,
         alternativeSubmitInput,
         showSimilarLocations,
-        setResetForm
+        setResetForm,
+        forceLocation: { setTmpforceLocation }
     } = dataToCheck;
 
     const state = useAppState();
@@ -108,6 +110,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                     }
                 }
                 showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
+                setTmpforceLocation(true);
                 dispatch({
                     type: 'UPDATE_BY_STEP',
                     processName,
