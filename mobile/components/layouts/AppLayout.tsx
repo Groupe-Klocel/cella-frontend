@@ -49,7 +49,9 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         translations,
         configs,
         parameters,
-        movementToProcess
+        movementToProcess,
+        pick,
+        pack
     } = useAppState();
     const router = useRouter();
     const [storage, setStorage] = useState<any>(null);
@@ -134,6 +136,24 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [movementToProcess, storage]);
 
     useEffect(() => {
+        if (storage && pick) {
+            const timer = setTimeout(() => {
+                storage.set('pick', JSON.stringify(pick));
+            }, debounceTimeout);
+            return () => clearTimeout(timer);
+        }
+    }, [pick, storage]);
+
+    useEffect(() => {
+        if (storage && pack) {
+            const timer = setTimeout(() => {
+                storage.set('pack', JSON.stringify(pack));
+            }, debounceTimeout);
+            return () => clearTimeout(timer);
+        }
+    }, [pack, storage]);
+
+    useEffect(() => {
         if (storage) {
             dispatchUser({
                 type: 'UPDATE_BY_PROCESS',
@@ -154,6 +174,16 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 type: 'UPDATE_BY_PROCESS',
                 processName: 'movementToProcess',
                 object: JSON.parse(storage.get('movementToProcess') || '{}')
+            });
+            dispatchUser({
+                type: 'UPDATE_BY_PROCESS',
+                processName: 'pick',
+                object: JSON.parse(storage.get('pick') || '{}')
+            });
+            dispatchUser({
+                type: 'UPDATE_BY_PROCESS',
+                processName: 'pack',
+                object: JSON.parse(storage.get('pack') || '{}')
             });
         }
     }, [storage]);

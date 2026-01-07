@@ -228,7 +228,7 @@ export const AddEquipmentDetailForm = (props: ISingleItemProps) => {
                     <Form.Item label={t('d:locationCategoryText')} name="locationCategory">
                         <Select
                             placeholder={`${t('messages:please-select-a', {
-                                name: t('d:locationCategory')
+                                name: t('d:category')
                             })}`}
                         >
                             {locationCategory?.map((ed: any) => (

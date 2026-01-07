@@ -36,7 +36,7 @@ const PreparationManagementPage: PageComponent = () => {
     const menuItemDatas = [
         getModesFromPermissions(permissions, 'mobile_round-picking').includes(ModeEnum.Read) && {
             title: 'menu:round-picking',
-            path: '/round-picking'
+            path: '/pick'
         },
         getModesFromPermissions(permissions, 'mobile_round-packing').includes(ModeEnum.Read) && {
             title: 'menu:round-packing',
