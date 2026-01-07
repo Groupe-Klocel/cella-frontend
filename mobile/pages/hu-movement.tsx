@@ -21,16 +21,15 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import {
-    EmptyLocations,
     SelectLocationByLevelForm,
     ScanLocation,
-    SimilarLocations,
+    SimilarLocationsV2,
     ScanHandlingUnit
 } from '@CommonRadio';
 import { LocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/LocationChecks';
@@ -125,7 +124,7 @@ const HuMovement: PageComponent = () => {
 
     //function to retrieve information to display in RadioInfosHeader before step 20
     useEffect(() => {
-        const object: { [k: string]: any } = {};
+        let object: { [k: string]: any } = {};
         if (storedObject?.currentStep <= 20) {
             setHeaderContent(false);
         }
@@ -156,12 +155,13 @@ const HuMovement: PageComponent = () => {
             const hu = storedObject['step40']?.data?.handlingUnit;
             object[t('common:handling-unit-final_abbr')] = hu.name;
         }
+        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 
     //function to retrieve information to display in RadioInfosHeader after step 20
     useEffect(() => {
-        const finalObject: { [k: string]: any } = {};
+        let finalObject: { [k: string]: any } = {};
         if (storedObject?.currentStep === 50) {
             const originLocation = storedObject['step15']?.data?.chosenLocation;
             finalObject[t('common:location-origin_abbr')] = originLocation.name;
@@ -183,6 +183,7 @@ const HuMovement: PageComponent = () => {
             const finalHandlingUnit = storedObject['step40']?.data.finalHandlingUnit;
             finalObject[t('common:handling-unit-final_abbr')] = finalHandlingUnit.name;
         }
+        finalObject = getMoreInfos(finalObject, storedObject, processName, t);
         setFinalDisplay(finalObject);
     }, [triggerRender]);
 
@@ -231,11 +232,11 @@ const HuMovement: PageComponent = () => {
             {showSimilarLocations &&
             storedObject['step20']?.data.handlingUnit.handlingUnitContents.length > 0 &&
             storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId ? (
-                <SimilarLocations
+                <SimilarLocationsV2
                     articleId={
                         storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
                     }
-                    chosenContentId={
+                    originalContentId={
                         storedObject['step20'].data.handlingUnit.handlingUnitContents[0].id
                     }
                     stockOwnerId={
@@ -245,12 +246,19 @@ const HuMovement: PageComponent = () => {
                     stockStatus={
                         storedObject['step20'].data.handlingUnit.handlingUnitContents[0].stockStatus
                     }
+                    processName={processName}
                 />
             ) : (
                 <></>
             )}
             {showEmptyLocations && storedObject['step20']?.data && !storedObject['step30']?.data ? (
-                <EmptyLocations withAvailableHU={false} />
+                <SimilarLocationsV2
+                    isEmptyLocations={true}
+                    articleId={
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
+                    }
+                    processName={processName}
+                />
             ) : (
                 <></>
             )}

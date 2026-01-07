@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: retrieve information from local storage and validate them for database updates
 
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
-import { showError, showSuccess, LsIsSecured } from '@helpers';
+import { showError, showSuccess, LsIsSecured, getLastStepWithPreviousStep } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -269,7 +269,7 @@ export const AutoValidatePickAndPackForm = ({
         dispatch({
             type: 'ON_BACK',
             processName: processName,
-            stepToReturn: `step${storedObject[`step${stepNumber}`].previousStep}`
+            stepToReturn: `step${getLastStepWithPreviousStep(storedObject)}`
         });
     };
 

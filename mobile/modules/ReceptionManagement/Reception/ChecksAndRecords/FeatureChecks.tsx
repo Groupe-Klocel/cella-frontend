@@ -24,8 +24,6 @@ import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
-//TO BE REWORKED
-
 export interface IFeatureChecksProps {
     dataToCheck: any;
 }
@@ -137,26 +135,21 @@ export const FeatureChecks = ({ dataToCheck }: IFeatureChecksProps) => {
                 data['nextFeatureCode'] = updatedFeaturesToProcess[0]?.featureCode;
                 setResetForm(true);
                 setScannedInfo(undefined);
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: `step${stepNumber}`,
+                    object: {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    },
+                    customFields: [{ key: 'currentStep', value: stepNumber }]
+                });
             } else {
                 showError(t('messages:no-feature'));
                 setResetForm(true);
                 setScannedInfo(undefined);
             }
-        }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName,
-                stepName: `step${stepNumber}`,
-                object: {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                },
-                customFields: [{ key: 'currentStep', value: stepNumber }]
-            });
         }
     }, [featuresToProcess, scannedInfo]);
 

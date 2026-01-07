@@ -182,6 +182,7 @@ export const ScanHandlingUnit = ({
                                 article {
                                     id
                                     name
+                                    genericArticleComment
                                     stockOwnerId
                                     stockOwner {
                                         name

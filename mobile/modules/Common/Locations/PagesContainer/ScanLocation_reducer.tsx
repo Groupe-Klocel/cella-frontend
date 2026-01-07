@@ -75,7 +75,6 @@ export const ScanLocation_reducer = ({
             objectUpdate.object = { previousStep: storedObject.currentStep };
             objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
-
         dispatch(objectUpdate);
     }, [defaultValue]);
 

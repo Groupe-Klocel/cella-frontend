@@ -1,26 +1,26 @@
 /**
- CELLA Frontend
- Website and Mobile templates that can be used to communicate
- with CELLA WMS APIs.
- Copyright (C) 2023 KLOCEL <contact@klocel.com>
- 
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with this program. If not, see <https://www.gnu.org/licenses/>.
- **/
+CELLA Frontend
+Website and Mobile templates that can be used to communicate
+with CELLA WMS APIs.
+Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+**/
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { HeaderContent, NavButton, PageContentWrapper, RadioInfosHeader } from '@components';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
@@ -94,7 +94,7 @@ const InitStock: PageComponent = () => {
     }
 
     useEffect(() => {
-        const object: { [k: string]: any } = {};
+        let object: { [k: string]: any } = {};
 
         if (storedObject['step15']?.data?.chosenLocation) {
             object[t('common:location_abbr')] = storedObject['step15']?.data?.chosenLocation.name;
@@ -142,7 +142,7 @@ const InitStock: PageComponent = () => {
             const comment = storedObject['step110']?.data?.comment;
             object[t('common:comment')] = comment;
         }
-
+        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 

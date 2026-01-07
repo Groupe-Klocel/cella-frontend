@@ -21,14 +21,13 @@ import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import {
-    SimilarLocations,
-    EmptyLocations,
+    SimilarLocationsV2,
     SelectLocationByLevelForm,
     SelectArticleByStockOwnerForm,
     SelectContentForArticleForm,
@@ -191,7 +190,7 @@ const ContentMvmt: PageComponent = () => {
 
     //function to retrieve information to display in RadioInfosHeader before step 50
     useEffect(() => {
-        const object: { [k: string]: any } = {};
+        let object: { [k: string]: any } = {};
         if (storedObject?.currentStep <= 50) {
             setHeaderContent(false);
         }
@@ -242,6 +241,7 @@ const ContentMvmt: PageComponent = () => {
             const movingQuantity = storedObject['step50']?.data?.movingQuantity;
             object[t('common:quantity')] = movingQuantity;
         }
+        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 
@@ -365,18 +365,24 @@ const ContentMvmt: PageComponent = () => {
             <div hidden={isLoading}>
                 {showSimilarLocations &&
                 storedObject['step35'].data.chosenArticleLuBarcode.articleId ? (
-                    <SimilarLocations
+                    <SimilarLocationsV2
                         articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
-                        chosenContentId={storedObject['step40'].data.chosenContent.id}
+                        originalContentId={storedObject['step40'].data.chosenContent.id}
                         stockOwnerId={storedObject['step40'].data.chosenContent.stockOwnerId}
                         stockStatus={storedObject['step40'].data.chosenContent.stockStatus}
+                        processName={'contentMvt'}
                     />
                 ) : (
                     <></>
                 )}
                 {showEmptyLocations &&
                 storedObject['step35'].data.chosenArticleLuBarcode.articleId ? (
-                    <EmptyLocations withAvailableHU={true} />
+                    <SimilarLocationsV2
+                        isEmptyLocations={true}
+                        articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
+                        processName={'contentMvt'}
+                        isEmptyWithHU={true}
+                    />
                 ) : (
                     <></>
                 )}
