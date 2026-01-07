@@ -305,6 +305,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                                 lineNumber
                                 articleId
                                 article {
+                                    id
                                     name
                                     description
                                 }
