@@ -35,6 +35,7 @@ export * from './HandlingUnits/Forms/ScanPalletForm';
 export * from './HandlingUnits/Forms/SelectHandlingUnitForLocationForm';
 export * from './Locations/Elements/EmptyLocations';
 export * from './Locations/Elements/SimilarLocations';
+export * from './Locations/Elements/SimilarLocationsV2';
 export * from './Locations/Forms/ScanLocationForm';
 export * from './Locations/Forms/SelectLocationByLevelForm';
 export * from './Locations/PagesContainer/ScanLocation';

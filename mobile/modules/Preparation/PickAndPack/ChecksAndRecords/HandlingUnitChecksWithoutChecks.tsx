@@ -41,8 +41,6 @@ export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitCh
         setResetForm
     } = dataToCheck;
 
-    console.log('handlingUnitInfos', handlingUnitInfos);
-
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};

@@ -21,13 +21,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '@helpers';
+import { showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import { useSimpleGetRoundsQuery, SimpleGetRoundsQuery } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
-import configs from '../../../../../common/configs.json';
+import { useEffect, useMemo, useState } from 'react';
 import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { useAppDispatch, useAppState } from 'context/AppContext';
@@ -44,6 +42,7 @@ export const SelectEquipmentForm = ({
     buttons
 }: ISelectEquipementProps) => {
     const { graphqlRequestClient, user } = useAuth();
+    const { configs } = useAppState();
     const { t } = useTranslation();
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -72,6 +71,27 @@ export const SelectEquipmentForm = ({
         setCamData(undefined);
     };
     // end camera scanner section
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScope = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+        const roundStatusStarted = parseInt(findCodeByScope(configs, 'round_status', 'Started'));
+        const roundStatusInPreparation = parseInt(
+            findCodeByScope(configs, 'round_status', 'In preparation')
+        );
+
+        const pickAndPackType = parseInt(findCodeByScope(configs, 'round_type', 'Pick And Pack'));
+
+        return {
+            roundStatusStarted,
+            roundStatusInPreparation,
+            pickAndPackType
+        };
+    }, [configs]);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -113,7 +133,13 @@ export const SelectEquipmentForm = ({
             `;
 
             const equipmentsListVariables = {
-                filters: { status: [400, 455] },
+                filters: {
+                    status: [
+                        configsParamsCodes.roundStatusStarted,
+                        configsParamsCodes.roundStatusInPreparation
+                    ],
+                    type: configsParamsCodes.pickAndPackType
+                },
                 advancedFilters: [
                     {
                         filter: [

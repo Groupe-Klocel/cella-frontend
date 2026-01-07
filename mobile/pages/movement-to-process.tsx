@@ -25,7 +25,12 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import { ScanHandlingUnit_reducer, ScanLocation_reducer, ScanArticle_reducer } from '@CommonRadio';
+import {
+    ScanHandlingUnit_reducer,
+    ScanLocation_reducer,
+    ScanArticle_reducer,
+    SimilarLocationsV2
+} from '@CommonRadio';
 import { LocationChecks } from 'modules/StockManagement/MovementToProcess/ChecksAndRecords/LocationChecks';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { SelectLocationByLevelForm_reducer } from 'modules/StockManagement/MovementToProcess/Forms/SelectLocationByLevelForm_reducer';
@@ -36,8 +41,6 @@ import { useAuth } from 'context/AuthContext';
 import { ArticleChecks } from 'modules/StockManagement/MovementToProcess/ChecksAndRecords/ArticleChecks';
 import { QuantityChecks } from 'modules/StockManagement/MovementToProcess/ChecksAndRecords/QuantityChecks';
 import { EnterQuantity_reducer } from 'modules/StockManagement/MovementToProcess/PagesContainer/EnterQuantity_reducer';
-import { EmptyLocationsV2 } from 'modules/Common/Locations/Elements/EmptyLocationsV2';
-import { SimilarLocationsV2 } from 'modules/Common/Locations/Elements/SimilarLocationsV2';
 import { SelectContentForArticleForm_reducer } from 'modules/StockManagement/MovementToProcess/Forms/SelectContentForArticleForm_reducer';
 import { SelectMovementCarousel } from 'modules/StockManagement/MovementToProcess/Forms/SelectMovementCarousel';
 
@@ -290,6 +293,7 @@ const MovementToProcess: PageComponent = () => {
                         stockOwnerId={movement?.stockOwnerIdStr}
                         stockStatus={movement?.stockStatus}
                         reservation={movement?.reservation}
+                        processName={'movement-to-process'}
                     />
                 ) : (
                     <></>
@@ -297,7 +301,11 @@ const MovementToProcess: PageComponent = () => {
                 {canChangeDestinationLocation &&
                 showEmptyLocations &&
                 storedObject['step50']?.data ? (
-                    <EmptyLocationsV2 />
+                    <SimilarLocationsV2
+                        isEmptyLocations={true}
+                        articleId={movement?.articleIdStr}
+                        processName={'movement-to-process'}
+                    />
                 ) : (
                     <></>
                 )}

@@ -27,10 +27,9 @@ import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import {
-    EmptyLocations,
     SelectLocationByLevelForm,
     ScanLocation,
-    SimilarLocations,
+    SimilarLocationsV2,
     ScanHandlingUnit
 } from '@CommonRadio';
 import { LocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/LocationChecks';
@@ -233,11 +232,11 @@ const HuMovement: PageComponent = () => {
             {showSimilarLocations &&
             storedObject['step20']?.data.handlingUnit.handlingUnitContents.length > 0 &&
             storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId ? (
-                <SimilarLocations
+                <SimilarLocationsV2
                     articleId={
                         storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
                     }
-                    chosenContentId={
+                    originalContentId={
                         storedObject['step20'].data.handlingUnit.handlingUnitContents[0].id
                     }
                     stockOwnerId={
@@ -247,12 +246,19 @@ const HuMovement: PageComponent = () => {
                     stockStatus={
                         storedObject['step20'].data.handlingUnit.handlingUnitContents[0].stockStatus
                     }
+                    processName={processName}
                 />
             ) : (
                 <></>
             )}
             {showEmptyLocations && storedObject['step20']?.data && !storedObject['step30']?.data ? (
-                <EmptyLocations withAvailableHU={false} />
+                <SimilarLocationsV2
+                    isEmptyLocations={true}
+                    articleId={
+                        storedObject['step20'].data.handlingUnit.handlingUnitContents[0].articleId
+                    }
+                    processName={processName}
+                />
             ) : (
                 <></>
             )}
