@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { LogisticUnitModelV2 } from 'models/LogisticUnitModelV2';
+import { LogisticUnitModelV2 } from '@helpers';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { logisticUnitsRoutes } from 'modules/LogisticUnits/Static/logisticUnitsRoutes';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';

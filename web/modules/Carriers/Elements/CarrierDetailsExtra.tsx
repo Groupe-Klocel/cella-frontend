@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { CarrierShippingModeModelV2 as model } from 'models/CarrierShippingModeModelV2';
+import { CarrierShippingModeModelV2 as model } from '@helpers';
 import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';

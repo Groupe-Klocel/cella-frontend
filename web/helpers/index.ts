@@ -24,6 +24,7 @@ export * from './utils/cancelHuoDeliveryStatus';
 export * from './utils/constant';
 export * from './utils/utils';
 export * from './utils/utilsServerSide';
+export * from './utils/newModelsInjected';
 export * from './configs/env';
 export * from './utils/TranslationFromDB';
 export * from './configs/misc';

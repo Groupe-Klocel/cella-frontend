@@ -22,7 +22,7 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import { LocationModelV2 as model } from 'models/LocationModelV2';
+import { LocationModelV2 as model } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';

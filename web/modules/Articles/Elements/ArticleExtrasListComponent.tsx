@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { DeleteOutlined, EditTwoTone } from '@ant-design/icons';
 import { AppTableV2, ContentSpin, HeaderContent, LinkButton } from '@components';
 import { Space, Button, Empty, Alert, Modal, Divider } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { GraphQLResponseType, useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
@@ -50,6 +50,8 @@ import { ExportFormat, ModeEnum } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { articlesRoutes as itemRoutes } from 'modules/Articles/Static/articlesRoutes';
 import { isString } from 'lodash';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 export type HeaderData = {
     title: string;
@@ -89,6 +91,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
+    const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const id = props.articleId;
@@ -116,57 +119,60 @@ const ArticleExtrasListComponent = (props: IListProps) => {
         )
     };
 
+    const actionColumns = [
+        {
+            title: 'actions:actions',
+            key: 'actions',
+            render: (record: {
+                id?: string;
+                key: string;
+                rawKey: string;
+                value: string;
+                extraData: string;
+            }) => {
+                return (
+                    <Space>
+                        {modes.length > 0 &&
+                        modes.includes(ModeEnum.Update) &&
+                        props.dataModel.isEditable ? (
+                            <LinkButton
+                                icon={<EditTwoTone />}
+                                path={pathParamsFromDictionary(`${rootPath}/extras/edit/[id]`, {
+                                    id: id,
+                                    articleName: props.articleName,
+                                    extraData: record.extraData,
+                                    extra_key: record.key,
+                                    extra_rawKey: record.rawKey,
+                                    extra_value: record.value
+                                })}
+                            />
+                        ) : (
+                            <></>
+                        )}
+                        {modes.length > 0 &&
+                        modes.includes(ModeEnum.Delete) &&
+                        props.dataModel.isDeletable ? (
+                            <Button
+                                icon={<DeleteOutlined />}
+                                danger
+                                onClick={() => {
+                                    confirmDelete(id, record.extraData, record.rawKey);
+                                }}
+                            />
+                        ) : (
+                            <></>
+                        )}
+                    </Space>
+                );
+            }
+        }
+    ];
+
     const defaultProps = {
         searchable: true,
         searchCriteria: {},
         extraColumns: [],
-        actionColumns: [
-            {
-                title: 'actions:actions',
-                key: 'actions',
-                render: (record: { id: string; status: number; index: number; key: string }) => {
-                    return (
-                        <Space>
-                            {modes.length > 0 &&
-                            modes.includes(ModeEnum.Update) &&
-                            props.dataModel.isEditable ? (
-                                <LinkButton
-                                    icon={<EditTwoTone />}
-                                    path={pathParamsFromDictionary(`${rootPath}/extras/edit/[id]`, {
-                                        id: id,
-                                        articleName: props.articleName,
-                                        extraData,
-                                        extra_key: newRows[record.index]?.key,
-                                        extra_rawKey: newRows[record.index]?.rawKey,
-                                        extra_value: newRows[record.index]?.value
-                                    })}
-                                />
-                            ) : (
-                                <></>
-                            )}
-                            {modes.length > 0 &&
-                            modes.includes(ModeEnum.Delete) &&
-                            props.dataModel.isDeletable ? (
-                                <Button
-                                    icon={<DeleteOutlined />}
-                                    danger
-                                    onClick={() =>
-                                        confirmDelete(
-                                            id,
-                                            extraData,
-                                            newRows[record.index]['rawKey'],
-                                            newRows[record.index]['value']
-                                        )()
-                                    }
-                                ></Button>
-                            ) : (
-                                <></>
-                            )}
-                        </Space>
-                    );
-                }
-            }
-        ]
+        actionColumns: actionColumns
     };
     props = { ...defaultProps, ...props };
     // #endregion
@@ -253,45 +259,63 @@ const ArticleExtrasListComponent = (props: IListProps) => {
 
     const [search, setSearch] = useState(searchCriterias);
 
-    const confirmDelete = (id: string, argument: any, argKey: string, argValue: string) => {
-        return () => {
-            Modal.confirm({
-                title: t('messages:delete-confirm'),
-                onOk: () => {
-                    const deleteArgument = async () => {
-                        const res = await fetch(`/api/article/deleteExtra`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                id,
-                                argument,
-                                argKey,
-                                argValue
-                            })
-                        });
-                        const response = await res.json();
-                        if (!res.ok) {
-                            if (response.error.is_error) {
-                                // specific error
-                                showError(t(`errors:${response.error.code}`));
-                            } else {
-                                // generic error
-                                showError(t('messages:error-deleting-data'));
-                            }
-                        } else {
-                            reloadData();
-                            showSuccess(t('messages:success-deleted'));
+    function confirmDelete(id: string, argument: any, argKey: string) {
+        Modal.confirm({
+            title: t('messages:delete-confirm'),
+            onOk: async () => {
+                const input_tmp: any = {};
+                const jsonData: any = {};
+
+                argument.split(',').forEach((element: any) => {
+                    if (element !== '') {
+                        const [key, value] = element.split('=');
+                        if (key !== argKey) {
+                            jsonData[key] = value;
                         }
-                    };
-                    deleteArgument();
-                },
-                okText: t('messages:confirm'),
-                cancelText: t('messages:cancel')
-            });
-        };
-    };
+                    }
+                });
+
+                input_tmp['extras'] = Object.assign({}, jsonData);
+                const query = gql`
+                    mutation UpdateArticle($id: String!, $input: UpdateArticleInput!) {
+                        updateArticle(id: $id, input: $input) {
+                            id
+                            extras
+                        }
+                    }
+                `;
+                const cleanArgumentVariables = {
+                    id,
+                    input: {
+                        extras: {}
+                    }
+                };
+
+                await graphqlRequestClient.request(query, cleanArgumentVariables);
+
+                const updateArgumentVariables = {
+                    id,
+                    input: {
+                        ...input_tmp
+                    }
+                };
+
+                const result: GraphQLResponseType = await graphqlRequestClient.request(
+                    query,
+                    updateArgumentVariables
+                );
+
+                if (result.updateArticle) {
+                    showSuccess(t('messages:success-deleted'));
+                    reloadData();
+                } else {
+                    showError(t('messages:error-deleting-data'));
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
+    }
     // #endregion
 
     // #region DATATABLE
@@ -512,6 +536,16 @@ const ArticleExtrasListComponent = (props: IListProps) => {
         if (Object.entries(rowsCopy).length !== 0) {
             let i = 0;
             let stringJsonData = '';
+
+            // Première passe : construire extraData
+            for (const [key, value] of Object.entries(rowsCopy[0])) {
+                if (key.includes('extras_')) {
+                    const argKey = key.replace('extras_', '');
+                    stringJsonData += argKey + '=' + value + ',';
+                }
+            }
+
+            // Deuxième passe : construire jsonData avec extraData inclus
             for (const [key, value] of Object.entries(rowsCopy[0])) {
                 const arg = key.split('_');
                 if (key.includes('extras_')) {
@@ -520,9 +554,9 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                         index: `${i}`,
                         key: t(`d:${argKey}`),
                         rawKey: `${argKey}`,
-                        value: `${value}`
+                        value: `${value}`,
+                        extraData: stringJsonData // Inclure extraData dans chaque record
                     });
-                    stringJsonData += argKey + '=' + value + ',';
                     i++;
                 }
             }
@@ -639,7 +673,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                                 <>
                                     <AppTableV2
                                         dataModel={props.dataModel}
-                                        columns={props.actionColumns.concat(columns)}
+                                        columns={actionColumns.concat(columns)}
                                         data={newRows}
                                         pagination={pagination}
                                         isLoading={isLoading}

@@ -25,7 +25,7 @@ import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { EquipmentDetailModelV2 } from 'models/EquipmentDetailModelV2';
+import { EquipmentDetailModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { useState } from 'react';
 

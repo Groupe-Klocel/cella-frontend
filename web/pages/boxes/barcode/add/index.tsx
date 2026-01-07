@@ -24,7 +24,7 @@ import { META_DEFAULTS } from '@helpers';
 import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
-import { HandlingUnitOutboundBarcode_BoxesModelV2 as model } from 'models/HandlingUnitOutboundBarcode_BoxesModelV2';
+import { HandlingUnitOutboundBarcode_BoxesModelV2 as model } from '@helpers';
 import { boxesRoutes as itemRoutes } from 'modules/Boxes/Static/boxesRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };

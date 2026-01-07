@@ -21,7 +21,7 @@ import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
-import { CarrierShippingModeModelV2 as model } from 'models/CarrierShippingModeModelV2';
+import { CarrierShippingModeModelV2 as model } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { carriersRoutes as itemRoutes } from 'modules/Carriers/Static/carriersRoutes';

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent, ContentSpin } from '@components';
-import { PatternModelV2 as model } from 'models/PatternModelV2';
+import { PatternModelV2 as model } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 import { patternsRoutes } from 'modules/Patterns/Static/patternsRoutes';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';

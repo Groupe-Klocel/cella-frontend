@@ -30,7 +30,7 @@ import { Button, Space, Modal } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { LogisticUnitModelV2 as model } from 'models/LogisticUnitModelV2';
+import { LogisticUnitModelV2 as model } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { logisticUnitsRoutes as itemRoutes } from 'modules/LogisticUnits/Static/logisticUnitsRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';

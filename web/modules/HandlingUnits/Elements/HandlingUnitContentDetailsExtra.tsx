@@ -34,7 +34,7 @@ import { ModeEnum } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { useAppState } from 'context/AppContext';
-import { HandlingUnitContentFeatureModelV2 as model } from 'models/HandlingUnitContentFeatureModelV2';
+import { HandlingUnitContentFeatureModelV2 as model } from '@helpers';
 import parameters from '../../../../common/parameters.json';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';

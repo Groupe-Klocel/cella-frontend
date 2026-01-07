@@ -24,7 +24,7 @@ import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { CustomerOrderModelV2 as model } from 'models/CustomerOrderModelV2';
+import { CustomerOrderModelV2 as model } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { ModeEnum } from 'generated/graphql';

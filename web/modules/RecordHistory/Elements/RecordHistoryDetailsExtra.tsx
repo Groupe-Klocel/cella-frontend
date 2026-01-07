@@ -23,8 +23,8 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Divider } from 'antd';
 import { useState } from 'react';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { RecordHistoryDetailBeforeModelV2 as modelBefore } from 'models/RecordHistoryDetailBeforeModelV2';
-import { RecordHistoryDetailAfterModelV2 as modelAfter } from 'models/RecordHistoryDetailAfterModelV2';
+import { RecordHistoryDetailBeforeModelV2 as modelBefore } from '@helpers';
+import { RecordHistoryDetailAfterModelV2 as modelAfter } from '@helpers';
 
 export interface IItemDetailsProps {
     sequenceId?: string | any;

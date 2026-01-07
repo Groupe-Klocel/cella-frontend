@@ -26,10 +26,10 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useEffect, useState } from 'react';
-import { CreditLineModelV2 } from 'models/CreditLineModelV2';
-import { PaymentLineModelV2 } from 'models/PaymentLineModelV2';
-import { CreditAddressModelV2 } from 'models/CreditAddressModelV2';
-import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { CreditLineModelV2 } from '@helpers';
+import { PaymentLineModelV2 } from '@helpers';
+import { CreditAddressModelV2 } from '@helpers';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
 
 export interface IItemDetailsProps {

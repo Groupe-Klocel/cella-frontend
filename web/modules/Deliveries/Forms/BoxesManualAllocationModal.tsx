@@ -3,14 +3,17 @@ CELLA Frontend
 Website and Mobile templates that can be used to communicate
 with CELLA WMS APIs.
 Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
+
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
+
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
@@ -45,6 +48,57 @@ const BoxesManualAllocationModal = ({
     const [isCreationLoading, setIsCreationLoading] = useState<boolean>(false);
     const [equipments, setEquipments] = useState<any[]>([]);
     const [boxes, setBoxes] = useState<any[]>([]);
+    const [roundCalculationProfiles, setRoundCalculationProfiles] = useState<any[]>([]);
+    const [isProfileSelected, setIsProfileSelected] = useState(false);
+    const [areEquipmentsSelected, setAreEquipmentsSelected] = useState(false);
+
+    const handleProfileChange = (value: any) => {
+        setIsProfileSelected(!!value);
+        if (value) {
+            form.setFieldsValue({ equipments: [] });
+            setAreEquipmentsSelected(false);
+        }
+    };
+
+    const handleEquipmentsChange = (value: any[]) => {
+        setAreEquipmentsSelected(value.length > 0);
+        if (value.length > 0) {
+            form.setFieldsValue({ roundCalculationProfileId: null });
+            setIsProfileSelected(false);
+        }
+    };
+
+    const getRoundCalculationProfiles = async () => {
+        const query = gql`
+            query roundCalculationProfiles {
+                roundCalculationProfiles(
+                    itemsPerPage: 1000
+                    orderBy: { field: "name", ascending: true }
+                ) {
+                    results {
+                        id
+                        name
+                    }
+                }
+            }
+        `;
+        try {
+            const data = await graphqlRequestClient.request(query);
+            return data.roundCalculationProfiles.results;
+        } catch (error) {
+            showError(t('messages:error-getting-data'));
+            console.log(error);
+            return [];
+        }
+    };
+
+    useEffect(() => {
+        const fetchRoundCalculationProfiles = async () => {
+            const results = await getRoundCalculationProfiles();
+            setRoundCalculationProfiles(results);
+        };
+        fetchRoundCalculationProfiles();
+    }, []);
 
     const getEquipments = async () => {
         const query = gql`
@@ -115,6 +169,8 @@ const BoxesManualAllocationModal = ({
     const handleCancel = () => {
         setIsCreationLoading(false);
         showModal.setShowBoxesManualAllocationModal(false);
+        setAreEquipmentsSelected(false);
+        setIsProfileSelected(false);
         form.resetFields();
         setFieldsValue();
     };
@@ -131,7 +187,7 @@ const BoxesManualAllocationModal = ({
 
     const calculateTotalVolume = (boxes: any[]) => {
         const totalVolumeMm3 = boxes.reduce((unitAcc: number, unit: any) => {
-            const { length, width, height } = unit.handlingUnit;
+            const { length, width, height } = unit.handlingUnit || {};
             if (length && width && height) {
                 const volume = length * width * height;
                 return unitAcc + volume;
@@ -142,10 +198,11 @@ const BoxesManualAllocationModal = ({
     };
 
     const handleAssign = async () => {
-        const form_value = form.getFieldsValue();
+        const form_value = await form.validateFields();
         setIsCreationLoading(true);
         setFieldsValue();
 
+        let roundCalculationProfileId = form_value.roundCalculationProfileId;
         let allowedEquipments = form_value.equipments;
 
         console.log(form_value.equipments);
@@ -153,6 +210,7 @@ const BoxesManualAllocationModal = ({
         const allowedBoxes = boxes.map((boxes: any) => boxes.id);
 
         const data = {
+            roundCalculationProfileId,
             allowedBoxes,
             allowedEquipments
         };
@@ -207,6 +265,8 @@ const BoxesManualAllocationModal = ({
             console.log('executeFunctionError', error);
         } finally {
             setIsCreationLoading(false);
+            setAreEquipmentsSelected(false);
+            setIsProfileSelected(false);
             showModal.setShowBoxesManualAllocationModal(false);
             form.resetFields();
         }
@@ -223,6 +283,26 @@ const BoxesManualAllocationModal = ({
             confirmLoading={isCreationLoading}
         >
             <Form form={form}>
+                <Form.Item name="roundCalculationProfileId">
+                    <Select
+                        placeholder={`${t('messages:please-select-an', {
+                            name: t('d:round-calculation-profiles')
+                        })}`}
+                        style={{ width: '100%' }}
+                        onChange={handleProfileChange}
+                        disabled={areEquipmentsSelected}
+                        allowClear
+                    >
+                        {roundCalculationProfiles.map((roundCalculationProfile) => (
+                            <Select.Option
+                                key={roundCalculationProfile.id}
+                                value={roundCalculationProfile.id}
+                            >
+                                {roundCalculationProfile.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
                 <Form.Item name="equipments">
                     <Select
                         mode="multiple"
@@ -230,6 +310,8 @@ const BoxesManualAllocationModal = ({
                             name: t('d:equipment')
                         })}`}
                         style={{ width: '100%' }}
+                        onChange={handleEquipmentsChange}
+                        disabled={isProfileSelected}
                     >
                         {equipments.map((equipment) => (
                             <Select.Option key={equipment.id} value={equipment.id}>

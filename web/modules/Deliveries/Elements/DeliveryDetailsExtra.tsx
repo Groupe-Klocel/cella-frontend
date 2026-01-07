@@ -31,12 +31,12 @@ import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { DeliveryAddressModelV2 } from 'models/DeliveryAddressModelV2';
-import { DeliveryLineModelV2 } from 'models/DeliveryLineModelV2';
-import { HandlingUnitOutboundModelV2 } from 'models/HandlingUnitOutboundModelV2';
+import { DeliveryAddressModelV2 } from '@helpers';
+import { DeliveryLineModelV2 } from '@helpers';
+import { HandlingUnitOutboundModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { useEffect, useState } from 'react';
-import { StatusHistoryDetailExtraModelV2 } from 'models/StatusHistoryDetailExtraModelV2';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 import { BoxesManualAllocationModal } from '../Forms/BoxesManualAllocationModal';
 
