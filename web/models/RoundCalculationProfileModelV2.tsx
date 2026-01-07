@@ -358,6 +358,26 @@ export const RoundCalculationProfileModelV2: ModelType = {
             config: null,
             param: null
         },
+        separateStockPickingRound: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'Boolean',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: 'Boolean',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         monoBlocRound: {
             isListRequested: true,
             isDefaultHiddenList: false,

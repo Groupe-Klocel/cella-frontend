@@ -27,7 +27,7 @@ import { ModeEnum } from 'generated/graphql';
 import { RoundModelV2 as model } from '@helpers';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
 import { ManageAssignmentModal } from 'components/common/smart/Modals/ManageAssignmentModal';
 import { EditPriorityRoundsModal } from 'modules/Rounds/Forms/EditPriorityRoundsModal';
@@ -43,8 +43,8 @@ const RoundPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [tableData, setTableData] = useState<any[]>([]);
     const [selectedRows, setSelectedRows] = useState<any[]>([]);
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [startRoundLoading, setStartRoundLoading] = useState(false);
     const [editPriorityRoundsLoading, setEditPriorityRoundsLoading] = useState(false);
     const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
@@ -57,7 +57,6 @@ const RoundPages: PageComponent = () => {
     const [selectionState, setSelectionState] = useState<'none' | 'assign' | 'unassign' | 'mixed'>(
         'none'
     );
-    const [allSelectedHaveCorrectStatus, setAllSelectedHaveCorrectStatus] = useState(false);
     const [allSelectedCanBeStartRounds, setAllSelectedCanBeStartRounds] = useState(false);
     const [allCanBeEdited, setAllCanBeEdited] = useState(false);
     const [selectedRoundsHaveUser, setSelectedRoundsHaveUser] = useState(false);
@@ -71,6 +70,12 @@ const RoundPages: PageComponent = () => {
                     item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
             )?.code;
         };
+         const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
         const estimatedStatusCode = findCodeByScope(configs, 'round_status', 'Estimated');
         const startedStatusCode = findCodeByScope(configs, 'round_status', 'Started');
         const pasDeStockDisponibleStatusCode = findCodeByScope(
@@ -78,13 +83,19 @@ const RoundPages: PageComponent = () => {
             'round_status',
             'Pas de stock disponible'
         );
+        const roundCategoryOutboundCode = findCodeByScopeAndValue(
+            configs,
+            'round_category',
+            'Outbound'
+        );
         const inPreparationStatusCode = findCodeByScope(configs, 'round_status', 'In preparation');
 
         return {
             estimatedStatusCode,
             startedStatusCode,
             pasDeStockDisponibleStatusCode,
-            inPreparationStatusCode
+            inPreparationStatusCode,
+            roundCategoryOutboundCode
         };
     }, [configs, parameters]);
 
@@ -166,53 +177,51 @@ const RoundPages: PageComponent = () => {
             });
         };
     };
-    const hasSelected = selectedRowKeys.length > 0;
+    const hasSelected = selectedRows.length > 0;
     const [refetch, setRefetch] = useState<boolean>(false);
 
-    const startRounds = async () => {
-        const launchRounds = async () => {
-            setStartRoundLoading(true);
-            const rounds = selectedRowKeys?.map((item) => ({ id: item }));
+    const launchRounds = async () => {
+        setStartRoundLoading(true);
+        const rounds = selectedRows?.map((item) => ({ id: item.id }));
 
-            const query = gql`
-                mutation executeFunction($functionName: String!, $event: JSON!) {
-                    executeFunction(functionName: $functionName, event: $event) {
-                        status
-                        output
-                    }
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
                 }
-            `;
-            const variables = {
-                functionName: 'update_rounds_status',
-                event: {
-                    input: { rounds: rounds, status: Number(configsParamsCodes.startedStatusCode) }
-                }
-            };
-            try {
-                const launchRoundsResult = await graphqlRequestClient.request(query, variables);
-                if (launchRoundsResult.executeFunction.status === 'ERROR') {
-                    showError(launchRoundsResult.executeFunction.output);
-                } else if (
-                    launchRoundsResult.executeFunction.status === 'OK' &&
-                    launchRoundsResult.executeFunction.output.status === 'KO'
-                ) {
-                    showError(t(`errors:${launchRoundsResult.executeFunction.output.output.code}`));
-                    console.log(
-                        'Backend_message',
-                        launchRoundsResult.executeFunction.output.output
-                    );
-                } else {
-                    showSuccess(t('messages:success-round-start'));
-                    setRefetch(true);
-                }
-                setStartRoundLoading(false);
-            } catch (error) {
-                showError(t('messages:error-executing-function'));
-                console.log('executeFunctionError', error);
-                setStartRoundLoading(false);
+            }
+        `;
+        const variables = {
+            functionName: 'update_rounds_status',
+            event: {
+                input: { rounds: rounds, status: Number(configsParamsCodes.startedStatusCode) }
             }
         };
+        try {
+            const launchRoundsResult = await graphqlRequestClient.request(query, variables);
+            if (launchRoundsResult.executeFunction.status === 'ERROR') {
+                showError(launchRoundsResult.executeFunction.output);
+                console.log('Backend_message', launchRoundsResult.executeFunction);
+            } else if (
+                launchRoundsResult.executeFunction.status === 'OK' &&
+                launchRoundsResult.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${launchRoundsResult.executeFunction.output.output.code}`));
+                console.log('Backend_message', launchRoundsResult.executeFunction.output.output);
+            } else {
+                showSuccess(t('messages:success-round-start'));
+                setRefetch(true);
+            }
+            setStartRoundLoading(false);
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+            setStartRoundLoading(false);
+        }
+    };
 
+    const startRounds = async () => {
         const hasNoStockSelected = selectedRows.some(
             (row) => row.status === Number(configsParamsCodes.pasDeStockDisponibleStatusCode)
         );
@@ -243,7 +252,7 @@ const RoundPages: PageComponent = () => {
         `;
 
         const variables = {
-            ids: selectedRowKeys,
+            ids: selectedRows.map((row) => row.id),
             input: input
         };
 
@@ -260,27 +269,43 @@ const RoundPages: PageComponent = () => {
         }
     };
 
-    const onSelectChange = (newSelectedRowKeys: React.Key[], newSelectedRows: any[]) => {
-        setSelectedRowKeys(newSelectedRowKeys);
-        setSelectedRows(newSelectedRows);
-        checkSelectedRowsStatus(newSelectedRowKeys as string[]);
+    const onSelectChange = (newSelectedRows: any[]) => {
+        selectedRows.forEach((infos: any) => {
+            if (
+                !newSelectedRows.map((NSR) => NSR.id).includes(infos.id) &&
+                tableData.map((d) => d.id).includes(infos.id)
+            ) {
+                setSelectedRows((prevKeys: any) => prevKeys.filter((k: any) => k.id !== infos.id));
+            }
+        });
+        newSelectedRows.forEach((value: any) => {
+            if (!selectedRows?.map((SR) => SR.id).includes(value.id)) {
+                setSelectedRows((prevKeys: React.Key[]) => [...prevKeys, value]);
+            }
+        });
     };
 
+    useEffect(() => {
+        if (selectedRows && selectedRows.length > 0) {
+            checkSelectedRowsStatus(selectedRows);
+        }
+    }, [selectedRows]);
+
     const rowSelection = {
-        selectedRowKeys,
-        onChange: (keys: React.Key[], rows: any[]) => onSelectChange(keys, rows),
+        selectedRows,
+        onChange: (keys: React.Key[], rows: any[]) => onSelectChange(rows),
         getCheckboxProps: (record: any) => ({
             name: record.name
         })
     };
 
     const resetSelection = () => {
-        setSelectedRowKeys([]);
+        setSelectedRows([]);
     };
 
-    const checkSelectedRowsStatus = async (selectedIds: any[]) => {
+    const checkSelectedRowsStatus = async (selectedInfos: any[]) => {
+        const selectedIds = selectedInfos.map((info) => info.id);
         if (selectedIds.length === 0) {
-            setAllSelectedHaveCorrectStatus(false);
             setAllSelectedCanBeStartRounds(false);
             setAllCanBeEdited(false);
             setSelectedRoundsHaveUser(false);
@@ -308,10 +333,6 @@ const RoundPages: PageComponent = () => {
         try {
             const result = await graphqlRequestClient.request(query, variables);
             const selectedRounds = result.rounds.results;
-
-            const allHaveCorrectStatus = selectedRounds.every(
-                (round: any) => round.status === parseInt(configsParamsCodes.startedStatusCode)
-            );
 
             const allCanBeEdited = selectedRounds.every((round: any) => {
                 const status = round.status;
@@ -364,7 +385,6 @@ const RoundPages: PageComponent = () => {
                       ? 'unassign'
                       : 'assign';
 
-            setAllSelectedHaveCorrectStatus(allHaveCorrectStatus);
             setAllSelectedCanBeStartRounds(allCanBeStartRounds);
             setAllCanBeEdited(allCanBeEdited);
             setSelectedRoundsHaveUser(hasUsersToProcess);
@@ -372,7 +392,6 @@ const RoundPages: PageComponent = () => {
             setAllSelectedHaveValidStatusForAssignment(allHaveValidStatusForAssignment);
         } catch (error) {
             console.error('Error checking movement status:', error);
-            setAllSelectedHaveCorrectStatus(false);
             setAllSelectedCanBeStartRounds(false);
             setAllCanBeEdited(false);
             setSelectedRoundsHaveUser(false);
@@ -387,7 +406,7 @@ const RoundPages: PageComponent = () => {
                         <span className="selected-items-span" style={{ marginLeft: 16 }}>
                             {hasSelected
                                 ? `${t('messages:selected-items-number', {
-                                      number: selectedRowKeys.length
+                                      number: selectedRows.length
                                   })}`
                                 : ''}
                         </span>
@@ -465,9 +484,10 @@ const RoundPages: PageComponent = () => {
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}
+                setData={setTableData}
                 refetch={refetch}
                 checkbox={true}
-                searchCriteria={{ category: configs.ROUND_CATEGORY_OUTBOUND }}
+                searchCriteria={{ category: configsParamsCodes.roundCategoryOutboundCode }}
                 actionColumns={[
                     {
                         title: 'actions:actions',
