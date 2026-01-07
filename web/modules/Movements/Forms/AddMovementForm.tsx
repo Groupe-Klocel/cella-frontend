@@ -570,10 +570,8 @@ export const AddMovementForm = () => {
             .then(() => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
-                console.log('DLA - onFinish - formData:', formData);
 
                 const formDataWithStr = addStrToKeys(formData);
-                console.log('DLA - onFinish - formDataWithStr:', formDataWithStr);
                 formDataWithStr['articleIdStr'] = aId;
                 formDataWithStr.model = parseInt(configsParamsCodes.normalMovementModel);
                 formDataWithStr.code = parseInt(configsParamsCodes.transferMovementCode);
