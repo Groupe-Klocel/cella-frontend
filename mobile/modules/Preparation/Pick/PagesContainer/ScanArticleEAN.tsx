@@ -223,7 +223,7 @@ export const ScanArticleEAN = ({
                 }}
                 action1Trigger={{ action1Trigger, setAction1Trigger }}
                 action1Label={t('actions:next')}
-                alternativeSubmitLabel1={t('actions:change-picking-location')}
+                alternativeSubmitLabel1={t('common:change-location')}
             ></ScanForm_reducer>
             {checkComponent(dataToCheck)}
         </>

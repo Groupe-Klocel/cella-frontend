@@ -18,21 +18,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured, showSuccess } from '@helpers';
+import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { useAuth } from 'context/AuthContext';
-import { gql } from 'graphql-request';
 
 export interface IArticleChecksProps {
     dataToCheck: any;
     setTmpforceLocation?: any;
 }
 
-export const ArticleChecks = ({ dataToCheck, setTmpforceLocation }: IArticleChecksProps) => {
+export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
     const { t } = useTranslation();
-    const { graphqlRequestClient } = useAuth();
 
     const {
         processName,
@@ -51,9 +48,6 @@ export const ArticleChecks = ({ dataToCheck, setTmpforceLocation }: IArticleChec
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
 
-    const handlingUnitContentArticleId =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
-            ?.id;
     const handlingUnitContentId =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.id;
     const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
@@ -152,95 +146,57 @@ export const ArticleChecks = ({ dataToCheck, setTmpforceLocation }: IArticleChec
                 },
                 customFields: [{ key: 'ignoreHUContentIds', value: newIgnoreHUContentIds }]
             });
+
+            // Transform raaToUse.handlingUnitContent to handlingUnit format
+            const handlingUnitContent = raaToUse?.handlingUnitContent;
+            const handlingUnitFromRaa = {
+                id: handlingUnitContent?.handlingUnit?.id,
+                name: handlingUnitContent?.handlingUnit?.name,
+                locationId: raaToUse?.locationId,
+                location: raaToUse?.location,
+                handlingUnitContents: [
+                    {
+                        id: handlingUnitContent?.id,
+                        quantity: handlingUnitContent?.quantity,
+                        reservation: handlingUnitContent?.reservation,
+                        stockStatus: handlingUnitContent?.stockStatus,
+                        stockStatusText: handlingUnitContent?.stockStatusText,
+                        stockOwnerId: handlingUnitContent?.stockOwnerId,
+                        stockOwner: handlingUnitContent?.stockOwner,
+                        articleId: handlingUnitContent?.articleId,
+                        article: handlingUnitContent?.article,
+                        handlingUnitContentFeatures:
+                            handlingUnitContent?.handlingUnitContentFeatures || []
+                    }
+                ]
+            };
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step30`,
+                object: {
+                    ...storedObject[`step30`],
+                    data: {
+                        ...storedObject[`step30`]?.data,
+                        chosenLocation: raaToUse?.location,
+                        handlingUnit: handlingUnitFromRaa
+                    }
+                }
+            });
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step40`,
+                object: {
+                    ...storedObject[`step40`],
+                    data: {
+                        ...storedObject[`step40`]?.data,
+                        handlingUnit: handlingUnitFromRaa
+                    }
+                }
+            });
         }
     }, [action1Trigger]);
-
-    const [isHuClosureLoading, setIsHuClosureLoading] = useState(false);
-    async function closeHUO(currentShippingPalletId: any) {
-        setIsHuClosureLoading(true);
-        const query = gql`
-            mutation executeFunction($functionName: String!, $event: JSON!) {
-                executeFunction(functionName: $functionName, event: $event) {
-                    status
-                    output
-                }
-            }
-        `;
-
-        const variables = {
-            functionName: 'RF_pickAndPack_closeShippingPallet',
-            event: {
-                input: { currentShippingPalletId }
-            }
-        };
-
-        try {
-            const closeHUOsResult = await graphqlRequestClient.request(query, variables);
-            if (closeHUOsResult.executeFunction.status === 'ERROR') {
-                showError(closeHUOsResult.executeFunction.output);
-            } else if (
-                closeHUOsResult.executeFunction.status === 'OK' &&
-                closeHUOsResult.executeFunction.output.status === 'KO'
-            ) {
-                showError(t(`errors:${closeHUOsResult.executeFunction.output.output.code}`));
-                console.log('Backend_message', closeHUOsResult.executeFunction.output.output);
-            } else {
-                showSuccess(t('messages:hu-ready-to-be-loaded'));
-                const newStoredObject: any = storedObject;
-                if (ignoreHUContentIds.length > 0) {
-                    newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
-                } else {
-                    newStoredObject.ignoreHUContentIds = [];
-                }
-                const { updatedRound } = closeHUOsResult.executeFunction.output.output;
-
-                let remainingHUContentIds = updatedRound.roundAdvisedAddresses
-                    .filter((raa: any) => {
-                        return !newStoredObject.ignoreHUContentIds.includes(
-                            raa.handlingUnitContentId
-                        );
-                    })
-                    .filter((raa: any) => raa.quantity != 0);
-                if (remainingHUContentIds.length === 0) {
-                    newStoredObject.ignoreHUContentIds = [];
-                    remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
-                        (raa: any) => raa.quantity != 0
-                    );
-                }
-
-                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses.filter(
-                    (raa: any) => raa.quantity != 0
-                );
-                const data = {
-                    proposedRoundAdvisedAddresses: roundAdvisedAddresses.filter(
-                        (raa: any) =>
-                            raa.handlingUnitContentId ==
-                            remainingHUContentIds[0].handlingUnitContentId
-                    ),
-                    round: updatedRound,
-                    pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
-                };
-                newStoredObject['currentStep'] = 10;
-                if (storedObject[`step5`]) {
-                    newStoredObject[`step5`] = {
-                        ...storedObject[`step5`]
-                    };
-                }
-                newStoredObject[`step10`] = { previousStep: storedObject[`step5`] ? 5 : 0, data };
-                delete newStoredObject['step10']['data']['currentShippingPallet'];
-                dispatch({
-                    type: 'UPDATE_BY_PROCESS',
-                    processName,
-                    object: newStoredObject
-                });
-            }
-            setIsHuClosureLoading(false);
-        } catch (error) {
-            showError(t('messages:error-updating-data'));
-            console.log('updateHUOsError', error);
-            setIsHuClosureLoading(false);
-        }
-    }
 
     useEffect(() => {
         if (triggerAlternativeSubmit1.triggerAlternativeSubmit1) {

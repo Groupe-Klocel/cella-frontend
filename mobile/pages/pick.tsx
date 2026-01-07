@@ -133,6 +133,11 @@ const Pick: PageComponent = () => {
             'outbound',
             'PICK_AUTOVALIDATE_1_QUANTITY'
         );
+        const highlightedQuantity = findValueByScopeAndCode(
+            parameters,
+            'outbound',
+            'IS_QUANTITY_HIGHLIGHTED'
+        );
         // Convert value in boolean or number as needed
         const equipmentScanAtPreparation = equipmentScanAtPreparationValue === '1';
         const manuallyGenerateParent = manuallyGenerateParentValue === '1';
@@ -150,6 +155,7 @@ const Pick: PageComponent = () => {
             }
         })();
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
+        const highlightQuantity = highlightedQuantity === '1';
 
         return {
             equipmentScanAtPreparation,
@@ -158,7 +164,8 @@ const Pick: PageComponent = () => {
             forceLocationScan,
             forceArticleScan,
             defaultQuantity,
-            autoValidate1Quantity
+            autoValidate1Quantity,
+            highlightQuantity
         };
     }, [parameters]);
 
@@ -171,6 +178,7 @@ const Pick: PageComponent = () => {
         : true;
     const quantityDefaultValue = configsParamsCodes.defaultQuantity;
     const autoValidate1Quantity = configsParamsCodes.autoValidate1Quantity;
+    const isQuantityHighlighted = configsParamsCodes.highlightQuantity;
 
     const [tmpForceLocation, setTmpforceLocation] = useState<any>(forceLocationScan);
     useEffect(() => {
@@ -187,7 +195,7 @@ const Pick: PageComponent = () => {
 
     // Check if there are different locationIds available for action1Button
     const hasMultipleLocationIds = (() => {
-        const proposedAddresses = storedObject['step10']?.data?.proposedRoundAdvisedAddresses || [];
+        const proposedAddresses = storedObject['step10']?.data?.round?.roundAdvisedAddresses || [];
         const locationIds = proposedAddresses.map((addr: any) => addr?.locationId);
         const uniqueLocationIds = Array.from(new Set(locationIds));
         return uniqueLocationIds.length > 1;
@@ -195,8 +203,25 @@ const Pick: PageComponent = () => {
 
     // function to add next location display in italics
     const addNextLocationDisplay = (currentLocationName: string) => {
-        const allAddresses = storedObject['step10']?.data?.proposedRoundAdvisedAddresses || [];
-        const nextLocationFull = allAddresses.length > 1 ? allAddresses[1]?.location?.name : '';
+        const allAddresses = storedObject['step10']?.data?.round?.roundAdvisedAddresses || [];
+        const currentProposedAddresses =
+            storedObject['step10']?.data?.proposedRoundAdvisedAddresses || [];
+
+        //Find next location
+        let currentIndex = -1;
+        if (currentProposedAddresses.length > 0) {
+            const firstProposedId = currentProposedAddresses[0].id;
+            currentIndex = allAddresses.findIndex((addr: any) => addr.id === firstProposedId);
+        }
+
+        const nextIndex = currentIndex + currentProposedAddresses.length;
+        let nextLocationFull = '';
+
+        if (nextIndex < allAddresses.length) {
+            nextLocationFull = allAddresses[nextIndex]?.location?.name || '';
+        } else if (allAddresses.length > 0) {
+            nextLocationFull = allAddresses[0]?.location?.name || '';
+        }
 
         let nextLocation = '';
         if (nextLocationFull) {
@@ -323,7 +348,7 @@ const Pick: PageComponent = () => {
                     (total: number, current: any) => total + current.quantity,
                     0
                 ),
-                highlight: true
+                highlight: isQuantityHighlighted
             };
         } else {
             headerDisplay[t('common:quantity_abbr')] =
