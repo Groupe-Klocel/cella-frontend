@@ -50,6 +50,8 @@ interface State {
     reception: Record<string, any>;
     returnReception: Record<string, any>;
     movementToProcess: Record<string, any>;
+    pick: Record<string, any>;
+    pack: Record<string, any>;
     [key: string]: any;
 }
 
@@ -190,7 +192,9 @@ const initialState: State = {
     pickAndPack: {},
     reception: {},
     returnReception: {},
-    movementToProcess: {}
+    movementToProcess: {},
+    pick: {},
+    pack: {}
 };
 
 function reducer(state: State, action: Action): State {
@@ -287,7 +291,9 @@ function reducer(state: State, action: Action): State {
                     pickAndPack: {},
                     reception: {},
                     returnReception: {},
-                    movementToProcess: {}
+                    movementToProcess: {},
+                    pick: {},
+                    pack: {}
                 };
             }
             return newState;
