@@ -388,12 +388,12 @@ const RuleVersionDetailsExtra = ({ rule, setRefetchRuleVersion }: IItemDetailsPr
                         dataModel={modelLineConf}
                         searchable={false}
                         triggerDelete={{
-                            idToDeleteVersionConfig: idToDeleteVersionConfig,
-                            setIdToDeleteVersionConfig: setIdToDeleteVersionConfig
+                            idToDelete: idToDeleteVersionConfig,
+                            setIdToDelete: setIdToDeleteVersionConfig
                         }}
                         triggerSoftDelete={{
-                            idToDisableVersionConfig: idToDisableVersionConfig,
-                            setIdToDisableVersionConfig: setIdToDisableVersionConfig
+                            idToDisable: idToDisableVersionConfig,
+                            setIdToDisable: setIdToDisableVersionConfig
                         }}
                         triggerPriorityChange={{
                             id: priorityStatus.id,

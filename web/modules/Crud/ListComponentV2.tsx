@@ -804,7 +804,20 @@ const ListComponent = (props: IListProps) => {
         isLoading: deleteLoading,
         result: deleteResult,
         mutate: callDelete
-    } = useDelete(props.dataModel.endpoints.delete, null, props.isCreateAMovement);
+    } = useDelete(
+        props.dataModel.endpoints.delete,
+        props.triggerPriorityChange
+            ? {
+                  tableName:
+                      props.dataModel.resolverName.charAt(0).toLowerCase() +
+                      props.dataModel.resolverName.slice(1),
+                  orderingField: props.triggerPriorityChange.orderingField,
+                  operation: 'delete',
+                  parentId: props.triggerPriorityChange.parentId
+              }
+            : undefined,
+        props.isCreateAMovement
+    );
 
     useEffect(() => {
         if (props.triggerDelete && props.triggerDelete.idToDelete) {
