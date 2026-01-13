@@ -18,173 +18,37 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-function findSupplierArticleCode(processName: string, storedObject: any) {
-    switch (processName) {
-        case 'pickAndPack':
-            if (storedObject[`step50`]?.data) {
-                const article =
-                    storedObject['step50']?.data?.article ??
-                    storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0].handlingUnitContent
-                        .article;
-                return {
-                    supplierArticleCode: article?.genericArticleComment,
-                    articleName: article?.name
-                };
-            } else {
-                const proposedRoundAdvisedAddress =
-                    storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0];
-                if (proposedRoundAdvisedAddress?.handlingUnitContent?.article) {
-                    const article = proposedRoundAdvisedAddress.handlingUnitContent.article;
-                    return {
-                        supplierArticleCode: article?.genericArticleComment,
-                        articleName: article?.name
-                    };
-                }
-            }
-            break;
-        case 'reception':
-        case 'receptionReturn':
-            if (storedObject[`step50`]?.data) {
-                const receptionArticle =
-                    storedObject['step50']?.data?.chosenArticleLuBarcode?.article;
-                return {
-                    supplierArticleCode: receptionArticle?.genericArticleComment,
-                    articleName: `${receptionArticle?.name}-${receptionArticle?.description}`
-                };
-            }
-            break;
-        case 'articleInfo':
-            if (storedObject[`step20`]?.data) {
-                const articleInfoArticle =
-                    storedObject['step20']?.data?.chosenArticleLuBarcode?.article;
-                return {
-                    supplierArticleCode: articleInfoArticle?.genericArticleComment,
-                    articleName:
-                        articleInfoArticle?.name +
-                        ' (' +
-                        storedObject['step20']?.data?.chosenArticleLuBarcode?.stockOwner?.name +
-                        ')'
-                };
-            }
-            break;
-        case 'roundPicking':
-            const proposedRoundAdvisedAddress =
-                storedObject['step10']?.data?.proposedRoundAdvisedAddress;
-            const roundPickingArticle = proposedRoundAdvisedAddress.handlingUnitContent?.article;
-            return {
-                supplierArticleCode: roundPickingArticle?.genericArticleComment,
-                articleName: roundPickingArticle?.name
-            };
-            break;
-        case 'roundPacking':
-            if (storedObject[`step30`]?.data) {
-                const roundPackingArticle = storedObject[`step30`]?.data?.article;
-                const serialNumber = storedObject[`step30`]?.data?.feature?.value ?? undefined;
-                const roundPackingArticleName = serialNumber
-                    ? '1 x ' + roundPackingArticle.name + ' / ' + serialNumber
-                    : roundPackingArticle.name;
-                return {
-                    supplierArticleCode: roundPackingArticle?.genericArticleComment,
-                    articleName: roundPackingArticleName
-                };
-            }
-            break;
-        case 'contentMvtReception':
-        case 'contentMvt':
-            if (storedObject[`step35`]?.data) {
-                const articleLuBarcode = storedObject['step35']?.data?.chosenArticleLuBarcode;
-                const stockOwnerName = articleLuBarcode?.stockOwner?.name ?? undefined;
-                const contentMvtArticle = articleLuBarcode.article
-                    ? articleLuBarcode.article
-                    : articleLuBarcode;
-                const contentMvtArticleName = stockOwnerName
-                    ? contentMvtArticle.name + ' (' + stockOwnerName + ')'
-                    : contentMvtArticle.name;
-                return {
-                    supplierArticleCode: contentMvtArticle?.genericArticleComment,
-                    articleName: contentMvtArticleName
-                };
-            }
-            break;
-        case 'boxPreparation':
-            if (storedObject[`step30`]?.data) {
-                const articleLuBarcode = storedObject[`step30`]?.data?.articleLuBarcode;
-                return {
-                    supplierArticleCode: articleLuBarcode.article?.genericArticleComment,
-                    articleName: articleLuBarcode.article.name
-                };
-            }
-            break;
-        case 'cycleCounts':
-            if (storedObject[`step55`]?.data) {
-                const article = storedObject['step55']?.data?.article;
-                const serialNumber = storedObject['step40']?.data?.feature?.value ?? undefined;
-                let cycleCountArticleName = serialNumber
-                    ? '1 x ' + article.name + ' / ' + serialNumber
-                    : article.name;
-                if (
-                    storedObject['step40']?.data?.resType === 'barcode' &&
-                    storedObject['step70']?.data?.movingQuantity
-                ) {
-                    const movingQuantity = storedObject['step70']?.data?.movingQuantity;
-                    cycleCountArticleName = movingQuantity + ' x ' + article.name;
-                }
-                return {
-                    supplierArticleCode: article?.genericArticleComment,
-                    articleName: cycleCountArticleName
-                };
-            }
-            break;
-        case 'huMvt':
-            if (storedObject['step20']?.data) {
-                const originalHu = storedObject['step20']?.data?.handlingUnit;
-                return {
-                    supplierArticleCode:
-                        originalHu.handlingUnitContents.length > 0
-                            ? originalHu.handlingUnitContents[0].article.genericArticleComment
-                            : null,
-                    articleName:
-                        originalHu.handlingUnitContents.length > 0
-                            ? originalHu.handlingUnitContents[0].article.name
-                            : null
-                };
-            }
-            break;
-        case 'initStock':
-            if (storedObject['step40']?.data) {
-                const article = storedObject['step40']?.data?.articleLuBarcodesInfos[0].article;
-                return {
-                    supplierArticleCode: article?.genericArticleComment,
-                    articleName: article?.name
-                };
-            }
-            break;
-        // Add more cases here for different process names if needed
-        default:
-            return { supplierArticleCode: null, articleName: null };
-    }
-}
+import { arrayOfInfosToAdd } from './getMoreInfosUtils/arrayOfInfosToAdd';
 
 export function getMoreInfos(headerDisplay: any, storedObject: any, processName: string, t: any) {
     if (!storedObject['step10']) {
         return headerDisplay;
     }
-    // #region Add Supplier Article Code
-    const { supplierArticleCode, articleName } = findSupplierArticleCode(
-        processName,
-        storedObject
-    ) ?? { supplierArticleCode: null, articleName: null };
-    // Insert supplierArticleCode just under the value Article name
-    if (articleName) {
-        const entries = Object.entries(headerDisplay);
-        const targetIndex = entries.findIndex(([key, value]) => value === articleName);
-        const insertIndex = targetIndex >= 0 ? targetIndex + 1 : entries.length;
-        entries.splice(insertIndex, 0, [
-            t('common:supplier-article-code'),
-            supplierArticleCode ?? ''
-        ]);
-        headerDisplay = Object.fromEntries(entries);
-    }
-    // #endregion
+
+    arrayOfInfosToAdd.forEach((info) => {
+        try {
+            const func = require(`./getMoreInfosUtils/${info.functionName}`)[info.functionName];
+            if (func) {
+                const result = func(processName, storedObject);
+                if (result) {
+                    // Insert the new info just under the targeted position, or at the end if targeted position is null
+                    const entries = Object.entries(headerDisplay);
+                    let insertIndex = entries.length;
+                    if (info.newHeaderInfoTargetedPosition) {
+                        const targetIndex = entries.findIndex(
+                            ([key, value]) => value === result[info.newHeaderInfoTargetedPosition!]
+                        );
+                        insertIndex = targetIndex >= 0 ? targetIndex + 1 : entries.length;
+                    }
+                    entries.splice(insertIndex, 0, [t(info.key), result[info.newHeaderInfoName]]);
+                    headerDisplay = Object.fromEntries(entries);
+                }
+            } else {
+                console.warn(`Function ${info.functionName} not found in function map`);
+            }
+        } catch (error) {
+            console.error(`Error calling function ${info.functionName}:`, error);
+        }
+    });
     return headerDisplay;
 }
