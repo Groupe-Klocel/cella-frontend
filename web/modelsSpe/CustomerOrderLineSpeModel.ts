@@ -28,7 +28,7 @@ export function CustomerOrderLineSpeModel(): [string | null, string, any][] {
         isDetailRequested: true,
         isExcludedFromDetail: false,
         detailGroup: '{"label":"general", "position":0}',
-        link: 'articles/id',
+        link: null,
         addEditFormat: null,
         addEditStep: null,
         maxLength: 70,
