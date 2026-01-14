@@ -59,6 +59,10 @@ export const SelectStockStatusForm_reducer = ({
 
     // TYPED SAFE ALL
     const [stockStatuses, setStockStatuses] = useState<Array<any>>();
+    console.log(
+        'AXC - SelectStockStatusForm_reducer.tsx - SelectStockStatusForm_reducer - stockStatuses:',
+        stockStatuses
+    );
 
     //camera scanner section
     const [form] = Form.useForm();
@@ -109,6 +113,10 @@ export const SelectStockStatusForm_reducer = ({
         scope: 'stock_statuses',
         language: locale === 'en-US' ? 'en' : locale
     });
+    console.log(
+        'AXC - SelectStockStatusForm_reducer.tsx - SelectStockStatusForm_reducer - stockStatusList:',
+        stockStatusList.data
+    );
 
     useEffect(() => {
         if (stockStatusList) {
