@@ -49,7 +49,8 @@ export const EditHookConfigArgumentForm: FC<ISingleItemProps> = ({
         const jsonData: any = {};
         argument.split(',').forEach((element: any) => {
             if (element !== '') {
-                const [key, value] = element.split('=');
+                const [key, ...valueParts] = element.split('=');
+                const value = valueParts.join('='); // Rejoint toutes les parties avec =
                 if (key !== argument_key) {
                     jsonData[key] = value;
                 }
