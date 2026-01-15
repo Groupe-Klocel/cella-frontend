@@ -361,6 +361,26 @@ export const CycleCountModelV2: ModelType = {
             config: null,
             param: null
         },
+        'article{description}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: true,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         blockId: {
             isListRequested: true,
             isDefaultHiddenList: false,
