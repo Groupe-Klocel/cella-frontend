@@ -718,7 +718,8 @@ const Pick: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {storedObject['step75']?.data || isAutoValidateLoading ? (
+                    {storedObject['step75']?.data ||
+                    (!isPositionChecked && storedObject['step70']?.data) ? (
                         <AutoValidatePickForm
                             processName={processName}
                             stepNumber={80}
