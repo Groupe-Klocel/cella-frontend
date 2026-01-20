@@ -18,26 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { Button, Input, Form, InputNumber, AutoComplete, Select, Modal, Space } from 'antd';
+import { Button, Input, Form, InputNumber, Select, Modal, Space } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import {
-    showError,
-    showSuccess,
-    showInfo,
-    useOrderLineIds,
-    useArticles,
-    useArticleLus
-} from '@helpers';
-import { debounce } from 'lodash';
+import { showError, showSuccess, useArticles } from '@helpers';
 import configs from '../../../../common/configs.json';
 import {
-    CreateOrderLineMutation,
-    CreateOrderLineMutationVariables,
     GetThirdPartiesQuery,
-    useCreateOrderLineMutation,
     useGetThirdPartiesQuery,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
@@ -53,17 +42,15 @@ interface IOption {
     id: string;
 }
 
-export interface ISingleItemProps {
-    orderId: string | any;
-    orderName: string | any;
-    stockOwnerId: string | any;
-    stockOwnerName: string | any;
-    thirdPartyId: any;
-    priceType: number | any;
-    routeOnCancel?: string;
-}
+export type EditCustomerOrderLineFormProps = {
+    orderLineId: string;
+    details: any;
+};
 
-export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
+export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
+    orderLineId,
+    details
+}: EditCustomerOrderLineFormProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const { parameters: appParameters, configs: appConfigs } = useAppState();
@@ -73,7 +60,6 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const article = t('d:article');
-    const articleLu = t('d:articleLu');
     const lineNumber = t('d:lineNumber');
     const unitPriceIncludingTaxes = t('d:unitPriceIncludingTaxes');
     const unitPriceExcludingTaxes = t('d:unitPriceExcludingTaxes');
@@ -96,18 +82,14 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     // TYPED SAFE ALL
     const [form] = Form.useForm();
     const [unsavedChanges, setUnsavedChanges] = useState(false);
-    const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
-    const [aId, setAId] = useState<string>();
-    const [articleName, setArticleName] = useState<string>('');
+    const [aId, setAId] = useState<string>(details?.articleId || '');
+    const [articleName, setArticleName] = useState<string>(details?.articleName || '');
     const [vatRates, setVatRates] = useState<any>();
     const [thirdPartyData, setThirdPartyData] = useState<any>();
     const [enteredQuantity, setEnteredQuantity] = useState<number | null>();
-    const [articleVatRate, setArticleVatRate] = useState<number | null | undefined>();
-    const [articleLus, setArticleLus] = useState<any>();
     const [articleCubingType, setArticleCubingType] = useState<any>();
     const [stockStatuses, setStockStatuses] = useState<Array<FormOptionType>>();
     const [selectedDiscountType, setSelectedDiscountType] = useState<number | undefined>(undefined);
-    const customerOrderLines = useOrderLineIds({ orderId: `${props.orderId}%` }, 1, 100, null);
 
     const configsParamsCodes = useMemo(() => {
         const findAllByScope = (items: any[], scope: string) => {
@@ -166,60 +148,25 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
         }
     }, [stockStatusList.data]);
 
-    //LineNumber assignement
-    useEffect(() => {
-        const receivedList = customerOrderLines?.data?.orderLines?.results.map(
-            (e: any) => e.lineNumber
-        );
-        if (receivedList && receivedList?.length != 0) {
-            form.setFieldsValue({ lineNumber: Math.max(...receivedList) + 1 });
-        } else {
-            form.setFieldsValue({ lineNumber: 1 });
-        }
-    }, [customerOrderLines]);
-
     // to render autocompleted articles list
-    const articleData = useArticles({ name: `${articleName}%` }, 1, 100, null);
+    const articleData = useArticles({ id: `${aId}%` }, 1, 100, null);
 
     useEffect(() => {
         const formValue = form.getFieldsValue(true);
         form.setFieldsValue({ ...formValue, articleId: aId, articleName: articleName });
-        if (thirdPartyData?.vatEligible) {
-            form.setFieldsValue({ vatRateCode: articleVatRate });
-        }
-    }, [aId, articleVatRate]);
+    }, [aId]);
 
     useEffect(() => {
         if (articleData.data) {
-            const newIdOpts: Array<IOption> = [];
-            articleData.data.articles?.results.forEach(
-                ({ id, name, status, vatRateCode, cubingType, description }) => {
-                    if (form.getFieldsValue(true).articleId === id) {
-                        setArticleName(name!);
-                        setAId(id!);
-                        setArticleVatRate(vatRateCode!);
-                        setArticleCubingType(cubingType!);
-                    }
-                    if (status != configs.ARTICLE_STATUS_CLOSED) {
-                        newIdOpts.push({ value: name!, id: id! });
-                    }
+            articleData.data.articles?.results.forEach(({ id, name, cubingType }) => {
+                if (form.getFieldsValue(true).articleId === id) {
+                    setArticleName(name!);
+                    setAId(id!);
+                    setArticleCubingType(cubingType!);
                 }
-            );
-            setAIdOptions(newIdOpts);
+            });
         }
     }, [articleName, articleData.data]);
-
-    const onChange = (data: string) => {
-        setArticleName(data);
-        // if we clear the select, we clear the form
-        if (data === null || data === undefined) {
-            form.setFieldsValue({
-                articleLuId: null,
-                orderedQuantity: null
-            });
-            setArticleLus(undefined);
-        }
-    };
 
     const onQuantityChange = (data: number | null) => {
         setEnteredQuantity(data);
@@ -272,7 +219,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
         async function fetchData() {
             const result = await getPrice(
                 aId!,
-                props.priceType,
+                details.priceType,
                 enteredQuantity!,
                 thirdPartyData?.id
             );
@@ -289,7 +236,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
         graphqlRequestClient,
         {
             filters: {
-                id: props.thirdPartyId
+                id: details.thirdPartyId
             },
             orderBy: null,
             page: 1,
@@ -318,60 +265,24 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
         }
     }, [vatRatesList.data]);
 
-    // Retrieve articleLus list
-
-    const articleLuData = useArticleLus({ articleId: `${aId}%` }, 1, 100, null);
-    useEffect(() => {
-        if (articleLuData.data) {
-            const newIdOpts: Array<FormOptionType> = [];
-            articleLuData.data.articleLus?.results.forEach(({ id, name }) => {
-                newIdOpts.push({ text: name!, key: id! });
-            });
-            setArticleLus(newIdOpts);
-        }
-    }, [articleLuData.data]);
-
-    const handleArticleLuChange = (key: any, value: any) => {
-        // if we clear the select, we clear the form
-        if (value === null || value === undefined) {
-            form.setFieldsValue({
-                orderedQuantity: null
-            });
-        }
-
-        // if we select a new value, we fill the form
-        if (articleLuData.data) {
-            articleLuData.data.articleLus?.results.forEach((alu: any) => {
-                if (alu.id == key) {
-                    form.setFieldsValue({
-                        orderedQuantity: alu?.quantity
-                    });
-                }
-            });
-        }
-    };
-
-    //CREATE delivery line
-    const { mutate, isPending: createLoading } = useCreateOrderLineMutation<Error>(
-        graphqlRequestClient,
-        {
-            onSuccess: (
-                data: CreateOrderLineMutation,
-                _variables: CreateOrderLineMutationVariables,
-                _context: any
-            ) => {
-                setUnsavedChanges(false);
-                router.push(`/customer-orders/${props.orderId}`);
-                showSuccess(t('messages:success-created'));
-            },
-            onError: (err) => {
-                showError(t('messages:error-creating-data'));
+    const mutation = gql`
+        mutation updateOrderLine($orderLineId: String!, $input: UpdateOrderLineInput!) {
+            updateOrderLine(id: $orderLineId, input: $input) {
+                id
             }
         }
-    );
+    `;
 
-    const createOrderLine = ({ input }: CreateOrderLineMutationVariables) => {
-        mutate({ input });
+    const updateOrderLine = async (input: any) => {
+        try {
+            const variables = { orderLineId: orderLineId, input: input };
+            await graphqlRequestClient.request(mutation, variables);
+            setUnsavedChanges(false);
+            router.push(`/customer-orders/line/${orderLineId}`);
+            showSuccess(t('messages:success-updated'));
+        } catch (err) {
+            showError(t('messages:error-updating-data'));
+        }
     };
 
     const handleDiscountTypeSelection = (key: any, value: any) => {
@@ -388,42 +299,52 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
 
-                delete formData.orderName;
-                delete formData.stockOwnerName;
-                delete formData.articleName;
-                delete formData.articleLuId;
+                const updateInput = {
+                    orderedQuantity: formData.orderedQuantity,
+                    unitPriceExcludingTaxes: formData.unitPriceExcludingTaxes,
+                    vatRateCode: formData.vatRateCode,
+                    discountType: formData.discountType,
+                    discount: formData.discount,
+                    discountAmount: formData.discountAmount,
+                    stockStatus: formData.stockStatus,
+                    comment: formData.comment,
+                    genericArticleComment: formData.genericArticleComment
+                };
 
-                createOrderLine({ input: formData });
+                updateOrderLine(updateInput);
                 setUnsavedChanges(false);
             })
             .catch((err) => {
-                console.log(err);
-
                 showError(t('messages:error-creating-data'));
             });
     };
 
     useEffect(() => {
         const tmp_details = {
-            orderId: props.orderId,
-            orderName: props.orderName,
-            status: configs.DELIVERY_STATUS_CREATED,
-            toBeCubed: true,
-            stockOwnerId: props.stockOwnerId,
-            stockOwnerName: props.stockOwnerName
+            ...details,
+            stockOwnerName: details?.stockOwner?.name,
+            articleName: details?.article?.name,
+            orderName: details?.order?.name
         };
+        delete tmp_details['id'];
+        delete tmp_details['created'];
+        delete tmp_details['createdBy'];
+        delete tmp_details['modified'];
+        delete tmp_details['modifiedBy'];
+        setSelectedDiscountType(tmp_details.discountType);
         form.setFieldsValue(tmp_details);
-        if (createLoading) {
-            showInfo(t('messages:info-create-wip'));
-        }
-    }, [createLoading]);
+        // if (updateLoading) {
+        //     showInfo(t('messages:info-create-wip'));
+        //     showSuccess(t('messages:success-updated'));
+        // }
+    }, [details]);
 
     const onCancel = () => {
         setUnsavedChanges(false);
         Modal.confirm({
             title: t('messages:confirm-leaving-page'),
             onOk: () => {
-                props.routeOnCancel ? router.push(props.routeOnCancel) : router.back();
+                details.routeOnCancel ? router.push(details.routeOnCancel) : router.back();
             },
             okText: t('common:bool-yes'),
             cancelText: t('common:bool-no')
@@ -453,56 +374,11 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                 <Form.Item label={lineNumber} name="lineNumber">
                     <InputNumber disabled />
                 </Form.Item>
-                <Form.Item
-                    label={article}
-                    name="articleName"
-                    rules={[{ required: true, message: errorMessageEmptyInput }]}
-                >
-                    <AutoComplete
-                        placeholder={`${t('messages:please-fill-letter-your', {
-                            name: t('d:articleName')
-                        })}`}
-                        style={{ width: '100%' }}
-                        options={aIdOptions}
-                        value={articleName}
-                        filterOption={(inputValue, option) =>
-                            option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
-                        }
-                        onKeyUp={(e: any) => {
-                            debounce(() => {
-                                setArticleName(e.target.value);
-                            }, 3000);
-                        }}
-                        onSelect={(value, option) => {
-                            setAId(option.id);
-                            setArticleName(value);
-                            const articleInfos = articleData.data?.articles?.results.find(
-                                (e) => e.id === option.id
-                            );
-                            setArticleVatRate(articleInfos?.vatRateCode);
-                            setArticleCubingType(articleInfos?.cubingType);
-                        }}
-                        allowClear
-                        onChange={onChange}
-                    />
+                <Form.Item label={article} name="articleName">
+                    <Input disabled />
                 </Form.Item>
                 {articleCubingType !== configs.ARTICLE_CUBING_TYPE_COMMENT ? (
                     <>
-                        <Form.Item label={articleLu} name="articleLuId">
-                            <Select
-                                allowClear
-                                placeholder={`${t('messages:please-select-a', {
-                                    name: t('d:articleLu')
-                                })}`}
-                                onChange={handleArticleLuChange}
-                            >
-                                {articleLus?.map((lu: any) => (
-                                    <Option key={lu.key} value={lu.key}>
-                                        {lu.text}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
                         <Form.Item
                             label={orderedQuantity}
                             name="orderedQuantity"
@@ -623,7 +499,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
             </Form>
             <div style={{ textAlign: 'center' }}>
                 <Space>
-                    <Button type="primary" loading={createLoading} onClick={onFinish}>
+                    <Button type="primary" onClick={onFinish}>
                         {submit}
                     </Button>
                     <Button onClick={onCancel}>{t('actions:cancel')}</Button>
