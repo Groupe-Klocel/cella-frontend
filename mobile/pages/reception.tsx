@@ -355,10 +355,7 @@ const Reception: PageComponent = () => {
                             storedObject['step40'].data.currentPurchaseOrderLine[0].stockOwnerId
                         }
                         stockStatus={
-                            storedObject['step70']?.data?.stockStatus
-                                ? storedObject['step70'].data.stockStatus.id
-                                : storedObject['step40'].data.currentPurchaseOrderLine[0]
-                                      .blockingStatus
+                            storedObject['step70']?.data?.stockStatus.key
                         }
                         processName={'reception'}
                         features={storedObject['step60']?.data?.processedFeatures}
