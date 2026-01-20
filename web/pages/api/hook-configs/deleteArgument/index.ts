@@ -76,7 +76,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
         argument.split(',').forEach((element: any) => {
             if (element !== '') {
-                const [key, value] = element.split('=');
+                const [key, ...valueParts] = element.split('=');
+                const value = valueParts.join('=');
                 if (key !== argKey) {
                     jsonData[key] = value;
                 }

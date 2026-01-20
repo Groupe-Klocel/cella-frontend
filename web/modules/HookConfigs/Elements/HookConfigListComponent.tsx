@@ -285,10 +285,6 @@ const HookConfigListComponent = (props: IListProps) => {
                         })
                     });
                     const response = await res.json();
-                    console.log(
-                        'AXC - HookConfigListComponent.tsx - deleteArgument - response:',
-                        response
-                    );
                     if (!res.ok) {
                         if (response.error.is_error) {
                             // specific error
