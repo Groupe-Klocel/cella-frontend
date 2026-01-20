@@ -26,9 +26,13 @@ import parameters from '../../../../../common/parameters.json';
 
 export interface IHandlingUnitFinalChecksProps {
     dataToCheck: any;
+    forceLocationScan?: boolean;
 }
 
-export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalChecksProps) => {
+export const HandlingUnitFinalChecks = ({
+    dataToCheck,
+    forceLocationScan
+}: IHandlingUnitFinalChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
 
@@ -48,15 +52,28 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
         if (scannedInfo) {
             if (handlingUnitInfos && handlingUnitInfos.handlingUnits.results.length > 0) {
                 const handlingUnit = handlingUnitInfos.handlingUnits.results[0];
+                if (forceLocationScan) {
+                    const chosenLocationId = storedObject['step35'].data.chosenLocation.id;
+                    if (
+                        handlingUnitInfos.handlingUnits.results[0].locationId !== chosenLocationId
+                    ) {
+                        showError(t('messages:no-hu-location'));
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                        return;
+                    }
+                    // HU with different Location = error
+                    else if (
+                        handlingUnit.locationId != storedObject['step35'].data.chosenLocation.id
+                    ) {
+                        showError(t('messages:unexpected-scanned-item'));
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                    }
+                }
                 // HU origin/final identical = error
                 if (handlingUnit.id == storedObject['step20'].data.handlingUnit.id) {
                     showError(t('messages:hu-origin-final-identical'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                }
-                // HU with different Location = error
-                else if (handlingUnit.locationId != storedObject['step35'].data.chosenLocation.id) {
-                    showError(t('messages:unexpected-scanned-item'));
                     setResetForm(true);
                     setScannedInfo(undefined);
                 }
@@ -80,12 +97,36 @@ export const HandlingUnitFinalChecks = ({ dataToCheck }: IHandlingUnitFinalCheck
                             handlingUnit.handlingUnitContents.some(
                                 (content: any) => content.articleId === originContent.articleId
                             )
-                    )
-                ) {
-                    showError(t('messages:unexpected-hu-article'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                } else {
+                        )
+                    ) {
+                        showError(t('messages:unexpected-hu-article'));
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                    } else {
+                    if (forceLocationScan == false) {
+                        storedObject['step30'] = {
+                            data: {
+                                locations: {
+                                    id: handlingUnitInfos.handlingUnits.results[0].locationId,
+                                    name: handlingUnitInfos.handlingUnits.results[0].location.name
+                                }
+                            }
+                        };
+                        storedObject['step35'] = {
+                            data: {
+                                chosenLocation: {
+                                    id: handlingUnitInfos.handlingUnits.results[0].locationId,
+                                    name: handlingUnitInfos.handlingUnits.results[0].location.name,
+                                    huManagement:
+                                        handlingUnitInfos.handlingUnits.results[0].location
+                                            .huManagement,
+                                    stockStatus:
+                                        handlingUnitInfos.handlingUnits.results[0].location
+                                            .stockStatus
+                                }
+                            }
+                        };
+                    }
                     // HU ok = next step
                     const data: { [label: string]: any } = {};
                     data['isHuToCreate'] = false;

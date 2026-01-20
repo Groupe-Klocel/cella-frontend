@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState, useMemo } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
@@ -39,16 +39,15 @@ import { ScanFinalHandlingUnit } from 'modules/StockManagement/HuMovement/PagesC
 import { ScanHuOrLocation } from 'modules/StockManagement/Forms/ScanHuOrLocationForm';
 import { HuOrLocationChecks } from 'modules/StockManagement/HuMovement/ChecksAndRecords/HuOrLocationChecks';
 import { ValidateHuMoveForm } from 'modules/StockManagement/Forms/ValidateHuMoveForm';
-import { gql } from 'graphql-request';
-import { useAuth } from 'context/AuthContext';
+import { useAppState } from 'context/AppContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const HuMovement: PageComponent = () => {
+    const { parameters } = useAppState();
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const router = useRouter();
-    const { graphqlRequestClient } = useAuth();
     const [triggerRender, setTriggerRender] = useState<boolean>(true);
     const [originDisplay, setOriginDisplay] = useState<any>({});
     const [finalDisplay, setFinalDisplay] = useState<any>({});
@@ -59,7 +58,6 @@ const HuMovement: PageComponent = () => {
     const [action1Trigger, setAction1Trigger] = useState<boolean>(false);
     const processName = 'huMvt';
     const storedObject = JSON.parse(storage.get(processName) || '{}');
-    const [isRoundToBeChecked, setIsRoundToBeChecked] = useState<boolean>(false);
 
     //Step10: Scan Location (origin)
     //Step15: Select Location by Level
@@ -71,56 +69,45 @@ const HuMovement: PageComponent = () => {
 
     console.log('huMvt', storedObject);
 
+    const configsParamsCodes = useMemo(() => {
+        const findValueByScopeAndCode = (items: any[], scope: string, code: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.code.toLowerCase() === code.toLowerCase()
+            )?.value;
+        };
+
+        const movementRoundChecksValue = findValueByScopeAndCode(
+            parameters,
+            'radio',
+            'MOVEMENT_CHECK_ROUND'
+        );
+
+        const forceLocationScanValue = findValueByScopeAndCode(
+            parameters,
+            'stock',
+            'FORCE_LOCATION_SCAN'
+        );
+
+        // Convert value in boolean or number as needed
+        const movementRoundChecks = movementRoundChecksValue === '1';
+        const forceLocationScan = forceLocationScanValue === '1';
+
+        return {
+            movementRoundChecks,
+            forceLocationScan
+        };
+    }, [parameters]);
+
     //initialize workflow on step 0
     if (Object.keys(storedObject).length === 0) {
-        storedObject['step10'] = { previousStep: 0 };
-        storedObject['currentStep'] = 10;
+        if (configsParamsCodes.forceLocationScan) {
+            storedObject['currentStep'] = 10;
+        } else {
+            storedObject['currentStep'] = 20;
+        }
         storage.set(processName, JSON.stringify(storedObject));
     }
-
-    //origin parameters handling
-    const getParameters = async (): Promise<{ [key: string]: any } | undefined> => {
-        const query = gql`
-            query parameters($filters: ParameterSearchFilters) {
-                parameters(filters: $filters) {
-                    count
-                    itemsPerPage
-                    totalPages
-                    results {
-                        id
-                        scope
-                        code
-                        value
-                    }
-                }
-            }
-        `;
-
-        const variables = {
-            filters: {
-                scope: 'radio',
-                code: ['MOVEMENT_CHECK_ROUND']
-            }
-        };
-        const parametersResults = await graphqlRequestClient.request(query, variables);
-        return parametersResults;
-    };
-
-    useEffect(() => {
-        async function fetchData() {
-            const parametersResults = await getParameters();
-            if (parametersResults) {
-                const parameters = parametersResults.parameters.results;
-                const movementRoundChecks = parameters.find(
-                    (param: any) => param.code === 'MOVEMENT_CHECK_ROUND'
-                ).value;
-                if (movementRoundChecks) {
-                    setIsRoundToBeChecked(movementRoundChecks === '1' ? true : false);
-                }
-            }
-        }
-        fetchData();
-    }, []);
 
     //function to retrieve information to display in RadioInfosHeader before step 20
     useEffect(() => {
@@ -130,12 +117,18 @@ const HuMovement: PageComponent = () => {
         }
         if (
             storedObject['step10']?.data?.locations &&
-            storedObject['step10']?.data?.locations?.length > 1
+            storedObject['step10']?.data?.locations?.length > 1 &&
+            configsParamsCodes.forceLocationScan == true
         ) {
             const locationsList = storedObject['step10']?.data?.locations;
             object[t('common:location-origin_abbr')] = locationsList[0].barcode;
         }
-        if (storedObject['step15']?.data?.chosenLocation) {
+        if (
+            (storedObject['step15']?.data?.chosenLocation &&
+                configsParamsCodes.forceLocationScan == true) ||
+            (configsParamsCodes.forceLocationScan == false &&
+                storedObject['step20']?.data?.handlingUnit)
+        ) {
             const location = storedObject['step15']?.data?.chosenLocation;
             object[t('common:location-origin_abbr')] = location.name;
         }
@@ -262,7 +255,7 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {!storedObject['step10']?.data ? (
+            {configsParamsCodes.forceLocationScan && !storedObject['step10']?.data ? (
                 <ScanLocation
                     process={processName}
                     stepNumber={10}
@@ -274,32 +267,45 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject['step10']?.data && !storedObject['step15']?.data ? (
+            {storedObject['step10']?.data &&
+            !storedObject['step15']?.data &&
+            storedObject.currentStep <= 15 ? (
                 <SelectLocationByLevelForm
                     process={processName}
                     stepNumber={15}
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     locations={storedObject['step10'].data.locations}
-                    roundsCheck={isRoundToBeChecked}
+                    roundsCheck={configsParamsCodes.movementRoundChecks}
                     isOriginLocation={true}
                 ></SelectLocationByLevelForm>
             ) : (
                 <></>
             )}
-            {storedObject['step15']?.data && !storedObject['step20']?.data ? (
+            {(storedObject['step15']?.data && !storedObject['step20']?.data) ||
+            (!storedObject['step20']?.data && !configsParamsCodes.forceLocationScan) ? (
                 <ScanHandlingUnit
                     process={processName}
                     stepNumber={20}
                     label={t('common:handling-unit')}
                     trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true }}
-                    checkComponent={(data: any) => <HandlingUnitOriginChecks dataToCheck={data} />}
+                    buttons={{
+                        submitButton: true,
+                        backButton: configsParamsCodes.forceLocationScan ? true : false
+                    }}
+                    checkComponent={(data: any) => (
+                        <HandlingUnitOriginChecks
+                            dataToCheck={data}
+                            forceLocationScan={configsParamsCodes.forceLocationScan}
+                        />
+                    )}
                 ></ScanHandlingUnit>
             ) : (
                 <></>
             )}
-            {storedObject['step20']?.data && !storedObject['step30']?.data ? (
+            {configsParamsCodes.forceLocationScan &&
+            storedObject['step20']?.data &&
+            !storedObject['step30']?.data ? (
                 <ScanHuOrLocation
                     process={processName}
                     stepNumber={30}
@@ -322,7 +328,9 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject['step30']?.data && !storedObject['step35']?.data ? (
+            {configsParamsCodes.forceLocationScan &&
+            storedObject['step30']?.data &&
+            !storedObject['step35']?.data ? (
                 <SelectLocationByLevelForm
                     process={processName}
                     stepNumber={35}
@@ -333,7 +341,10 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {storedObject['step35']?.data && !storedObject['step40']?.data ? (
+            {(storedObject['step35']?.data && !storedObject['step40']?.data) ||
+            (storedObject['step20']?.data &&
+                !storedObject['step40']?.data &&
+                !configsParamsCodes.forceLocationScan) ? (
                 <ScanFinalHandlingUnit
                     process={processName}
                     stepNumber={40}
@@ -343,16 +354,21 @@ const HuMovement: PageComponent = () => {
                         submitButton: true,
                         backButton: true,
                         action1Button:
-                            storedObject['step30'].data.resType == 'location' ? true : false
+                            storedObject['step30']?.data?.resType == 'location' ? true : false
                     }}
-                    checkComponent={(data: any) => <HandlingUnitFinalChecks dataToCheck={data} />}
+                    checkComponent={(data: any) => (
+                        <HandlingUnitFinalChecks
+                            dataToCheck={data}
+                            forceLocationScan={configsParamsCodes.forceLocationScan}
+                        />
+                    )}
                     action1Trigger={{
                         action1Trigger,
                         setAction1Trigger
                     }}
                     defaultValue={
-                        storedObject['step30'].data.resType == 'handlingUnit'
-                            ? storedObject['step30'].data.finalHandlingUnit
+                        storedObject['step30']?.data?.resType == 'handlingUnit'
+                            ? storedObject['step30']?.data?.finalHandlingUnit
                             : null
                     }
                     enforcedValue={
@@ -372,6 +388,7 @@ const HuMovement: PageComponent = () => {
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}
+                    forceLocationScan={configsParamsCodes.forceLocationScan}
                 ></ValidateHuMoveForm>
             ) : (
                 <></>
