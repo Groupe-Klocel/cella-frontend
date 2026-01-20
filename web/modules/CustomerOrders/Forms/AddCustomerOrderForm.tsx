@@ -31,32 +31,30 @@ import {
 } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAuth } from 'context/AuthContext';
+import { useAppState } from 'context/AppContext';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, useCarrierShippingModeIds, useStockOwners } from '@helpers';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
-import { FC, useEffect, useState } from 'react';
-import { FilterFieldType, FormOptionType, ModelType } from 'models/ModelsV2';
+import { FC, useEffect, useMemo, useState } from 'react';
+import { FilterFieldType, ModelType } from 'models/ModelsV2';
 import {
     CreateOrderMutation,
     CreateOrderMutationVariables,
     GetThirdPartiesQuery,
     useCreateOrderMutation,
-    useGetThirdPartiesQuery,
-    useListConfigsForAScopeQuery,
-    useListParametersForAScopeQuery
+    useGetThirdPartiesQuery
 } from 'generated/graphql';
 import moment from 'moment';
 import dayjs from 'dayjs';
 import { debounce } from 'lodash';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import TextArea from 'antd/lib/input/TextArea';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 
 interface IOption {
+    label: string;
     value: string;
-    id: string;
 }
 
 export interface IAddItemFormProps {
@@ -72,12 +70,32 @@ export interface IAddItemFormProps {
 export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
+    const { parameters: appParameters, configs: appConfigs } = useAppState();
     const router = useRouter();
-    const errorMessageEmptyInput = t('messages:error-message-empty-input');
+    const { locale } = router;
+    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
     const [thirdParties, setThirdParties] = useState<Array<IOption>>([]);
-    const [thirdPartyId, setThirdPartyId] = useState<string>();
     const [thirdPartyName, setThirdPartyName] = useState<string>('');
+    const [debouncedThirdPartyName, setDebouncedThirdPartyName] = useState<string>('');
 
+    // Create the debounced function using useMemo to prevent recreation on each render
+    const debouncedSetThirdPartyName = useMemo(
+        () =>
+            debounce((value: string) => {
+                setDebouncedThirdPartyName(value);
+            }, 500),
+        []
+    );
+
+    // Use the debounced function when thirdPartyName changes
+    useEffect(() => {
+        debouncedSetThirdPartyName(thirdPartyName);
+        return () => {
+            debouncedSetThirdPartyName.cancel();
+        };
+    }, [thirdPartyName, debouncedSetThirdPartyName]);
+
+    const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const errorMessageMinInputNumber = t('messages:select-number-min', { min: 0 });
     const errorMessageMaxInputNumber = t('messages:select-number-max', { max: 100 });
 
@@ -90,7 +108,9 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     const paymentAccountLabel = t('d:paymentAccount');
     const priceTypeLabel = t('d:priceType');
     const currencyLabel = t('d:currency');
+    const discountTypeLabel = t('d:discount_type');
     const discountLabel = t('d:discount_percent');
+    const discountAmountLabel = t('d:discount_amount');
     const expectedDeliveryDateLabel = t('d:expectedDeliveryDate');
     const deliveryTypeLabel = t('d:deliveryType');
     const carrierShippingModeNameLabel = t('d:carrierShippingMode_name');
@@ -111,6 +131,38 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     // TYPED SAFE ALL
     const [form] = Form.useForm();
     const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+    const configsParamsCodes = useMemo(() => {
+        const findAllByScope = (items: any[], scope: string) => {
+            return items
+                .filter((item: any) => item.scope === scope)
+                .sort((a, b) => a.code - b.code)
+                .map((item: any) => {
+                    return {
+                        ...item,
+                        value: item.translation?.[language] || item.value
+                    };
+                });
+        };
+        const paymentTerms = findAllByScope(appParameters, 'payment_terms');
+        const paymentMethods = findAllByScope(appParameters, 'payment_method');
+        const paymentAccounts = findAllByScope(appParameters, 'bank_account');
+        const priceTypes = findAllByScope(appParameters, 'price_type');
+        const currencies = findAllByScope(appParameters, 'currency');
+        const discountTypes = findAllByScope(appParameters, 'discount_type');
+        const priorities = findAllByScope(appParameters, 'priority');
+        const deliveryTypes = findAllByScope(appConfigs, 'delivery_po_type');
+        return {
+            paymentTerms,
+            paymentMethods,
+            paymentAccounts,
+            priceTypes,
+            currencies,
+            discountTypes,
+            priorities,
+            deliveryTypes
+        };
+    }, [appConfigs, appParameters, language]);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -160,23 +212,16 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
             .then(() => {
                 // Here make api call of something else
                 const nowDate = moment();
-
-                form.setFieldsValue({
-                    status: configs.ORDER_STATUS_CREATED,
-                    orderType: configs.ORDER_TYPE_CUSTOMER_ORDER,
-                    orderDate: nowDate,
-                    thirdPartyId,
-                    extraStatus1: parameters.ORDER_EXTRA_STATUS1_NOT_PAID,
-                    extraStatus2: parameters.ORDER_EXTRA_STATUS2_NOT_DELIVERED
-                });
-
                 const formData = form.getFieldsValue(true);
-
-                delete formData['paymentAccountText'];
-                delete formData['paymentMethodText'];
-                delete formData['paymentTermsText'];
-                delete formData['priceTypeText'];
-                delete formData['currencyText'];
+                formData.thirdPartyId = thirdParties.find(
+                    (tp) => tp.label === formData.thirdParty
+                )?.value;
+                formData.status = configs.ORDER_STATUS_CREATED;
+                formData.orderDate = nowDate;
+                formData.orderType = configs.ORDER_TYPE_CUSTOMER_ORDER;
+                formData.extraStatus1 = parameters.ORDER_EXTRA_STATUS1_NOT_PAID;
+                formData.extraStatus2 = parameters.ORDER_EXTRA_STATUS2_NOT_DELIVERED;
+                delete formData.thirdParty;
 
                 createOrder({ input: formData });
                 setUnsavedChanges(false);
@@ -193,7 +238,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
             filters: {
                 category: [configs.THIRD_PARTY_CATEGORY_CUSTOMER],
                 status: [configs.THIRD_PARTY_STATUS_ENABLED],
-                name: `${thirdPartyName}%`
+                name: `${debouncedThirdPartyName}%`
             },
             orderBy: null,
             page: 1,
@@ -206,30 +251,12 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
             const newIdOpts: Array<IOption> = [];
             customerThirdPartiesList.data.thirdParties?.results.forEach(
                 ({ id, name, description }) => {
-                    if (form.getFieldsValue(true).thirdPartyId === id) {
-                        setThirdPartyName(name!);
-                        setThirdPartyId(id!);
-                    }
-                    newIdOpts.push({ value: name! + ' - ' + description!, id: id! });
+                    newIdOpts.push({ label: name! + ' - ' + description!, value: id! });
                 }
             );
             setThirdParties(newIdOpts);
         }
-    }, [thirdPartyName, customerThirdPartiesList.data]);
-
-    // useEffect(() => {
-    //     if (customerThirdPartiesList) {
-    //         const newTypeTexts: Array<any> = [];
-    //         const cData = customerThirdPartiesList?.data?.thirdParties?.results;
-    //         if (cData) {
-    //             cData.forEach((item) => {
-    //                 newTypeTexts.push({ key: item.id, text: item.name + ' - ' + item.description });
-    //             });
-    //             newTypeTexts.sort((a, b) => a.text.localeCompare(b.text));
-    //             setThirdParties(newTypeTexts);
-    //         }
-    //     }
-    // }, [customerThirdPartiesList.data]);
+    }, [customerThirdPartiesList.data]);
 
     //To render Simple stockOwners list
     const [stockOwners, setStockOwners] = useState<any>();
@@ -261,202 +288,13 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
         }
     }, [carrierShippingModeData.data]);
 
-    // Retrieve Payment terms list
-    const [paymentTerms, setPaymentTerms] = useState<any>();
-    const paymentTermsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'payment_terms'
-    });
-
-    useEffect(() => {
-        if (paymentTermsList) {
-            const newPaymentTerm: Array<FormOptionType> = [];
-
-            const cData = paymentTermsList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPaymentTerm.push({ key: item.code, text: item.text });
-                });
-                setPaymentTerms(newPaymentTerm);
-            }
-        }
-    }, [paymentTermsList.data]);
-
-    // Retrieve Payment methods list
-    const [paymentMethods, setPaymentMethods] = useState<any>();
-    const paymentMethodsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'payment_method'
-    });
-
-    useEffect(() => {
-        if (paymentMethodsList) {
-            const newPaymentMethod: Array<FormOptionType> = [];
-
-            const cData = paymentMethodsList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPaymentMethod.push({ key: item.code, text: item.text });
-                });
-                setPaymentMethods(newPaymentMethod);
-            }
-        }
-    }, [paymentMethodsList.data]);
-
-    // Retrieve bank accounts list
-    const [paymentAccounts, setPaymentAccounts] = useState<any>();
-    const paymentAccountsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'bank_account'
-    });
-
-    useEffect(() => {
-        if (paymentAccountsList) {
-            const newPaymentAccount: Array<FormOptionType> = [];
-
-            const cData = paymentAccountsList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPaymentAccount.push({ key: item.code, text: item.text });
-                });
-                setPaymentAccounts(newPaymentAccount);
-            }
-        }
-    }, [paymentAccountsList.data]);
-
-    // Retrieve currencies list
-    const [currencies, setCurrencies] = useState<any>();
-    const currenciesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'currency'
-    });
-
-    useEffect(() => {
-        if (currenciesList) {
-            const newCurrency: Array<FormOptionType> = [];
-
-            const cData = currenciesList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newCurrency.push({ key: item.code, text: item.text });
-                });
-                setCurrencies(newCurrency);
-            }
-        }
-    }, [currenciesList.data]);
-
-    // Retrieve price types list
-    const [priceTypes, setPriceTypes] = useState<any>();
-    const priceTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'price_type'
-    });
-
-    useEffect(() => {
-        if (priceTypesList) {
-            const newPriceType: Array<FormOptionType> = [];
-
-            const cData = priceTypesList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPriceType.push({ key: parseInt(item.code), text: item.text });
-                });
-                setPriceTypes(newPriceType);
-            }
-        }
-    }, [priceTypesList.data]);
-
-    // Retrieve delivery types list
-    const [deliveryTypes, setDeliveryTypes] = useState<any>();
-    const deliveryTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'delivery_po_type'
-    });
-
-    useEffect(() => {
-        if (deliveryTypesList) {
-            const newDeliveryType: Array<FormOptionType> = [];
-
-            const cData = deliveryTypesList?.data?.listConfigsForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    if (!item.text.startsWith('N3')) {
-                        newDeliveryType.push({ key: parseInt(item.code), text: item.text });
-                    }
-                });
-                setDeliveryTypes(newDeliveryType);
-            }
-        }
-    }, [deliveryTypesList.data]);
-
-    // Retrieve priorities list
-    const [priorities, setpriorities] = useState<any>();
-    const prioritiesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'priority'
-    });
-
-    useEffect(() => {
-        if (prioritiesList) {
-            const newPriority: Array<FormOptionType> = [];
-
-            const cData = prioritiesList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPriority.push({ key: parseInt(item.code), text: item.text });
-                });
-                setpriorities(newPriority);
-            }
-        }
-    }, [prioritiesList.data]);
-
-    const handleThirdPartySelection = (key: any, value: any) => {
-        setThirdPartyName(key);
-    };
-
-    const handlePaymentTermsSelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ paymentTerms: null });
-        } else {
-            form.setFieldsValue({ paymentTerms: key });
-        }
-    };
-
-    const handlePaymentMethodSelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ paymentMethod: null });
-        } else {
-            form.setFieldsValue({ paymentMethod: key });
-        }
-    };
-
-    const handlePaymentAccountSelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ paymentAccount: null });
-        } else {
-            form.setFieldsValue({ paymentAccount: key });
-        }
-    };
-
-    const handlePriceTypeSelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ priceType: null });
-        } else {
-            form.setFieldsValue({ priceType: key });
-        }
-    };
-
-    const handleCurrencySelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ currency: null });
-        } else {
-            form.setFieldsValue({ currency: key });
-        }
-    };
-
-    //manage call back on change checkbox
-    const onCarrierImposedChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ carrierImposed: e.target.checked });
+    const [selectedDiscountType, setSelectedDiscountType] = useState<any>();
+    const handleDiscountTypeSelection = (key: any, value: any) => {
+        setSelectedDiscountType(parseInt(key));
+        form.setFieldsValue({
+            invoiceDiscount: null,
+            invoiceDiscountAmount: null
+        });
     };
 
     const onCancel = () => {
@@ -494,47 +332,31 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={thirdPartyLabel} name="thirdPartyId">
+                <Form.Item label={thirdPartyLabel} name="thirdParty">
                     <AutoComplete
                         placeholder={`${t('messages:please-fill-letter-your', {
                             name: t('d:thirdParty')
                         })}`}
                         style={{ width: '100%' }}
                         options={thirdParties}
-                        value={thirdPartyName}
-                        filterOption={(inputValue, option) =>
-                            option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
-                        }
-                        onKeyUp={(e: any) => {
-                            debounce(() => {
-                                setThirdPartyName(e.target.value);
-                            }, 3000);
+                        onSearch={(value) => {
+                            setThirdPartyName(value);
                         }}
                         onSelect={(value, option) => {
-                            setThirdPartyId(option.id);
-                            setThirdPartyName(value.split(' - ')[0]);
                             if (customerThirdPartiesList.data) {
                                 customerThirdPartiesList.data.thirdParties?.results.forEach(
                                     (customerThirdParty: any) => {
-                                        if (customerThirdParty.id === option.id) {
+                                        if (customerThirdParty.id === option.value) {
                                             form.setFieldsValue({
-                                                paymentTermsText:
-                                                    customerThirdParty.defaultPaymentTermsText,
+                                                thirdParty: option.label,
                                                 paymentTerms:
                                                     customerThirdParty.defaultPaymentTerms,
-                                                paymentMethodText:
-                                                    customerThirdParty.defaultPaymentMethodText,
                                                 paymentMethod:
                                                     customerThirdParty.defaultPaymentMethod,
-                                                paymentAccountText:
-                                                    customerThirdParty.defaultPaymentAccountText,
                                                 paymentAccount:
                                                     customerThirdParty.defaultPaymentAccount,
-                                                currencyText:
-                                                    customerThirdParty.defaultCurrencyText,
                                                 currency: customerThirdParty.defaultCurrency,
                                                 invoiceDiscount: customerThirdParty.defaultDiscount,
-                                                priceTypeText: customerThirdParty.priceTypeText,
                                                 priceType: customerThirdParty.priceType,
                                                 genericDeliveryComment:
                                                     customerThirdParty.genericDeliveryComment
@@ -545,98 +367,126 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                             }
                         }}
                         allowClear
-                        onChange={handleThirdPartySelection}
-                        onClear={() => {
-                            setThirdPartyId(undefined);
-                            setThirdPartyName('');
-                        }}
                     />
                 </Form.Item>
-                <Form.Item label={paymentTermLabel} name="paymentTermsText">
+                <Form.Item label={paymentTermLabel} name="paymentTerms">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:paymentTerm')
                         })}`}
-                        onChange={handlePaymentTermsSelection}
                     >
-                        {paymentTerms?.map((paymentTerm: any) => (
-                            <Option key={paymentTerm.key} value={paymentTerm.key}>
-                                {paymentTerm.text}
+                        {configsParamsCodes.paymentTerms?.map((paymentTerm: any) => (
+                            <Option key={paymentTerm.code} value={paymentTerm.code}>
+                                {paymentTerm.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={paymentMethodLabel} name="paymentMethodText">
+                <Form.Item label={paymentMethodLabel} name="paymentMethod">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:paymentMethod')
                         })}`}
-                        onChange={handlePaymentMethodSelection}
                     >
-                        {paymentMethods?.map((paymentMethod: any) => (
-                            <Option key={paymentMethod.key} value={paymentMethod.key}>
-                                {paymentMethod.text}
+                        {configsParamsCodes.paymentMethods?.map((paymentMethod: any) => (
+                            <Option key={paymentMethod.code} value={paymentMethod.code}>
+                                {paymentMethod.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={paymentAccountLabel} name="paymentAccountText">
+                <Form.Item label={paymentAccountLabel} name="paymentAccount">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:paymentAccount')
                         })}`}
-                        onChange={handlePaymentAccountSelection}
                     >
-                        {paymentAccounts?.map((paymentAccount: any) => (
-                            <Option key={paymentAccount.key} value={paymentAccount.key}>
-                                {paymentAccount.text}
+                        {configsParamsCodes.paymentAccounts?.map((paymentAccount: any) => (
+                            <Option key={paymentAccount.code} value={paymentAccount.code}>
+                                {paymentAccount.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={priceTypeLabel} name="priceTypeText">
+                <Form.Item label={priceTypeLabel} name="priceType">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:priceType')
                         })}`}
-                        onChange={handlePriceTypeSelection}
                     >
-                        {priceTypes?.map((priceType: any) => (
-                            <Option key={priceType.key} value={priceType.key}>
-                                {priceType.text}
+                        {configsParamsCodes.priceTypes?.map((priceType: any) => (
+                            <Option key={priceType.code} value={parseInt(priceType.code)}>
+                                {priceType.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={currencyLabel} name="currencyText">
+                <Form.Item label={currencyLabel} name="currency">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:currency')
                         })}`}
-                        onChange={handleCurrencySelection}
                     >
-                        {currencies?.map((currency: any) => (
-                            <Option key={currency.key} value={currency.key}>
-                                {currency.text}
+                        {configsParamsCodes.currencies?.map((currency: any) => (
+                            <Option key={currency.code} value={currency.code}>
+                                {currency.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item
-                    label={discountLabel}
-                    name="invoiceDiscount"
-                    rules={[
-                        { type: 'number', min: 0, message: errorMessageMinInputNumber },
-                        { type: 'number', max: 100, message: errorMessageMaxInputNumber }
-                    ]}
-                >
-                    <InputNumber />
+                <Form.Item label={discountTypeLabel} name="invoiceDiscountType">
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:discount_type')
+                        })}`}
+                        onChange={handleDiscountTypeSelection}
+                    >
+                        {configsParamsCodes.discountTypes?.map((discountType: any) => (
+                            <Option key={discountType.code} value={parseInt(discountType.code)}>
+                                {discountType.value}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
+                {selectedDiscountType != 10 && selectedDiscountType != undefined && (
+                    <Form.Item
+                        label={discountLabel}
+                        name="invoiceDiscount"
+                        rules={[
+                            { type: 'number', min: 0, message: errorMessageMinInputNumber },
+                            { type: 'number', max: 100, message: errorMessageMaxInputNumber }
+                        ]}
+                    >
+                        <InputNumber
+                            disabled={
+                                selectedDiscountType != 10 && selectedDiscountType != undefined
+                                    ? false
+                                    : true
+                            }
+                        />
+                    </Form.Item>
+                )}
+                {selectedDiscountType == 10 && selectedDiscountType != undefined && (
+                    <Form.Item
+                        label={discountAmountLabel}
+                        name="invoiceDiscountAmount"
+                        rules={[{ type: 'number', min: 0, message: errorMessageMinInputNumber }]}
+                    >
+                        <InputNumber
+                            disabled={
+                                selectedDiscountType == 10 && selectedDiscountType != undefined
+                                    ? false
+                                    : true
+                            }
+                        />
+                    </Form.Item>
+                )}
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
                     <DatePicker
                         allowClear
@@ -651,15 +501,15 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
                     <Select allowClear>
-                        {deliveryTypes?.map((deliveryType: any) => (
-                            <Option key={deliveryType.key} value={deliveryType.key}>
-                                {deliveryType.text}
+                        {configsParamsCodes.deliveryTypes?.map((deliveryType: any) => (
+                            <Option key={deliveryType.code} value={parseInt(deliveryType.code)}>
+                                {deliveryType.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item name="carrierImposed">
-                    <Checkbox onChange={onCarrierImposedChange}>{carrierImposed}</Checkbox>
+                <Form.Item name="carrierImposed" valuePropName="checked">
+                    <Checkbox>{carrierImposed}</Checkbox>
                 </Form.Item>
                 <Form.Item label={carrierShippingModeNameLabel} name="carrierShippingModeId">
                     <Select allowClear>
@@ -679,9 +529,9 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
                     <Select allowClear>
-                        {priorities?.map((priority: any) => (
-                            <Option key={priority.key} value={priority.key}>
-                                {priority.text}
+                        {configsParamsCodes.priorities?.map((priority: any) => (
+                            <Option key={priority.code} value={parseInt(priority.code)}>
+                                {priority.value}
                             </Option>
                         ))}
                     </Select>

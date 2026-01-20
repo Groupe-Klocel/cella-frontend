@@ -48,6 +48,7 @@ export interface IItemDetailsProps {
     thirdPartyId?: string | any;
     priceType?: number | any;
     status?: string | any;
+    fixedPrice?: boolean | any;
     setInvoiceAddress?: any;
     deliveriesIds?: any[];
     refetchPaymentLine?: boolean;
@@ -61,6 +62,7 @@ const CustomerOrderDetailsExtra = ({
     thirdPartyId,
     priceType,
     status,
+    fixedPrice,
     setInvoiceAddress,
     deliveriesIds,
     refetchPaymentLine
@@ -116,6 +118,7 @@ const CustomerOrderDetailsExtra = ({
         actionsComponent:
             customerOrderLineModes.length > 0 &&
             customerOrderLineModes.includes(ModeEnum.Create) &&
+            !fixedPrice &&
             status < configs.ORDER_STATUS_TO_INVOICE ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:customer-order-line') })}
@@ -380,6 +383,7 @@ const CustomerOrderDetailsExtra = ({
                                         )}
                                         {customerOrderLineModes.length > 0 &&
                                         customerOrderLineModes.includes(ModeEnum.Update) &&
+                                        !fixedPrice &&
                                         CustomerOrderLineModelV2.isEditable ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
@@ -395,6 +399,7 @@ const CustomerOrderDetailsExtra = ({
                                         )}
                                         {customerOrderLineModes.length > 0 &&
                                         customerOrderLineModes.includes(ModeEnum.Delete) &&
+                                        !fixedPrice &&
                                         CustomerOrderLineModelV2.isSoftDeletable ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
@@ -411,6 +416,7 @@ const CustomerOrderDetailsExtra = ({
                                         )}
                                         {customerOrderLineModes.length > 0 &&
                                         customerOrderLineModes.includes(ModeEnum.Delete) &&
+                                        !fixedPrice &&
                                         CustomerOrderLineModelV2.isDeletable ? (
                                             <Button
                                                 icon={<DeleteOutlined />}
