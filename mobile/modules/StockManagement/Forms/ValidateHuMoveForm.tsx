@@ -33,6 +33,7 @@ export interface IValidateHuMoveProps {
     trigger: { [label: string]: any };
     buttons: { [label: string]: any };
     headerContent: { [label: string]: any };
+    forceLocationScan: boolean;
 }
 
 export const ValidateHuMoveForm = ({
@@ -40,7 +41,8 @@ export const ValidateHuMoveForm = ({
     stepNumber,
     trigger: { triggerRender, setTriggerRender },
     buttons,
-    headerContent: { setHeaderContent }
+    headerContent: { setHeaderContent },
+    forceLocationScan
 }: IValidateHuMoveProps) => {
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
@@ -133,12 +135,22 @@ export const ValidateHuMoveForm = ({
 
     //ValidateHuMove-1b: handle back to previous - previous step settings (specific since check is automatic)
     const onBack = () => {
-        setTriggerRender(!triggerRender);
-        for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
-            delete storedObject[`step${i}`]?.data;
+        if (forceLocationScan == true) {
+            setTriggerRender(!triggerRender);
+            for (let i = storedObject[`step${stepNumber}`].previousStep; i <= stepNumber; i++) {
+                delete storedObject[`step${i}`]?.data;
+            }
+            storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
+            storage.set(process, JSON.stringify(storedObject));
+        } else {
+            const stepsToRemove = [30, 35, 40, 50];
+            stepsToRemove.forEach((step) => {
+                delete storedObject[`step${step}`];
+            });
+            storedObject.currentStep = 20;
+            storage.set(process, JSON.stringify(storedObject));
+            setTriggerRender(!triggerRender);
         }
-        storedObject.currentStep = storedObject[`step${stepNumber}`].previousStep;
-        storage.set(process, JSON.stringify(storedObject));
     };
 
     return (
