@@ -71,7 +71,7 @@ export const AddHookConfigArgumentForm: FC<ISingleItemProps> = ({
         hookConfigArgument.split(',').forEach((element: any) => {
             if (element !== '') {
                 const [key, ...valueParts] = element.split('=');
-                const value = valueParts.join('='); // Rejoint toutes les parties avec =
+                const value = valueParts.join('=');
                 jsonData[key] = value;
             }
         });
