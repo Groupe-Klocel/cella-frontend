@@ -440,6 +440,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                             name: t('d:discount_type')
                         })}`}
                         onChange={handleDiscountTypeSelection}
+                        disabled={details.fixedPrice}
                     >
                         {configsParamsCodes.discountTypes?.map((discountType: any) => (
                             <Option key={discountType.code} value={parseInt(discountType.code)}>
@@ -457,13 +458,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                             { type: 'number', max: 100, message: errorMessageMaxInputNumber }
                         ]}
                     >
-                        <InputNumber
-                            disabled={
-                                selectedDiscountType != 10 && selectedDiscountType != undefined
-                                    ? false
-                                    : true
-                            }
-                        />
+                        <InputNumber disabled={details.fixedPrice} />
                     </Form.Item>
                 )}
                 {selectedDiscountType == 10 && selectedDiscountType != undefined && (
@@ -472,13 +467,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         name="invoiceDiscountAmount"
                         rules={[{ type: 'number', min: 0, message: errorMessageMinInputNumber }]}
                     >
-                        <InputNumber
-                            disabled={
-                                selectedDiscountType == 10 && selectedDiscountType != undefined
-                                    ? false
-                                    : true
-                            }
-                        />
+                        <InputNumber disabled={details.fixedPrice} />
                     </Form.Item>
                 )}
                 <Form.Item

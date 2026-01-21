@@ -47,6 +47,7 @@ query GetOrderById($id: String!) {
         invoiceDiscountType
         invoiceDiscountTypeText
         invoiceDiscountAmount
+        fixedPrice
         paymentTerms
         paymentTermsText
         paymentMethod
