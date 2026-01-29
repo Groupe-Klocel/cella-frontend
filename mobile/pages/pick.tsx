@@ -31,7 +31,7 @@ import { QuantityChecks } from 'modules/Preparation/Pick/ChecksAndRecords/Quanti
 import { SelectRoundForm } from 'modules/Preparation/Pick/Forms/SelectRoundForm';
 import { SelectEquipmentForm } from 'modules/Preparation/Pick/Forms/SelectEquipmentForm';
 import { HandlingUnitChecks } from 'modules/Preparation/Pick/ChecksAndRecords/HandlingUnitChecks';
-import { HandlingUnitChecksWithoutChecks } from 'modules/Preparation/Pick/ChecksAndRecords/HandlingUnitChecksWithoutChecks';
+import { HandlingUnitChecksWithoutChecks } from 'modules/Preparation/Pick/ChecksAndRecords/HandlingUnitEquipmentChecks';
 import { ScanLocation } from 'modules/Preparation/Pick/PagesContainer/ScanLocation';
 import { LocationChecks } from 'modules/Preparation/Pick/ChecksAndRecords/LocationChecks';
 import { ArticleChecks } from 'modules/Preparation/Pick/ChecksAndRecords/ArticleChecks';
@@ -157,6 +157,15 @@ const Pick: PageComponent = () => {
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
         const highlightQuantity = highlightedQuantity === '1';
 
+        const findCodeByScope = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+
+        const equipmentHuType = findCodeByScope(parameters, 'handling_unit_type', 'EQUIPMENT');
+
         return {
             equipmentScanAtPreparation,
             manuallyGenerateParent,
@@ -165,7 +174,8 @@ const Pick: PageComponent = () => {
             forceArticleScan,
             defaultQuantity,
             autoValidate1Quantity,
-            highlightQuantity
+            highlightQuantity,
+            equipmentHuType
         };
     }, [parameters]);
 
@@ -279,6 +289,10 @@ const Pick: PageComponent = () => {
             const handlingUnit = storedObject['step15']?.data?.handlingUnit;
             headerDisplay[t('common:pick_handling-unit_grouping')] =
                 typeof handlingUnit === 'string' ? handlingUnit : handlingUnit.name;
+        }
+        if (isPositionChecked) {
+            headerDisplay[t('common:pick_position')] =
+                proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.roundPosition;
         }
         if (!storedObject['step30']?.data?.chosenLocation) {
             if (isLocationDefined) {
@@ -394,6 +408,24 @@ const Pick: PageComponent = () => {
         }
     }, [storedObject]);
 
+    function findHUEquipment(handlingUnitOutbounds: any[]) {
+        return (
+            handlingUnitOutbounds.find((huo) => {
+                return huo.handlingUnit?.type === parseInt(configsParamsCodes.equipmentHuType);
+            }) || null
+        );
+    }
+
+    let isANewHUEquipment = true;
+
+    if (storedObject['step10']?.data) {
+        isANewHUEquipment = findHUEquipment(
+            storedObject['step10']?.data?.round?.handlingUnitOutbounds
+        )
+            ? false
+            : true;
+    }
+
     const onReset = () => {
         dispatch({
             type: 'DELETE_RF_PROCESS',
@@ -498,6 +530,7 @@ const Pick: PageComponent = () => {
                                 submitButton: true,
                                 backButton: true
                             }}
+                            isANewHUEquipment={isANewHUEquipment}
                             checkComponent={(data: any) => (
                                 <HandlingUnitChecksWithoutChecks dataToCheck={data} />
                             )}

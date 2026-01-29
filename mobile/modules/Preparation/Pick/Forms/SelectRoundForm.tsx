@@ -261,6 +261,10 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                         statusText
                         roundId
                         handlingUnitModelId
+                        handlingUnit {
+                            id
+                            type
+                        }
                     }
                     roundAdvisedAddresses(
                         orderBy: [{ fieldName: "roundOrderId", ascending: true }]
