@@ -186,7 +186,7 @@ export const AutoValidatePickForm = ({
                     console.log(validateFullBoxResult.executeFunction.output.output, 'output');
 
                     const storedObject: any = {};
-                    const { updatedRound, isPickValidated } =
+                    const { updatedRound, isPickValidated, equipmentHu } =
                         validateFullBoxResult.executeFunction.output.output;
                     if (isPickValidated) {
                         if (step5.data && step10.data.roundNumber !== 1) {
@@ -251,7 +251,7 @@ export const AutoValidatePickForm = ({
                             data['roundNumber'] = step10.roundNumber;
                         }
                         const dataStep15 = {
-                            handlingUnit: hu,
+                            handlingUnit: equipmentHu,
                             handlingUnitType: huType,
                             isHUToCreate: false
                         };
