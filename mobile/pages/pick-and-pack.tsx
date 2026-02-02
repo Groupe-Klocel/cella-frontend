@@ -369,23 +369,22 @@ const PickAndPack: PageComponent = () => {
             );
             setArticleToPropose(proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name);
         }
-        if (
-            storedObject['step10']?.data &&
-            !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
-                ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized &&
-            !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
-        ) {
-            setToBePalletizedForBackEnd(false);
-            setToBePalletizedForHUModel(false);
-        }
+        const shouldBePalletized =
+            proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
+                ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized;
+        const forcePickingCheck = storedObject['step10']?.data?.round?.equipment?.forcePickingCheck;
 
-        if (
-            storedObject['step10']?.data &&
-            !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
-                ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized &&
-            storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
-        ) {
-            setToBePalletizedForHUModel(false);
+        if (storedObject['step10']?.data) {
+            if (!shouldBePalletized && !forcePickingCheck) {
+                setToBePalletizedForBackEnd(false);
+                setToBePalletizedForHUModel(false);
+            } else if (!shouldBePalletized && forcePickingCheck) {
+                setToBePalletizedForHUModel(false);
+                setToBePalletizedForBackEnd(true);
+            } else {
+                setToBePalletizedForBackEnd(true);
+                setToBePalletizedForHUModel(true);
+            }
         }
 
         if (storedObject['step10']?.data?.round) {

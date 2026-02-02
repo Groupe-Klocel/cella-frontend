@@ -251,6 +251,10 @@ export const SelectLocationByLevelForm = ({
                                     handlingUnitOutbound {
                                         id
                                         name
+                                        carrierShippingMode {
+                                            id
+                                            toBePalletized
+                                        }
                                     }
                                 }
                                 processedQuantity
