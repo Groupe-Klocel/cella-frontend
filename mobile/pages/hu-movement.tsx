@@ -303,9 +303,7 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {configsParamsCodes.forceLocationScan &&
-            storedObject['step20']?.data &&
-            !storedObject['step30']?.data ? (
+            {storedObject['step20']?.data && !storedObject['step30']?.data ? (
                 <ScanHuOrLocation
                     process={processName}
                     stepNumber={30}
@@ -328,9 +326,7 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {configsParamsCodes.forceLocationScan &&
-            storedObject['step30']?.data &&
-            !storedObject['step35']?.data ? (
+            {storedObject['step30']?.data && !storedObject['step35']?.data ? (
                 <SelectLocationByLevelForm
                     process={processName}
                     stepNumber={35}
@@ -341,10 +337,7 @@ const HuMovement: PageComponent = () => {
             ) : (
                 <></>
             )}
-            {(storedObject['step35']?.data && !storedObject['step40']?.data) ||
-            (storedObject['step20']?.data &&
-                !storedObject['step40']?.data &&
-                !configsParamsCodes.forceLocationScan) ? (
+            {storedObject['step35']?.data && !storedObject['step40']?.data ? (
                 <ScanFinalHandlingUnit
                     process={processName}
                     stepNumber={40}
@@ -354,21 +347,16 @@ const HuMovement: PageComponent = () => {
                         submitButton: true,
                         backButton: true,
                         action1Button:
-                            storedObject['step30']?.data?.resType == 'location' ? true : false
+                            storedObject['step30'].data.resType == 'location' ? true : false
                     }}
-                    checkComponent={(data: any) => (
-                        <HandlingUnitFinalChecks
-                            dataToCheck={data}
-                            forceLocationScan={configsParamsCodes.forceLocationScan}
-                        />
-                    )}
+                    checkComponent={(data: any) => <HandlingUnitFinalChecks dataToCheck={data} />}
                     action1Trigger={{
                         action1Trigger,
                         setAction1Trigger
                     }}
                     defaultValue={
-                        storedObject['step30']?.data?.resType == 'handlingUnit'
-                            ? storedObject['step30']?.data?.finalHandlingUnit
+                        storedObject['step30'].data.resType == 'handlingUnit'
+                            ? storedObject['step30'].data.finalHandlingUnit
                             : null
                     }
                     enforcedValue={
@@ -388,7 +376,6 @@ const HuMovement: PageComponent = () => {
                     buttons={{ submitButton: true, backButton: true }}
                     trigger={{ triggerRender, setTriggerRender }}
                     headerContent={{ setHeaderContent }}
-                    forceLocationScan={configsParamsCodes.forceLocationScan}
                 ></ValidateHuMoveForm>
             ) : (
                 <></>
