@@ -164,6 +164,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 _variables: UpdateOrderMutationVariables,
                 _context: any
             ) => {
+                showSuccess(t('messages:success-updated'));
                 router.push(`/customer-orders/${data.updateOrder?.id}`);
             },
             onError: (err) => {
@@ -181,6 +182,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
         form.validateFields()
             .then(() => {
                 checkUndefinedValues(form);
+                showInfo(t('messages:info-update-wip'));
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
 
@@ -194,6 +196,8 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 delete formData['thirdParty'];
                 delete formData['stockOwner'];
                 delete formData['invoiceDiscountTypeText'];
+                formData.invoiceDiscount = formData.invoiceDiscount ?? 0;
+                formData.invoiceDiscountAmount = formData.invoiceDiscountAmount ?? 0;
 
                 updateOrder({ id: orderId, input: formData });
                 setUnsavedChanges(false);
@@ -206,7 +210,10 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     useEffect(() => {
         const tmp_details = {
             ...details,
-            stockOwnerName: details?.stockOwner?.name
+            stockOwnerName: details?.stockOwner?.name,
+            invoiceDiscountAmount: details?.invoiceDiscountAmount
+                ? Math.abs(details.invoiceDiscountAmount)
+                : details?.invoiceDiscountAmount
         };
         delete tmp_details['id'];
         delete tmp_details['created'];
@@ -215,10 +222,6 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
         delete tmp_details['modifiedBy'];
         setSelectedDiscountType(tmp_details.invoiceDiscountType);
         form.setFieldsValue(tmp_details);
-        if (updateLoading) {
-            showInfo(t('messages:info-create-wip'));
-            showSuccess(t('messages:success-updated'));
-        }
     }, [updateLoading, details]);
 
     const onCancel = () => {
@@ -449,7 +452,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         ))}
                     </Select>
                 </Form.Item>
-                {selectedDiscountType != 10 && selectedDiscountType != undefined && (
+                {selectedDiscountType == 20 && selectedDiscountType != undefined && (
                     <Form.Item
                         label={discountLabel}
                         name="invoiceDiscount"

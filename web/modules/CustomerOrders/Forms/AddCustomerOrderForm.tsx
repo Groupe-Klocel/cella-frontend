@@ -454,7 +454,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                         ))}
                     </Select>
                 </Form.Item>
-                {selectedDiscountType != 10 && selectedDiscountType != undefined && (
+                {selectedDiscountType == 20 && selectedDiscountType != undefined && (
                     <Form.Item
                         label={discountLabel}
                         name="invoiceDiscount"

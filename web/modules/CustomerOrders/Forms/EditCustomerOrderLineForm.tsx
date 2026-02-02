@@ -304,8 +304,8 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                     unitPriceExcludingTaxes: formData.unitPriceExcludingTaxes,
                     vatRateCode: formData.vatRateCode,
                     discountType: formData.discountType,
-                    discount: formData.discount,
-                    discountAmount: formData.discountAmount,
+                    discount: formData.discount ?? 0,
+                    discountAmount: formData.discountAmount ?? 0,
                     stockStatus: formData.stockStatus,
                     comment: formData.comment,
                     genericArticleComment: formData.genericArticleComment
@@ -324,7 +324,10 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
             ...details,
             stockOwnerName: details?.stockOwner?.name,
             articleName: details?.article?.name,
-            orderName: details?.order?.name
+            orderName: details?.order?.name,
+            discountAmount: details?.discountAmount
+                ? Math.abs(details.discountAmount)
+                : details?.discountAmount
         };
         delete tmp_details['id'];
         delete tmp_details['created'];
@@ -360,6 +363,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                 onValuesChange={() => {
                     setUnsavedChanges(true);
                 }}
+                style={{ margin: '20px 30px' }}
             >
                 <Form.Item
                     label={t('d:stockOwner_name')}
@@ -431,7 +435,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                                 ))}
                             </Select>
                         </Form.Item>
-                        {selectedDiscountType != 10 && selectedDiscountType != undefined && (
+                        {selectedDiscountType == 20 && selectedDiscountType != undefined && (
                             <Form.Item
                                 label={discountLabel}
                                 name="discount"
@@ -444,14 +448,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                                     }
                                 ]}
                             >
-                                <InputNumber
-                                    disabled={
-                                        selectedDiscountType != 10 &&
-                                        selectedDiscountType != undefined
-                                            ? false
-                                            : true
-                                    }
-                                />
+                                <InputNumber />
                             </Form.Item>
                         )}
                         {selectedDiscountType == 10 && selectedDiscountType != undefined && (
@@ -462,14 +459,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                                     { type: 'number', min: 0, message: errorMessageMinInputNumber }
                                 ]}
                             >
-                                <InputNumber
-                                    disabled={
-                                        selectedDiscountType == 10 &&
-                                        selectedDiscountType != undefined
-                                            ? false
-                                            : true
-                                    }
-                                />
+                                <InputNumber />
                             </Form.Item>
                         )}
                         <Form.Item name="stockStatus" label={stockStatus}>
@@ -489,6 +479,18 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                         </Form.Item>
                         <Form.Item label={comment} name="comment">
                             <Input />
+                        </Form.Item>
+                        <Form.Item label={t('d:reference1')} name="reference1">
+                            <Input />
+                        </Form.Item>
+                        <Form.Item label={t('d:reference2')} name="reference2">
+                            <Input />
+                        </Form.Item>
+                        <Form.Item label={t('d:reference3')} name="reference3">
+                            <Input />
+                        </Form.Item>
+                        <Form.Item label={genericArticleComment} name="genericArticleComment">
+                            <TextArea />
                         </Form.Item>
                     </>
                 ) : (
