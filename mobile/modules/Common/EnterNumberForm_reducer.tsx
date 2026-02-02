@@ -40,6 +40,8 @@ export interface IEnterNumberFormProps {
     alternativeSubmitLabel1?: any;
     triggerAlternativeSubmit1?: any;
     style?: any;
+    autoFocus?: boolean;
+    inputNumberRef?: any;
 }
 
 export const EnterNumberForm = ({
@@ -56,7 +58,9 @@ export const EnterNumberForm = ({
     isCommentDisplayed,
     alternativeSubmitLabel1,
     triggerAlternativeSubmit1,
-    style
+    style,
+    autoFocus,
+    inputNumberRef
 }: IEnterNumberFormProps) => {
     const { t } = useTranslation('common');
     const state = useAppState();
@@ -121,7 +125,8 @@ export const EnterNumberForm = ({
                             if (!/^(-?[\d]+([.,]\d*)?)?$/.test(value)) return '';
                             return value.replace(',', '.');
                         }}
-                        autoFocus
+                        autoFocus={autoFocus != null ? autoFocus : true}
+                        ref={inputNumberRef}
                     />
                 </StyledFormItem>
                 {isCommentDisplayed && (
