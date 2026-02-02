@@ -34,7 +34,7 @@ import {
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { HandlingUnitOutboundModelV2 } from '@helpers';
 import { RoundAdvisedAddressModelV2 } from '@helpers';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { RoundLineModelV2 } from '@helpers';
@@ -53,7 +53,7 @@ export interface IItemDetailsProps {
 const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
-    const { permissions } = useAppState();
+    const { permissions, parameters } = useAppState();
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const RoundLineModes = getModesFromPermissions(permissions, Table.RoundLine);
@@ -75,6 +75,22 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
     const [form] = Form.useForm();
     const errorMessageUpdateData = t('messages:error-update-data');
     const successMessageUpdateData = t('messages:success-updated');
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScope = (items: any[], scope: string) => {
+            return items.filter((item: any) => item.scope === scope);
+        };
+
+        const huTypes = findCodeByScope(parameters, 'handling_unit_type');
+
+        const nonEquipmentHuTypeCodes = huTypes
+            .filter((huType: any) => huType.value.toLowerCase() !== 'equipment')
+            .map((huType: any) => huType.code);
+
+        return {
+            nonEquipmentHuTypeCodes
+        };
+    }, [parameters]);
 
     const roundLineData: HeaderData = {
         title: t('common:associated', { name: t('common:round-lines') }),
@@ -308,7 +324,10 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                 <>
                     <Divider />
                     <ListComponent
-                        searchCriteria={{ roundId: roundId }}
+                        searchCriteria={{
+                            roundId: roundId,
+                            handlingUnit_Type: configsParamsCodes.nonEquipmentHuTypeCodes
+                        }}
                         dataModel={HandlingUnitOutboundModelV2}
                         headerData={boxHeaderData}
                         triggerDelete={{ idToDelete, setIdToDelete }}
