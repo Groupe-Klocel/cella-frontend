@@ -555,7 +555,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                                 ))}
                             </Select>
                         </Form.Item>
-                        {selectedDiscountType != 10 && selectedDiscountType != undefined && (
+                        {selectedDiscountType == 20 && selectedDiscountType != undefined && (
                             <Form.Item
                                 label={discountLabel}
                                 name="discount"
@@ -568,14 +568,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                                     }
                                 ]}
                             >
-                                <InputNumber
-                                    disabled={
-                                        selectedDiscountType != 10 &&
-                                        selectedDiscountType != undefined
-                                            ? false
-                                            : true
-                                    }
-                                />
+                                <InputNumber />
                             </Form.Item>
                         )}
                         {selectedDiscountType == 10 && selectedDiscountType != undefined && (
@@ -586,14 +579,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                                     { type: 'number', min: 0, message: errorMessageMinInputNumber }
                                 ]}
                             >
-                                <InputNumber
-                                    disabled={
-                                        selectedDiscountType == 10 &&
-                                        selectedDiscountType != undefined
-                                            ? false
-                                            : true
-                                    }
-                                />
+                                <InputNumber />
                             </Form.Item>
                         )}
                         <Form.Item name="stockStatus" label={stockStatus}>
