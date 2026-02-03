@@ -21,10 +21,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { arrayOfInfosToAdd } from './getMoreInfosUtils/arrayOfInfosToAdd';
 
 export function getMoreInfos(headerDisplay: any, storedObject: any, processName: string, t: any) {
-    if (!storedObject['step10']) {
-        return headerDisplay;
-    }
-
     arrayOfInfosToAdd.forEach((info) => {
         try {
             const func = require(`./getMoreInfosUtils/${info.functionName}`)[info.functionName];
