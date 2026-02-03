@@ -366,10 +366,10 @@ const Pack: PageComponent = () => {
                             )}
                             enforcedValue={step20Position ?? undefined}
                             defaultValue={
-                                !round?.equipment?.checkPosition
-                                    ? destinationHuos
-                                    : inProgressHuo
-                                      ? [inProgressHuo]
+                                inProgressHuo
+                                    ? [inProgressHuo]
+                                    : !round?.equipment?.checkPosition
+                                      ? destinationHuos
                                       : undefined
                             }
                         ></ScanPosition>
