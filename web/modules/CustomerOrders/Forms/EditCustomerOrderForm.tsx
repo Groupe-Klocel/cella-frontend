@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import { Button, Input, InputNumber, Form, Select, Space, Modal, DatePicker } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import dayjs from 'dayjs';
@@ -40,6 +40,7 @@ import configs from '../../../../common/configs.json';
 import { FormOptionType } from 'models/ModelsV2';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
+import { useAppState } from 'context/AppContext';
 
 export type EditCustomerOrderFormProps = {
     orderId: string;
@@ -52,7 +53,10 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
 }: EditCustomerOrderFormProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
+    const { parameters: appParameters, configs: appConfigs } = useAppState();
     const router = useRouter();
+    const { locale } = router;
+    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [stockOwners, setStockOwners] = useState<any>();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
@@ -70,7 +74,9 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     const paymentAccountLabel = t('d:paymentAccount');
     const priceTypeLabel = t('d:priceType');
     const currencyLabel = t('d:currency');
+    const discountTypeLabel = t('d:discount_type');
     const discountLabel = t('d:discount_percent');
+    const discountAmountLabel = t('d:discount_amount');
     const deliveryPoTypeLabel = t('d:deliveryType');
     const priorityLabel = t('d:priority');
     const printLanguageLabel = t('d:printLanguage');
@@ -81,6 +87,38 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     const thirdPartyLabel = t('d:thirdParty');
     const expectedDeliveryDateLabel = t('d:expectedDeliveryDate');
     const submit = t('actions:submit');
+
+    const configsParamsCodes = useMemo(() => {
+        const findAllByScope = (items: any[], scope: string) => {
+            return items
+                .filter((item: any) => item.scope === scope)
+                .sort((a, b) => a.code - b.code)
+                .map((item: any) => {
+                    return {
+                        ...item,
+                        value: item.translation?.[language] || item.value
+                    };
+                });
+        };
+        const paymentTerms = findAllByScope(appParameters, 'payment_terms');
+        const paymentMethods = findAllByScope(appParameters, 'payment_method');
+        const paymentAccounts = findAllByScope(appParameters, 'bank_account');
+        const priceTypes = findAllByScope(appParameters, 'price_type');
+        const currencies = findAllByScope(appParameters, 'currency');
+        const discountTypes = findAllByScope(appParameters, 'discount_type');
+        const priorities = findAllByScope(appParameters, 'priority');
+        const deliveryTypes = findAllByScope(appConfigs, 'delivery_po_type');
+        return {
+            paymentTerms,
+            paymentMethods,
+            paymentAccounts,
+            priceTypes,
+            currencies,
+            discountTypes,
+            priorities,
+            deliveryTypes
+        };
+    }, [appConfigs, appParameters, language]);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -126,9 +164,10 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 _variables: UpdateOrderMutationVariables,
                 _context: any
             ) => {
+                showSuccess(t('messages:success-updated'));
                 router.push(`/customer-orders/${data.updateOrder?.id}`);
             },
-            onError: () => {
+            onError: (err) => {
                 showError(t('messages:error-update-data'));
             }
         }
@@ -143,6 +182,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
         form.validateFields()
             .then(() => {
                 checkUndefinedValues(form);
+                showInfo(t('messages:info-update-wip'));
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
 
@@ -155,6 +195,9 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 delete formData['stockOwnerName'];
                 delete formData['thirdParty'];
                 delete formData['stockOwner'];
+                delete formData['invoiceDiscountTypeText'];
+                formData.invoiceDiscount = formData.invoiceDiscount ?? 0;
+                formData.invoiceDiscountAmount = formData.invoiceDiscountAmount ?? 0;
 
                 updateOrder({ id: orderId, input: formData });
                 setUnsavedChanges(false);
@@ -167,18 +210,18 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     useEffect(() => {
         const tmp_details = {
             ...details,
-            stockOwnerName: details?.stockOwner?.name
+            stockOwnerName: details?.stockOwner?.name,
+            invoiceDiscountAmount: details?.invoiceDiscountAmount
+                ? Math.abs(details.invoiceDiscountAmount)
+                : details?.invoiceDiscountAmount
         };
         delete tmp_details['id'];
         delete tmp_details['created'];
         delete tmp_details['createdBy'];
         delete tmp_details['modified'];
         delete tmp_details['modifiedBy'];
+        setSelectedDiscountType(tmp_details.invoiceDiscountType);
         form.setFieldsValue(tmp_details);
-        if (updateLoading) {
-            showInfo(t('messages:info-create-wip'));
-            showSuccess(t('messages:success-updated'));
-        }
     }, [updateLoading, details]);
 
     const onCancel = () => {
@@ -221,168 +264,6 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
         }
     }, [customerThirdPartiesList.data]);
 
-    // Retrieve Payment terms list
-    const [paymentTerms, setPaymentTerms] = useState<any>();
-    const paymentTermsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'payment_terms'
-    });
-
-    useEffect(() => {
-        if (paymentTermsList) {
-            const newPaymentTerm: Array<FormOptionType> = [];
-
-            const cData = paymentTermsList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPaymentTerm.push({ key: item.code, text: item.text });
-
-                    if (item.code === details.paymentTerms) {
-                        form.setFieldsValue({ paymentTermsText: item.text });
-                    }
-                });
-                setPaymentTerms(newPaymentTerm);
-            }
-        }
-    }, [paymentTermsList.data]);
-
-    // Retrieve Payment methods list
-    const [paymentMethods, setPaymentMethods] = useState<any>();
-    const paymentMethodsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'payment_method'
-    });
-
-    useEffect(() => {
-        if (paymentMethodsList) {
-            const newPaymentMethod: Array<FormOptionType> = [];
-
-            const cData = paymentMethodsList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPaymentMethod.push({ key: item.code, text: item.text });
-                    if (item.code === details.paymentMethod) {
-                        form.setFieldsValue({ paymentMethodText: item.text });
-                    }
-                });
-                setPaymentMethods(newPaymentMethod);
-            }
-        }
-    }, [paymentMethodsList.data]);
-
-    // Retrieve bank accounts list
-    const [paymentAccounts, setPaymentAccounts] = useState<any>();
-    const paymentAccountsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'bank_account'
-    });
-
-    useEffect(() => {
-        if (paymentAccountsList) {
-            const newPaymentAccount: Array<FormOptionType> = [];
-
-            const cData = paymentAccountsList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPaymentAccount.push({ key: item.code, text: item.text });
-                    if (item.code === details.paymentAccount) {
-                        form.setFieldsValue({ paymentAccountText: item.text });
-                    }
-                });
-                setPaymentAccounts(newPaymentAccount);
-            }
-        }
-    }, [paymentAccountsList.data]);
-
-    // Retrieve currencies list
-    const [currencies, setCurrencies] = useState<any>();
-    const currenciesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'currency'
-    });
-
-    useEffect(() => {
-        if (currenciesList) {
-            const newCurrency: Array<FormOptionType> = [];
-
-            const cData = currenciesList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newCurrency.push({ key: item.code, text: item.text });
-                    if (item.code === details.currency) {
-                        form.setFieldsValue({ currencyText: item.text });
-                    }
-                });
-                setCurrencies(newCurrency);
-            }
-        }
-    }, [currenciesList.data]);
-
-    // Retrieve price types list
-    const [priceTypes, setPriceTypes] = useState<any>();
-    const priceTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'price_type'
-    });
-
-    useEffect(() => {
-        if (priceTypesList) {
-            const newPriceType: Array<FormOptionType> = [];
-
-            const cData = priceTypesList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPriceType.push({ key: parseInt(item.code), text: item.text });
-                });
-                setPriceTypes(newPriceType);
-            }
-        }
-    }, [priceTypesList.data]);
-
-    // Retrieve delivery types list
-    const [deliveryTypes, setDeliveryTypes] = useState<any>();
-    const deliveryTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'delivery_po_type'
-    });
-
-    useEffect(() => {
-        if (deliveryTypesList) {
-            const newDeliveryType: Array<FormOptionType> = [];
-
-            const cData = deliveryTypesList?.data?.listConfigsForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    if (!item.text.startsWith('N3')) {
-                        newDeliveryType.push({ key: parseInt(item.code), text: item.text });
-                    }
-                });
-                setDeliveryTypes(newDeliveryType);
-            }
-        }
-    }, [deliveryTypesList.data]);
-
-    // Retrieve priorities list
-    const [priorities, setpriorities] = useState<any>();
-    const prioritiesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
-        scope: 'priority'
-    });
-
-    useEffect(() => {
-        if (prioritiesList) {
-            const newPriority: Array<FormOptionType> = [];
-
-            const cData = prioritiesList?.data?.listParametersForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    newPriority.push({ key: parseInt(item.code), text: item.text });
-                });
-                setpriorities(newPriority);
-            }
-        }
-    }, [prioritiesList.data]);
-
     const handleThirdPartySelection = (key: any, value: any) => {
         // if we select a new value, we fill the form
         if (key === undefined) {
@@ -421,44 +302,13 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
         }
     };
 
-    const handlePaymentTermsSelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ paymentTerms: null });
-        } else {
-            form.setFieldsValue({ paymentTerms: key });
-        }
-    };
-
-    const handlePaymentMethodSelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ paymentMethod: null });
-        } else {
-            form.setFieldsValue({ paymentMethod: key });
-        }
-    };
-
-    const handlePaymentAccountSelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ paymentAccount: null });
-        } else {
-            form.setFieldsValue({ paymentAccount: key });
-        }
-    };
-
-    const handlePriceTypeSelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ priceType: null });
-        } else {
-            form.setFieldsValue({ priceType: key });
-        }
-    };
-
-    const handleCurrencySelection = (key: any, value: any) => {
-        if (key === undefined) {
-            form.setFieldsValue({ currency: null });
-        } else {
-            form.setFieldsValue({ currency: key });
-        }
+    const [selectedDiscountType, setSelectedDiscountType] = useState<any>();
+    const handleDiscountTypeSelection = (key: any, value: any) => {
+        setSelectedDiscountType(parseInt(key));
+        form.setFieldsValue({
+            invoiceDiscount: null,
+            invoiceDiscountAmount: null
+        });
     };
 
     return (
@@ -516,100 +366,122 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={paymentTermLabel} name="paymentTermsText">
+                <Form.Item label={paymentTermLabel} name="paymentTerms">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:paymentTerm')
                         })}`}
-                        onChange={handlePaymentTermsSelection}
                     >
-                        {paymentTerms?.map((paymentTerm: any) => (
-                            <Option key={paymentTerm.key} value={paymentTerm.key}>
-                                {paymentTerm.text}
+                        {configsParamsCodes.paymentTerms?.map((paymentTerm: any) => (
+                            <Option key={paymentTerm.code} value={paymentTerm.code}>
+                                {paymentTerm.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={paymentMethodLabel} name="paymentMethodText">
+                <Form.Item label={paymentMethodLabel} name="paymentMethod">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:paymentMethod')
                         })}`}
-                        onChange={handlePaymentMethodSelection}
                     >
-                        {paymentMethods?.map((paymentMethod: any) => (
-                            <Option key={paymentMethod.key} value={paymentMethod.key}>
-                                {paymentMethod.text}
+                        {configsParamsCodes.paymentMethods?.map((paymentMethod: any) => (
+                            <Option key={paymentMethod.code} value={paymentMethod.code}>
+                                {paymentMethod.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={paymentAccountLabel} name="paymentAccountText">
+                <Form.Item label={paymentAccountLabel} name="paymentAccount">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:paymentAccount')
                         })}`}
-                        onChange={handlePaymentAccountSelection}
                     >
-                        {paymentAccounts?.map((paymentAccount: any) => (
-                            <Option key={paymentAccount.key} value={paymentAccount.key}>
-                                {paymentAccount.text}
+                        {configsParamsCodes.paymentAccounts?.map((paymentAccount: any) => (
+                            <Option key={paymentAccount.code} value={paymentAccount.code}>
+                                {paymentAccount.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={priceTypeLabel} name="priceTypeText">
+                <Form.Item label={priceTypeLabel} name="priceType">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:priceType')
                         })}`}
-                        onChange={handlePriceTypeSelection}
                     >
-                        {priceTypes?.map((priceType: any) => (
-                            <Option key={priceType.key} value={priceType.key}>
-                                {priceType.text}
+                        {configsParamsCodes.priceTypes?.map((priceType: any) => (
+                            <Option key={priceType.code} value={parseInt(priceType.code)}>
+                                {priceType.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item label={currencyLabel} name="currencyText">
+                <Form.Item label={currencyLabel} name="currency">
                     <Select
                         allowClear
                         placeholder={`${t('messages:please-select-a', {
                             name: t('d:currency')
                         })}`}
-                        onChange={handleCurrencySelection}
                     >
-                        {currencies?.map((currency: any) => (
-                            <Option key={currency.key} value={currency.key}>
-                                {currency.text}
+                        {configsParamsCodes.currencies?.map((currency: any) => (
+                            <Option key={currency.code} value={currency.code}>
+                                {currency.value}
                             </Option>
                         ))}
                     </Select>
                 </Form.Item>
-                <Form.Item
-                    label={discountLabel}
-                    name="invoiceDiscount"
-                    rules={[
-                        { type: 'number', min: 0, message: errorMessageMinInputNumber },
-                        { type: 'number', max: 100, message: errorMessageMaxInputNumber }
-                    ]}
-                >
-                    <InputNumber />
+                <Form.Item label={discountTypeLabel} name="invoiceDiscountType">
+                    <Select
+                        allowClear
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:discount_type')
+                        })}`}
+                        onChange={handleDiscountTypeSelection}
+                        disabled={details.fixedPrice}
+                    >
+                        {configsParamsCodes.discountTypes?.map((discountType: any) => (
+                            <Option key={discountType.code} value={parseInt(discountType.code)}>
+                                {discountType.value}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
+                {selectedDiscountType == 20 && selectedDiscountType != undefined && (
+                    <Form.Item
+                        label={discountLabel}
+                        name="invoiceDiscount"
+                        rules={[
+                            { type: 'number', min: 0, message: errorMessageMinInputNumber },
+                            { type: 'number', max: 100, message: errorMessageMaxInputNumber }
+                        ]}
+                    >
+                        <InputNumber disabled={details.fixedPrice} />
+                    </Form.Item>
+                )}
+                {selectedDiscountType == 10 && selectedDiscountType != undefined && (
+                    <Form.Item
+                        label={discountAmountLabel}
+                        name="invoiceDiscountAmount"
+                        rules={[{ type: 'number', min: 0, message: errorMessageMinInputNumber }]}
+                    >
+                        <InputNumber disabled={details.fixedPrice} />
+                    </Form.Item>
+                )}
                 <Form.Item
                     label={deliveryPoTypeLabel}
                     name="deliveryPoType"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
                     <Select>
-                        {deliveryTypes?.map((deliveryType: any) => (
-                            <Option key={deliveryType.key} value={deliveryType.key}>
-                                {deliveryType.text}
+                        {configsParamsCodes.deliveryTypes?.map((deliveryType: any) => (
+                            <Option key={deliveryType.code} value={parseInt(deliveryType.code)}>
+                                {deliveryType.value}
                             </Option>
                         ))}
                     </Select>
@@ -620,9 +492,9 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
                     <Select>
-                        {priorities?.map((priority: any) => (
-                            <Option key={priority.key} value={priority.key}>
-                                {priority.text}
+                        {configsParamsCodes.priorities?.map((priority: any) => (
+                            <Option key={priority.code} value={parseInt(priority.code)}>
+                                {priority.value}
                             </Option>
                         ))}
                     </Select>

@@ -22,7 +22,7 @@ import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../../components/layouts/MainLayout';
 import { CustomerOrderLineModelV2 } from '@helpers';
-import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { EditCustomerOrderLineForm } from 'modules/CustomerOrders/Forms/EditCustomerOrderLineForm';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
 import { GetServerSideProps } from 'next';
@@ -38,8 +38,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }
     };
 };
+interface EditCustomerOrderPageProps {
+    initialData: any;
+}
 
-const EditCustomerOrderPage: PageComponent = (props) => {
+const EditCustomerOrderPage: FC<EditCustomerOrderPageProps> & { layout: typeof MainLayout } = (
+    props
+) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -49,36 +54,24 @@ const EditCustomerOrderPage: PageComponent = (props) => {
     const customerOrderDetailBreadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.order_name}`,
-            path: '/customer-orders/' + data?.orderId
+            breadcrumbName: `${props.initialData?.order?.name}`,
+            path: '/customer-orders/' + props.initialData?.orderId
         }
     ];
 
     const breadCrumb = [
         ...customerOrderDetailBreadCrumb,
         {
-            breadcrumbName: `${t('common:line')} ${data?.lineNumber}`
+            breadcrumbName: `${t('common:line')} ${props.initialData?.lineNumber}`
         }
     ];
 
-    const pageTitle = `${data?.order_name} - ${t('common:line')} ${data?.lineNumber}`;
+    const pageTitle = `${props.initialData?.order?.name} - ${t('common:line')} ${props.initialData?.lineNumber}`;
     return (
         <>
             <AppHead title={pageTitle} />
-            <AddEditItemComponent
-                id={id as string}
-                initialProps={props}
-                setData={setData}
-                dataModel={CustomerOrderLineModelV2}
-                headerComponent={
-                    <HeaderContent
-                        title={pageTitle}
-                        routes={breadCrumb}
-                        onBack={() => router.push(`/customer-orders/line/${id}`)}
-                    />
-                }
-                routeAfterSuccess={`/customer-orders/line/:id`}
-            />
+            <HeaderContent title={pageTitle} routes={breadCrumb} onBack={() => router.back()} />
+            <EditCustomerOrderLineForm orderLineId={id as string} details={props.initialData} />
         </>
     );
 };
