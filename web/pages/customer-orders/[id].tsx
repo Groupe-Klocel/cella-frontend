@@ -504,6 +504,7 @@ const CustomerOrderPage: PageComponent = () => {
                         thirdPartyId={data?.thirdPartyId}
                         priceType={data?.priceType}
                         status={data?.status}
+                        fixedPrice={data?.fixedPrice}
                         setInvoiceAddress={setInvoiceAddress}
                         deliveriesIds={deliveriesToDisplay}
                         refetchPaymentLine={refetchPaymentLine}

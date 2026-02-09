@@ -106,6 +106,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         console.log('No matching handling unit content', data);
                         showError(t('messages:unexpected-scanned-item'));
                         setResetForm(true);
+                        setScannedInfo(undefined);
                         return;
                     }
                 }

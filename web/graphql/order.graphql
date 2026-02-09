@@ -44,6 +44,10 @@ query GetOrderById($id: String!) {
         reference2
         reference3
         invoiceDiscount
+        invoiceDiscountType
+        invoiceDiscountTypeText
+        invoiceDiscountAmount
+        fixedPrice
         paymentTerms
         paymentTermsText
         paymentMethod
