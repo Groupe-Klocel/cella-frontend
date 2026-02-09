@@ -122,27 +122,24 @@ export const EditShippingUnitsForm: FC<EditShippingUnitsFormProps> = ({
                     showError(t('messages:error-min-theoriticalWeight'));
                     return;
                 }
+                let formDataToSend = {};
 
                 //Delete CarrierBox if packaging or theoritical Weight is updated
                 if (
                     details.handlingUnitModel != formData.handlingUnitModel ||
                     details.theoriticalWeight != formData.theoriticalWeight
                 ) {
-                    formData.carrierBox = null;
+                    formDataToSend = { ...formDataToSend, carrierBox: null };
                 }
 
-                //end part to update priorities on foreigners
-                delete formData['stockOwner'];
-                delete formData['handlingUnitModel'];
-                delete formData['handlingUnit'];
-                delete formData['carrier'];
-                delete formData['preparationModeText'];
-                delete formData['load'];
-                delete formData['delivery'];
-                delete formData['statusText'];
-                delete formData['round'];
+                formDataToSend = {
+                    ...formDataToSend,
+                    handlingUnitModelId: formData.handlingUnitModelId,
+                    theoriticalWeight: formData.theoriticalWeight,
+                    comment: formData.comment
+                };
 
-                updateHUO({ id: shippingUnitId, input: formData });
+                updateHUO({ id: shippingUnitId, input: formDataToSend });
                 reload();
             })
             .catch((err) => {
