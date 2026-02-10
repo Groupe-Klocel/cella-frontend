@@ -135,9 +135,12 @@ export const AutoValidatePackForm = ({
                     const { currentRound, equipmentHu, destinationHuo, isPackValidated } =
                         validateFullBoxResult.executeFunction.output.output;
                     if (isPackValidated) {
+                        storedObject['currentStep'] = 20;
+                        storedObject['step10'] = step10;
                         dispatch({
-                            type: 'DELETE_RF_PROCESS',
-                            processName
+                            type: 'UPDATE_BY_PROCESS',
+                            processName: processName,
+                            object: storedObject
                         });
                         setIsToControl(false);
                         showSuccess(t('messages:pack-round-finished'));
@@ -156,6 +159,7 @@ export const AutoValidatePackForm = ({
                                     : null
                             }
                         };
+                        setIsToControl(null);
                         dispatch({
                             type: 'UPDATE_BY_PROCESS',
                             processName: processName,
