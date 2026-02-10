@@ -75,7 +75,7 @@ const TextAreaInput: FC<IDraggerTextAreaInputProps> = ({ item }) => {
             rules={getRulesWithNoSpacesValidator(item.rules!, t('messages:error-space'))}
         >
             <Input.TextArea
-                maxLength={item.maxLength ? item.maxLength : 100}
+                maxLength={item.maxLength ? item.maxLength : undefined}
                 allowClear
                 disabled={item.disabled ? true : false}
             />
