@@ -308,6 +308,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                                     id
                                     name
                                     description
+                                    genericArticleComment
                                 }
                                 status
                                 statusText

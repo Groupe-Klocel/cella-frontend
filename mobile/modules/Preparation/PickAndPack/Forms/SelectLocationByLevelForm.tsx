@@ -262,6 +262,12 @@ export const SelectLocationByLevelForm = ({
                                 roundLine {
                                     lineNumber
                                     articleId
+                                    article {
+                                        id
+                                        name
+                                        description
+                                        genericArticleComment
+                                    }
                                     status
                                     statusText
                                 }
