@@ -137,6 +137,17 @@ const Pack: PageComponent = () => {
     );
     //box currently in progress of packing if any
     const inProgressHuo = storedObject?.step20?.data?.inProgressHuo;
+
+    // Check if box closure is allowed
+    const isBoxClosureAllowed = useMemo(() => {
+        return (
+            inProgressHuo &&
+            !inProgressHuo.handlingUnitContentOutbounds?.every(
+                (huco: any) => huco.pickedQuantity === 0
+            )
+        );
+    }, [inProgressHuo]);
+
     //selected box (in progress or new one)
     const currentHuo = round?.equipment?.checkPosition
         ? storedObject?.step30?.data?.currentHuos?.[0]
@@ -391,7 +402,7 @@ const Pack: PageComponent = () => {
                             buttons={{
                                 submitButton: true,
                                 backButton: true,
-                                alternativeSubmitButton1: !!inProgressHuo
+                                alternativeSubmitButton1: isBoxClosureAllowed
                             }}
                             proposedHuos={storedObject['step30']?.data?.currentHuos}
                             checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
