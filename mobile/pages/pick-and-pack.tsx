@@ -361,12 +361,6 @@ const PickAndPack: PageComponent = () => {
 
     // retrieve location, article and qty to propose
     useEffect(() => {
-        if (storedObject['step10']?.data?.proposedRoundAdvisedAddresses) {
-            setLocationToPropose(
-                proposedRoundAdvisedAddress.location?.name || t('d:no-location-defined')
-            );
-            setArticleToPropose(proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name);
-        }
         const shouldBePalletized =
             proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
                 ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized;
