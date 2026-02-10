@@ -297,6 +297,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                                 stockOwner {
                                     name
                                 }
+                                genericArticleComment
                                 description
                                 baseUnitWeight
                                 featureType
@@ -359,6 +360,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                                     id
                                     name
                                     description
+                                    genericArticleComment
                                 }
                                 status
                                 statusText
