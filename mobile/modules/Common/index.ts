@@ -51,3 +51,4 @@ export * from './StockStatus/Forms/SelectStockStatusForm_reducer';
 export * from './HandlingUnits/PagesContainer/ScanHandlingUnit_reducer';
 export * from './Articles/PagesContainer/ScanArticle_reducer';
 export * from './Contents/Forms/SelectContentForArticleForm_reducer';
+export * from './QuantityStockStatus/PagesContainer/SelectStockStatusAndQuantityForm_reducer';
