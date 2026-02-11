@@ -189,7 +189,6 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
             roundsListVariables
         );
 
-        console.log('DLA - fetchRoundsList - roundsList_result:', roundsList_result);
         return roundsList_result;
     };
 
