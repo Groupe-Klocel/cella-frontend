@@ -183,6 +183,26 @@ export const ArticleLuBarcodeModelV2: ModelType = {
             param: null,
             isEditDisabled: true
         },
+        'article{description}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: true,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         articleLuId: {
             isListRequested: true,
             isDefaultHiddenList: false,

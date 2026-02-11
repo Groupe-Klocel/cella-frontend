@@ -322,6 +322,26 @@ export const MovementModelV2: ModelType = {
             config: null,
             param: null
         },
+        'article{description}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         quantity: {
             isListRequested: true,
             isDefaultHiddenList: false,
