@@ -30,12 +30,14 @@ import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { handlingUnitContentsSubRoutes as itemRoutes } from 'modules/HandlingUnits/Static/handlingUnitContentsRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { HandlingUnitContentModelV2 as model } from '@helpers';
 import parameters from '../../../common/parameters.json';
+import configs from '../../../common/configs.json';
+import { EditHandlingUnitContentsRenderModal } from 'modules/HandlingUnitContents/Forms/EditHandlingUnitContentsModal';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -49,6 +51,12 @@ const HandlingUnitContentsPage: PageComponent = () => {
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [infoToPrint, setInfoToPrint] = useState<any>();
     const [dataToCreateMovement, setDataToCreateMovement] = useState<any>();
+    const [selectedRows, setSelectedRows] = useState<any[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [refetch, setRefetch] = useState<boolean>(false);
+    const toggleRefetch = () => setRefetch((prev) => !prev);
 
     const headerData: HeaderData = {
         title: t('common:handlingUnitContents'),
@@ -65,6 +73,59 @@ const HandlingUnitContentsPage: PageComponent = () => {
             ) : null
     };
 
+    const hasSelected = selectedRows.length > 0;
+
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+    const rowSelection = {
+        selectedRowKeys: selectedRows.map((r) => r.id),
+        onChange: (newSelectedRowKeys: any, newSelectedRows: any) => {
+            setSelectedRows(newSelectedRows);
+        },
+        getCheckboxProps: (record: any) => ({
+            disabled: record.status == configs.ARTICLE_STATUS_CLOSED
+        })
+    };
+
+    const actionButtons: ActionButtons = {
+        actionsComponent:
+            modes.length > 0 && modes.includes(ModeEnum.Update) ? (
+                <>
+                    <>
+                        <span className="selected-span" style={{ marginLeft: 16 }}>
+                            {hasSelected
+                                ? `${t('messages:selected-items-number', {
+                                      number: selectedRows.length
+                                  })}`
+                                : ''}
+                        </span>
+                        <span style={{ marginLeft: 16 }}>
+                            <Button
+                                type="primary"
+                                onClick={() => {
+                                    setShowModal(true);
+                                }}
+                                disabled={!hasSelected}
+                                loading={loading}
+                            >
+                                {t('actions:edit')}
+                            </Button>
+                        </span>
+                        <EditHandlingUnitContentsRenderModal
+                            visible={showModal}
+                            rows={selectedRows}
+                            setRefetch={toggleRefetch}
+                            refetch={refetch}
+                            showhideModal={() => {
+                                setShowModal(!showModal);
+                            }}
+                        />
+                    </>
+                </>
+            ) : null
+    };
+
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
             Modal.confirm({
@@ -78,15 +139,24 @@ const HandlingUnitContentsPage: PageComponent = () => {
         };
     };
 
+    useEffect(() => {
+        setSelectedRows([]);
+        setSelectedRowKeys([]);
+    }, [refetch]);
+
     return (
         <>
             <AppHead title={headerData.title} />
             <ListComponent
                 headerData={headerData}
+                refetch={refetch}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 isCreateAMovement={true}
+                actionButtons={actionButtons}
+                rowSelection={rowSelection}
+                checkbox={true}
                 actionColumns={[
                     {
                         title: 'actions:actions',
