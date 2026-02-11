@@ -25,9 +25,13 @@ import parameters from '../../../../../common/parameters.json';
 
 export interface IHandlingUnitOriginChecksProps {
     dataToCheck: any;
+    forceLocationScan?: boolean;
 }
 
-export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChecksProps) => {
+export const HandlingUnitOriginChecks = ({
+    dataToCheck,
+    forceLocationScan
+}: IHandlingUnitOriginChecksProps) => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
 
@@ -45,16 +49,48 @@ export const HandlingUnitOriginChecks = ({ dataToCheck }: IHandlingUnitOriginChe
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && handlingUnitInfos) {
-            const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
             if (handlingUnitInfos.handlingUnits?.count !== 0) {
-                if (handlingUnitInfos.handlingUnits.results[0].locationId !== chosenLocationId) {
-                    showError(t('messages:no-hu-location'));
-                    setResetForm(true);
-                    setScannedInfo(undefined);
-                    return;
+                if (forceLocationScan) {
+                    const chosenLocationId = storedObject['step15'].data.chosenLocation.id;
+                    if (
+                        handlingUnitInfos.handlingUnits.results[0].locationId !== chosenLocationId
+                    ) {
+                        showError(t('messages:no-hu-location'));
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                        return;
+                    }
                 }
-                if (!handlingUnitInfos.handlingUnits.results[0].location.huManagement) {
-                    showError(t('messages:hu-cannot-move'));
+                if (handlingUnitInfos.handlingUnits.results[0].location) {
+                    if (!handlingUnitInfos.handlingUnits.results[0].location.huManagement) {
+                        showError(t('messages:hu-cannot-move'));
+                        setResetForm(true);
+                        setScannedInfo(undefined);
+                        return;
+                    }
+                    if (forceLocationScan == false) {
+                        storedObject['step10'] = {
+                            data: {
+                                locations: {
+                                    id: handlingUnitInfos.handlingUnits.results[0].locationId,
+                                    name: handlingUnitInfos.handlingUnits.results[0].location.name
+                                }
+                            }
+                        };
+                        storedObject['step15'] = {
+                            data: {
+                                chosenLocation: {
+                                    id: handlingUnitInfos.handlingUnits.results[0].locationId,
+                                    name: handlingUnitInfos.handlingUnits.results[0].location.name,
+                                    stockStatus:
+                                        handlingUnitInfos.handlingUnits.results[0].location
+                                            .stockStatus
+                                }
+                            }
+                        };
+                    }
+                } else {
+                    showError(t('messages:hu-no-location'));
                     setResetForm(true);
                     setScannedInfo(undefined);
                     return;
