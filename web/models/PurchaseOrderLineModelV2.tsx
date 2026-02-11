@@ -252,13 +252,13 @@ export const PurchaseOrderLineModelV2: ModelType = {
             param: null,
             optionTable: null
         },
-        'article{additionalDescription}': {
+        'article{description}': {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: false,
+            isSortable: true,
             searchingFormat: null,
-            isDetailRequested: false,
+            isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
             link: null,
@@ -266,12 +266,11 @@ export const PurchaseOrderLineModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
-            isMandatory: false,
+            isMandatory: true,
             minRule: null,
             maxRule: null,
             config: null,
-            param: null,
-            optionTable: null
+            param: null
         },
         quantity: {
             isListRequested: true,
