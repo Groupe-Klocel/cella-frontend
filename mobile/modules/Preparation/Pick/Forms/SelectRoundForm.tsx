@@ -189,6 +189,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
             roundsListVariables
         );
 
+        console.log('DLA - fetchRoundsList - roundsList_result:', roundsList_result);
         return roundsList_result;
     };
 
@@ -216,14 +217,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                         }
                     });
 
-                    const sortedAssignedToUser = assignedToUser.sort((a, b) =>
-                        a.text.localeCompare(b.text)
-                    );
-                    const sortedNotAssignedToUser = notAssignedToUser.sort((a, b) =>
-                        a.text.localeCompare(b.text)
-                    );
-
-                    setRounds([...sortedAssignedToUser, ...sortedNotAssignedToUser]);
+                    setRounds([...assignedToUser, ...notAssignedToUser]);
                 }
             } catch (error) {
                 console.error('Error fetching rounds list:', error);
