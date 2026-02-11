@@ -211,6 +211,7 @@ export const SelectLocationByLevelForm = ({
                                     baseUnitWeight
                                     featureType
                                     description
+                                    genericArticleComment
                                 }
                                 stockOwnerId
                                 stockOwner {
