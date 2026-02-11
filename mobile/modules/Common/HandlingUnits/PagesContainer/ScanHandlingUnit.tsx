@@ -157,6 +157,7 @@ export const ScanHandlingUnit = ({
                                 category
                                 categoryText
                                 huManagement
+                                stockStatus
                             }
                             handlingUnitContents {
                                 id
