@@ -552,10 +552,10 @@ export const HandlingUnitOutboundModelV2: ModelType = {
             param: null
         },
         roundPosition: {
-            isListRequested: false,
+            isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
-            isSortable: false,
+            isSortable: true,
             searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: false,
