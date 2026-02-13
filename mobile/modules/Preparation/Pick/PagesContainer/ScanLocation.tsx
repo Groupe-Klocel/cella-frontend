@@ -151,6 +151,7 @@ export const ScanLocation = ({
                                     name
                                     baseUnitWeight
                                     featureType
+                                    genericArticleComment
                                 }
                                 handlingUnitContentFeatures {
                                     id
