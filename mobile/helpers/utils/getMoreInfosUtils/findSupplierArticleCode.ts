@@ -30,7 +30,7 @@ export function findSupplierArticleCode(processName: string, storedObject: any) 
                     supplierArticleCode: article?.genericArticleComment,
                     articleName: article?.name
                 };
-            } else {
+            } else if (storedObject?.step10?.data?.proposedRoundAdvisedAddresses) {
                 const proposedRoundAdvisedAddress =
                     storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0];
                 if (proposedRoundAdvisedAddress?.handlingUnitContent?.article) {
@@ -68,13 +68,33 @@ export function findSupplierArticleCode(processName: string, storedObject: any) 
             }
             break;
         case 'roundPicking':
-            const proposedRoundAdvisedAddress =
-                storedObject['step10']?.data?.proposedRoundAdvisedAddress;
-            const roundPickingArticle = proposedRoundAdvisedAddress.handlingUnitContent?.article;
-            return {
-                supplierArticleCode: roundPickingArticle?.genericArticleComment,
-                articleName: roundPickingArticle?.name
-            };
+            if (storedObject?.step10?.data?.proposedRoundAdvisedAddress) {
+                const proposedRoundAdvisedAddress =
+                    storedObject['step10']?.data?.proposedRoundAdvisedAddress;
+                const roundPickingArticle =
+                    proposedRoundAdvisedAddress.handlingUnitContent?.article;
+                return {
+                    supplierArticleCode: roundPickingArticle?.genericArticleComment,
+                    articleName: roundPickingArticle?.name
+                };
+            }
+            break;
+        case 'pick':
+            if (storedObject['step50']?.data?.article) {
+                const pickArticle = storedObject['step50']?.data?.article;
+                return {
+                    supplierArticleCode: pickArticle?.genericArticleComment,
+                    articleName: pickArticle?.name
+                };
+            } else if (storedObject?.step10?.data?.proposedRoundAdvisedAddresses) {
+                const expectedArticle =
+                    storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0]?.roundLineDetail
+                        ?.roundLine.article;
+                return {
+                    supplierArticleCode: expectedArticle?.genericArticleComment,
+                    articleName: expectedArticle?.name
+                };
+            }
             break;
         case 'roundPacking':
             if (storedObject[`step30`]?.data) {
@@ -86,6 +106,26 @@ export function findSupplierArticleCode(processName: string, storedObject: any) 
                 return {
                     supplierArticleCode: roundPackingArticle?.genericArticleComment,
                     articleName: roundPackingArticleName
+                };
+            }
+            break;
+        case 'pack':
+            if (storedObject['step40']?.data?.currentHuco) {
+                const article = storedObject['step40']?.data?.currentHuco.article;
+                return {
+                    supplierArticleCode: article?.genericArticleComment,
+                    articleName: article?.name
+                };
+            } else if (
+                storedObject?.step20?.data?.inProgressHuo &&
+                storedObject?.step40?.data &&
+                !storedObject?.step20?.data?.round?.equipment?.checkPosition
+            ) {
+                const inProgressHuo = storedObject?.step20?.data?.inProgressHuo;
+                const article = inProgressHuo.handlingUnitContentOutbounds[0].article;
+                return {
+                    supplierArticleCode: article?.genericArticleComment,
+                    articleName: article?.name
                 };
             }
             break;
@@ -161,6 +201,6 @@ export function findSupplierArticleCode(processName: string, storedObject: any) 
             break;
         // Add more cases here for different process names if needed
         default:
-            return { supplierArticleCode: null, articleName: null };
+            return null;
     }
 }
