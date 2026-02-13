@@ -131,6 +131,7 @@ export type FieldInfo = {
     toBeEditDisabled?: string;
     isMultipleSearch?: boolean;
     filterConfigParam?: string;
+    highlight?: any;
 };
 
 export type FieldsInfo = {

@@ -20,14 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { gql } from 'graphql-request';
 import { useState } from 'react';
 import { useAuth } from 'context/AuthContext';
-import { isString } from 'lodash';
-import {
-    isStringDateTime,
-    setUTCDateTime,
-    isStringDate,
-    setUTCDate,
-    showError
-} from 'helpers/utils/utils';
+import { showError } from 'helpers/utils/utils';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 /**
@@ -50,7 +43,6 @@ const useList = (
     itemsPerPage: number,
     sort: any,
     language?: string,
-    defaultModelSort?: any,
     advancedFilters?: any,
     functions?: any
 ) => {
@@ -105,20 +97,6 @@ const useList = (
         graphqlRequestClient
             .request(query, variables)
             .then((result: any) => {
-                // Object.keys(result).forEach((element) => {
-                //     Object.keys(result[element]).forEach((key) => {
-                //         if (
-                //             isString(result[element][key]) &&
-                //             isStringDateTime(result[element][key])
-                //         ) {
-                //             result[element][key] = setUTCDateTime(result[element][key]);
-                //         }
-                //         if (isString(result[element][key]) && isStringDate(result[element][key])) {
-                //             result[element][key] = setUTCDate(result[element][key]);
-                //         }
-                //     });
-                // });
-
                 setData(result);
                 setIsLoading(false);
             })
