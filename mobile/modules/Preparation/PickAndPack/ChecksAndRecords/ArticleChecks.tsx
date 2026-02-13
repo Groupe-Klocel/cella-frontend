@@ -25,9 +25,10 @@ import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IArticleChecksProps {
     dataToCheck: any;
+    setTmpForceLocationScan?: any;
 }
 
-export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
+export const ArticleChecks = ({ dataToCheck, setTmpForceLocationScan }: IArticleChecksProps) => {
     const { t } = useTranslation();
 
     const {
@@ -207,6 +208,7 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                 stepToReturn: `step20`
             });
             triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
+            setTmpForceLocationScan(true);
         }
     }, [triggerAlternativeSubmit1, alternativeSubmitInput]);
 

@@ -111,7 +111,6 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                     }
                 }
                 showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
-                setTmpforceLocation(true);
                 dispatch({
                     type: 'UPDATE_BY_STEP',
                     processName,

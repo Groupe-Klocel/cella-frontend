@@ -56,8 +56,6 @@ const PickAndPack: PageComponent = () => {
     const { parameters } = useAppState();
     const [headerContent, setHeaderContent] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
-    const [locationToPropose, setLocationToPropose] = useState<string>();
-    const [articleToPropose, setArticleToPropose] = useState<string>();
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
     const [triggerHuClose, setTriggerHuClose] = useState<boolean>(false);
     const [triggerNextRaa, setTriggerNextRaa] = useState<boolean>(false);
@@ -516,23 +514,21 @@ const PickAndPack: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {locationToPropose !== 'noValue' &&
-                    storedObject[
+                    {storedObject[
                         !manuallyGenerateParent ||
                         storedObject['step10']?.data?.round?.handlingUnitOutbounds?.filter(
                             (huo: any) => huo.status === 500
                         ).length !== 0
                             ? 'step10'
                             : 'step15'
-                    ]?.data &&
-                    !storedObject['step20']?.data ? (
+                    ]?.data && !storedObject['step20']?.data ? (
                         <ScanLocation
                             processName={processName}
                             stepNumber={20}
                             label={
                                 isLocationDefined
                                     ? t('common:location-var', {
-                                          name: `${locationToPropose}`
+                                          name: `${proposedRoundAdvisedAddress.location?.name || t('d:no-location-defined')}`
                                       })
                                     : t('common:location')
                             }
@@ -551,7 +547,12 @@ const PickAndPack: PageComponent = () => {
                                 locationButton: true,
                                 action1Button: hasMultipleLocationIds
                             }}
-                            enforcedValue={!tmpForceLocation ? locationToPropose : undefined}
+                            enforcedValue={
+                                !tmpForceLocation
+                                    ? proposedRoundAdvisedAddress.location?.name ||
+                                      t('d:no-location-defined')
+                                    : undefined
+                            }
                             checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
                             showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                             showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
@@ -595,7 +596,7 @@ const PickAndPack: PageComponent = () => {
                             processName={processName}
                             stepNumber={50}
                             label={t('common:article-var', {
-                                name: `${articleToPropose}`
+                                name: `${proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name}`
                             })}
                             triggerAlternativeSubmit1={{
                                 triggerAlternativeSubmit1: triggerChangeLocationFromArticle,
@@ -615,7 +616,12 @@ const PickAndPack: PageComponent = () => {
                             contents={
                                 storedObject['step40']?.data?.handlingUnit?.handlingUnitContents
                             }
-                            checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
+                            checkComponent={(data: any) => (
+                                <ArticleChecks
+                                    dataToCheck={data}
+                                    setTmpForceLocationScan={setTmpforceLocation}
+                                />
+                            )}
                         ></ScanArticleEAN>
                     ) : (
                         <></>
