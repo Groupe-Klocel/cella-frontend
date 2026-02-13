@@ -330,6 +330,7 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                         }}
                         dataModel={HandlingUnitOutboundModelV2}
                         headerData={boxHeaderData}
+                        sortDefault={[{ field: 'roundPosition', ascending: true }]}
                         triggerDelete={{ idToDelete, setIdToDelete }}
                         triggerSoftDelete={{ idToDisable, setIdToDisable }}
                         actionColumns={[
