@@ -116,7 +116,11 @@ export function findSupplierArticleCode(processName: string, storedObject: any) 
                     supplierArticleCode: article?.genericArticleComment,
                     articleName: article?.name
                 };
-            } else if (storedObject?.step20?.data?.inProgressHuo && storedObject?.step40?.data) {
+            } else if (
+                storedObject?.step20?.data?.inProgressHuo &&
+                storedObject?.step40?.data &&
+                !storedObject?.step20?.data?.round?.equipment?.checkPosition
+            ) {
                 const inProgressHuo = storedObject?.step20?.data?.inProgressHuo;
                 const article = inProgressHuo.handlingUnitContentOutbounds[0].article;
                 return {
