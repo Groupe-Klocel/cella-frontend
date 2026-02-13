@@ -1407,6 +1407,7 @@ const ListComponent = (props: IListProps) => {
         pagination.itemsPerPage,
         sort,
         router.locale,
+        defaultModelSort,
         advancedFilters,
         functions
     );
