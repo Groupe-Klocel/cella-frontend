@@ -32,7 +32,8 @@ import {
     HeaderContent,
     DrawerItems,
     PageTableContentWrapper,
-    WrapperStickyActions
+    WrapperStickyActions,
+    StyledTooltip
 } from '@components';
 import { Space, Form, Button, Empty, Alert, Badge, Tag, Spin, Table, Typography } from 'antd';
 import { isNumeric, useTranslationWithFallback as useTranslation } from '@helpers';
@@ -61,14 +62,13 @@ import {
 } from '@helpers';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
-import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
-import { ExportFormat, ModeEnum } from 'generated/graphql';
+import { FormDataType, ModelType } from 'models/ModelsV2';
+import { ExportFormat, ModeEnum, Table as tableList } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, filter, isString, set } from 'lodash';
+import _, { debounce, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { log } from 'console';
 
 export type HeaderData = {
     title: string;
@@ -164,6 +164,25 @@ const ListComponent = (props: IListProps) => {
     let initialState = userSettings?.valueJson?.allColumnsInfos;
     const [allColumns, setAllColumns] = useState<any[]>(initialState);
     const [initialAllColumns, setInitialAllColumns] = useState<any[]>(initialState);
+
+    // Function to convert plural words to singular based on Table enum keys
+    const convertTableNamePluralToSingular = (text: string): string => {
+        // Get table enum keys
+        const tableEnumKeys = new Set(
+            Object.keys(tableList).map((key) => {
+                // Convert PascalCase to camelCase
+                return key.charAt(0).toLowerCase() + key.slice(1);
+            })
+        );
+
+        return text.replace(/\b(\w+)s\b/g, (match, word) => {
+            // Check if the word without 's' exists in our table enum keys
+            if (tableEnumKeys.has(word)) {
+                return word;
+            }
+            return match;
+        });
+    };
 
     // Define pageName to retrieve screen permissions
     const pageName = router.pathname.split('/').filter(Boolean)[0];
@@ -587,7 +606,9 @@ const ListComponent = (props: IListProps) => {
                 displayName: t(
                     `d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`
                 ),
-                name: key.replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`).replace(/}/g, ''),
+                name: convertTableNamePluralToSingular(key)
+                    .replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`)
+                    .replace(/}/g, ''),
                 type: FormDataType[value.searchingFormat as keyof typeof FormDataType],
                 maxLength: value.maxLength ?? undefined,
                 config: value.config ?? undefined,
@@ -599,6 +620,7 @@ const ListComponent = (props: IListProps) => {
                 initialValue: undefined
             }))
     );
+
     // Update filterFields if props.filterFields changes
     useEffect(() => {
         let updatedFilterFields = Object.entries(props.dataModel.fieldsInfo)
@@ -607,21 +629,25 @@ const ListComponent = (props: IListProps) => {
                     value.searchingFormat !== null ||
                     Object.keys(props.searchCriteria).includes(key)
             )
-            .map(([key, value]) => ({
-                displayName: t(
-                    `d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`
-                ),
-                name: key.replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`).replace(/}/g, ''),
-                type: FormDataType[value.searchingFormat as keyof typeof FormDataType],
-                maxLength: value.maxLength ?? undefined,
-                config: value.config ?? undefined,
-                configList: configs.filter((config: any) => config.scope === value.config),
-                param: value.param ?? undefined,
-                paramList: parameters.filter((param: any) => param.scope === value.param),
-                optionTable: value.optionTable ? JSON.parse(value.optionTable) : undefined,
-                isMultipleSearch: value.isMultipleSearch ?? undefined,
-                initialValue: undefined
-            }));
+            .map(([key, value]) => {
+                return {
+                    displayName: t(
+                        `d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`
+                    ),
+                    name: convertTableNamePluralToSingular(key)
+                        .replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`)
+                        .replace(/}/g, ''),
+                    type: FormDataType[value.searchingFormat as keyof typeof FormDataType],
+                    maxLength: value.maxLength ?? undefined,
+                    config: value.config ?? undefined,
+                    configList: configs.filter((config: any) => config.scope === value.config),
+                    param: value.param ?? undefined,
+                    paramList: parameters.filter((param: any) => param.scope === value.param),
+                    optionTable: value.optionTable ? JSON.parse(value.optionTable) : undefined,
+                    isMultipleSearch: value.isMultipleSearch ?? undefined,
+                    initialValue: undefined
+                };
+            });
         if (props.cumulSearchInfos) {
             updatedFilterFields.push(props.cumulSearchInfos.filters);
         }
@@ -672,21 +698,89 @@ const ListComponent = (props: IListProps) => {
         }));
     //#endregion
 
+    const fieldsToHighlight = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].highlight !== undefined)
+        .map((key) => ({
+            highlightCondition: props.dataModel.fieldsInfo[key].highlight,
+            name: key.replace(/{/g, '_').replace(/}/g, '')
+        }));
+
     // #region links generation
     const renderLink = (text: string, record: any, dataIndex: string) => {
-        // retrieve the column data index
-        const linkObject = linkFields.find((item: any) => item.name === dataIndex);
-        if (!linkObject?.link) return text;
-        const suffix = linkObject.link.substring(linkObject.link.lastIndexOf('/') + 1);
-        //handle case where the suffix is at the end of a chain of characters
-        const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
-        const link = `${linkObject.link.replace(`/${suffix}`, '')}/${record[recordKey!]}`;
-        const completeLink = `${process.env.NEXT_PUBLIC_WMS_URL}/${
-            router.locale !== 'en-US' ? router.locale + '/' : ''
-        }${link}`;
-        if (linkObject) {
-            return <Link href={completeLink}>{text}</Link>;
+        let shouldHighlight = false;
+        let tooltipText = t('messages:field-requires-attention');
+
+        // Check if field should be highlighted
+        if (fieldsToHighlight.map((field) => field.name).includes(dataIndex)) {
+            const highlightField = fieldsToHighlight.find(
+                (field) => field.name === dataIndex
+            )?.highlightCondition;
+            if (highlightField) {
+                const grossRecord = data?.[props.dataModel.endpoints.list].results.find(
+                    (item: any) => {
+                        return item.id === record.id;
+                    }
+                );
+
+                // Check if grossRecord exists before executing the condition
+                if (grossRecord) {
+                    try {
+                        // Expect object format with condition and optional tooltip
+                        const condition = highlightField.condition;
+                        if (highlightField.tooltip) {
+                            tooltipText = t(`messages:${highlightField.tooltip}`);
+                        }
+
+                        // Use Function constructor to create a function from the string condition
+                        const conditionFunction = new Function(
+                            'grossRecord',
+                            `return ${condition};`
+                        );
+                        // Execute the function with the current record
+                        shouldHighlight = conditionFunction(grossRecord);
+                    } catch (error) {
+                        console.error('Error evaluating highlight condition:', error);
+                    }
+                }
+            }
         }
+
+        // retrieve the column data index for link
+        const linkObject = linkFields.find((item: any) => item.name === dataIndex);
+
+        if (linkObject?.link) {
+            const suffix = linkObject.link.substring(linkObject.link.lastIndexOf('/') + 1);
+            //handle case where the suffix is at the end of a chain of characters
+            const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
+            const link = `${linkObject.link.replace(`/${suffix}`, '')}/${record[recordKey!]}`;
+            const completeLink = `${process.env.NEXT_PUBLIC_WMS_URL}/${
+                router.locale !== 'en-US' ? router.locale + '/' : ''
+            }${link}`;
+
+            // Return link with or without highlight tag
+            if (shouldHighlight) {
+                return (
+                    <Link href={completeLink}>
+                        <StyledTooltip title={tooltipText}>
+                            <Tag color="red">{text}</Tag>
+                        </StyledTooltip>
+                    </Link>
+                );
+            } else {
+                return <Link href={completeLink}>{text}</Link>;
+            }
+        }
+
+        // No link but should highlight
+        if (shouldHighlight) {
+            return (
+                <StyledTooltip title={tooltipText}>
+                    <Tag color="red">{text}</Tag>
+                </StyledTooltip>
+            );
+        }
+
+        // Default return
         return text;
     };
 
@@ -1479,7 +1573,9 @@ const ListComponent = (props: IListProps) => {
     useEffect(() => {
         if (data) {
             // if data is refreshed
-            let listData: any = data?.[props.dataModel.endpoints.list];
+            let listData: any = data[props.dataModel.endpoints.list]
+                ? JSON.parse(JSON.stringify(data[props.dataModel.endpoints.list]))
+                : undefined;
             if (props.isDragAndDroppable && listData && listData['results'].length === 0) {
                 if (listData.count === 0) {
                     listData = {
@@ -1921,7 +2017,9 @@ const ListComponent = (props: IListProps) => {
                                 key: column_name,
                                 showSorterTooltip: false,
                                 hidden: isHidden,
-                                fixed: false
+                                fixed: false,
+                                highlightCondition:
+                                    props.dataModel.fieldsInfo[column_name]?.highlight ?? undefined
                             };
 
                             // if column is in sortable list add sorter property
