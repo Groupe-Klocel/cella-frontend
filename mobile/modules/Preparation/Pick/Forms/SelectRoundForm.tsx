@@ -175,7 +175,11 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                     ]
                 }
             ],
-            orderBy: null,
+            orderBy: [
+                { field: 'assignedUser', ascending: true },
+                { field: 'priority', ascending: false },
+                { field: 'expectedDeliveryDate', ascending: false }
+            ],
             page: 1,
             itemsPerPage: 100
         };
@@ -261,6 +265,10 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                         statusText
                         roundId
                         handlingUnitModelId
+                        handlingUnit {
+                            id
+                            type
+                        }
                     }
                     roundAdvisedAddresses(
                         orderBy: [{ fieldName: "roundOrderId", ascending: true }]
@@ -289,6 +297,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                                 stockOwner {
                                     name
                                 }
+                                genericArticleComment
                                 description
                                 baseUnitWeight
                                 featureType
@@ -351,6 +360,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                                     id
                                     name
                                     description
+                                    genericArticleComment
                                 }
                                 status
                                 statusText
@@ -415,7 +425,6 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
         }
 
         data['round'] = selectedRound.round;
-        data['roundNumber'] = rounds.length;
 
         const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses?.filter(
             (raa: any) => raa.quantity != 0
@@ -476,7 +485,10 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                         processName,
                         stepName: `step${stepNumber}`,
                         object: { ...storedObject[`step${stepNumber}`], data },
-                        customFields: [{ key: 'currentStep', value: stepNumber }]
+                        customFields: [
+                            { key: 'currentStep', value: stepNumber },
+                            { key: 'roundNumber', value: rounds.length }
+                        ]
                     });
                 }
             } catch (error) {
@@ -489,7 +501,10 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                 processName,
                 stepName: `step${stepNumber}`,
                 object: { ...storedObject[`step${stepNumber}`], data },
-                customFields: [{ key: 'currentStep', value: stepNumber }]
+                customFields: [
+                    { key: 'currentStep', value: stepNumber },
+                    { key: 'roundNumber', value: rounds.length }
+                ]
             });
         }
     };

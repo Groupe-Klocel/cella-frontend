@@ -28,7 +28,7 @@ export interface IArticleChecksProps {
     setTmpforceLocation?: any;
 }
 
-export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
+export const ArticleChecks = ({ dataToCheck, setTmpforceLocation }: IArticleChecksProps) => {
     const { t } = useTranslation();
 
     const {
@@ -178,7 +178,7 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                     ...storedObject[`step30`],
                     data: {
                         ...storedObject[`step30`]?.data,
-                        chosenLocation: raaToUse?.location,
+                        chosenLocation: { ...raaToUse?.location, id: raaToUse?.locationId },
                         handlingUnit: handlingUnitFromRaa
                     }
                 }
@@ -206,6 +206,7 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
                 stepToReturn: `step20`
             });
             triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
+            setTmpforceLocation(true);
         }
     }, [triggerAlternativeSubmit1, alternativeSubmitInput]);
 

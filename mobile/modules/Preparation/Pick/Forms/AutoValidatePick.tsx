@@ -74,6 +74,7 @@ export const AutoValidatePickForm = ({
     const features = step60?.data?.processedFeatures;
     const huc = step60?.data.content;
     const movingQuantity = step70?.data?.movingQuantity;
+    const roundNumber = storedObject.roundNumber || 1;
 
     const movementInput = {
         originalLocationIdStr: pickedLocation.id,
@@ -186,14 +187,14 @@ export const AutoValidatePickForm = ({
                     console.log(validateFullBoxResult.executeFunction.output.output, 'output');
 
                     const storedObject: any = {};
-                    const { updatedRound, isPickValidated } =
+                    const { updatedRound, isPickValidated, equipmentHu } =
                         validateFullBoxResult.executeFunction.output.output;
                     if (isPickValidated) {
-                        if (step5.data && step10.data.roundNumber !== 1) {
+                        if (step5.data && roundNumber !== 1) {
                             storedObject['currentStep'] = 10;
                             storedObject[`step5`] = { previousStep: 0, data: step5.data };
                             storedObject[`step10`] = { previousStep: 5 };
-                        } else if (step5.data && step10.data.roundNumber === 1) {
+                        } else if (step5.data && roundNumber === 1) {
                             storedObject['currentStep'] = 5;
                             storedObject[`step5`] = { previousStep: 0 };
                         } else {
@@ -234,7 +235,6 @@ export const AutoValidatePickForm = ({
                             pickAndPackType: string;
                             round: any;
                             currentShippingPalletId: any;
-                            roundNumber?: number;
                         }
 
                         const data: DataType = {
@@ -247,11 +247,8 @@ export const AutoValidatePickForm = ({
                             round: updatedRound,
                             currentShippingPalletId: updatedRound.extraText1
                         };
-                        if (step10.roundNumber) {
-                            data['roundNumber'] = step10.roundNumber;
-                        }
                         const dataStep15 = {
-                            handlingUnit: hu,
+                            handlingUnit: equipmentHu,
                             handlingUnitType: huType,
                             isHUToCreate: false
                         };
@@ -262,6 +259,7 @@ export const AutoValidatePickForm = ({
                         storedObject[`step10`] = { previousStep: step5 ? 5 : 0, data };
                         storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
                         storedObject.ignoreHUContentIds = ignoreHUContentIds;
+                        storedObject.roundNumber = roundNumber;
                         storedObject.currentStep = 20;
                         dispatch({
                             type: 'UPDATE_BY_PROCESS',
