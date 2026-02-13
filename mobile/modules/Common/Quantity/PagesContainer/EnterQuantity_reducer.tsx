@@ -62,6 +62,22 @@ export const EnterQuantity_reducer = ({
         return initialValueType == 1 ? 1 : initialValueType == 2 ? availableQuantity : undefined;
     })();
 
+    let hasOtherIncompleteHucos = false;
+    if (processName === 'pack') {
+        // Check if there are other incomplete HUCOs in currentHuo (excluding currentHuco)
+        const currentHuo = storedObject?.step40?.data?.currentHuo;
+        const currentHuco = storedObject?.step40?.data?.currentHuco;
+
+        const otherIncompleteHucos =
+            currentHuo?.handlingUnitContentOutbounds?.filter(
+                (huco: any) =>
+                    huco.id !== currentHuco?.id &&
+                    huco.missingQuantity + huco.pickedQuantity < huco.quantityToBePicked
+            ) || [];
+
+        hasOtherIncompleteHucos = otherIncompleteHucos.length > 0;
+    }
+
     //Pre-requisite: initialize current step
     useEffect(() => {
         let objectUpdate: any = {
@@ -89,12 +105,6 @@ export const EnterQuantity_reducer = ({
                 const receivedQuantity = line.receivedQuantity || 0;
                 const quantity = line.quantity || 0;
                 const quantityNeeded = quantity - receivedQuantity;
-                console.log(
-                    receivedQuantity,
-                    quantity,
-                    quantityNeeded,
-                    'Quantities: received, expected, needed'
-                );
 
                 if (quantityNeeded > 0) {
                     if (movingQuantity >= quantityNeeded) {
@@ -148,10 +158,14 @@ export const EnterQuantity_reducer = ({
                         ?.receivedQuantity
             );
         } else if (autoValidate1Quantity && tmpInitialValue === 1) {
-            objectUpdate.object = {
-                ...storedObject[`step${stepNumber}`],
-                data: { movingQuantity: 1 }
-            };
+            if (!hasOtherIncompleteHucos) {
+                objectUpdate.object = {
+                    ...storedObject[`step${stepNumber}`],
+                    data: { movingQuantity: 1 }
+                };
+            } else {
+                setEnteredInfo(1);
+            }
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             objectUpdate.object = { previousStep: storedObject.currentStep };
@@ -164,7 +178,9 @@ export const EnterQuantity_reducer = ({
     const dataToCheck = {
         processName,
         stepNumber,
-        enteredInfo: { enteredInfo, setEnteredInfo }
+        enteredInfo: { enteredInfo, setEnteredInfo },
+        availableQuantity,
+        hasOtherIncompleteHucos
     };
 
     let rules: Array<any> = [{ required: true, message: t('messages:error-message-empty-input') }];

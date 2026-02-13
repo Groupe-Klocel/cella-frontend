@@ -70,7 +70,7 @@ const RoundPages: PageComponent = () => {
                     item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
             )?.code;
         };
-         const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+        const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
             return items.find(
                 (item: any) =>
                     item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
@@ -89,12 +89,20 @@ const RoundPages: PageComponent = () => {
             'Outbound'
         );
         const inPreparationStatusCode = findCodeByScope(configs, 'round_status', 'In preparation');
+        const toBePackedStatusCode = findCodeByScope(configs, 'round_status', 'To be packed');
+        const packingInProgressStatusCode = findCodeByScope(
+            configs,
+            'round_status',
+            'Packing in progress'
+        );
 
         return {
             estimatedStatusCode,
             startedStatusCode,
             pasDeStockDisponibleStatusCode,
             inPreparationStatusCode,
+            toBePackedStatusCode,
+            packingInProgressStatusCode,
             roundCategoryOutboundCode
         };
     }, [configs, parameters]);
@@ -369,7 +377,16 @@ const RoundPages: PageComponent = () => {
                 const inPreparationStatusCode = parseInt(
                     configsParamsCodes.inPreparationStatusCode
                 );
-                return status == startedStatusCode || status == inPreparationStatusCode;
+                const toBePackedStatusCode = parseInt(configsParamsCodes.toBePackedStatusCode);
+                const packingInProgressStatusCode = parseInt(
+                    configsParamsCodes.packingInProgressStatusCode
+                );
+                return (
+                    status == startedStatusCode ||
+                    status == inPreparationStatusCode ||
+                    status == toBePackedStatusCode ||
+                    status == packingInProgressStatusCode
+                );
             });
 
             // Check selected movements have assigned user or not
