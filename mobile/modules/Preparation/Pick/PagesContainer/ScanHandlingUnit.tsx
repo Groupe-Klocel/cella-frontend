@@ -162,6 +162,7 @@ export const ScanHandlingUnit = ({
                                     description
                                     baseUnitWeight
                                     featureType
+                                    genericArticleComment
                                 }
                                 articleLuBarcode {
                                     id
@@ -171,6 +172,7 @@ export const ScanHandlingUnit = ({
                                         description
                                         baseUnitWeight
                                         featureType
+                                        genericArticleComment
                                     }
                                     barcodeId
                                     barcode {
