@@ -95,6 +95,7 @@ export const ScanArticleEAN = ({
                                 }
                                 newProduct
                                 featureType
+                                genericArticleComment
                             }
                             barcodeId
                             barcode {
