@@ -43,6 +43,7 @@ const useList = (
     itemsPerPage: number,
     sort: any,
     language?: string,
+    defaultModelSort?: any,
     advancedFilters?: any,
     functions?: any
 ) => {
