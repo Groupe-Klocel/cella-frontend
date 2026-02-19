@@ -17,66 +17,109 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+
+import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { EnterNumberForm } from 'modules/Common/EnterNumberForm_reducer';
+import { showError } from '@helpers';
+import { Form, Select } from 'antd';
+import { useAuth } from 'context/AuthContext';
+import { useListParametersForAScopeQuery } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { useEffect, useMemo, useState } from 'react';
+import CameraScanner from 'modules/Common/CameraScanner';
+import TextArea from 'antd/es/input/TextArea';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
-export interface IEnterQuantityReducerProps {
+export interface ISelectStockStatusAndQuantityFormReducerProps {
     processName: string;
     stepNumber: number;
-    label?: string;
-    defaultValue?: number;
     buttons: { [label: string]: any };
+    defaultValue?: any;
+    StockStatusInitialValue?: any;
+    QuantityDefaultValue?: number;
     availableQuantity?: number;
-    checkComponent: any;
     isCommentDisplayed?: boolean;
-    initialValueType?: number;
-    autoValidate1Quantity?: boolean;
+    checkComponent: any;
+    QuantityInitialValueType?: number;
 }
 
-export const EnterQuantity_reducer = ({
+export const SelectStockStatusAndQuantityForm_reducer = ({
     processName,
     stepNumber,
-    label,
     defaultValue,
-    buttons,
+    StockStatusInitialValue,
+    QuantityDefaultValue,
     availableQuantity,
-    checkComponent,
+    buttons,
     isCommentDisplayed,
-    initialValueType,
-    autoValidate1Quantity
-}: IEnterQuantityReducerProps) => {
-    const { t } = useTranslation('common');
+    checkComponent,
+    QuantityInitialValueType
+}: ISelectStockStatusAndQuantityFormReducerProps) => {
+    const { graphqlRequestClient } = useAuth();
+    const { t } = useTranslation();
     const state = useAppState();
+    const { configs, parameters } = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
-    const [enteredInfo, setEnteredInfo] = useState<number>();
+    const router = useRouter();
+    const { locale } = router;
+    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
 
-    // TYPED SAFE ALL
+    const [enteredQuantityInfo, setEnteredQuantityInfo] = useState<number>();
+
     // Define initial value according to prioritized parameters sent
     const tmpInitialValue = (() => {
-        if (autoValidate1Quantity && availableQuantity !== 1) {
-            return initialValueType === 2 ? availableQuantity : undefined;
-        }
-        return initialValueType == 1 ? 1 : initialValueType == 2 ? availableQuantity : undefined;
+        return QuantityInitialValueType == 1
+            ? 1
+            : QuantityInitialValueType == 2
+              ? availableQuantity
+              : undefined;
     })();
 
-    let hasOtherIncompleteHucos = false;
-    if (processName === 'pack') {
-        // Check if there are other incomplete HUCOs in currentHuo (excluding currentHuco)
-        const currentHuo = storedObject?.step40?.data?.currentHuo;
-        const currentHuco = storedObject?.step40?.data?.currentHuco;
+    const configsParamsCodes = useMemo(() => {
+        const findAllByScope = (items: any[], scope: string) => {
+            return items
+                .filter((item: any) => item.scope === scope)
+                .sort((a, b) => a.code - b.code)
+                .map((item: any) => {
+                    return {
+                        ...item,
+                        code: parseInt(item.code),
+                        value: item.translation?.[language] || item.value
+                    };
+                });
+        };
+        const stockStatuses = findAllByScope(parameters, 'stock_statuses');
+        const salesStatus = stockStatuses.find((status: any) => status.value === 'Sale');
+        return {
+            stockStatuses,
+            salesStatus
+        };
+    }, [configs, parameters]);
 
-        const otherIncompleteHucos =
-            currentHuo?.handlingUnitContentOutbounds?.filter(
-                (huco: any) =>
-                    huco.id !== currentHuco?.id &&
-                    huco.missingQuantity + huco.pickedQuantity < huco.quantityToBePicked
-            ) || [];
+    // #region camera scanner
+    const [form] = Form.useForm();
+    const [camData, setCamData] = useState();
 
-        hasOtherIncompleteHucos = otherIncompleteHucos.length > 0;
-    }
+    useEffect(() => {
+        if (camData) {
+            if (configsParamsCodes.stockStatuses?.some((option) => option.value === camData)) {
+                const stockStatusToFind = configsParamsCodes.stockStatuses?.find(
+                    (option) => option.value === camData
+                );
+                form.setFieldsValue({ stockStatus: stockStatusToFind.code });
+            } else {
+                showError(t('messages:unexpected-scanned-item'));
+            }
+        }
+    }, [camData]);
+
+    const handleCleanData = () => {
+        form.resetFields();
+        setCamData(undefined);
+    };
+    // #endregion camera scanner section
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -85,7 +128,7 @@ export const EnterQuantity_reducer = ({
             processName,
             stepName: `step${stepNumber}`,
             object: undefined,
-            customFields: undefined
+            currentStep: undefined
         };
         //automatically set movingQuantity when defaultValue is provided
         if (defaultValue) {
@@ -105,6 +148,12 @@ export const EnterQuantity_reducer = ({
                 const receivedQuantity = line.receivedQuantity || 0;
                 const quantity = line.quantity || 0;
                 const quantityNeeded = quantity - receivedQuantity;
+                console.log(
+                    receivedQuantity,
+                    quantity,
+                    quantityNeeded,
+                    'Quantities: received, expected, needed'
+                );
 
                 if (quantityNeeded > 0) {
                     if (movingQuantity >= quantityNeeded) {
@@ -157,30 +206,21 @@ export const EnterQuantity_reducer = ({
                     originalPoLines.find((oldPoline: any) => oldPoline.id === newPoline.id)
                         ?.receivedQuantity
             );
-        } else if (autoValidate1Quantity && tmpInitialValue === 1) {
-            if (!hasOtherIncompleteHucos) {
-                objectUpdate.object = {
-                    ...storedObject[`step${stepNumber}`],
-                    data: { movingQuantity: 1 }
-                };
-            } else {
-                setEnteredInfo(1);
-            }
         } else if (storedObject.currentStep < stepNumber) {
             //check workflow direction and assign current step accordingly
             objectUpdate.object = { previousStep: storedObject.currentStep };
-            objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
+            objectUpdate.currentStep = stepNumber;
         }
-
         dispatch(objectUpdate);
     }, []);
 
     const dataToCheck = {
         processName,
         stepNumber,
-        enteredInfo: { enteredInfo, setEnteredInfo },
-        availableQuantity,
-        hasOtherIncompleteHucos
+        stockStatuses: configsParamsCodes.stockStatuses?.find((e: any) => {
+            return e.code == form.getFieldValue('stockStatus');
+        }),
+        enteredInfo: { enteredQuantityInfo, setEnteredQuantityInfo }
     };
 
     let rules: Array<any> = [{ required: true, message: t('messages:error-message-empty-input') }];
@@ -194,12 +234,50 @@ export const EnterQuantity_reducer = ({
 
     return (
         <>
+            <WrapperForm>
+                <StyledForm
+                    name="basic"
+                    layout="vertical"
+                    autoComplete="off"
+                    scrollToFirstError
+                    size="small"
+                    form={form}
+                >
+                    <StyledFormItem
+                        label={t('common:stock-status')}
+                        name="stockStatus"
+                        rules={[
+                            { required: true, message: t('messages:error-message-empty-input') }
+                        ]}
+                        initialValue={
+                            StockStatusInitialValue ?? configsParamsCodes.salesStatus?.code
+                        }
+                    >
+                        <Select
+                            style={{ height: '20px', marginBottom: '5px' }}
+                            showSearch
+                            filterOption={(inputValue, option) =>
+                                option!.props.children
+                                    .toUpperCase()
+                                    .indexOf(inputValue.toUpperCase()) !== -1
+                            }
+                            allowClear
+                        >
+                            {configsParamsCodes.stockStatuses?.map((option: any) => (
+                                <Select.Option key={option.code} value={option.code}>
+                                    {option.value}
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </StyledFormItem>
+                    <CameraScanner camData={{ setCamData }} handleCleanData={handleCleanData} />
+                </StyledForm>
+            </WrapperForm>
             <EnterNumberForm
                 processName={processName}
                 stepNumber={stepNumber}
-                label={label}
                 buttons={{ ...buttons }}
-                setEnteredInfo={setEnteredInfo}
+                setEnteredInfo={setEnteredQuantityInfo}
                 rules={rules}
                 min={1}
                 initialValue={tmpInitialValue}

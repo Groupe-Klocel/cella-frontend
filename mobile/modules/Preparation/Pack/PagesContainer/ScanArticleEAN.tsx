@@ -31,9 +31,8 @@ export interface IScanArticleEANProps {
     buttons: { [label: string]: any };
     forceArticleScan?: boolean;
     checkComponent: any;
-    contents?: any;
+    proposedHuos?: any;
     triggerAlternativeSubmit1?: any;
-    action1Trigger?: any;
 }
 
 export const ScanArticleEAN = ({
@@ -43,9 +42,8 @@ export const ScanArticleEAN = ({
     buttons,
     forceArticleScan,
     checkComponent,
-    contents,
-    triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-    action1Trigger: { action1Trigger, setAction1Trigger }
+    proposedHuos,
+    triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 }
 }: IScanArticleEANProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -53,71 +51,13 @@ export const ScanArticleEAN = ({
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [articleLuBarcodesInfos, setArticleLuBarcodesInfos] = useState<any>();
-    const [featureTypeDetailsInfos, setFeatureTypeDetailsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
 
-    const getFeatureTypeDetails = async (
-        featureType: any
-    ): Promise<{ [key: string]: any } | undefined> => {
-        if (featureType) {
-            const query = gql`
-                query featureTypeDetails($filters: FeatureTypeDetailSearchFilters) {
-                    featureTypeDetails(filters: $filters) {
-                        results {
-                            id
-                            atPreparation
-                            featureType
-                            featureCodeId
-                            featureCode {
-                                id
-                                name
-                                unique
-                                dateType
-                            }
-                        }
-                    }
-                }
-            `;
-            const variables = {
-                filters: { featureType: featureType }
-            };
-            const featureTypeDetails = await graphqlRequestClient
-                .request(query, variables)
-                .then((data: any) => data.featureTypeDetails.results);
-            return featureTypeDetails;
-        }
-    };
-
-    //N.B.: Version1 autorecovers information from previous step as there is only one HUC and no article scan check.
     //Pre-requisite: initialize current step
     useEffect(() => {
         const fetchData = async () => {
-            if (contents.length === 1 && !forceArticleScan) {
-                // N.B.: in this case previous step is kept at its previous value
-                let data: { [label: string]: any } = {};
-                data['article'] = contents[0].article;
-                data['contents'] = contents;
-                const featureTypeDetails: any = await getFeatureTypeDetails(
-                    contents[0].article.featureType
-                );
-                // add feature type details to results
-                if (featureTypeDetails?.filter((item: any) => item.atPreparation).length > 0) {
-                    data['article']['featureType'] = featureTypeDetails?.filter(
-                        (item: any) => item.atPreparation
-                    );
-                } else {
-                    data['article']['featureType'] = [];
-                }
-                dispatch({
-                    type: 'UPDATE_BY_STEP',
-                    processName,
-                    stepName: `step${stepNumber}`,
-                    object: { data }
-                });
-            }
-            // check workflow direction and assign current step accordingly
-            else if (storedObject.currentStep < stepNumber) {
+            if (storedObject.currentStep < stepNumber) {
                 dispatch({
                     type: 'UPDATE_BY_STEP',
                     processName: processName,
@@ -148,7 +88,6 @@ export const ScanArticleEAN = ({
                                 id
                                 name
                                 description
-                                genericArticleComment
                                 baseUnitWeight
                                 stockOwnerId
                                 stockOwner {
@@ -156,6 +95,7 @@ export const ScanArticleEAN = ({
                                 }
                                 newProduct
                                 featureType
+                                genericArticleComment
                             }
                             barcodeId
                             barcode {
@@ -182,16 +122,8 @@ export const ScanArticleEAN = ({
     useEffect(() => {
         async function fetchData() {
             let result = await getArticleLuBarcodes(scannedInfo);
-            const featureTypeDetails: any = await getFeatureTypeDetails(
-                result?.articleLuBarcodes?.results[0]?.article?.featureType
-            );
-            // add feature type details to resutls
-            result = { ...result, featureTypeDetails };
+            // add feature type details to results
             if (result) setArticleLuBarcodesInfos(result);
-            if (featureTypeDetails?.filter((item: any) => item.atPreparation).length > 0)
-                setFeatureTypeDetailsInfos(
-                    featureTypeDetails.filter((item: any) => item.atPreparation)
-                );
         }
         fetchData();
     }, [scannedInfo]);
@@ -200,13 +132,11 @@ export const ScanArticleEAN = ({
         processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        contents,
+        proposedHuos,
         articleLuBarcodesInfos,
-        featureTypeDetailsInfos,
         setResetForm,
         triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-        action1Trigger: { action1Trigger, setAction1Trigger },
-        alternativeSubmitInput: storedObject?.step10?.data?.round.extraText1 ?? undefined
+        alternativeSubmitInput: storedObject?.step20?.data?.inProgressHuo ?? undefined
     };
 
     return (
@@ -222,9 +152,7 @@ export const ScanArticleEAN = ({
                     triggerAlternativeSubmit1,
                     setTriggerAlternativeSubmit1
                 }}
-                action1Trigger={{ action1Trigger, setAction1Trigger }}
-                action1Label={t('actions:next')}
-                alternativeSubmitLabel1={t('common:change-location')}
+                alternativeSubmitLabel1={t('common:close-box')}
             ></ScanForm_reducer>
             {checkComponent(dataToCheck)}
         </>

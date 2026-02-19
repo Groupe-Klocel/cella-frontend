@@ -83,7 +83,6 @@ export const ScanLocation = ({
                 previousStep: getLastStepWithPreviousStep(storedObject)
             };
             objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
-            setTmpforceLocation(true);
         }
         dispatch(objectUpdate);
     }, []);
@@ -152,6 +151,7 @@ export const ScanLocation = ({
                                     name
                                     baseUnitWeight
                                     featureType
+                                    genericArticleComment
                                 }
                                 handlingUnitContentFeatures {
                                     id

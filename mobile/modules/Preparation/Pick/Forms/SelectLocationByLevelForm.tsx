@@ -211,6 +211,7 @@ export const SelectLocationByLevelForm = ({
                                     baseUnitWeight
                                     featureType
                                     description
+                                    genericArticleComment
                                 }
                                 stockOwnerId
                                 stockOwner {
@@ -259,6 +260,12 @@ export const SelectLocationByLevelForm = ({
                                 roundLine {
                                     lineNumber
                                     articleId
+                                    article {
+                                        id
+                                        name
+                                        description
+                                        genericArticleComment
+                                    }
                                     status
                                     statusText
                                 }

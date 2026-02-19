@@ -251,6 +251,10 @@ export const SelectLocationByLevelForm = ({
                                     handlingUnitOutbound {
                                         id
                                         name
+                                        carrierShippingMode {
+                                            id
+                                            toBePalletized
+                                        }
                                     }
                                 }
                                 processedQuantity
@@ -258,6 +262,12 @@ export const SelectLocationByLevelForm = ({
                                 roundLine {
                                     lineNumber
                                     articleId
+                                    article {
+                                        id
+                                        name
+                                        description
+                                        genericArticleComment
+                                    }
                                     status
                                     statusText
                                 }
