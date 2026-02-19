@@ -124,7 +124,13 @@ const HookConfigListComponent = (props: IListProps) => {
             {
                 title: 'actions:actions',
                 key: 'actions',
-                render: (record: { id: string; status: number; index: number; key: string }) => (
+                render: (record: {
+                    id: string;
+                    status: number;
+                    argument: any;
+                    index: number;
+                    key: string;
+                }) => (
                     <Space>
                         {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                             <LinkButton
@@ -132,7 +138,7 @@ const HookConfigListComponent = (props: IListProps) => {
                                 path={pathParamsFromDictionary(`${rootPath}/argument/edit/[id]`, {
                                     id: id,
                                     hookConfigName: props.details.name,
-                                    argument: argumentData,
+                                    argument: record.argument,
                                     argument_key: newRows[record.index]?.key,
                                     argument_value: newRows[record.index]?.value
                                 })}
@@ -149,7 +155,7 @@ const HookConfigListComponent = (props: IListProps) => {
                                 onClick={() =>
                                     confirmDelete(
                                         id,
-                                        argumentData,
+                                        record.argument,
                                         newRows[record.index]['key'],
                                         newRows[record.index]['value']
                                     )()
@@ -265,35 +271,32 @@ const HookConfigListComponent = (props: IListProps) => {
         return () => {
             Modal.confirm({
                 title: t('messages:delete-confirm'),
-                onOk: () => {
-                    const deleteArgument = async () => {
-                        const res = await fetch(`/api/hook-configs/deleteArgument`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                id,
-                                argument,
-                                argKey,
-                                argValue
-                            })
-                        });
-                        const response = await res.json();
-                        if (!res.ok) {
-                            if (response.error.is_error) {
-                                // specific error
-                                showError(t(`errors:${response.error.code}`));
-                            } else {
-                                // generic error
-                                showError(t('messages:error-deleting-data'));
-                            }
+                onOk: async () => {
+                    const res = await fetch(`/api/hook-configs/deleteArgument`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id,
+                            argument,
+                            argKey,
+                            argValue
+                        })
+                    });
+                    const response = await res.json();
+                    if (!res.ok) {
+                        if (response.error.is_error) {
+                            // specific error
+                            showError(t(`errors:${response.error.code}`));
                         } else {
-                            reloadData();
-                            showSuccess(t('messages:success-deleted'));
+                            // generic error
+                            showError(t('messages:error-deleting-data'));
                         }
-                    };
-                    deleteArgument();
+                    } else {
+                        reloadData();
+                        showSuccess(t('messages:success-deleted'));
+                    }
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -519,21 +522,48 @@ const HookConfigListComponent = (props: IListProps) => {
         if (Object.entries(rowsCopy).length !== 0) {
             let i = 0;
             let stringJsonData = '';
+
+            for (const [key, value] of Object.entries(rowsCopy[0])) {
+                if (key.includes('argument_')) {
+                    const argKey = key.replace('argument_', '');
+                    stringJsonData += argKey + '=' + value + ',';
+                }
+            }
+
             for (const [key, value] of Object.entries(rowsCopy[0])) {
                 const arg = key.split('_');
                 if (key.includes('argument_')) {
                     const argKey = key.replace('argument_', '');
-                    jsonData.push({ index: `${i}`, key: argKey, value: `${value}` });
-                    stringJsonData += argKey + '=' + value + ',';
+                    jsonData.push({
+                        index: `${i}`,
+                        key: argKey,
+                        value: `${value}`,
+                        argument: stringJsonData
+                    });
                     i++;
                 }
             }
             setArgumentData(stringJsonData);
         }
         const newColumns = [
-            { title: t('d:index'), dataIndex: 'index', key: 'index', showSorterTooltip: false },
-            { title: t('d:key'), dataIndex: 'key', key: 'key', showSorterTooltip: false },
-            { title: t('d:value'), dataIndex: 'value', key: 'value', showSorterTooltip: false }
+            {
+                title: t('d:index'),
+                dataIndex: 'index',
+                key: 'index',
+                showSorterTooltip: false
+            },
+            {
+                title: t('d:key'),
+                dataIndex: 'key',
+                key: 'key',
+                showSorterTooltip: false
+            },
+            {
+                title: t('d:value'),
+                dataIndex: 'value',
+                key: 'value',
+                showSorterTooltip: false
+            }
         ];
 
         setColumns(newColumns);

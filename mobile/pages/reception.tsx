@@ -30,10 +30,12 @@ import {
     SelectStockStatusForm_reducer,
     EnterQuantity_reducer,
     ScanLocation_reducer,
-    SimilarLocationsV2
+    SimilarLocationsV2,
+    SelectStockStatusAndQuantityForm_reducer
 } from '@CommonRadio';
 import { ValidateReceptionForm } from 'modules/ReceptionManagement/Reception/Forms/ValidateReception';
 import { QuantityChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/QuantityChecks';
+import { StockStatusAndQuantityChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/StockStatusAndQuantityChecks';
 
 import { ScanHandlingUnit } from 'modules/ReceptionManagement/Reception/PagesContainer/ScanHandlingUnit';
 import { HandlingUnitChecks } from 'modules/ReceptionManagement/Reception/ChecksAndRecords/HandlingUnitChecks';
@@ -255,10 +257,10 @@ const Reception: PageComponent = () => {
     }
     if (storedObject['step70']?.data?.stockStatus) {
         const stockStatus = storedObject['step70']?.data?.stockStatus;
-        headerDisplay[t('common:stock-status')] = stockStatus.text;
+        headerDisplay[t('common:stock-status')] = stockStatus.value;
     }
-    if (storedObject['step80']?.data?.movingQuantity) {
-        const movingQuantity = storedObject['step80']?.data?.movingQuantity;
+    if (storedObject['step70']?.data?.movingQuantity) {
+        const movingQuantity = storedObject['step70']?.data?.movingQuantity;
         headerDisplay[t('common:quantity')] = movingQuantity;
     }
     if (storedObject['step100']?.data?.chosenLocation) {
@@ -476,28 +478,18 @@ const Reception: PageComponent = () => {
                 )}
                 {storedObject['step60']?.data?.remainingFeatures?.length === 0 &&
                 !storedObject['step70']?.data ? (
-                    <SelectStockStatusForm_reducer
+                    <SelectStockStatusAndQuantityForm_reducer
                         processName={processName}
                         stepNumber={70}
                         buttons={{
                             submitButton: true,
                             backButton: true
                         }}
-                        initialValue={
+                        StockStatusInitialValue={
                             storedObject['step40'].data.currentPurchaseOrderLine?.[0]
                                 ?.blockingStatus
                         }
-                        isCommentDisplayed={true}
-                    ></SelectStockStatusForm_reducer>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step70']?.data && !storedObject['step80']?.data ? (
-                    <EnterQuantity_reducer
-                        processName={processName}
-                        stepNumber={80}
-                        buttons={{ submitButton: true, backButton: true }}
-                        defaultValue={
+                        QuantityDefaultValue={
                             storedObject['step50'].data.chosenArticleLuBarcode.article.featureType
                                 ? storedObject['step60'].data.processedFeatures.reduce(
                                       (count: number, feature: any) =>
@@ -509,14 +501,16 @@ const Reception: PageComponent = () => {
                                 : undefined
                         }
                         availableQuantity={availableQuantity}
-                        checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
-                        initialValueType={quantityDefaultValue}
+                        checkComponent={(data: any) => (
+                            <StockStatusAndQuantityChecks dataToCheck={data} />
+                        )}
+                        QuantityInitialValueType={quantityDefaultValue}
                         isCommentDisplayed={true}
-                    ></EnterQuantity_reducer>
+                    ></SelectStockStatusAndQuantityForm_reducer>
                 ) : (
                     <></>
                 )}
-                {storedObject['step80']?.data && !storedObject['step90']?.data ? (
+                {storedObject['step70']?.data && !storedObject['step90']?.data ? (
                     <ScanLocation_reducer
                         processName={processName}
                         stepNumber={90}

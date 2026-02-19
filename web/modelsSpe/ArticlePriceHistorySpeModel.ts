@@ -28,7 +28,7 @@ export function ArticlePriceHistorySpeModel(): [string | null, string, any][] {
         isDetailRequested: true,
         isExcludedFromDetail: false,
         detailGroup: null,
-        link: 'articles/id',
+        link: null,
         addEditFormat: null,
         addEditStep: null,
         maxLength: 70,

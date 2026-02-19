@@ -232,6 +232,26 @@ export const HandlingUnitContentOutboundModelV2: ModelType = {
             optionTable: null,
             isEditDisabled: true
         },
+        'handlingUnitContent{article{description}}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'article_description',
+            isMandatory: true,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         quantityToBePicked: {
             isListRequested: true,
             isDefaultHiddenList: false,

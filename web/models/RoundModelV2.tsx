@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { Table } from 'generated/graphql';
+import { RoundAdvisedAddressFieldName, Table } from 'generated/graphql';
 import { ModelType } from './ModelsV2';
 
 export const RoundModelV2: ModelType = {
@@ -75,7 +75,11 @@ export const RoundModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: null,
+            highlight: {
+                condition: `grossRecord.roundAdvisedAddresses && Array.isArray(grossRecord.roundAdvisedAddresses) && grossRecord.roundAdvisedAddresses.length > 0 && grossRecord.roundAdvisedAddresses.some((raa) => raa.locationId === null)`,
+                tooltip: 'no-location-assigned-raa'
+            }
         },
         status: {
             isListRequested: true,
@@ -98,6 +102,46 @@ export const RoundModelV2: ModelType = {
             param: null
         },
         statusText: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        type: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: true,
+            searchingFormat: 'Dropdown',
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: 'round_type',
+            param: null
+        },
+        typeText: {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,
@@ -608,6 +652,26 @@ export const RoundModelV2: ModelType = {
             searchingFormat: 'String',
             isDetailRequested: true,
             isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: true,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        'roundAdvisedAddresses{locationId}': {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
             addEditFormat: null,

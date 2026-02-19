@@ -40,7 +40,7 @@ const PreparationManagementPage: PageComponent = () => {
         },
         getModesFromPermissions(permissions, 'mobile_round-packing').includes(ModeEnum.Read) && {
             title: 'menu:round-packing',
-            path: '/round-packing'
+            path: '/pack'
         },
         getModesFromPermissions(permissions, 'mobile_pick-and-pack').includes(ModeEnum.Read) && {
             title: 'menu:pick-and-pack',

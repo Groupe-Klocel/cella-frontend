@@ -28,7 +28,7 @@ export function HandlingUnitContentFeatureSpeModel(): [string | null, string, an
         isDetailRequested: true,
         isExcludedFromDetail: false,
         detailGroup: null,
-        link: 'articles/id',
+        link: null,
         addEditFormat: null,
         addEditStep: null,
         maxLength: 70,

@@ -31,7 +31,7 @@ import { QuantityChecks } from 'modules/Preparation/Pick/ChecksAndRecords/Quanti
 import { SelectRoundForm } from 'modules/Preparation/Pick/Forms/SelectRoundForm';
 import { SelectEquipmentForm } from 'modules/Preparation/Pick/Forms/SelectEquipmentForm';
 import { HandlingUnitChecks } from 'modules/Preparation/Pick/ChecksAndRecords/HandlingUnitChecks';
-import { HandlingUnitChecksWithoutChecks } from 'modules/Preparation/Pick/ChecksAndRecords/HandlingUnitChecksWithoutChecks';
+import { HandlingUnitChecksWithoutChecks } from 'modules/Preparation/Pick/ChecksAndRecords/HandlingUnitEquipmentChecks';
 import { ScanLocation } from 'modules/Preparation/Pick/PagesContainer/ScanLocation';
 import { LocationChecks } from 'modules/Preparation/Pick/ChecksAndRecords/LocationChecks';
 import { ArticleChecks } from 'modules/Preparation/Pick/ChecksAndRecords/ArticleChecks';
@@ -55,8 +55,6 @@ const Pick: PageComponent = () => {
     const { parameters } = useAppState();
     const [headerContent, setHeaderContent] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
-    const [locationToPropose, setLocationToPropose] = useState<string>('noValue');
-    const [articleToPropose, setArticleToPropose] = useState<string>();
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
     const [triggerHuClose, setTriggerHuClose] = useState<boolean>(false);
     const [triggerNextRaa, setTriggerNextRaa] = useState<boolean>(false);
@@ -157,6 +155,15 @@ const Pick: PageComponent = () => {
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
         const highlightQuantity = highlightedQuantity === '1';
 
+        const findCodeByScope = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+
+        const equipmentHuType = findCodeByScope(parameters, 'handling_unit_type', 'EQUIPMENT');
+
         return {
             equipmentScanAtPreparation,
             manuallyGenerateParent,
@@ -165,7 +172,8 @@ const Pick: PageComponent = () => {
             forceArticleScan,
             defaultQuantity,
             autoValidate1Quantity,
-            highlightQuantity
+            highlightQuantity,
+            equipmentHuType
         };
     }, [parameters]);
 
@@ -280,6 +288,10 @@ const Pick: PageComponent = () => {
             headerDisplay[t('common:pick_handling-unit_grouping')] =
                 typeof handlingUnit === 'string' ? handlingUnit : handlingUnit.name;
         }
+        if (isPositionChecked) {
+            headerDisplay[t('common:pick_position')] =
+                proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.roundPosition;
+        }
         if (!storedObject['step30']?.data?.chosenLocation) {
             if (isLocationDefined) {
                 headerDisplay[t('common:expected-location_abbr')] = addNextLocationDisplay(
@@ -364,12 +376,6 @@ const Pick: PageComponent = () => {
 
     // retrieve location, article and qty to propose
     useEffect(() => {
-        if (storedObject['step10']?.data?.proposedRoundAdvisedAddresses) {
-            setLocationToPropose(
-                proposedRoundAdvisedAddress.location?.name || t('d:no-location-defined')
-            );
-            setArticleToPropose(proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name);
-        }
         if (
             storedObject['step10']?.data &&
             !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
@@ -393,6 +399,24 @@ const Pick: PageComponent = () => {
             setTmpforceLocation(true);
         }
     }, [storedObject]);
+
+    function findHUEquipment(handlingUnitOutbounds: any[]) {
+        return (
+            handlingUnitOutbounds.find((huo) => {
+                return huo.handlingUnit?.type === parseInt(configsParamsCodes.equipmentHuType);
+            }) || null
+        );
+    }
+
+    let isANewHUEquipment = true;
+
+    if (storedObject['step10']?.data) {
+        isANewHUEquipment = findHUEquipment(
+            storedObject['step10']?.data?.round?.handlingUnitOutbounds
+        )
+            ? false
+            : true;
+    }
 
     const onReset = () => {
         dispatch({
@@ -498,6 +522,7 @@ const Pick: PageComponent = () => {
                                 submitButton: true,
                                 backButton: true
                             }}
+                            isANewHUEquipment={isANewHUEquipment}
                             checkComponent={(data: any) => (
                                 <HandlingUnitChecksWithoutChecks dataToCheck={data} />
                             )}
@@ -505,23 +530,21 @@ const Pick: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {locationToPropose !== 'noValue' &&
-                    storedObject[
+                    {storedObject[
                         !manuallyGenerateParent ||
                         storedObject['step10']?.data?.round?.handlingUnitOutbounds?.filter(
                             (huo: any) => huo.status === 500
                         ).length !== 0
                             ? 'step10'
                             : 'step15'
-                    ]?.data &&
-                    !storedObject['step20']?.data ? (
+                    ]?.data && !storedObject['step20']?.data ? (
                         <ScanLocation
                             processName={processName}
                             stepNumber={20}
                             label={
                                 isLocationDefined
                                     ? t('common:location-var', {
-                                          name: `${locationToPropose}`
+                                          name: `${proposedRoundAdvisedAddress.location?.name || t('d:no-location-defined')}`
                                       })
                                     : t('common:location')
                             }
@@ -540,7 +563,12 @@ const Pick: PageComponent = () => {
                                 locationButton: true,
                                 action1Button: hasMultipleLocationIds
                             }}
-                            enforcedValue={!tmpForceLocation ? locationToPropose : undefined}
+                            enforcedValue={
+                                !tmpForceLocation
+                                    ? proposedRoundAdvisedAddress.location?.name ||
+                                      t('d:no-location-defined')
+                                    : undefined
+                            }
                             checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
                             showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                             showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
@@ -584,7 +612,7 @@ const Pick: PageComponent = () => {
                             processName={processName}
                             stepNumber={50}
                             label={t('common:article-var', {
-                                name: `${articleToPropose}`
+                                name: `${proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name}`
                             })}
                             triggerAlternativeSubmit1={{
                                 triggerAlternativeSubmit1: triggerChangeLocationFromArticle,
@@ -718,7 +746,8 @@ const Pick: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {storedObject['step75']?.data || isAutoValidateLoading ? (
+                    {storedObject['step75']?.data ||
+                    (!isPositionChecked && storedObject['step70']?.data) ? (
                         <AutoValidatePickForm
                             processName={processName}
                             stepNumber={80}

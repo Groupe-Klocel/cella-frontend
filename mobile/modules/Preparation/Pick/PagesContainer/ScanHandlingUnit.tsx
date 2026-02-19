@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { showError } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -29,6 +29,7 @@ export interface IScanHandlingUnitProps {
     processName: string;
     stepNumber: number;
     label: string;
+    isANewHUEquipment?: boolean;
     buttons: { [label: string]: any };
     checkComponent: any;
     defaultValue?: any;
@@ -38,6 +39,7 @@ export const ScanHandlingUnit = ({
     processName,
     stepNumber,
     label,
+    isANewHUEquipment,
     buttons,
     checkComponent,
     defaultValue
@@ -160,6 +162,7 @@ export const ScanHandlingUnit = ({
                                     description
                                     baseUnitWeight
                                     featureType
+                                    genericArticleComment
                                 }
                                 articleLuBarcode {
                                     id
@@ -169,6 +172,7 @@ export const ScanHandlingUnit = ({
                                         description
                                         baseUnitWeight
                                         featureType
+                                        genericArticleComment
                                     }
                                     barcodeId
                                     barcode {
@@ -194,7 +198,10 @@ export const ScanHandlingUnit = ({
             `;
 
             const variables = {
-                filters: { barcode: [`${scannedInfo}`], locationId: chosenLocation?.id }
+                filters: {
+                    barcode: [`${scannedInfo}`],
+                    locationId: chosenLocation?.id
+                }
             };
             const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitInfos;
@@ -212,6 +219,7 @@ export const ScanHandlingUnit = ({
     const dataToCheck = {
         processName,
         stepNumber,
+        isANewHUEquipment,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitInfos,
         uniqueHU,

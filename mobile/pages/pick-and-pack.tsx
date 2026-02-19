@@ -56,8 +56,6 @@ const PickAndPack: PageComponent = () => {
     const { parameters } = useAppState();
     const [headerContent, setHeaderContent] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
-    const [locationToPropose, setLocationToPropose] = useState<string>();
-    const [articleToPropose, setArticleToPropose] = useState<string>();
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
     const [triggerHuClose, setTriggerHuClose] = useState<boolean>(false);
     const [triggerNextRaa, setTriggerNextRaa] = useState<boolean>(false);
@@ -363,29 +361,22 @@ const PickAndPack: PageComponent = () => {
 
     // retrieve location, article and qty to propose
     useEffect(() => {
-        if (storedObject['step10']?.data?.proposedRoundAdvisedAddresses) {
-            setLocationToPropose(
-                proposedRoundAdvisedAddress.location?.name || t('d:no-location-defined')
-            );
-            setArticleToPropose(proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name);
-        }
-        if (
-            storedObject['step10']?.data &&
-            !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
-                ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized &&
-            !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
-        ) {
-            setToBePalletizedForBackEnd(false);
-            setToBePalletizedForHUModel(false);
-        }
+        const shouldBePalletized =
+            proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
+                ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized;
+        const forcePickingCheck = storedObject['step10']?.data?.round?.equipment?.forcePickingCheck;
 
-        if (
-            storedObject['step10']?.data &&
-            !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
-                ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized &&
-            storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
-        ) {
-            setToBePalletizedForHUModel(false);
+        if (storedObject['step10']?.data) {
+            if (!shouldBePalletized && !forcePickingCheck) {
+                setToBePalletizedForBackEnd(false);
+                setToBePalletizedForHUModel(false);
+            } else if (!shouldBePalletized && forcePickingCheck) {
+                setToBePalletizedForHUModel(false);
+                setToBePalletizedForBackEnd(true);
+            } else {
+                setToBePalletizedForBackEnd(true);
+                setToBePalletizedForHUModel(true);
+            }
         }
 
         if (storedObject['step10']?.data?.round) {
@@ -517,23 +508,21 @@ const PickAndPack: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {locationToPropose !== 'noValue' &&
-                    storedObject[
+                    {storedObject[
                         !manuallyGenerateParent ||
                         storedObject['step10']?.data?.round?.handlingUnitOutbounds?.filter(
                             (huo: any) => huo.status === 500
                         ).length !== 0
                             ? 'step10'
                             : 'step15'
-                    ]?.data &&
-                    !storedObject['step20']?.data ? (
+                    ]?.data && !storedObject['step20']?.data ? (
                         <ScanLocation
                             processName={processName}
                             stepNumber={20}
                             label={
                                 isLocationDefined
                                     ? t('common:location-var', {
-                                          name: `${locationToPropose}`
+                                          name: `${proposedRoundAdvisedAddress.location?.name || t('d:no-location-defined')}`
                                       })
                                     : t('common:location')
                             }
@@ -552,7 +541,12 @@ const PickAndPack: PageComponent = () => {
                                 locationButton: true,
                                 action1Button: hasMultipleLocationIds
                             }}
-                            enforcedValue={!tmpForceLocation ? locationToPropose : undefined}
+                            enforcedValue={
+                                !tmpForceLocation
+                                    ? proposedRoundAdvisedAddress.location?.name ||
+                                      t('d:no-location-defined')
+                                    : undefined
+                            }
                             checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
                             showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                             showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
@@ -596,7 +590,7 @@ const PickAndPack: PageComponent = () => {
                             processName={processName}
                             stepNumber={50}
                             label={t('common:article-var', {
-                                name: `${articleToPropose}`
+                                name: `${proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name}`
                             })}
                             triggerAlternativeSubmit1={{
                                 triggerAlternativeSubmit1: triggerChangeLocationFromArticle,
@@ -616,7 +610,12 @@ const PickAndPack: PageComponent = () => {
                             contents={
                                 storedObject['step40']?.data?.handlingUnit?.handlingUnitContents
                             }
-                            checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
+                            checkComponent={(data: any) => (
+                                <ArticleChecks
+                                    dataToCheck={data}
+                                    setTmpForceLocationScan={setTmpforceLocation}
+                                />
+                            )}
                         ></ScanArticleEAN>
                     ) : (
                         <></>

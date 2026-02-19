@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import { Button, Input, Form, InputNumber, AutoComplete, Select, Modal, Space } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import {
@@ -44,6 +44,7 @@ import {
 import { gql } from 'graphql-request';
 import { FormOptionType } from 'models/ModelsV2';
 import TextArea from 'antd/lib/input/TextArea';
+import { useAppState } from 'context/AppContext';
 
 const { Option } = Select;
 
@@ -65,7 +66,10 @@ export interface ISingleItemProps {
 export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
+    const { parameters: appParameters, configs: appConfigs } = useAppState();
     const router = useRouter();
+    const { locale } = router;
+    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const article = t('d:article');
@@ -75,10 +79,15 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const unitPriceExcludingTaxes = t('d:unitPriceExcludingTaxes');
     const vatRate = t('d:vatRate');
     const customerOrder = t('common:customer-order');
+    const discountTypeLabel = t('d:discount_type');
+    const discountLabel = t('d:discount_percent');
+    const discountAmountLabel = t('d:discount_amount');
     const orderedQuantity = t('d:orderedQuantity');
     const stockStatus = t('d:stockStatus');
     const comment = t('d:comment');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
+    const errorMessageMinInputNumber = t('messages:select-number-min', { min: 0 });
+    const errorMessageMaxInputNumber = t('messages:select-number-max', { max: 100 });
     const errorMessageNegativeNumberInput = t('messages:select-number-min', { min: 0 });
     const genericArticleComment = t('d:genericArticleComment');
     const submit = t('actions:submit');
@@ -97,7 +106,26 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const [articleLus, setArticleLus] = useState<any>();
     const [articleCubingType, setArticleCubingType] = useState<any>();
     const [stockStatuses, setStockStatuses] = useState<Array<FormOptionType>>();
+    const [selectedDiscountType, setSelectedDiscountType] = useState<number | undefined>(undefined);
     const customerOrderLines = useOrderLineIds({ orderId: `${props.orderId}%` }, 1, 100, null);
+
+    const configsParamsCodes = useMemo(() => {
+        const findAllByScope = (items: any[], scope: string) => {
+            return items
+                .filter((item: any) => item.scope === scope)
+                .sort((a, b) => a.code - b.code)
+                .map((item: any) => {
+                    return {
+                        ...item,
+                        value: item.translation?.[language] || item.value
+                    };
+                });
+        };
+        const discountTypes = findAllByScope(appParameters, 'discount_type');
+        return {
+            discountTypes
+        };
+    }, [appConfigs, appParameters, language]);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -346,28 +374,12 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
         mutate({ input });
     };
 
-    //to retrieve selectedVatRate value
-    const getVatRate = async (
-        selectedCode: string
-    ): Promise<{ [key: string]: any } | undefined> => {
-        const query = gql`
-            query vatRateParameters($filters: ParameterSearchFilters) {
-                parameters(filters: $filters) {
-                    results {
-                        id
-                        value
-                        code
-                    }
-                }
-            }
-        `;
-
-        const variables = {
-            filters: { scope: 'vat_rate', code: selectedCode }
-        };
-
-        const vatRate = await graphqlRequestClient.request(query, variables);
-        return vatRate;
+    const handleDiscountTypeSelection = (key: any, value: any) => {
+        setSelectedDiscountType(parseInt(key));
+        form.setFieldsValue({
+            discount: null,
+            discountAmount: null
+        });
     };
 
     const onFinish = () => {
@@ -525,9 +537,51 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                                 ))}
                             </Select>
                         </Form.Item>
-                        <Form.Item label={t('d:discount_percent')} name="discount" initialValue={0}>
-                            <InputNumber min={0} max={100} precision={1} />
+                        <Form.Item label={discountTypeLabel} name="discountType">
+                            <Select
+                                allowClear
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:discount_type')
+                                })}`}
+                                onChange={handleDiscountTypeSelection}
+                            >
+                                {configsParamsCodes.discountTypes?.map((discountType: any) => (
+                                    <Option
+                                        key={discountType.code}
+                                        value={parseInt(discountType.code)}
+                                    >
+                                        {discountType.value}
+                                    </Option>
+                                ))}
+                            </Select>
                         </Form.Item>
+                        {selectedDiscountType == 20 && selectedDiscountType != undefined && (
+                            <Form.Item
+                                label={discountLabel}
+                                name="discount"
+                                rules={[
+                                    { type: 'number', min: 0, message: errorMessageMinInputNumber },
+                                    {
+                                        type: 'number',
+                                        max: 100,
+                                        message: errorMessageMaxInputNumber
+                                    }
+                                ]}
+                            >
+                                <InputNumber />
+                            </Form.Item>
+                        )}
+                        {selectedDiscountType == 10 && selectedDiscountType != undefined && (
+                            <Form.Item
+                                label={discountAmountLabel}
+                                name="discountAmount"
+                                rules={[
+                                    { type: 'number', min: 0, message: errorMessageMinInputNumber }
+                                ]}
+                            >
+                                <InputNumber />
+                            </Form.Item>
+                        )}
                         <Form.Item name="stockStatus" label={stockStatus}>
                             <Select
                                 placeholder={`${t('messages:please-select-a', {

@@ -656,7 +656,7 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                     </Col>
                     <Col xs={24} xl={12}>
                         <Form.Item name="monoDelivery">
-                            <Checkbox onChange={onMonoDeliveryChange}>
+                            <Checkbox checked={monoDeliveryValue} onChange={onMonoDeliveryChange}>
                                 {t('d:monoDelivery')}
                             </Checkbox>
                         </Form.Item>
