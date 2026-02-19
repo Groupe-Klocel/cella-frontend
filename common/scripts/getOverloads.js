@@ -37,6 +37,7 @@ const ignoredFolders = [
   "pagesModels",
   "locales",
   "modelsSpe",
+  "getMoreInfosUtils",
 ];
 
 const ignoredRoutes = [];
