@@ -551,6 +551,26 @@ export const HandlingUnitOutboundModelV2: ModelType = {
             config: null,
             param: null
         },
+        roundPosition: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         carrierBox: {
             isListRequested: false,
             isDefaultHiddenList: false,

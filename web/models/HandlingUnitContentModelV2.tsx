@@ -355,6 +355,27 @@ export const HandlingUnitContentModelV2: ModelType = {
             config: null,
             param: null
         },
+        'handlingUnitContentInbounds{purchaseOrder{name}}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: false,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'purchaseOrder',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            optionTable: null
+        },
         stockOwnerId: {
             isListRequested: true,
             isDefaultHiddenList: false,

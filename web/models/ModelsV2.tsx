@@ -89,7 +89,7 @@ export type CustomizedTitlesType = {
 // Used for model definition of CRUD operations.
 export type ModelType = {
     tableName: string;
-    modelName?: string;
+    modelName?: string | null;
     resolverName: string;
     isEditable: boolean;
     isDeletable: boolean;
@@ -131,6 +131,7 @@ export type FieldInfo = {
     toBeEditDisabled?: string;
     isMultipleSearch?: boolean;
     filterConfigParam?: string;
+    highlight?: any;
 };
 
 export type FieldsInfo = {

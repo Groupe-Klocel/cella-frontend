@@ -73,7 +73,7 @@ export function injectedModel(
 
     return {
         tableName: newModel.tableName,
-        modelName: newModel.modelName,
+        modelName: newModel.modelName ?? null,
         resolverName: newModel.resolverName,
         isEditable: newModel.isEditable,
         isDeletable: newModel.isDeletable,

@@ -17,6 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+import React from 'react';
+import { Tooltip } from 'antd';
 import styled from 'styled-components';
 
 const WelcomeText = styled.h2`
@@ -24,4 +26,31 @@ const WelcomeText = styled.h2`
     margin: 3rem 0 2rem 0;
 `;
 
-export { WelcomeText };
+interface StyledTooltipProps {
+    title: string;
+    children: React.ReactNode;
+}
+
+const StyledTooltip: React.FC<StyledTooltipProps> = ({ title, children }) => {
+    return (
+        <Tooltip
+            title={title}
+            overlayInnerStyle={{
+                backgroundColor: 'rgba(254, 245, 225, 0.8)',
+                color: '#6B7280',
+                border: 'none',
+                borderRadius: '6px'
+            }}
+            overlayStyle={{
+                maxWidth: '300px'
+            }}
+            arrow={{
+                pointAtCenter: true
+            }}
+        >
+            {children}
+        </Tooltip>
+    );
+};
+
+export { WelcomeText, StyledTooltip };

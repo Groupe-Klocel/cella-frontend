@@ -101,7 +101,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     const description = t('common:description');
     const handlingUnitModel = t('d:handlingUnitModel');
     const parentLogisticUnit = t('d:parentLogisticUnit');
-    const replenish = t('d:replenishByParentLu');
+    const replenish = t('d:replenish');
     const name = t('d:name');
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const errorMessageUpdateData = t('messages:error-update-data');
@@ -127,8 +127,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     const locationData = useLocations({}, 1, 100, null);
     const patternData = usePatternIds({}, 1, 100, null);
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
-    const [disableReplenish, setDisableReplenish] = useState<boolean>(false);
-    const [replenishValue, setReplenishValue] = useState(details.blacklisted);
+    const [disableReplenish, setDisableReplenish] = useState<boolean>(true);
     const [sortTypes, setSortTypes] = useState<Array<FormOptionType>>();
     const [pickingTypes, setPickingTypes] = useState<Array<FormOptionType>>();
     const [locations, setLocations] = useState<Array<FormOptionType>>();
@@ -254,37 +253,6 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         }
     }, [patternData.data]);
 
-    //manage call back on HU Model change
-    const handleHUModelChange = (key: any, value: any) => {
-        // if we clear the select, we clear the form
-        if (value === null || value === undefined) {
-            setDisableReplenish(false);
-        }
-
-        // if we select a new value, we fill the form
-        if (
-            handlingUnitModelData.data &&
-            handlingUnitModelData?.data?.handlingUnitModels &&
-            handlingUnitModelData?.data?.handlingUnitModels?.count > 0
-        ) {
-            handlingUnitModelData.data.handlingUnitModels?.results.forEach((huModel: any) => {
-                if (
-                    huModel.id == key &&
-                    huModel.category == parameters.HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND
-                ) {
-                    setDisableReplenish(true);
-                } else {
-                    setDisableReplenish(false);
-                }
-            });
-        }
-    };
-
-    //manage call back on change checkbox
-    const onReplenishChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ replenish: e.target.checked });
-    };
-
     //To render articleLu rotations from params table for the given scope
     const articleLuRotationList = useGetArticleLuRotationsParamsQuery<
         Partial<GetArticleLuRotationsParamsQuery>,
@@ -322,10 +290,16 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     const [isPickingLocationDisplay, setIsPickingLocationDisplay] = useState<boolean>(false);
     // handle call back on Cycle Count Type change for displays
     const handlePickingTypeChange = (value: any) => {
-        setIsPickingLocationDisplay(false);
-
+        if (value) {
+            setDisableReplenish(false);
+        } else {
+            setDisableReplenish(true);
+            form.setFieldsValue({ replenish: false });
+        }
         if (value == parameters.PICKING_TYPE_FIXED) {
             setIsPickingLocationDisplay(true);
+        } else {
+            setIsPickingLocationDisplay(false);
         }
     };
 
@@ -382,13 +356,10 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         delete tmp_details['modified'];
         delete tmp_details['modifiedBy'];
 
-        if (
-            details?.handlingUnitModel?.category == parameters.HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND
-        ) {
-            setDisableReplenish(true);
-            setReplenishValue(details.replenish);
-        } else {
+        if (details?.pickingType) {
             setDisableReplenish(false);
+        } else {
+            setDisableReplenish(true);
         }
 
         form.setFieldsValue(tmp_details);
@@ -530,7 +501,6 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:handlingUnitModel')
                                 })}`}
-                                onChange={handleHUModelChange}
                             >
                                 {handlingUnitModels?.map((lu: any) => (
                                     <Option key={lu.key} value={lu.key}>
@@ -541,14 +511,8 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
-                        <Form.Item name="replenish">
-                            <Checkbox
-                                disabled={disableReplenish === true ? false : true}
-                                onChange={onReplenishChange}
-                                checked={replenishValue}
-                            >
-                                {replenish}
-                            </Checkbox>
+                        <Form.Item name="replenish" valuePropName="checked">
+                            <Checkbox disabled={disableReplenish}>{replenish}</Checkbox>
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>

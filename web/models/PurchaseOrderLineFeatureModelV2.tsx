@@ -163,6 +163,26 @@ export const PurchaseOrderLineFeatureModelV2: ModelType = {
             param: null,
             optionTable: null
         },
+        'purchaseOrderLine{article{description}}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'article_description',
+            isMandatory: true,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         'purchaseOrderLine{quantity}': {
             isListRequested: true,
             isDefaultHiddenList: true,
