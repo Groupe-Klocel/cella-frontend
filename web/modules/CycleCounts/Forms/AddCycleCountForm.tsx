@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import configs from '../../../../common/configs.json';
 import {
     AutoComplete,
     Button,
@@ -33,7 +32,7 @@ import {
     Space
 } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -49,7 +48,6 @@ import { debounce } from 'lodash';
 import _ from 'lodash';
 import { showError, showSuccess, useArticleIds } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import existingConfigs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
 
 const { Option } = Select;
@@ -67,17 +65,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
-    const { userSettings } = useAppState();
-    const generalUserSettings = userSettings?.find((item: any) => {
-        return 'globalParameters' === item.code;
-    });
-    const globalLocale = generalUserSettings?.valueJson?.lang;
-    const searchedLanguage = globalLocale == 'en-us' ? 'en' : globalLocale;
+    const { configs, parameters } = useAppState();
+    const { locale } = router;
+    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
 
     const [stockOwners, setStockOwners] = useState<any>();
     // EQUIPMENT : const [equipmentWithPriorities, setEquipmentWithPriorities] = useState<any>();
-    const [cycleCountTypes, setCycleCountTypes] = useState<any>();
-    const [cycleCountModels, setCycleCountModels] = useState<any>();
     const [choosenStockOwner, setChoosenStockOwner] = useState<string>();
     const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
@@ -90,46 +83,45 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const [locationDisplayGroup, setLocationDisplayGroup] = useState<boolean>(false);
     const [emptyLocationDisplayGroup, setEmptyLocationDisplayGroup] = useState<boolean>(false);
     const [stockMiniDisplayGroup, setStockMiniDisplayGroup] = useState<boolean>(false);
-    const [reasonsTexts, setReasonsTexts] = useState<any>();
-    const [motivesTexts, setMotivesTexts] = useState<any>();
+    const [nbDaysDisplayGroup, setNbDaysDisplayGroup] = useState<boolean>(false);
+    const [isNbDaysRequired, setIsNbDaysRequired] = useState<boolean>(false);
     const [form] = Form.useForm();
 
-    // Retrieve all necessary information
-    const cycleCountModelsList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: 'cycle_count_model',
-        language: searchedLanguage
-    });
+    const configsParamsCodes = useMemo(() => {
+        const findAllByScope = (items: any[], scope: string) => {
+            return items
+                .filter((item: any) => item.scope === scope)
+                .sort((a, b) => a.code - b.code)
+                .map((item: any) => {
+                    return {
+                        ...item,
+                        text: item.translation?.[language] || item.value
+                    };
+                });
+        };
 
-    useEffect(() => {
-        if (cycleCountModelsList) {
-            setCycleCountModels(cycleCountModelsList?.data?.listConfigsForAScope);
-        }
-    }, [cycleCountModelsList]);
+        const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
 
-    const cycleCountTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: 'cycle_count_type',
-        language: searchedLanguage
-    });
+        const normalCycleCountModeCode = findCodeByScopeAndValue(
+            configs,
+            'cycle_count_model',
+            'Normal'
+        );
+        const cycleCountTypes = findAllByScope(configs, 'cycle_count_type');
 
-    useEffect(() => {
-        if (cycleCountTypesList) {
-            // 29/09/202 - The backend functions for emptyLocation, nbDays and stockMini will be deployed later on.
-            // For now, we need to remove them from the list of cycle count types
-            // setCycleCountTypes(cycleCountTypesList?.data?.listConfigsForAScope);
-            const cycleCountTypesListFiltered =
-                cycleCountTypesList?.data?.listConfigsForAScope?.filter(
-                    (type) =>
-                        type.code !== existingConfigs.CYCLE_COUNT_TYPE_NB_DAYS.toString() &&
-                        type.code !== existingConfigs.CYCLE_COUNT_TYPE_EMPTY_LOCATION.toString() &&
-                        type.code !== existingConfigs.CYCLE_COUNT_TYPE_STOCK_MINI.toString()
-                );
+        return {
+            normalCycleCountModeCode,
+            cycleCountTypes
+        };
+    }, [configs, parameters, language]);
 
-            // Update cycleCountTypes only if the filtered list has changed
-            if (!_.isEqual(cycleCountTypesListFiltered, cycleCountTypes)) {
-                setCycleCountTypes(cycleCountTypesListFiltered);
-            }
-        }
-    }, [cycleCountTypesList]);
+    const normalCycleCountModel = parseInt(configsParamsCodes?.normalCycleCountModeCode);
+    const cycleCountTypes = configsParamsCodes?.cycleCountTypes;
 
     //To render Simple In progress stock owners list
     const stockOwnerList = useSimpleGetInProgressStockOwnersQuery<
@@ -208,7 +200,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
             finalAisle: undefined,
             finalColumn: undefined,
             finalLevel: undefined,
-            finalPosition: undefined,
+            finalPosition: undefined
         });
 
         setOriginAisleToSearch(undefined);
@@ -335,22 +327,26 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const [finalLevelValueOptions, setFinalLevelValueOptions] = useState<any>(null);
     useEffect(() => {
         if (originAisleToSearch && originColumnToSearch) {
-            fetchLocationsData('level', [originAisleToSearch], [originColumnToSearch]).then((data: any) => {
-                setOriginLevelValueOptions(data);
-                const current = form.getFieldValue('originalLevel');
-                if (!data.includes(current)) {
-                    setOriginLevelToSearch(data[0]);
+            fetchLocationsData('level', [originAisleToSearch], [originColumnToSearch]).then(
+                (data: any) => {
+                    setOriginLevelValueOptions(data);
+                    const current = form.getFieldValue('originalLevel');
+                    if (!data.includes(current)) {
+                        setOriginLevelToSearch(data[0]);
+                    }
                 }
-            });
+            );
         }
     }, [originAisleToSearch, originColumnToSearch]);
 
     useEffect(() => {
         if (finalAisleToSearch && finalColumnToSearch) {
-            fetchLocationsData('level', [finalAisleToSearch], [finalColumnToSearch]).then((data: any) => {
-                setFinalLevelValueOptions(data);
-                setFinalLevelToSearch(data[data.length - 1]);
-            });
+            fetchLocationsData('level', [finalAisleToSearch], [finalColumnToSearch]).then(
+                (data: any) => {
+                    setFinalLevelValueOptions(data);
+                    setFinalLevelToSearch(data[data.length - 1]);
+                }
+            );
         }
     }, [finalAisleToSearch, finalColumnToSearch]);
 
@@ -387,30 +383,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         finalLevelToSearch
     ]);
 
-    //list reason
-    const reasonsTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: 'cycle_count_reason',
-        language: router.locale
-    });
-
-    useEffect(() => {
-        if (reasonsTextList) {
-            setReasonsTexts(reasonsTextList?.data?.listConfigsForAScope);
-        }
-    }, [reasonsTextList.data]);
-
-    //list motive
-    const motivesTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'movement_code',
-        language: router.locale
-    });
-
-    useEffect(() => {
-        if (motivesTextList) {
-            setMotivesTexts(motivesTextList?.data?.listParametersForAScope);
-        }
-    }, [motivesTextList.data]);
-
     // TYPED SAFE ALL
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -439,20 +411,31 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
         setLocationDisplayGroup(false);
         setEmptyLocationDisplayGroup(false);
         setStockMiniDisplayGroup(false);
+        setNbDaysDisplayGroup(false);
+        setIsNbDaysRequired(false);
+
         switch (value) {
-            case configs.CYCLE_COUNT_TYPE_PRODUCT:
+            case parseInt(cycleCountTypes?.find((type: any) => type.value === 'Product')?.code):
                 setArticleDisplayGroup(true);
                 break;
-            case configs.CYCLE_COUNT_TYPE_LOCATION:
+            case parseInt(cycleCountTypes?.find((type: any) => type.value === 'Location')?.code):
                 setLocationDisplayGroup(true);
                 setEmptyLocationDisplayGroup(true);
                 break;
-            case configs.CYCLE_COUNT_TYPE_EMPTY_LOCATION:
+            case parseInt(
+                cycleCountTypes?.find((type: any) => type.value === 'Empty location')?.code
+            ):
                 setLocationDisplayGroup(true);
                 break;
-            case configs.CYCLE_COUNT_TYPE_STOCK_MINI:
+            case parseInt(cycleCountTypes?.find((type: any) => type.value === 'Stock mini')?.code):
                 setLocationDisplayGroup(true);
                 setStockMiniDisplayGroup(true);
+                setNbDaysDisplayGroup(true);
+                break;
+            case parseInt(cycleCountTypes?.find((type: any) => type.value === 'Nb days')?.code):
+                setLocationDisplayGroup(true);
+                setNbDaysDisplayGroup(true);
+                setIsNbDaysRequired(true);
                 break;
             default:
                 break;
@@ -510,6 +493,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 //tmp_formData is to avoid form infos reset when submit fails
                 const tmp_formData = { ...formData };
                 tmp_formData['status'] = configs.CYCLE_COUNT_STATUS_CREATED;
+                tmp_formData['model'] = normalCycleCountModel;
                 if (!articleDisplayGroup) {
                     delete tmp_formData['stockOwnerId'];
                     delete tmp_formData['articleId'];
@@ -525,9 +509,12 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                     delete tmp_formData['finalPosition'];
                 } else if (!emptyLocationDisplayGroup) {
                     delete tmp_formData['emptyLocation'];
-                } else if (stockMiniDisplayGroup) {
+                } else if (!stockMiniDisplayGroup) {
                     delete tmp_formData['thresholdQuantity'];
+                } else if (!nbDaysDisplayGroup) {
+                    delete tmp_formData['nbDays'];
                 }
+
                 delete tmp_formData['articleName'];
 
                 let functionName: string;
@@ -573,25 +560,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                 scrollToFirstError
                 onValuesChange={() => setUnsavedChanges(true)}
             >
-                <Form.Item
-                    label={t('common:model')}
-                    name="model"
-                    initialValue={configs.CYCLE_COUNT_MODEL_NORMAL}
-                    rules={[
-                        {
-                            required: true,
-                            message: `${t('messages:error-message-empty-input')}`
-                        }
-                    ]}
-                >
-                    <Select disabled>
-                        {cycleCountModels?.map((cycleCountModel: any) => (
-                            <Option key={cycleCountModel.id} value={parseInt(cycleCountModel.code)}>
-                                {cycleCountModel.text}
-                            </Option>
-                        ))}
-                    </Select>
-                </Form.Item>
                 <Form.Item
                     label={t('common:type')}
                     name="type"
@@ -1006,7 +974,9 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 }
                                             }}
                                             allowClear
-                                            disabled={(blockToSearch ? false : true) || finalAisle == '*'}
+                                            disabled={
+                                                (blockToSearch ? false : true) || finalAisle == '*'
+                                            }
                                         >
                                             {aislesValueOptions?.map((aisle: any) => (
                                                 <Option key={aisle} value={aisle}>
@@ -1063,7 +1033,9 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 }
                                             }}
                                             allowClear
-                                            disabled={(!finalAisle || !blockToSearch) || finalColumn == '*'}
+                                            disabled={
+                                                !finalAisle || !blockToSearch || finalColumn == '*'
+                                            }
                                         >
                                             {finalColumnValueOptions?.map((column: any) => (
                                                 <Option key={column} value={column}>
@@ -1120,7 +1092,9 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 }
                                             }}
                                             allowClear
-                                            disabled={(!finalColumn || !blockToSearch) || finalLevel == '*'}
+                                            disabled={
+                                                !finalColumn || !blockToSearch || finalLevel == '*'
+                                            }
                                         >
                                             {finalLevelValueOptions?.map((level: any) => (
                                                 <Option key={level} value={level}>
@@ -1167,8 +1141,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                         setOriginPositionToSearch
                                                     );
                                                 } else if (
-                                                    form.getFieldValue('originalPosition') ===
-                                                    '*'
+                                                    form.getFieldValue('originalPosition') === '*'
                                                 ) {
                                                     const first = finalPositionValueOptions?.[0];
                                                     form.setFieldsValue({
@@ -1182,7 +1155,11 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                                 }
                                             }}
                                             allowClear
-                                            disabled={(!finalLevel || !blockToSearch) || finalPosition == '*'}
+                                            disabled={
+                                                !finalLevel ||
+                                                !blockToSearch ||
+                                                finalPosition == '*'
+                                            }
                                         >
                                             {finalPositionValueOptions?.map((position: any) => (
                                                 <Option key={position} value={position}>
@@ -1206,7 +1183,6 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                                 <Form.Item
                                     label={t('d:thresholdQuantity')}
                                     name="thresholdQuantity"
-                                    initialValue={10}
                                     rules={[
                                         {
                                             required: stockMiniDisplayGroup,
@@ -1220,40 +1196,20 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
                         )}
                     </>
                 )}
-                {/* 2023/11/29 This part of code has been commented on FCT demand
-                <Form.Item label={t('d:reason')} name="reason">
-                    <Select
-                        placeholder={`${t('messages:please-select-a', {
-                            name: t('d:reason')
-                        })}`}
-                        allowClear
+                {nbDaysDisplayGroup && (
+                    <Form.Item
+                        label={t('d:number-of-days')}
+                        name="numberOfDays"
+                        rules={[
+                            {
+                                required: isNbDaysRequired,
+                                message: `${t('messages:error-message-empty-input')}`
+                            }
+                        ]}
                     >
-                        {reasonsTexts?.map((category: any) => (
-                            <Option key={category.id} value={parseInt(category.code)}>
-                                {category.text}
-                            </Option>
-                        ))}
-                    </Select>
-                </Form.Item>
-                <Form.Item label={t('d:motive')} name="motive">
-                    <Select
-                        placeholder={`${t('messages:please-select-a', {
-                            name: t('d:motive')
-                        })}`}
-                        allowClear
-                    >
-                        {motivesTexts?.map((category: any) => (
-                            <Option key={category.id} value={parseInt(category.code)}>
-                                {category.text}
-                            </Option>
-                        ))}
-                    </Select>
-                </Form.Item>*/}
-
-                {/* 29/09/202 - The backend functions for emptyLocation, nbDays and stockMini will be deployed later on.
-                <Form.Item label={t('d:number-of-days')} name="numberOfDays">
-                    <InputNumber />
-                </Form.Item> */}
+                        <InputNumber />
+                    </Form.Item>
+                )}
             </Form>
             <div style={{ textAlign: 'center' }}>
                 <Space>
