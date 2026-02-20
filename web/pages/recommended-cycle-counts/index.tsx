@@ -17,48 +17,72 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import {
-    DeleteOutlined,
-    EditTwoTone,
-    EyeTwoTone,
-    LockTwoTone,
-    CaretRightOutlined
-} from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
-import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import { getModesFromPermissions, pathParams, showError, showSuccess } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { CycleCountModelV2 as model } from '@helpers';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { RecommendedCycleCountModelV2 as model } from '@helpers';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useState } from 'react';
-import { cycleCountsRoutes as itemRoutes } from 'modules/CycleCounts/Static/cycleCountsRoutes';
-import configs from '../../../common/configs.json';
+import { FC, useMemo, useState } from 'react';
+import { recommendedCycleCountsRoutes as itemRoutes } from 'modules/CycleCounts/Static/recommendedCycleCountsRoutes';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const CycleCountPages: PageComponent = () => {
-    const { permissions } = useAppState();
+    const { permissions, configs } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [selectedRowKeys, setSelectedRowKeys] = useState<any>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const { graphqlRequestClient } = useAuth();
 
     const headerData: HeaderData = {
         title: t('common:recommended-cycle-counts'),
         routes: itemRoutes,
-        actionsComponent:
-            modes.length > 0 && modes.includes(ModeEnum.Create) ? (
-                <LinkButton
-                    title={t('actions:add2', { name: t('common:cycle-count') })}
-                    path={`${rootPath}/add`}
-                    type="primary"
-                />
-            ) : null
+        actionsComponent: null
     };
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+
+        const recommendedCycleCountModeCode = findCodeByScopeAndValue(
+            configs,
+            'cycle_count_model',
+            'Recommended'
+        );
+
+        const closedCycleCountStatus = findCodeByScopeAndValue(
+            configs,
+            'cycle_count_status',
+            'closed'
+        );
+
+        const cancelledCycleCountStatus = findCodeByScopeAndValue(
+            configs,
+            'cycle_count_status',
+            'canceled'
+        );
+
+        return {
+            recommendedCycleCountModeCode,
+            closedCycleCountStatus,
+            cancelledCycleCountStatus
+        };
+    }, [configs]);
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
@@ -73,34 +97,124 @@ const CycleCountPages: PageComponent = () => {
         };
     };
 
+    const hasSelected = selectedRowKeys.length > 0;
+    const [refetch, setRefetch] = useState<boolean>(false);
+
+    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+        getCheckboxProps: (record: any) => ({
+            disabled:
+                record.status == parseInt(configsParamsCodes.closedCycleCountStatus) ||
+                record.status == parseInt(configsParamsCodes.cancelledCycleCountStatus)
+                    ? true
+                    : false
+        })
+    };
+
+    const generateCycleCount = async (selectedRowKeys: [String]) => {
+        setIsLoading(true);
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'consolidate_recommended_cycle_counts',
+            event: {
+                input: { cycleCountIds: selectedRowKeys }
+            }
+        };
+
+        try {
+            const query_result = await graphqlRequestClient.request(query, variables);
+            if (query_result.executeFunction.status === 'ERROR') {
+                setSelectedRowKeys([]);
+                showError(query_result.executeFunction.output);
+            } else if (
+                query_result.executeFunction.status === 'OK' &&
+                query_result.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${query_result.executeFunction.output.output.code}`));
+                console.log('Backend_message', query_result.executeFunction.output.output);
+            } else {
+                setSelectedRowKeys([]);
+                showSuccess(t('messages:success-cycle-count-creation'));
+            }
+        } catch (error) {
+            setSelectedRowKeys([]);
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const actionButtons: ActionButtons = {
+        actionsComponent:
+            modes.length > 0 && modes.includes(ModeEnum.Update) ? (
+                <>
+                    <>
+                        <span className="selected-span" style={{ marginLeft: 16 }}>
+                            {hasSelected
+                                ? `${t('messages:selected-items-number', {
+                                      number: selectedRowKeys.length
+                                  })}`
+                                : ''}
+                        </span>
+                        <span style={{ marginLeft: 16 }}>
+                            <Button
+                                type="primary"
+                                onClick={() => {
+                                    Modal.confirm({
+                                        title: t('messages:confirm-cycle-count-generation'),
+                                        onOk: () => {
+                                            generateCycleCount(selectedRowKeys);
+                                            setRefetch((prev) => !prev);
+                                        },
+                                        okText: t('messages:confirm'),
+                                        cancelText: t('messages:cancel')
+                                    });
+                                }}
+                                disabled={!hasSelected}
+                                loading={isLoading}
+                            >
+                                {t('actions:generate-cycle-count')}
+                            </Button>
+                        </span>
+                    </>
+                </>
+            ) : null
+    };
+
     return (
         <>
             <AppHead title={headerData.title} />
             <ListComponent
                 searchCriteria={{
-                    model: configs.CYCLE_COUNT_MODEL_RECOMMENDED,
-                    status: configs.CYCLE_COUNT_STATUS_CREATED
+                    model: parseInt(configsParamsCodes.recommendedCycleCountModeCode)
                 }}
                 headerData={headerData}
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                rowSelection={rowSelection}
+                refetch={refetch}
+                checkbox={true}
+                actionButtons={actionButtons}
                 actionColumns={[
                     {
                         title: 'actions:actions',
                         key: 'actions',
                         render: (record: { id: string; status: number }) => (
                             <Space>
-                                {modes.length > 0 &&
-                                modes.includes(ModeEnum.Read) &&
-                                record.status == configs.CYCLE_COUNT_STATUS_CREATED ? (
-                                    <LinkButton
-                                        icon={<CaretRightOutlined />}
-                                        path={pathParams(`${rootPath}/[id]`, record.id)}
-                                    />
-                                ) : (
-                                    <></>
-                                )}
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
                                         icon={<EyeTwoTone />}
@@ -121,8 +235,7 @@ const CycleCountPages: PageComponent = () => {
                                 )}
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
-                                model.isSoftDeletable &&
-                                record.status > configs.CYCLE_COUNT_STATUS_CREATED ? (
+                                model.isSoftDeletable ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                         onClick={() =>

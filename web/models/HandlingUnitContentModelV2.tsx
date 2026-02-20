@@ -276,7 +276,7 @@ export const HandlingUnitContentModelV2: ModelType = {
         },
         'handlingUnit{location{name}}': {
             isListRequested: true,
-            isDefaultHiddenList: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
             searchingFormat: 'String',

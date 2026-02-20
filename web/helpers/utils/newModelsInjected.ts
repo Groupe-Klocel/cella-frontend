@@ -178,6 +178,10 @@ export const CycleCountMovementModelV2 = injectedModel(
     _CycleCountMovementModelV2,
     'CycleCountMovementSpeModel'
 );
+export const RecommendedCycleCountModelV2 = injectedModel(
+    _CycleCountModelV2,
+    'RecommendedCycleCountSpeModel'
+);
 export const DeliveryAddressModelV2 = injectedModel(
     _DeliveryAddressModelV2,
     'DeliveryAddressSpeModel'
