@@ -46,6 +46,16 @@ const PreparationManagementPage: PageComponent = () => {
             title: 'menu:pick-and-pack',
             path: '/pick-and-pack'
         },
+        getModesFromPermissions(permissions, 'mobile_equipment-position-release').includes(
+            ModeEnum.Read
+        ) && {
+            title: 'menu:equipment-position-release',
+            path: '/equipment-position-release'
+        },
+        getModesFromPermissions(permissions, 'mobile_wave-picking').includes(ModeEnum.Read) && {
+            title: 'menu:wave-picking',
+            path: '/wave-picking'
+        },
         getModesFromPermissions(permissions, 'mobile_box-cheking').includes(ModeEnum.Read) && {
             title: 'common:box-checking',
             path: '/box-checking'

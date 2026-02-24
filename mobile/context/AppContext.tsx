@@ -194,7 +194,8 @@ const initialState: State = {
     returnReception: {},
     movementToProcess: {},
     pick: {},
-    pack: {}
+    pack: {},
+    equipmentPositionRelease: {}
 };
 
 function reducer(state: State, action: Action): State {
@@ -293,7 +294,8 @@ function reducer(state: State, action: Action): State {
                     returnReception: {},
                     movementToProcess: {},
                     pick: {},
-                    pack: {}
+                    pack: {},
+                    equipmentPositionRelease: {}
                 };
             }
             return newState;
