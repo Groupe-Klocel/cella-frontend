@@ -23,13 +23,13 @@ import { WarehouseWorkerStockOwnerModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
-import MainLayout from '../../components/layouts/MainLayout';
+import MainLayout from '../../../components/layouts/MainLayout';
 import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
-import useTranslation from 'next-translate/useTranslation';
-import { warehouseWorkerStockOwnersRoutes as itemRoutes } from 'modules/WarehouseWorkerStockOwners/Static/warehouseWorkerStockOwnersRoutes';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
+import { warehouseWorkersRoutes as itemRoutes } from 'modules/WarehouseWorkers/Static/warehouseWorkersRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -49,7 +49,7 @@ const warehouseWorkerStockOwnersPages: PageComponent = () => {
     const breadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.id}`
+            breadcrumbName: `${data?.stockOwner_name}`
         }
     ].map((item) => {
         if (item.path) {
@@ -61,7 +61,7 @@ const warehouseWorkerStockOwnersPages: PageComponent = () => {
         return item;
     });
 
-    const pageTitle = `${t('common:warehouse-worker-stock-owners')} ${data?.id}`;
+    const pageTitle = `${t('common:warehouse-worker-stock-owner')} ${t('common:for')} ${data?.warehouseWorker_username}`;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)

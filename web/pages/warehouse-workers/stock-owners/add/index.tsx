@@ -21,12 +21,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
-import MainLayout from '../../../components/layouts/MainLayout';
+import MainLayout from '../../../../components/layouts/MainLayout';
 import { WarehouseWorkerStockOwnerModelV2 } from '@helpers';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
-import useTranslation from 'next-translate/useTranslation';
-import { warehouseWorkerStockOwnersRoutes } from 'modules/WarehouseWorkerStockOwners/Static/warehouseWorkerStockOwnersRoutes';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS } from '@helpers';
+import { warehouseWorkersRoutes } from 'modules/WarehouseWorkers/Static/warehouseWorkersRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -35,10 +35,24 @@ const WarehouseWorkerStockOwner: PageComponent = () => {
 
     const router = useRouter();
 
-    const { id } = router.query;
+    const { id, username } = router.query;
 
     //enter between {} the default values for the form (for instance status "In progress"))
     const defaultValues = { warehouseWorkerId: id };
+
+    const warehouseWorkerDetailBreadCrumb = [
+        ...warehouseWorkersRoutes,
+        {
+            breadcrumbName: `${username}`,
+            path: '/warehouse-workers/' + id
+        }
+    ];
+    const breadsCrumb = [
+        ...warehouseWorkerDetailBreadCrumb,
+        {
+            breadcrumbName: t('actions:add-warehouse-worker-stock-owner')
+        }
+    ];
 
     return (
         <>
@@ -48,7 +62,7 @@ const WarehouseWorkerStockOwner: PageComponent = () => {
                 headerComponent={
                     <HeaderContent
                         title={t('actions:add-warehouse-worker-stock-owner')}
-                        routes={warehouseWorkerStockOwnersRoutes}
+                        routes={breadsCrumb}
                         onBack={() => router.push(`/warehouse-workers/${id}`)}
                     />
                 }

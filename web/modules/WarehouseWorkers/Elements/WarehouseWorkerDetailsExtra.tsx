@@ -79,8 +79,9 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
             userRoleModes.length > 0 && userRoleModes.includes(ModeEnum.Create) ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:warehouse-worker-stock-owners') })}
-                    path={pathParamsFromDictionary('/warehouse-worker-stock-owners/add', {
-                        id
+                    path={pathParamsFromDictionary('/warehouse-workers/stock-owners/add', {
+                        id,
+                        username
                     })}
                     type="primary"
                 />
@@ -196,7 +197,7 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
                                     <LinkButton
                                         icon={<EyeTwoTone />}
                                         path={pathParams(
-                                            `/warehouse-worker-stock-owners/[id]`,
+                                            `/warehouse-workers/stock-owners/[id]`,
                                             record?.id
                                         )}
                                     />
