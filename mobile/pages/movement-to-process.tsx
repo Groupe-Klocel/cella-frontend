@@ -134,10 +134,8 @@ const MovementToProcess: PageComponent = () => {
     const checkIcon = <CheckCircleFilled style={{ color: '#52c41a', marginLeft: '5px' }} />;
 
     if (storedObject['step10']?.data?.movement) {
-        // Movement - toujours validé dès qu'il est sélectionné
         headerDisplay[t('common:movement')] = <span>{movement?.number}</span>;
 
-        // Location origine - validée après step25 (chosenLocation) ou step30 si huManagement
         headerDisplay[t('common:location-origin_abbr')] = (
             <span>
                 {movement?.originalLocationNameStr}
@@ -147,7 +145,6 @@ const MovementToProcess: PageComponent = () => {
             </span>
         );
 
-        // Handling Unit origine - validé après step30 (handlingUnit)
         typeof expectedOriginLocation === 'object' && expectedOriginLocation?.huManagement
             ? (headerDisplay[t('common:handling-unit-origin_abbr')] = (
                   <span>
@@ -157,7 +154,6 @@ const MovementToProcess: PageComponent = () => {
               ))
             : undefined;
 
-        // Stock Owner - validé après step50 (chosenContent) pour les mouvements non-fullHU
         if (!isFullHuMoving) {
             headerDisplay[t('common:stock-owner')] = (
                 <span>
@@ -167,7 +163,6 @@ const MovementToProcess: PageComponent = () => {
             );
         }
 
-        // Article - validé après step40 (articleLuBarcode) pour les mouvements non-fullHU
         if (!isFullHuMoving) {
             headerDisplay[t('common:article')] = (
                 <span>
@@ -177,7 +172,6 @@ const MovementToProcess: PageComponent = () => {
             );
         }
 
-        // Quantity - validée après step60 (movingQuantity) pour les mouvements non-fullHU
         if (!isFullHuMoving) {
             const movingQuantity = storedObject['step60']?.data?.movingQuantity;
             const totalQuantity = movement?.quantity;
@@ -197,7 +191,6 @@ const MovementToProcess: PageComponent = () => {
             );
         }
 
-        // Stock Status - validé après step50 (chosenContent) pour les mouvements non-fullHU
         if (!isFullHuMoving) {
             headerDisplay[t('common:stock-status')] = (
                 <span>
@@ -207,7 +200,6 @@ const MovementToProcess: PageComponent = () => {
             );
         }
 
-        // Reservation - validée après step50 (chosenContent) pour les mouvements non-fullHU
         if (!isFullHuMoving) {
             headerDisplay[t('common:reservation')] = (
                 <span>
@@ -219,7 +211,6 @@ const MovementToProcess: PageComponent = () => {
             );
         }
 
-        // Location finale - validée après step75 (chosenLocation)
         headerDisplay[t('common:location-final_abbr')] = (
             <span>
                 {movement?.finalLocationNameStr ??
