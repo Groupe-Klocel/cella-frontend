@@ -23,19 +23,18 @@ import { Button, Checkbox, Divider, Form, Input, InputNumber, Modal, Select, Spa
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { useAuth } from 'context/AuthContext';
 import {
-    BulkCreateLocationsMutation,
-    BulkCreateLocationsMutationVariables,
     GetReplenishTypesConfigsQuery,
     GetRotationsParamsQuery,
-    useBulkCreateLocationsMutation,
     useGetReplenishTypesConfigsQuery,
     useGetRotationsParamsQuery,
-    useListConfigsForAScopeQuery
+    useListConfigsForAScopeQuery,
+    useListParametersForAScopeQuery
 } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';
+import { gql } from 'graphql-request';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -57,6 +56,9 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
     const [selectedReplenishType, setSelectedReplenishType] = useState<any>(null);
     const [categoriesTexts, setCategoriesTexts] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+    const [stockStatusesTexts, setStockStatusesTexts] = useState<any>();
+    const [locationGroupIdsTexts, setLocationGroupIdsTexts] = useState<any>();
+    const [createLoading, setCreateLoading] = useState(false);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -101,6 +103,28 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
         }
     }, [categoriesTextList.data]);
 
+    //To render Simple stock statuses list
+    const stockStatusesTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'stock_statuses'
+    });
+
+    useEffect(() => {
+        if (stockStatusesTextList) {
+            setStockStatusesTexts(stockStatusesTextList?.data?.listParametersForAScope);
+        }
+    }, [stockStatusesTextList.data]);
+
+    //To render Simple location groups list
+    const locationGroupIdsTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
+        scope: 'location_location_group_id'
+    });
+
+    useEffect(() => {
+        if (locationGroupIdsTextList) {
+            setLocationGroupIdsTexts(locationGroupIdsTextList?.data?.listParametersForAScope);
+        }
+    }, [locationGroupIdsTextList.data]);
+
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
         const handleWindowClose = (e: BeforeUnloadEvent) => {
@@ -122,25 +146,45 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
         };
     }, [unsavedChanges]);
 
-    const { mutate, isPending: createLoading } = useBulkCreateLocationsMutation<Error>(
-        graphqlRequestClient,
-        {
-            onSuccess: (
-                data: BulkCreateLocationsMutation,
-                _variables: BulkCreateLocationsMutationVariables,
-                _context: any
-            ) => {
-                router.push(`/blocks/${props.blockId}`);
-                showSuccess(t('messages:success-created'));
-            },
-            onError: () => {
-                showError(t('messages:error-creating-data'));
-            }
-        }
-    );
+    const bulkCreateLocation = async (formData: any) => {
+        const blockId = formData['input']['blockId'];
+        setCreateLoading(true);
+        try {
+            const query = gql`
+                mutation executeFunction($functionName: String!, $event: JSON!) {
+                    executeFunction(functionName: $functionName, event: $event) {
+                        status
+                        output
+                    }
+                }
+            `;
+            const variables = {
+                functionName: 'bulk_create_locations',
+                event: {
+                    ...formData
+                }
+            };
 
-    const bulkCreateLocation = ({ input }: BulkCreateLocationsMutationVariables) => {
-        mutate({ input });
+            const response = await graphqlRequestClient.request(query, variables);
+
+            if (response.executeFunction.status === 'ERROR') {
+                showError(response.executeFunction.output);
+            } else if (
+                response.executeFunction.status === 'OK' &&
+                response.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${response.executeFunction.output.output.code}`));
+                console.log('Backend_message', response.executeFunction.output.output);
+            } else {
+                showSuccess(t('messages:success-created'));
+                router.push(`/blocks/${blockId}`);
+            }
+            setCreateLoading(false);
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+            setCreateLoading(false);
+        }
     };
 
     const onReplenishChange = (e: CheckboxChangeEvent) => {
@@ -152,6 +196,10 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
         form.setFieldsValue({ allowCycleCountStockMin: e.target.checked });
     };
 
+    const onHuManagementChange = (e: CheckboxChangeEvent) => {
+        form.setFieldsValue({ huManagement: e.target.checked });
+    };
+
     // Call api to create new group
     const onFinish = () => {
         form.validateFields()
@@ -160,6 +208,9 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
                 const formData = form.getFieldsValue(true);
                 formData.replenishType = parseInt(formData.replenishType);
                 if (formData['replenish'] == false) formData.replenishType = 0;
+                formData.replenish = formData.replenish ? true : false;
+                formData.allowCycleCountStockMin = formData.allowCycleCountStockMin ? true : false;
+                formData.huManagement = formData.huManagement ? true : false;
                 formData.baseUnitRotation = parseInt(formData.rotation);
                 formData.status = configs.LOCATION_STATUS_AVAILABLE;
                 delete formData.rotation;
@@ -237,7 +288,6 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
                 >
                     <Input />
                 </Form.Item>
-                <Divider />
                 <Form.Item
                     label={t('d:nb-aisle')}
                     name="numberOfAisle"
@@ -314,6 +364,19 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
                     <InputNumber min={0} />
                 </Form.Item>
                 <Divider />
+                <Form.Item label={t('d:length')} name="length">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:width')} name="width">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:height')} name="height">
+                    <InputNumber />
+                </Form.Item>
+                <Form.Item label={t('d:maxWeight')} name="weight">
+                    <InputNumber />
+                </Form.Item>
+                <Divider />
                 <Form.Item name="replenish" initialValue={false}>
                     <Checkbox onChange={onReplenishChange}>{t('d:replenish')}</Checkbox>
                 </Form.Item>
@@ -382,6 +445,29 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
                     <Checkbox onChange={onStockMiniChange}>
                         {t('d:allowCycleCountStockMin')}
                     </Checkbox>
+                </Form.Item>
+                <Form.Item name="huManagement">
+                    <Checkbox onChange={onHuManagementChange}>{t('d:huManagement')}</Checkbox>
+                </Form.Item>
+                <Form.Item label={t('d:stockStatus')} name="stockStatus" rules={[]}>
+                    <Select defaultValue="">
+                        <Option value="">-</Option>
+                        {stockStatusesTexts?.map((stockStatus: any) => (
+                            <Option key={stockStatus.id} value={parseInt(stockStatus.code)}>
+                                {stockStatus.text}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+                <Form.Item label={t('d:locationGroupIdText')} name="locationGroupId" rules={[]}>
+                    <Select defaultValue="">
+                        <Option value="">-</Option>
+                        {locationGroupIdsTexts?.map((locationGroupId: any) => (
+                            <Option key={locationGroupId.id} value={locationGroupId.code}>
+                                {locationGroupId.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>
