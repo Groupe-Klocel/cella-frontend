@@ -240,6 +240,7 @@ const HuMovement: PageComponent = () => {
                         storedObject['step20'].data.handlingUnit.handlingUnitContents[0].stockStatus
                     }
                     processName={processName}
+                    handlingUnitCategory={storedObject['step20'].data.handlingUnit.category}
                 />
             ) : (
                 <></>
