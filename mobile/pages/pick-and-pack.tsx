@@ -454,7 +454,10 @@ const PickAndPack: PageComponent = () => {
         form.resetFields();
     };
 
+    const [missingModalConfirmLoading, setMissingModalConfirmLoading] = useState<boolean>(false);
+
     const onClickOk = () => {
+        setMissingModalConfirmLoading(true);
         form.validateFields()
             .then(async (values) => {
                 console.log('Missing modal form values:', values);
@@ -495,9 +498,11 @@ const PickAndPack: PageComponent = () => {
 
                 setVisible(false);
                 form.resetFields();
+                setMissingModalConfirmLoading(false);
             })
             .catch((errorInfo) => {
                 console.log('Validation failed:', errorInfo);
+                setMissingModalConfirmLoading(false);
             });
     };
 
@@ -512,6 +517,7 @@ const PickAndPack: PageComponent = () => {
                 open={visible}
                 onCancel={handleCancel}
                 onOk={onClickOk}
+                confirmLoading={missingModalConfirmLoading}
                 width={800}
                 okText={t('actions:submit')}
                 cancelText={t('actions:cancel')}
@@ -553,7 +559,7 @@ const PickAndPack: PageComponent = () => {
             },
             position: 'top',
             style: {
-                background: 'radial-gradient(circle, #ca511dff 70%, #d0981eff 100%)'
+                background: '#d46b08'
             }
         }
     ];

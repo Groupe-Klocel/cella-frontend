@@ -64,9 +64,9 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
     };
 
     const buttonStyle: React.CSSProperties = {
-        boxShadow: 'inset 0px 1px 0px 0px #f9eca0',
-        background: 'radial-gradient(circle, #f5c73d 70%, #f4a261 100%)',
-        border: '1px solid #f5c73d',
+        boxShadow: 'inset 0px 1px 0px 0px #f2c794',
+        background: '#d46b08',
+        border: '1px solid #b8530a',
         color: '#000000',
         fontSize: '10px',
         maxWidth: '25%',
@@ -75,11 +75,21 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
         whiteSpace: 'normal',
         minHeight: '35px',
         width: '100%',
-        flexBasis: 'calc(30% - 5px)'
+        flexBasis: 'calc(30% - 5px)',
+        transition: 'all 0.1s ease'
     };
+
+    const activeButtonStyle = `
+        .custom-button:active {
+            transform: translateY(1px) !important;
+            box-shadow: inset 0px 2px 4px 0px rgba(0,0,0,0.3) !important;
+            background: #c2610a !important;
+        }
+    `;
 
     return (
         <>
+            <style>{activeButtonStyle}</style>
             {topButtons.length > 0 && (
                 <div style={containerStyle}>
                     {topButtons.map((button, index) => (
@@ -87,6 +97,7 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
                             key={`top-${index}`}
                             icon={button.icon}
                             onClick={button.onClick}
+                            className="custom-button"
                             style={button.style ? { ...buttonStyle, ...button.style } : buttonStyle}
                         >
                             {button.label}
