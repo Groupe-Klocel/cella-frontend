@@ -35,10 +35,13 @@ import styled from 'styled-components';
 export interface ISimilarLocationsV2Props {
     articleId: string;
     originalContentId?: string;
+    handlingUnitCategory?: number;
     stockOwnerId?: string;
     stockStatus?: number;
     reservation?: string;
     processName?: string;
+    handlingUnitContentIdToExclude?: string[];
+    locationIdToExclude?: string[];
     isEmptyLocations?: boolean;
     isEmptyWithHU?: boolean;
     orderBy?: any;
@@ -82,10 +85,13 @@ const SmallSelect = styled(Select)`
 export const SimilarLocationsV2 = ({
     articleId,
     originalContentId,
+    handlingUnitCategory,
     stockOwnerId,
     stockStatus,
     reservation,
     processName,
+    handlingUnitContentIdToExclude,
+    locationIdToExclude,
     isEmptyLocations,
     isEmptyWithHU,
     orderBy,
@@ -110,17 +116,31 @@ export const SimilarLocationsV2 = ({
                 '0',
             10
         );
-        const nbPicking = parseInt(
+        const nbPickingSimilar = parseInt(
             findValueByScopeAndCode(
                 parameters,
                 'similar_locations',
                 `${processName}_nb-results-picking`
             )
         );
-        const nbStock = parseInt(
+        const nbStockSimilar = parseInt(
             findValueByScopeAndCode(
                 parameters,
                 'similar_locations',
+                `${processName}_nb-results-stock`
+            )
+        );
+        const nbPickingEmpty = parseInt(
+            findValueByScopeAndCode(
+                parameters,
+                'empty_locations',
+                `${processName}_nb-results-picking`
+            )
+        );
+        const nbStockEmpty = parseInt(
+            findValueByScopeAndCode(
+                parameters,
+                'empty_locations',
                 `${processName}_nb-results-stock`
             )
         );
@@ -135,7 +155,15 @@ export const SimilarLocationsV2 = ({
             )
         );
 
-        return { isWithBlockFilter, nbPicking, nbStock, cumulativeParam, similarFeatures };
+        return {
+            isWithBlockFilter,
+            nbPickingSimilar,
+            nbStockSimilar,
+            nbPickingEmpty,
+            nbStockEmpty,
+            cumulativeParam,
+            similarFeatures
+        };
     }, [parameters]);
 
     const withBlockFilter = configsParamsCodes?.isWithBlockFilter === 1;
@@ -196,9 +224,17 @@ export const SimilarLocationsV2 = ({
     };
 
     const defaultFilter = { articleId: `${articleId}` };
+    const blockFilter = block ? { blockId: block } : undefined;
+    const handlingUnitCategoryFilter = handlingUnitCategory
+        ? { handlingUnitCategory: handlingUnitCategory }
+        : undefined;
     const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
     const stockStatusFilter = stockStatus ? { stockStatus: stockStatus } : undefined;
     const reservationFilter = reservation ? { reservation: reservation } : undefined;
+    const handlingUnitContentIdToExcludeFilter = handlingUnitContentIdToExclude
+        ? { handlingUnitContentIdToExclude }
+        : undefined;
+    const locationIdToExcludeFilter = locationIdToExclude ? { locationIdToExclude } : undefined;
     const cumulativeFilter =
         configsParamsCodes.cumulativeParam === 1 ? { isCumulativeLocations: true } : undefined;
     const emptyLocationsFilter = isEmptyLocations ? { isEmptyLocations } : undefined;
@@ -208,20 +244,34 @@ export const SimilarLocationsV2 = ({
         isFilteredByFeatures && features
             ? { similarFeatures: transformFeatures(features) }
             : undefined;
-    const blockFilter = block ? { blockId: block } : undefined;
 
     const filters = {
         ...defaultFilter,
+        ...blockFilter,
+        ...handlingUnitCategoryFilter,
         ...stockOwnerFilter,
         ...stockStatusFilter,
         ...reservationFilter,
+        ...handlingUnitContentIdToExcludeFilter,
+        ...locationIdToExcludeFilter,
         ...cumulativeFilter,
         ...emptyLocationsFilter,
         ...emptyWithHUFilter,
         ...orderByFilter,
-        ...featureFilter,
-        ...blockFilter
+        ...featureFilter
     };
+
+    let nbResultsPicking: number;
+    let nbResultsStock: number;
+
+    if (isEmptyLocations) {
+        nbResultsPicking = configsParamsCodes.nbPickingEmpty;
+        nbResultsStock = configsParamsCodes.nbStockEmpty;
+        filters.isCumulativeLocations = false;
+    } else {
+        nbResultsPicking = configsParamsCodes.nbPickingSimilar;
+        nbResultsStock = configsParamsCodes.nbStockSimilar;
+    }
 
     async function retrieveSimilarLocations() {
         const query = gql`
@@ -236,8 +286,8 @@ export const SimilarLocationsV2 = ({
             functionName: 'get_locations',
             event: {
                 input: {
-                    nbResultsPicking: configsParamsCodes.nbPicking,
-                    nbResultsStock: configsParamsCodes.nbStock,
+                    nbResultsPicking: nbResultsPicking,
+                    nbResultsStock: nbResultsStock,
                     ...filters,
                     handlingUnitContentIdToExclude: originalContentId
                 }
