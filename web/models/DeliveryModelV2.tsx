@@ -487,6 +487,26 @@ export const DeliveryModelV2: ModelType = {
             config: null,
             param: null
         },
+        'order{id}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: false,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         orderDate: {
             isListRequested: true,
             isDefaultHiddenList: false,
