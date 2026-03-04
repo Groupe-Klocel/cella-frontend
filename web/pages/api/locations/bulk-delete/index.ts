@@ -93,7 +93,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const locations: any = await graphqlRequestClient
         .request(query, variables, requestHeader)
         .catch((error: any) => {
-            if (error.response.errors[0].extensions.is_error) {
+            if (error.response?.errors?.[0]?.extensions?.is_error) {
                 res.status(500).json({
                     error: {
                         is_error: error.response.errors[0].extensions.is_error,
@@ -103,7 +103,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                         exception: error.response.errors[0].extensions.exception
                     }
                 });
+                return;
             }
+            throw error;
         });
 
     locations.locationsRange.forEach((item: any) => {
@@ -120,21 +122,26 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             bulkDeleteLocations(locationsIds: $locationsIds)
         }
     `;
-    const result = await graphqlRequestClient
-        .request(bulkDeleteLocationsMutation, bulkDeleteLocationsVariables, requestHeader)
-        .catch((error: any) => {
-            if (error.response.errors[0].extensions.is_error) {
-                res.status(500).json({
-                    error: {
-                        is_error: error.response.errors[0].extensions.is_error,
-                        code: error.response.errors[0].extensions.code,
-                        message: error.response.errors[0].message,
-                        variables: error.response.errors[0].extensions.variables,
-                        exception: error.response.errors[0].extensions.exception
-                    }
-                });
-            }
-        });
+    const result = await graphqlRequestClient.request(
+        bulkDeleteLocationsMutation,
+        bulkDeleteLocationsVariables,
+        requestHeader
+    );
+    // .catch((error: any) => {
+    //     if (error.response?.errors?.[0]?.extensions?.is_error) {
+    //         res.status(500).json({
+    //             error: {
+    //                 is_error: error.response.errors[0].extensions.is_error,
+    //                 code: error.response.errors[0].extensions.code,
+    //                 message: error.response.errors[0].message,
+    //                 variables: error.response.errors[0].extensions.variables,
+    //                 exception: error.response.errors[0].extensions.exception
+    //             }
+    //         });
+    //         return;
+    //     }
+    //     throw error;
+    // });
 
     if (result) res.status(200).json({ response: { locations: result } });
 };
