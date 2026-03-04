@@ -204,26 +204,31 @@ const MovementToProcess: PageComponent = () => {
             headerDisplay[t('common:reservation')] = (
                 <span>
                     {movement?.initialReservation}
-                    {storedObject['step50']?.data?.chosenContent ? checkIcon : null}
+                    {movement?.initialReservation && storedObject['step50']?.data?.chosenContent
+                        ? checkIcon
+                        : null}
                 </span>
             );
         }
 
         headerDisplay[t('common:location-final_abbr')] = (
             <span>
-                {movement?.finalLocationNameStr}
+                {movement?.finalLocationNameStr ??
+                    storedObject['step75']?.data?.chosenLocation?.name}
                 {storedObject['step75']?.data?.chosenLocation && checkIcon}
             </span>
         );
 
         // Handling Unit finale - validé après step80 (handlingUnit)
-        expectedFinalLocation?.huManagement
+        expectedFinalLocation?.huManagement ||
+        storedObject['step75']?.data?.chosenLocation?.huManagement
             ? (headerDisplay[t('common:handling-unit-final_abbr')] = (
                   <span>
                       {movement?.finalHandlingUnitNameStr ??
                           storedObject['step80']?.data?.handlingUnit?.name}
                       {!movement?.finalHandlingUnitNameStr &&
                           storedObject['step80']?.data?.handlingUnit?.name &&
+                          !storedObject['step75']?.data?.chosenLocation?.huManagement &&
                           ` (${t('common:new')})`}
                       {storedObject['step80']?.data?.handlingUnit && checkIcon}
                   </span>
