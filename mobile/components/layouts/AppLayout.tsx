@@ -51,7 +51,8 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         parameters,
         movementToProcess,
         pick,
-        pack
+        pack,
+        equipmentPositionRelease
     } = useAppState();
     const router = useRouter();
     const [storage, setStorage] = useState<any>(null);
@@ -154,6 +155,15 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [pack, storage]);
 
     useEffect(() => {
+        if (storage && equipmentPositionRelease) {
+            const timer = setTimeout(() => {
+                storage.set('equipmentPositionRelease', JSON.stringify(equipmentPositionRelease));
+            }, debounceTimeout);
+            return () => clearTimeout(timer);
+        }
+    }, [equipmentPositionRelease, storage]);
+
+    useEffect(() => {
         if (storage) {
             dispatchUser({
                 type: 'UPDATE_BY_PROCESS',
@@ -184,6 +194,11 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 type: 'UPDATE_BY_PROCESS',
                 processName: 'pack',
                 object: JSON.parse(storage.get('pack') || '{}')
+            });
+            dispatchUser({
+                type: 'UPDATE_BY_PROCESS',
+                processName: 'equipmentPositionRelease',
+                object: JSON.parse(storage.get('equipmentPositionRelease') || '{}')
             });
         }
     }, [storage]);
@@ -233,7 +248,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     const getTranslations = useCallback(async () => {
         const query = gql`
             query {
-                translations(filters: { type: "mobile" }, itemsPerPage: 999999999) {
+                translations(filters: { type: ["mobile", "*"] }, itemsPerPage: 999999999) {
                     count
                     results {
                         type

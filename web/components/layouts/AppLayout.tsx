@@ -147,7 +147,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     const getTranslations = useCallback(async () => {
         const query = gql`
             query {
-                translations(filters: { type: "wm" }, itemsPerPage: 999999999) {
+                translations(filters: { type: ["wm", "*"] }, itemsPerPage: 999999999) {
                     count
                     results {
                         type

@@ -51,6 +51,7 @@ export interface IPermissionListProps {
     setUpdatedRows?: any;
     setUnsavedChanges?: any;
     warehouseId?: any;
+    monoPermissions?: any;
 }
 
 const PermissionList = ({
@@ -60,7 +61,8 @@ const PermissionList = ({
     updatedRows,
     setUpdatedRows,
     setUnsavedChanges,
-    warehouseId
+    warehouseId,
+    monoPermissions
 }: IPermissionListProps) => {
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.Permission);
@@ -156,19 +158,28 @@ const PermissionList = ({
 
     // Set Columns
     const columns: ColumnType<CustomColumn>[] = [
-        {
-            title: 'd:table',
-            dataIndex: ['table'],
-            key: 'table'
-        }
+        monoPermissions
+            ? {
+                  title: 'd:buttons',
+                  dataIndex: ['table'],
+                  key: 'buttons'
+              }
+            : {
+                  title: 'd:screens',
+                  dataIndex: ['table'],
+                  key: 'screens'
+              }
     ];
 
-    Object.keys(ModeEnum).forEach((key) => {
+    (monoPermissions
+        ? [Object.keys(ModeEnum).find((mode) => mode === 'Read')!]
+        : Object.keys(ModeEnum)
+    ).forEach((key) => {
         key = key.toLowerCase();
         columns.push({
             title: (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span>{t(`d:${key}`)}</span>
+                    <span>{t(monoPermissions ? 'd:has-access' : `d:${key}`)}</span>
                     <Button
                         size={'small'}
                         style={{ borderColor: '#0B5E00' }}

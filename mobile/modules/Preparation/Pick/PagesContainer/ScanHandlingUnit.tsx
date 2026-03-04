@@ -133,6 +133,9 @@ export const ScanHandlingUnit = ({
                                 name
                             }
                             handlingUnitOutbounds {
+                                id
+                                status
+                                name
                                 roundId
                             }
                             handlingUnitContents(
