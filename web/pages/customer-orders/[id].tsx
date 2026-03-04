@@ -223,6 +223,8 @@ const CustomerOrderPage: PageComponent = () => {
         });
     };
 
+    const [deliveriesToDisplay, setDeliveriesToDisplay] = useState<any[]>([]);
+
     //to retrieve deliveries Ids from orderLines_deliveryLine attached to current order
     const getOrderLines = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
@@ -250,6 +252,30 @@ const CustomerOrderPage: PageComponent = () => {
         const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
         return handlingUnitInfos;
     };
+
+    useEffect(() => {
+        async function fetchData() {
+            const result = await getOrderLines();
+            if (result) {
+                const orderLines = result.orderLines.results;
+                const deliveries: any[] = [];
+                // Iterate through results
+                orderLines.forEach((result: any) => {
+                    // Iterate through delivery lines
+                    result.deliveryLines.forEach((deliveryLine: any) => {
+                        // Extract delivery information
+                        const delivery = deliveryLine.delivery;
+                        const isDuplicate = deliveries.some((d) => d.id === delivery.id);
+                        if (!isDuplicate) {
+                            deliveries.push(delivery.id);
+                        }
+                    });
+                });
+                setDeliveriesToDisplay(deliveries);
+            }
+        }
+        fetchData();
+    }, [id]);
 
     //#endregion
 
@@ -480,6 +506,7 @@ const CustomerOrderPage: PageComponent = () => {
                         status={data?.status}
                         fixedPrice={data?.fixedPrice}
                         setInvoiceAddress={setInvoiceAddress}
+                        deliveriesIds={deliveriesToDisplay}
                         refetchPaymentLine={refetchPaymentLine}
                     />
                 }
