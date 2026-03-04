@@ -49,7 +49,9 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
     const modes = getModesFromPermissions(permissions, Table.Permission);
     const [enableUpdate, setEnableUpdate] = useState<any>();
     const [mobileUpdatedRows, setMobileUpdatedRows] = useState<any>();
+    const [mobileButtonUpdatedRows, setMobileButtonUpdatedRows] = useState<any>();
     const [wmUpdatedRows, setWmUpdatedRows] = useState<any>();
+    const [wmButtonUpdatedRows, setWmButtonUpdatedRows] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     const roleData = useGetRoles({ id: roleId }, 1, 100, null);
@@ -147,7 +149,9 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
     });
 
     const [mobileTables, setMobileTables] = useState<any>();
+    const [mobileButtonTables, setMobileButtonTables] = useState<any>();
     const [wmTables, setWmTables] = useState<any>();
+    const [wmButtonTables, setWmButtonTables] = useState<any>();
     useEffect(() => {
         if (tablesList) {
             tablesList?.data?.listConfigsForAScope.sort(
@@ -157,12 +161,34 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
             );
             setMobileTables(
                 tablesList?.data?.listConfigsForAScope.filter(
-                    (table: any) => table.code.split('_')[0] === 'mobile'
+                    (table: any) =>
+                        table.code.split('_')[0] === 'mobile' &&
+                        table.code.split('_')[1] !== 'button' &&
+                        table.code.split('_').length === 2
+                )
+            );
+            setMobileButtonTables(
+                tablesList?.data?.listConfigsForAScope.filter(
+                    (table: any) =>
+                        table.code.split('_')[0] === 'mobile' &&
+                        table.code.split('_')[1] === 'button' &&
+                        table.code.split('_').length === 3
                 )
             );
             setWmTables(
                 tablesList?.data?.listConfigsForAScope.filter(
-                    (table: any) => table.code.split('_')[0] === 'wm'
+                    (table: any) =>
+                        table.code.split('_')[0] === 'wm' &&
+                        table.code.split('_')[1] !== 'button' &&
+                        table.code.split('_').length === 2
+                )
+            );
+            setWmButtonTables(
+                tablesList?.data?.listConfigsForAScope.filter(
+                    (table: any) =>
+                        table.code.split('_')[0] === 'wm' &&
+                        table.code.split('_')[1] === 'button' &&
+                        table.code.split('_').length === 3
                 )
             );
         }
@@ -204,7 +230,7 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
                                 </>
                             }
                         />
-                        {mobileTables && wmTables && (
+                        {mobileTables && wmTables && mobileButtonTables && wmButtonTables && (
                             <div style={{ padding: '0 20px' }}>
                                 <h2>{t('d:mobile') + ' ' + t('common:permissions')}</h2>
                                 <PermissionList
@@ -216,6 +242,16 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
                                     warehouseId={roleData.data?.roles?.results[0].warehouseId}
                                     tables={mobileTables!}
                                 />
+                                <PermissionList
+                                    searchCriteria={{ roleId: roleId }}
+                                    setEnableUpdate={setEnableUpdate}
+                                    updatedRows={mobileButtonUpdatedRows}
+                                    setUpdatedRows={setMobileButtonUpdatedRows}
+                                    setUnsavedChanges={setUnsavedChanges}
+                                    warehouseId={roleData.data?.roles?.results[0].warehouseId}
+                                    tables={mobileButtonTables!}
+                                    monoPermissions={true}
+                                />
 
                                 <h2>WM {t('common:permissions')}</h2>
                                 <PermissionList
@@ -226,6 +262,16 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
                                     setUnsavedChanges={setUnsavedChanges}
                                     warehouseId={roleData.data?.roles?.results[0].warehouseId}
                                     tables={wmTables!}
+                                />
+                                <PermissionList
+                                    searchCriteria={{ roleId: roleId }}
+                                    setEnableUpdate={setEnableUpdate}
+                                    updatedRows={wmButtonUpdatedRows}
+                                    setUpdatedRows={setWmButtonUpdatedRows}
+                                    setUnsavedChanges={setUnsavedChanges}
+                                    warehouseId={roleData.data?.roles?.results[0].warehouseId}
+                                    tables={wmButtonTables!}
+                                    monoPermissions={true}
                                 />
                             </div>
                         )}

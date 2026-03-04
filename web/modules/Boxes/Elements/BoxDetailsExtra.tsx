@@ -18,11 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
-import { EditTwoTone, EyeTwoTone, LockTwoTone, DeleteOutlined } from '@ant-design/icons';
-import { getModesFromPermissions, pathParams, pathParamsFromDictionary } from '@helpers';
+import {
+    EditTwoTone,
+    EyeTwoTone,
+    LockTwoTone,
+    DeleteOutlined,
+    ExclamationCircleOutlined
+} from '@ant-design/icons';
+import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space } from 'antd';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
@@ -30,28 +36,59 @@ import { HandlingUnitContentOutboundModelV2 } from '@helpers';
 import { HandlingUnitOutboundBarcodeModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
+import { MissingModal } from 'components/common/smart/Modals/MissingModal';
 
 export interface IItemDetailsProps {
     boxId?: string | any;
     boxName?: string | any;
+    setRefetchTrigger?: (arg0: any) => void;
 }
 
-const BoxDetailsExtra = ({ boxId, boxName }: IItemDetailsProps) => {
+const BoxDetailsExtra = ({ boxId, boxName, setRefetchTrigger }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
-    const { permissions } = useAppState();
+    const { permissions, configs } = useAppState();
     const huContentOutboundModes = getModesFromPermissions(
         permissions,
         Table.HandlingUnitContentOutbound
     );
+
+    const missingPermissions = getModesFromPermissions(
+        permissions,
+        'wm_button_missing-handling'
+    ).includes(ModeEnum.Read);
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+            return items.find((item: any) => item.scope === scope && item.value === value)?.code;
+        };
+
+        const HUCOStatusStarted = parseInt(
+            findCodeByScopeAndValue(configs, 'handling_unit_content_outbound_status', 'Started') ??
+                '0',
+            10
+        );
+        const HUCOStatusInPreparation = parseInt(
+            findCodeByScopeAndValue(
+                configs,
+                'handling_unit_content_outbound_status',
+                'In preparation'
+            ) ?? '0',
+            10
+        );
+
+        return { HUCOStatusStarted, HUCOStatusInPreparation };
+    }, [configs]);
 
     const HUOBarcodeModes = getModesFromPermissions(permissions, Table.HandlingUnitOutboundBarcode);
 
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [barcodeIdToDelete, setBarcodeIdToDelete] = useState<string | undefined>();
+    const [showMissingModal, setShowMissingModal] = useState(false);
+    const [missingModalAdditionalInfo, setMissingModalAdditionalInfo] = useState<any>();
 
-    const [, setHandlingUnitContentOutboundsData] = useState<any>();
+    const [handlingUnitContentOutboundsData, setHandlingUnitContentOutboundsData] = useState<any>();
 
     const huContentOutboundHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:boxLines') }),
@@ -123,7 +160,16 @@ const BoxDetailsExtra = ({ boxId, boxName }: IItemDetailsProps) => {
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: { id: string; status: number }) => (
+                                render: (record: {
+                                    id: string;
+                                    status: number;
+                                    lineNumber: any;
+                                    quantityToBePicked: any;
+                                    pickedQuantity: any;
+                                    missingQuantity: any;
+                                    roundLineDetail_processedQuantity: any;
+                                    roundLineDetail_quantityToBeProcessed: any;
+                                }) => (
                                     <Space>
                                         {huContentOutboundModes.length == 0 ||
                                         !huContentOutboundModes.includes(ModeEnum.Read) ? (
@@ -177,6 +223,40 @@ const BoxDetailsExtra = ({ boxId, boxName }: IItemDetailsProps) => {
                                         ) : (
                                             <></>
                                         )}
+                                        {missingPermissions &&
+                                            (record?.status ===
+                                                configsParamsCodes.HUCOStatusStarted ||
+                                                record?.status ===
+                                                    configsParamsCodes.HUCOStatusInPreparation) &&
+                                            record.roundLineDetail_quantityToBeProcessed !==
+                                                record.roundLineDetail_processedQuantity && (
+                                                <Button
+                                                    icon={
+                                                        <ExclamationCircleOutlined
+                                                            style={{ color: '#d46b08' }}
+                                                        />
+                                                    }
+                                                    onClick={() => {
+                                                        setMissingModalAdditionalInfo({
+                                                            id: record.id,
+                                                            box: boxName,
+                                                            line: record.lineNumber,
+                                                            maxQuantity:
+                                                                record.roundLineDetail_quantityToBeProcessed -
+                                                                    record.roundLineDetail_processedQuantity <
+                                                                record.quantityToBePicked -
+                                                                    record.missingQuantity -
+                                                                    record.pickedQuantity
+                                                                    ? record.roundLineDetail_quantityToBeProcessed -
+                                                                      record.roundLineDetail_processedQuantity
+                                                                    : record.quantityToBePicked -
+                                                                      record.missingQuantity -
+                                                                      record.pickedQuantity
+                                                        });
+                                                        setShowMissingModal(true);
+                                                    }}
+                                                />
+                                            )}
                                     </Space>
                                 )
                             }
@@ -260,6 +340,16 @@ const BoxDetailsExtra = ({ boxId, boxName }: IItemDetailsProps) => {
                         ]}
                     />
                     <Divider />
+                    <MissingModal
+                        showModal={{ showMissingModal, setShowMissingModal }}
+                        inputToValidate={{
+                            handlingUnitContentOutboundId: handlingUnitContentOutboundsData?.find(
+                                (line: { id: string }) => line.id === missingModalAdditionalInfo?.id
+                            )?.id
+                        }}
+                        additionalInfos={missingModalAdditionalInfo}
+                        setRefetchTrigger={setRefetchTrigger}
+                    />
                 </>
             ) : (
                 <></>

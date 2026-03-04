@@ -47,6 +47,7 @@ const BoxPage: PageComponent = () => {
     const [cancelInfo, setCancelInfo] = useState<any>();
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
+    const [refetchTrigger, setRefetchTrigger] = useState(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -152,9 +153,16 @@ const BoxPage: PageComponent = () => {
         <>
             <AppHead title={headerData.title} />
             <ItemDetailComponent
-                extraDataComponent={<BoxDetailsExtra boxId={id} boxName={data?.name} />}
+                extraDataComponent={
+                    <BoxDetailsExtra
+                        boxId={id}
+                        boxName={data?.name}
+                        setRefetchTrigger={setRefetchTrigger}
+                    />
+                }
                 id={id!}
                 headerData={headerData}
+                refetch={refetchTrigger}
                 dataModel={model}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
