@@ -19,20 +19,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 // Breadcrumb Name should be the same as in the translation file
 
-export const cycleCountsRoutes = [
+export const recommendedCycleCountsRoutes = [
     {
         breadcrumbName: 'menu:stock-management'
     },
     {
-        path: '/cycle-counts',
-        breadcrumbName: 'menu:cycle-counts'
-    }
-];
-
-export const addCycleCountRoutes = [
-    ...cycleCountsRoutes,
-    {
-        path: '/add-cycle-counts',
-        breadcrumbName: 'actions:add-cycle-count'
+        path: '/recommended-cycle-counts',
+        breadcrumbName: 'menu:recommended-cycle-counts'
     }
 ];

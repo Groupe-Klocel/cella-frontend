@@ -27,8 +27,8 @@ import { CycleCountLineModelV2 } from '@helpers';
 import { CycleCountMovementModelV2 } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import configs from '../../../../common/configs.json';
 import { CycleCountErrorModelV2 } from '@helpers';
+import { useMemo } from 'react';
 
 export interface IItemDetailsProps {
     cycleCountId?: string | any;
@@ -41,7 +41,7 @@ const CycleCountDetailsExtra = ({
     cycleCountModel,
     cycleCountStatus
 }: IItemDetailsProps) => {
-    const { permissions } = useAppState();
+    const { permissions, configs } = useAppState();
     const { t } = useTranslation();
     const cycleCountLineModes = getModesFromPermissions(
         permissions,
@@ -55,6 +55,32 @@ const CycleCountDetailsExtra = ({
         permissions,
         CycleCountErrorModelV2.tableName
     );
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+
+        const recommendedCycleCountModeCode = findCodeByScopeAndValue(
+            configs,
+            'cycle_count_model',
+            'Recommended'
+        );
+
+        const createdCycleCountStatus = findCodeByScopeAndValue(
+            configs,
+            'cycle_count_status',
+            'created'
+        );
+
+        return {
+            recommendedCycleCountModeCode,
+            createdCycleCountStatus
+        };
+    }, [configs]);
 
     const CycleCountLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:cycle-count-lines') }),
@@ -114,8 +140,8 @@ const CycleCountDetailsExtra = ({
             ) : (
                 <></>
             )}
-            {cycleCountModel != configs.CYCLE_COUNT_MODEL_RECOMMENDED &&
-            cycleCountStatus != configs.CYCLE_COUNT_STATUS_CREATED &&
+            {cycleCountModel != parseInt(configsParamsCodes.recommendedCycleCountModeCode) &&
+            cycleCountStatus != parseInt(configsParamsCodes.createdCycleCountStatus) &&
             cycleCountMovementModes.length > 0 &&
             cycleCountMovementModes.includes(ModeEnum.Read) ? (
                 <>
@@ -155,7 +181,9 @@ const CycleCountDetailsExtra = ({
             ) : (
                 <></>
             )}
-            {cycleCountErrorModes.length > 0 && cycleCountErrorModes.includes(ModeEnum.Read) ? (
+            {cycleCountModel != parseInt(configsParamsCodes.recommendedCycleCountModeCode) &&
+            cycleCountErrorModes.length > 0 &&
+            cycleCountErrorModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
                     <ListComponent
