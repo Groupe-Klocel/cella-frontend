@@ -487,7 +487,9 @@ const Pick: PageComponent = () => {
                     ...values,
                     proposedRoundAdvisedAddresses:
                         storedObject['step10']?.data?.proposedRoundAdvisedAddresses,
-                    round: storedObject['step10']?.data?.round
+                    round: storedObject['step10']?.data?.round,
+                    equipmentHUOPalletId:
+                        storedObject['step15']?.data?.handlingUnit?.handlingUnitOutbounds?.[0]?.id
                 };
                 const query = gql`
                     mutation executeFunction($functionName: String!, $event: JSON!) {
@@ -513,10 +515,7 @@ const Pick: PageComponent = () => {
                     processName,
                     dispatch,
                     setIsAutoValidateLoading,
-                    huName:
-                        storedObject.step15?.data?.handlingUnit?.name ||
-                        storedObject.step15?.data?.handlingUnit ||
-                        '',
+                    huName: storedObject.step15?.data?.handlingUnit,
                     huType: storedObject.step15?.data?.handlingUnitType,
                     roundNumber: storedObject.step10?.data?.round?.number,
                     context: 'declareMissing'
@@ -557,8 +556,14 @@ const Pick: PageComponent = () => {
                             {
                                 type: 'number',
                                 min: 1,
+                                message: t('messages:select-number-min', {
+                                    min: 1
+                                })
+                            },
+                            {
+                                type: 'number',
                                 max: maxQuantity,
-                                message: t('messages:error-message-invalid-quantity', {
+                                message: t('messages:select-number-max', {
                                     max: maxQuantity
                                 })
                             }
@@ -573,7 +578,7 @@ const Pick: PageComponent = () => {
 
     const buttonManagement: ButtonManagementType = [
         {
-            label: 'manquant',
+            label: t('common:missing-quantity'),
             icon: null,
             visibleOnSteps: [50],
             permissionsToSeeTheButton: getModesFromPermissions(

@@ -126,12 +126,21 @@ const MissingModal = ({
                         { required: true, message: t('messages:error-message-empty-input') },
                         {
                             type: 'number',
-                            min: 0,
-                            message: t('messages:error-message-empty-input')
+                            min: 1,
+                            message: t('messages:select-number-min', {
+                                min: 1
+                            })
+                        },
+                        {
+                            type: 'number',
+                            max: maxQuantity,
+                            message: t('messages:select-number-max', {
+                                max: maxQuantity
+                            })
                         }
                     ]}
                 >
-                    <InputNumber min={0} max={maxQuantity} style={{ width: '100%' }} />
+                    <InputNumber min={1} max={maxQuantity} style={{ width: '100%' }} />
                 </Form.Item>
             </Form>
         </Modal>
