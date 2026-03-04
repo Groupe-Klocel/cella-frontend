@@ -513,7 +513,10 @@ const Pick: PageComponent = () => {
                     processName,
                     dispatch,
                     setIsAutoValidateLoading,
-                    huName: storedObject.step15?.data?.handlingUnit,
+                    huName:
+                        storedObject.step15?.data?.handlingUnit?.name ||
+                        storedObject.step15?.data?.handlingUnit ||
+                        '',
                     huType: storedObject.step15?.data?.handlingUnitType,
                     roundNumber: storedObject.step10?.data?.round?.number,
                     context: 'declareMissing'
@@ -732,6 +735,7 @@ const Pick: PageComponent = () => {
                             buttons={{ submitButton: true, backButton: true }}
                             showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                             locations={storedObject['step20'].data.locations}
+                            setTmpforceLocation={setTmpforceLocation}
                             dontAskBeforeLocationChange={dontAskBeforeLocationChange}
                         ></SelectLocationByLevelForm>
                     ) : (

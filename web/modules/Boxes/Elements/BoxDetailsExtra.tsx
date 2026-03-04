@@ -167,6 +167,8 @@ const BoxDetailsExtra = ({ boxId, boxName, setRefetchTrigger }: IItemDetailsProp
                                     quantityToBePicked: any;
                                     pickedQuantity: any;
                                     missingQuantity: any;
+                                    roundLineDetail_processedQuantity: any;
+                                    roundLineDetail_quantityToBeProcessed: any;
                                 }) => (
                                     <Space>
                                         {huContentOutboundModes.length == 0 ||
@@ -226,8 +228,8 @@ const BoxDetailsExtra = ({ boxId, boxName, setRefetchTrigger }: IItemDetailsProp
                                                 configsParamsCodes.HUCOStatusStarted ||
                                                 record?.status ===
                                                     configsParamsCodes.HUCOStatusInPreparation) &&
-                                            record.pickedQuantity + record.missingQuantity !==
-                                                record.quantityToBePicked && (
+                                            record.roundLineDetail_quantityToBeProcessed !==
+                                                record.roundLineDetail_processedQuantity && (
                                                 <Button
                                                     icon={
                                                         <ExclamationCircleOutlined
@@ -240,9 +242,16 @@ const BoxDetailsExtra = ({ boxId, boxName, setRefetchTrigger }: IItemDetailsProp
                                                             box: boxName,
                                                             line: record.lineNumber,
                                                             maxQuantity:
+                                                                record.roundLineDetail_quantityToBeProcessed -
+                                                                    record.roundLineDetail_processedQuantity <
                                                                 record.quantityToBePicked -
-                                                                record.missingQuantity -
-                                                                record.pickedQuantity
+                                                                    record.missingQuantity -
+                                                                    record.pickedQuantity
+                                                                    ? record.roundLineDetail_quantityToBeProcessed -
+                                                                      record.roundLineDetail_processedQuantity
+                                                                    : record.quantityToBePicked -
+                                                                      record.missingQuantity -
+                                                                      record.pickedQuantity
                                                         });
                                                         setShowMissingModal(true);
                                                     }}

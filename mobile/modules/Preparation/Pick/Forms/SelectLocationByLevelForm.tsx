@@ -36,6 +36,7 @@ export interface ISelectLocationByLevelProps {
     buttons: { [label: string]: any };
     showSimilarLocations?: any;
     locations: Array<any>;
+    setTmpforceLocation: any;
     roundsCheck?: boolean;
     dontAskBeforeLocationChange?: boolean;
 }
@@ -46,6 +47,7 @@ export const SelectLocationByLevelForm = ({
     buttons,
     showSimilarLocations,
     locations,
+    setTmpforceLocation,
     roundsCheck,
     dontAskBeforeLocationChange
 }: ISelectLocationByLevelProps) => {
@@ -372,6 +374,7 @@ export const SelectLocationByLevelForm = ({
                     bodyStyle: { fontSize: '2px' }
                 });
             } else {
+                setTmpforceLocation(true);
                 showError(t('messages:unexpected-scanned-item'));
                 form.resetFields();
                 dispatch({
