@@ -28,6 +28,7 @@ import configs from '../../../../../common/configs.json';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import { handlePickAndPackProcessResult } from '../Elements/endOfProcessHandling';
 
 export interface IAutoValidatePickAndPackProps {
     processName: string;
@@ -150,108 +151,18 @@ export const AutoValidatePickAndPackForm = ({
             };
             try {
                 const validateFullBoxResult = await graphqlRequestClient.request(query, variables);
-                if (validateFullBoxResult.executeFunction.status === 'ERROR') {
-                    showError(validateFullBoxResult.executeFunction.output);
-                } else if (
-                    validateFullBoxResult.executeFunction.status === 'OK' &&
-                    validateFullBoxResult.executeFunction.output.status === 'KO'
-                ) {
-                    showError(
-                        t(`errors:${validateFullBoxResult.executeFunction.output.output.code}`)
-                    );
-                    console.log(
-                        'Backend_message',
-                        validateFullBoxResult.executeFunction.output.output
-                    );
-                    onBack();
-                    setIsAutoValidateLoading(false);
-                } else {
-                    showSuccess(t('messages:picked-and-packed-successfully'));
-                    console.log(validateFullBoxResult.executeFunction.output.output, 'output');
-
-                    const storedObject: any = {};
-                    const { updatedRound, isRoundClosed } =
-                        validateFullBoxResult.executeFunction.output.output;
-                    if (isRoundClosed) {
-                        if (step5.data && roundNumber !== 1) {
-                            storedObject['currentStep'] = 10;
-                            storedObject[`step5`] = { previousStep: 0, data: step5.data };
-                            storedObject[`step10`] = { previousStep: 5 };
-                        } else if (step5.data && roundNumber === 1) {
-                            storedObject['currentStep'] = 5;
-                            storedObject[`step5`] = { previousStep: 0 };
-                        } else {
-                            storedObject['currentStep'] = 10;
-                            storedObject[`step10`] = { previousStep: 0 };
-                        }
-                        dispatch({
-                            type: 'UPDATE_BY_PROCESS',
-                            processName: processName,
-                            object: storedObject
-                        });
-                        showSuccess(t('messages:pick-and-pack-round-finished'));
-                    } else {
-                        let ignoreHUContentIds = initialIgnoreHUContentIds || [];
-                        let remainingHUContentIds = updatedRound.roundAdvisedAddresses
-                            .filter((raa: any) => {
-                                return !ignoreHUContentIds.includes(raa.handlingUnitContentId);
-                            })
-                            .filter((raa: any) => raa.quantity != 0);
-
-                        if (remainingHUContentIds.length === 0) {
-                            ignoreHUContentIds = [];
-                            remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
-                                (raa: any) => raa.quantity != 0
-                            );
-                        }
-
-                        const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses
-                            .filter((raa: any) => raa.quantity != 0)
-                            .filter(
-                                (raa: any) =>
-                                    raa.handlingUnitContentId ===
-                                    remainingHUContentIds[0]?.handlingUnitContentId
-                            );
-
-                        interface DataType {
-                            proposedRoundAdvisedAddresses: any;
-                            pickAndPackType: string;
-                            round: any;
-                            currentShippingPalletId: any;
-                        }
-
-                        const data: DataType = {
-                            proposedRoundAdvisedAddresses: updatedRound.equipment.checkPosition
-                                ? [roundAdvisedAddresses[0]]
-                                : roundAdvisedAddresses,
-                            pickAndPackType: updatedRound.equipment.checkPosition
-                                ? 'detail'
-                                : 'fullBox',
-                            round: updatedRound,
-                            currentShippingPalletId: updatedRound.extraText1
-                        };
-                        const dataStep15 = {
-                            handlingUnit: huName,
-                            handlingUnitType: huType,
-                            isHUToCreate: false
-                        };
-
-                        if (step5) {
-                            storedObject[`step5`] = { previousStep: 0, data: step5.data };
-                        }
-                        storedObject[`step10`] = { previousStep: step5 ? 5 : 0, data };
-                        storedObject[`step15`] = { previousStep: 10, data: dataStep15 };
-                        storedObject.ignoreHUContentIds = ignoreHUContentIds;
-                        storedObject.roundNumber = roundNumber;
-                        storedObject.currentStep = 20;
-                        dispatch({
-                            type: 'UPDATE_BY_PROCESS',
-                            processName: processName,
-                            object: storedObject
-                        });
-                    }
-                }
-                setIsAutoValidateLoading(false);
+                handlePickAndPackProcessResult({
+                    result: validateFullBoxResult,
+                    t,
+                    storedObject,
+                    processName,
+                    dispatch,
+                    onBack,
+                    setIsAutoValidateLoading,
+                    huName,
+                    huType,
+                    context: 'autoValidate'
+                });
             } catch (error) {
                 showError(t('messages:error-executing-function'));
                 console.log('executeFunctionError', error);

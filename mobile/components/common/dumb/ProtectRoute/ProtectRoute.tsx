@@ -62,8 +62,6 @@ const ProtectRoute: any | null = ({ children }: OnlyChildrenType) => {
             const tmpUser: any = JSON.parse(JSON.stringify(data.me));
             delete tmpUser['userRoles'];
             setUserInfo(data.me);
-            console.log('tmpUser info updated:', tmpUser);
-            console.log('user:', user);
             if (JSON.stringify(tmpUser) !== JSON.stringify(user)) {
                 router.push('/login');
             }

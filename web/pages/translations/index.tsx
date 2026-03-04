@@ -203,9 +203,7 @@ const Translation: PageComponent = () => {
         (key) => TranslationModelV2.fieldsInfo[key].isListRequested
     );
 
-    let searchCriterias: any = {};
-
-    const [search, setSearch] = useState(searchCriterias);
+    const [search, setSearch] = useState({});
 
     const [pagination, setPagination] = useState<PaginationType>({
         total: undefined,
@@ -353,7 +351,7 @@ const Translation: PageComponent = () => {
             dataIndex: 'type',
             width: '10%',
             filters: translationTypes,
-            onFilter: (value, record) => record.type === value
+            onFilter: (value, record) => record.type === value || record.type === '*'
         },
         {
             title: `${t('common:language')}`,
@@ -540,6 +538,8 @@ const Translation: PageComponent = () => {
                                 if (filterValue) {
                                     if (key == 'code') {
                                         acc[key] = `%${filterValue[0]}%`;
+                                    } else if (key == 'type') {
+                                        acc[key] = ['*', ...filterValue];
                                     } else {
                                         acc[key] = filterValue;
                                     }

@@ -370,6 +370,7 @@ const ContentMvmt: PageComponent = () => {
                         originalContentId={storedObject['step40'].data.chosenContent.id}
                         stockOwnerId={storedObject['step40'].data.chosenContent.stockOwnerId}
                         stockStatus={storedObject['step40'].data.chosenContent.stockStatus}
+                        handlingUnitCategory={storedObject['step20'].data.handlingUnit.category}
                         processName={'contentMvt'}
                     />
                 ) : (

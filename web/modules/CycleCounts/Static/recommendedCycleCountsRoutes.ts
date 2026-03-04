@@ -17,19 +17,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-export const warehouseWorkerStockOwnersRoutes = [
+// Breadcrumb Name should be the same as in the translation file
+
+export const recommendedCycleCountsRoutes = [
     {
-        breadcrumbName: 'menu:administration'
+        breadcrumbName: 'menu:stock-management'
     },
     {
-        path: '/warehouse-worker-stock-owners',
-        breadcrumbName: 'menu:warehouse-worker-stock-owners'
-    }
-];
-
-export const addWarehouseWorkerRoutes = [
-    ...warehouseWorkerStockOwnersRoutes,
-    {
-        breadcrumbName: 'actions:add-warehouse-worker-stock-owners'
+        path: '/recommended-cycle-counts',
+        breadcrumbName: 'menu:recommended-cycle-counts'
     }
 ];
