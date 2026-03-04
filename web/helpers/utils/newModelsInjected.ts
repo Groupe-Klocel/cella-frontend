@@ -178,6 +178,10 @@ export const CycleCountMovementModelV2 = injectedModel(
     _CycleCountMovementModelV2,
     'CycleCountMovementSpeModel'
 );
+export const RecommendedCycleCountModelV2 = injectedModel(
+    _CycleCountModelV2,
+    'RecommendedCycleCountSpeModel'
+);
 export const DeliveryAddressModelV2 = injectedModel(
     _DeliveryAddressModelV2,
     'DeliveryAddressSpeModel'
@@ -252,7 +256,10 @@ export const HookConfigModelV2 = injectedModel(_HookConfigModelV2, 'HookConfigSp
 export const LoadModelV2 = injectedModel(_LoadModelV2, 'LoadSpeModel');
 export const LocationModelV2 = injectedModel(_LocationModelV2, 'LocationSpeModel');
 export const LogisticUnitModelV2 = injectedModel(_LogisticUnitModelV2, 'LogisticUnitSpeModel');
-export const ManualAllocationModelV2 = injectedModel(_ManualAllocationModelV2, 'ManualAllocationSpeModel');
+export const ManualAllocationModelV2 = injectedModel(
+    _ManualAllocationModelV2,
+    'ManualAllocationSpeModel'
+);
 export const MovementModelV2 = injectedModel(_MovementModelV2, 'MovementSpeModel');
 export const NotificationModelV2 = injectedModel(_NotificationModelV2, 'NotificationSpeModel');
 export const ParameterExtrasModelV2 = injectedModel(
