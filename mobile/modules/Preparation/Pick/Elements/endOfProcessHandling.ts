@@ -227,7 +227,7 @@ const handlePickRoundContinuation = (
 
     // Prepare step15 data
     const dataStep15 = {
-        handlingUnit: huName,
+        handlingUnit: equipmentHu ?? huName,
         handlingUnitType: huType,
         isHUToCreate: context === 'autoValidate' ? false : storedObject.step15?.data?.isHUToCreate
     };

@@ -61,7 +61,7 @@ export const AutoValidatePickForm = ({
         }
     }, []);
     // retrieve values for update contents/boxline and create movement
-    const { step5, step10, step15, step30, step40, step50, step60, step70 } = storedObject;
+    const { step5, step10, step15, step30, step40, step50, step60, step70, step75 } = storedObject;
 
     const initialIgnoreHUContentIds = storedObject.ignoreHUContentIds || [];
     const proposedRoundAdvisedAddresses = step10?.data?.proposedRoundAdvisedAddresses;
@@ -76,6 +76,7 @@ export const AutoValidatePickForm = ({
     const huc = step60?.data.content;
     const movingQuantity = step70?.data?.movingQuantity;
     const roundNumber = storedObject.roundNumber || 1;
+    const roundPosition = step75?.data?.position ?? null;
 
     const movementInput = {
         originalLocationIdStr: pickedLocation.id,
@@ -94,6 +95,7 @@ export const AutoValidatePickForm = ({
 
     const currentRoundInfo = {
         id: round.id,
+        position: roundPosition,
         roundAdvisedAddresses:
             proposedRoundAdvisedAddresses?.map(
                 ({
@@ -174,6 +176,7 @@ export const AutoValidatePickForm = ({
                     dispatch,
                     onBack,
                     setIsAutoValidateLoading,
+                    huName: hu.name || hu,
                     huType,
                     roundNumber,
                     context: 'autoValidate'
