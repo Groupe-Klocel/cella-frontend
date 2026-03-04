@@ -531,8 +531,14 @@ const PickAndPack: PageComponent = () => {
                             {
                                 type: 'number',
                                 min: 1,
+                                message: t('messages:select-number-min', {
+                                    min: 1
+                                })
+                            },
+                            {
+                                type: 'number',
                                 max: maxQuantity,
-                                message: t('messages:error-message-invalid-quantity', {
+                                message: t('messages:select-number-max', {
                                     max: maxQuantity
                                 })
                             }
@@ -547,7 +553,7 @@ const PickAndPack: PageComponent = () => {
 
     const buttonManagement: ButtonManagementType = [
         {
-            label: 'manquant',
+            label: t('common:missing-quantity'),
             icon: null,
             visibleOnSteps: [50],
             permissionsToSeeTheButton: getModesFromPermissions(
