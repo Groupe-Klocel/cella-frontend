@@ -21,8 +21,12 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Space } from 'antd';
+import {
+    getModesFromPermissions,
+    getMoreInfos,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
+import { Form, InputNumber, Modal, Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { EnterQuantity_reducer } from '@CommonRadio';
@@ -46,13 +50,18 @@ import { ScanPosition } from 'modules/Preparation/Pick/PagesContainer/ScanPositi
 import { UpperMobileSpinner } from 'components/common/dumb/Spinners/UpperMobileSpinner';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { SimilarLocationsV2 } from 'modules/Common/Locations/Elements/SimilarLocationsV2';
+import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { ModeEnum } from 'generated/graphql';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
+import { handlePickProcessResult } from 'modules/Preparation/Pick/Elements/endOfProcessHandling';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const Pick: PageComponent = () => {
     const { t } = useTranslation();
     const router = useRouter();
-    const { parameters } = useAppState();
+    const { parameters, permissions } = useAppState();
     const [headerContent, setHeaderContent] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
@@ -65,6 +74,9 @@ const Pick: PageComponent = () => {
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [toBePalletizedForBackEnd, setToBePalletizedForBackEnd] = useState<boolean>(true);
+    const [visible, setVisible] = useState<boolean>(false);
+    const [form] = Form.useForm();
+    const { graphqlRequestClient } = useAuth();
 
     const processName = 'pick';
 
@@ -276,9 +288,15 @@ const Pick: PageComponent = () => {
             },
             0
         );
+        const totalQuantityToBeProcessed = round.roundAdvisedAddresses.reduce(
+            (sum: number, address: any) => {
+                return sum + address.roundLineDetail.quantityToBeProcessed;
+            },
+            0
+        );
         headerDisplay[t('common:round')] = round.name;
         headerDisplay[t('common:total-picked-quantity')] =
-            totalProcessedQuantity + '/' + round.nbPickArticle;
+            totalProcessedQuantity + '/' + totalQuantityToBeProcessed;
         if (storedObject['step10']?.data?.pickAndPackType === 'detail') {
             headerDisplay[t('common:handling-unit-final_abbr')] =
                 proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.name;
@@ -443,6 +461,140 @@ const Pick: PageComponent = () => {
         setTmpforceLocation(forceLocationScan);
     };
 
+    type ButtonManagementType = {
+        label: string;
+        icon?: any;
+        visibleOnSteps: number[];
+        permissionsToSeeTheButton?: boolean; // Optional: if not provided, the button will be visible based on steps only
+        onClick: (e?: any) => void;
+        position: 'top' | 'bottom';
+        style?: React.CSSProperties;
+    }[];
+
+    const handleCancel = () => {
+        setVisible(false);
+        form.resetFields();
+    };
+
+    const [missingModalConfirmLoading, setMissingModalConfirmLoading] = useState<boolean>(false);
+
+    const onClickOk = () => {
+        setMissingModalConfirmLoading(true);
+        form.validateFields()
+            .then(async (values) => {
+                console.log('Missing modal form values:', values);
+                const inputToValidate = {
+                    ...values,
+                    proposedRoundAdvisedAddresses:
+                        storedObject['step10']?.data?.proposedRoundAdvisedAddresses,
+                    round: storedObject['step10']?.data?.round,
+                    equipmentHUOPalletId:
+                        storedObject['step15']?.data?.handlingUnit?.handlingUnitOutbounds?.[0]?.id
+                };
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+
+                const variables = {
+                    functionName: 'declare_missing_quantity',
+                    event: {
+                        input: inputToValidate
+                    }
+                };
+                const validateFullBoxResult = await graphqlRequestClient.request(query, variables);
+
+                handlePickProcessResult({
+                    result: validateFullBoxResult,
+                    t,
+                    storedObject,
+                    processName,
+                    dispatch,
+                    setIsAutoValidateLoading,
+                    huName: storedObject.step15?.data?.handlingUnit,
+                    huType: storedObject.step15?.data?.handlingUnitType,
+                    roundNumber: storedObject.step10?.data?.round?.number,
+                    context: 'declareMissing'
+                });
+
+                setVisible(false);
+                form.resetFields();
+                setMissingModalConfirmLoading(false);
+            })
+            .catch((errorInfo) => {
+                console.log('Validation failed:', errorInfo);
+                setMissingModalConfirmLoading(false);
+            });
+    };
+
+    const missingModal = () => {
+        const maxQuantity = storedObject['step10']?.data?.proposedRoundAdvisedAddresses.reduce(
+            (total: number, current: any) => total + current.quantity,
+            0
+        );
+        return (
+            <Modal
+                title={t('common:missing-quantity')}
+                open={visible}
+                onCancel={handleCancel}
+                onOk={onClickOk}
+                width={800}
+                confirmLoading={missingModalConfirmLoading}
+                okText={t('actions:submit')}
+                cancelText={t('actions:cancel')}
+            >
+                <Form form={form} layout="vertical" scrollToFirstError size="small">
+                    <Form.Item
+                        label={t('common:quantity')}
+                        name="missingQuantity"
+                        rules={[
+                            { required: true, message: t('messages:error-message-empty-input') },
+                            {
+                                type: 'number',
+                                min: 1,
+                                message: t('messages:select-number-min', {
+                                    min: 1
+                                })
+                            },
+                            {
+                                type: 'number',
+                                max: maxQuantity,
+                                message: t('messages:select-number-max', {
+                                    max: maxQuantity
+                                })
+                            }
+                        ]}
+                    >
+                        <InputNumber min={1} max={maxQuantity} style={{ width: '100%' }} />
+                    </Form.Item>
+                </Form>
+            </Modal>
+        );
+    };
+
+    const buttonManagement: ButtonManagementType = [
+        {
+            label: t('common:missing-quantity'),
+            icon: null,
+            visibleOnSteps: [50],
+            permissionsToSeeTheButton: getModesFromPermissions(
+                permissions,
+                'mobile_button_missing-handling'
+            ).includes(ModeEnum.Read),
+            onClick: () => {
+                setVisible(true);
+            },
+            position: 'top',
+            style: {
+                background: '#d46b08'
+            }
+        }
+    ];
+
     return (
         <PageContentWrapper>
             <HeaderContent
@@ -470,7 +622,10 @@ const Pick: PageComponent = () => {
             {isLoading ? (
                 <UpperMobileSpinner></UpperMobileSpinner>
             ) : (
-                <>
+                <RadioButtonWrapper
+                    buttonManagement={buttonManagement}
+                    currentStep={storedObject.currentStep}
+                >
                     {showSimilarLocations && storedObject['step10']?.data ? (
                         <SimilarLocationsV2
                             articleId={expectedArticle?.id}
@@ -585,6 +740,7 @@ const Pick: PageComponent = () => {
                             buttons={{ submitButton: true, backButton: true }}
                             showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                             locations={storedObject['step20'].data.locations}
+                            setTmpforceLocation={setTmpforceLocation}
                             dontAskBeforeLocationChange={dontAskBeforeLocationChange}
                         ></SelectLocationByLevelForm>
                     ) : (
@@ -761,8 +917,9 @@ const Pick: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                </>
+                </RadioButtonWrapper>
             )}
+            {missingModal()}
         </PageContentWrapper>
     );
 };
