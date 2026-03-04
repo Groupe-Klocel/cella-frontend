@@ -155,7 +155,8 @@ const BoxLinePage: PageComponent = () => {
                 data &&
                 (data?.status === configsParamsCodes.HUCOStatusStarted ||
                     data?.status === configsParamsCodes.HUCOStatusInPreparation) &&
-                data?.pickedQuantity + data?.missingQuantity !== data?.quantityToBePicked ? (
+                data?.roundLineDetail_processedQuantity !==
+                    data?.roundLineDetail_quantityToBeProcessed ? (
                     <Button
                         style={{ backgroundColor: '#d46b08' }}
                         onClick={() => {
@@ -163,9 +164,16 @@ const BoxLinePage: PageComponent = () => {
                                 box: data.handlingUnitOutbound_name,
                                 line: data.lineNumber,
                                 maxQuantity:
+                                    data.roundLineDetail_quantityToBeProcessed -
+                                        data.roundLineDetail_processedQuantity <
                                     data.quantityToBePicked -
-                                    data.missingQuantity -
-                                    data.pickedQuantity
+                                        data.missingQuantity -
+                                        data.pickedQuantity
+                                        ? data.roundLineDetail_quantityToBeProcessed -
+                                          data.roundLineDetail_processedQuantity
+                                        : data.quantityToBePicked -
+                                          data.missingQuantity -
+                                          data.pickedQuantity
                             });
                             setShowMissingModal(true);
                         }}
