@@ -29,7 +29,8 @@ import {
     LsIsSecured,
     META_DEFAULTS,
     decodeJWT,
-    showError
+    showError,
+    getEnvironmentLabel
 } from '@helpers';
 import { LogoutOutlined, MenuOutlined } from '@ant-design/icons';
 import Link from 'next/link';
@@ -145,6 +146,34 @@ const Header: FC = () => {
                         <Logo />
                     </StyledCol>
                 </Link>
+                {(() => {
+                    const envLabel = getEnvironmentLabel();
+                    return envLabel ? (
+                        <StyledCol
+                            style={{
+                                background:
+                                    envLabel === 'DEV'
+                                        ? '#f5222d'
+                                        : envLabel === 'STAGING'
+                                          ? '#fa8c16'
+                                          : '#722ed1',
+                                padding: '0px 6px',
+                                minWidth: 'auto',
+                                borderRight: '1px solid black'
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: '#fff',
+                                    fontSize: '10px',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                {envLabel}
+                            </Text>
+                        </StyledCol>
+                    ) : null;
+                })()}
                 <StyledCol flex="auto">
                     <Text style={{ fontSize: '14px', fontWeight: 'bold' }}>
                         {META_DEFAULTS.title}

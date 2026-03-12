@@ -21,6 +21,7 @@ import { Row, Space, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
+import configOverloads from '../../../../common/configOverloads.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -142,6 +143,11 @@ const EnPage: PageComponent = () => {
                         Thank you for considering KLOCEL and CELLA as your trusted partners in
                         warehouse management. We look forward to helping you succeed!
                     </Paragraph>
+                </Row>
+                <Row align="middle" justify="center" style={{ marginTop: '20px' }}>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>
+                        Version: {configOverloads.overloadReleaseTag}
+                    </Text>
                 </Row>
             </Space>
         </>
