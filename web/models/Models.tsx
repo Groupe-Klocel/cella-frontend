@@ -61,6 +61,7 @@ export type FilterFieldType = {
     maxLength?: number;
     min?: number;
     max?: number;
+    advancedFilters?: any[];
 };
 
 // Used for defining endpoints inside ModelType

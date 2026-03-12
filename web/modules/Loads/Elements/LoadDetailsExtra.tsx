@@ -18,19 +18,36 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
-import { EyeTwoTone } from '@ant-design/icons';
+import { EyeTwoTone, LinkOutlined, DownloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { pathParams } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { Divider } from 'antd';
+import { Button, Divider, Modal, Space } from 'antd';
 import { ListComponent, HeaderData } from 'modules/Crud/ListComponentV2';
-import { HandlingUnitOutboundModelV2 } from '@helpers';
+import { HandlingUnitOutboundModelV2, DeliveryModelV2 } from '@helpers';
+import { DocumentAttachmentModelV2 } from 'models/DocumentAttachmentModelV2';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
+import { AssignDeliveryModal } from '../Forms/AssignDeliveryModal';
+import { AddDocumentsModal } from 'components/common/AddDocumentsModal';
+import { useState } from 'react';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
+import { showError, showSuccess } from '@helpers';
+import configs from '../../../../common/configs.json';
 
 export interface IItemDetailsProps {
     loadId?: string | any;
+    loadData?: any;
+    setDocumentAttachmentsData?: any;
 }
-const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
+const LoadDetailsExtra = ({ loadId, loadData, setDocumentAttachmentsData }: IItemDetailsProps) => {
     const { t } = useTranslation();
+    const { graphqlRequestClient } = useAuth();
+    const [showAssignDeliveryModal, setShowAssignDeliveryModal] = useState(false);
+    const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
+    const [refetchTrigger, setRefetchTrigger] = useState(false);
+
+    //veriffy if load is not dispatched to show or not the assign delivery button
+    const canModifyLoad = loadData?.status < configs.LOAD_STATUS_DISPATCHED;
 
     // header RELATED to Boxes
     const loadBoxesHeaderData: HeaderData = {
@@ -39,11 +56,126 @@ const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
         actionsComponent: null
     };
 
+    // header RELATED to Documents
+    const loadDocumentsHeaderData: HeaderData = {
+        title: `${t('common:documents')}`,
+        routes: [],
+        actionsComponent: canModifyLoad ? (
+            <Button type="primary" onClick={() => setShowAddDocumentModal(true)}>
+                {t('actions:add')}
+            </Button>
+        ) : null
+    };
+
     // header RELATED to StatusHistory
     const statusHistoryHeaderData: HeaderData = {
         title: `${t('common:status-history')}`,
         routes: [],
         actionsComponent: null
+    };
+
+    // Fonction pour refetch les données
+    const handleRefetch = () => {
+        setRefetchTrigger((prev) => !prev);
+    };
+
+    // Fonction pour supprimer l'assignation d'une delivery
+    const removeDeliveryAssignment = async (deliveryId: string, deliveryName: string) => {
+        Modal.confirm({
+            title: t('messages:remove-assignment-confirm'),
+            content: t('messages:remove-delivery-from-load-confirm', {
+                delivery: deliveryName,
+                load: loadData?.name || loadId
+            }),
+            onOk: async () => {
+                try {
+                    const mutation = gql`
+                        mutation updateDelivery($id: String!, $input: UpdateDeliveryInput!) {
+                            updateDelivery(id: $id, input: $input) {
+                                id
+                                name
+                                preAssignedLoadId
+                            }
+                        }
+                    `;
+
+                    const variables = {
+                        id: deliveryId,
+                        input: {
+                            preAssignedLoadId: null
+                        }
+                    };
+
+                    await graphqlRequestClient.request(mutation, variables);
+                    showSuccess(t('messages:success-removed-assignment'));
+                    handleRefetch();
+                } catch (error) {
+                    console.error('Error removing delivery assignment:', error);
+                    showError(t('messages:error-removing-assignment'));
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
+    };
+
+    // Fonction pour télécharger un document
+    const downloadDocument = (base64Data: string, fileName: string) => {
+        try {
+            const [header, actualBase64] = base64Data.split(',');
+            const fileType = header.split(':')[1].split(';')[0];
+
+            const byteCharacters = window.atob(actualBase64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: fileType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading document:', error);
+            showError(t('messages:error-downloading-document'));
+        }
+    };
+
+    // Fonction pour supprimer un document
+    const removeDocument = async (documentId: string, documentName: string) => {
+        Modal.confirm({
+            title: t('messages:delete-confirm'),
+            // content: t('messages:delete-document-confirm', {
+            //     document: documentName
+            // }),
+            onOk: async () => {
+                try {
+                    const mutation = gql`
+                        mutation deleteDocumentAttachment($id: String!) {
+                            deleteDocumentAttachment(id: $id)
+                        }
+                    `;
+
+                    const variables = {
+                        id: documentId
+                    };
+
+                    await graphqlRequestClient.request(mutation, variables);
+                    showSuccess(t('messages:success-deleted'));
+                    handleRefetch();
+                } catch (error) {
+                    console.error('Error deleting document:', error);
+                    showError(t('messages:error-deleting-data'));
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
     };
 
     return (
@@ -79,6 +211,116 @@ const LoadDetailsExtra = ({ loadId }: IItemDetailsProps) => {
                 triggerDelete={undefined}
                 triggerSoftDelete={undefined}
             />
+            <Divider />
+            <ListComponent
+                searchCriteria={{ objectId: loadId, objectName: 'Load' }}
+                dataModel={DocumentAttachmentModelV2}
+                headerData={loadDocumentsHeaderData}
+                actionColumns={[
+                    {
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: {
+                            id: string;
+                            name: string;
+                            filename: string;
+                            fileContent: string;
+                        }) => (
+                            <Space>
+                                <Button
+                                    icon={<DownloadOutlined />}
+                                    onClick={() =>
+                                        downloadDocument(
+                                            record.fileContent,
+                                            record.filename || record.name
+                                        )
+                                    }
+                                    title={t('actions:download')}
+                                />
+                                {canModifyLoad && (
+                                    <Button
+                                        icon={<DeleteOutlined />}
+                                        danger
+                                        onClick={() => removeDocument(record.id, record.name)}
+                                        title={t('actions:delete')}
+                                    />
+                                )}
+                            </Space>
+                        )
+                    }
+                ]}
+                setData={setDocumentAttachmentsData}
+                searchable={false}
+                triggerDelete={undefined}
+                triggerSoftDelete={undefined}
+                refetch={refetchTrigger}
+            />
+            <Divider />
+            <ListComponent
+                searchCriteria={{ preAssignedLoadId: loadId }}
+                dataModel={DeliveryModelV2}
+                headerData={{
+                    title: `${t('common:deliveries-pre-assigned')}`,
+                    routes: [],
+                    actionsComponent: canModifyLoad ? (
+                        <LinkButton
+                            type="primary"
+                            path={`/deliveries/pre-assigned-load?loadId=${loadId}`}
+                            title={t('actions:assign-deliveries')}
+                        />
+                    ) : null
+                }}
+                actionColumns={[
+                    {
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: { id: string; name: string }) => (
+                            <Space>
+                                <LinkButton
+                                    icon={<EyeTwoTone />}
+                                    path={pathParams('/deliveries/[id]', record.id)}
+                                />
+                                {canModifyLoad && (
+                                    <Button
+                                        icon={<LinkOutlined />}
+                                        danger
+                                        onClick={() =>
+                                            removeDeliveryAssignment(record.id, record.name)
+                                        }
+                                        title={t('actions:remove-from-load')}
+                                    />
+                                )}
+                            </Space>
+                        )
+                    }
+                ]}
+                searchable={false}
+                triggerDelete={undefined}
+                triggerSoftDelete={undefined}
+                refetch={refetchTrigger}
+            />
+
+            {loadData && (
+                <>
+                    <AssignDeliveryModal
+                        showModal={{
+                            showAssignDeliveryModal,
+                            setShowAssignDeliveryModal
+                        }}
+                        loadData={loadData}
+                        refetch={handleRefetch}
+                    />
+                    <AddDocumentsModal
+                        showModal={{
+                            showAddDocumentModal,
+                            setShowAddDocumentModal
+                        }}
+                        objectType="Load"
+                        objectData={loadData}
+                        refetch={handleRefetch}
+                    />
+                </>
+            )}
         </>
     );
 };
