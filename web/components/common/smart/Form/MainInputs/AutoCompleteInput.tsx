@@ -31,6 +31,8 @@ export interface IFormGroupProps {
     item: FilterFieldType;
     key: string;
     setAllSubOptions?: any;
+    advancedFilters?: any[];
+    isSingleSelect?: boolean;
 }
 
 interface OptionTableType {
@@ -61,6 +63,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
     const [autoCompleteValue, setAutoCompleteValue] = useState<AutoCompleteValueType>(item as any);
     const [filteredOptions, setFilteredOptions] = useState<any>({});
     const optionTable: any = autoCompleteValue?.optionTable ?? {};
+    const isAdvancedFilters = props?.advancedFilters?.length !== 0;
 
     useEffect(() => {
         async function fetchData() {
@@ -74,6 +77,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             const query = gql`
             query CustomListQuery(
                 $filters: ${tableName}SearchFilters
+                ${isAdvancedFilters ? `$advancedFilters: [${tableName}AdvancedSearchFilters!]` : ''}
                 $orderBy: [${tableName}OrderByCriterion!]
                 $page: Int!
                 $itemsPerPage: Int!
@@ -81,6 +85,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             ) {
                 ${queryName}(
                     filters: $filters
+                    ${isAdvancedFilters ? 'advancedFilters: $advancedFilters' : ''}
                     orderBy: $orderBy
                     page: $page
                     itemsPerPage: $itemsPerPage
@@ -104,6 +109,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
 
             const variables = {
                 filters: modifiedFilters,
+                advancedFilters: isAdvancedFilters ? item?.advancedFilters : undefined,
                 orderBy: null,
                 page: 1,
                 itemsPerPage: 100
@@ -171,7 +177,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             <Select
                 showSearch
                 value={autoCompleteValue.value}
-                mode="multiple"
+                mode={props.isSingleSelect ? undefined : 'multiple'}
                 filterOption={false}
                 onSearch={handleSearch}
                 allowClear

@@ -213,6 +213,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                         code
                         value
                         system
+                        extras
                     }
                 }
             }

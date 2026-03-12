@@ -152,6 +152,15 @@ const ListComponent = (props: IListProps) => {
                 : [props.advancedFilters]
             : []
     );
+    useEffect(() => {
+        setAdvancedFilters(
+            props.advancedFilters
+                ? Array.isArray(props.advancedFilters)
+                    ? props.advancedFilters
+                    : [props.advancedFilters]
+                : []
+        );
+    }, [props.advancedFilters]);
     const resolverName = props.dataModel.moreInfos
         ? `${props.dataModel.resolverName}${props.dataModel.moreInfos}`
         : props.dataModel.resolverName;
@@ -1425,7 +1434,7 @@ const ListComponent = (props: IListProps) => {
         return () => {
             debouncedReload.cancel();
         };
-    }, [searchWithParams, props.refetch, router.locale]);
+    }, [searchWithParams, props.refetch, router.locale, advancedFilters]);
 
     // #endregion
 
