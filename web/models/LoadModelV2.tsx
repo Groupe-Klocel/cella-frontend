@@ -840,7 +840,7 @@ export const LoadModelV2: ModelType = {
             isSortable: true,
             searchingFormat: 'Dropdown',
             isDetailRequested: true,
-            isExcludedFromDetail: false,
+            isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
             addEditFormat: 'Dropdown',

@@ -127,17 +127,21 @@ export const AddDocumentsModal = (props: IAddDocumentsModalProps) => {
         reader.onload = (e) => {
             const base64String: string = e.target?.result as string;
             const name = file.name;
+            const fileExtention = name.split('.').pop();
             setFilesList((prevFilesList) => [
                 ...prevFilesList,
                 {
                     name: props.objectData.name + '_' + name,
                     filename: name,
-                    fileType: file.type.split('/')[1],
+                    fileType: fileExtention,
                     fileCategory: '',
                     objectName: props.objectType,
                     objectId: props.objectData.id,
                     fileContent: base64String.split(',')[1],
-                    description: ''
+                    description: '',
+                    extras: {
+                        fullFileType: file.type
+                    }
                 }
             ]);
         };

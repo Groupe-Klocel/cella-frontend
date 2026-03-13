@@ -213,12 +213,9 @@ const DeliveryDetailsExtra = ({
     };
 
     // Fonction pour télécharger un document
-    const downloadDocument = (base64Data: string, fileName: string) => {
+    const downloadDocument = (base64Data: string, fileName: string, fileType: string) => {
         try {
-            const [header, actualBase64] = base64Data.split(',');
-            const fileType = header.split(':')[1].split(';')[0];
-
-            const byteCharacters = window.atob(actualBase64);
+            const byteCharacters = window.atob(base64Data);
             const byteNumbers = new Array(byteCharacters.length);
             for (let i = 0; i < byteCharacters.length; i++) {
                 byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -638,6 +635,7 @@ const DeliveryDetailsExtra = ({
                                     name: string;
                                     filename: string;
                                     fileContent: string;
+                                    extras?: { fullFileType: string };
                                 }) => (
                                     <Space>
                                         <Button
@@ -645,7 +643,9 @@ const DeliveryDetailsExtra = ({
                                             onClick={() =>
                                                 downloadDocument(
                                                     record.fileContent,
-                                                    record.filename || record.name
+                                                    record.filename || record.name,
+                                                    record.extras?.fullFileType ||
+                                                        'application/octet-stream'
                                                 )
                                             }
                                             title={t('actions:download')}
