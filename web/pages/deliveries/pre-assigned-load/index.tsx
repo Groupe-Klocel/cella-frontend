@@ -268,6 +268,7 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
             form.resetFields();
             setSelectedRowKeys([]);
             setSelectedRowKeysInfo([]);
+            setCarrierFilter((prev) => (loadId ? prev : null)); // Reset le filtre transporteur si on vient de la page d'un load
             setRefetch((prev) => !prev); // Trigger refresh of the list
         }
     };
@@ -333,7 +334,7 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
         <>
             <AppHead title={headerData.title} />
             <Modal
-                title={t('actions:assign') + ' - ' + t('actions:confirmation')}
+                title={t('actions:assign')}
                 open={showConfirmModal}
                 onCancel={() => setShowConfirmModal(false)}
                 footer={[
