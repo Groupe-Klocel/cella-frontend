@@ -216,7 +216,7 @@ export const AddDocumentsModal = (props: IAddDocumentsModalProps) => {
                         </Dragger>
                     </Form.Item>
                     <Form.Item
-                        label={t('d:file-category')}
+                        label={t('d:fileCategory')}
                         name="fileCategory"
                         rules={[
                             { required: true, message: t('messages:error-message-empty-input') }
@@ -224,7 +224,7 @@ export const AddDocumentsModal = (props: IAddDocumentsModalProps) => {
                     >
                         <Select
                             placeholder={t('messages:please-select-a', {
-                                name: t('d:file-category')
+                                name: t('d:fileCategory')
                             })}
                         >
                             {configsParamsCodes.FilesCategory?.map((category: string) => (

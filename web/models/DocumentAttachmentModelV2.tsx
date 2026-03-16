@@ -283,11 +283,11 @@ export const DocumentAttachmentModelV2: ModelType = {
         lastTransactionId: {
             isListRequested: true,
             isDefaultHiddenList: true,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: true,
             searchingFormat: null,
             isDetailRequested: true,
-            isExcludedFromDetail: false,
+            isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
             addEditFormat: null,
