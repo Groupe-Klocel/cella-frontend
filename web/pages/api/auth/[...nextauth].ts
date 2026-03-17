@@ -68,21 +68,25 @@ const getWarehouseSsoConfiguration = async () => {
         };
     };
 
-    try {
-        result = await graphqlRequestClient.request<{
-            warehouseSsoConfiguration: {
-                type: string;
-                authUrl: string;
-                clientId: string;
-                clientSecret: string;
-                redirectUri: string;
-                tokenUrl: string;
-                scope: string;
-            };
-        }>(query, variables);
-        return result.warehouseSsoConfiguration;
-    } catch (error) {
-        console.error('Error fetching SSO configuration:', error);
+    if (process.env.NEXT_PUBLIC_SSO_SECRET) {
+        try {
+            result = await graphqlRequestClient.request<{
+                warehouseSsoConfiguration: {
+                    type: string;
+                    authUrl: string;
+                    clientId: string;
+                    clientSecret: string;
+                    redirectUri: string;
+                    tokenUrl: string;
+                    scope: string;
+                };
+            }>(query, variables);
+            return result.warehouseSsoConfiguration;
+        } catch (error) {
+            console.error('Error fetching SSO configuration:', error);
+            return null;
+        }
+    } else {
         return null;
     }
 };
@@ -91,8 +95,7 @@ const getWarehouseSsoConfiguration = async () => {
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     const ssoConfiguration = await getWarehouseSsoConfiguration();
     if (!ssoConfiguration) {
-        console.log('No SSO configuration found for the warehouse');
-        return res.status(204).end();
+        return res.status(200).json({});
     } else {
         return NextAuth(req, res, {
             providers: [
