@@ -227,6 +227,16 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 setGetUserSettingsQuery(true);
             }
 
+            if (
+                queryInfo.warehouseWorkerSettings.results.find(
+                    (item: any) => item.code === 'globalParameters'
+                )?.valueJson?.lang === 'fr'
+            ) {
+                queryInfo.warehouseWorkerSettings.results.find(
+                    (item: any) => item.code === 'globalParameters'
+                ).valueJson.lang = 'fr-FR';
+            }
+
             const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
                 (item: any) => item.code === 'globalParametersMobile'
             );
@@ -353,7 +363,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             (getParameterSettingsQuery || parameters?.length > 0)
         ) {
             if (
-                (getUserSettingsQuery && userSettings.length > 1) ||
+                (getUserSettingsQuery && userSettings.length >= 1) ||
                 (!getUserSettingsQuery && userSettings.length == 1)
             ) {
                 setUserSettingsLoading(true);
