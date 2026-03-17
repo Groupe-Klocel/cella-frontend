@@ -67,7 +67,7 @@ const EditItemComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filterLanguage = router.locale?.split('-')[0] || 'en';
     const { graphqlRequestClient } = useAuth();
     const editSteps: any[] = [];
     const [optionsList, setOptionsList] = useState<any>();

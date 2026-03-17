@@ -109,7 +109,7 @@ export const UserSettings: FC = () => {
             userSettings: [
                 {
                     code: 'globalParameters',
-                    valueJson: { lang: 'fr', isSettingMenuCollapsed: true, theme: 'light' }
+                    valueJson: { isSettingMenuCollapsed: true, theme: 'light' }
                 }
             ]
         });

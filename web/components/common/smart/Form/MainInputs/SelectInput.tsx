@@ -70,7 +70,7 @@ const SelectInput: FC<IDraggerSelectProps> = ({
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const { configs, parameters } = useAppState();
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filterLanguage = router.locale?.split('-')[0] || 'en';
 
     const [oldSubOptions, setOldSubOptions] = useState<FormOptionType[]>();
     const [subOptions, setSubOptions] = useState<FormOptionType[]>();

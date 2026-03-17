@@ -44,7 +44,7 @@ const EditPriorityRoundsModal = ({
     const [isEditLoading, setIsEditLoading] = useState(false);
     const { parameters } = useAppState();
     const router = useRouter();
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filterLanguage = router.locale?.split('-')[0] || 'en';
 
     const ParamsCodes = useMemo(() => {
         const priorityList = parameters
