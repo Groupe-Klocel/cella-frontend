@@ -16,7 +16,21 @@ const config = withAntdLess(
             'rc-table',
             'lodash-es',
             '@ant-design/pro-form'
-        ]
+        ],
+        async redirects() {
+            return [
+                {
+                    source: '/fr',
+                    destination: '/fr-FR',
+                    permanent: true
+                },
+                {
+                    source: '/fr/:path*',
+                    destination: '/fr-FR/:path*',
+                    permanent: true
+                }
+            ];
+        }
     })
 );
 
