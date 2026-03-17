@@ -136,7 +136,7 @@ const ListComponent = (props: IListProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
-    const filterLanguage = router.locale;
+    const filterLanguage = router.locale?.split('-')[0] || 'en';
     const state = useAppState();
     const configs = state?.configs;
     const parameters = state?.parameters;
@@ -1415,7 +1415,7 @@ const ListComponent = (props: IListProps) => {
         adjustedPagination,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filterLanguage,
         defaultModelSort,
         advancedFilters,
         functions

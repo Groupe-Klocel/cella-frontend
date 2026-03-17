@@ -62,7 +62,7 @@ const AddFeatureComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =>
     const router = useRouter();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filterLanguage = router.locale?.split('-')[0] || 'en';
     const addSteps: any[] = [];
     const { graphqlRequestClient } = useAuth();
     const [configParamOptionsList, setConfigParamOptionsList] = useState<Array<any>>([]);

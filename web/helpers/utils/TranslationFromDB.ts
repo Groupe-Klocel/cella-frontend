@@ -27,17 +27,29 @@ interface TranslationResponse {
     // Add other properties if needed based on your use case
 }
 
+// Helper function to map frontend locale codes to database language codes
+const mapLocaleToDbLanguage = (locale: string): string => {
+    const localeMap: { [key: string]: string } = {
+        'en-US': 'en-US',
+        'fr-FR': 'fr-FR',
+        'de-DE': 'de-DE'
+    };
+    return localeMap[locale] || locale;
+};
+
 export function useTranslationWithFallback(keyInfo?: string): TranslationResponse {
     const { t, lang } = useTranslation();
 
     const { translations } = useAppState();
+
+    const dbLanguage = mapLocaleToDbLanguage(lang);
 
     const translationFiltered = (key: any) => {
         if (key.split(':').length === 1) {
             return (
                 translations.find(
                     (translation: any) =>
-                        translation.language === (lang === 'fr' ? 'fr-FR' : lang) &&
+                        translation.language === dbLanguage &&
                         translation.category === keyInfo &&
                         translation.code === key
                 )?.value ?? key
@@ -46,7 +58,7 @@ export function useTranslationWithFallback(keyInfo?: string): TranslationRespons
             return (
                 translations.find(
                     (translation: any) =>
-                        translation.language === (lang === 'fr' ? 'fr-FR' : lang) &&
+                        translation.language === dbLanguage &&
                         translation.category === key.split(':')[0] &&
                         translation.code === key.split(':')[1]
                 )?.value ?? key

@@ -60,7 +60,7 @@ export const AddMovementForm = () => {
     const { graphqlRequestClient } = useAuth();
     const { id } = router.query;
     const { configs, parameters } = useAppState();
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filterLanguage = router.locale?.split('-')[0] || 'en';
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [stockOwners, setStockOwners] = useState<any>();
     const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
