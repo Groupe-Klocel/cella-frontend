@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Input, Form, Select, Collapse, AutoComplete } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -60,6 +60,7 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [category, setCategory] = useState<Array<FormOptionType>>();
     const [thirdParties, setThirdParties] = useState<Array<FormOptionType>>();
     const [thirdPartyAddresses, setThirdPartyAddresses] = useState<Array<FormOptionType>>();
@@ -135,7 +136,7 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 
@@ -159,7 +160,7 @@ export const AddDeliveryAddressForm = (props: ISingleItemProps) => {
 
     // PARAMETER : category
     const categoryList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'third_party_address_category'
     });
     useEffect(() => {

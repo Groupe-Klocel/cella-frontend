@@ -43,7 +43,7 @@ const AboutPage: PageComponent = () => {
     return (
         <Page>
             <CenteredWrapper>
-                {language == 'fr' && <FrPage />}
+                {language == 'fr-FR' && <FrPage />}
                 {language == 'en-US' && <EnPage />}
             </CenteredWrapper>
         </Page>

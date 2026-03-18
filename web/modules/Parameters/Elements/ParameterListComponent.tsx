@@ -25,6 +25,7 @@ import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
+    getLanguageCode,
     getModesFromPermissions,
     orderByFormater,
     PaginationType,
@@ -87,6 +88,7 @@ const ParameterListComponent = (props: IListProps) => {
 
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const id = props.parameterId;
 
@@ -337,7 +339,7 @@ const ParameterListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 
@@ -349,7 +351,7 @@ const ParameterListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         refetchAfterDelete
     ]);
 
@@ -366,7 +368,7 @@ const ParameterListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 

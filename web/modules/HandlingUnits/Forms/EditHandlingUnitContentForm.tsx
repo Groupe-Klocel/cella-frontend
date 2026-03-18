@@ -32,7 +32,8 @@ import {
     useArticleIds,
     useStockOwners,
     useLocationIds,
-    checkUndefinedValues
+    checkUndefinedValues,
+    getLanguageCode
 } from '@helpers';
 import configs from '../../../../common/configs.json';
 
@@ -54,6 +55,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
     const { graphqlRequestClient } = useAuth();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [form] = Form.useForm();
     const [stockStatus, setStockStatus] = useState<Array<FormOptionType>>();
@@ -91,7 +93,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
 
     // PARAMETER : stock_status
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'stock_statuses'
     });
     useEffect(() => {

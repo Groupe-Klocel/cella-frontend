@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Col, Input, Row, Form, Select } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -52,6 +52,7 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const equipment = t('common:equipment');
     const handlingUnitModel = t('common:handling-unit-model');
@@ -68,10 +69,10 @@ export const EditEquipmentDetailForm = (props: ISingleItemProps) => {
     const [locationCategory, setLocationCategory] = useState<Array<FormOptionType>>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
     const [carrierShippingModeIds, setcarrierShippingMode] = useState<Array<FormOptionType>>();
-    const carrierShippingModeData = useGetCarrierShippingModes({}, 1, 100, null, router.locale);
+    const carrierShippingModeData = useGetCarrierShippingModes({}, 1, 100, null, filteredLanguage);
 
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'preparation_mode'
     });
 

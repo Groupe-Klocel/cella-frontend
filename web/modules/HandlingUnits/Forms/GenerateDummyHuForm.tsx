@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { showError, showInfo, showSuccess } from '@helpers';
+import { showError, showInfo, showSuccess, getLanguageCode } from '@helpers';
 import { Button, Col, Form, InputNumber, Row, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
@@ -34,6 +34,7 @@ export const GenerateDummyHuForm = () => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -55,7 +56,7 @@ export const GenerateDummyHuForm = () => {
 
     // Get all handling unit types
     const handlingUnitTypeList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'handling_unit_type'
     });
     useEffect(() => {
@@ -74,7 +75,7 @@ export const GenerateDummyHuForm = () => {
 
     // Get all handling unit types
     const printerList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'printer'
     });
     useEffect(() => {

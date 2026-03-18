@@ -22,6 +22,7 @@ import {
     isNumeric,
     pascalToSnakeUpper,
     pluralize,
+    getLanguageCode,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { FormOptionType } from '../../../../../models/ModelsV2';
@@ -70,7 +71,7 @@ const SelectInput: FC<IDraggerSelectProps> = ({
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const { configs, parameters } = useAppState();
-    const filterLanguage = router.locale?.split('-')[0] || 'en';
+    const filteredLanguage = getLanguageCode(router);
 
     const [oldSubOptions, setOldSubOptions] = useState<FormOptionType[]>();
     const [subOptions, setSubOptions] = useState<FormOptionType[]>();
@@ -243,10 +244,10 @@ const SelectInput: FC<IDraggerSelectProps> = ({
                     .map((item: any) => {
                         if (configFilters !== item.scope) return;
                         const value =
-                            filterLanguage &&
+                            filteredLanguage &&
                             item.translation &&
-                            item.translation[`${filterLanguage}`]
-                                ? item.translation[`${filterLanguage}`]
+                            item.translation[`${filteredLanguage}`]
+                                ? item.translation[`${filteredLanguage}`]
                                 : item.value;
                         return {
                             key: !isNumeric(item.code) ? item.code : parseInt(item.code),
@@ -267,10 +268,10 @@ const SelectInput: FC<IDraggerSelectProps> = ({
                     .map((item: any) => {
                         if (paramsFilters !== item.scope) return;
                         const value =
-                            filterLanguage &&
+                            filteredLanguage &&
                             item.translation &&
-                            item.translation[`${filterLanguage}`]
-                                ? item.translation[`${filterLanguage}`]
+                            item.translation[`${filteredLanguage}`]
+                                ? item.translation[`${filteredLanguage}`]
                                 : item.value;
                         return {
                             key: !isNumeric(item.code) ? item.code : parseInt(item.code),

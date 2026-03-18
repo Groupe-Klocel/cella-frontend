@@ -38,7 +38,8 @@ import {
     useStockOwners,
     useLocationIds,
     useArticles,
-    useHandlingUnitModels
+    useHandlingUnitModels,
+    getLanguageCode
 } from '@helpers';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
@@ -56,6 +57,7 @@ export const AddHandlingUnitContentForm = () => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [form] = Form.useForm();
     const [handlingUnitType, setHandlingUnitType] = useState<Array<FormOptionType>>();
@@ -97,7 +99,7 @@ export const AddHandlingUnitContentForm = () => {
 
     // PARAMETER : handling_unit_type
     const handlingUnitTypeList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'handling_unit_type'
     });
     useEffect(() => {
@@ -116,7 +118,7 @@ export const AddHandlingUnitContentForm = () => {
 
     // PARAMETER : stock_status
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'stock_statuses'
     });
     useEffect(() => {
