@@ -190,6 +190,7 @@ const AppTable: FC<IAppTableProps> = ({
                 rowKey="id"
                 dataSource={data}
                 scroll={scroll}
+                sticky
                 size="small"
                 loading={isLoading}
                 onChange={onChange}

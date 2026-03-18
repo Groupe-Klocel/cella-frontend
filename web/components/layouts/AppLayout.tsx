@@ -53,7 +53,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     const [getParameterSettingsQuery, setGetParameterSettingsQuery] = useState<boolean>(false);
 
     useEffect(() => {
-        const scrollableContainer = document.querySelector('.bqHEif');
+        const scrollableContainer = document.querySelector('.app-content-scroll');
         if (scrollableContainer && !router.query?.scrollTo) {
             scrollableContainer.scrollTo(0, 0);
         }

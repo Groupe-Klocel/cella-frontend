@@ -17,6 +17,10 @@ body {
     overflow: hidden;
 }
 
+#__next {
+    height: 100%;
+}
+
 a {
     color: inherit;
     text-decoration: none;
@@ -117,6 +121,23 @@ input::-webkit-input-placeholder {
 .edit-article-modal .ant-modal-footer {
     margin-top: 50px;
 }
+
+@media (max-width: 1200px) {
+    .form-filter {
+        padding-right: 0;
+    }
+
+    .edit-article-modal {
+        width: 80%;
+    }
+}
+
+@media (max-width: 768px) {
+    .edit-article-modal {
+        width: 95%;
+    }
+}
+
 /* .ant-modal-body {
 height: calc(100vh - 110px);
 } */
