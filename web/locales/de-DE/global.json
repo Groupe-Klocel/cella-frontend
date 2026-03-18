@@ -1,0 +1,16 @@
+{
+    "welcome": "Willkommen auf",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "login": "Anmelden",
+    "error-message-empty-input": "Das Feld darf nicht leer sein",
+    "error-login": "Anmeldefehler",
+    "login-success": "Sie sind jetzt angemeldet",
+    "please-reset-password": "Bitte setzen Sie Ihr Passwort zurück",
+    "SSO-000001": "Kein Benutzer mit dieser E-Mail-Adresse gefunden",
+    "SSO-000002": "SSO-Anmeldung ist erforderlich",
+    "SSO-000003": "Das Feld 'sso_metadata' ist erforderlich.",
+    "SSO-000004": "Das Feld 'sso_front_secret' fehlt oder ist ungültig.",
+    "SSO-000005": "Das SSO-Token ist ungültig oder abgelaufen. Bitte melden Sie sich erneut an.",
+    "SSO-000006": "Das SSO-Token konnte nicht überprüft werden. Bitte kontaktieren Sie den Administrator."
+}

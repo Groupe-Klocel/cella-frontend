@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { Checkbox, Col, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import {
@@ -51,6 +51,7 @@ const EditArticlesRenderModal = ({
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [form] = Form.useForm();
     const errorMessageUpdateData = t('messages:error-update-data');
     const successMessageUpdateData = t('messages:success-updated');
@@ -77,7 +78,7 @@ const EditArticlesRenderModal = ({
     //To render cubing_types from configs
     const cubingTypesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'article_cubing_type',
-        language: router.locale
+        language: filteredLanguage
     });
     useEffect(() => {
         if (cubingTypesTextList) {
@@ -88,7 +89,7 @@ const EditArticlesRenderModal = ({
     //To render feature_types from parameters
     const featureTypesTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'feature_type',
-        language: router.locale
+        language: filteredLanguage
     });
     useEffect(() => {
         if (featureTypesTextList) {
@@ -99,7 +100,7 @@ const EditArticlesRenderModal = ({
     //To render article_family from parameters
     const familyArticleList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'article_family',
-        language: router.locale
+        language: filteredLanguage
     });
     useEffect(() => {
         if (familyArticleList) {
@@ -110,7 +111,7 @@ const EditArticlesRenderModal = ({
     //To render article_subfamily from parameters
     const subFamilyArticleList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'article_subfamily',
-        language: router.locale
+        language: filteredLanguage
     });
     useEffect(() => {
         if (subFamilyArticleList) {
@@ -121,7 +122,7 @@ const EditArticlesRenderModal = ({
     //To render rotations from parameters
     const rotationsTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'rotation',
-        language: router.locale
+        language: filteredLanguage
     });
     useEffect(() => {
         if (rotationsTextList) {
@@ -132,7 +133,7 @@ const EditArticlesRenderModal = ({
     //To render statuses from parameters
     const statusesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'article_status',
-        language: router.locale
+        language: filteredLanguage
     });
     useEffect(() => {
         if (statusesTextList) {

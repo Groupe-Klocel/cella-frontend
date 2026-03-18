@@ -35,7 +35,7 @@ import {
     useListConfigsForAScopeQuery,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
+import { showError, showSuccess, showInfo, checkUndefinedValues, getLanguageCode } from '@helpers';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 const { Option } = Select;
@@ -54,6 +54,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -108,7 +109,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
     //To render Simple categories list
     const categoriesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'location_category',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -120,7 +121,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
     //To render Simple stock statuses list
     const stockStatusesTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'stock_statuses',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -132,7 +133,7 @@ export const EditLocationForm: FC<EditLocationFormProps> = ({
     //To render Simple location groups list
     const locationGroupsTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'location_location_group_id',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

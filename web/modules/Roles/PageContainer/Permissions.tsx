@@ -23,7 +23,13 @@ import { ContentSpin, HeaderContent, LinkButton } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Space, Form, Button, Alert, Modal } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import { getModesFromPermissions, showError, showSuccess, useGetRoles } from '@helpers';
+import {
+    getModesFromPermissions,
+    getLanguageCode,
+    showError,
+    showSuccess,
+    useGetRoles
+} from '@helpers';
 import { useAppState } from 'context/AppContext';
 import {
     ModeEnum,
@@ -48,6 +54,7 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.Permission);
     const [enableUpdate, setEnableUpdate] = useState<any>();
@@ -142,7 +149,7 @@ const Permissions = ({ roleId, roleName }: IItemDetailsProps) => {
     //To render Simple tables list
     const tablesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'object_name',
-        language: router.locale
+        language: filteredLanguage
     });
 
     const [tables, setTables] = useState<any>();

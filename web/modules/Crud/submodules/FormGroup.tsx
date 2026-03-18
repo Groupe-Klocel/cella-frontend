@@ -23,7 +23,7 @@ import dayjs from 'dayjs';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC } from 'react';
 import { FilterFieldType, FormDataType, FormOptionType } from '../../../models/Models';
-import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';
+import { getRulesWithNoSpacesValidator, pluralize, getLanguageCode } from '@helpers';
 import { DraggerInput } from 'components/common/smart/Form/MainInputs/DraggerInput';
 import { useRouter } from 'next/router';
 import AutoComplete from '../../../components/common/smart/Form/MainInputs/AutoCompleteInput';
@@ -40,6 +40,7 @@ export interface IFormGroupProps {
 const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     moment.locale(router.locale);
 
@@ -161,14 +162,14 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                             {item.initialValue ? (
                                 <DatePicker
                                     format={localeDateTimeFormat}
-                                    locale={router.locale === 'fr' ? fr_FR : en_US}
+                                    locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                                     showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
                                     defaultValue={item.initialValue}
                                 />
                             ) : (
                                 <DatePicker
                                     format={localeDateTimeFormat}
-                                    locale={router.locale === 'fr' ? fr_FR : en_US}
+                                    locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                                     showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
                                 />
                             )}

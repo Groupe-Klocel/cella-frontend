@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { Form, Modal, Select, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { showError, showSuccess } from '@helpers';
@@ -44,14 +44,14 @@ const EditPriorityRoundsModal = ({
     const [isEditLoading, setIsEditLoading] = useState(false);
     const { parameters } = useAppState();
     const router = useRouter();
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filteredLanguage = getLanguageCode(router);
 
     const ParamsCodes = useMemo(() => {
         const priorityList = parameters
             .filter((param: any) => param.scope === 'priority')
             .map((param: any) => ({
                 id: param.id,
-                text: param.translation?.[String(filterLanguage)!] || param.value,
+                text: param.translation?.[String(filteredLanguage)!] || param.value,
                 code: param.code
             }))
             .sort((a: any, b: any) => b.code - a.code);

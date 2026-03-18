@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ContentSpin, DetailsList, HeaderContent } from '@components';
 import { Alert, Layout, Space, Typography } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import {
@@ -69,6 +69,7 @@ const DocumentHistoryDetailComponent: FC<ISingleItemProps> = (props: ISingleItem
     const { t } = useTranslation();
     const router = useRouter();
     const [displayedGrouping, setDisplayedGrouping] = useState<any>();
+    const filteredLanguage = getLanguageCode(router);
 
     // #region extract data from modelV2
     const detailFields = Object.keys(props.dataModel.fieldsInfo).filter(
@@ -118,7 +119,7 @@ const DocumentHistoryDetailComponent: FC<ISingleItemProps> = (props: ISingleItem
         props.id,
         props.dataModel.endpoints.detail,
         detailFields,
-        router.locale
+        filteredLanguage
     );
 
     const tmp_titles = Object.keys(props.dataModel.fieldsInfo)

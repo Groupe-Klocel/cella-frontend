@@ -30,7 +30,13 @@ import {
     CreateCarrierShippingModeMutationVariables,
     useListConfigsForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo, getRulesWithNoSpacesValidator } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    getRulesWithNoSpacesValidator,
+    getLanguageCode
+} from '@helpers';
 
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { FormOptionType } from 'models/Models';
@@ -46,6 +52,7 @@ export const AddCarrierShippingModeForm = (props: ISingleItemProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     // prompt the user if they try and leave with unsaved changes
@@ -83,7 +90,7 @@ export const AddCarrierShippingModeForm = (props: ISingleItemProps) => {
 
     // Get all shipping modes
     const shippingModeList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'shipping_mode'
     });
     useEffect(() => {
@@ -102,7 +109,7 @@ export const AddCarrierShippingModeForm = (props: ISingleItemProps) => {
 
     // Get all carrier management modes
     const carrierManagementModeList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'carrier_management_mode'
     });
     useEffect(() => {
@@ -121,7 +128,7 @@ export const AddCarrierShippingModeForm = (props: ISingleItemProps) => {
 
     // Get all handling unit types
     const handlingUnitTypeList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'handling_unit_type'
     });
     useEffect(() => {
@@ -140,7 +147,7 @@ export const AddCarrierShippingModeForm = (props: ISingleItemProps) => {
 
     // Get all label types
     const labelTypeList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'label_type'
     });
     useEffect(() => {

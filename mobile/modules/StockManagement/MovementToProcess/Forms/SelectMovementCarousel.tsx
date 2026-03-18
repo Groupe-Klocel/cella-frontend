@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { showError } from '@helpers';
+import { showError, getLanguageCode } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -86,6 +86,7 @@ export const SelectMovementCarousel = ({
     const { graphqlRequestClient, user } = useAuth();
     const { configs } = useAppState();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const [movements, setMovements] = useState<any>([]);
     const [isLoadingMovements, setIsLoadingMovements] = useState<boolean>(true);
@@ -197,7 +198,7 @@ export const SelectMovementCarousel = ({
             ],
             page: 1,
             itemsPerPage: 999,
-            language: router.locale
+            language: filteredLanguage
         };
 
         const movementsList_result = await graphqlRequestClient.request(

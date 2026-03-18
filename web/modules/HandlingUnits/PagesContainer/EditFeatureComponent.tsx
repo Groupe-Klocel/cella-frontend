@@ -34,7 +34,8 @@ import {
     useDetail,
     useParams,
     checkValueInKey,
-    extractComparisonValues
+    extractComparisonValues,
+    getLanguageCode
 } from '@helpers';
 import { FilterFieldType, FormDataType, ModelType } from 'models/ModelsV2';
 import { useRouter } from 'next/router';
@@ -66,7 +67,7 @@ const EditFeatureComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filteredLanguage = getLanguageCode(router);
     const { graphqlRequestClient } = useAuth();
     const editSteps: any[] = [];
     const [optionsList, setOptionsList] = useState<any>();
@@ -215,8 +216,8 @@ const EditFeatureComponent: FC<IEditItemProps> = (props: IEditItemProps) => {
                 tmp_results[item.scope] = [];
             }
             const value =
-                filterLanguage && item.translation && item.translation[`${filterLanguage}`]
-                    ? item.translation[`${filterLanguage}`]
+                filteredLanguage && item.translation && item.translation[`${filteredLanguage}`]
+                    ? item.translation[`${filteredLanguage}`]
                     : item.value;
             //check if item.scope is in filteringConfigValues
             if (filteringConfigValues?.find?.((obj: any) => obj.scope === item.scope)) {

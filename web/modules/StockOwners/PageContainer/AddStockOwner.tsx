@@ -31,7 +31,8 @@ import {
     useConfigs,
     useParams,
     checkValueInKey,
-    pluralize
+    pluralize,
+    getLanguageCode
 } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -63,7 +64,7 @@ const AddStockOwner: FC<IAddStockOwnerFormProps> = (props: IAddStockOwnerFormPro
     const router = useRouter();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filteredLanguage = getLanguageCode(router);
     const addSteps: any[] = [];
     const { graphqlRequestClient } = useAuth();
     const [configParamOptionsList, setConfigParamOptionsList] = useState<Array<any>>([]);
@@ -198,8 +199,8 @@ const AddStockOwner: FC<IAddStockOwnerFormProps> = (props: IAddStockOwnerFormPro
             }
 
             const value =
-                filterLanguage && item.translation && item.translation[`${filterLanguage}`]
-                    ? item.translation[`${filterLanguage}`]
+                filteredLanguage && item.translation && item.translation[`${filteredLanguage}`]
+                    ? item.translation[`${filteredLanguage}`]
                     : item.value;
             //check if item.scope is in filteringConfigValues
 

@@ -24,6 +24,7 @@ import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import {
     flatten,
+    getLanguageCode,
     getModesFromPermissions,
     showError,
     showInfo,
@@ -86,6 +87,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [displayedGrouping, setDisplayedGrouping] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const dispatchToReducer = useAppDispatch();
@@ -140,7 +142,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
         isLoading,
         detail,
         reload: reloadData
-    } = useDetail(props.id, props.dataModel.endpoints.detail, detailFields, router.locale);
+    } = useDetail(props.id, props.dataModel.endpoints.detail, detailFields, filteredLanguage);
 
     const tmp_titles = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].detailGroup !== null)

@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, HandlingUnitSpin } from '@components';
-import { LsIsSecured, useHandlingUnits } from '@helpers';
+import { LsIsSecured, useHandlingUnits, getLanguageCode } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -80,6 +80,7 @@ export const SelectHandlingUnitForLocationForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -98,7 +99,7 @@ export const SelectHandlingUnitForLocationForm = ({
         1,
         100,
         null,
-        router.locale
+        filteredLanguage
     );
 
     //SelecHandlingUnitForLocation-2: set handling units to provide to carousel

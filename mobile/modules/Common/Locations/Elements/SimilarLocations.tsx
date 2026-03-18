@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageTableContentWrapper, ContentSpin, RadioSimpleTable } from '@components';
-import { useHandlingUnitContents } from '@helpers';
+import { useHandlingUnitContents, getLanguageCode } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -42,6 +42,7 @@ export const SimilarLocations = ({
 }: ISimilarLocationsProps) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [similarLocations, setSimilarLocationsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
@@ -170,7 +171,7 @@ export const SimilarLocations = ({
             orderBy: sortByQuantity,
             page: 1,
             itemsPerPage: 100,
-            language: router.locale
+            language: filteredLanguage
         };
         const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
         return handlingUnitInfos;

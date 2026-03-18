@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Input, Form, Select, Space, Modal, AutoComplete } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -45,6 +45,7 @@ export const EditThirdPartyAddressContactForm: FC<EditThirdPartyAddressContactFo
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const { Option } = Select;
 
@@ -61,7 +62,7 @@ export const EditThirdPartyAddressContactForm: FC<EditThirdPartyAddressContactFo
     const thirdPartyAddressContactCategoryList = useListConfigsForAScopeQuery(
         graphqlRequestClient,
         {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'third_party_address_contact_category'
         }
     );
@@ -95,7 +96,7 @@ export const EditThirdPartyAddressContactForm: FC<EditThirdPartyAddressContactFo
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 

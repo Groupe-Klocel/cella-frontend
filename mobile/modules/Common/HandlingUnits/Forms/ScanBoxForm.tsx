@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select list handling unit type = pallet corresponding to a given barcode
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { showError, LsIsSecured, useBoxes } from '@helpers';
+import { showError, LsIsSecured, useBoxes, getLanguageCode } from '@helpers';
 import { Form, Input } from 'antd';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -47,6 +47,7 @@ export const ScanBoxForm = ({
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     //camera scanner section
     const [camData, setCamData] = useState();
@@ -85,7 +86,7 @@ export const ScanBoxForm = ({
         1,
         100,
         null,
-        router.locale
+        filteredLanguage
     );
 
     //ScanBox-3: manage information for persistence storage and front-end errors

@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { useHandlingUnitContents, LsIsSecured } from '@helpers';
+import { useHandlingUnitContents, LsIsSecured, getLanguageCode } from '@helpers';
 import { Button, Carousel, Col, Divider, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -90,6 +90,7 @@ export const SelectContentForHuForm = ({
     const [showChangeStockStatusModal, setShowChangeStockStatusModal] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [refetch, setRefetch] = useState(false);
+    const filteredLanguage = getLanguageCode(router);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -113,7 +114,7 @@ export const SelectContentForHuForm = ({
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'radio'
         };
 
@@ -225,7 +226,7 @@ export const SelectContentForHuForm = ({
 
     useEffect(() => {
         graphqlRequestClient
-            .request(handlingUnitContentsQuery, { ...variables, language: router.locale })
+            .request(handlingUnitContentsQuery, { ...variables, language: filteredLanguage })
             .then((res: any) => {
                 if (res?.handlingUnitContents) {
                     setContents(res.handlingUnitContents.results);

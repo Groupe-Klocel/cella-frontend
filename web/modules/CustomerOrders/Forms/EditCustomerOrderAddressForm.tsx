@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { HeaderContent, WrapperForm } from '@components';
 import { Button, Input, Form, Select, Space, Modal, Collapse, AutoComplete } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -49,6 +49,7 @@ export const EditCustomerOrderAddressForm: FC<EditCustomerOrderAddressFormProps>
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [thirdPartyAddresses, setThirdPartyAddresses] = useState<Array<FormOptionType>>();
     const [chosenAddress, setChosenAddress] = useState<string | undefined>();
@@ -152,7 +153,7 @@ export const EditCustomerOrderAddressForm: FC<EditCustomerOrderAddressFormProps>
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 

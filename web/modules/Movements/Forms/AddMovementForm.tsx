@@ -23,7 +23,8 @@ import {
     showSuccess,
     useGetHandlingUnitContents,
     useGetHandlingUnits,
-    useLocations
+    useLocations,
+    getLanguageCode
 } from '@helpers';
 import {
     AutoComplete,
@@ -60,7 +61,7 @@ export const AddMovementForm = () => {
     const { graphqlRequestClient } = useAuth();
     const { id } = router.query;
     const { configs, parameters } = useAppState();
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [stockOwners, setStockOwners] = useState<any>();
     const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
@@ -118,7 +119,7 @@ export const AddMovementForm = () => {
             .filter((item: any) => item.scope === 'priority')
             .map((item: any) => ({
                 key: parseInt(item.code),
-                value: item.translation?.[filterLanguage!] || item.value
+                value: item.translation?.[filteredLanguage!] || item.value
             }))
             .sort((a: any, b: any) => a.key - b.key);
 
