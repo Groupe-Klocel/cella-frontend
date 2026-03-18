@@ -21,7 +21,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { useHandlingUnitContents, LsIsSecured, useHandlingUnitContentFeatures } from '@helpers';
+import {
+    useHandlingUnitContents,
+    LsIsSecured,
+    useHandlingUnitContentFeatures,
+    getLanguageCode
+} from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -82,6 +87,7 @@ export const DisplayContentByArticleSerialForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -100,7 +106,7 @@ export const DisplayContentByArticleSerialForm = ({
         1,
         100,
         null,
-        router.locale
+        filteredLanguage
     );
 
     //DisplayContentByArticleSerial-2: set contents to provide to carousel

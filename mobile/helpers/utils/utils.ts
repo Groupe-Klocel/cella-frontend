@@ -370,6 +370,10 @@ const getLastStepWithPreviousStep = (storedObject: Record<string, any>) => {
     return lastStepNumber;
 };
 
+const getLanguageCode = (router: any): string | undefined => {
+    return router.locale?.split('-')[0] || 'en';
+};
+
 export {
     isEmpty,
     pathParams,
@@ -407,5 +411,6 @@ export {
     formatUTCLocaleDate,
     getDatesDifference,
     pathParamsFromDictionary,
-    getLastStepWithPreviousStep
+    getLastStepWithPreviousStep,
+    getLanguageCode
 };

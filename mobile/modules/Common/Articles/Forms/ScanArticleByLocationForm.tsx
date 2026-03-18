@@ -20,7 +20,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select list of articles corresponding to a given barcode and check its availability on the previouslychosenlocation
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { showError, useArticleLuBarcodeIds, useHandlingUnitContents, LsIsSecured } from '@helpers';
+import {
+    showError,
+    useArticleLuBarcodeIds,
+    useHandlingUnitContents,
+    LsIsSecured,
+    getLanguageCode
+} from '@helpers';
 import { Form, Input } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
@@ -49,6 +55,7 @@ export const ScanArticleByLocationForm = ({
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [form] = Form.useForm();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TYPED SAFE ALL
     //Pre-requisite: initialize current step
@@ -105,7 +112,7 @@ export const ScanArticleByLocationForm = ({
         1,
         100,
         null,
-        router.locale
+        filteredLanguage
     );
 
     //ScanArticleByLocation-5: send the articleLuBarcode value when specified contents are not empty or show error

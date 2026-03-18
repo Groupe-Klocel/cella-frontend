@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { useBoxes } from '@helpers';
-import { LsIsSecured } from '@helpers';
+import { LsIsSecured, getLanguageCode } from '@helpers';
 import { useRouter } from 'next/router';
 
 export interface IScanBoxProps {
@@ -45,6 +45,7 @@ export const ScanBox = ({
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -58,7 +59,7 @@ export const ScanBox = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    const boxesInfos = useBoxes({ name: `${scannedInfo}` }, 1, 100, null, router.locale);
+    const boxesInfos = useBoxes({ name: `${scannedInfo}` }, 1, 100, null, filteredLanguage);
 
     const dataToCheck = {
         process,

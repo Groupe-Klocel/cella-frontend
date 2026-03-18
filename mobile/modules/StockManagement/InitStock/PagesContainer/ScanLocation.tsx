@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useLocationIds } from '@helpers';
+import { useLocationIds, getLanguageCode } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -49,6 +49,7 @@ export const ScanLocation = ({
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -68,7 +69,7 @@ export const ScanLocation = ({
         1,
         100,
         null,
-        router.locale
+        filteredLanguage
     );
 
     const dataToCheck = {
