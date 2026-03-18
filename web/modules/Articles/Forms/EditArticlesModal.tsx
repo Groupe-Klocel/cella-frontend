@@ -156,6 +156,11 @@ const EditArticlesRenderModal = ({
         form.setFieldsValue({ permanentProduct: e.target.checked });
     };
 
+    //Checkbox newProduct
+    const onNewProductChange = (e: CheckboxChangeEvent) => {
+        form.setFieldsValue({ newProduct: e.target.checked });
+    };
+
     // UPDATE Articles
     const {
         mutate,
@@ -346,6 +351,9 @@ const EditArticlesRenderModal = ({
                         </Form.Item>
                         <Form.Item label={t('d:permanentProduct')} name="permanentProduct">
                             <Checkbox onChange={onPermanentProductChange}></Checkbox>
+                        </Form.Item>
+                        <Form.Item label={t('d:newProduct')} name="newProduct">
+                            <Checkbox onChange={onNewProductChange}></Checkbox>
                         </Form.Item>
                     </Col>
                 </Row>

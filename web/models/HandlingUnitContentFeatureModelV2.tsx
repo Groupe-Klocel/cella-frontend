@@ -165,7 +165,7 @@ export const HandlingUnitContentFeatureModelV2: ModelType = {
             optionTable: null
         },
         'handlingUnitContent{articleId}': {
-            isListRequested: true,
+            isListRequested: false,
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,

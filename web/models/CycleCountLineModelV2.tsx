@@ -76,7 +76,8 @@ export const CycleCountLineModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: null,
+            defaultSort: 'ascending'
         },
         stockOwnerId: {
             isListRequested: true,

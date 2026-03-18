@@ -58,6 +58,7 @@ import { FeatureTypeDetailModelV2 as _FeatureTypeDetailModelV2 } from '../../mod
 import { FeaturesListModelV2 as _FeaturesListModelV2 } from '../../models/FeaturesListModelV2';
 import { GoodsInLineDetailModelV2 as _GoodsInLineDetailModelV2 } from '../../models/GoodsInLineDetailModelV2';
 import { GoodsInModelV2 as _GoodsInModelV2 } from '../../models/GoodsInModelV2';
+import { GoodsInLineModelV2 as _GoodsInLineModelV2 } from '../../models/GoodsInLineModelV2';
 import { HandlingUnitContentFeatureModelV2 as _HandlingUnitContentFeatureModelV2 } from '../../models/HandlingUnitContentFeatureModelV2';
 import { HandlingUnitContentInboundModelV2 as _HandlingUnitContentInboundModelV2 } from '../../models/HandlingUnitContentInboundModelV2';
 import { HandlingUnitContentModelV2 as _HandlingUnitContentModelV2 } from '../../models/HandlingUnitContentModelV2';
@@ -213,6 +214,7 @@ export const GoodsInLineDetailModelV2 = injectedModel(
     'GoodsInLineDetailSpeModel'
 );
 export const GoodsInModelV2 = injectedModel(_GoodsInModelV2, 'GoodsInSpeModel');
+export const GoodsInLineModelV2 = injectedModel(_GoodsInLineModelV2, 'GoodsInLineSpeModel');
 export const HandlingUnitContentFeatureModelV2 = injectedModel(
     _HandlingUnitContentFeatureModelV2,
     'HandlingUnitContentFeatureSpeModel'

@@ -310,9 +310,9 @@ export const HandlingUnitContentInboundModelV2: ModelType = {
             optionTable: null
         },
         'handlingUnitContent{articleId}': {
-            isListRequested: true,
+            isListRequested: false,
             isDefaultHiddenList: true,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: false,
             searchingFormat: 'Dropdown',
             isDetailRequested: true,
