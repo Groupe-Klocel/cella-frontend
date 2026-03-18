@@ -20,7 +20,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    getMoreInfos,
+    useTranslationWithFallback as useTranslation,
+    getLanguageCode
+} from '@helpers';
 import { HeaderContent, NavButton, PageContentWrapper, RadioInfosHeader } from '@components';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
@@ -53,6 +57,7 @@ const InitStock: PageComponent = () => {
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [originDisplay, setOriginDisplay] = useState<any>({});
     const [finalDisplay, setFinalDisplay] = useState<any>({});
     const [headerContent, setHeaderContent] = useState<boolean>(false);
@@ -77,7 +82,7 @@ const InitStock: PageComponent = () => {
     const [triggerAlternativeSubmit1, setTriggerAlternativeSubmit1] = useState<boolean>(false);
 
     const huModelDefault = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'global',
         code: 'default_handling_unit_model'
     });

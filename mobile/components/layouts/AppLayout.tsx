@@ -221,10 +221,20 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             warehouseWorkerId: user.id
         };
         try {
-            const queryInfo: any = await graphqlRequestClient.request(query, variables);
+            let queryInfo: any = await graphqlRequestClient.request(query, variables);
 
             if (queryInfo.warehouseWorkerSettings.results.length > 0) {
                 setGetUserSettingsQuery(true);
+            }
+
+            if (
+                queryInfo.warehouseWorkerSettings.results.find(
+                    (item: any) => item.code === 'globalParametersMobile'
+                )?.valueJson?.lang === 'fr'
+            ) {
+                queryInfo.warehouseWorkerSettings.results.find(
+                    (item: any) => item.code === 'globalParametersMobile'
+                ).valueJson.lang = 'fr-FR';
             }
 
             const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
@@ -234,7 +244,11 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             const newSettings = containsTestCode
                 ? queryInfo.warehouseWorkerSettings.results
                 : [...queryInfo.warehouseWorkerSettings.results, ...userSettings];
-            setLang(newSettings[0].valueJson.lang);
+            setLang(
+                queryInfo.warehouseWorkerSettings.results.find(
+                    (item: any) => item.code === 'globalParametersMobile'
+                ).valueJson.lang
+            );
             dispatchUser({
                 type: 'SWITCH_USER_SETTINGS',
                 userSettings: newSettings
@@ -353,7 +367,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             (getParameterSettingsQuery || parameters?.length > 0)
         ) {
             if (
-                (getUserSettingsQuery && userSettings.length > 1) ||
+                (getUserSettingsQuery && userSettings.length >= 1) ||
                 (!getUserSettingsQuery && userSettings.length == 1)
             ) {
                 setUserSettingsLoading(true);

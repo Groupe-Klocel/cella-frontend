@@ -27,8 +27,13 @@ const isoLangs: Array<LanguageType> = [
     },
     {
         name: 'Français',
-        code: 'fr',
+        code: 'fr-FR',
         flag: '/images/fr.png'
+    },
+    {
+        name: 'Deutsch',
+        code: 'de-DE',
+        flag: '/images/de.png'
     }
 ];
 
