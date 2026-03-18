@@ -17,11 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton, SinglePrintModal } from '@components';
+import { AppHead, LinkButton, SinglePrintModalV2 } from '@components';
 import { DeliveryModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import {
     META_DEFAULTS,
@@ -50,7 +50,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const DeliveryPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions } = useAppState();
+    const { permissions, parameters } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const [shippingAddress, setShippingAddress] = useState<any>();
@@ -62,6 +62,23 @@ const DeliveryPage: PageComponent = () => {
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [refetchHUO, setRefetchHUO] = useState(false);
+    const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
+
+    const configsParamsCodes = useMemo(() => {
+        const findextrasByScopeAndCode = (items: any[], scope: string, value: string) => {
+            return items.find((item: any) => item.scope === scope && item.code === value).extras;
+        };
+
+        const defaultDeliveryDocuments = findextrasByScopeAndCode(
+            parameters,
+            'documents',
+            'default_delivery_documents'
+        );
+
+        return {
+            defaultDeliveryDocuments
+        };
+    }, [parameters]);
 
     // #region to customize information
     const breadCrumb = [
@@ -358,15 +375,16 @@ const DeliveryPage: PageComponent = () => {
                             )}
                         </>
                     )}
-                    <SinglePrintModal
+                    <SinglePrintModalV2
                         showModal={{
                             showSinglePrintModal,
                             setShowSinglePrintModal
                         }}
                         dataToPrint={{ id: idToPrint }}
-                        documentName="K_Delivery"
+                        allDocumentName={configsParamsCodes.defaultDeliveryDocuments}
                         documentReference={data?.name}
                         customLanguage={data?.printLanguage ?? undefined}
+                        documentAttachmentsData={documentAttachmentsData}
                     />
                 </Space>
             ) : (
@@ -390,6 +408,7 @@ const DeliveryPage: PageComponent = () => {
                         setShippingAddress={setShippingAddress}
                         refetchHUO={refetchHUO}
                         setRefetchHUO={setRefetchHUO}
+                        setDocumentAttachmentsData={setDocumentAttachmentsData}
                     />
                 }
                 id={id!}
