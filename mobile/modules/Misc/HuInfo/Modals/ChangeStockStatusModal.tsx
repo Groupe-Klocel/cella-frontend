@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Form, InputNumber, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
-import { showError, showSuccess } from '@helpers';
+import { showError, showSuccess, getLanguageCode } from '@helpers';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -50,6 +50,7 @@ const ChangeStockStatusModal = ({
     const successMessageUpdateData = t('messages:success-updated');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const originalFeatures = content?.handlingUnitContentFeatures?.reduce(
         (acc: any, feature: any, index: number) => {
@@ -119,7 +120,7 @@ const ChangeStockStatusModal = ({
 
     // Retrieve stock status list
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'stock_statuses'
     });
 
