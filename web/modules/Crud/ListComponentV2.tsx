@@ -2760,6 +2760,7 @@ const ListComponent = (props: IListProps) => {
                                         rowKey="id"
                                         dataSource={dataSource}
                                         scroll={tableScroll}
+                                        sticky
                                         size="small"
                                         loading={isLoading}
                                         onChange={handleTableChange}

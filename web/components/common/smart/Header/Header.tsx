@@ -17,16 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { SettingOutlined } from '@ant-design/icons';
+import { MenuOutlined, SettingOutlined } from '@ant-design/icons';
 import { DrawerItems, Logo, ProfileMenu, UserSettings } from '@components';
-import { Col, Layout, Row } from 'antd';
+import { Button, Col, Layout, Row, Space } from 'antd';
 import { useAppState, useAppDispatch } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import {
     useTranslationWithFallback as useTranslation,
     decodeJWT,
     showError,
-    cookie
+    cookie,
+    getEnvironmentLabel
 } from '@helpers';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
@@ -35,17 +36,26 @@ import Link from 'next/link';
 import { gql } from 'graphql-request';
 
 const StyledHeader = styled(Layout.Header)`
-    padding: 0px 10px 0px 10px;
+    padding: 3px 10px 3px 10px;
     line-height: 50px;
-    height: 53px;
+    height: 59px;
+
+    @media (max-width: 991px) {
+        padding: 0px 8px;
+    }
 `;
 
 const StyledCol = styled(Col)`
-    max-height: 50px;
+    min-width: 0;
     padding: 0px 5px 0px 5px;
 `;
 
-const Header: FC = () => {
+export interface IHeaderProps {
+    showMenuButton?: boolean;
+    onMenuButtonClick?: () => void;
+}
+
+const Header: FC<IHeaderProps> = ({ showMenuButton = false, onMenuButtonClick }: IHeaderProps) => {
     const { t } = useTranslation();
     const { user, logout } = useAuth();
     const { switcher } = useThemeSwitcher();
@@ -231,32 +241,69 @@ const Header: FC = () => {
     return (
         <StyledHeader>
             <DrawerItems {...drawerProps()} />
-            <Row wrap={false} align="middle">
-                <StyledCol flex="10vw">
-                    <Link href="/" passHref>
-                        <Logo width={45} />
-                    </Link>
-                </StyledCol>
+            <Row wrap={false} align="middle" justify="space-between">
                 <StyledCol flex="0 1 auto">
-                    {timeLeft !== null &&
-                        timeLeft > 0 &&
-                        timeLeft < delayNotificationBeforeLogout && (
-                            <span
-                                style={{ cursor: 'pointer' }}
-                                onClick={() =>
-                                    showError(
-                                        t('messages:session-timeout-notification', {
-                                            time: `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`
-                                        })
-                                    )
-                                }
-                            >
-                                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-                            </span>
+                    <Space size="small" align="center">
+                        {showMenuButton && (
+                            <Button
+                                type="text"
+                                icon={<MenuOutlined />}
+                                onClick={() => onMenuButtonClick?.()}
+                                aria-label="Open navigation menu"
+                            />
                         )}
+                        <Link href="/" passHref>
+                            <Logo width={45} />
+                        </Link>
+                        {(() => {
+                            const envLabel = getEnvironmentLabel();
+                            return envLabel ? (
+                                <span
+                                    style={{
+                                        background:
+                                            envLabel === 'DEV'
+                                                ? '#f5222d'
+                                                : envLabel === 'STAGING'
+                                                  ? '#fa8c16'
+                                                  : '#722ed1',
+                                        color: '#fff',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: 'bold',
+                                        lineHeight: 'normal'
+                                    }}
+                                >
+                                    {envLabel}
+                                </span>
+                            ) : null;
+                        })()}
+                    </Space>
                 </StyledCol>
-                <StyledCol flex="0 1 auto">
-                    <ProfileMenu username={user.username} profileMenu={profileMenuList} />
+                <StyledCol
+                    flex="1 1 auto"
+                    style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}
+                >
+                    <Space size="middle" align="center">
+                        {timeLeft !== null &&
+                            timeLeft > 0 &&
+                            timeLeft < delayNotificationBeforeLogout && (
+                                <span
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() =>
+                                        showError(
+                                            t('messages:session-timeout-notification', {
+                                                time: `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`
+                                            })
+                                        )
+                                    }
+                                >
+                                    {Math.floor(timeLeft / 60)}:
+                                    {String(timeLeft % 60).padStart(2, '0')}
+                                </span>
+                            )}
+                        <ProfileMenu username={user.username} profileMenu={profileMenuList} />
+                    </Space>
                 </StyledCol>
             </Row>
         </StyledHeader>
