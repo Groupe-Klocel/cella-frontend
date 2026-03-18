@@ -25,6 +25,7 @@ import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
+    getLanguageCode,
     getModesFromPermissions,
     orderByFormater,
     PaginationType,
@@ -90,6 +91,7 @@ const HookConfigListComponent = (props: IListProps) => {
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const id = props.hookConfigId;
     const [argumentData, setArgumentData] = useState<string | undefined>();
@@ -338,13 +340,20 @@ const HookConfigListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 
     useEffect(() => {
         reloadData();
-    }, [search, props.refetch, pagination.current, pagination.itemsPerPage, sort, router.locale]);
+    }, [
+        search,
+        props.refetch,
+        pagination.current,
+        pagination.itemsPerPage,
+        sort,
+        filteredLanguage
+    ]);
 
     // #region EXPORT DATA
     const exportFields = Object.keys(props.dataModel.fieldsInfo).filter((key) => {
@@ -358,7 +367,7 @@ const HookConfigListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 

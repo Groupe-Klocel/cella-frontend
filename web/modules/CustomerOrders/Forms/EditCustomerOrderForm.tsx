@@ -24,7 +24,7 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import dayjs from 'dayjs';
-import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
+import { showError, showSuccess, showInfo, checkUndefinedValues, getLanguageCode } from '@helpers';
 import {
     GetThirdPartiesQuery,
     SimpleGetInProgressStockOwnersQuery,
@@ -55,6 +55,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     const { graphqlRequestClient } = useAuth();
     const { parameters: appParameters, configs: appConfigs } = useAppState();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { locale } = router;
     const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
@@ -340,8 +341,8 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
                     <DatePicker
                         allowClear
-                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
-                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        format={filteredLanguage === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                         defaultValue={dayjs()}
                     />
                 </Form.Item>

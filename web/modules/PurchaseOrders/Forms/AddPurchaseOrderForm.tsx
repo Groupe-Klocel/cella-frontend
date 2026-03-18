@@ -32,7 +32,7 @@ import {
 import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo, useCreate } from '@helpers';
+import { showError, showSuccess, showInfo, getLanguageCode, useCreate } from '@helpers';
 import { FilterFieldType, FormOptionType, ModelType } from 'models/ModelsV2';
 import { FormGroup } from 'modules/Crud/submodules/FormGroup';
 import configs from '../../../../common/configs.json';
@@ -75,6 +75,7 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
 ) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { graphqlRequestClient } = useAuth();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [thirdParties, setThirdParties] = useState<Array<FormOptionType>>();
@@ -110,7 +111,7 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 
@@ -134,7 +135,7 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
 
     // Get all type
     const typeList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'purchase_order_type'
     });
     const excludedCodes = ['10100', '10104'];
@@ -519,8 +520,8 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                 </Form.Item>
                 <Form.Item label={t('d:expectedGoodsInDate')} name={'expectedGoodsInDate'}>
                     <DatePicker
-                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
-                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        format={filteredLanguage === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                     />
                 </Form.Item>
                 <Form.Item label={t('d:comment')} name="comment">

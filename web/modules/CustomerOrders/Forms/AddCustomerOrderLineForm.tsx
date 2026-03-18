@@ -29,7 +29,8 @@ import {
     showInfo,
     useOrderLineIds,
     useArticles,
-    useArticleLus
+    useArticleLus,
+    getLanguageCode
 } from '@helpers';
 import { debounce } from 'lodash';
 import configs from '../../../../common/configs.json';
@@ -68,8 +69,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     const { graphqlRequestClient } = useAuth();
     const { parameters: appParameters, configs: appConfigs } = useAppState();
     const router = useRouter();
-    const { locale } = router;
-    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
+    const filteredLanguage = getLanguageCode(router);
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const article = t('d:article');
@@ -117,7 +117,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                 .map((item: any) => {
                     return {
                         ...item,
-                        value: item.translation?.[language] || item.value
+                        value: item.translation?.[filteredLanguage!] || item.value
                     };
                 });
         };
@@ -125,7 +125,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
         return {
             discountTypes
         };
-    }, [appConfigs, appParameters, language]);
+    }, [appConfigs, appParameters, filteredLanguage]);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -149,7 +149,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     }, [unsavedChanges]);
     // PARAMETER : stock_status
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'stock_statuses'
     });
     useEffect(() => {
@@ -309,7 +309,7 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
     //To render Simple vat rates list
     const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'vat_rate',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

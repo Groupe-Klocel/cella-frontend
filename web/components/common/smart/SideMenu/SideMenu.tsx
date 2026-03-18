@@ -645,6 +645,7 @@ const SideMenu: FC = () => {
             'wm_handling-unit-outbound-barcodes',
             'wm_boxes',
             'wm_deliveries',
+            'wm_pre-assigned-load',
             'wm_manual-allocation',
             'wm_shipping-units',
             'wm_rounds'
@@ -685,6 +686,17 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'preparation-management-deliveries',
                           label: <Link href="/deliveries">{t('deliveries')}</Link>
+                      }
+                    : null,
+                // PRE-ASSIGNED LOADS
+                getModesFromPermissions(permissions, 'wm_pre-assigned-load').includes(ModeEnum.Read)
+                    ? {
+                          key: 'preparation-management-pre-assigned-load',
+                          label: (
+                              <Link href="/deliveries/pre-assigned-load">
+                                  {t('pre-assigned-load')}
+                              </Link>
+                          )
                       }
                     : null,
                 // MANUAl ALLOCATION

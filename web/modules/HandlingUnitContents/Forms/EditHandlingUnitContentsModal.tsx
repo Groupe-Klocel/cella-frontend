@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { Col, Form, Input, Select, Modal, Row, Checkbox } from 'antd';
 import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
@@ -46,13 +46,14 @@ const EditHandlingUnitContentsRenderModal = ({
     const [stockStatus, setStockStatus] = useState<any>();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const selectedRows = rows;
     const [enableReservation, setEnableReservation] = useState(false);
     const [deleteReservation, setDeleteReservation] = useState(false);
 
     const stockStatusTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'stock_statuses',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

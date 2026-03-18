@@ -574,6 +574,10 @@ const formatFeatures = (hucfs: any[]): Record<string, any> => {
     return updated_features;
 };
 
+const getLanguageCode = (router: any): string => {
+    return router.locale?.split('-')[0] || 'en';
+};
+
 export {
     isNumeric,
     formatDigitsForData,
@@ -622,5 +626,6 @@ export {
     queryString,
     areObjectsIdentical,
     checkUndefinedValues,
-    formatFeatures
+    formatFeatures,
+    getLanguageCode
 };

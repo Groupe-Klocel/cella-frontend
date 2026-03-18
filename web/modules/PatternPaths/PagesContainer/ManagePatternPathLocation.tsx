@@ -27,7 +27,7 @@ import {
     useListConfigsForAScopeQuery
 } from 'generated/graphql';
 import { useAppState } from 'context/AppContext';
-import { getModesFromPermissions, showError, showSuccess } from '@helpers';
+import { getModesFromPermissions, getLanguageCode, showError, showSuccess } from '@helpers';
 import { Alert, Button, Card, Col, Layout, Row } from 'antd';
 import { ContentSpin, HeaderContent } from '@components';
 import { styled } from 'styled-components';
@@ -68,6 +68,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.PatternPathLocation);
     const { graphqlRequestClient } = useAuth();
+    const filteredLanguage = getLanguageCode(router);
     const [locationsList, setLocationsList] = useState<any>();
     const [patternPathLocationsList, setPatternPathLocationsList] = useState<any>();
     const [initialPatternPathLocations, setInitialPatternPathLocations] = useState<any>(null);
@@ -100,7 +101,7 @@ export const ManagePatternPathLocation: FC<IManagePatternPathLocationProps> = ({
     //#region LIST For FILTER component
     const categoriesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'location_category',
-        language: router.locale
+        language: filteredLanguage
     });
     useEffect(() => {
         if (categoriesTextList) {

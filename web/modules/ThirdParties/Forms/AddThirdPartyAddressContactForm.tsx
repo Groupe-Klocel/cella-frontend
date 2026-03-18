@@ -29,7 +29,7 @@ import {
     CreateThirdPartyAddressContactMutationVariables,
     useListConfigsForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo } from '@helpers';
+import { showError, showSuccess, showInfo, getLanguageCode } from '@helpers';
 import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
@@ -46,6 +46,7 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     // prompt the user if they try and leave with unsaved changes
@@ -82,7 +83,7 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 
@@ -119,7 +120,7 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
     const thirdPartyAddressContactCategoryList = useListConfigsForAScopeQuery(
         graphqlRequestClient,
         {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'third_party_address_contact_category'
         }
     );

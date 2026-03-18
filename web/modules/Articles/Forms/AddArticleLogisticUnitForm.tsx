@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Col, Input, Row, Form, Select, Checkbox, InputNumber, Modal } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -66,6 +66,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     // prompt the user if they try and leave with unsaved changes
@@ -139,7 +140,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
 
     // Retrieve Preparation Modes list
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'preparation_mode'
     });
 
@@ -207,7 +208,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
 
     // Retrieve sort types
     const sortTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'stock_sort_type'
     });
     useEffect(() => {
@@ -226,7 +227,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
 
     // Retrieve picking types
     const pickingTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'picking_type'
     });
     useEffect(() => {

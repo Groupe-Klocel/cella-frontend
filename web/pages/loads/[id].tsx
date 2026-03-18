@@ -17,11 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton, SinglePrintModal } from '@components';
-import { META_DEFAULTS, getModesFromPermissions, showError, showSuccess } from '@helpers';
+import { AppHead, LinkButton, SinglePrintModalV2 } from '@components';
+import { getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { LoadDetailsExtra } from 'modules/Loads/Elements/LoadDetailsExtra';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -29,13 +29,7 @@ import { LoadModelV2 as model } from '@helpers';
 import { loadsRoutes as itemRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
-import {
-    ModeEnum,
-    UpdateLoadMutation,
-    UpdateLoadMutationVariables,
-    useListParametersForAScopeQuery,
-    useUpdateLoadMutation
-} from 'generated/graphql';
+import { ModeEnum, useListParametersForAScopeQuery } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { useAuth } from 'context/AuthContext';
 import 'moment/min/locales';
@@ -46,7 +40,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const LoadsPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions } = useAppState();
+    const { permissions, parameters } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -55,8 +49,24 @@ const LoadsPage: PageComponent = () => {
     const { graphqlRequestClient } = useAuth();
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
-    const [dataToPrint, setDataToPrint] = useState<any>();
-    const [documentToPrint, setDocumentToPrint] = useState<string>();
+    const [idToPrint, setIdToPrint] = useState<string>();
+    const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
+
+    const configsParamsCodes = useMemo(() => {
+        const findextrasByScopeAndCode = (items: any[], scope: string, value: string) => {
+            return items.find((item: any) => item.scope === scope && item.code === value)?.extras;
+        };
+
+        const defaultLoadDocuments = findextrasByScopeAndCode(
+            parameters,
+            'documents',
+            'default_load_documents'
+        );
+
+        return {
+            defaultLoadDocuments
+        };
+    }, [parameters]);
 
     // #region to customize information
     const breadCrumb = [
@@ -278,15 +288,9 @@ const LoadsPage: PageComponent = () => {
                 {/* Print List of boxes and code bar of load */}
                 {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
                     <Button
-                        // onClick={() => chooseAction(data.id, 'print')}
                         onClick={() => {
                             setShowSinglePrintModal(true);
-                            setDataToPrint({
-                                id: data.id,
-                                date: dateLocal,
-                                statusDispatched
-                            });
-                            setDocumentToPrint('K_LoadLoadingList');
+                            setIdToPrint(data.id);
                         }}
                     >
                         {t('actions:print')}
@@ -294,30 +298,19 @@ const LoadsPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                {/* Print just code bar of load */}
-                {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
-                    <Button
-                        // onClick={() => chooseAction(data.id, 'label')}
-                        onClick={() => {
-                            setShowSinglePrintModal(true);
-                            setDataToPrint({
-                                id: data.id
-                            });
-                            setDocumentToPrint('K_LoadLabel');
-                        }}
-                    >
-                        {t('actions:load-label')}
-                    </Button>
-                ) : (
-                    <></>
-                )}
-                <SinglePrintModal
+                <SinglePrintModalV2
                     showModal={{
                         showSinglePrintModal,
                         setShowSinglePrintModal
                     }}
-                    dataToPrint={dataToPrint}
-                    documentName={documentToPrint!}
+                    dataToPrint={{
+                        id: idToPrint,
+                        date: dateLocal,
+                        statusDispatched
+                    }}
+                    allDocumentName={configsParamsCodes.defaultLoadDocuments}
+                    documentReference={data?.name}
+                    documentAttachmentsData={documentAttachmentsData}
                 />
             </Space>
         )
@@ -327,7 +320,13 @@ const LoadsPage: PageComponent = () => {
         <>
             <AppHead title={headerData.title} />
             <ItemDetailComponent
-                extraDataComponent={<LoadDetailsExtra loadId={id!} />}
+                extraDataComponent={
+                    <LoadDetailsExtra
+                        loadId={id!}
+                        loadData={data}
+                        setDocumentAttachmentsData={setDocumentAttachmentsData}
+                    />
+                }
                 headerData={headerData}
                 id={id!}
                 dataModel={model}

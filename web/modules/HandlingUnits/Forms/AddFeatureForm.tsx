@@ -23,7 +23,7 @@ import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
 import { formatFeatures, useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
 import moment from 'moment';
-import { showError, showSuccess, showInfo, useCreate } from '@helpers';
+import { showError, showSuccess, showInfo, useCreate, getLanguageCode } from '@helpers';
 import { FilterFieldType, ModelType, FormOptionType } from 'models/ModelsV2';
 import { useAuth } from 'context/AuthContext';
 import dayjs from 'dayjs';
@@ -45,6 +45,7 @@ export interface IAddItemFormProps {
 export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const { graphqlRequestClient } = useAuth();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
@@ -379,7 +380,7 @@ export const AddFeatureForm: FC<IAddItemFormProps> = (props: IAddItemFormProps) 
                         >
                             <DatePicker
                                 format={localeDateTimeFormat}
-                                locale={router.locale === 'fr' ? fr_FR : en_US}
+                                locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                             />
                         </Form.Item>
                     ) : (

@@ -37,7 +37,8 @@ import {
     flatten,
     cookie,
     queryString,
-    pathParamsFromDictionary
+    pathParamsFromDictionary,
+    getLanguageCode
 } from '@helpers';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { FilterFieldType, ModelType } from 'models/ModelsV2';
@@ -86,6 +87,7 @@ const ConfigurationListComponent = (props: IListProps) => {
 
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const id = props.parameterId;
 
@@ -338,7 +340,7 @@ const ConfigurationListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 
@@ -367,7 +369,7 @@ const ConfigurationListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 

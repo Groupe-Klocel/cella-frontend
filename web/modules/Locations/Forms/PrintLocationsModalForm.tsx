@@ -24,6 +24,7 @@ import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import {
     DataQueryType,
+    getLanguageCode,
     removeDuplicatesAndSort,
     showError,
     showSuccess,
@@ -55,6 +56,7 @@ const PrintLocationsModalForm = ({ showModal }: IPrintLocationsModalFormProps) =
     const [blocks, setBlocks] = useState<any>();
     const [locations, setLocations] = useState<DataQueryType>();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [printers, setPrinters] = useState<Array<FormOptionType>>();
     const [printLanguage, setPrintLanguage] = useState<string>();
     const [printBlock, setPrintBlock] = useState(false);
@@ -236,7 +238,7 @@ const PrintLocationsModalForm = ({ showModal }: IPrintLocationsModalFormProps) =
 
     // Get all printers
     const printerList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'printer'
     });
     useEffect(() => {

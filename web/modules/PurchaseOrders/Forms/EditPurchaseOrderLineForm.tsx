@@ -43,6 +43,7 @@ import {
     showError,
     showSuccess,
     showInfo,
+    getLanguageCode,
     useArticleIds,
     usePurchaseOrderLineIds,
     checkUndefinedValues
@@ -69,6 +70,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const stockOwner = t('d:stockOwner');
     const article = t('common:article');
@@ -153,7 +155,7 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     //To render Simple vat rates list
     const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'vat_rate',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

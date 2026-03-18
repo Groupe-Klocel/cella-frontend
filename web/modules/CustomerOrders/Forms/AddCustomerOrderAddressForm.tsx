@@ -24,7 +24,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo, GraphQLResponseType } from '@helpers';
+import { showError, showSuccess, showInfo, GraphQLResponseType, getLanguageCode } from '@helpers';
 import { debounce } from 'lodash';
 import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
@@ -60,6 +60,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [category, setCategory] = useState<Array<FormOptionType>>();
     const [thirdPartyAddresses, setThirdPartyAddresses] = useState<Array<FormOptionType>>();
     const [thirdPartyAddressContacts, setThirdPartyAddressContacts] =
@@ -119,7 +120,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
 
     // PARAMETER : category
     const categoryList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'third_party_address_category'
     });
     useEffect(() => {
@@ -317,7 +318,7 @@ export const AddCustomerOrderAddressForm = (props: ISingleItemProps) => {
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 

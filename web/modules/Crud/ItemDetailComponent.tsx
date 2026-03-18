@@ -22,7 +22,7 @@ import { Alert, Layout, Typography } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { flatten, getModesFromPermissions, showError, useDetail } from '@helpers';
+import { flatten, getModesFromPermissions, showError, useDetail, getLanguageCode } from '@helpers';
 import { ModelType } from 'models/Models';
 import { useRouter } from 'next/router';
 import { ModeEnum } from 'generated/graphql';
@@ -46,6 +46,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [detailData, setDetailData] = useState<any>(null);
     const [displayedGrouping, setDisplayedGrouping] = useState<any>();
 
@@ -53,7 +54,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
         props.id,
         props.dataModel.endpoints.detail,
         props.dataModel.detailFields,
-        router.locale
+        filteredLanguage
     );
 
     useEffect(() => {

@@ -25,6 +25,7 @@ import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
+    getLanguageCode,
     getModesFromPermissions,
     orderByFormater,
     PaginationType,
@@ -94,6 +95,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
+    const filteredLanguage = getLanguageCode(router);
     const id = props.articleId;
     const [extraData, setExtraData] = useState<string | undefined>();
     const [newRows, setNewRows] = useState<Array<any>>([]);
@@ -351,7 +353,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 
@@ -371,7 +373,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 

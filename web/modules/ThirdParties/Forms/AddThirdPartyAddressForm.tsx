@@ -40,7 +40,7 @@ import {
     useListConfigsForAScopeQuery,
     useListParametersForAScopeQuery
 } from 'generated/graphql';
-import { showError, showSuccess, showInfo } from '@helpers';
+import { showError, showSuccess, showInfo, getLanguageCode } from '@helpers';
 import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
 import { gql, GraphQLClient } from 'graphql-request';
@@ -63,6 +63,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     const [dataLocations, setDataLocations] = useState<any>();
@@ -100,7 +101,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     const [thirdPartyCategories, setThirdPartyCategories] = useState<Array<FormOptionType>>();
     // Get all third party categories
     const thirdPartyAddressCategoryList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'third_party_address_category'
     });
     useEffect(() => {
@@ -120,7 +121,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     const [currencies, setCurrencies] = useState<Array<FormOptionType>>();
     // Get all currencies
     const currenciesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'currency'
     });
     useEffect(() => {
@@ -140,7 +141,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     const [paymentTerms, setPaymentTerms] = useState<Array<FormOptionType>>();
     // Get all paymentTerms
     const paymentTermsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'payment_terms'
     });
     useEffect(() => {
@@ -160,7 +161,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     const [paymentMethods, setPaymentMethods] = useState<Array<FormOptionType>>();
     // Get all paymentMethods
     const paymentMethodsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'payment_method'
     });
     useEffect(() => {
@@ -180,7 +181,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     const [bankAccounts, setBankAccounts] = useState<Array<FormOptionType>>();
     // Get all bankAccounts
     const bankAccountsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'bank_account'
     });
     useEffect(() => {
@@ -200,7 +201,7 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
     const [vatRates, setVatRates] = useState<Array<FormOptionType>>();
     // Get all vatRates
     const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'vat_rate'
     });
 
