@@ -33,7 +33,8 @@ import {
     PaginationType,
     showError,
     showSuccess,
-    useList
+    useList,
+    getLanguageCode
 } from '@helpers';
 import { HeaderData } from 'modules/Crud/ListComponentV2';
 import { translationsRoutes as itemRoutes } from 'modules/Translations/Static/translationsRoutes';
@@ -97,6 +98,7 @@ const Translation: PageComponent = () => {
     const [form] = Form.useForm();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [activeEditKey, setActiveEditKey] = useState<string | null>(null);
 
     const [searchedColumn, setSearchedColumn] = useState('');
@@ -109,7 +111,7 @@ const Translation: PageComponent = () => {
     //To render translation_types from configs
     const translationTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'translation_type',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -129,7 +131,7 @@ const Translation: PageComponent = () => {
     //To render translation_languages from configs
     const translationLanguagesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'translation_language',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -149,7 +151,7 @@ const Translation: PageComponent = () => {
     //To render translation_categories from configs
     const translationCategoriesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'translation_category',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -223,7 +225,7 @@ const Translation: PageComponent = () => {
         pagination.current,
         pagination.itemsPerPage,
         null,
-        router.locale,
+        filteredLanguage,
         defaultOrder
     );
 

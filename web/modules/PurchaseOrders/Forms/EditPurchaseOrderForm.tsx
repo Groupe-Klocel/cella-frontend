@@ -23,7 +23,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
+import { showError, showSuccess, showInfo, getLanguageCode, checkUndefinedValues } from '@helpers';
 import {
     UpdatePurchaseOrderMutation,
     UpdatePurchaseOrderMutationVariables,
@@ -44,6 +44,7 @@ export const EditPurchaseOrderForm: FC<EditPurchaseOrderFormProps> = ({
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -67,7 +68,7 @@ export const EditPurchaseOrderForm: FC<EditPurchaseOrderFormProps> = ({
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 

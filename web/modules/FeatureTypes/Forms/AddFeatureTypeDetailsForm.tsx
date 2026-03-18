@@ -34,7 +34,7 @@ import {
     useSimpleGetAllFeatureCodesQuery
 } from 'generated/graphql';
 import { FormOptionType } from 'models/ModelsV2';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
@@ -44,13 +44,9 @@ export const AddFeatureTypeDetailsForm = () => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { parameterId } = router.query;
-    const { userSettings } = useAppState();
-    const generalUserSettings = userSettings?.find((item: any) => {
-        return 'globalParameters' === item.code;
-    });
-    const globalLocale = generalUserSettings?.valueJson?.lang;
-    const searchedLanguage = globalLocale == 'en-us' ? 'en' : globalLocale;
+
     const [featureCodes, setFeatureCodes] = useState<any>();
     const [featureTypeObject, setFeatureTypeObject] = useState<any>();
     const [sortTypes, setSortTypes] = useState<Array<FormOptionType>>();
@@ -88,16 +84,16 @@ export const AddFeatureTypeDetailsForm = () => {
         if (featureTypeObject) {
             formData['featureType'] = parseInt(featureTypeObject?.code);
         }
-        formData['associatedFeatureType'] = globalLocale
+        formData['associatedFeatureType'] = filteredLanguage
             ? featureTypeObject?.translation
-                ? featureTypeObject?.translation[searchedLanguage]
+                ? featureTypeObject?.translation[filteredLanguage]
                 : featureTypeObject?.value
             : featureTypeObject?.value;
     }, [featureTypeObject]);
 
     // PARAMETER : sort types
     const sortTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'stock_sort_type'
     });
     useEffect(() => {

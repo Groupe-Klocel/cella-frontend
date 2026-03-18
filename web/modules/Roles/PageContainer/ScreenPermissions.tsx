@@ -21,7 +21,13 @@ import { useEffect, useState } from 'react';
 import { ContentSpin, HeaderContent } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Alert, Modal } from 'antd';
-import { getModesFromPermissions, showError, showSuccess, useGetRoles } from '@helpers';
+import {
+    getModesFromPermissions,
+    getLanguageCode,
+    showError,
+    showSuccess,
+    useGetRoles
+} from '@helpers';
 import { useAppState } from 'context/AppContext';
 import {
     ModeEnum,
@@ -45,6 +51,7 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { permissions } = useAppState();
     const modes = getModesFromPermissions(permissions, Table.Permission);
     const [enableUpdate, setEnableUpdate] = useState<any>();
@@ -145,7 +152,7 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
     //To render Simple tables list
     const tablesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'screen',
-        language: router.locale
+        language: filteredLanguage
     });
 
     const [mobileTables, setMobileTables] = useState<any>();

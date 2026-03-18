@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { useHandlingUnitContents, LsIsSecured } from '@helpers';
+import { useHandlingUnitContents, LsIsSecured, getLanguageCode } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -86,6 +86,7 @@ export const SelectContentForHandlingUnitForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [radio, setRadio] = useState<any>([]);
     const [showChangeStockStatusModal, setShowChangeStockStatusModal] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -113,7 +114,7 @@ export const SelectContentForHandlingUnitForm = ({
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'radio'
         };
 
@@ -222,7 +223,7 @@ export const SelectContentForHandlingUnitForm = ({
     const [selectContent, setSelectContent] = useState<any>();
     useEffect(() => {
         graphqlRequestClient
-            .request(handlingUnitContentsQuery, { ...variables, language: router.locale })
+            .request(handlingUnitContentsQuery, { ...variables, language: filteredLanguage })
             .then((res: any) => {
                 if (res?.handlingUnitContents) {
                     setContents(res.handlingUnitContents.results);

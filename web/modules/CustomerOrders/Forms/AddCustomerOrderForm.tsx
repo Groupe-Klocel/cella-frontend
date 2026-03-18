@@ -33,7 +33,13 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useAppState } from 'context/AppContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, useCarrierShippingModeIds, useStockOwners } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    useCarrierShippingModeIds,
+    useStockOwners,
+    getLanguageCode
+} from '@helpers';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
 import { FC, useEffect, useMemo, useState } from 'react';
@@ -72,6 +78,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     const { graphqlRequestClient } = useAuth();
     const { parameters: appParameters, configs: appConfigs } = useAppState();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { locale } = router;
     const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
     const [thirdParties, setThirdParties] = useState<Array<IOption>>([]);
@@ -490,8 +497,8 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
                 <Form.Item label={expectedDeliveryDateLabel} name="expectedDeliveryDate">
                     <DatePicker
                         allowClear
-                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
-                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        format={filteredLanguage === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                         defaultValue={dayjs()}
                     />
                 </Form.Item>

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
-import { showError, showInfo, showSuccess } from '@helpers';
+import { showError, showInfo, showSuccess, getLanguageCode } from '@helpers';
 import { Button, Checkbox, Divider, Form, Input, InputNumber, Modal, Select, Space } from 'antd';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { useAuth } from 'context/AuthContext';
@@ -49,6 +49,7 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
+    const filteredLanguage = getLanguageCode(router);
     const { id } = router.query;
     const [replenishTypes, setReplenishTypes] = useState<any>();
     const [rotations, setRotations] = useState<any>();
@@ -94,7 +95,7 @@ export const AddBlockLocationForm = (props: ISingleItemProps) => {
     //To render Simple categories list
     const categoriesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'location_category',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

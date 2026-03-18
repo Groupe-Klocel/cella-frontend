@@ -27,7 +27,7 @@ import {
 } from '@components';
 import { Space, Form, Button, Empty, Alert, Badge } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
@@ -121,6 +121,7 @@ const DragAndDropListComponent = (props: IListProps) => {
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { graphqlRequestClient } = useAuth();
 
     const state = useAppState();
@@ -928,7 +929,7 @@ const DragAndDropListComponent = (props: IListProps) => {
         adjustedPagination,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort,
         advancedFilters
     );
@@ -969,7 +970,7 @@ const DragAndDropListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 

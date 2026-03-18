@@ -25,6 +25,7 @@ import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
+    getLanguageCode,
     getModesFromPermissions,
     orderByFormater,
     PaginationType,
@@ -93,6 +94,7 @@ const ArticleTranslationsListComponent = (props: IListProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const id = props.articleId;
     const [translationData, setTranslationData] = useState<string | undefined>();
@@ -354,7 +356,7 @@ const ArticleTranslationsListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 
@@ -374,7 +376,7 @@ const ArticleTranslationsListComponent = (props: IListProps) => {
         pagination.current,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort
     );
 

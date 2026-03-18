@@ -24,7 +24,7 @@ import {
     StyledFormItem,
     StyledForm
 } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { useRouter } from 'next/router';
@@ -74,6 +74,7 @@ const SmallSelect = styled(Select)`
 export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { graphqlRequestClient } = useAuth();
     const [displayedLocations, setDisplayedLocations] = useState<Array<any>>();
     const [nbMaxLocations, setNbMaxLocations] = useState<number>(3);
@@ -241,7 +242,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
             orderBy: sortByDate,
             page: 1,
             itemsPerPage: 100,
-            language: router.locale
+            language: filteredLanguage
         };
         const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
         return handlingUnitInfos;
@@ -305,7 +306,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
             orderBy: sortByName,
             page: 1,
             itemsPerPage: 100,
-            language: router.locale
+            language: filteredLanguage
         };
         const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
         return handlingUnitInfos;

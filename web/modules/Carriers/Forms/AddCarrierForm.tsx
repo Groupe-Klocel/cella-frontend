@@ -22,7 +22,7 @@ import { Form, Button, Modal, Collapse, Select, Input, AutoComplete, Checkbox } 
 import { WrapperForm } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
-import { showError, showSuccess } from '@helpers';
+import { showError, showSuccess, getLanguageCode } from '@helpers';
 import { FilterFieldType, FormOptionType, ModelType } from 'models/ModelsV2';
 import {
     CreateCarrierMutation,
@@ -59,6 +59,7 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [selectedAvailable, setSelectedAvailable] = useState<any>();
     const [selectedToBeLoaded, setSelectedToBeLoaded] = useState<any>();
@@ -224,7 +225,7 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 

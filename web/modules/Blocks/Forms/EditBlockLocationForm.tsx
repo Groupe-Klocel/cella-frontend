@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import configs from '../../../../common/configs.json';
 import { Button, Input, Form, Checkbox, Select, Space, Modal } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -52,6 +52,7 @@ export const EditBlockLocationForm: FC<EditLocationFormProps> = ({
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TYPED SAFE ALL
     const [form] = Form.useForm();
@@ -95,7 +96,7 @@ export const EditBlockLocationForm: FC<EditLocationFormProps> = ({
     //To render Simple categories list
     const categoriesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'location_category',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

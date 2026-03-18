@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured } from '@helpers';
+import { LsIsSecured, getLanguageCode } from '@helpers';
 import { Form, DatePicker } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
@@ -77,6 +77,7 @@ export const DatePickerForm = ({
     const [form] = Form.useForm();
     const [camData, setCamData] = useState();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TYPED SAFE ALL
     //Scan-1a: retrieve value from input and set values for display
@@ -84,7 +85,7 @@ export const DatePickerForm = ({
         setScannedInfo(values.scannedItem);
     };
 
-    dayjs.locale(router.locale === 'fr' ? 'fr' : 'en');
+    dayjs.locale(filteredLanguage);
 
     // Scan-2: manage form reset in case of error
     useEffect(() => {
@@ -148,8 +149,8 @@ export const DatePickerForm = ({
                     initialValue={initValue ? initValue : undefined}
                 >
                     <DatePicker
-                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
-                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        format={filteredLanguage === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                         picker="date"
                         popupStyle={{
                             maxHeight: '200px' // avoid the calendar to be hidden

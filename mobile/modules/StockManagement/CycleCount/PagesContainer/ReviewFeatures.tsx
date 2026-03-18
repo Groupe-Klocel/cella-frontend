@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
+import { LsIsSecured, getLanguageCode } from '@helpers';
 import { Form, Space, Typography } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
@@ -62,7 +62,7 @@ export const ReviewFeatures = ({
     const [isEditable, setIsEditable] = useState(false);
     const isHuToCreate: boolean = storedObject.step30?.data?.isHuToCreate;
     const router = useRouter();
-    const locale = router.locale;
+    const filteredLanguage = getLanguageCode(router);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -253,7 +253,7 @@ export const ReviewFeatures = ({
                             ]}
                         >
                             <StyledFeaturesDatePicker
-                                format={locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                                format={filteredLanguage === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
                                 picker="date"
                                 disabled={!isEditable}
                             />
