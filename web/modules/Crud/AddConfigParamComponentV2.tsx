@@ -29,7 +29,8 @@ import {
     pascalToSnakeUpper,
     removeDuplicatesAndSort,
     useConfigs,
-    useParams
+    useParams,
+    getLanguageCode
 } from '@helpers';
 import { ModeEnum, Table } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -61,7 +62,7 @@ const AddConfigParamComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps
     const router = useRouter();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
-    const filterLanguage = router.locale == 'en-US' ? 'en' : router.locale;
+    const filteredLanguage = getLanguageCode(router);
     const addSteps: any[] = [];
     const { graphqlRequestClient } = useAuth();
     const [configParamOptionsList, setConfigParamOptionsList] = useState<Array<any>>([]);
@@ -225,8 +226,8 @@ const AddConfigParamComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps
                 tmp_results[item.scope] = [];
             }
             const value =
-                filterLanguage && item.translation
-                    ? item.translation[`${filterLanguage}`]
+                filteredLanguage && item.translation
+                    ? item.translation[`${filteredLanguage}`]
                     : item.value;
             tmp_results[item.scope].push({
                 key: isNumeric(item.code) ? parseInt(item.code) : item.code,
@@ -239,8 +240,8 @@ const AddConfigParamComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps
                 tmp_results[item.scope] = [];
             }
             const value =
-                filterLanguage && item.translation
-                    ? item.translation[`${filterLanguage}`]
+                filteredLanguage && item.translation
+                    ? item.translation[`${filteredLanguage}`]
                     : item.value;
             tmp_results[item.scope].push({
                 key: isNumeric(item.code) ? parseInt(item.code) : item.code,

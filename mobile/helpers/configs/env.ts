@@ -23,3 +23,13 @@ export const IS_FAKE = process.env.NEXT_PUBLIC_FAKE_DATA_ON === 'true';
 export const IS_SAME_SEED = process.env.NEXT_PUBLIC_SAME_SEED_ON === 'true';
 export const IS_LS_SECURED = process.env.NEXT_PUBLIC_LS_SECURE === 'true';
 export const WMS_URL = process.env.NEXT_PUBLIC_WMS_URL;
+
+export function getEnvironmentLabel(): string | null {
+    const endpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? '';
+    const lower = endpoint.toLowerCase();
+    if (lower.includes('localhost') || lower.includes('127.0.0.1')) return 'DEV';
+    if (lower.includes('.dev.')) return 'DEV';
+    if (lower.includes('.staging.')) return 'STAGING';
+    if (lower.includes('.preprod.')) return 'PRE-PROD';
+    return null;
+}

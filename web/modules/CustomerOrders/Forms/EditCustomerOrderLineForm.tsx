@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Input, Form, InputNumber, Select, Modal, Space } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -55,8 +55,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
     const { graphqlRequestClient } = useAuth();
     const { parameters: appParameters, configs: appConfigs } = useAppState();
     const router = useRouter();
-    const { locale } = router;
-    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
+    const filteredLanguage = getLanguageCode(router);
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const article = t('d:article');
@@ -99,7 +98,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                 .map((item: any) => {
                     return {
                         ...item,
-                        value: item.translation?.[language] || item.value
+                        value: item.translation?.[filteredLanguage] || item.value
                     };
                 });
         };
@@ -107,7 +106,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
         return {
             discountTypes
         };
-    }, [appConfigs, appParameters, language]);
+    }, [appConfigs, appParameters, filteredLanguage]);
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -131,7 +130,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
     }, [unsavedChanges]);
     // PARAMETER : stock_status
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'stock_statuses'
     });
     useEffect(() => {
@@ -256,7 +255,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
     //To render Simple vat rates list
     const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'vat_rate',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

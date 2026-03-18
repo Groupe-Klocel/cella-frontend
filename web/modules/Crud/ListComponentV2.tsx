@@ -41,6 +41,7 @@ import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
+    getLanguageCode,
     getModesFromPermissions,
     orderByFormater,
     PaginationType,
@@ -136,7 +137,7 @@ const ListComponent = (props: IListProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
-    const filterLanguage = router.locale;
+    const filteredLanguage = getLanguageCode(router);
     const state = useAppState();
     const configs = state?.configs;
     const parameters = state?.parameters;
@@ -152,6 +153,15 @@ const ListComponent = (props: IListProps) => {
                 : [props.advancedFilters]
             : []
     );
+    useEffect(() => {
+        setAdvancedFilters(
+            props.advancedFilters
+                ? Array.isArray(props.advancedFilters)
+                    ? props.advancedFilters
+                    : [props.advancedFilters]
+                : []
+        );
+    }, [props.advancedFilters]);
     const resolverName = props.dataModel.moreInfos
         ? `${props.dataModel.resolverName}${props.dataModel.moreInfos}`
         : props.dataModel.resolverName;
@@ -1182,7 +1192,7 @@ const ListComponent = (props: IListProps) => {
             const found = HUCParameters?.find(
                 (param: any) => parseInt(param.code) === parseInt(key)
             );
-            return found.translation[`${filterLanguage}`] || found.value;
+            return found.translation[`${filteredLanguage}`] || found.value;
         });
 
         const transformed = {
@@ -1406,7 +1416,7 @@ const ListComponent = (props: IListProps) => {
         adjustedPagination,
         pagination.itemsPerPage,
         sort,
-        router.locale,
+        filteredLanguage,
         defaultModelSort,
         advancedFilters,
         functions
@@ -1425,7 +1435,7 @@ const ListComponent = (props: IListProps) => {
         return () => {
             debouncedReload.cancel();
         };
-    }, [searchWithParams, props.refetch, router.locale]);
+    }, [searchWithParams, props.refetch, router.locale, advancedFilters]);
 
     // #endregion
 
@@ -1456,7 +1466,7 @@ const ListComponent = (props: IListProps) => {
             pagination.current,
             pagination.itemsPerPage,
             sort,
-            router.locale,
+            filteredLanguage,
             defaultModelSort
         );
 
@@ -2276,7 +2286,7 @@ const ListComponent = (props: IListProps) => {
                             )
                             .map((item: any) => {
                                 return {
-                                    text: item?.translation?.[`${filterLanguage}`] || item.value,
+                                    text: item?.translation?.[`${filteredLanguage}`] || item.value,
                                     code: item.code
                                 };
                             }) || searchForTags[key];
@@ -2294,7 +2304,7 @@ const ListComponent = (props: IListProps) => {
                             )
                             .map((item: any) => {
                                 return {
-                                    text: item?.translation?.[`${filterLanguage}`] || item.value,
+                                    text: item?.translation?.[`${filteredLanguage}`] || item.value,
                                     code: item.code
                                 };
                             }) || searchForTags[key];
@@ -2751,6 +2761,7 @@ const ListComponent = (props: IListProps) => {
                                         rowKey="id"
                                         dataSource={dataSource}
                                         scroll={tableScroll}
+                                        sticky
                                         size="small"
                                         loading={isLoading}
                                         onChange={handleTableChange}

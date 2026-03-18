@@ -22,7 +22,10 @@ import React, { FC, ReactNode } from 'react';
 import styled from 'styled-components';
 
 const StyledAppContent = styled(Layout.Content)`
-    overflow-y: scroll;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: auto;
     scrollbar-width: auto;
     scrollbar-color: #8f54a0 #ffffff;
     &::-webkit-scrollbar {
@@ -45,7 +48,7 @@ export interface IAppContentProps {
 }
 
 const AppContent: FC<IAppContentProps> = ({ children }: IAppContentProps) => {
-    return <StyledAppContent>{children}</StyledAppContent>;
+    return <StyledAppContent className="app-content-scroll">{children}</StyledAppContent>;
 };
 
 AppContent.displayName = 'AppContent';

@@ -40,7 +40,7 @@ import {
     useListParametersForAScopeQuery,
     useUpdateArticleLuMutation
 } from 'generated/graphql';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';
@@ -66,6 +66,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     const [form] = Form.useForm();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
 
     // prompt the user if they try and leave with unsaved changes
@@ -135,7 +136,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
 
     // Retrieve Preparation Modes list
     const modePreparationList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'preparation_mode'
     });
 
@@ -191,7 +192,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
 
     // Retrieve sort types
     const sortTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'stock_sort_type'
     });
     useEffect(() => {
@@ -210,7 +211,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
 
     // Retrieve picking types
     const pickingTypesList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'picking_type'
     });
     useEffect(() => {

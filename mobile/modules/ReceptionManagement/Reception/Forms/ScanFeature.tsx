@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer, DatePickerForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useFeatureTypeDetails } from '@helpers';
+import { useFeatureTypeDetails, getLanguageCode } from '@helpers';
 import { useRouter } from 'next/router';
 import { Typography } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -67,6 +67,7 @@ export const ScanFeature = ({
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation();
     const [buttonsState, setButtonsState] = useState<any>({ ...buttons });
 
@@ -98,7 +99,7 @@ export const ScanFeature = ({
         1,
         100,
         { field: 'featureCode_unique', ascending: true },
-        router.locale
+        filteredLanguage
     );
 
     //initialize features to process

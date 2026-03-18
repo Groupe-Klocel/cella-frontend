@@ -49,6 +49,7 @@ import { CycleCountMovementModelV2 as _CycleCountMovementModelV2 } from '../../m
 import { DeliveryAddressModelV2 as _DeliveryAddressModelV2 } from '../../models/DeliveryAddressModelV2';
 import { DeliveryLineModelV2 as _DeliveryLineModelV2 } from '../../models/DeliveryLineModelV2';
 import { DeliveryModelV2 as _DeliveryModelV2 } from '../../models/DeliveryModelV2';
+import { DocumentAttachmentModelV2 as _DocumentAttachmentModelV2 } from '../../models/DocumentAttachmentModelV2';
 import { DocumentHistoryModelV2 as _DocumentHistoryModelV2 } from '../../models/DocumentHistoryModelV2';
 import { EquipmentDetailModelV2 as _EquipmentDetailModelV2 } from '../../models/EquipmentDetailModelV2';
 import { EquipmentModelV2 as _EquipmentModelV2 } from '../../models/EquipmentModelV2';
@@ -188,6 +189,10 @@ export const DeliveryAddressModelV2 = injectedModel(
 );
 export const DeliveryLineModelV2 = injectedModel(_DeliveryLineModelV2, 'DeliveryLineSpeModel');
 export const DeliveryModelV2 = injectedModel(_DeliveryModelV2, 'DeliverySpeModel');
+export const DocumentAttachmentModelV2 = injectedModel(
+    _DocumentAttachmentModelV2,
+    'DocumentAttachmentSpeModel'
+);
 export const DocumentHistoryModelV2 = injectedModel(
     _DocumentHistoryModelV2,
     'DocumentHistorySpeModel'

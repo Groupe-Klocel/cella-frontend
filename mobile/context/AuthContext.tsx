@@ -148,11 +148,12 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
                 warehouseId: process.env.NEXT_PUBLIC_WAREHOUSE_ID,
                 envSecret: process.env.NEXT_PUBLIC_SSO_SECRET
             };
-
-            result = await graphqlRequestClient.request(
-                warehouseSsoConfiguration,
-                warehouseSsoConfigurationValue
-            );
+            if (process.env.NEXT_PUBLIC_SSO_SECRET) {
+                result = await graphqlRequestClient.request(
+                    warehouseSsoConfiguration,
+                    warehouseSsoConfigurationValue
+                );
+            }
         } catch (error: any) {
             showError(t(error.response.errors[0].extensions.code));
         }

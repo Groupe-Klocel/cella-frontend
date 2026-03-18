@@ -23,9 +23,16 @@ import {
     DeleteOutlined,
     EditTwoTone,
     EyeTwoTone,
-    LockTwoTone
+    LockTwoTone,
+    DownloadOutlined
 } from '@ant-design/icons';
-import { pathParams, getModesFromPermissions, pathParamsFromDictionary, showError } from '@helpers';
+import {
+    pathParams,
+    getModesFromPermissions,
+    pathParamsFromDictionary,
+    showError,
+    showSuccess
+} from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
@@ -34,11 +41,15 @@ import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListCompo
 import { DeliveryAddressModelV2 } from '@helpers';
 import { DeliveryLineModelV2 } from '@helpers';
 import { HandlingUnitOutboundModelV2 } from '@helpers';
+import { DocumentAttachmentModelV2 } from 'models/DocumentAttachmentModelV2';
 import configs from '../../../../common/configs.json';
 import { useEffect, useState } from 'react';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 import { BoxesManualAllocationModal } from '../Forms/BoxesManualAllocationModal';
+import { AddDocumentsModal } from 'components/common/AddDocumentsModal';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 
 const { Title } = Typography;
 
@@ -51,6 +62,7 @@ export interface IItemDetailsProps {
     setShippingAddress?: any;
     refetchHUO?: any;
     setRefetchHUO?: any;
+    setDocumentAttachmentsData?: any;
 }
 
 const DeliveryDetailsExtra = ({
@@ -61,10 +73,12 @@ const DeliveryDetailsExtra = ({
     stockOwnerName,
     setShippingAddress,
     refetchHUO,
-    setRefetchHUO
+    setRefetchHUO,
+    setDocumentAttachmentsData
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
+    const { graphqlRequestClient } = useAuth();
     const boxesModes = getModesFromPermissions(permissions, HandlingUnitOutboundModelV2.tableName);
     const [idToDeleteAddress, setIdToDeleteAddress] = useState<string | undefined>();
     const [idToDisableAddress, setIdToDisableAddress] = useState<string | undefined>();
@@ -72,6 +86,8 @@ const DeliveryDetailsExtra = ({
     const [idToDisableLine, setIdToDisableLine] = useState<string | undefined>();
     const [idToDeleteBox, setIdToDeleteBox] = useState<string | undefined>();
     const [idToDisableBox, setIdToDisableBox] = useState<string | undefined>();
+    const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
+    const [refetchTrigger, setRefetchTrigger] = useState(false);
     const deliveryAddressModes = getModesFromPermissions(permissions, Table.DeliveryAddress);
     const deliveryLineModes = getModesFromPermissions(permissions, Table.DeliveryLine);
     const huOutboundModes = getModesFromPermissions(permissions, Table.HandlingUnitOutbound);
@@ -177,6 +193,76 @@ const DeliveryDetailsExtra = ({
         title: `${t('common:status-history')}`,
         routes: [],
         actionsComponent: null
+    };
+
+    // header RELATED to Documents
+    const canModifyDelivery = deliveryStatus < configs.DELIVERY_STATUS_DISPATCHED;
+    const deliveryDocumentsHeaderData: HeaderData = {
+        title: `${t('common:documents')}`,
+        routes: [],
+        actionsComponent: canModifyDelivery ? (
+            <Button type="primary" onClick={() => setShowAddDocumentModal(true)}>
+                {t('actions:add')}
+            </Button>
+        ) : null
+    };
+
+    // Fonction pour refetch les données
+    const handleRefetch = () => {
+        setRefetchTrigger((prev) => !prev);
+    };
+
+    // Fonction pour télécharger un document
+    const downloadDocument = (base64Data: string, fileName: string, fileType: string) => {
+        try {
+            const byteCharacters = window.atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: fileType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading document:', error);
+            showError(t('messages:error-downloading-document'));
+        }
+    };
+
+    // Fonction pour supprimer un document
+    const removeDocument = async (documentId: string, documentName: string) => {
+        Modal.confirm({
+            title: t('messages:delete-confirm'),
+            onOk: async () => {
+                try {
+                    const mutation = gql`
+                        mutation deleteDocumentAttachment($id: String!) {
+                            deleteDocumentAttachment(id: $id)
+                        }
+                    `;
+
+                    const variables = {
+                        id: documentId
+                    };
+
+                    await graphqlRequestClient.request(mutation, variables);
+                    showSuccess(t('messages:success-deleted'));
+                    handleRefetch();
+                } catch (error) {
+                    console.error('Error deleting document:', error);
+                    showError(t('messages:error-deleting-data'));
+                }
+            },
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel')
+        });
     };
 
     const boxesActionButtons: ActionButtons = {
@@ -534,6 +620,55 @@ const DeliveryDetailsExtra = ({
                         setData={setHandlingUnitOutboundsData}
                         sortDefault={[{ field: 'created', ascending: true }]}
                     />
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ objectId: deliveryId, objectName: 'Delivery' }}
+                        dataModel={DocumentAttachmentModelV2}
+                        headerData={deliveryDocumentsHeaderData}
+                        setData={setDocumentAttachmentsData}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: {
+                                    id: string;
+                                    name: string;
+                                    filename: string;
+                                    fileContent: string;
+                                    extras?: { fullFileType: string };
+                                }) => (
+                                    <Space>
+                                        <Button
+                                            icon={<DownloadOutlined />}
+                                            onClick={() =>
+                                                downloadDocument(
+                                                    record.fileContent,
+                                                    record.filename || record.name,
+                                                    record.extras?.fullFileType ||
+                                                        'application/octet-stream'
+                                                )
+                                            }
+                                            title={t('actions:download')}
+                                        />
+                                        {canModifyDelivery && (
+                                            <Button
+                                                icon={<DeleteOutlined />}
+                                                danger
+                                                onClick={() =>
+                                                    removeDocument(record.id, record.name)
+                                                }
+                                                title={t('actions:delete')}
+                                            />
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
+                        searchable={false}
+                        triggerDelete={undefined}
+                        triggerSoftDelete={undefined}
+                        refetch={refetchTrigger}
+                    />
                     <NumberOfPrintsModalV2
                         showModal={{
                             showNumberOfPrintsModal,
@@ -545,6 +680,17 @@ const DeliveryDetailsExtra = ({
                 </>
             ) : (
                 <></>
+            )}
+            {deliveryId && (
+                <AddDocumentsModal
+                    showModal={{
+                        showAddDocumentModal,
+                        setShowAddDocumentModal
+                    }}
+                    objectType="Delivery"
+                    objectData={{ id: deliveryId, name: deliveryName }}
+                    refetch={handleRefetch}
+                />
             )}
         </>
     );

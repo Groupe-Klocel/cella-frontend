@@ -21,6 +21,7 @@ import { Row, Space, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
+import configOverloads from '../../../../common/configOverloads.json';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -153,6 +154,11 @@ const FrPage: PageComponent = () => {
                         matière de gestion d&apos;entrepôt. Nous sommes impatients de vous aider à
                         réussir !
                     </Paragraph>
+                </Row>
+                <Row align="middle" justify="center" style={{ marginTop: '20px' }}>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>
+                        Version : {configOverloads.overloadReleaseTag}
+                    </Text>
                 </Row>
             </Space>
         </>
