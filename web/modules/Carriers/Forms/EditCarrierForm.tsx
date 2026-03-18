@@ -23,7 +23,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
+import { showError, showSuccess, showInfo, checkUndefinedValues, getLanguageCode } from '@helpers';
 import {
     GetAllCarriersQuery,
     UpdateCarrierMutation,
@@ -47,6 +47,7 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [availableValue, setAvailableValue] = useState(details.available);
     const [toBeLoadedValue, setToBeLoadedValue] = useState(details.toBeLoaded);
@@ -114,7 +115,7 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
             }
         `;
         const queryVariables = {
-            language: router.locale,
+            language: filteredLanguage,
             scope: 'civility'
         };
 

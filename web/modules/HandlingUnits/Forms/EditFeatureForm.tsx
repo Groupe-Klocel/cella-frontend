@@ -27,7 +27,14 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo, useUpdate, setUTCDateTime } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    useUpdate,
+    setUTCDateTime,
+    getLanguageCode
+} from '@helpers';
 import { FilterFieldType, FormDataType, ModelType, FormOptionType } from 'models/ModelsV2';
 import moment from 'moment';
 import {
@@ -55,6 +62,7 @@ export interface IEditItemFormProps {
 export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProps) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [current, setCurrent] = useState(0);
     const [form] = Form.useForm();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
@@ -331,7 +339,7 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                         >
                             <DatePicker
                                 format={localeDateTimeFormat}
-                                locale={router.locale === 'fr' ? fr_FR : en_US}
+                                locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                             />
                         </Form.Item>
                     ) : (

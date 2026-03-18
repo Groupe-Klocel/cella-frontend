@@ -24,6 +24,7 @@ import { FC, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import {
     flatten,
+    getLanguageCode,
     getModesFromPermissions,
     showError,
     showInfo,
@@ -68,6 +69,7 @@ const NotificationDetailComponent: FC<ISingleItemProps> = (props: ISingleItemPro
     const { permissions } = useAppState();
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [displayedGrouping, setDisplayedGrouping] = useState<any>();
 
     // #region extract data from modelV2
@@ -119,7 +121,7 @@ const NotificationDetailComponent: FC<ISingleItemProps> = (props: ISingleItemPro
         props.id,
         props.dataModel.endpoints.detail,
         detailFields,
-        router.locale
+        filteredLanguage
     );
 
     const tmp_titles = Object.keys(props.dataModel.fieldsInfo)
@@ -181,7 +183,7 @@ const NotificationDetailComponent: FC<ISingleItemProps> = (props: ISingleItemPro
 
     useEffect(() => {
         reloadData();
-    }, [router.locale]);
+    }, [filteredLanguage]);
 
     useEffect(() => {
         if (detail?.data[props.dataModel.endpoints.detail]) {

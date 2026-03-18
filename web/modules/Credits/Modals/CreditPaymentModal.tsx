@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, DatePicker, Form, InputNumber, Modal, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
-import { showError, showSuccess } from '@helpers';
+import { showError, showSuccess, getLanguageCode } from '@helpers';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -45,6 +45,7 @@ const CreditPaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalPro
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const [orderData, setOrderData] = useState<any>();
     const [isCreationLoading, setIsCreationLoading] = useState<boolean>(false);
 
@@ -130,7 +131,7 @@ const CreditPaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalPro
     // Retrieve Payment methods list
     const [paymentMethods, setPaymentMethods] = useState<any>();
     const paymentMethodsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'payment_method'
     });
 
@@ -150,7 +151,7 @@ const CreditPaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalPro
     // Retrieve bank accounts list
     const [paymentAccounts, setPaymentAccounts] = useState<any>();
     const paymentAccountsList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        language: router.locale,
+        language: filteredLanguage,
         scope: 'bank_account'
     });
 
@@ -284,8 +285,8 @@ const CreditPaymentModal = ({ showModal, orderId, setRefetch }: IPaymentModalPro
                 >
                     <DatePicker
                         allowClear
-                        format={router.locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
-                        locale={router.locale === 'fr' ? fr_FR : en_US}
+                        format={filteredLanguage === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                        locale={filteredLanguage === 'fr' ? fr_FR : en_US}
                         defaultValue={dayjs()}
                     />
                 </Form.Item>

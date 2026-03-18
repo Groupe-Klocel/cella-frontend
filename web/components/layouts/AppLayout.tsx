@@ -121,7 +121,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         };
 
         try {
-            const queryInfo: any = await graphqlRequestClient.request(query, variables);
+            let queryInfo: any = await graphqlRequestClient.request(query, variables);
 
             if (queryInfo.warehouseWorkerSettings.results.length > 0) {
                 setGetUserSettingsQuery(true);
@@ -130,6 +130,16 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
                 (item: any) => item.code === 'globalParameters'
             );
+
+            if (
+                queryInfo.warehouseWorkerSettings.results.find(
+                    (item: any) => item.code === 'globalParameters'
+                )?.valueJson?.lang === 'fr'
+            ) {
+                queryInfo.warehouseWorkerSettings.results.find(
+                    (item: any) => item.code === 'globalParameters'
+                ).valueJson.lang = 'fr-FR';
+            }
 
             const newSettings = containsTestCode
                 ? queryInfo.warehouseWorkerSettings.results
@@ -252,7 +262,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             (getParameterSettingsQuery || parameters?.length > 0)
         ) {
             if (
-                (getUserSettingsQuery && userSettings.length > 1) ||
+                (getUserSettingsQuery && userSettings.length >= 1) ||
                 (!getUserSettingsQuery && userSettings.length == 1)
             ) {
                 setUserSettingsLoading(true);

@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Col, Input, InputNumber, Row, Form, Checkbox, Select, Modal, Space } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -51,6 +51,7 @@ export const AddEquipmentForm = () => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const name = t('common:name');
     const comment = t('common:comment');
@@ -132,7 +133,7 @@ export const AddEquipmentForm = () => {
     //To render Equipment types list configs
     const equipmentTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'equipment_type',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -144,7 +145,7 @@ export const AddEquipmentForm = () => {
     //To render Equipment Limit types list configs
     const equipmentLimitTypeList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'equipment_limit_type',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -173,7 +174,7 @@ export const AddEquipmentForm = () => {
     //To render Equipment mechanizedSystem list configs
     const equipmentMechanizedSystemList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'equipment_mechanized_system',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -185,7 +186,7 @@ export const AddEquipmentForm = () => {
     //To render Equipment automaticLabelPrinting list configs
     const equipmentAutomaticLabelPrintingList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'equipment_automatic_label_printing',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -199,7 +200,7 @@ export const AddEquipmentForm = () => {
     //To render printers list params
     const printersList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'printer',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

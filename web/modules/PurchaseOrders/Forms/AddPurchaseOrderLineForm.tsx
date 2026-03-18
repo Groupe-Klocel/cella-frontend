@@ -33,6 +33,7 @@ import {
     showError,
     showSuccess,
     showInfo,
+    getLanguageCode,
     usePurchaseOrderLineIds,
     useArticles,
     useStockOwners
@@ -57,6 +58,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const stockOwner = t('d:stockOwner');
     const article = t('common:article');
@@ -165,7 +167,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
 
     const stockStatusTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'stock_statuses',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
@@ -177,7 +179,7 @@ export const AddPurchaseOrderLineForm = (props: ISingleItemProps) => {
     //To render Simple vat rates list
     const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'vat_rate',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {

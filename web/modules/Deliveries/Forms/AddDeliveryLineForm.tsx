@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm } from '@components';
 import { Button, Input, Form, Select, Checkbox, InputNumber, AutoComplete } from 'antd';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -57,6 +57,7 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     const { t } = useTranslation('common');
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const stockOwner = t('d:stockOwner');
@@ -149,7 +150,7 @@ export const AddDeliveryLineForm = (props: ISingleItemProps) => {
     //To render Simple vat rates list
     const vatRatesList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'vat_rate',
-        language: router.locale
+        language: filteredLanguage
     });
 
     useEffect(() => {
