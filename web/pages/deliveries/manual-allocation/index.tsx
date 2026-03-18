@@ -28,7 +28,7 @@ import { ModeEnum } from 'generated/graphql';
 import { ManualAllocationModelV2 as model } from '@helpers';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { useAuth } from 'context/AuthContext';
 import { DeliveryProgressBar } from 'modules/Deliveries/Elements/DeliveryProgressBar';
@@ -52,9 +52,12 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
         routes: itemRoutes,
         actionsComponent: null
     };
-    const autocountFilter = {
-        filter: [{ field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }]
-    };
+    const autocountFilter = useMemo(
+        () => ({
+            filter: [{ field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }]
+        }),
+        []
+    );
 
     const deliveryStatusEstimated = parseInt(
         configs.filter((c: any) => c.scope === 'delivery_status' && c.value === 'Estimated')[0]
