@@ -368,7 +368,19 @@ export const SimilarLocationsV2 = ({
                 </StyledForm>
             )}
             {similarLocations ? (
-                <RadioSimpleTable columns={columns} displayedLocations={similarLocations} />
+                <RadioSimpleTable
+                    columns={columns}
+                    displayedLocations={similarLocations}
+                    rowKey={(record) =>
+                        record.blockId +
+                        '-' +
+                        record.locationId +
+                        '-' +
+                        record.handlingUnitContentId +
+                        '-' +
+                        record.handlingUnitId
+                    }
+                />
             ) : (
                 <ContentSpin />
             )}

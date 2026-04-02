@@ -80,7 +80,7 @@ export const ScanLocation = ({
         } else if (storedObject.currentStep < stepNumber || tmpForceLocation) {
             //check workflow direction and assign current step accordingly
             objectUpdate.object = {
-                previousStep: getLastStepWithPreviousStep(storedObject)
+                previousStep: getLastStepWithPreviousStep(storedObject, stepNumber)
             };
             objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
