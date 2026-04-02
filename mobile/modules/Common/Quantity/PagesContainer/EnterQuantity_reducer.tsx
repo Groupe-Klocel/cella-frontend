@@ -18,7 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { EnterNumberForm } from 'modules/Common/EnterNumberForm_reducer';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    getLastStepWithPreviousStep,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
@@ -33,6 +36,7 @@ export interface IEnterQuantityReducerProps {
     isCommentDisplayed?: boolean;
     initialValueType?: number;
     autoValidate1Quantity?: boolean;
+    checkRemainingQuantity?: boolean;
 }
 
 export const EnterQuantity_reducer = ({
@@ -45,7 +49,8 @@ export const EnterQuantity_reducer = ({
     checkComponent,
     isCommentDisplayed,
     initialValueType,
-    autoValidate1Quantity
+    autoValidate1Quantity,
+    checkRemainingQuantity
 }: IEnterQuantityReducerProps) => {
     const { t } = useTranslation('common');
     const state = useAppState();
@@ -158,7 +163,7 @@ export const EnterQuantity_reducer = ({
                         ?.receivedQuantity
             );
         } else if (autoValidate1Quantity && tmpInitialValue === 1) {
-            if (!hasOtherIncompleteHucos) {
+            if (!hasOtherIncompleteHucos && (!checkRemainingQuantity || processName === 'pack')) {
                 objectUpdate.object = {
                     ...storedObject[`step${stepNumber}`],
                     data: { movingQuantity: 1 }
@@ -167,10 +172,12 @@ export const EnterQuantity_reducer = ({
                 setEnteredInfo(1);
             }
         } else if (storedObject.currentStep < stepNumber) {
-            //check workflow direction and assign current step accordingly
-            objectUpdate.object = { previousStep: storedObject.currentStep };
             objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
+
+        objectUpdate.object = {
+            previousStep: getLastStepWithPreviousStep(storedObject, stepNumber)
+        };
 
         dispatch(objectUpdate);
     }, []);

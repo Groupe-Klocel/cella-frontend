@@ -152,6 +152,11 @@ const PickAndPack: PageComponent = () => {
             'outbound',
             'IS_QUANTITY_HIGHLIGHTED'
         );
+        const checkRemainingQuantityValue = findValueByScopeAndCode(
+            parameters,
+            'outbound',
+            'PAP_CHECK_REMAINING_QUANTITY'
+        );
         // Convert value in boolean or number as needed
         const equipmentScanAtPreparation = equipmentScanAtPreparationValue === '1';
         const manuallyGenerateParent = manuallyGenerateParentValue === '1';
@@ -171,6 +176,8 @@ const PickAndPack: PageComponent = () => {
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
         const highlightQuantity = highlightedQuantity === '1';
 
+        const checkRemainingQuantity = checkRemainingQuantityValue === '1';
+
         return {
             equipmentScanAtPreparation,
             manuallyGenerateParent,
@@ -179,7 +186,8 @@ const PickAndPack: PageComponent = () => {
             forceArticleScan,
             defaultQuantity,
             autoValidate1Quantity,
-            highlightQuantity
+            highlightQuantity,
+            checkRemainingQuantity
         };
     }, [parameters]);
 
@@ -193,6 +201,7 @@ const PickAndPack: PageComponent = () => {
     const quantityDefaultValue = configsParamsCodes.defaultQuantity;
     const autoValidate1Quantity = configsParamsCodes.autoValidate1Quantity;
     const isQuantityHighlighted = configsParamsCodes.highlightQuantity;
+    const checkRemainingQuantity = configsParamsCodes.checkRemainingQuantity;
 
     const [tmpForceLocation, setTmpforceLocation] = useState<any>(forceLocationScan);
     useEffect(() => {
@@ -844,6 +853,7 @@ const PickAndPack: PageComponent = () => {
                                 )?.quantity
                             )}
                             autoValidate1Quantity={autoValidate1Quantity}
+                            checkRemainingQuantity={checkRemainingQuantity}
                             checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                         ></EnterQuantity_reducer>
                     ) : (
