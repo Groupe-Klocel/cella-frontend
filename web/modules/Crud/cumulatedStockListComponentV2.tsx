@@ -35,28 +35,12 @@ import {
     WrapperStickyActions,
     StyledTooltip
 } from '@components';
-import { useExportData } from './listComponentSubModule/export';
-import { useListRequests } from './listComponentSubModule/requests';
-import type { InputRef, TableProps, TableColumnType } from 'antd';
-import {
-    Space,
-    Form,
-    Button,
-    Empty,
-    Alert,
-    Badge,
-    Tag,
-    Spin,
-    Table,
-    Typography,
-    Input
-} from 'antd';
+import { Space, Form, Button, Empty, Alert, Badge, Tag, Spin, Table, Typography } from 'antd';
 import { isNumeric, useTranslationWithFallback as useTranslation } from '@helpers';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
     DEFAULT_PAGE_NUMBER,
-    getLanguageCode,
     getModesFromPermissions,
     orderByFormater,
     PaginationType,
@@ -64,26 +48,27 @@ import {
     showWarning,
     showInfo,
     showSuccess,
+    useDelete,
+    useExport,
     useList,
     flatten,
+    useSoftDelete,
+    useUpdate,
     queryString,
     formatUTCLocaleDateTime,
     isStringDateTime,
     isStringDate,
     formatUTCLocaleDate
 } from '@helpers';
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
 import { FormDataType, ModelType } from 'models/ModelsV2';
 import { ExportFormat, ModeEnum, Table as tableList } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, isString, set } from 'lodash';
+import _, { debounce, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { FilterDropdownProps } from 'antd/es/table/interface';
-import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
-import { FormGroupV3 } from './submodules/FormGroupV3';
 
 export type HeaderData = {
     title: string;
@@ -107,6 +92,7 @@ export interface IListProps {
     routeUpdatePage?: string;
     searchable?: boolean;
     searchCriteria?: any;
+    cumulSearchInfos?: any;
     setData?: any;
     refresh?: any;
     sortDefault?: any;
@@ -122,6 +108,8 @@ export interface IListProps {
     functions?: any;
     //from here : props used for drag and/or drop handling
     items?: any;
+    isDragAndDroppable?: boolean;
+    isDragSource?: boolean;
     addRow?: (item: any, index: number) => void;
     moveRow?: (fromIndex: number, toIndex: number) => void;
     removeRow?: (item: any) => void;
@@ -132,42 +120,11 @@ export interface IListProps {
     isCreateAMovement?: boolean;
     dataToCreateMovement?: any;
     setSuccessDeleteResult?: any;
-    noDBSave?: boolean;
 }
 
 export interface newPaginationType {
-    current?: number;
+    current: number;
     itemsPerPage: number;
-}
-
-interface Item {
-    key: string;
-    language: string;
-    type: string;
-    category: string;
-    code: string;
-    value: string;
-    id?: string | null;
-}
-
-type DataIndex = keyof Item;
-
-interface DataType {
-    id: string;
-    language: string;
-    type: string;
-    category: string;
-    code: string;
-    value: string;
-    warehouseId?: string | null;
-    created?: any;
-    createdBy?: string;
-    modified?: any;
-    modifiedBy?: string;
-    warehouse?: {
-        id: string;
-        name: string;
-    };
 }
 
 const { Column } = Table;
@@ -179,39 +136,30 @@ const ListComponent = (props: IListProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
-    const filteredLanguage = getLanguageCode(router);
+    const filterLanguage = router.locale;
     const state = useAppState();
-    const resolverName = props.dataModel.moreInfos
-        ? `${props.dataModel.resolverName}${props.dataModel.moreInfos}`
-        : props.dataModel.resolverName;
-    const userSettings = state?.userSettings?.find((item: any) => {
-        return (
-            `${resolverName}${router.pathname}` === item.code ||
-            `${resolverName}${router.pathname}/${props.headerData?.title}` === item.code
-        );
-    });
     const configs = state?.configs;
     const parameters = state?.parameters;
     const dispatch = useAppDispatch();
-
     const [firstLoad, setFirstLoad] = useState<boolean>(true);
     const [rows, setRows] = useState<DataQueryType>();
-    const [selectCase, setSelectCase] = useState<string[]>(
-        userSettings?.valueJson?.filterParameters?.selectCase ?? []
+    const [selectCase, setSelectCase] = useState<string[]>([]);
+    const [selectJoker, setSelectJoker] = useState<string[]>([]);
+    const [advancedFilters, setAdvancedFilters] = useState<any>(
+        props.advancedFilters
+            ? Array.isArray(props.advancedFilters)
+                ? props.advancedFilters
+                : [props.advancedFilters]
+            : []
     );
-    const [selectJoker, setSelectJoker] = useState<string[]>(
-        userSettings?.valueJson?.filterParameters?.selectJoker ?? []
+    const resolverName = props.dataModel.moreInfos
+        ? `${props.dataModel.resolverName}${props.dataModel.moreInfos}`
+        : props.dataModel.resolverName;
+    const [userSettings, setUserSettings] = useState<any>(
+        state?.userSettings?.find((item: any) => {
+            return `${resolverName}${router.pathname}` === item.code;
+        })
     );
-    const [advancedFilters, setAdvancedFilters] = useState<any>([
-        ...(userSettings?.valueJson?.advancedFilters ?? []),
-        ...(props?.advancedFilters ?? [])
-    ]);
-    useEffect(() => {
-        setAdvancedFilters([
-            ...(userSettings?.valueJson?.advancedFilters ?? []),
-            ...(props?.advancedFilters ?? [])
-        ]);
-    }, [props.advancedFilters, userSettings]);
 
     let initialState = userSettings?.valueJson?.allColumnsInfos;
     const [allColumns, setAllColumns] = useState<any[]>(initialState);
@@ -236,9 +184,13 @@ const ListComponent = (props: IListProps) => {
         });
     };
 
+    // Define pageName to retrieve screen permissions
+    const pageName = router.pathname.split('/').filter(Boolean)[0];
+    const permissionTableName = 'wm_' + pageName;
+
     // manage empty props
     const defaultProps = {
-        searchable: true,
+        searchable: props.isDragAndDroppable ? false : true,
         searchCriteria: {},
         extraColumns: [],
         actionColumns: [],
@@ -246,10 +198,20 @@ const ListComponent = (props: IListProps) => {
     };
     props = { ...defaultProps, ...props };
     // SearchForm in cookies
-    const searchCriterias: any = {
-        ...(userSettings?.valueJson?.filter ?? undefined),
-        ...props.searchCriteria
-    };
+    const searchCriterias: any = Object.keys(props.searchCriteria).reduce(
+        (acc: any, key: string) => {
+            if (props.searchCriteria[key] !== undefined && props.searchCriteria[key] !== null) {
+                acc[key] =
+                    !Array.isArray(props.searchCriteria[key]) &&
+                    props.searchCriteria[key] !== 'String'
+                        ? [props.searchCriteria[key]]
+                        : props.searchCriteria[key];
+            }
+            return acc;
+        },
+        {}
+    );
+    let showBadge = false;
 
     // #region sorter / pagination
 
@@ -269,7 +231,9 @@ const ListComponent = (props: IListProps) => {
     const [sort, setSort] = useState<any>(
         props.triggerPriorityChange
             ? [{ field: props.triggerPriorityChange.orderingField, ascending: true }]
-            : (savedSorters ?? props.sortDefault ?? sortParameter)
+            : savedSorters === null
+              ? null
+              : (savedSorters ?? props.sortDefault ?? sortParameter)
     );
 
     const defaultPagination: newPaginationType = {
@@ -299,6 +263,21 @@ const ListComponent = (props: IListProps) => {
             DEFAULT_ITEMS_PER_PAGE
     });
 
+    const adjustedPagination =
+        props.isDragSource &&
+        (pagination?.total ?? 1) / pagination?.itemsPerPage === pagination?.current - 1
+            ? pagination?.current > 1
+                ? pagination.current - 1
+                : pagination?.current
+            : pagination?.current;
+
+    //this is to retrieve sort applied any time (used by drag and drop component)
+    useEffect(() => {
+        if (props.setAppliedSort) {
+            props.setAppliedSort(sort);
+        }
+    }, [sort]);
+
     // #endregion
 
     // #region create / update and delete user settings
@@ -317,15 +296,11 @@ const ListComponent = (props: IListProps) => {
     ) {
         const settings =
             newState?.userSettings?.find((item: any) => {
-                return (
-                    `${resolverName}${router.pathname}` === item.code ||
-                    `${resolverName}${router.pathname}/${props.headerData?.title}` === item.code
-                );
+                return `${resolverName}${router.pathname}` === item.code;
             }) ?? userSettings; // use latest from state
 
         const newsSettings = {
             ...settings,
-            code: `${resolverName}${router.pathname}/${props.headerData?.title}`,
             valueJson: {
                 ...settings?.valueJson,
                 filter: newFilter ?? settings?.valueJson?.filter,
@@ -357,9 +332,8 @@ const ListComponent = (props: IListProps) => {
         `;
         const updateVariables = {
             warehouseWorkerSettingsId: settings.id,
-            input: { code: newsSettings.code, valueJson: newsSettings.valueJson }
+            input: { valueJson: newsSettings.valueJson }
         };
-
         try {
             const queryInfo: any = await graphqlRequestClient.request(updateQuery, updateVariables);
             dispatch({
@@ -370,6 +344,7 @@ const ListComponent = (props: IListProps) => {
                         : item;
                 })
             });
+            setUserSettings(queryInfo.updateWarehouseWorkerSetting);
             setPagination({
                 ...pagination,
                 current: newPagination?.current ?? pagination.current,
@@ -397,7 +372,7 @@ const ListComponent = (props: IListProps) => {
             newPagination.current = 1;
         }
         const newsSettings = {
-            code: `${resolverName}${router.pathname}/${props.headerData?.title}`,
+            code: `${resolverName}${router.pathname}`,
             warehouseWorkerId: state.user.id,
             valueJson: {
                 filter: newFilter,
@@ -431,6 +406,7 @@ const ListComponent = (props: IListProps) => {
                 type: 'SWITCH_USER_SETTINGS',
                 userSettings: [...newState?.userSettings, queryInfo.createWarehouseWorkerSetting]
             });
+            setUserSettings(queryInfo.createWarehouseWorkerSetting);
             setPagination({
                 ...pagination,
                 current: newPagination?.current ?? pagination.current,
@@ -492,7 +468,7 @@ const ListComponent = (props: IListProps) => {
                     newState
                 );
             },
-            100 // ms, adjust as needed
+            500 // ms, adjust as needed
         )
     ).current;
 
@@ -523,7 +499,7 @@ const ListComponent = (props: IListProps) => {
                     newState
                 );
             },
-            100
+            500
         )
     ).current;
 
@@ -547,38 +523,6 @@ const ListComponent = (props: IListProps) => {
             newAllColumnsInfos?: any,
             newColumnWidths?: any
         ) => {
-            if (props.noDBSave) {
-                // If noDBSave is true, we only update the local state without saving to DB
-                dispatch({
-                    type: 'SWITCH_USER_SETTINGS',
-                    userSettings: [
-                        ...state?.userSettings.filter((item: any) => {
-                            return (
-                                `${resolverName}${router.pathname}` !== item.code &&
-                                `${resolverName}${router.pathname}/${props.headerData?.title}` !==
-                                    item.code
-                            );
-                        }),
-                        {
-                            code: `${resolverName}${router.pathname}/${props.headerData?.title}`,
-                            valueJson: {
-                                filter: newFilter,
-                                advancedFilters: newAdvancedFilters ?? advancedFilters,
-                                filterParameters: {
-                                    selectCase: newSelectCase,
-                                    selectJoker: newSelectJoker
-                                },
-                                sorter: newSorter ?? props.sortDefault ?? null,
-                                pagination: newPagination ?? defaultPagination,
-                                subOptions: newSubOptions ?? undefined,
-                                allColumnsInfos: newAllColumnsInfos ?? allColumns ?? undefined,
-                                columnsWidth: newColumnWidths ?? {}
-                            }
-                        } as any
-                    ]
-                });
-                return;
-            }
             // Always use the latest userSettings from state
             if (userSettings) {
                 debouncedUpdateUserSettings(
@@ -650,8 +594,9 @@ const ListComponent = (props: IListProps) => {
         Object.keys(props.dataModel.fieldsInfo),
         (key) => props.dataModel.fieldsInfo[key].isDefaultHiddenList
     );
-    const filterFields: any = useMemo(() => {
-        const fields = Object.entries(props.dataModel.fieldsInfo)
+
+    const [filterFields, setFilterFields] = useState<any>(() =>
+        Object.entries(props.dataModel.fieldsInfo)
             .filter(
                 ([key, value]) =>
                     value.searchingFormat !== null ||
@@ -670,30 +615,77 @@ const ListComponent = (props: IListProps) => {
                 configList: configs.filter((config: any) => config.scope === value.config),
                 param: value.param ?? undefined,
                 paramList: parameters.filter((param: any) => param.scope === value.param),
-                optionTable: value.optionTable ? JSON.parse(value.optionTable) : undefined,
-                initialValue:
-                    searchCriterias[
-                        key
-                            .replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`)
-                            .replace(/}/g, '')
-                    ] ?? undefined
-            }));
+                optionTable: value.optionTable ?? undefined,
+                isMultipleSearch: value.isMultipleSearch ?? undefined,
+                initialValue: undefined
+            }))
+    );
 
-        fields.unshift({
+    // Update filterFields if props.filterFields changes
+    useEffect(() => {
+        let updatedFilterFields = Object.entries(props.dataModel.fieldsInfo)
+            .filter(
+                ([key, value]) =>
+                    value.searchingFormat !== null ||
+                    Object.keys(props.searchCriteria).includes(key)
+            )
+            .map(([key, value]) => {
+                return {
+                    displayName: t(
+                        `d:${(value.displayName ?? key).replace(/{/g, '_').replace(/}/g, '')}`
+                    ),
+                    name: convertTableNamePluralToSingular(key)
+                        .replace(/{(.)/g, (_, char) => `_${char.toUpperCase()}`)
+                        .replace(/}/g, ''),
+                    type: FormDataType[value.searchingFormat as keyof typeof FormDataType],
+                    maxLength: value.maxLength ?? undefined,
+                    config: value.config ?? undefined,
+                    configList: configs.filter((config: any) => config.scope === value.config),
+                    param: value.param ?? undefined,
+                    paramList: parameters.filter((param: any) => param.scope === value.param),
+                    optionTable: value.optionTable ? JSON.parse(value.optionTable) : undefined,
+                    isMultipleSearch: value.isMultipleSearch ?? undefined,
+                    initialValue: undefined
+                };
+            });
+        if (props.cumulSearchInfos) {
+            updatedFilterFields.push(props.cumulSearchInfos.filters);
+        }
+        const savedFilters = userSettings?.valueJson?.filter ?? undefined;
+
+        const newSearchCriterias = {
+            ...savedFilters,
+            ...searchCriterias
+        };
+
+        updatedFilterFields = updatedFilterFields.map((item: any) => {
+            if (item.name in newSearchCriterias) {
+                return {
+                    ...item,
+                    initialValue: newSearchCriterias[item.name]
+                };
+            } else {
+                return item;
+            }
+        });
+
+        updatedFilterFields.unshift({
             name: 'allFields',
             displayName: t('d:all-fields-search'),
             type: FormDataType.String,
-            initialValue: searchCriterias.allFields ?? undefined,
+            initialValue: newSearchCriterias.allFields ?? undefined,
             config: undefined,
             configList: [],
             param: undefined,
             paramList: [],
             optionTable: undefined,
+            isMultipleSearch: false,
             maxLength: undefined
         });
 
-        return fields;
-    }, [userSettings]);
+        setFilterFields(updatedFilterFields);
+    }, [userSettings, props.cumulSearchInfos]);
+    // handle cancelled or closed item
 
     const statusScope = filterFields.find((obj: any) => obj.name === 'status')?.config ?? null;
 
@@ -704,6 +696,7 @@ const ListComponent = (props: IListProps) => {
             link: props.dataModel.fieldsInfo[key].link,
             name: key.replace(/{/g, '_').replace(/}/g, '')
         }));
+    //#endregion
 
     const fieldsToHighlight = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].highlight !== undefined)
@@ -711,8 +704,6 @@ const ListComponent = (props: IListProps) => {
             highlightCondition: props.dataModel.fieldsInfo[key].highlight,
             name: key.replace(/{/g, '_').replace(/}/g, '')
         }));
-
-    //#endregion
 
     // #region links generation
     const renderLink = (text: string, record: any, dataIndex: string) => {
@@ -803,91 +794,401 @@ const ListComponent = (props: IListProps) => {
                   render: (text: any, record: any) => renderLink(text, record, e.dataIndex),
                   dataIndex: e.dataIndex
               }
-            : {
-                  ...e,
-                  render: (text: any) =>
-                      text === true ? (
-                          <CheckCircleOutlined style={{ color: 'green' }} />
-                      ) : text === false ? (
-                          <CloseSquareOutlined style={{ color: 'red' }} />
-                      ) : isString(text) && isStringDateTime(text) ? (
-                          formatUTCLocaleDateTime(text, router.locale)
-                      ) : isString(text) && isStringDate(text) ? (
-                          formatUTCLocaleDate(text, router.locale)
-                      ) : (
-                          text
-                      )
-              };
+            : e;
     });
+
+    const render = (text: any) =>
+        text === true ? (
+            <CheckCircleOutlined style={{ color: 'green' }} />
+        ) : text === false ? (
+            <CloseSquareOutlined style={{ color: 'red' }} />
+        ) : isString(text) && isStringDateTime(text) ? (
+            formatUTCLocaleDateTime(text, router.locale)
+        ) : isString(text) && isStringDate(text) ? (
+            formatUTCLocaleDate(text, router.locale)
+        ) : (
+            text
+        );
+    const newTableColumns = columnWithLinks?.map((e: any) =>
+        e.render ? e : (e = { ...e, render: render })
+    );
 
     // #endregion
 
     // #region WITHOUT CLOSED ITEMS
-    const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>(
-        userSettings?.valueJson?.advancedFilters
-            .map((item: any) => item.filter[0].field.status)
-            .some((status: any) => status === 2000 || status === 1005 || status === 1600) ?? false
-    );
+    const [isWithoutClosed, setIsWithoutClosed] = useState<boolean>(false);
     const btnName = t('actions:without-closed-cancel-items');
 
     function addForcedFilter() {
-        if (
-            advancedFilters
-                .map((item: any) => item.filter[0].field.status)
-                .some((status: any) => status === 2000 || status === 1005 || status === 1600)
-        ) {
-            const newAdvancedFilters = advancedFilters.filter(
-                (item: any) =>
-                    item.filter[0].field.status !== 2000 &&
-                    item.filter[0].field.status !== 1005 &&
-                    item.filter[0].field.status !== 1600
-            );
-            handleUserSettings(
-                null,
-                null,
-                defaultPagination,
-                newAdvancedFilters,
-                selectCase,
-                selectJoker,
-                null
-            );
-            setIsWithoutClosed(false);
-            return newAdvancedFilters;
-        } else {
-            const newAdvancedFilters = [
-                ...advancedFilters,
-                { filter: [{ searchType: 'DIFFERENT', field: { status: 2000 } }] },
-                { filter: [{ searchType: 'DIFFERENT', field: { status: 1005 } }] },
-                { filter: [{ searchType: 'DIFFERENT', field: { status: 1600 } }] }
-            ];
-            handleUserSettings(
-                null,
-                null,
-                defaultPagination,
-                newAdvancedFilters,
-                selectCase,
-                selectJoker,
-                null
-            );
-            setIsWithoutClosed(true);
-            return newAdvancedFilters;
-        }
+        setAdvancedFilters((prev: any) => {
+            if (
+                prev
+                    .map((item: any) => item.filter[0].field.status)
+                    .some((status: any) => status === 2000 || status === 1005 || status === 1600)
+            ) {
+                const newAdvancedFilters = prev.filter(
+                    (item: any) =>
+                        item.filter[0].field.status !== 2000 &&
+                        item.filter[0].field.status !== 1005 &&
+                        item.filter[0].field.status !== 1600
+                );
+                handleUserSettings(
+                    null,
+                    null,
+                    defaultPagination,
+                    newAdvancedFilters,
+                    selectCase,
+                    selectJoker,
+                    null
+                );
+                setIsWithoutClosed(false);
+                return newAdvancedFilters;
+            } else {
+                const newAdvancedFilters = [
+                    ...prev,
+                    { filter: [{ searchType: 'DIFFERENT', field: { status: 2000 } }] },
+                    { filter: [{ searchType: 'DIFFERENT', field: { status: 1005 } }] },
+                    { filter: [{ searchType: 'DIFFERENT', field: { status: 1600 } }] }
+                ];
+                handleUserSettings(
+                    null,
+                    null,
+                    defaultPagination,
+                    newAdvancedFilters,
+                    selectCase,
+                    selectJoker,
+                    null
+                );
+                setIsWithoutClosed(true);
+                return newAdvancedFilters;
+            }
+        });
     }
+
+    // #endregion
+
+    // #region DELETE MUTATION
+    const createMovement = async (dataToCreateMovement: any) => {
+        const executeFunctionQuery = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        let executeFunctionVariables = {
+            functionName: 'create_movements',
+            event: {
+                input: {
+                    content: dataToCreateMovement.content,
+                    type: 'delete',
+                    lastTransactionId: deleteResult.transactionId
+                }
+            }
+        };
+
+        const executeFunctionResult = await graphqlRequestClient.request(
+            executeFunctionQuery,
+            executeFunctionVariables
+        );
+    };
+    const {
+        isLoading: deleteLoading,
+        result: deleteResult,
+        mutate: callDelete
+    } = useDelete(
+        props.dataModel.endpoints.delete,
+        props.triggerPriorityChange
+            ? {
+                  tableName:
+                      props.dataModel.resolverName.charAt(0).toLowerCase() +
+                      props.dataModel.resolverName.slice(1),
+                  orderingField: props.triggerPriorityChange.orderingField,
+                  operation: 'delete',
+                  parentId: props.triggerPriorityChange.parentId
+              }
+            : undefined,
+        props.isCreateAMovement
+    );
+
+    useEffect(() => {
+        if (props.triggerDelete && props.triggerDelete.idToDelete) {
+            const deletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Delete
+            );
+            if (!deletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callDelete(props.triggerDelete.idToDelete);
+                props.triggerDelete.setIdToDelete(undefined);
+            }
+        }
+    }, [props.triggerDelete]);
+
+    useEffect(() => {
+        if (deleteLoading) {
+            showInfo(t('messages:info-delete-wip'));
+        }
+    }, [deleteLoading]);
+
+    useEffect(() => {
+        if (!(deleteResult && deleteResult.data)) return;
+
+        if (deleteResult.success) {
+            showSuccess(t('messages:success-deleted'));
+            if (props.setSuccessDeleteResult) props.setSuccessDeleteResult(deleteResult);
+            if (props.isCreateAMovement) {
+                try {
+                    createMovement(props.dataToCreateMovement);
+                } catch (error) {
+                    console.error('Error creating movement:', error);
+                    showError(t('messages:error-creating-movement'));
+                }
+            }
+            reloadData();
+        } else {
+            showError(t('messages:error-deleting-data'));
+        }
+    }, [deleteResult]);
+    // #endregion
+
+    // #region SOFT DELETE MUTATION
+    const {
+        isLoading: softDeleteLoading,
+        result: softDeleteResult,
+        mutate: callSoftDelete
+    } = useSoftDelete(props.dataModel.endpoints.delete!);
+
+    useEffect(() => {
+        if (props.triggerSoftDelete && props.triggerSoftDelete.idToDisable) {
+            const softDeletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Update
+            );
+            if (!softDeletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callSoftDelete(props.triggerSoftDelete.idToDisable);
+                props.triggerSoftDelete.setIdToDisable(undefined);
+            }
+        }
+    }, [props.triggerSoftDelete]);
+
+    useEffect(() => {
+        if (softDeleteLoading) {
+            showInfo(t('messages:info-disabling-wip'));
+        }
+    }, [softDeleteLoading]);
+
+    useEffect(() => {
+        if (!(softDeleteResult && softDeleteResult.data)) return;
+
+        if (softDeleteResult.success) {
+            showSuccess(t('messages:success-disabled'));
+            reloadData();
+        } else {
+            showError(t('messages:error-disabling-element'));
+        }
+    }, [softDeleteResult]);
+    // #endregion
+
+    // #region Enable (Re-Open)
+
+    const {
+        isLoading: enableLoading,
+        result: enableResult,
+        mutate: callReopen
+    } = useUpdate(props.dataModel.resolverName, props.dataModel.endpoints.update, listFields);
+
+    useEffect(() => {
+        if (props.triggerReopen && props.triggerReopen.reopenInfo) {
+            const softDeletePermission = permissions?.find(
+                (permission) =>
+                    permission.table === permissionTableName &&
+                    permission.mode.toUpperCase() === ModeEnum.Update
+            );
+            if (!softDeletePermission) {
+                console.warn(
+                    `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                );
+                showError(t('errors:APP-000200'));
+            } else {
+                callReopen({
+                    id: props.triggerReopen.reopenInfo.id,
+                    input: { status: props.triggerReopen.reopenInfo.status }
+                });
+                props.triggerReopen.setReopenInfo(undefined);
+            }
+        }
+    }, [props.triggerReopen]);
+
+    useEffect(() => {
+        if (enableLoading) {
+            showInfo(t('messages:info-enabling-wip'));
+        }
+    }, [enableLoading]);
+
+    useEffect(() => {
+        if (!(enableResult && enableResult.data)) return;
+
+        if (enableResult.success) {
+            showSuccess(t('messages:success-enabled'));
+            reloadData();
+        } else {
+            showError(t('messages:error-enabling-element'));
+        }
+    }, [enableResult]);
+    // #endregion
+
+    // #region PRIORITY CHANGE MUTATION
+
+    useEffect(() => {
+        if (props.triggerPriorityChange?.orderingField) {
+            setSort([{ field: props.triggerPriorityChange.orderingField, ascending: true }]);
+        }
+    }, [props.triggerPriorityChange]);
+
+    useEffect(() => {
+        if (
+            props.triggerPriorityChange &&
+            props.triggerPriorityChange.id &&
+            data?.[props.dataModel.endpoints.list]?.results?.length > 0
+        ) {
+            const updateWithOrder = gql`
+                mutation executeFunction($id: String!) {
+                    executeFunction(
+                        functionName: "reorder_priority"
+                        event: {
+                            input: {
+                                ids: $id
+                                tableName: "${props.dataModel.resolverName.charAt(0).toLowerCase() + props.dataModel.resolverName.slice(1)}"
+                                orderingField: "${props.triggerPriorityChange.orderingField}"
+                                operation: "update"
+                                parentId: "${props.triggerPriorityChange.parentId}"
+                                newOrder: ${props.triggerPriorityChange.newOrder}
+                            }
+                        }
+                    ) {
+                        status
+                        output
+                    }
+                }
+            `;
+            graphqlRequestClient
+                .request(updateWithOrder, {
+                    id: props.triggerPriorityChange.id
+                })
+                .then((result: any) => {
+                    if (result.executeFunction.status === 'ERROR') {
+                        showError(result.executeFunction.output);
+                    } else if (
+                        result.executeFunction.status === 'OK' &&
+                        result.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(t(`errors:${result.executeFunction.output.output.code}`));
+                        console.log('Backend_message', result.executeFunction.output.output);
+                    } else {
+                        console.log('Priority change successful');
+                        reloadData();
+                    }
+                    props.triggerPriorityChange.setId({
+                        id: null,
+                        newOrder: null
+                    });
+                })
+                .catch((error: any) => {
+                    console.error('Error during priority change:', error);
+                    showError(t('messages:error-priority-change'));
+                    props.triggerPriorityChange.setId({
+                        id: null,
+                        newOrder: null
+                    });
+                });
+        }
+    }, [props.triggerPriorityChange]);
 
     // #endregion
 
     // #region SEARCH OPERATIONS
 
-    const [searchWithParams, setSearchWithParams] = useState<any>({});
+    if (props.searchable) {
+        useEffect(() => {
+            if (userSettings && userSettings.valueJson?.filterParameters) {
+                setSelectCase(userSettings.valueJson.filterParameters.selectCase ?? []);
+                setSelectJoker(userSettings.valueJson.filterParameters.selectJoker ?? []);
+            }
+            if (userSettings && userSettings.valueJson?.advancedFilters) {
+                setAdvancedFilters(userSettings.valueJson.advancedFilters ?? []);
+                if (
+                    userSettings.valueJson.advancedFilters
+                        .map((item: any) => item.filter[0].field.status)
+                        .some(
+                            (status: any) => status === 2000 || status === 1005 || status === 1600
+                        )
+                ) {
+                    setIsWithoutClosed(true);
+                }
+            }
+            if (userSettings && userSettings.valueJson?.subOptions) {
+                setAllSubOptions(userSettings.valueJson.subOptions ?? []);
+            }
+        }, []);
+        showBadge = true;
+    }
 
-    let allSubOptions = userSettings?.valueJson?.subOptions ?? [];
-    function setAllSubOptions(newSubOptions: any) {
-        // Support both direct values and callback functions like setState
-        if (typeof newSubOptions === 'function') {
-            allSubOptions = newSubOptions(allSubOptions);
-        } else {
-            allSubOptions = newSubOptions;
+    const [search, setSearch] = useState(searchCriterias);
+    const [searchWithParams, setSearchWithParams] = useState<any>({});
+    const [allSubOptions, setAllSubOptions] = useState<any>([]);
+
+    useEffect(() => {
+        if (filterFields.length === 0) {
+            return;
         }
+        if (filterFields.length > 0) {
+            const newSearchCriterias: any = searchCriterias ?? {};
+            filterFields.forEach((field: any) => {
+                if (field.initialValue !== undefined && field.initialValue !== null) {
+                    if (field.isMultipleSearch) {
+                        newSearchCriterias[field.name] = Array.isArray(field.initialValue)
+                            ? field.initialValue
+                            : [field.initialValue];
+                    } else {
+                        newSearchCriterias[field.name] = field.initialValue;
+                    }
+                }
+            });
+            setSearch(newSearchCriterias);
+        }
+    }, [filterFields]);
+
+    // Transform some search fields for better display in the CumulSearch screen
+    if (props.cumulSearchInfos && 'handlingUnit_Category' in search) {
+        const HUCParameters = parameters?.filter(
+            (param: any) => param.scope === 'handling_unit_category'
+        );
+
+        const paramTexts = search?.handlingUnit_Category?.map((key: any) => {
+            const found = HUCParameters?.find(
+                (param: any) => parseInt(param.code) === parseInt(key)
+            );
+            return found.translation[`${filterLanguage}`] || found.value;
+        });
+
+        const transformed = {
+            handlingUnit_Category: Array.isArray(paramTexts) ? paramTexts.join(' / ') : paramTexts
+        };
+        props.cumulSearchInfos.data = transformed;
     }
 
     // #endregion
@@ -897,7 +1198,7 @@ const ListComponent = (props: IListProps) => {
     useEffect(() => {
         let searchWithParamsInfos: { [key: string]: any } = {};
 
-        Object.entries(searchCriterias).forEach(([key, value]) => {
+        Object.entries(search).forEach(([key, value]) => {
             let filterParams = '';
             if (selectCase.includes(key)) {
                 filterParams = filterParams + '^';
@@ -908,20 +1209,16 @@ const ListComponent = (props: IListProps) => {
             if (filterParams !== '') {
                 searchWithParamsInfos[key] = [filterParams, value];
             } else {
-                searchWithParamsInfos[key] = value;
+                searchWithParamsInfos[key] =
+                    Array.isArray(value) && value.length === 1 ? value[0] : value;
             }
         });
 
         setSearchWithParams(searchWithParamsInfos);
-    }, [selectCase, selectJoker, userSettings]);
+    }, [search, selectCase, selectJoker]);
 
     const [formSearch] = Form.useForm();
-    // Initialize form with userSettings default values
-    useEffect(() => {
-        if (userSettings?.valueJson?.filter) {
-            formSearch.setFieldsValue(userSettings.valueJson.filter);
-        }
-    }, [userSettings, formSearch]);
+    const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
 
     const handleSubmit = () => {
         formSearch
@@ -929,51 +1226,52 @@ const ListComponent = (props: IListProps) => {
             .then(() => {
                 // Here make api call of something else
                 const searchValues = formSearch.getFieldsValue(true);
-                if (formSearch.isFieldsTouched()) {
-                    const newSearchValues = {
-                        ...searchCriterias,
-                        ...searchValues
-                    };
+                const newSearchValues = {
+                    ...searchValues,
+                    ...searchCriterias
+                };
 
-                    let savedFilters: any = {};
-
-                    if (newSearchValues) {
-                        for (const [key, value] of Object.entries(newSearchValues)) {
-                            if (
-                                value !== undefined &&
-                                value !== null &&
-                                (Array.isArray(value) ? value.length > 0 : true)
-                            ) {
-                                savedFilters[key] = value;
-                            }
+                showBadge = false;
+                let savedFilters: any = {};
+                if (newSearchValues) {
+                    for (const [key, value] of Object.entries(newSearchValues)) {
+                        if (
+                            value !== undefined &&
+                            value !== null &&
+                            (Array.isArray(value) ? value.length > 0 : true)
+                        ) {
+                            savedFilters[key] = value;
                         }
+                    }
+                    const allSubOptionsFiltered = allSubOptions
+                        .map((item: any) => {
+                            const itemKey = Object.keys(item)[0];
+                            if (savedFilters[itemKey] && item[itemKey]) {
+                                return {
+                                    ...item,
+                                    [itemKey]: item[itemKey].filter((option: any) =>
+                                        savedFilters[itemKey].includes(option.key)
+                                    )
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(Boolean);
 
-                        const allSubOptionsFiltered = allSubOptions
-                            .map((item: any) => {
-                                const itemKey = Object.keys(item)[0];
-                                if (savedFilters[itemKey] && item[itemKey]) {
-                                    return {
-                                        ...item,
-                                        [itemKey]: item[itemKey].filter((option: any) =>
-                                            savedFilters[itemKey].includes(option.key)
-                                        )
-                                    };
-                                }
-                                return null;
-                            })
-                            .filter(Boolean);
-
-                        handleUserSettings(
-                            savedFilters,
-                            null,
-                            defaultPagination,
-                            [],
-                            selectCase,
-                            selectJoker,
-                            allSubOptionsFiltered
-                        );
+                    handleUserSettings(
+                        savedFilters,
+                        null,
+                        defaultPagination,
+                        [],
+                        selectCase,
+                        selectJoker,
+                        allSubOptionsFiltered
+                    );
+                    if (Object.keys(savedFilters).length > 0) {
+                        showBadge = true;
                     }
                 }
+                setIsSearchDrawerOpen(false);
             })
             .catch((err: any) => {
                 console.log('Error validating form:', err);
@@ -989,6 +1287,52 @@ const ListComponent = (props: IListProps) => {
             return false;
         }
     }
+
+    function drawerProps() {
+        return {
+            size: 450,
+            isOpen: isSearchDrawerOpen,
+            setIsOpen: setIsSearchDrawerOpen,
+            title: 'actions:search',
+            comfirmButtonTitle: 'actions:search',
+            comfirmButton: true,
+            cancelButtonTitle: 'actions:reset',
+            cancelButton: true,
+            submit: true,
+            content: (
+                <ListFilters
+                    form={formSearch}
+                    columns={filterFields}
+                    defaultSubOptions={props.defaultSubOptions}
+                    allSubOptions={allSubOptions}
+                    setAllSubOptions={setAllSubOptions}
+                    handleSubmit={handleSubmit}
+                    selectCase={!isSelectCaseExptions() ? selectCase : undefined}
+                    setSelectCase={!isSelectCaseExptions() ? setSelectCase : undefined}
+                    selectJoker={!isSelectCaseExptions() ? selectJoker : undefined}
+                    setSelectJoker={!isSelectCaseExptions() ? setSelectJoker : undefined}
+                />
+            ),
+            onCancel: () => handleReset(),
+            onComfirm: () => handleSubmit()
+        };
+    }
+
+    const handleReset = () => {
+        console.log('handleReset called');
+        handleUserSettings({}, null, defaultPagination, [], [], [], []);
+        setIsWithoutClosed(false);
+        setAdvancedFilters([]);
+        setSelectCase([]);
+        setSelectJoker([]);
+        formSearch.resetFields();
+        // Reset search criteria to empty object if no search criteria is provided
+        !searchCriterias ? setSearch({}) : setSearch({ ...searchCriterias });
+        for (const obj of filterFields) {
+            obj.initialValue = undefined;
+        }
+        setIsSearchDrawerOpen(false);
+    };
 
     // #endregion
 
@@ -1059,10 +1403,10 @@ const ListComponent = (props: IListProps) => {
         props.dataModel.endpoints.list,
         listFields,
         searchWithParams,
-        pagination.current,
+        adjustedPagination,
         pagination.itemsPerPage,
         sort,
-        filteredLanguage,
+        router.locale,
         defaultModelSort,
         advancedFilters,
         functions
@@ -1070,7 +1414,7 @@ const ListComponent = (props: IListProps) => {
 
     useEffect(() => {
         // Time delay before reloading data
-        const delay = 100;
+        const delay = 1000;
         const debouncedReload = debounce(() => {
             reloadData();
         }, delay);
@@ -1081,59 +1425,147 @@ const ListComponent = (props: IListProps) => {
         return () => {
             debouncedReload.cancel();
         };
-    }, [searchWithParams, props.refetch, router.locale, advancedFilters, pagination.current]);
+    }, [searchWithParams, props.refetch, router.locale]);
 
-    // #endregion
-
-    // #region REQUEST HOOKS
-    // function DELETE, SOFT DELETE, REOPEN, PRIORITY CHANGE and CREATE A MOVEMENT
-    const {} = useListRequests({
-        dataModel: props.dataModel,
-        triggerDelete: props.triggerDelete,
-        triggerSoftDelete: props.triggerSoftDelete,
-        triggerReopen: props.triggerReopen,
-        triggerPriorityChange: props.triggerPriorityChange,
-        isCreateAMovement: props.isCreateAMovement,
-        dataToCreateMovement: props.dataToCreateMovement,
-        setSuccessDeleteResult: props.setSuccessDeleteResult,
-        reloadData,
-        listFields,
-        permissions: permissions || [],
-        data,
-        setSort
-    });
     // #endregion
 
     // #region EXPORT DATA
-    const { stickyActions } = useExportData({
-        props,
-        newTableColumns: columnWithLinks,
-        searchWithParams,
-        pagination,
-        sort,
-        filteredLanguage,
-        defaultModelSort,
-        allColumns,
-        rows,
-        displayedLabels
-    });
+
+    const { isLoading: exportLoading, result: exportResult, mutate } = useExport();
+
+    const exportData = () => {
+        const exportFields = [
+            ...props.extraColumns,
+            ...(newTableColumns?.filter((col) => col.key !== 'actions') || [])
+        ]
+            .filter((col) => col.hidden !== true)
+            .map((col) => {
+                if (!col?.dataIndex?.includes('_')) {
+                    return col?.dataIndex;
+                }
+                return (
+                    col?.dataIndex?.split('_').join('{') +
+                    '}'.repeat(col?.dataIndex?.split('_').slice(1).length || 0)
+                );
+            });
+
+        const exportQueryString = queryString(
+            props.dataModel.endpoints.list,
+            exportFields,
+            search,
+            pagination.current,
+            pagination.itemsPerPage,
+            sort,
+            router.locale,
+            defaultModelSort
+        );
+
+        // Creation of columnNames for export
+        let columnNames: any = {};
+        const titleIndexMap: Record<string, number> = {};
+
+        // Base from allColumns
+        allColumns.forEach((col, index) => {
+            const translatedTitle = t(col.title);
+            columnNames[index] = {
+                title: translatedTitle,
+                keys: [col.dataIndex]
+            };
+            titleIndexMap[translatedTitle] = index;
+        });
+
+        // Add keys from rows
+        if (rows && rows.results && rows.results.length > 0) {
+            rows.results.forEach((result) => {
+                Object.keys(result).forEach((key) => {
+                    let title = `d:${key}`;
+                    if (displayedLabels && key in displayedLabels) {
+                        title = `d:${displayedLabels[key]}`;
+                    }
+                    const translatedTitle = t(title);
+
+                    // If the value is an array, we skip it for now
+                    if (!Array.isArray(result[key])) {
+                        // If the key is similar to an existing columnName, we add it to that column keys
+                        const similarColumns: any[] = Object.values(columnNames).filter(
+                            (column: any) =>
+                                column.keys.some((cnKey: any) => cnKey.startsWith(key + '_'))
+                        );
+
+                        if (similarColumns.length > 0) {
+                            for (const col of similarColumns) {
+                                col.keys.push(key);
+                            }
+                        }
+                        // If title does not exist in allColumns, we create it
+                        else {
+                            const newIndex = Object.keys(columnNames).length;
+                            columnNames[newIndex] = { title: translatedTitle, keys: [key] };
+                            titleIndexMap[translatedTitle] = newIndex;
+                        }
+                    }
+                });
+            });
+        }
+
+        // Sort by index if needed
+        const orderedColumns = Object.keys(columnNames)
+            .sort((a, b) => Number(a) - Number(b))
+            .map((idx) => columnNames[Number(idx)]);
+
+        columnNames = orderedColumns;
+
+        const base64QueryString = Buffer.from(exportQueryString, 'binary').toString('base64');
+        mutate({
+            graphqlRequest: base64QueryString,
+            format: ExportFormat.Xlsx,
+            separator: ';',
+            columnNames
+            // compression
+        });
+    };
+
+    const stickyActions = {
+        export: {
+            active: props.dataModel.endpoints.export ? true : false,
+            function: () => exportData()
+        }
+    };
+
+    useEffect(() => {
+        if (exportLoading) {
+            showInfo(t('messages:info-export-wip'));
+        }
+    }, [exportLoading]);
+
+    useEffect(() => {
+        if (!(exportResult && exportResult.data)) return;
+        if (exportResult.success && exportResult?.data.exportData?.url) {
+            showSuccess(t('messages:success-exported'));
+            const newWindow = window.open(exportResult?.data.exportData?.url, '_blank');
+        } else {
+            showError(t('messages:error-exporting-data'));
+        }
+    }, [exportResult]);
+
     // #endregion
 
     // #region onChangePagination
-    const onChangePagination = (currentPage: number, itemsPerPage: number) => {
-        // Re fetch data for new current page or items per page
-        if (itemsPerPage !== pagination.itemsPerPage) {
+    const onChangePagination = useCallback(
+        (currentPage: number, itemsPerPage: number) => {
+            // Re fetch data for new current page or items per page
             handleUserSettings(null, null, {
-                itemsPerPage: itemsPerPage
-            });
-        } else {
-            setPagination({
-                ...pagination,
                 current: currentPage,
                 itemsPerPage: itemsPerPage
             });
-        }
-    };
+            setPagination({
+                total: rows?.count,
+                current: currentPage,
+                itemsPerPage: itemsPerPage
+            });
+        },
+        [setPagination, rows]
+    );
 
     // #endregion
 
@@ -1144,6 +1576,22 @@ const ListComponent = (props: IListProps) => {
             let listData: any = data[props.dataModel.endpoints.list]
                 ? JSON.parse(JSON.stringify(data[props.dataModel.endpoints.list]))
                 : undefined;
+            if (props.isDragAndDroppable && listData && listData['results'].length === 0) {
+                if (listData.count === 0) {
+                    listData = {
+                        count: 1,
+                        itemsPerPage: 10,
+                        totalPages: 1,
+                        results: props.defaultEmptyList
+                    };
+                }
+            }
+            if (props.cumulSearchInfos && listData && listData['results']) {
+                listData.results = listData?.results.map((item: any) => ({
+                    ...item,
+                    ...(props.cumulSearchInfos.data || {})
+                }));
+            }
             if (listData && listData['results']) {
                 const result_list: Array<any> = [];
                 switch (props.dataModel.modelName) {
@@ -1240,6 +1688,7 @@ const ListComponent = (props: IListProps) => {
 
                         setPagination({
                             ...pagination,
+                            current: adjustedPagination,
                             total: listData['count']
                         });
 
@@ -1515,6 +1964,7 @@ const ListComponent = (props: IListProps) => {
 
                         break;
                     default:
+                        let sort_index = 1;
                         if (listData['results'].length > 0) {
                             listData['results'] = listData['results'].map((item: any) => {
                                 const flatItem = flatten(item);
@@ -1529,6 +1979,22 @@ const ListComponent = (props: IListProps) => {
                                 });
                                 return { ...flatItem, listDataCount: listData.count };
                             });
+                            if (props.isDragAndDroppable && !props.isDragSource) {
+                                listData['results'] = listData['results'].map(
+                                    (item: any, index: number) => {
+                                        return { ...item, index };
+                                    }
+                                );
+                                if (
+                                    listData['results'].filter((e: any) => e.id !== 'null')
+                                        .length !== 0
+                                ) {
+                                    listData['results'] = [
+                                        ...listData['results'],
+                                        ...props.defaultEmptyList
+                                    ];
+                                }
+                            }
                         }
                         // iterate over the first result and get list of columns to define table structure
                         listFields.forEach((column_name: any, index: number) => {
@@ -1545,163 +2011,6 @@ const ListComponent = (props: IListProps) => {
                                 hiddenListFields.includes(column_name) ||
                                 excludedListFields.includes(column_name);
 
-                            // Helper function to get the correct filter field name
-                            const getFilterFieldName = (dataIndex: string): string => {
-                                // Check if this field has a corresponding filter field definition
-                                const filterField = filterFields.find((field: any) => {
-                                    const fieldNameVariations = [
-                                        dataIndex,
-                                        dataIndex.replace(/_/g, ''),
-                                        dataIndex.replace(/_([a-z])/g, (match, letter) =>
-                                            letter.toUpperCase()
-                                        )
-                                    ];
-                                    return fieldNameVariations.includes(field.name);
-                                });
-
-                                if (filterField) {
-                                    return filterField.name;
-                                }
-
-                                // For linked fields, check if we need to use the ID field
-                                const originalFieldKey = Object.keys(
-                                    props.dataModel.fieldsInfo
-                                ).find((key) => {
-                                    const normalizedKey = key.replace(/{/g, '_').replace(/}/g, '');
-                                    return normalizedKey === dataIndex;
-                                });
-
-                                if (originalFieldKey) {
-                                    // Common patterns for ID fields
-                                    const idFieldCandidates = [
-                                        `${dataIndex}Id`,
-                                        `${dataIndex.replace('_name', '')}Id`,
-                                        `${dataIndex.replace('_Name', '')}Id`,
-                                        dataIndex.replace(/(_name|_Name)$/, 'Id'),
-                                        `${dataIndex.replace('Text', '')}`
-                                    ];
-
-                                    for (const candidate of idFieldCandidates) {
-                                        const candidateWithLetterCase = candidate.replace(
-                                            /_([a-z])/g,
-                                            (match, letter) => '_' + letter.toUpperCase()
-                                        );
-                                        const idFilterField = filterFields.find(
-                                            (field: any) => field.name === candidateWithLetterCase
-                                        );
-                                        if (idFilterField) {
-                                            return candidateWithLetterCase;
-                                        }
-                                    }
-                                }
-
-                                // Fallback to original dataIndex
-                                return dataIndex;
-                            };
-
-                            const getColumnSearchProps = (
-                                dataIndex: DataIndex
-                            ): TableColumnType<DataType> => {
-                                const filterFieldName = getFilterFieldName(dataIndex);
-                                const filterField = filterFields.find(
-                                    (field: any) => field.name === filterFieldName
-                                );
-
-                                if (!props.dataModel.fieldsInfo[filterFieldName]?.searchingFormat) {
-                                    return {};
-                                }
-
-                                return {
-                                    filterDropdown: () => (
-                                        <div
-                                            style={{
-                                                padding: 8,
-                                                minWidth: '250px',
-                                                maxWidth: '300px'
-                                            }}
-                                            onKeyDown={(e) => e.stopPropagation()}
-                                        >
-                                            <FormGroupV3
-                                                form={formSearch}
-                                                item={{
-                                                    name: filterFieldName,
-                                                    displayName:
-                                                        filterField?.displayName ??
-                                                        t(`d:${dataIndex}`),
-                                                    type: filterField?.type || FormDataType.String,
-                                                    maxLength: filterField?.maxLength,
-                                                    config: filterField?.config,
-                                                    configList: filterField?.configList,
-                                                    param: filterField?.param,
-                                                    paramList: filterField?.paramList,
-                                                    optionTable: filterField?.optionTable
-                                                }}
-                                                defaultSubOptions={props.defaultSubOptions}
-                                                handleSubmit={handleSubmit}
-                                                setAllSubOptions={setAllSubOptions}
-                                                selectCase={
-                                                    !isSelectCaseExptions() ? selectCase : undefined
-                                                }
-                                                setSelectCase={
-                                                    !isSelectCaseExptions()
-                                                        ? setSelectCase
-                                                        : undefined
-                                                }
-                                                selectJoker={
-                                                    !isSelectCaseExptions()
-                                                        ? selectJoker
-                                                        : undefined
-                                                }
-                                                setSelectJoker={
-                                                    !isSelectCaseExptions()
-                                                        ? setSelectJoker
-                                                        : undefined
-                                                }
-                                            />
-                                        </div>
-                                    ),
-                                    filterOnClose: true,
-                                    onFilterDropdownOpenChange: (visible) => {
-                                        if (!visible) {
-                                            // Auto-submit when dropdown closes
-                                            handleSubmit();
-                                        }
-                                    },
-                                    filterIcon: () => {
-                                        const filtered = !!searchWithParams[filterFieldName];
-
-                                        // Count active filters
-                                        const activeFiltersCount =
-                                            searchWithParams[filterFieldName]?.length || 0;
-
-                                        return (
-                                            <>
-                                                <span
-                                                    style={{
-                                                        position: 'absolute',
-                                                        right: 0,
-                                                        top: 0,
-                                                        transform: 'translateY(-12px)',
-                                                        color: 'orange',
-                                                        opacity: filtered ? 0.8 : 0,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        height: '100%'
-                                                    }}
-                                                >
-                                                    {activeFiltersCount}
-                                                </span>
-                                                <SearchOutlined
-                                                    style={{
-                                                        color: filtered ? 'orange' : undefined
-                                                    }}
-                                                />
-                                            </>
-                                        );
-                                    }
-                                };
-                            };
-
                             const row_data: any = {
                                 title: title,
                                 dataIndex: column_name,
@@ -1710,22 +2019,34 @@ const ListComponent = (props: IListProps) => {
                                 hidden: isHidden,
                                 fixed: false,
                                 highlightCondition:
-                                    props.dataModel.fieldsInfo[column_name]?.highlight ?? undefined,
-                                sorter:
-                                    sortableFields.includes(column_name) &&
-                                    !props.triggerPriorityChange
-                                        ? { multiple: index + 1 }
-                                        : undefined,
-                                defaultSortOrder: sort?.find(
-                                    (sorter: any) => sorter.field === column_name
-                                )
-                                    ? sort.find((sorter: any) => sorter.field === column_name)
-                                          .ascending
-                                        ? 'ascend'
-                                        : 'descend'
-                                    : undefined,
-                                ...(props.searchable ? getColumnSearchProps(column_name) : {})
+                                    props.dataModel.fieldsInfo[column_name]?.highlight ?? undefined
                             };
+
+                            // if column is in sortable list add sorter property
+                            if (
+                                sortableFields.length > 0 &&
+                                sortableFields.includes(column_name) &&
+                                !props.triggerPriorityChange
+                            ) {
+                                row_data['sorter'] = { multiple: sort_index };
+                                row_data['showSorterTooltip'] = false;
+                                sort_index++;
+                            }
+
+                            //If default sort memorized or passed add defaultSortOrder
+                            if (sort) {
+                                sort.forEach((sorter: any) => {
+                                    if (props.isDragAndDroppable) {
+                                        if (column_name === 'index') {
+                                            row_data['defaultSortOrder'] = 'ascend';
+                                        }
+                                    } else if (sorter.field === column_name) {
+                                        row_data['defaultSortOrder'] = sorter.ascending
+                                            ? 'ascend'
+                                            : 'descend';
+                                    }
+                                });
+                            }
 
                             // Hide fields if there is any hidden selected.
                             if (!excludedListFields || !excludedListFields.includes(row_data.key)) {
@@ -1748,19 +2069,9 @@ const ListComponent = (props: IListProps) => {
                                 }
                             }
                         });
+
                         // set columns to use in table
-                        if (initialState) {
-                            setAllColumns(
-                                result_list.map((col) => {
-                                    const initialCol = initialState.find(
-                                        (initial: any) => initial.key === col.key
-                                    );
-                                    return initialCol ? { ...col, ...initialCol } : col;
-                                })
-                            );
-                        } else {
-                            setAllColumns(result_list);
-                        }
+                        setAllColumns(initialState ?? result_list);
                         setInitialAllColumns(result_list);
 
                         // set data for the table
@@ -1771,17 +2082,25 @@ const ListComponent = (props: IListProps) => {
 
                         setPagination({
                             ...pagination,
+                            current: adjustedPagination,
                             total: listData['count']
                         });
 
                         break;
                 }
-                setFirstLoad(false);
             }
+            setFirstLoad(false);
         } else {
             deleteUserSettings();
         }
-    }, [data, props.dataModel.endpoints.list]);
+    }, [
+        data,
+        userSettings,
+        props.dataModel.endpoints.list,
+        props?.cumulSearchInfos?.columns,
+        props.isDragAndDroppable,
+        props.isDragSource
+    ]);
 
     // #endregion
 
@@ -1849,12 +2168,54 @@ const ListComponent = (props: IListProps) => {
         }
     };
 
+    const badgeCount = filterFields.reduce((count: number, field: any) => {
+        if (field.initialValue) {
+            return count + 1; // Count all fields with a type
+        }
+        return count;
+    }, 0);
+
+    // #endregion
+
+    // #region Date formatting
+    if (rows?.results && rows?.results.length > 0) {
+        rows.results.forEach((row: any) => {
+            Object.keys(row).forEach((key) => {
+                if (isString(row[key]) && isStringDateTime(row[key])) {
+                    if (
+                        !(
+                            key === 'value' &&
+                            'featureCode_dateType' in row &&
+                            !row['featureCode_dateType']
+                        )
+                    ) {
+                        row[key] = formatUTCLocaleDateTime(row[key], router.locale);
+                    }
+                }
+                if (isString(row[key]) && isStringDate(row[key])) {
+                    if (
+                        !(
+                            key === 'value' &&
+                            'featureCode_dateType' in row &&
+                            !row['featureCode_dateType']
+                        )
+                    ) {
+                        row[key] = formatUTCLocaleDate(row[key], router.locale);
+                    }
+                }
+            });
+        });
+    }
+
+    // #endregion
+
     // #region merge columns
 
     const mergedColumns = [
         ...props.actionColumns,
         ...props.extraColumns,
-        ...(columnWithLinks?.filter((col) => col.key !== 'actions') || [])
+        ...(newTableColumns?.filter((col) => col.key !== 'actions') || []),
+        ...(props?.cumulSearchInfos?.columns ? props.cumulSearchInfos.columns : [])
     ];
 
     useEffect(() => {
@@ -1881,7 +2242,7 @@ const ListComponent = (props: IListProps) => {
                 if (
                     searchForTags[key] === undefined ||
                     searchForTags[key] === null ||
-                    Object.keys(props.searchCriteria).includes(key)
+                    Object.keys(searchCriterias).includes(key)
                 ) {
                     return null;
                 }
@@ -1915,7 +2276,7 @@ const ListComponent = (props: IListProps) => {
                             )
                             .map((item: any) => {
                                 return {
-                                    text: item?.translation?.[`${filteredLanguage}`] || item.value,
+                                    text: item?.translation?.[`${filterLanguage}`] || item.value,
                                     code: item.code
                                 };
                             }) || searchForTags[key];
@@ -1933,7 +2294,7 @@ const ListComponent = (props: IListProps) => {
                             )
                             .map((item: any) => {
                                 return {
-                                    text: item?.translation?.[`${filteredLanguage}`] || item.value,
+                                    text: item?.translation?.[`${filterLanguage}`] || item.value,
                                     code: item.code
                                 };
                             }) || searchForTags[key];
@@ -1958,7 +2319,6 @@ const ListComponent = (props: IListProps) => {
         }
 
         let allTags: any[] = [];
-        const listOfParamsKeys = ['%', '^', '%^', '^%'];
         filterInfos.forEach((item: any) => {
             Object.keys(item).forEach((key) => {
                 if (
@@ -1968,11 +2328,7 @@ const ListComponent = (props: IListProps) => {
                     filterFields.find((field: any) => field.name === key)?.type !== 7
                 ) {
                     item[key].forEach((value: any) => {
-                        if (
-                            value !== undefined &&
-                            value !== null &&
-                            !listOfParamsKeys.includes(value)
-                        ) {
+                        if (value !== undefined && value !== null) {
                             allTags.push({
                                 key: findDisplayNameForKey(key),
                                 value: value,
@@ -2018,7 +2374,7 @@ const ListComponent = (props: IListProps) => {
         'lime',
         'volcano'
     ];
-    tagFormatter(searchWithParams).map((info, index) => {
+    tagFormatter(search).map((info, index) => {
         if (tagColor.some((color: string) => Object.keys(color)[0] === info.key)) {
             return tagColor.find((color: string) => Object.keys(color)[0] === info.key)[info.key];
         } else {
@@ -2031,12 +2387,12 @@ const ListComponent = (props: IListProps) => {
 
     function onTagClose(e: any, info: any) {
         e.preventDefault();
-        let newSearch = { ...searchCriterias };
+        let newSearch = { ...search };
         if (
-            Array.isArray(searchCriterias[info.originalKey]) &&
+            Array.isArray(search[info.originalKey]) &&
             filterFields.find((field: any) => field.name === info.originalKey)?.type !== 7
         ) {
-            newSearch[info.originalKey] = searchCriterias[info.originalKey].filter((item: any) => {
+            newSearch[info.originalKey] = search[info.originalKey].filter((item: any) => {
                 let infoToCompare = info.value.code ?? info.value.key ?? info.value;
                 if (typeof infoToCompare !== 'string') {
                     infoToCompare = JSON.stringify(infoToCompare);
@@ -2063,7 +2419,47 @@ const ListComponent = (props: IListProps) => {
 
     // #endregion
 
+    // #region Drag and Drop management
+    let draggableComponent;
+    if (props.isDragAndDroppable) {
+        draggableComponent = {
+            body: {
+                row: (rowprops: any) => {
+                    const { 'data-row-key': rowKey, children, ...restProps } = rowprops;
+                    const record = props.items?.find((item: any) => item.id === rowKey);
+                    if (!record) return <tr {...restProps}>{children}</tr>;
+                    return (
+                        <DraggableItem
+                            key={record.id}
+                            record={record}
+                            index={record.index}
+                            columns={mergedColumns}
+                            addRow={props.addRow}
+                            moveRow={props.moveRow}
+                            removeRow={props.removeRow}
+                            {...restProps}
+                            isDragSource={props.isDragSource}
+                        />
+                    );
+                }
+            }
+        };
+    }
+    // #endregion
+
     // #region adjust columns for resizable
+
+    const dataSource = props.isDragAndDroppable
+        ? props.items!.map((item: any, index: number) => ({
+              ...item,
+              key: item.id,
+              index
+          }))
+        : (rows?.results ?? []);
+
+    const insideScroll = { x: '100%', y: 400 };
+    const insideScrollPagination = { pageSize: dataSource.length, showSizeChanger: false };
+
     // 1. Add state for column widths
     const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>({});
 
@@ -2161,10 +2557,15 @@ const ListComponent = (props: IListProps) => {
 
     // 4. Add custom components for header cell
     const tableComponents = {
+        ...draggableComponent,
         header: {
             cell: ResizableTitle
         }
     };
+
+    // Ensure scroll.x is always set for fixed table layout
+    const tableScroll = props.isIndependentScrollable ? insideScroll : { x: '100%' };
+
     // #endregion
 
     // #region return
@@ -2182,7 +2583,7 @@ const ListComponent = (props: IListProps) => {
                     </>
                 ) : (
                     <>
-                        {/* <DrawerItems {...drawerProps()} /> */}
+                        <DrawerItems {...drawerProps()} />
                         <DrawerItems {...columnDrawerProps()} />
                         {props.headerData ? (
                             <HeaderContent
@@ -2197,28 +2598,25 @@ const ListComponent = (props: IListProps) => {
                                     !firstLoad && rows ? (
                                         props.searchable && (
                                             <>
-                                                {tagFormatter(searchWithParams).map(
-                                                    (info, index) => {
-                                                        return (
-                                                            <Tag
-                                                                key={info.key + index}
-                                                                style={{ margin: '2px' }}
-                                                                color={(() => {
-                                                                    return tagColor.find(
-                                                                        (color: string) =>
-                                                                            Object.keys(
-                                                                                color
-                                                                            )[0] === info.key
-                                                                    )[info.key];
-                                                                })()}
-                                                                closable
-                                                                onClose={(e) => onTagClose(e, info)}
-                                                            >
-                                                                {`${info.key}: ${info.value.text ?? info.value}`}
-                                                            </Tag>
-                                                        );
-                                                    }
-                                                )}
+                                                {tagFormatter(search).map((info, index) => {
+                                                    return (
+                                                        <Tag
+                                                            key={info.key + index}
+                                                            style={{ margin: '2px' }}
+                                                            color={(() => {
+                                                                return tagColor.find(
+                                                                    (color: string) =>
+                                                                        Object.keys(color)[0] ===
+                                                                        info.key
+                                                                )[info.key];
+                                                            })()}
+                                                            closable
+                                                            onClose={(e) => onTagClose(e, info)}
+                                                        >
+                                                            {`${info.key}: ${info.value.text ?? info.value}`}
+                                                        </Tag>
+                                                    );
+                                                })}
                                             </>
                                         )
                                     ) : (
@@ -2246,6 +2644,33 @@ const ListComponent = (props: IListProps) => {
                                         ) : (
                                             <></>
                                         )}
+                                        {props.searchable ? (
+                                            <>
+                                                {showBadge ? (
+                                                    <Badge
+                                                        size="default"
+                                                        count={badgeCount}
+                                                        color="blue"
+                                                    >
+                                                        <Button
+                                                            icon={<SearchOutlined />}
+                                                            onClick={() => {
+                                                                setIsSearchDrawerOpen(true);
+                                                            }}
+                                                        />
+                                                    </Badge>
+                                                ) : (
+                                                    <Button
+                                                        icon={<SearchOutlined />}
+                                                        onClick={() => {
+                                                            setIsSearchDrawerOpen(true);
+                                                        }}
+                                                    />
+                                                )}
+                                            </>
+                                        ) : (
+                                            <></>
+                                        )}
                                         {props.headerData.actionsComponent != null ? (
                                             props.headerData.actionsComponent
                                         ) : (
@@ -2254,52 +2679,60 @@ const ListComponent = (props: IListProps) => {
                                     </Space>
                                 }
                             />
-                        ) : null}
-                        {!firstLoad && rows ? (
+                        ) : (
                             <>
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        width: '100%',
-                                        maxHeight: 40
-                                    }}
-                                >
-                                    <div>{props.actionButtons?.actionsComponent}</div>
-                                    {props.searchable ? (
-                                        <Form
-                                            form={formSearch}
-                                            layout="inline"
-                                            name="control-hooks"
-                                            onKeyUp={(event: any) => {
-                                                if (event.key === 'Enter') {
-                                                    handleSubmit();
-                                                }
-                                            }}
-                                            onBlur={() => {
-                                                handleSubmit();
+                                {props.searchable &&
+                                    (showBadge ? (
+                                        <div
+                                            style={{
+                                                float: 'right',
+                                                marginTop: -120,
+                                                marginRight: 20
                                             }}
                                         >
-                                            <StringInput
-                                                item={{
-                                                    name: 'allFields',
-                                                    displayName: t('d:all-fields-search')
-                                                }}
-                                                key={'globalSearch'}
-                                            />
-                                        </Form>
+                                            <Badge size="default" count={badgeCount} color="blue">
+                                                <Button
+                                                    icon={<SearchOutlined />}
+                                                    onClick={() => {
+                                                        formSearch.resetFields();
+                                                        setIsSearchDrawerOpen(true);
+                                                    }}
+                                                />
+                                            </Badge>
+                                        </div>
                                     ) : (
-                                        <></>
-                                    )}
-                                </div>
+                                        <div
+                                            style={{
+                                                float: 'right',
+                                                marginRight: 20,
+                                                marginTop: -120
+                                            }}
+                                        >
+                                            <Button
+                                                icon={<SearchOutlined />}
+                                                onClick={() => {
+                                                    formSearch.resetFields();
+                                                    setIsSearchDrawerOpen(true);
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                            </>
+                        )}
+                        {!firstLoad && rows ? (
+                            <>
+                                {props.actionButtons?.actionsComponent}
                                 <PageTableContentWrapper>
+                                    <DrawerItems {...drawerProps()} />
                                     <WrapperStickyActions>
                                         <Space direction="vertical">
-                                            <Button
-                                                type="primary"
-                                                icon={<SettingOutlined />}
-                                                onClick={() => setIsColumnDrawerOpen(true)}
-                                            />
+                                            {props.columnFilter && (
+                                                <Button
+                                                    type="primary"
+                                                    icon={<SettingOutlined />}
+                                                    onClick={() => setIsColumnDrawerOpen(true)}
+                                                />
+                                            )}
                                             {stickyActions?.export.active && (
                                                 <Button
                                                     icon={<FileExcelOutlined />}
@@ -2316,35 +2749,27 @@ const ListComponent = (props: IListProps) => {
                                     </WrapperStickyActions>
                                     <Table
                                         rowKey="id"
-                                        dataSource={rows.results ?? []}
-                                        scroll={{ x: '100%' }}
+                                        dataSource={dataSource}
+                                        scroll={tableScroll}
                                         sticky
                                         size="small"
                                         loading={isLoading}
                                         onChange={handleTableChange}
                                         pagination={
-                                            pagination && {
-                                                position: ['bottomRight'],
-                                                total: pagination.total,
-                                                current: pagination.current,
-                                                pageSize: pagination.itemsPerPage,
-                                                showSizeChanger: true,
-                                                showTotal: (total, range) =>
-                                                    `${range[0]}-${range[1]} sur ${total} éléments`,
-                                                onChange: (page, pageSize) => {
-                                                    onChangePagination(page, pageSize);
-                                                },
-                                                showQuickJumper:
-                                                    (pagination.total ?? 0) /
-                                                        pagination.itemsPerPage >
-                                                    5
-                                                        ? true
-                                                        : false,
-                                                locale: {
-                                                    jump_to: t('d:jump-to'),
-                                                    page: t('d:page')
-                                                }
-                                            }
+                                            props.isIndependentScrollable
+                                                ? insideScrollPagination
+                                                : pagination && {
+                                                      position: ['bottomRight'],
+                                                      total: pagination.total,
+                                                      current: pagination.current,
+                                                      pageSize: pagination.itemsPerPage,
+                                                      showSizeChanger: true,
+                                                      showTotal: (total, range) =>
+                                                          `${range[0]}-${range[1]} sur ${total} éléments`,
+                                                      onChange: (page, pageSize) => {
+                                                          onChangePagination(page, pageSize);
+                                                      }
+                                                  }
                                         }
                                         locale={{
                                             emptyText: !isLoading ? (
@@ -2422,12 +2847,6 @@ const ListComponent = (props: IListProps) => {
                                                     render={c.render}
                                                     defaultSortOrder={c.defaultSortOrder}
                                                     onHeaderCell={c.onHeaderCell}
-                                                    filterDropdown={c.filterDropdown}
-                                                    filterIcon={c.filterIcon}
-                                                    filters={c.filters}
-                                                    onFilterDropdownOpenChange={
-                                                        c.onFilterDropdownOpenChange
-                                                    }
                                                 />
                                             );
                                         })}

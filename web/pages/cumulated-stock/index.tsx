@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { FC, useEffect, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
-import { ListComponent } from 'modules/Crud/ListComponentV2';
+import { ListComponent } from 'modules/Crud/cumulatedStockListComponentV2';
 import { AppHead, HeaderContent } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { cumulatedStockRoutes as itemRoutes } from 'modules/CumulatedStock/static/cumulatedStockRoutes';
