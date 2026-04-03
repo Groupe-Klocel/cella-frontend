@@ -1599,15 +1599,27 @@ const ListComponent = (props: IListProps) => {
                                 return dataIndex;
                             };
 
+                            // Reverse conversion: handlingUnit_Location_BlockId → handlingUnit{location{blockId}}
+                            const convertFilterNameToFieldsInfoKey = (name: string): string => {
+                                let nestingCount = 0;
+                                const result = name.replace(/_([A-Z])/g, (_, char) => {
+                                    nestingCount++;
+                                    return '{' + char.toLowerCase();
+                                });
+                                return result + '}'.repeat(nestingCount);
+                            };
+
                             const getColumnSearchProps = (
                                 dataIndex: DataIndex
                             ): TableColumnType<DataType> => {
                                 const filterFieldName = getFilterFieldName(dataIndex);
+                                const fieldsInfoKey =
+                                    convertFilterNameToFieldsInfoKey(filterFieldName);
                                 const filterField = filterFields.find(
                                     (field: any) => field.name === filterFieldName
                                 );
 
-                                if (!props.dataModel.fieldsInfo[filterFieldName]?.searchingFormat) {
+                                if (!props.dataModel.fieldsInfo[fieldsInfoKey]) {
                                     return {};
                                 }
 
