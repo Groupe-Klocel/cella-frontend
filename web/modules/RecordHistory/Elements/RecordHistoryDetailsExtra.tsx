@@ -60,6 +60,7 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 searchable={false}
+                noDBSave={true}
             />
             <Divider />
             <ListComponent
@@ -69,6 +70,7 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 searchable={false}
+                noDBSave={true}
             />
         </>
     );

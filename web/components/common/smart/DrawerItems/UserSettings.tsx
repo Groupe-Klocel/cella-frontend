@@ -119,7 +119,7 @@ export const UserSettings: FC = () => {
 
     const ResetUserSettingByScreen = useCallback(async () => {
         const userSettingToDelete = userSettings.filter((item: any) => {
-            return item.code.endsWith(router.pathname);
+            return item.code.includes(router.pathname);
         });
         if (userSettingToDelete.length === 0) return setIsModalByScreenVisible(false);
         const arrayOfIds = userSettingToDelete
