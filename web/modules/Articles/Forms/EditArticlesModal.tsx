@@ -32,7 +32,6 @@ import {
 import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 export interface IEditArticlesRenderModalProps {
     visible: boolean;
@@ -40,13 +39,17 @@ export interface IEditArticlesRenderModalProps {
     showhideModal: () => void;
     refetch: boolean;
     setRefetch: () => void;
+    initializeBooleanModalValues: any;
+    setSelectedRowKeys: ([]) => void;
 }
 
 const EditArticlesRenderModal = ({
     visible,
     showhideModal,
     rows,
-    setRefetch
+    setRefetch,
+    initializeBooleanModalValues,
+    setSelectedRowKeys
 }: IEditArticlesRenderModalProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
@@ -141,25 +144,23 @@ const EditArticlesRenderModal = ({
         }
     }, [statusesTextList.data]);
 
-    //Checkbox baseUnitPicking
-    const onBaseUnitPickingChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ baseUnitPicking: e.target.checked });
-    };
-
-    //Checkbox endOfLife
-    const onEndOfLifeChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ endOfLife: e.target.checked });
-    };
-
-    //Checkbox permanentProduct
-    const onPermanentProductChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ permanentProduct: e.target.checked });
-    };
-
-    //Checkbox newProduct
-    const onNewProductChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ newProduct: e.target.checked });
-    };
+    // Synchronize form values when modal opens or values change
+    useEffect(() => {
+        if (visible) {
+            form.setFieldsValue({
+                newProduct: initializeBooleanModalValues.isAllNewProduct || false
+            });
+            form.setFieldsValue({
+                endOfLife: initializeBooleanModalValues.isAllEndOfLife || false
+            });
+            form.setFieldsValue({
+                permanentProduct: initializeBooleanModalValues.isAllPermanentProduct || false
+            });
+            form.setFieldsValue({
+                baseUnitPicking: initializeBooleanModalValues.isAllPicking || false
+            });
+        }
+    }, [visible, initializeBooleanModalValues, form]);
 
     // UPDATE Articles
     const {
@@ -200,6 +201,7 @@ const EditArticlesRenderModal = ({
                 showError(errorMessageUpdateData);
             });
         showhideModal();
+        setSelectedRowKeys([]);
     };
 
     return (
@@ -343,17 +345,33 @@ const EditArticlesRenderModal = ({
                         </Form.Item>
                     </Col>
                     <Col xs={2} xl={4}>
-                        <Form.Item label={t('d:baseUnitPicking')} name="baseUnitPicking">
-                            <Checkbox onChange={onBaseUnitPickingChange}></Checkbox>
+                        <Form.Item
+                            label={t('d:baseUnitPicking')}
+                            name="baseUnitPicking"
+                            valuePropName="checked"
+                        >
+                            <Checkbox />
                         </Form.Item>
-                        <Form.Item label={t('d:endOfLife')} name="endOfLife">
-                            <Checkbox onChange={onEndOfLifeChange}></Checkbox>
+                        <Form.Item
+                            label={t('d:endOfLife')}
+                            name="endOfLife"
+                            valuePropName="checked"
+                        >
+                            <Checkbox />
                         </Form.Item>
-                        <Form.Item label={t('d:permanentProduct')} name="permanentProduct">
-                            <Checkbox onChange={onPermanentProductChange}></Checkbox>
+                        <Form.Item
+                            label={t('d:permanentProduct')}
+                            name="permanentProduct"
+                            valuePropName="checked"
+                        >
+                            <Checkbox />
                         </Form.Item>
-                        <Form.Item label={t('d:newProduct')} name="newProduct">
-                            <Checkbox onChange={onNewProductChange}></Checkbox>
+                        <Form.Item
+                            label={t('d:newProduct')}
+                            name="newProduct"
+                            valuePropName="checked"
+                        >
+                            <Checkbox />
                         </Form.Item>
                     </Col>
                 </Row>

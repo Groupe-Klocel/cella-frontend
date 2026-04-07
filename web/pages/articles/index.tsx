@@ -51,6 +51,12 @@ const ArticlePages: PageComponent = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [initializeBooleanModalValues, setInitializeBooleanModalValues] = useState({
+        isAllPicking: false,
+        isAllPermanentProduct: false,
+        isAllNewProduct: false,
+        isAllEndOfLife: false
+    });
 
     const headerData: HeaderData = {
         title: t('common:articles'),
@@ -91,8 +97,27 @@ const ArticlePages: PageComponent = () => {
     const hasSelected = selectedRowKeys.length > 0;
     const [refetch, setRefetch] = useState<boolean>(false);
 
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+    const onSelectChange = (newSelectedRowKeys: React.Key[], record: any) => {
         setSelectedRowKeys(newSelectedRowKeys);
+        const initializeBooleanModalValues: any = {
+            isAllPicking: false,
+            isAllPermanentProduct: false,
+            isAllNewProduct: false,
+            isAllEndOfLife: false
+        };
+        initializeBooleanModalValues.isAllPicking = record.every(
+            (item: any) => item.baseUnitPicking === true
+        );
+        initializeBooleanModalValues.isAllPermanentProduct = record.every(
+            (item: any) => item.permanentProduct === true
+        );
+        initializeBooleanModalValues.isAllNewProduct = record.every(
+            (item: any) => item.newProduct === true
+        );
+        initializeBooleanModalValues.isAllEndOfLife = record.every(
+            (item: any) => item.endOfLife === true
+        );
+        setInitializeBooleanModalValues(initializeBooleanModalValues);
     };
     const rowSelection = {
         selectedRowKeys,
@@ -129,6 +154,7 @@ const ArticlePages: PageComponent = () => {
                         <EditArticlesRenderModal
                             visible={showModal}
                             rows={rowSelection}
+                            initializeBooleanModalValues={initializeBooleanModalValues}
                             showhideModal={() => {
                                 setShowModal(!showModal);
                             }}
@@ -136,6 +162,7 @@ const ArticlePages: PageComponent = () => {
                             setRefetch={() => {
                                 setRefetch(!refetch);
                             }}
+                            setSelectedRowKeys={setSelectedRowKeys}
                         />
                     </>
                 </>
