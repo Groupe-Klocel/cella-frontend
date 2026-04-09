@@ -526,7 +526,7 @@ const DeliveryDetailsExtra = ({
                         ]}
                         searchable={false}
                         setData={setDeliveryLinesData}
-                        sortDefault={[{ field: 'created', ascending: true }]}
+                        sortDefault={[{ field: 'lineNumber', ascending: true }]}
                     />
                 </>
             ) : (

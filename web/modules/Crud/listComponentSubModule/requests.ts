@@ -142,7 +142,7 @@ export const useListRequests = (params: IRequestsHookParams) => {
                 triggerDelete.setIdToDelete(undefined);
             }
         }
-    }, [triggerDelete, permissions, router.pathname, t, callDelete, permissionTableName]);
+    }, [triggerDelete, permissions, router.pathname, callDelete, permissionTableName]);
 
     useEffect(() => {
         if (deleteLoading) {
@@ -168,14 +168,7 @@ export const useListRequests = (params: IRequestsHookParams) => {
         } else {
             showError(t('messages:error-deleting-data'));
         }
-    }, [
-        deleteResult,
-        isCreateAMovement,
-        dataToCreateMovement,
-        setSuccessDeleteResult,
-        reloadData,
-        t
-    ]);
+    }, [deleteResult, isCreateAMovement, dataToCreateMovement, setSuccessDeleteResult]);
     // #endregion
 
     // #region SOFT DELETE MUTATION
@@ -219,7 +212,7 @@ export const useListRequests = (params: IRequestsHookParams) => {
         } else {
             showError(t('messages:error-disabling-element'));
         }
-    }, [softDeleteResult, reloadData, t]);
+    }, [softDeleteResult]);
     // #endregion
 
     // #region Enable (Re-Open)
@@ -249,7 +242,7 @@ export const useListRequests = (params: IRequestsHookParams) => {
                 triggerReopen.setReopenInfo(undefined);
             }
         }
-    }, [triggerReopen, permissions, router.pathname, t, callReopen, permissionTableName]);
+    }, [triggerReopen, permissions, router.pathname, callReopen, permissionTableName]);
 
     useEffect(() => {
         if (enableLoading) {
@@ -266,7 +259,7 @@ export const useListRequests = (params: IRequestsHookParams) => {
         } else {
             showError(t('messages:error-enabling-element'));
         }
-    }, [enableResult, reloadData, t]);
+    }, [enableResult]);
     // #endregion
 
     // #region PRIORITY CHANGE MUTATION
@@ -333,7 +326,7 @@ export const useListRequests = (params: IRequestsHookParams) => {
                     });
                 });
         }
-    }, [triggerPriorityChange, data, dataModel, graphqlRequestClient, reloadData, t]);
+    }, [triggerPriorityChange, data, dataModel, graphqlRequestClient]);
     // #endregion
 
     return {
