@@ -52,6 +52,7 @@ import {
     Input
 } from 'antd';
 import { isNumeric, useTranslationWithFallback as useTranslation } from '@helpers';
+import dayjs from 'dayjs';
 import {
     DataQueryType,
     DEFAULT_ITEMS_PER_PAGE,
@@ -919,7 +920,17 @@ const ListComponent = (props: IListProps) => {
     // Initialize form with userSettings default values
     useEffect(() => {
         if (userSettings?.valueJson?.filter) {
-            formSearch.setFieldsValue(userSettings.valueJson.filter);
+            Object.keys(userSettings.valueJson.filter).forEach((key) => {
+                const value = userSettings.valueJson.filter[key];
+                let newValue = value;
+                if (Array.isArray(value)) {
+                    newValue = value.map((item: any, index: number) => {
+                        return isString(item) && isStringDateTime(item) ? dayjs(item) : item;
+                    });
+                }
+                formSearch.setFieldsValue({ [key]: newValue });
+            });
+            // formSearch.setFieldsValue(userSettings.valueJson.filter);
         }
     }, [userSettings, formSearch]);
 
@@ -1619,7 +1630,10 @@ const ListComponent = (props: IListProps) => {
                                     (field: any) => field.name === filterFieldName
                                 );
 
-                                if (!props.dataModel.fieldsInfo[fieldsInfoKey]) {
+                                if (
+                                    !props.dataModel.fieldsInfo[fieldsInfoKey] ||
+                                    !filterField?.type
+                                ) {
                                     return {};
                                 }
 
@@ -1640,7 +1654,7 @@ const ListComponent = (props: IListProps) => {
                                                     displayName:
                                                         filterField?.displayName ??
                                                         t(`d:${dataIndex}`),
-                                                    type: filterField?.type || FormDataType.String,
+                                                    type: filterField?.type,
                                                     maxLength: filterField?.maxLength,
                                                     config: filterField?.config,
                                                     configList: filterField?.configList,
@@ -1682,9 +1696,27 @@ const ListComponent = (props: IListProps) => {
                                     filterIcon: () => {
                                         const filtered = !!searchWithParams[filterFieldName];
 
-                                        // Count active filters
-                                        const activeFiltersCount =
-                                            searchWithParams[filterFieldName]?.length || 0;
+                                        // Count active filters based on field type
+                                        let activeFiltersCount = 0;
+                                        if (searchWithParams[filterFieldName]) {
+                                            switch (filterField?.type) {
+                                                case 1:
+                                                    activeFiltersCount = 1;
+                                                    break;
+                                                case 2:
+                                                case 4:
+                                                    activeFiltersCount =
+                                                        searchWithParams[filterFieldName].length;
+                                                    break;
+                                                default:
+                                                    activeFiltersCount = searchWithParams[
+                                                        filterFieldName
+                                                    ]
+                                                        ? 1
+                                                        : 0;
+                                                    break;
+                                            }
+                                        }
 
                                         return (
                                             <>
@@ -2023,8 +2055,8 @@ const ListComponent = (props: IListProps) => {
         'green',
         'orange',
         'purple',
-        'red',
         'cyan',
+        'red',
         'magenta',
         'gold',
         'lime',
@@ -2071,6 +2103,22 @@ const ListComponent = (props: IListProps) => {
             });
         }
         handleUserSettings(newSearch, null, defaultPagination, null, selectCase, selectJoker, null);
+    }
+
+    function clearAllFilters(e: any) {
+        e.preventDefault();
+        // Clear all search criteria except those in props.searchCriteria (which are permanent)
+        const newSearch = { ...props.searchCriteria };
+
+        // Reset form values
+        formSearch.resetFields();
+
+        // Set form values to props.searchCriteria if any
+        if (Object.keys(props.searchCriteria).length > 0) {
+            formSearch.setFieldsValue(props.searchCriteria);
+        }
+
+        handleUserSettings(newSearch, null, defaultPagination, null, [], [], null);
     }
 
     // #endregion
@@ -2230,6 +2278,20 @@ const ListComponent = (props: IListProps) => {
                                                             </Tag>
                                                         );
                                                     }
+                                                )}
+                                                {tagFormatter(searchWithParams).length > 0 && (
+                                                    <Button
+                                                        key="clear-all-filters"
+                                                        size="small"
+                                                        danger
+                                                        style={{
+                                                            marginTop: '8px',
+                                                            margin: '8px 85% 0px 0px'
+                                                        }}
+                                                        onClick={clearAllFilters}
+                                                    >
+                                                        {t('actions:clear-all-filters')}
+                                                    </Button>
                                                 )}
                                             </>
                                         )
