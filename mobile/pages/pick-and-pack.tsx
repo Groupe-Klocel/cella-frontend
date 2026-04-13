@@ -155,7 +155,7 @@ const PickAndPack: PageComponent = () => {
         const checkRemainingQuantityValue = findValueByScopeAndCode(
             parameters,
             'outbound',
-            'PAP_CHECK_REMAINING_QUANTITY'
+            'PICK_AND_PACK_CHECK_REMAINING_QUANTITY'
         );
         // Convert value in boolean or number as needed
         const equipmentScanAtPreparation = equipmentScanAtPreparationValue === '1';
