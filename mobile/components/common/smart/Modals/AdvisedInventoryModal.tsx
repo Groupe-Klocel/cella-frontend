@@ -28,34 +28,29 @@ import { Modal } from 'antd';
 export interface IAdvisedInventoryModalProps {
     visible: boolean;
     locationId?: string;
-    onCancel: () => void;
-    onSuccess: () => void;
+    yesClick: () => void;
+    noClick: () => void;
 }
 
 export const AdvisedInventoryModal = ({
     visible,
     locationId,
-    onCancel,
-    onSuccess
+    yesClick,
+    noClick
 }: IAdvisedInventoryModalProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const [isConfirmLoading, setIsConfirmLoading] = useState<boolean>(false);
 
     const handleYes = async () => {
-        onCancel();
         setIsConfirmLoading(false);
-        onSuccess();
-    };
-
-    const handleNo = async () => {
-        await handleCreateInventory();
+        yesClick();
     };
 
     const handleCreateInventory = async () => {
         if (!locationId) {
             showError(t('messages:no-location-for-inventory'));
-            onSuccess();
+            noClick();
             return;
         }
 
@@ -112,7 +107,7 @@ export const AdvisedInventoryModal = ({
             showError(t('messages:error-creating-advised-inventory'));
         } finally {
             setIsConfirmLoading(false);
-            onSuccess();
+            noClick();
         }
     };
 
@@ -121,7 +116,9 @@ export const AdvisedInventoryModal = ({
             title={t('common:is-location-empty')}
             open={visible}
             onOk={handleYes}
-            onCancel={handleNo}
+            onCancel={handleCreateInventory}
+            maskClosable={false}
+            closeIcon={false}
             confirmLoading={isConfirmLoading}
             okText={t('common:bool-yes')}
             cancelText={t('common:bool-no')}

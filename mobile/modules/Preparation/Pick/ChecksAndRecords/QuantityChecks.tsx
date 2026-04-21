@@ -111,6 +111,7 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
     const handleCancel = () => {
         setIsModalVisible(false);
         setEnteredInfo(undefined);
+        proceedToNextStep();
     };
 
     return (
@@ -124,8 +125,8 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
             <AdvisedInventoryModal
                 visible={isModalVisible}
                 locationId={locationId}
-                onSuccess={proceedToNextStep}
-                onCancel={handleCancel}
+                yesClick={proceedToNextStep}
+                noClick={handleCancel}
             />
         </WrapperForm>
     );
