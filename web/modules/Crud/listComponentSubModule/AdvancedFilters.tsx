@@ -130,6 +130,11 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
                                 );
                             }}
                             showSearch
+                            filterOption={(input, option) =>
+                                String(option?.label ?? '')
+                                    .toLowerCase()
+                                    .includes(input.toLowerCase())
+                            }
                             allowClear
                         />
                     </div>
