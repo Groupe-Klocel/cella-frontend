@@ -24,7 +24,6 @@ import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, Key, ClassAttributes, HTMLAttributes } from 'react';
 import { SortableContainer, SortableElement, SortableHandle } from 'react-sortable-hoc';
-import { arrayMoveImmutable } from 'array-move';
 import { MenuOutlined } from '@ant-design/icons';
 
 export interface ITableFilterProps {
@@ -128,11 +127,18 @@ const TableFilter: FC<ITableFilterProps> = ({ allColumnsInfos, setAllColumnsInfo
 
     const onSortEnd = ({ oldIndex, newIndex }: Iindex) => {
         if (oldIndex !== newIndex) {
-            const newData = arrayMoveImmutable(
-                [].concat(allColumnsInfos),
-                oldIndex,
-                newIndex
-            ).filter((el) => !!el);
+            const sortMultiples = allColumnsInfos.map((col: any) => col.sorter?.multiple);
+            const arr = [...allColumnsInfos];
+            arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
+            const newData = arr
+                .filter((el) => !!el)
+                .map((col: any, index: number) => ({
+                    ...col,
+                    sorter:
+                        col.sorter !== undefined
+                            ? { ...col.sorter, multiple: sortMultiples[index] }
+                            : col.sorter
+                }));
             setAllColumnsInfos(newData);
         }
     };

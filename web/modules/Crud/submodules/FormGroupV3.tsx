@@ -40,10 +40,7 @@ export interface IGeneralSearchProps {
     allSubOptions?: any;
     setAllSubOptions?: any;
     handleSubmit?: any;
-    selectCase?: string[];
-    setSelectCase?: any;
-    selectJoker?: string[];
-    setSelectJoker?: any;
+    filtersParameters?: boolean;
 }
 
 const FormGroupV3: FC<IGeneralSearchProps> = ({
@@ -53,10 +50,7 @@ const FormGroupV3: FC<IGeneralSearchProps> = ({
     allSubOptions,
     setAllSubOptions,
     handleSubmit,
-    selectCase,
-    setSelectCase,
-    selectJoker,
-    setSelectJoker
+    filtersParameters
 }: IGeneralSearchProps) => {
     const router = useRouter();
 
@@ -80,16 +74,8 @@ const FormGroupV3: FC<IGeneralSearchProps> = ({
                             <StringInput
                                 item={item}
                                 key={item.name}
-                                filtersParameters={
-                                    selectCase && selectJoker
-                                        ? {
-                                              selectCase: selectCase,
-                                              setSelectCase: setSelectCase,
-                                              selectJoker: selectJoker,
-                                              setSelectJoker: setSelectJoker
-                                          }
-                                        : undefined
-                                }
+                                form={form}
+                                filtersParameters={filtersParameters}
                             />
                         );
                     } else if (item.type === FormDataType.TextArea) {

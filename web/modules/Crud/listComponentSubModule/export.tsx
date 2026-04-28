@@ -27,7 +27,7 @@ import { IListProps } from '../ListComponentV2';
 interface UseExportDataProps {
     props: IListProps;
     newTableColumns: any[] | undefined;
-    searchWithParams: any;
+    searchCriterias: any;
     pagination: {
         current: number;
         itemsPerPage: number;
@@ -43,7 +43,7 @@ interface UseExportDataProps {
 export const useExportData = ({
     props,
     newTableColumns,
-    searchWithParams,
+    searchCriterias,
     pagination,
     sort,
     filteredLanguage,
@@ -74,7 +74,7 @@ export const useExportData = ({
         const exportQueryString = queryString(
             props.dataModel.endpoints.list,
             exportFields,
-            searchWithParams,
+            searchCriterias,
             pagination.current,
             pagination.itemsPerPage,
             sort,

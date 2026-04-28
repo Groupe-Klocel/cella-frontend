@@ -32,14 +32,6 @@ const WrapperStickyActions = styled.div`
     right: 0px;
     top: 15px;
     align-self: flex-end;
-
-    @media only screen and (max-width: 992px) {
-        position: static;
-        margin-bottom: 12px;
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-    }
 `;
 
 const InputWrapper = styled.div`
@@ -102,14 +94,6 @@ const PageTableContentWrapper = styled(Layout.Content)`
     padding: 15px 40px 15px 15px;
     position: relative;
     min-width: 0;
-
-    @media only screen and (max-width: 1200px) {
-        padding: 12px 24px 12px 12px;
-    }
-
-    @media only screen and (max-width: 992px) {
-        padding: 10px 12px;
-    }
 `;
 export {
     PageContentWrapper,

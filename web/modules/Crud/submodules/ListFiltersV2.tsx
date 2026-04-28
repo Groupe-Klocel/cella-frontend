@@ -82,7 +82,6 @@ const ListFilters: FC<IGeneralSearchProps> = ({
             numberOfSubOptions += 1;
         }
     });
-    console.log('AXC - ListFiltersV2.tsx - ListFilters - columns:', columns);
 
     if (numberOfSubOptions === allSubOptions?.length && isLoading) {
         setIsLoading(false);
@@ -111,22 +110,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({
                     if (item.type === FormDataType.Number) {
                         return <NumberInput item={item} key={item.name + index} />;
                     } else if (item.type == FormDataType.String) {
-                        return (
-                            <StringInput
-                                item={item}
-                                key={item.name + index}
-                                filtersParameters={
-                                    selectCase && selectJoker
-                                        ? {
-                                              selectCase: selectCase,
-                                              setSelectCase: setSelectCase,
-                                              selectJoker: selectJoker,
-                                              setSelectJoker: setSelectJoker
-                                          }
-                                        : undefined
-                                }
-                            />
-                        );
+                        return <StringInput item={item} key={item.name + index} />;
                     } else if (item.type == FormDataType.TextArea) {
                         return <TextAreaInput item={item} key={item.name + index} />;
                     } else if (

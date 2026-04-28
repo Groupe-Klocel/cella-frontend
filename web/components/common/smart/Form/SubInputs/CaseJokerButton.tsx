@@ -27,10 +27,10 @@ export interface IDraggerInputProps {
         initialValue?: string;
         maxLength?: number;
     };
-    selectCase: string[];
-    setSelectCase: React.Dispatch<React.SetStateAction<string[]>>;
-    selectJoker: string[];
-    setSelectJoker: React.Dispatch<React.SetStateAction<string[]>>;
+    selectCase: boolean;
+    setSelectCase: React.Dispatch<React.SetStateAction<boolean>>;
+    selectJoker: boolean;
+    setSelectJoker: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CaseJokerButton: FC<IDraggerInputProps> = ({
@@ -43,26 +43,14 @@ const CaseJokerButton: FC<IDraggerInputProps> = ({
     return (
         <>
             <Button
-                type={selectCase.includes(item.name) ? 'default' : 'primary'}
-                onClick={() =>
-                    setSelectCase((prev) =>
-                        prev.includes(item.name)
-                            ? prev.filter((e) => e !== item.name)
-                            : [...prev, item.name]
-                    )
-                }
+                type={selectCase ? 'primary' : 'default'}
+                onClick={() => setSelectCase((prev) => !prev)}
             >
                 Aa
             </Button>
             <Button
-                type={selectJoker.find((e: string) => e === item.name) ? 'primary' : 'default'}
-                onClick={() =>
-                    setSelectJoker((prev) =>
-                        prev.includes(item.name)
-                            ? prev.filter((e) => e !== item.name)
-                            : [...prev, item.name]
-                    )
-                }
+                type={selectJoker ? 'primary' : 'default'}
+                onClick={() => setSelectJoker((prev) => !prev)}
             >
                 %
             </Button>
