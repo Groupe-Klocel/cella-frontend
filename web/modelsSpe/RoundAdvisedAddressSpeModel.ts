@@ -24,7 +24,7 @@ export function RoundAdvisedAddressSpeModel(): [string | null, string, any][] {
         isDefaultHiddenList: false,
         isExcludedFromList: false,
         isSortable: true,
-        searchingFormat: 'String',
+        searchingFormat: null,
         isDetailRequested: true,
         isExcludedFromDetail: false,
         detailGroup: null,

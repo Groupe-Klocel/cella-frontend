@@ -85,6 +85,7 @@ import { useAppDispatch, useAppState } from 'context/AppContext';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { FormGroupV3 } from './submodules/FormGroupV3';
+import { AdvancedFilters, AdvancedFilterTags } from './listComponentSubModule/AdvancedFilters';
 
 export type HeaderData = {
     title: string;
@@ -197,12 +198,6 @@ const ListComponent = (props: IListProps) => {
 
     const [firstLoad, setFirstLoad] = useState<boolean>(true);
     const [rows, setRows] = useState<DataQueryType>();
-    const [selectCase, setSelectCase] = useState<string[]>(
-        userSettings?.valueJson?.filterParameters?.selectCase ?? []
-    );
-    const [selectJoker, setSelectJoker] = useState<string[]>(
-        userSettings?.valueJson?.filterParameters?.selectJoker ?? []
-    );
     const [advancedFilters, setAdvancedFilters] = useState<any>([
         ...(userSettings?.valueJson?.advancedFilters ?? []),
         ...(props?.advancedFilters ?? [])
@@ -309,8 +304,6 @@ const ListComponent = (props: IListProps) => {
         newSorting: any,
         newPagination?: newPaginationType,
         newAdvancedFilters?: any,
-        selectCase?: string[],
-        selectJoker?: string[],
         newSubOptions?: any,
         newAllColumnsInfos?: any,
         newColumnWidths?: any,
@@ -324,17 +317,20 @@ const ListComponent = (props: IListProps) => {
                 );
             }) ?? userSettings; // use latest from state
 
+        const propAdvFiltersSet = new Set(
+            (props.advancedFilters ?? []).map((f: any) => JSON.stringify(f))
+        );
+        const filtersToSave = (newAdvancedFilters ?? advancedFilters).filter(
+            (f: any) => !propAdvFiltersSet.has(JSON.stringify(f))
+        );
+
         const newsSettings = {
             ...settings,
             code: `${resolverName}${router.pathname}/${props.headerData?.title}`,
             valueJson: {
                 ...settings?.valueJson,
                 filter: newFilter ?? settings?.valueJson?.filter,
-                advancedFilters: newAdvancedFilters ?? advancedFilters,
-                filterParameters: {
-                    selectCase: selectCase,
-                    selectJoker: selectJoker
-                },
+                advancedFilters: filtersToSave,
                 sorter: newSorting ?? settings?.valueJson?.sorter ?? props.sortDefault ?? null,
                 pagination: newPagination ?? defaultPagination,
                 subOptions: newSubOptions ?? settings?.valueJson?.subOptions ?? undefined,
@@ -387,8 +383,6 @@ const ListComponent = (props: IListProps) => {
         newSorting: any,
         newPagination?: newPaginationType,
         newAdvancedFilters?: any,
-        selectCase?: string[],
-        selectJoker?: string[],
         newSubOptions?: any,
         newAllColumnsInfos?: any,
         newColumnWidths?: any,
@@ -402,11 +396,12 @@ const ListComponent = (props: IListProps) => {
             warehouseWorkerId: state.user.id,
             valueJson: {
                 filter: newFilter,
-                advancedFilters: newAdvancedFilters ?? advancedFilters,
-                filterParameters: {
-                    selectCase: selectCase,
-                    selectJoker: selectJoker
-                },
+                advancedFilters: (newAdvancedFilters ?? advancedFilters).filter(
+                    (f: any) =>
+                        !(props.advancedFilters ?? []).some(
+                            (pf: any) => JSON.stringify(pf) === JSON.stringify(f)
+                        )
+                ),
                 sorter: newSorting ?? props.sortDefault ?? null,
                 pagination: newPagination ?? defaultPagination,
                 subOptions: newSubOptions ?? undefined,
@@ -473,8 +468,6 @@ const ListComponent = (props: IListProps) => {
                 newSorting: any,
                 newPagination?: newPaginationType,
                 advancedFilters?: any,
-                selectCase?: string[],
-                selectJoker?: string[],
                 newSubOptions?: any,
                 newAllColumnsInfos?: any,
                 newColumnWidths?: any,
@@ -485,8 +478,6 @@ const ListComponent = (props: IListProps) => {
                     newSorting,
                     newPagination,
                     advancedFilters,
-                    selectCase,
-                    selectJoker,
                     newSubOptions,
                     newAllColumnsInfos,
                     newColumnWidths,
@@ -504,8 +495,6 @@ const ListComponent = (props: IListProps) => {
                 newSorting: any,
                 newPagination?: newPaginationType,
                 advancedFilters?: any,
-                selectCase?: string[],
-                selectJoker?: string[],
                 newSubOptions?: any,
                 newAllColumnsInfos?: any,
                 newColumnWidths?: any,
@@ -516,8 +505,6 @@ const ListComponent = (props: IListProps) => {
                     newSorting,
                     newPagination,
                     advancedFilters,
-                    selectCase,
-                    selectJoker,
                     newSubOptions,
                     newAllColumnsInfos,
                     newColumnWidths,
@@ -542,8 +529,6 @@ const ListComponent = (props: IListProps) => {
             newSorter: any = null,
             newPagination?: newPaginationType,
             newAdvancedFilters?: any,
-            newSelectCase?: string[],
-            newSelectJoker?: string[],
             newSubOptions?: any,
             newAllColumnsInfos?: any,
             newColumnWidths?: any
@@ -565,10 +550,6 @@ const ListComponent = (props: IListProps) => {
                             valueJson: {
                                 filter: newFilter,
                                 advancedFilters: newAdvancedFilters ?? advancedFilters,
-                                filterParameters: {
-                                    selectCase: newSelectCase,
-                                    selectJoker: newSelectJoker
-                                },
                                 sorter: newSorter ?? props.sortDefault ?? null,
                                 pagination: newPagination ?? defaultPagination,
                                 subOptions: newSubOptions ?? undefined,
@@ -587,8 +568,6 @@ const ListComponent = (props: IListProps) => {
                     newSorter,
                     newPagination,
                     newAdvancedFilters ?? advancedFilters,
-                    newSelectCase ?? selectCase,
-                    newSelectJoker ?? selectJoker,
                     newSubOptions,
                     newAllColumnsInfos,
                     newColumnWidths,
@@ -600,8 +579,6 @@ const ListComponent = (props: IListProps) => {
                     newSorter,
                     pagination,
                     newAdvancedFilters,
-                    newSelectCase,
-                    newSelectJoker,
                     newSubOptions,
                     newAllColumnsInfos,
                     newColumnWidths,
@@ -615,8 +592,6 @@ const ListComponent = (props: IListProps) => {
             debouncedUpdateUserSettings,
             debouncedCreateUsersSettings,
             advancedFilters,
-            selectCase,
-            selectJoker,
             pagination
         ]
     );
@@ -843,15 +818,7 @@ const ListComponent = (props: IListProps) => {
                     item.filter[0].field.status !== 1005 &&
                     item.filter[0].field.status !== 1600
             );
-            handleUserSettings(
-                null,
-                null,
-                defaultPagination,
-                newAdvancedFilters,
-                selectCase,
-                selectJoker,
-                null
-            );
+            handleUserSettings(null, null, defaultPagination, newAdvancedFilters, null);
             setIsWithoutClosed(false);
             return newAdvancedFilters;
         } else {
@@ -861,15 +828,7 @@ const ListComponent = (props: IListProps) => {
                 { filter: [{ searchType: 'DIFFERENT', field: { status: 1005 } }] },
                 { filter: [{ searchType: 'DIFFERENT', field: { status: 1600 } }] }
             ];
-            handleUserSettings(
-                null,
-                null,
-                defaultPagination,
-                newAdvancedFilters,
-                selectCase,
-                selectJoker,
-                null
-            );
+            handleUserSettings(null, null, defaultPagination, newAdvancedFilters, null);
             setIsWithoutClosed(true);
             return newAdvancedFilters;
         }
@@ -878,44 +837,22 @@ const ListComponent = (props: IListProps) => {
     // #endregion
 
     // #region SEARCH OPERATIONS
-
-    const [searchWithParams, setSearchWithParams] = useState<any>({});
-
-    let allSubOptions = userSettings?.valueJson?.subOptions ?? [];
+    const allSubOptionsRef = useRef<any>(userSettings?.valueJson?.subOptions ?? []);
+    const allSubOptions = allSubOptionsRef.current;
     function setAllSubOptions(newSubOptions: any) {
         // Support both direct values and callback functions like setState
+        // Using a ref avoids re-renders (which close column filter dropdowns) while
+        // still making the latest value available on the next render triggered by state changes.
         if (typeof newSubOptions === 'function') {
-            allSubOptions = newSubOptions(allSubOptions);
+            allSubOptionsRef.current = newSubOptions(allSubOptionsRef.current);
         } else {
-            allSubOptions = newSubOptions;
+            allSubOptionsRef.current = newSubOptions;
         }
     }
 
     // #endregion
 
     // #region Search Drawer
-
-    useEffect(() => {
-        let searchWithParamsInfos: { [key: string]: any } = {};
-
-        Object.entries(searchCriterias).forEach(([key, value]) => {
-            let filterParams = '';
-            if (selectCase.includes(key)) {
-                filterParams = filterParams + '^';
-            }
-            if (selectJoker.includes(key)) {
-                filterParams = filterParams + '%';
-            }
-            if (filterParams !== '') {
-                searchWithParamsInfos[key] = [filterParams, value];
-            } else {
-                searchWithParamsInfos[key] = value;
-            }
-        });
-
-        setSearchWithParams(searchWithParamsInfos);
-    }, [selectCase, selectJoker, userSettings]);
-
     const [formSearch] = Form.useForm();
     // Initialize form with userSettings default values
     useEffect(() => {
@@ -978,9 +915,7 @@ const ListComponent = (props: IListProps) => {
                             savedFilters,
                             null,
                             defaultPagination,
-                            [],
-                            selectCase,
-                            selectJoker,
+                            null,
                             allSubOptionsFiltered
                         );
                     }
@@ -1001,40 +936,39 @@ const ListComponent = (props: IListProps) => {
         }
     }
 
+    function getAdvSubOptions(filters: any[]): any[] {
+        return filters
+            .map((f: any) => {
+                const fieldName = Object.keys(f.filter[0].field)[0];
+                const value = f.filter[0].field[fieldName];
+                const entry = allSubOptionsRef.current.find(
+                    (item: any) => Object.keys(item)[0] === fieldName
+                );
+                if (!entry) return null;
+                const valuesToKeep = Array.isArray(value) ? value : [value];
+                return {
+                    [fieldName]: entry[fieldName].filter((opt: any) =>
+                        valuesToKeep.some((v: any) => String(opt.key) === String(v))
+                    )
+                };
+            })
+            .filter(Boolean);
+    }
+
     // #endregion
 
-    // #region Columns Drawer
+    // #region Columns Drawer (handlers)
 
     const [isColumnDrawerOpen, setIsColumnDrawerOpen] = useState<boolean>(false);
 
     const handleColumnReset = () => {
         setAllColumns(initialAllColumns);
-        handleUserSettings(
-            null,
-            null,
-            pagination,
-            null,
-            undefined,
-            undefined,
-            null,
-            initialAllColumns,
-            null
-        );
+        handleUserSettings(null, null, pagination, null, null, initialAllColumns, null);
         setIsColumnDrawerOpen(false);
     };
 
     const handleColumnSave = () => {
-        handleUserSettings(
-            null,
-            null,
-            pagination,
-            null,
-            undefined,
-            undefined,
-            null,
-            allColumns,
-            null
-        );
+        handleUserSettings(null, null, pagination, null, null, allColumns, null);
         setIsColumnDrawerOpen(false);
     };
 
@@ -1069,7 +1003,7 @@ const ListComponent = (props: IListProps) => {
         props.dataModel.resolverName,
         props.dataModel.endpoints.list,
         listFields,
-        searchWithParams,
+        searchCriterias,
         pagination.current,
         pagination.itemsPerPage,
         sort,
@@ -1092,7 +1026,7 @@ const ListComponent = (props: IListProps) => {
         return () => {
             debouncedReload.cancel();
         };
-    }, [searchWithParams, props.refetch, router.locale, advancedFilters, pagination.current]);
+    }, [props.refetch, router.locale, advancedFilters, pagination.current]);
 
     // #endregion
 
@@ -1119,7 +1053,7 @@ const ListComponent = (props: IListProps) => {
     const { stickyActions } = useExportData({
         props,
         newTableColumns: columnWithLinks,
-        searchWithParams,
+        searchCriterias,
         pagination,
         sort,
         filteredLanguage,
@@ -1642,8 +1576,8 @@ const ListComponent = (props: IListProps) => {
                                         <div
                                             style={{
                                                 padding: 8,
-                                                minWidth: '250px',
-                                                maxWidth: '300px'
+                                                minWidth: '280px',
+                                                maxWidth: '280px'
                                             }}
                                             onKeyDown={(e) => e.stopPropagation()}
                                         >
@@ -1665,24 +1599,7 @@ const ListComponent = (props: IListProps) => {
                                                 defaultSubOptions={props.defaultSubOptions}
                                                 handleSubmit={handleSubmit}
                                                 setAllSubOptions={setAllSubOptions}
-                                                selectCase={
-                                                    !isSelectCaseExptions() ? selectCase : undefined
-                                                }
-                                                setSelectCase={
-                                                    !isSelectCaseExptions()
-                                                        ? setSelectCase
-                                                        : undefined
-                                                }
-                                                selectJoker={
-                                                    !isSelectCaseExptions()
-                                                        ? selectJoker
-                                                        : undefined
-                                                }
-                                                setSelectJoker={
-                                                    !isSelectCaseExptions()
-                                                        ? setSelectJoker
-                                                        : undefined
-                                                }
+                                                filtersParameters={!isSelectCaseExptions() && true}
                                             />
                                         </div>
                                     ),
@@ -1694,11 +1611,14 @@ const ListComponent = (props: IListProps) => {
                                         }
                                     },
                                     filterIcon: () => {
-                                        const filtered = !!searchWithParams[filterFieldName];
+                                        const filtered =
+                                            !!searchCriterias[filterFieldName] &&
+                                            props.searchCriteria[filterFieldName] !==
+                                                searchCriterias[filterFieldName];
 
                                         // Count active filters based on field type
                                         let activeFiltersCount = 0;
-                                        if (searchWithParams[filterFieldName]) {
+                                        if (searchCriterias[filterFieldName]) {
                                             switch (filterField?.type) {
                                                 case 1:
                                                     activeFiltersCount = 1;
@@ -1706,10 +1626,10 @@ const ListComponent = (props: IListProps) => {
                                                 case 2:
                                                 case 4:
                                                     activeFiltersCount =
-                                                        searchWithParams[filterFieldName].length;
+                                                        searchCriterias[filterFieldName].length;
                                                     break;
                                                 default:
-                                                    activeFiltersCount = searchWithParams[
+                                                    activeFiltersCount = searchCriterias[
                                                         filterFieldName
                                                     ]
                                                         ? 1
@@ -1755,11 +1675,7 @@ const ListComponent = (props: IListProps) => {
                                 fixed: false,
                                 highlightCondition:
                                     props.dataModel.fieldsInfo[column_name]?.highlight ?? undefined,
-                                sorter:
-                                    sortableFields.includes(column_name) &&
-                                    !props.triggerPriorityChange
-                                        ? { multiple: index + 1 }
-                                        : undefined,
+                                sorter: { multiple: index + 1 },
                                 defaultSortOrder: sort?.find(
                                     (sorter: any) => sorter.field === column_name
                                 )
@@ -1795,12 +1711,18 @@ const ListComponent = (props: IListProps) => {
                         // set columns to use in table
                         if (initialState) {
                             setAllColumns(
-                                result_list.map((col) => {
-                                    const initialCol = initialState.find(
-                                        (initial: any) => initial.key === col.key
-                                    );
-                                    return initialCol ? { ...col, ...initialCol } : col;
-                                })
+                                result_list
+                                    .map((col) => {
+                                        const initialCol = initialState.find(
+                                            (initial: any) => initial.key === col.key
+                                        );
+                                        return initialCol ? { ...col, ...initialCol } : col;
+                                    })
+                                    .sort((a, b) => {
+                                        const indexA = a?.sorter?.multiple || 0;
+                                        const indexB = b?.sorter?.multiple || 0;
+                                        return indexA - indexB;
+                                    })
                             );
                         } else {
                             setAllColumns(result_list);
@@ -1825,7 +1747,7 @@ const ListComponent = (props: IListProps) => {
         } else {
             deleteUserSettings();
         }
-    }, [data, props.dataModel.endpoints.list]);
+    }, [data]);
 
     // #endregion
 
@@ -1878,16 +1800,7 @@ const ListComponent = (props: IListProps) => {
                         return rest;
                     }
                 });
-                handleUserSettings(
-                    null,
-                    tmp_array,
-                    pagination,
-                    null,
-                    selectCase,
-                    selectJoker,
-                    null,
-                    updatedColumns
-                );
+                handleUserSettings(null, tmp_array, pagination, null, null, updatedColumns);
                 return updatedColumns;
             });
         }
@@ -2002,7 +1915,7 @@ const ListComponent = (props: IListProps) => {
         }
 
         let allTags: any[] = [];
-        const listOfParamsKeys = ['%', '^', '%^', '^%'];
+        const listOfParamsKeys = ['%', '^', '%^', '^%', ''];
         filterInfos.forEach((item: any) => {
             Object.keys(item).forEach((key) => {
                 if (
@@ -2062,7 +1975,7 @@ const ListComponent = (props: IListProps) => {
         'lime',
         'volcano'
     ];
-    tagFormatter(searchWithParams).map((info, index) => {
+    tagFormatter(searchCriterias).map((info, index) => {
         if (tagColor.some((color: string) => Object.keys(color)[0] === info.key)) {
             return tagColor.find((color: string) => Object.keys(color)[0] === info.key)[info.key];
         } else {
@@ -2078,7 +1991,8 @@ const ListComponent = (props: IListProps) => {
         let newSearch = { ...searchCriterias };
         if (
             Array.isArray(searchCriterias[info.originalKey]) &&
-            filterFields.find((field: any) => field.name === info.originalKey)?.type !== 7
+            filterFields.find((field: any) => field.name === info.originalKey)?.type !== 7 &&
+            filterFields.find((field: any) => field.name === info.originalKey)?.type !== 1
         ) {
             newSearch[info.originalKey] = searchCriterias[info.originalKey].filter((item: any) => {
                 let infoToCompare = info.value.code ?? info.value.key ?? info.value;
@@ -2102,7 +2016,7 @@ const ListComponent = (props: IListProps) => {
                 [info.originalKey]: null
             });
         }
-        handleUserSettings(newSearch, null, defaultPagination, null, selectCase, selectJoker, null);
+        handleUserSettings(newSearch, null, defaultPagination, null, null);
     }
 
     function clearAllFilters(e: any) {
@@ -2118,7 +2032,17 @@ const ListComponent = (props: IListProps) => {
             formSearch.setFieldsValue(props.searchCriteria);
         }
 
-        handleUserSettings(newSearch, null, defaultPagination, null, [], [], null);
+        const defaultAdvancedFilters = props?.advancedFilters ?? [];
+
+        handleUserSettings(
+            newSearch,
+            null,
+            defaultPagination,
+            defaultAdvancedFilters,
+            [],
+            [],
+            null
+        );
     }
 
     // #endregion
@@ -2201,20 +2125,10 @@ const ListComponent = (props: IListProps) => {
                     ...prev,
                     [col.key]: Math.max(newWidth, 80) // minimum width
                 }));
-                handleUserSettings(
-                    null,
-                    null,
-                    pagination,
-                    null,
-                    undefined,
-                    undefined,
-                    null,
-                    allColumns,
-                    {
-                        ...columnWidths,
-                        [col.key]: Math.max(newWidth, 80)
-                    }
-                );
+                handleUserSettings(null, null, pagination, null, null, allColumns, {
+                    ...columnWidths,
+                    [col.key]: Math.max(newWidth, 80)
+                });
             }
         })
     }));
@@ -2257,7 +2171,7 @@ const ListComponent = (props: IListProps) => {
                                     !firstLoad && rows ? (
                                         props.searchable && (
                                             <>
-                                                {tagFormatter(searchWithParams).map(
+                                                {tagFormatter(searchCriterias).map(
                                                     (info, index) => {
                                                         return (
                                                             <Tag
@@ -2279,14 +2193,43 @@ const ListComponent = (props: IListProps) => {
                                                         );
                                                     }
                                                 )}
-                                                {tagFormatter(searchWithParams).length > 0 && (
+                                                <AdvancedFilterTags
+                                                    advancedFilters={advancedFilters}
+                                                    propAdvancedFilters={props.advancedFilters}
+                                                    filterFields={filterFields}
+                                                    filteredLanguage={filteredLanguage}
+                                                    allSubOptions={allSubOptions}
+                                                    onTagClose={(filterToRemove) => {
+                                                        const newFilters = JSON.parse(
+                                                            JSON.stringify([...advancedFilters])
+                                                        );
+                                                        const index = newFilters.findIndex(
+                                                            (af: any) =>
+                                                                JSON.stringify(af) ===
+                                                                JSON.stringify(filterToRemove)
+                                                        );
+                                                        if (index !== -1)
+                                                            newFilters.splice(index, 1);
+                                                        handleUserSettings(
+                                                            null,
+                                                            null,
+                                                            defaultPagination,
+                                                            newFilters,
+                                                            getAdvSubOptions(newFilters)
+                                                        );
+                                                    }}
+                                                />
+                                                {(tagFormatter(searchCriterias).length > 0 ||
+                                                    advancedFilters.length -
+                                                        (props?.advancedFilters?.length ?? 0) >
+                                                        0) && (
                                                     <Button
                                                         key="clear-all-filters"
                                                         size="small"
                                                         danger
                                                         style={{
                                                             marginTop: '8px',
-                                                            margin: '8px 85% 0px 0px'
+                                                            margin: '8px 85% 8px 0px'
                                                         }}
                                                         onClick={clearAllFilters}
                                                     >
@@ -2341,27 +2284,44 @@ const ListComponent = (props: IListProps) => {
                                 >
                                     <div>{props.actionButtons?.actionsComponent}</div>
                                     {props.searchable ? (
-                                        <Form
-                                            form={formSearch}
-                                            layout="inline"
-                                            name="control-hooks"
-                                            onKeyUp={(event: any) => {
-                                                if (event.key === 'Enter') {
-                                                    handleSubmit();
-                                                }
-                                            }}
-                                            onBlur={() => {
-                                                handleSubmit();
-                                            }}
-                                        >
-                                            <StringInput
-                                                item={{
-                                                    name: 'allFields',
-                                                    displayName: t('d:all-fields-search')
+                                        <Space>
+                                            <Form
+                                                form={formSearch}
+                                                layout="inline"
+                                                name="control-hooks"
+                                                onKeyUp={(event: any) => {
+                                                    if (event.key === 'Enter') {
+                                                        handleSubmit();
+                                                    }
                                                 }}
-                                                key={'globalSearch'}
+                                                onBlur={() => {
+                                                    handleSubmit();
+                                                }}
+                                            >
+                                                <StringInput
+                                                    item={{
+                                                        name: 'allFields',
+                                                        displayName: t('d:all-fields-search')
+                                                    }}
+                                                    key={'globalSearch'}
+                                                />
+                                            </Form>
+                                            <AdvancedFilters
+                                                filterFields={filterFields}
+                                                advancedFilters={advancedFilters}
+                                                defaultSubOptions={props.defaultSubOptions}
+                                                setAllSubOptions={setAllSubOptions}
+                                                onFiltersChange={(newFilters) => {
+                                                    handleUserSettings(
+                                                        null,
+                                                        null,
+                                                        defaultPagination,
+                                                        newFilters,
+                                                        getAdvSubOptions(newFilters)
+                                                    );
+                                                }}
                                             />
-                                        </Form>
+                                        </Space>
                                     ) : (
                                         <></>
                                     )}
