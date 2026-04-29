@@ -26,7 +26,6 @@ import { ListComponent, HeaderData } from 'modules/Crud/ListComponentV2';
 import { HandlingUnitOutboundModelV2, DeliveryModelV2 } from '@helpers';
 import { DocumentAttachmentModelV2 } from 'models/DocumentAttachmentModelV2';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
-import { AssignDeliveryModal } from '../Forms/AssignDeliveryModal';
 import { AddDocumentsModal } from 'components/common/AddDocumentsModal';
 import { useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -42,7 +41,6 @@ export interface IItemDetailsProps {
 const LoadDetailsExtra = ({ loadId, loadData, setDocumentAttachmentsData }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
-    const [showAssignDeliveryModal, setShowAssignDeliveryModal] = useState(false);
     const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
     const [refetchTrigger, setRefetchTrigger] = useState(false);
 
@@ -302,14 +300,6 @@ const LoadDetailsExtra = ({ loadId, loadData, setDocumentAttachmentsData }: IIte
 
             {loadData && (
                 <>
-                    <AssignDeliveryModal
-                        showModal={{
-                            showAssignDeliveryModal,
-                            setShowAssignDeliveryModal
-                        }}
-                        loadData={loadData}
-                        refetch={handleRefetch}
-                    />
                     <AddDocumentsModal
                         showModal={{
                             showAddDocumentModal,
