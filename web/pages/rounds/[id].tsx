@@ -61,12 +61,6 @@ const RoundPage: PageComponent = () => {
 
     const pageTitle = `${t('common:round')} ${data?.name}`;
 
-    const roundsStatusPasDeStockDisponible = parseInt(
-        configs.filter(
-            (c: any) => c.scope === 'round_status' && c.value === 'No stock available'
-        )[0]?.code
-    );
-
     const roundsStatusEstimated = parseInt(
         configs.filter((c: any) => c.scope === 'round_status' && c.value === 'Estimated')[0]?.code
     );
@@ -208,12 +202,12 @@ const RoundPage: PageComponent = () => {
             <Space>
                 {data?.status !== configs.ROUND_STATUS_CLOSED ? (
                     <>
-                        {data?.status === roundsStatusEstimated ||
-                        data?.status === roundsStatusPasDeStockDisponible ? (
+                        {data?.status === roundsStatusEstimated ? (
                             <span style={{ marginLeft: 16 }}>
                                 <Button
                                     type="primary"
                                     onClick={startRounds}
+                                    disabled={data?.status !== roundsStatusEstimated}
                                     loading={startRoundLoading}
                                 >
                                     {t('actions:startRound')}

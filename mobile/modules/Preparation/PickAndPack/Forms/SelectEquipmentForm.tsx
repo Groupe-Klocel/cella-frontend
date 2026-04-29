@@ -99,7 +99,6 @@ export const SelectEquipmentForm = ({
             type: 'UPDATE_BY_STEP',
             processName,
             stepName: `step${stepNumber}`,
-            object: { previousStep: storedObject.currentStep },
             customFields: [{ key: 'currentStep', value: stepNumber }]
         });
     }, []);

@@ -37,20 +37,17 @@ const StyledTable = styled(Table)`
 export interface IRadioSimpleTableProps {
     columns: any[];
     displayedLocations: Array<any> | undefined;
-    rowKey?: string | ((record: any) => string);
 }
 
 const RadioSimpleTable: FC<IRadioSimpleTableProps> = ({
     columns,
-    displayedLocations,
-    rowKey
+    displayedLocations
 }: IRadioSimpleTableProps) => {
     return (
         <>
             <StyledTable
                 columns={columns}
                 dataSource={displayedLocations}
-                rowKey={rowKey}
                 pagination={false}
                 size="small"
             />

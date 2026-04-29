@@ -355,20 +355,17 @@ const pathParamsFromDictionary = (pathname: string, values: any) => {
 };
 
 // Helper function to find the last step with previousStep property
-const getLastStepWithPreviousStep = (
-    storedObject: Record<string, any>,
-    stepToExclude?: number
-): number => {
+const getLastStepWithPreviousStep = (storedObject: Record<string, any>) => {
     let lastStepNumber = 0;
 
-    for (const [key, value] of Object.entries(storedObject)) {
-        if (key.startsWith('step') && value?.previousStep) {
-            const stepNumber = parseInt(key.slice(4), 10);
-            if (stepNumber !== stepToExclude && stepNumber > lastStepNumber) {
+    Object.keys(storedObject).forEach((key) => {
+        if (key.startsWith('step') && storedObject[key]?.previousStep) {
+            const stepNumber = parseInt(key.replace('step', ''));
+            if (stepNumber > lastStepNumber) {
                 lastStepNumber = stepNumber;
             }
         }
-    }
+    });
 
     return lastStepNumber;
 };
