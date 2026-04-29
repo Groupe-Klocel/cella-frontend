@@ -191,6 +191,7 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                             }
                         ]}
                         searchable={false}
+                        sortDefault={[{ field: 'lineNumber', ascending: true }]}
                     />
                 </>
             ) : (
@@ -204,6 +205,7 @@ const RoundDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                         headerData={roundAdvisedAddressData}
                         dataModel={RoundAdvisedAddressModelV2}
                         searchCriteria={{ roundId: roundId }}
+                        searchable={false}
                         triggerDelete={undefined}
                         triggerSoftDelete={undefined}
                         triggerPriorityChange={{
