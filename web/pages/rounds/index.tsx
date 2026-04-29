@@ -81,7 +81,7 @@ const RoundPages: PageComponent = () => {
         const pasDeStockDisponibleStatusCode = findCodeByScope(
             configs,
             'round_status',
-            'No stock available'
+            'Pas de stock disponible'
         );
         const roundCategoryOutboundCode = findCodeByScopeAndValue(
             configs,

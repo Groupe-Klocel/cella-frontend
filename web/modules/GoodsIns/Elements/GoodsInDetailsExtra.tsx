@@ -38,7 +38,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { RoundLineModelV2 } from '@helpers';
-import { GoodsInLineModelV2 } from '@helpers';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { HandlingUnitInboundModelV2 } from '@helpers';
 
@@ -146,7 +145,7 @@ const GoodsInDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                     <Divider />
                     <ListComponent
                         searchCriteria={{ roundId: roundId }}
-                        dataModel={GoodsInLineModelV2}
+                        dataModel={RoundLineModelV2}
                         headerData={roundLineData}
                         triggerDelete={{ idToDelete, setIdToDelete }}
                         triggerSoftDelete={{ idToDisable, setIdToDisable }}

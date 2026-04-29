@@ -434,7 +434,7 @@ export const GoodsInModelV2: ModelType = {
             addEditFormat: null,
             addEditStep: null,
             maxLength: null,
-            displayName: "nbBoxGoodsIn",
+            displayName: null,
             isMandatory: false,
             minRule: null,
             maxRule: null,
