@@ -148,11 +148,6 @@ const Pick: PageComponent = () => {
             'outbound',
             'IS_QUANTITY_HIGHLIGHTED'
         );
-        const checkRemainingQuantityValue = findValueByScopeAndCode(
-            parameters,
-            'outbound',
-            'PICK_CHECK_REMAINING_QUANTITY'
-        );
         // Convert value in boolean or number as needed
         const equipmentScanAtPreparation = equipmentScanAtPreparationValue === '1';
         const manuallyGenerateParent = manuallyGenerateParentValue === '1';
@@ -172,8 +167,6 @@ const Pick: PageComponent = () => {
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
         const highlightQuantity = highlightedQuantity === '1';
 
-        const checkRemainingQuantity = checkRemainingQuantityValue === '1';
-
         const findCodeByScope = (items: any[], scope: string, value: string) => {
             return items.find(
                 (item: any) =>
@@ -192,8 +185,7 @@ const Pick: PageComponent = () => {
             defaultQuantity,
             autoValidate1Quantity,
             highlightQuantity,
-            equipmentHuType,
-            checkRemainingQuantity
+            equipmentHuType
         };
     }, [parameters]);
 
@@ -207,7 +199,6 @@ const Pick: PageComponent = () => {
     const quantityDefaultValue = configsParamsCodes.defaultQuantity;
     const autoValidate1Quantity = configsParamsCodes.autoValidate1Quantity;
     const isQuantityHighlighted = configsParamsCodes.highlightQuantity;
-    const checkRemainingQuantity = configsParamsCodes.checkRemainingQuantity;
 
     const [tmpForceLocation, setTmpforceLocation] = useState<any>(forceLocationScan);
     useEffect(() => {
@@ -877,7 +868,6 @@ const Pick: PageComponent = () => {
                                 )?.quantity
                             )}
                             autoValidate1Quantity={autoValidate1Quantity}
-                            checkRemainingQuantity={checkRemainingQuantity}
                             checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                         ></EnterQuantity_reducer>
                     ) : (
