@@ -71,6 +71,7 @@ import { HandlingUnitOutboundModelV2 as _HandlingUnitOutboundModelV2 } from '../
 import { HookConfigDetailArgumentModelV2 as _HookConfigDetailArgumentModelV2 } from '../../models/HookConfigDetailArgumentModelV2';
 import { HookConfigModelV2 as _HookConfigModelV2 } from '../../models/HookConfigModelV2';
 import { LoadModelV2 as _LoadModelV2 } from '../../models/LoadModelV2';
+import { LocationExtrasModelV2 as _LocationExtrasModelV2 } from '../../models/LocationExtrasModelV2';
 import { LocationModelV2 as _LocationModelV2 } from '../../models/LocationModelV2';
 import { LogisticUnitModelV2 as _LogisticUnitModelV2 } from '../../models/LogisticUnitModelV2';
 import { ManualAllocationModelV2 as _ManualAllocationModelV2 } from '../../models/ManualAllocationModelV2';
@@ -259,6 +260,10 @@ export const HookConfigDetailArgumentModelV2 = injectedModel(
 );
 export const HookConfigModelV2 = injectedModel(_HookConfigModelV2, 'HookConfigSpeModel');
 export const LoadModelV2 = injectedModel(_LoadModelV2, 'LoadSpeModel');
+export const LocationExtrasModelV2 = injectedModel(
+    _LocationExtrasModelV2,
+    'LocationExtrasSpeModel'
+);
 export const LocationModelV2 = injectedModel(_LocationModelV2, 'LocationSpeModel');
 export const LogisticUnitModelV2 = injectedModel(_LogisticUnitModelV2, 'LogisticUnitSpeModel');
 export const ManualAllocationModelV2 = injectedModel(
