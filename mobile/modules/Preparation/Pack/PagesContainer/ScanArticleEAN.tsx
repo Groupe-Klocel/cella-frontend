@@ -22,17 +22,16 @@ import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export interface IScanArticleEANProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
-    forceArticleScan?: boolean;
     checkComponent: any;
+    buttons?: { [label: string]: any };
+    forceArticleScan?: boolean;
     proposedHuos?: any;
-    triggerAlternativeSubmit1?: any;
+    formToUse?: any;
 }
 
 export const ScanArticleEAN = ({
@@ -40,10 +39,9 @@ export const ScanArticleEAN = ({
     stepNumber,
     label,
     buttons,
-    forceArticleScan,
     checkComponent,
     proposedHuos,
-    triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 }
+    formToUse
 }: IScanArticleEANProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -52,7 +50,6 @@ export const ScanArticleEAN = ({
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [articleLuBarcodesInfos, setArticleLuBarcodesInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
-    const { t } = useTranslation();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -134,9 +131,7 @@ export const ScanArticleEAN = ({
         scannedInfo: { scannedInfo, setScannedInfo },
         proposedHuos,
         articleLuBarcodesInfos,
-        setResetForm,
-        triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-        alternativeSubmitInput: storedObject?.step20?.data?.inProgressHuo ?? undefined
+        setResetForm
     };
 
     return (
@@ -148,11 +143,7 @@ export const ScanArticleEAN = ({
                 buttons={{ ...buttons }}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
-                triggerAlternativeSubmit1={{
-                    triggerAlternativeSubmit1,
-                    setTriggerAlternativeSubmit1
-                }}
-                alternativeSubmitLabel1={t('common:close-box')}
+                formToUse={formToUse}
             ></ScanForm_reducer>
             {checkComponent(dataToCheck)}
         </>

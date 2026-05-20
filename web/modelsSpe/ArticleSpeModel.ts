@@ -31,28 +31,28 @@ import { ArticleModelV2 } from 'models/ArticleModelV2';
  * @returns An array of tuples, each describing a specialized article field and its configuration.
  */
 export function ArticleSpeModel(): [string | null, string, any][] {
-    const genericArticleComment = {
-        isListRequested: true,
-        isDefaultHiddenList: false,
-        isExcludedFromList: false,
-        isSortable: true,
-        searchingFormat: 'String',
-        isDetailRequested: true,
-        isExcludedFromDetail: false,
-        detailGroup: null,
-        link: null,
-        addEditFormat: 'String',
-        addEditStep: null,
-        maxLength: 70,
-        displayName: 'supplier-article-code',
-        isMandatory: false,
-        minRule: null,
-        maxRule: null,
-        config: null,
-        param: null,
-        defaultSort: null,
-        isEditDisabled: false
-    };
+    // const genericArticleComment = {
+    //     isListRequested: true,
+    //     isDefaultHiddenList: false,
+    //     isExcludedFromList: false,
+    //     isSortable: true,
+    //     searchingFormat: 'String',
+    //     isDetailRequested: true,
+    //     isExcludedFromDetail: false,
+    //     detailGroup: null,
+    //     link: null,
+    //     addEditFormat: 'String',
+    //     addEditStep: null,
+    //     maxLength: 70,
+    //     displayName: 'supplier-article-code',
+    //     isMandatory: false,
+    //     minRule: null,
+    //     maxRule: null,
+    //     config: null,
+    //     param: null,
+    //     defaultSort: null,
+    //     isEditDisabled: false
+    // };
 
     // const description = {
     //     ...ArticleModelV2.fieldsInfo['description'],
@@ -60,7 +60,7 @@ export function ArticleSpeModel(): [string | null, string, any][] {
     // };
 
     return [
-        ['name', 'genericArticleComment', genericArticleComment]
+        // ['name', 'genericArticleComment', genericArticleComment]
         // [null, 'description', description]
     ];
 }

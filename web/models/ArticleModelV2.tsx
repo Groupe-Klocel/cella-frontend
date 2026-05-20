@@ -80,6 +80,27 @@ export const ArticleModelV2: ModelType = {
             defaultSort: 'ascending',
             isEditDisabled: true
         },
+        genericArticleComment: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: 'String',
+            addEditStep: null,
+            maxLength: 70,
+            displayName: 'supplier-article-code',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            isEditDisabled: false
+        },
         stockOwnerId: {
             isListRequested: true,
             isDefaultHiddenList: false,

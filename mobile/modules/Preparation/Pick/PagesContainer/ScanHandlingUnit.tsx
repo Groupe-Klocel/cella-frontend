@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { showError } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -30,8 +30,9 @@ export interface IScanHandlingUnitProps {
     stepNumber: number;
     label: string;
     isANewHUEquipment?: boolean;
-    buttons: { [label: string]: any };
     checkComponent: any;
+    buttons?: { [label: string]: any };
+    formToUse?: any;
     defaultValue?: any;
 }
 
@@ -42,6 +43,7 @@ export const ScanHandlingUnit = ({
     isANewHUEquipment,
     buttons,
     checkComponent,
+    formToUse,
     defaultValue
 }: IScanHandlingUnitProps) => {
     const state = useAppState();
@@ -128,6 +130,7 @@ export const ScanHandlingUnit = ({
                             code
                             reservation
                             status
+                            type
                             locationId
                             location {
                                 name
@@ -239,6 +242,7 @@ export const ScanHandlingUnit = ({
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
+                    formToUse={formToUse}
                 ></ScanForm_reducer>
                 {checkComponent(dataToCheck)}
             </>

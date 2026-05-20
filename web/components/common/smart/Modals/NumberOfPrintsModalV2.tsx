@@ -148,7 +148,7 @@ const NumberOfPrintsModalV2 = ({
         if (documentResult.generateDocument.__typename !== 'RenderedDocument') {
             showError(t('messages:error-print-data'));
         } else {
-            printer
+            printer || recipients
                 ? showSuccess(t('messages:success-print-data'))
                 : window.open(documentResult.generateDocument.url, '_blank');
         }

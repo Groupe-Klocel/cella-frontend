@@ -259,6 +259,27 @@ export const CycleCountLineModelV2: ModelType = {
             config: null,
             param: null
         },
+        'article{genericArticleComment}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: 70,
+            displayName: 'supplier-article-code',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            isEditDisabled: false
+        },
         'article{description}': {
             isListRequested: true,
             isDefaultHiddenList: false,

@@ -223,6 +223,8 @@ const CustomerOrderPage: PageComponent = () => {
         });
     };
 
+    const [deliveriesToDisplay, setDeliveriesToDisplay] = useState<any[]>([]);
+
     //to retrieve deliveries Ids from orderLines_deliveryLine attached to current order
     const getOrderLines = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
@@ -250,6 +252,71 @@ const CustomerOrderPage: PageComponent = () => {
         const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
         return handlingUnitInfos;
     };
+
+    const [isCreateOrderLoading, setIsCreateOrderLoading] = useState(false);
+    const duplicateOrder = async (orderIds: [string]) => {
+        setIsCreateOrderLoading(true);
+
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'duplicate_orders',
+            event: {
+                orderIds
+            }
+        };
+
+        try {
+            const orderDuplicatedResult = await graphqlRequestClient.request(query, variables);
+            if (orderDuplicatedResult.executeFunction.status === 'ERROR') {
+                showError(orderDuplicatedResult.executeFunction.output);
+            } else if (
+                orderDuplicatedResult.executeFunction.status === 'OK' &&
+                orderDuplicatedResult.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${orderDuplicatedResult.executeFunction.output.output.code}`));
+                console.log('Backend_message', orderDuplicatedResult.executeFunction.output.output);
+            } else {
+                showSuccess(t('messages:success-order-duplication'));
+            }
+            setIsCreateOrderLoading(false);
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+            setIsCreateOrderLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        async function fetchData() {
+            const result = await getOrderLines();
+            if (result) {
+                const orderLines = result.orderLines.results;
+                const deliveries: any[] = [];
+                // Iterate through results
+                orderLines.forEach((result: any) => {
+                    // Iterate through delivery lines
+                    result.deliveryLines.forEach((deliveryLine: any) => {
+                        // Extract delivery information
+                        const delivery = deliveryLine.delivery;
+                        const isDuplicate = deliveries.some((d) => d.id === delivery.id);
+                        if (!isDuplicate) {
+                            deliveries.push(delivery.id);
+                        }
+                    });
+                });
+                setDeliveriesToDisplay(deliveries);
+            }
+        }
+        fetchData();
+    }, [id]);
 
     //#endregion
 
@@ -317,6 +384,21 @@ const CustomerOrderPage: PageComponent = () => {
                         path={`${rootPath}/edit/${id}`}
                         type="primary"
                     />
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Read) &&
+                data?.status < configs.ORDER_STATUS_CLOSED ? (
+                    <Button
+                        type="primary"
+                        loading={isCreateOrderLoading}
+                        onClick={() => duplicateOrder([data.id])}
+                    >
+                        {t(`actions:duplicate-order`, {
+                            number: 1
+                        })}
+                    </Button>
                 ) : (
                     <></>
                 )}

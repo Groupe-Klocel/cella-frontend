@@ -22,20 +22,18 @@ import {
     AppstoreAddOutlined,
     AuditOutlined,
     DeploymentUnitOutlined,
-    ExportOutlined,
     HourglassOutlined,
     QuestionCircleOutlined,
     SettingOutlined,
     SlidersOutlined
 } from '@ant-design/icons';
-import { useAuth } from 'context/AuthContext';
 import { Menu } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
 import React, { FC } from 'react';
 import { useAppState } from 'context/AppContext';
-import { Table, ModeEnum } from 'generated/graphql';
-import { cookie, getModesFromPermissions } from '@helpers';
+import { ModeEnum } from 'generated/graphql';
+import { getModesFromPermissions } from '@helpers';
 import styled from 'styled-components';
 import { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 
@@ -55,7 +53,6 @@ const StyledMenu = styled(Menu)`
 
 const SideMenu: FC = () => {
     const { t } = useTranslation('menu');
-    const { logout } = useAuth();
     const { permissions } = useAppState();
 
     const bi_link = process.env.NEXT_PUBLIC_BI_URL || 'https://bi.cella.cloud';
@@ -69,7 +66,8 @@ const SideMenu: FC = () => {
             'wm_hook-configs',
             'wm_parameters',
             'wm_excel-imports',
-            'wm_scheduler-configs'
+            'wm_scheduler-configs',
+            'wm_translations'
         ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)) && {
             key: 'administration',
             icon: <AuditOutlined />,
@@ -138,6 +136,13 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'administration-scheduler-configs',
                           label: <Link href="/scheduler-configs">{t('scheduler-configs')}</Link>
+                      }
+                    : null,
+                // TRANSLATIONS
+                getModesFromPermissions(permissions, 'wm_translations').includes(ModeEnum.Read)
+                    ? {
+                          key: 'administration-translations',
+                          label: <Link href="/translations">{t('translations')}</Link>
                       }
                     : null
             ].filter(Boolean)
@@ -786,13 +791,6 @@ const SideMenu: FC = () => {
             key: 'about',
             icon: <QuestionCircleOutlined />,
             label: <Link href="/about">{t('about')}</Link>
-        },
-        // LOGOUT
-        {
-            key: 'logout',
-            icon: <ExportOutlined />,
-            label: t('logout'),
-            onClick: () => logout()
         }
     ].filter(Boolean) as ItemType<MenuItemType>[];
 

@@ -22,18 +22,16 @@ import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export interface IScanArticleEANProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
-    forceArticleScan?: boolean;
     checkComponent: any;
+    buttons?: { [label: string]: any };
+    form?: any;
+    forceArticleScan?: boolean;
     contents?: any;
-    triggerAlternativeSubmit1?: any;
-    action1Trigger?: any;
 }
 
 export const ScanArticleEAN = ({
@@ -41,11 +39,10 @@ export const ScanArticleEAN = ({
     stepNumber,
     label,
     buttons,
+    form,
     forceArticleScan,
     checkComponent,
-    contents,
-    triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-    action1Trigger: { action1Trigger, setAction1Trigger }
+    contents
 }: IScanArticleEANProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -55,7 +52,6 @@ export const ScanArticleEAN = ({
     const [articleLuBarcodesInfos, setArticleLuBarcodesInfos] = useState<any>();
     const [featureTypeDetailsInfos, setFeatureTypeDetailsInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
-    const { t } = useTranslation();
 
     const getFeatureTypeDetails = async (
         featureType: any
@@ -203,10 +199,7 @@ export const ScanArticleEAN = ({
         contents,
         articleLuBarcodesInfos,
         featureTypeDetailsInfos,
-        setResetForm,
-        triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-        action1Trigger: { action1Trigger, setAction1Trigger },
-        alternativeSubmitInput: storedObject?.step10?.data?.round.extraText1 ?? undefined
+        setResetForm
     };
 
     return (
@@ -218,13 +211,7 @@ export const ScanArticleEAN = ({
                 buttons={{ ...buttons }}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
-                triggerAlternativeSubmit1={{
-                    triggerAlternativeSubmit1,
-                    setTriggerAlternativeSubmit1
-                }}
-                action1Trigger={{ action1Trigger, setAction1Trigger }}
-                action1Label={t('actions:next')}
-                alternativeSubmitLabel1={t('common:change-location')}
+                formToUse={form}
             ></ScanForm_reducer>
             {checkComponent(dataToCheck)}
         </>

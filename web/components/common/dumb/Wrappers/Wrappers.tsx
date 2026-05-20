@@ -22,7 +22,6 @@ import { Layout, Input } from 'antd';
 
 const WrapperForm = styled.div`
     padding: 20px;
-    max-height: 30vh;
 `;
 const WrapperStepContent = styled.div`
     margin: 40px auto;

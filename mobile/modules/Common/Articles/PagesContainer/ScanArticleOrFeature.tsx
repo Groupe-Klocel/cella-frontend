@@ -19,7 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useBoxes } from '@helpers';
 import { LsIsSecured } from '@helpers';
 
 export interface IScanArticleOrFeatureProps {

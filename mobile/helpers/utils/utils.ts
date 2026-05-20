@@ -355,19 +355,92 @@ const pathParamsFromDictionary = (pathname: string, values: any) => {
 };
 
 // Helper function to find the last step with previousStep property
-const getLastStepWithPreviousStep = (storedObject: Record<string, any>) => {
+const getLastStepWithPreviousStep = (
+    storedObject: Record<string, any>,
+    stepToExclude?: number
+): number => {
     let lastStepNumber = 0;
 
-    Object.keys(storedObject).forEach((key) => {
-        if (key.startsWith('step') && storedObject[key]?.previousStep) {
-            const stepNumber = parseInt(key.replace('step', ''));
-            if (stepNumber > lastStepNumber) {
+    for (const [key, value] of Object.entries(storedObject)) {
+        if (key.startsWith('step') && value?.previousStep) {
+            const stepNumber = parseInt(key.slice(4), 10);
+            if (stepNumber !== stepToExclude && stepNumber > lastStepNumber) {
                 lastStepNumber = stepNumber;
             }
         }
-    });
+    }
 
     return lastStepNumber;
+};
+
+const findValueByScopeAndCode = (items: any[], scope: string, code: string) => {
+    return items.find(
+        (item: any) => item.scope === scope && item.code.toLowerCase() === code.toLowerCase()
+    )?.value;
+};
+
+const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+    return items.find(
+        (item: any) => item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+    )?.code;
+};
+
+/** @deprecated: use filterItems instead with exclude option
+ * Helper function to find all items by scope and code
+ */
+const findAllByScope = (items: any[], scope: string) => {
+    return items
+        .filter((item: any) => item.scope === scope)
+        .sort((a, b) => a.code - b.code)
+        .map((item: any) => {
+            return {
+                ...item,
+                code: parseInt(item.code),
+                value: item.value
+            };
+        });
+};
+
+// Defines filtering criteria where each property of T can be a single value or an array of values
+type FilterCriteria<T> = {
+    [K in keyof T]?: T[K] | T[K][];
+};
+
+// Helper function to filter an array by matching properties against 'include' criteria removing those in 'exclude'
+const advancedFilter = <T>(
+    items: T[],
+    include?: FilterCriteria<T>,
+    exclude?: FilterCriteria<T>
+): T[] => {
+    return items.filter((item) => {
+        if (include) {
+            for (const key in include) {
+                const k = key as keyof T;
+                const val = include[k];
+                const allowed = Array.isArray(val) ? val : [val];
+
+                // We use 'as any' here because TypeScript cannot guarantee that item[k] is of the same type as val
+                if (!allowed.includes(item[k] as any)) return false;
+            }
+        }
+        if (exclude) {
+            for (const key in exclude) {
+                const k = key as keyof T;
+                const val = exclude[k];
+                const disallowed = Array.isArray(val) ? val : [val];
+
+                // same as above, we use 'as any' to bypass TypeScript's type checking for dynamic keys
+                if (disallowed.includes(item[k] as any)) return false;
+            }
+        }
+        return true;
+    });
+};
+
+// convert snake_case (underscore-separated) strings to camelCase
+// example: "return_code" -> "returnCode"
+const snakeToCamel = (input: string): string => {
+    return input.replace(/_([a-zA-Z0-9])/g, (_, g) => g.toUpperCase());
 };
 
 const getLanguageCode = (router: any): string | undefined => {
@@ -412,5 +485,10 @@ export {
     getDatesDifference,
     pathParamsFromDictionary,
     getLastStepWithPreviousStep,
+    findValueByScopeAndCode,
+    findCodeByScopeAndValue,
+    findAllByScope,
+    advancedFilter,
+    snakeToCamel,
     getLanguageCode
 };

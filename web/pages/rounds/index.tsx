@@ -78,10 +78,10 @@ const RoundPages: PageComponent = () => {
         };
         const estimatedStatusCode = findCodeByScope(configs, 'round_status', 'Estimated');
         const startedStatusCode = findCodeByScope(configs, 'round_status', 'Started');
-        const pasDeStockDisponibleStatusCode = findCodeByScope(
+        const noStockAvailableStatusCode = findCodeByScope(
             configs,
             'round_status',
-            'Pas de stock disponible'
+            'No stock available'
         );
         const roundCategoryOutboundCode = findCodeByScopeAndValue(
             configs,
@@ -99,7 +99,7 @@ const RoundPages: PageComponent = () => {
         return {
             estimatedStatusCode,
             startedStatusCode,
-            pasDeStockDisponibleStatusCode,
+            noStockAvailableStatusCode,
             inPreparationStatusCode,
             toBePackedStatusCode,
             packingInProgressStatusCode,
@@ -231,7 +231,7 @@ const RoundPages: PageComponent = () => {
 
     const startRounds = async () => {
         const hasNoStockSelected = selectedRows.some(
-            (row) => row.status === Number(configsParamsCodes.pasDeStockDisponibleStatusCode)
+            (row) => row.status === Number(configsParamsCodes.noStockAvailableStatusCode)
         );
 
         if (hasNoStockSelected) {
@@ -345,7 +345,7 @@ const RoundPages: PageComponent = () => {
             const allCanBeEdited = selectedRounds.every((round: any) => {
                 const status = round.status;
                 const pasDeStockDisponible = parseInt(
-                    configsParamsCodes.pasDeStockDisponibleStatusCode
+                    configsParamsCodes.noStockAvailableStatusCode
                 );
                 const estimated = parseInt(configsParamsCodes.estimatedStatusCode);
                 const startedStatusCode = parseInt(configsParamsCodes.startedStatusCode);
@@ -365,7 +365,7 @@ const RoundPages: PageComponent = () => {
                 const status = round.status;
                 const estimated = parseInt(configsParamsCodes.estimatedStatusCode);
                 const pasDeStockDisponible = parseInt(
-                    configsParamsCodes.pasDeStockDisponibleStatusCode
+                    configsParamsCodes.noStockAvailableStatusCode
                 );
                 return status == pasDeStockDisponible || status == estimated;
             });

@@ -21,23 +21,20 @@ import { LinkButton } from '@components';
 import { EyeTwoTone } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, showSuccess, showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { Button, Divider, Form, Modal, Space, Typography } from 'antd';
+import { Divider, Form, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
 import {
     ModeEnum,
     Table,
-    UpdateRoundAdvisedAddressInput,
     UpdateRoundAdvisedAddressMutation,
     UpdateRoundAdvisedAddressMutationVariables,
     useUpdateRoundAdvisedAddressMutation
 } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { HandlingUnitOutboundModelV2 } from '@helpers';
-import { RoundAdvisedAddressModelV2 } from '@helpers';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import { RoundLineModelV2 } from '@helpers';
+import { GoodsInLineModelV2 } from '@helpers';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { HandlingUnitInboundModelV2 } from '@helpers';
 
@@ -145,7 +142,7 @@ const GoodsInDetailsExtra = ({ roundId }: IItemDetailsProps) => {
                     <Divider />
                     <ListComponent
                         searchCriteria={{ roundId: roundId }}
-                        dataModel={RoundLineModelV2}
+                        dataModel={GoodsInLineModelV2}
                         headerData={roundLineData}
                         triggerDelete={{ idToDelete, setIdToDelete }}
                         triggerSoftDelete={{ idToDisable, setIdToDisable }}

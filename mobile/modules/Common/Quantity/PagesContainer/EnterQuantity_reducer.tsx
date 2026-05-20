@@ -18,21 +18,27 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { EnterNumberForm } from 'modules/Common/EnterNumberForm_reducer';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    getLastStepWithPreviousStep,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IEnterQuantityReducerProps {
     processName: string;
     stepNumber: number;
+    checkComponent: any;
+    buttons?: { [label: string]: any };
     label?: string;
     defaultValue?: number;
-    buttons: { [label: string]: any };
-    availableQuantity?: number;
-    checkComponent: any;
+    requiredMaxQuantity?: number;
+    stockMaxQuantity?: number;
     isCommentDisplayed?: boolean;
     initialValueType?: number;
     autoValidate1Quantity?: boolean;
+    checkRemainingQuantity?: boolean;
+    formToUse?: any;
 }
 
 export const EnterQuantity_reducer = ({
@@ -41,11 +47,14 @@ export const EnterQuantity_reducer = ({
     label,
     defaultValue,
     buttons,
-    availableQuantity,
+    requiredMaxQuantity,
+    stockMaxQuantity,
     checkComponent,
     isCommentDisplayed,
     initialValueType,
-    autoValidate1Quantity
+    autoValidate1Quantity,
+    checkRemainingQuantity,
+    formToUse
 }: IEnterQuantityReducerProps) => {
     const { t } = useTranslation('common');
     const state = useAppState();
@@ -56,31 +65,15 @@ export const EnterQuantity_reducer = ({
     // TYPED SAFE ALL
     // Define initial value according to prioritized parameters sent
     const tmpInitialValue = (() => {
-        if (autoValidate1Quantity && availableQuantity !== 1) {
-            return initialValueType === 2 ? availableQuantity : undefined;
+        if (autoValidate1Quantity && requiredMaxQuantity !== 1) {
+            return initialValueType === 2 ? requiredMaxQuantity : undefined;
         }
-        return initialValueType == 1 ? 1 : initialValueType == 2 ? availableQuantity : undefined;
+        return initialValueType == 1 ? 1 : initialValueType == 2 ? requiredMaxQuantity : undefined;
     })();
-
-    let hasOtherIncompleteHucos = false;
-    if (processName === 'pack') {
-        // Check if there are other incomplete HUCOs in currentHuo (excluding currentHuco)
-        const currentHuo = storedObject?.step40?.data?.currentHuo;
-        const currentHuco = storedObject?.step40?.data?.currentHuco;
-
-        const otherIncompleteHucos =
-            currentHuo?.handlingUnitContentOutbounds?.filter(
-                (huco: any) =>
-                    huco.id !== currentHuco?.id &&
-                    huco.missingQuantity + huco.pickedQuantity < huco.quantityToBePicked
-            ) || [];
-
-        hasOtherIncompleteHucos = otherIncompleteHucos.length > 0;
-    }
 
     //Pre-requisite: initialize current step
     useEffect(() => {
-        let objectUpdate: any = {
+        const objectUpdate: any = {
             type: 'UPDATE_BY_STEP',
             processName,
             stepName: `step${stepNumber}`,
@@ -158,7 +151,7 @@ export const EnterQuantity_reducer = ({
                         ?.receivedQuantity
             );
         } else if (autoValidate1Quantity && tmpInitialValue === 1) {
-            if (!hasOtherIncompleteHucos) {
+            if (!checkRemainingQuantity) {
                 objectUpdate.object = {
                     ...storedObject[`step${stepNumber}`],
                     data: { movingQuantity: 1 }
@@ -167,10 +160,13 @@ export const EnterQuantity_reducer = ({
                 setEnteredInfo(1);
             }
         } else if (storedObject.currentStep < stepNumber) {
-            //check workflow direction and assign current step accordingly
-            objectUpdate.object = { previousStep: storedObject.currentStep };
             objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
+
+        objectUpdate.object = {
+            ...objectUpdate.object,
+            previousStep: getLastStepWithPreviousStep(storedObject, stepNumber)
+        };
 
         dispatch(objectUpdate);
     }, []);
@@ -179,15 +175,15 @@ export const EnterQuantity_reducer = ({
         processName,
         stepNumber,
         enteredInfo: { enteredInfo, setEnteredInfo },
-        availableQuantity,
-        hasOtherIncompleteHucos
+        requiredMaxQuantity,
+        stockMaxQuantity
     };
 
     let rules: Array<any> = [{ required: true, message: t('messages:error-message-empty-input') }];
-    if (availableQuantity !== undefined && availableQuantity !== null) {
+    if (requiredMaxQuantity !== undefined && requiredMaxQuantity !== null) {
         rules.push({
             type: 'number',
-            max: availableQuantity,
+            max: requiredMaxQuantity,
             message: t('messages:erroneous-quantity')
         });
     }
@@ -205,6 +201,7 @@ export const EnterQuantity_reducer = ({
                 initialValue={tmpInitialValue}
                 isSelected={true}
                 isCommentDisplayed={isCommentDisplayed}
+                formToUse={formToUse}
             ></EnterNumberForm>
             {checkComponent(dataToCheck)}
         </>

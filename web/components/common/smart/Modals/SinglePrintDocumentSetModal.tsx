@@ -31,23 +31,25 @@ import Text from 'antd/lib/typography/Text';
 
 const { Option } = Select;
 
-export interface ISinglePrintModalV2Props {
+export interface ISinglePrintDocumentSetModalProps {
     dataToPrint: any;
     showModal: any;
     allDocumentName: string[];
     documentReference?: string | any;
     customLanguage?: string;
     documentAttachmentsData?: any;
+    setAllDocumentName?: any;
 }
 
-const SinglePrintModalV2 = ({
+const SinglePrintDocumentSetModal = ({
     showModal,
     dataToPrint,
     allDocumentName,
     documentReference,
     customLanguage,
-    documentAttachmentsData
-}: ISinglePrintModalV2Props) => {
+    documentAttachmentsData,
+    setAllDocumentName
+}: ISinglePrintDocumentSetModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');
@@ -63,7 +65,7 @@ const SinglePrintModalV2 = ({
     });
 
     const documentPlusDocumentAttachments = [
-        ...(allDocumentName.map((allDocument: any) => {
+        ...(allDocumentName?.map((allDocument: any) => {
             return {
                 id: allDocument.name,
                 name: allDocument.description
@@ -167,7 +169,7 @@ const SinglePrintModalV2 = ({
             showError(t('messages:error-print-data'));
             console.error('Error details:', documentResult.generateDocuments);
         } else {
-            printer
+            printer || recipients
                 ? showSuccess(t('messages:success-print-data'))
                 : documentResult.generateDocuments.results.map((result: any) => {
                       window.open(result.url, '_blank');
@@ -189,6 +191,9 @@ const SinglePrintModalV2 = ({
         showModal.setShowSinglePrintModal(false);
         form.resetFields();
         setSelectAllDocuments(false);
+        if (setAllDocumentName) {
+            setAllDocumentName(undefined);
+        }
     };
 
     const onClickOk = () => {
@@ -202,10 +207,10 @@ const SinglePrintModalV2 = ({
                     formData.recipients,
                     documentReference,
                     formData.documents.filter((attachmentId: any) =>
-                        allDocumentName.some((doc: any) => doc.name === attachmentId)
+                        allDocumentName?.some((doc: any) => doc.name === attachmentId)
                     ),
                     formData.documents.filter((attachmentId: any) =>
-                        documentAttachmentsData.some((doc: any) => doc.id === attachmentId)
+                        documentAttachmentsData?.some((doc: any) => doc.id === attachmentId)
                     )
                 );
             })
@@ -229,6 +234,8 @@ const SinglePrintModalV2 = ({
             onCancel={handleCancel}
             width={'80%'}
             confirmLoading={isPrintingLoading}
+            okText={t('actions:submit')}
+            cancelText={t('actions:cancel')}
         >
             <WrapperForm>
                 <Form form={form} layout="vertical" scrollToFirstError>
@@ -282,4 +289,4 @@ const SinglePrintModalV2 = ({
     );
 };
 
-export { SinglePrintModalV2 };
+export { SinglePrintDocumentSetModal };

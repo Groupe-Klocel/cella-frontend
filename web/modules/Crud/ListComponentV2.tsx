@@ -23,7 +23,8 @@ import {
     FileExcelOutlined,
     ReloadOutlined,
     SearchOutlined,
-    SettingOutlined
+    SettingOutlined,
+    UploadOutlined
 } from '@ant-design/icons';
 import {
     TableFilter,
@@ -73,19 +74,20 @@ import {
     isStringDate,
     formatUTCLocaleDate
 } from '@helpers';
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
 import { FormDataType, ModelType } from 'models/ModelsV2';
 import { ExportFormat, ModeEnum, Table as tableList } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, isString, set } from 'lodash';
+import _, { debounce, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { FormGroupV3 } from './submodules/FormGroupV3';
 import { AdvancedFilters, AdvancedFilterTags } from './listComponentSubModule/AdvancedFilters';
+import { useImportData } from './listComponentSubModule/import';
 
 export type HeaderData = {
     title: string;
@@ -135,6 +137,10 @@ export interface IListProps {
     dataToCreateMovement?: any;
     setSuccessDeleteResult?: any;
     noDBSave?: boolean;
+    excelImport?: {
+        functionName: string;
+        titleLabel?: any;
+    };
 }
 
 export interface newPaginationType {
@@ -212,6 +218,7 @@ const ListComponent = (props: IListProps) => {
     let initialState = userSettings?.valueJson?.allColumnsInfos;
     const [allColumns, setAllColumns] = useState<any[]>(initialState);
     const [initialAllColumns, setInitialAllColumns] = useState<any[]>(initialState);
+    const [isExcelImportModalOpen, setIsExcelImportModalOpen] = useState<boolean>(false);
 
     // Function to convert plural words to singular based on Table enum keys
     const convertTableNamePluralToSingular = (text: string): string => {
@@ -1062,6 +1069,19 @@ const ListComponent = (props: IListProps) => {
         rows,
         displayedLabels
     });
+    // #endregion
+
+    // #region IMPORT DATA
+    const { displayImportModal } = useImportData({
+        functionName: props.excelImport?.functionName || '',
+        titleLabel: props.excelImport?.titleLabel,
+        onCancel: () => setIsExcelImportModalOpen(false),
+        onSuccess: () => {
+            setIsExcelImportModalOpen(false);
+            reloadData();
+        }
+    });
+
     // #endregion
 
     // #region onChangePagination
@@ -2334,6 +2354,12 @@ const ListComponent = (props: IListProps) => {
                                                 icon={<SettingOutlined />}
                                                 onClick={() => setIsColumnDrawerOpen(true)}
                                             />
+                                            {props.excelImport?.functionName && (
+                                                <Button
+                                                    icon={<UploadOutlined />}
+                                                    onClick={displayImportModal}
+                                                />
+                                            )}
                                             {stickyActions?.export.active && (
                                                 <Button
                                                     icon={<FileExcelOutlined />}
