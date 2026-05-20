@@ -21,13 +21,17 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Space } from 'antd';
+import {
+    ButtonManagementType,
+    getMoreInfos,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
+import { Form, Modal, Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { UpperMobileSpinner } from 'components/common/dumb/Spinners/UpperMobileSpinner';
-import { useAppDispatch, useAppState } from 'context/AppContext';
 import { SelectPrinter } from 'modules/Preparation/Pack/Forms/SelectPrinter_Reducer';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 import { ScanRoundOrHuOrPosition } from 'modules/Preparation/Pack/PagesContainer/ScanRoundOrHuOrPosition';
 import { RoundOrHuOrPositionCheck } from 'modules/Preparation/Pack/ChecksAndRecords/RoundOrHuOrPositionCheck';
 import { ScanPosition } from 'modules/Preparation/Pack/PagesContainer/ScanPosition';
@@ -41,10 +45,12 @@ import { ReviewHuModelWeightChecks } from 'modules/Preparation/Pack/ChecksAndRec
 import { AutoValidatePackForm } from 'modules/Preparation/Pack/Forms/AutoValidatePack';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const Pack: PageComponent = () => {
+    //#region Common variables
     const { t } = useTranslation();
     const { graphqlRequestClient, user } = useAuth();
     const router = useRouter();
@@ -125,9 +131,12 @@ const Pack: PageComponent = () => {
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
+    const [form] = Form.useForm();
 
     console.log(`${processName}`, storedObject);
+    //#endregion
 
+    //#region extract data & checks
     const round = storedObject?.step20?.data?.round;
     const equipmentHu = storedObject?.step20?.data?.equipmentHu;
     const step20Position = storedObject?.step20?.data?.position;
@@ -152,8 +161,37 @@ const Pack: PageComponent = () => {
     const currentHuo = round?.equipment?.checkPosition
         ? storedObject?.step30?.data?.currentHuos?.[0]
         : storedObject?.step40?.data?.currentHuo;
+    const currentHuco = storedObject?.step40?.data?.currentHuco;
 
-    //function to retrieve information to display in RadioInfosHeader
+    const hasOtherIncompleteHucos = storedObject[
+        round?.equipment?.checkPosition ? 'step30' : 'step40'
+    ]?.data
+        ? currentHuo?.handlingUnitContentOutbounds?.filter(
+              (huco: any) =>
+                  huco.id !== currentHuco?.id &&
+                  huco.missingQuantity + huco.pickedQuantity < huco.quantityToBePicked
+          ).length > 0
+        : true;
+    const isCurrentHucoIncomplete = currentHuco
+        ? currentHuco.missingQuantity +
+              currentHuco.pickedQuantity +
+              (storedObject['step50']?.data?.movingQuantity || 0) <
+          currentHuco.quantityToBePicked
+        : true;
+    const proposedHuos = storedObject['step30']?.data?.currentHuos;
+
+    // this to check if we need to display step 60 (ReviewHuModelWeightForm) or if we can directly go to autovalidate (step 70) after quantity entering (step 50)
+    const isBoxReviewNeeded =
+        (storedObject['step40']?.data?.isBoxForcedClosed ||
+            (!hasOtherIncompleteHucos && !isCurrentHucoIncomplete) ||
+            (!isToControl && isToControl !== null && storedObject['step30']?.data) ||
+            (isToControl &&
+                typeof storedObject['step50']?.data !== 'object' &&
+                storedObject['step50']?.data)) &&
+        !storedObject['step60']?.data;
+    //#endregion
+
+    //#region RadioInfosHeader settings
     let headerDisplay: { [k: string]: any } = {};
 
     if (storedObject['step10']?.data?.printers) {
@@ -178,12 +216,26 @@ const Pack: PageComponent = () => {
             inProgressHuo.handlingUnitContentOutbounds[0].pickedQuantity -
             inProgressHuo.handlingUnitContentOutbounds[0].missingQuantity;
     }
+    if (
+        storedObject['step30']?.data?.currentHuos?.length > 0 &&
+        !isToControl &&
+        isToControl !== null
+    ) {
+        const currentHuo = storedObject['step30'].data.currentHuos[0];
+        let quantityDisplay = 0;
+        currentHuo?.handlingUnitContentOutbounds.forEach((hu: any, index: number) => {
+            quantityDisplay += hu.quantityToBePicked - hu.pickedQuantity - hu.missingQuantity;
+        });
+        headerDisplay[t('common:quantity')] = {
+            value: quantityDisplay,
+            highlight: true
+        };
+    }
     if (storedObject['step40']?.data?.currentHuco) {
         headerDisplay[t('common:article_abbr')] =
             storedObject['step40']?.data?.currentHuco.article.name;
     }
-    if (storedObject['step50']?.data?.movingQuantity && storedObject['step40']?.data?.currentHuco) {
-        const currentHuco = storedObject['step40'].data.currentHuco;
+    if (storedObject['step50']?.data?.movingQuantity && currentHuco) {
         headerDisplay[t('common:quantity')] =
             storedObject['step50'].data.movingQuantity +
             '/' +
@@ -193,7 +245,9 @@ const Pack: PageComponent = () => {
     }
 
     headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
+    //#endregion
 
+    //#region control while packing
     // retrieve rule to apply
     useEffect(() => {
         const fetchRuleResult = async (ruleInputs: any) => {
@@ -209,7 +263,7 @@ const Pack: PageComponent = () => {
         if (inProgressHuo) {
             setIsToControl(true);
         } else if (round) {
-            if (round.equipment?.checkPosition && isToControl === null) {
+            if (round.equipment?.checkPosition) {
                 if (currentHuo?.handlingUnitContentOutbounds) {
                     const promises = currentHuo.handlingUnitContentOutbounds.map(
                         async (huco: any) => {
@@ -293,12 +347,16 @@ const Pack: PageComponent = () => {
             }
         }
     }, [isToControl, currentHuo]);
+    //#endregion
 
+    //#region global buttons
     const onReset = () => {
         dispatch({
             type: 'DELETE_RF_PROCESS',
             processName
         });
+        setIsToControl(null);
+        form.resetFields();
     };
 
     const previousPage = () => {
@@ -306,9 +364,162 @@ const Pack: PageComponent = () => {
             type: 'DELETE_RF_PROCESS',
             processName
         });
+        form.resetFields();
+        setIsToControl(null);
         router.back();
     };
 
+    const onBack = () => {
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${storedObject.currentStep}`].previousStep}`
+        });
+        form.resetFields();
+    };
+    //#endregion
+
+    //#region specific functions
+    useEffect(() => {
+        if (closeBox) {
+            // Check if all HUCOs of proposedHuos[0] are complete
+            const firstHuo = proposedHuos[0];
+            const incompleteHucos = firstHuo?.handlingUnitContentOutbounds?.filter(
+                (huco: any) =>
+                    huco.quantityToBePicked !== huco.missingQuantity + huco.pickedQuantity
+            );
+
+            if (incompleteHucos && incompleteHucos.length > 0) {
+                Modal.confirm({
+                    title: t('messages:confirmation'),
+                    content: t('messages:confirm-incomplete-box-closure'),
+                    onOk: () => {
+                        // Continue with dispatches
+                        const step40Data: { [label: string]: any } = {};
+                        step40Data['currentHuo'] = proposedHuos[0];
+                        step40Data['isBoxForcedClosed'] = true;
+                        dispatch({
+                            type: 'UPDATE_BY_STEP',
+                            processName,
+                            stepName: 'step40',
+                            object: {
+                                ...storedObject['step40'],
+                                data: step40Data
+                            }
+                        });
+
+                        dispatch({
+                            type: 'UPDATE_BY_STEP',
+                            processName,
+                            stepName: 'step50',
+                            object: {
+                                ...storedObject['step50'],
+                                data: 'allQuantites'
+                            }
+                        });
+                        setCloseBox(false);
+                    },
+                    onCancel: () => {
+                        // Return to current step
+                        setCloseBox(false);
+                    }
+                });
+                return;
+            }
+
+            const step40Data: { [label: string]: any } = {};
+            step40Data['currentHuo'] = proposedHuos[0];
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: 'step40',
+                object: {
+                    ...storedObject['step40'],
+                    data: step40Data
+                }
+            });
+
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: 'step50',
+                object: {
+                    ...storedObject['step50'],
+                    data: 'allQuantites'
+                }
+            });
+            setCloseBox(false);
+        }
+    }, [closeBox, inProgressHuo]);
+
+    useEffect(() => {
+        if (triggerEnforcedControl) {
+            setIsToControl(true);
+            //N.B. : Need initializing step 40 to have the relevant previousStep before going back
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName: processName,
+                stepName: `step40`,
+                object: {
+                    previousStep: storedObject[`step${storedObject.currentStep}`].previousStep
+                },
+                customFields: undefined
+            });
+            dispatch({
+                type: 'ON_BACK',
+                processName: processName,
+                stepToReturn: `step40`
+            });
+            setTriggerEnforcedControl(false);
+        }
+    }, [triggerEnforcedControl]);
+    //#endregion
+
+    //#region module buttons
+    const buttonManagement: ButtonManagementType = [
+        {
+            label: t('actions:submit'),
+            visibleOnSteps: [10, 20, 30, 40, 50, 60, 70],
+            onClick: () => form.submit(),
+            position: 'bottom'
+        },
+        {
+            label: t('common:close-box'),
+            visibleOnSteps: [40],
+            permissionsToSeeTheButton: isBoxClosureAllowed ? true : false,
+            onClick: () => {
+                setCloseBox(true);
+            },
+            position: 'bottom'
+        },
+        {
+            label: t('actions:enforce-control'),
+            visibleOnSteps: [60],
+            permissionsToSeeTheButton: !isToControl && isToControl !== null ? true : false,
+            onClick: () => {
+                setTriggerEnforcedControl(true);
+            },
+            position: 'bottom'
+        },
+        {
+            label: t('actions:back'),
+            visibleOnSteps: [20, 30, 40, 50, 60, 70],
+            permissionsToSeeTheButton: true,
+            onClick: () => {
+                onBack();
+            },
+            position: 'bottom'
+        }
+    ];
+    //#endregion
+
+    //#region reset form on step change
+    useEffect(() => {
+        form.resetFields();
+    }, [storedObject.currentStep]);
+    //#endregion
+
+    //#region RETURN
     return (
         <PageContentWrapper>
             <HeaderContent
@@ -336,13 +547,16 @@ const Pack: PageComponent = () => {
             {isLoading ? (
                 <UpperMobileSpinner></UpperMobileSpinner>
             ) : (
-                <>
+                <RadioButtonWrapper
+                    buttonManagement={buttonManagement}
+                    currentStep={storedObject.currentStep}
+                >
                     {!storedObject['step10']?.data ? (
                         <SelectPrinter
                             processName={processName}
                             ruleName="pack"
                             stepNumber={10}
-                            buttons={{ submitButton: true, backButton: false }}
+                            formToUse={form}
                         ></SelectPrinter>
                     ) : (
                         <></>
@@ -352,10 +566,10 @@ const Pack: PageComponent = () => {
                             processName={processName}
                             stepNumber={20}
                             label={t('d:round-or-equipment-or-position')}
-                            buttons={{ submitButton: true, backButton: true }}
                             checkComponent={(data: any) => (
                                 <RoundOrHuOrPositionCheck dataToCheck={data} />
                             )}
+                            formToUse={form}
                         ></ScanRoundOrHuOrPosition>
                     ) : (
                         <></>
@@ -365,10 +579,6 @@ const Pack: PageComponent = () => {
                             processName={processName}
                             stepNumber={30}
                             label={t('common:pack_position')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             checkComponent={(data: any) => (
                                 <PositionChecks
                                     dataToCheck={data}
@@ -383,6 +593,7 @@ const Pack: PageComponent = () => {
                                       ? destinationHuos
                                       : undefined
                             }
+                            formToUse={form}
                         ></ScanPosition>
                     ) : (
                         <></>
@@ -395,16 +606,8 @@ const Pack: PageComponent = () => {
                             processName={processName}
                             stepNumber={40}
                             label={t('common:article_abbr')}
-                            triggerAlternativeSubmit1={{
-                                triggerAlternativeSubmit1: closeBox,
-                                setTriggerAlternativeSubmit1: setCloseBox
-                            }}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true,
-                                alternativeSubmitButton1: isBoxClosureAllowed
-                            }}
                             proposedHuos={storedObject['step30']?.data?.currentHuos}
+                            formToUse={form}
                             checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
                         ></ScanArticleEAN>
                     ) : (
@@ -427,12 +630,8 @@ const Pack: PageComponent = () => {
                                         : 0
                                 }`
                             })}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             initialValueType={quantityDefaultValue}
-                            availableQuantity={
+                            requiredMaxQuantity={
                                 storedObject['step40']?.data?.currentHuco
                                     ? storedObject['step40'].data.currentHuco.quantityToBePicked -
                                       storedObject['step40'].data.currentHuco.pickedQuantity -
@@ -440,45 +639,36 @@ const Pack: PageComponent = () => {
                                     : 0
                             }
                             autoValidate1Quantity={autoValidate1Quantity}
-                            checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
+                            formToUse={form}
+                            checkComponent={(data: any) => (
+                                <QuantityChecks dataToCheck={{ ...data }} />
+                            )}
                         ></EnterQuantity_reducer>
                     ) : (
                         <></>
                     )}
-                    {((!isToControl && isToControl !== null && storedObject['step30']?.data) ||
-                        (isToControl && isToControl !== null && storedObject['step50']?.data)) &&
-                    !storedObject['step60']?.data ? (
+                    {isBoxReviewNeeded ? (
                         <ReviewHuModelWeightForm
                             processName={processName}
                             stepNumber={60}
-                            buttons={{
-                                submitButton: true,
-                                alternativeSubmitButton1: !isToControl,
-                                backButton: true
-                            }}
                             currentHuo={currentHuo}
-                            triggerAlternativeSubmit1={{
-                                triggerAlternativeSubmit1: triggerEnforcedControl,
-                                setTriggerAlternativeSubmit1: setTriggerEnforcedControl
-                            }}
                             checkComponent={(data: any) => (
                                 <ReviewHuModelWeightChecks
                                     dataToCheck={data}
                                     isToControl={{ isToControl, setIsToControl }}
                                 />
                             )}
+                            formToUse={form}
                         ></ReviewHuModelWeightForm>
                     ) : (
                         <></>
                     )}
-                    {storedObject['step60']?.data && !storedObject['step70']?.data ? (
+                    {((!isBoxReviewNeeded && storedObject['step50']?.data) ||
+                        storedObject['step60']?.data) &&
+                    !storedObject['step70']?.data ? (
                         <AutoValidatePackForm
                             processName={processName}
                             stepNumber={70}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             toBePalletized={false}
                             autoValidateLoading={{
                                 isAutoValidateLoading: isLoading,
@@ -489,11 +679,12 @@ const Pack: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                </>
+                </RadioButtonWrapper>
             )}
         </PageContentWrapper>
     );
 };
+//#endregion
 
 Pack.layout = MainLayout;
 

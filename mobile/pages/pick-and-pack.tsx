@@ -26,9 +26,10 @@ import {
     getModesFromPermissions,
     useTranslationWithFallback as useTranslation,
     showError,
-    showSuccess
+    showSuccess,
+    ButtonManagementType
 } from '@helpers';
-import { Button, Form, InputNumber, Modal, Space, Select } from 'antd';
+import { Form, InputNumber, Modal, Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { EnterQuantity_reducer, SimilarLocationsV2 } from '@CommonRadio';
@@ -52,7 +53,6 @@ import { ScanFinalHandlingUnitOutbound } from 'modules/Preparation/PickAndPack/P
 import { SelectHuModelForm } from 'modules/Preparation/PickAndPack/Forms/SelectHuModelForm';
 import { UpperMobileSpinner } from 'components/common/dumb/Spinners/UpperMobileSpinner';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { config } from 'process';
 import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
 import { ModeEnum } from 'generated/graphql';
 import { gql } from 'graphql-request';
@@ -62,6 +62,7 @@ import { handlePickAndPackProcessResult } from 'modules/Preparation/PickAndPack/
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const PickAndPack: PageComponent = () => {
+    //#region Common variables
     const { t } = useTranslation();
     const router = useRouter();
     const { parameters, permissions } = useAppState();
@@ -80,6 +81,7 @@ const PickAndPack: PageComponent = () => {
         useState<boolean>(false);
     const [visible, setVisible] = useState<boolean>(false);
     const [form] = Form.useForm();
+    const [missingForm] = Form.useForm();
     const { graphqlRequestClient } = useAuth();
 
     const processName = 'pickAndPack';
@@ -100,7 +102,9 @@ const PickAndPack: PageComponent = () => {
     const storedObject = state[processName] || {};
 
     console.log(`${processName}`, storedObject);
+    //#endregion
 
+    // #region Config parameters
     const configsParamsCodes = useMemo(() => {
         const findValueByScopeAndCode = (items: any[], scope: string, code: string) => {
             return items.find(
@@ -152,6 +156,11 @@ const PickAndPack: PageComponent = () => {
             'outbound',
             'IS_QUANTITY_HIGHLIGHTED'
         );
+        const checkRemainingQuantityValue = findValueByScopeAndCode(
+            parameters,
+            'outbound',
+            'PICK_AND_PACK_CHECK_REMAINING_QUANTITY'
+        );
         // Convert value in boolean or number as needed
         const equipmentScanAtPreparation = equipmentScanAtPreparationValue === '1';
         const manuallyGenerateParent = manuallyGenerateParentValue === '1';
@@ -171,6 +180,8 @@ const PickAndPack: PageComponent = () => {
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
         const highlightQuantity = highlightedQuantity === '1';
 
+        const checkRemainingQuantity = checkRemainingQuantityValue === '1';
+
         return {
             equipmentScanAtPreparation,
             manuallyGenerateParent,
@@ -179,7 +190,8 @@ const PickAndPack: PageComponent = () => {
             forceArticleScan,
             defaultQuantity,
             autoValidate1Quantity,
-            highlightQuantity
+            highlightQuantity,
+            checkRemainingQuantity
         };
     }, [parameters]);
 
@@ -193,6 +205,7 @@ const PickAndPack: PageComponent = () => {
     const quantityDefaultValue = configsParamsCodes.defaultQuantity;
     const autoValidate1Quantity = configsParamsCodes.autoValidate1Quantity;
     const isQuantityHighlighted = configsParamsCodes.highlightQuantity;
+    const checkRemainingQuantity = configsParamsCodes.checkRemainingQuantity;
 
     const [tmpForceLocation, setTmpforceLocation] = useState<any>(forceLocationScan);
     useEffect(() => {
@@ -200,7 +213,9 @@ const PickAndPack: PageComponent = () => {
             setIsLoading(false);
         }
     }, [parameters]);
+    //#endregion
 
+    // #region Extracting data & checks
     const proposedRoundAdvisedAddress =
         storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0] || [];
     const isLocationDefined = !!proposedRoundAdvisedAddress.locationId;
@@ -264,8 +279,9 @@ const PickAndPack: PageComponent = () => {
             currentLocationName
         );
     };
+    // #endregion
 
-    //function to retrieve information to display in RadioInfosHeader
+    //#region RadioInfosHeader settings
     let headerDisplay: { [k: string]: any } = {};
     if (storedObject['step5']?.data?.equipmentName) {
         headerDisplay[t('common:equipment')] = storedObject['step5']?.data?.equipmentName;
@@ -378,8 +394,9 @@ const PickAndPack: PageComponent = () => {
         }
         headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
     }
+    //#endregion
 
-    // retrieve location, article and qty to propose
+    //#region settings for this module
     useEffect(() => {
         const shouldBePalletized =
             proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
@@ -413,7 +430,9 @@ const PickAndPack: PageComponent = () => {
             setTmpforceLocation(true);
         }
     }, [storedObject]);
+    //#endregion
 
+    //#region global buttons
     const onReset = () => {
         dispatch({
             type: 'DELETE_RF_PROCESS',
@@ -424,6 +443,7 @@ const PickAndPack: PageComponent = () => {
         setShowEmptyLocations(false);
         setShowSimilarLocations(false);
         setTmpforceLocation(forceLocationScan);
+        form.resetFields();
     };
 
     const previousPage = () => {
@@ -437,28 +457,191 @@ const PickAndPack: PageComponent = () => {
         setShowSimilarLocations(false);
         setShowEmptyLocations(false);
         setTmpforceLocation(forceLocationScan);
-    };
-
-    type ButtonManagementType = {
-        label: string;
-        icon?: any;
-        visibleOnSteps: number[];
-        permissionsToSeeTheButton?: boolean; // Optional: if not provided, the button will be visible based on steps only
-        onClick: (e?: any) => void;
-        position: 'top' | 'bottom';
-        style?: React.CSSProperties;
-    }[];
-
-    const handleCancel = () => {
-        setVisible(false);
         form.resetFields();
     };
 
+    const onBack = () => {
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${storedObject.currentStep}`].previousStep}`
+        });
+        form.resetFields();
+    };
+
+    const handleCancel = () => {
+        setVisible(false);
+        missingForm.resetFields();
+    };
+    //#endregion
+
+    //#region specific functions
+    const handlingUnitContentId =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.id;
+    const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
+
+    const [isHuClosureLoading, setIsHuClosureLoading] = useState(false);
+    async function closeHUO(currentShippingPalletId: any) {
+        setIsHuClosureLoading(true);
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'RF_pickAndPack_closeShippingPallet',
+            event: {
+                input: { currentShippingPalletId }
+            }
+        };
+
+        try {
+            const closeHUOsResult = await graphqlRequestClient.request(query, variables);
+            if (closeHUOsResult.executeFunction.status === 'ERROR') {
+                showError(closeHUOsResult.executeFunction.output);
+            } else if (
+                closeHUOsResult.executeFunction.status === 'OK' &&
+                closeHUOsResult.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${closeHUOsResult.executeFunction.output.output.code}`));
+                console.log('Backend_message', closeHUOsResult.executeFunction.output.output);
+            } else {
+                showSuccess(t('messages:hu-ready-to-be-loaded'));
+                const newStoredObject: any = storedObject;
+                if (ignoreHUContentIds.length > 0) {
+                    newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
+                } else {
+                    newStoredObject.ignoreHUContentIds = [];
+                }
+                const { updatedRound } = closeHUOsResult.executeFunction.output.output;
+
+                let remainingHUContentIds = updatedRound.roundAdvisedAddresses
+                    .filter((raa: any) => {
+                        return !newStoredObject.ignoreHUContentIds.includes(
+                            raa.handlingUnitContentId
+                        );
+                    })
+                    .filter((raa: any) => raa.quantity != 0);
+                if (remainingHUContentIds.length === 0) {
+                    newStoredObject.ignoreHUContentIds = [];
+                    remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
+                        (raa: any) => raa.quantity != 0
+                    );
+                }
+
+                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses.filter(
+                    (raa: any) => raa.quantity != 0
+                );
+                const data = {
+                    proposedRoundAdvisedAddresses: roundAdvisedAddresses.filter(
+                        (raa: any) =>
+                            raa.handlingUnitContentId ==
+                            remainingHUContentIds[0].handlingUnitContentId
+                    ),
+                    round: updatedRound,
+                    pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
+                };
+                newStoredObject['currentStep'] = 10;
+                if (storedObject[`step5`]) {
+                    newStoredObject[`step5`] = {
+                        ...storedObject[`step5`]
+                    };
+                }
+                newStoredObject[`step10`] = { previousStep: storedObject[`step5`] ? 5 : 0, data };
+                delete newStoredObject['step10']['data']['currentShippingPallet'];
+                dispatch({
+                    type: 'UPDATE_BY_PROCESS',
+                    processName,
+                    object: newStoredObject
+                });
+            }
+            setIsHuClosureLoading(false);
+        } catch (error) {
+            showError(t('messages:error-updating-data'));
+            console.log('updateHUOsError', error);
+            setIsHuClosureLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        if (triggerNextRaa) {
+            setTriggerNextRaa(false);
+            let newIgnoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
+            let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => {
+                    return !newIgnoreHUContentIds.includes(raa.handlingUnitContentId);
+                })
+                .filter((raa: any) => raa.quantity != 0);
+            if (remainingHUContentIds.length === 0) {
+                newIgnoreHUContentIds = [];
+                remainingHUContentIds = storedObject[
+                    `step10`
+                ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
+            }
+            const newProposedRoundAdvisedAddresses = storedObject[
+                `step10`
+            ]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => raa.quantity != 0)
+                .filter(
+                    (raa: any) =>
+                        raa.handlingUnitContentId ===
+                        remainingHUContentIds[0]?.handlingUnitContentId
+                );
+            setShowSimilarLocations(false);
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step10`,
+                object: {
+                    ...storedObject[`step10`],
+                    data: {
+                        ...storedObject[`step10`]?.data,
+                        proposedRoundAdvisedAddresses: newProposedRoundAdvisedAddresses
+                    }
+                },
+                customFields: [{ key: 'ignoreHUContentIds', value: newIgnoreHUContentIds }]
+            });
+        }
+    }, [triggerNextRaa]);
+
+    const currentShippingPalletId = storedObject?.step10?.data?.round.extraText1 ?? undefined;
+
+    useEffect(() => {
+        if (triggerHuClose) {
+            if (!currentShippingPalletId) {
+                showError(t('messages:no-hu-to-close'));
+                setTriggerHuClose(false);
+            } else {
+                setTriggerHuClose(false);
+                closeHUO(currentShippingPalletId);
+            }
+        }
+    }, [triggerHuClose, currentShippingPalletId]);
+
+    useEffect(() => {
+        if (triggerChangeLocationFromArticle) {
+            dispatch({
+                type: 'ON_BACK',
+                processName: processName,
+                stepToReturn: `step20`
+            });
+            setTriggerChangeLocationFromArticle(false);
+            setTmpforceLocation(true);
+        }
+    }, [triggerChangeLocationFromArticle, currentShippingPalletId]);
+    // #endregion
+
+    //#region missing declaration modal
     const [missingModalConfirmLoading, setMissingModalConfirmLoading] = useState<boolean>(false);
 
     const onClickOk = () => {
         setMissingModalConfirmLoading(true);
-        form.validateFields()
+        missingForm
+            .validateFields()
             .then(async (values) => {
                 console.log('Missing modal form values:', values);
                 const inputToValidate = {
@@ -497,7 +680,7 @@ const PickAndPack: PageComponent = () => {
                 });
 
                 setVisible(false);
-                form.resetFields();
+                missingForm.resetFields();
                 setMissingModalConfirmLoading(false);
             })
             .catch((errorInfo) => {
@@ -522,7 +705,7 @@ const PickAndPack: PageComponent = () => {
                 okText={t('actions:submit')}
                 cancelText={t('actions:cancel')}
             >
-                <Form form={form} layout="vertical" scrollToFirstError size="small">
+                <Form form={missingForm} layout="vertical" scrollToFirstError size="small">
                     <Form.Item
                         label={t('common:quantity')}
                         name="missingQuantity"
@@ -550,11 +733,25 @@ const PickAndPack: PageComponent = () => {
             </Modal>
         );
     };
+    //#endregion
 
+    //#region module buttons
     const buttonManagement: ButtonManagementType = [
         {
+            label: t('actions:submit'),
+            visibleOnSteps: [5, 10, 15, 20, 30, 40, 50, 60, 70, 75, 80],
+            onClick: () => form.submit(),
+            position: 'bottom'
+        },
+        {
+            label: t('actions:close-shipping-hu'),
+            visibleOnSteps: [20],
+            permissionsToSeeTheButton: isHuInProgress,
+            onClick: () => setTriggerHuClose(true),
+            position: 'bottom'
+        },
+        {
             label: t('common:missing-quantity'),
-            icon: null,
             visibleOnSteps: [50],
             permissionsToSeeTheButton: getModesFromPermissions(
                 permissions,
@@ -565,11 +762,61 @@ const PickAndPack: PageComponent = () => {
             },
             position: 'top',
             style: {
-                background: '#d46b08'
+                background: 'radial-gradient(circle, #ff8a1ce8 5%, #f4a261 100%)'
             }
+        },
+        {
+            label: t('common:locations_abbr'),
+            icon: null,
+            visibleOnSteps: [20],
+            permissionsToSeeTheButton: !showSimilarLocations && !showEmptyLocations,
+            onClick: () => {
+                setShowSimilarLocations(true);
+            },
+            position: 'bottom'
+        },
+        {
+            label: t('common:change-location'),
+            visibleOnSteps: [50],
+            permissionsToSeeTheButton: !forceLocationScan && forceArticleScan ? true : false,
+            onClick: () => {
+                setTriggerChangeLocationFromArticle(true);
+            },
+            position: 'bottom'
+        },
+        {
+            label: t('actions:next'),
+            visibleOnSteps: [20, 50],
+            permissionsToSeeTheButton: hasMultipleLocationIds ? true : false,
+            onClick: () => {
+                setTriggerNextRaa(true);
+            },
+            position: 'bottom'
+        },
+        {
+            label: t('actions:back'),
+            visibleOnSteps: [10, 15, 20, 30, 40, 50, 60, 70, 75, 80],
+            permissionsToSeeTheButton:
+                equipmentScanAtPreparation && storedObject['step10'] ? true : false || true,
+            onClick: () => {
+                if (showSimilarLocations) {
+                    setShowSimilarLocations(false);
+                } else {
+                    onBack();
+                }
+            },
+            position: 'bottom'
         }
     ];
+    //#endregion
 
+    //#region reset form on step change
+    useEffect(() => {
+        form.resetFields();
+    }, [storedObject.currentStep]);
+    //#endregion
+
+    //#region RETURN
     return (
         <PageContentWrapper>
             <HeaderContent
@@ -626,7 +873,7 @@ const PickAndPack: PageComponent = () => {
                         <SelectEquipmentForm
                             processName={processName}
                             stepNumber={5}
-                            buttons={{ submitButton: true, backButton: false }}
+                            formToUse={form}
                         ></SelectEquipmentForm>
                     ) : (
                         <></>
@@ -636,7 +883,7 @@ const PickAndPack: PageComponent = () => {
                         <SelectRoundForm
                             processName={processName}
                             stepNumber={10}
-                            buttons={{ submitButton: true, backButton: equipmentScanAtPreparation }}
+                            formToUse={form}
                         ></SelectRoundForm>
                     ) : (
                         <></>
@@ -651,13 +898,10 @@ const PickAndPack: PageComponent = () => {
                             processName={processName}
                             stepNumber={15}
                             label={t('common:handling-unit')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             checkComponent={(data: any) => (
                                 <HandlingUnitChecksWithoutChecks dataToCheck={data} />
                             )}
+                            formToUse={form}
                         ></ScanHandlingUnit>
                     ) : (
                         <></>
@@ -680,21 +924,6 @@ const PickAndPack: PageComponent = () => {
                                       })
                                     : t('common:location')
                             }
-                            triggerAlternativeSubmit1={{
-                                triggerAlternativeSubmit1: triggerHuClose,
-                                setTriggerAlternativeSubmit1: setTriggerHuClose
-                            }}
-                            action1Trigger={{
-                                action1Trigger: triggerNextRaa,
-                                setAction1Trigger: setTriggerNextRaa
-                            }}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true,
-                                alternativeSubmitButton1: isHuInProgress,
-                                locationButton: true,
-                                action1Button: hasMultipleLocationIds
-                            }}
                             enforcedValue={
                                 !tmpForceLocation
                                     ? proposedRoundAdvisedAddress.location?.name ||
@@ -706,6 +935,7 @@ const PickAndPack: PageComponent = () => {
                             showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
                             headerContent={{ headerContent, setHeaderContent }}
                             forceLocation={{ tmpForceLocation, setTmpforceLocation }}
+                            formToUse={form}
                         ></ScanLocation>
                     ) : (
                         <></>
@@ -714,10 +944,10 @@ const PickAndPack: PageComponent = () => {
                         <SelectLocationByLevelForm
                             processName={processName}
                             stepNumber={30}
-                            buttons={{ submitButton: true, backButton: true }}
                             showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                             locations={storedObject['step20'].data.locations}
                             dontAskBeforeLocationChange={dontAskBeforeLocationChange}
+                            formToUse={form}
                         ></SelectLocationByLevelForm>
                     ) : (
                         <></>
@@ -727,14 +957,12 @@ const PickAndPack: PageComponent = () => {
                             processName={processName}
                             stepNumber={40}
                             label={t('common:handling-unit')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             checkComponent={(data: any) => (
                                 <HandlingUnitChecks dataToCheck={data} />
                             )}
                             defaultValue={storedObject['step30'].data.handlingUnit ?? undefined}
+                            scanCarrierBox={false}
+                            formToUse={form}
                         ></ScanHandlingUnit>
                     ) : (
                         <></>
@@ -746,30 +974,12 @@ const PickAndPack: PageComponent = () => {
                             label={t('common:article-var', {
                                 name: `${proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name}`
                             })}
-                            triggerAlternativeSubmit1={{
-                                triggerAlternativeSubmit1: triggerChangeLocationFromArticle,
-                                setTriggerAlternativeSubmit1: setTriggerChangeLocationFromArticle
-                            }}
-                            action1Trigger={{
-                                action1Trigger: triggerNextRaa,
-                                setAction1Trigger: setTriggerNextRaa
-                            }}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true,
-                                alternativeSubmitButton1: !forceLocationScan && forceArticleScan,
-                                action1Button: hasMultipleLocationIds
-                            }}
                             forceArticleScan={forceArticleScan}
                             contents={
                                 storedObject['step40']?.data?.handlingUnit?.handlingUnitContents
                             }
-                            checkComponent={(data: any) => (
-                                <ArticleChecks
-                                    dataToCheck={data}
-                                    setTmpForceLocationScan={setTmpforceLocation}
-                                />
-                            )}
+                            checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
+                            formToUse={form}
                         ></ScanArticleEAN>
                     ) : (
                         <></>
@@ -783,10 +993,6 @@ const PickAndPack: PageComponent = () => {
                             processName={processName}
                             stepNumber={60}
                             label={t('common:feature-code')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             dataInfos={storedObject['step50']?.data}
                             action1Trigger={{
                                 action1Trigger: finishUniqueFeatures,
@@ -800,6 +1006,7 @@ const PickAndPack: PageComponent = () => {
                                 storedObject['step60']?.data?.nextFeatureCode ?? undefined
                             }
                             checkComponent={(data: any) => <FeatureChecks dataToCheck={data} />}
+                            formToUse={form}
                         ></ScanFeature>
                     ) : (
                         <></>
@@ -819,12 +1026,27 @@ const PickAndPack: PageComponent = () => {
                                     0
                                 )}`
                             })}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             initialValueType={quantityDefaultValue}
-                            availableQuantity={Math.min(
+                            requiredMaxQuantity={Math.min(
+                                storedObject['step10'].data.proposedRoundAdvisedAddresses.reduce(
+                                    (total: number, current: any) => total + current.quantity,
+                                    0
+                                ),
+                                storedObject[
+                                    'step40'
+                                ]?.data?.handlingUnit?.handlingUnitContents.find((content: any) =>
+                                    storedObject['step60']?.data.processedFeatures.every(
+                                        (feature_filter: any) =>
+                                            content.handlingUnitContentFeatures.some(
+                                                (feature_content: any) =>
+                                                    feature_content.featureCode.id ===
+                                                        feature_filter.featureCodeId &&
+                                                    feature_content.value === feature_filter.value
+                                            )
+                                    )
+                                )?.quantity
+                            )}
+                            stockMaxQuantity={Math.min(
                                 storedObject['step10'].data.proposedRoundAdvisedAddresses.reduce(
                                     (total: number, current: any) => total + current.quantity,
                                     0
@@ -844,7 +1066,9 @@ const PickAndPack: PageComponent = () => {
                                 )?.quantity
                             )}
                             autoValidate1Quantity={autoValidate1Quantity}
+                            checkRemainingQuantity={checkRemainingQuantity}
                             checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
+                            formToUse={form}
                         ></EnterQuantity_reducer>
                     ) : (
                         <></>
@@ -854,10 +1078,6 @@ const PickAndPack: PageComponent = () => {
                             processName={processName}
                             stepNumber={75}
                             label={t('common:handling-unit-final')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             checkComponent={(data: any) => (
                                 <HandlingUnitOutboundFinalChecks dataToCheck={data} />
                             )}
@@ -866,6 +1086,7 @@ const PickAndPack: PageComponent = () => {
                                     ? 'fullBox'
                                     : undefined
                             }
+                            formToUse={form}
                         ></ScanFinalHandlingUnitOutbound>
                     ) : (
                         <></>
@@ -874,7 +1095,6 @@ const PickAndPack: PageComponent = () => {
                         <SelectHuModelForm
                             processName={processName}
                             stepNumber={80}
-                            buttons={{ submitButton: true, backButton: true }}
                             defaultValue={
                                 isHuInProgress
                                     ? 'huModelExist'
@@ -882,6 +1102,7 @@ const PickAndPack: PageComponent = () => {
                                       ? 'defaultModel'
                                       : undefined
                             }
+                            formToUse={form}
                         ></SelectHuModelForm>
                     ) : (
                         <></>
@@ -890,7 +1111,6 @@ const PickAndPack: PageComponent = () => {
                         <AutoValidatePickAndPackForm
                             processName={processName}
                             stepNumber={90}
-                            buttons={{ submitButton: true, backButton: true }}
                             headerContent={{ setHeaderContent }}
                             toBePalletized={toBePalletizedForBackEnd}
                             autoValidateLoading={{
@@ -907,7 +1127,7 @@ const PickAndPack: PageComponent = () => {
         </PageContentWrapper>
     );
 };
-
+// #endregion
 PickAndPack.layout = MainLayout;
 
 export default PickAndPack;

@@ -19,18 +19,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
 import { useAuth } from 'context/AuthContext';
-import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanPositionProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
     checkComponent: any;
+    buttons?: { [label: string]: any };
     defaultValue?: any;
+    formToUse?: any;
 }
 
 export const ScanPosition = ({
@@ -39,7 +38,8 @@ export const ScanPosition = ({
     label,
     buttons,
     checkComponent,
-    defaultValue
+    defaultValue,
+    formToUse
 }: IScanPositionProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -87,6 +87,7 @@ export const ScanPosition = ({
                 buttons={{ ...buttons }}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
+                formToUse={formToUse}
             ></ScanForm_reducer>
             {checkComponent(dataToCheck)}
         </>

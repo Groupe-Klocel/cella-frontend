@@ -247,7 +247,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
             setLang(
                 queryInfo.warehouseWorkerSettings.results.find(
                     (item: any) => item.code === 'globalParametersMobile'
-                ).valueJson.lang
+                )?.valueJson?.lang ?? router.locale
             );
             dispatchUser({
                 type: 'SWITCH_USER_SETTINGS',

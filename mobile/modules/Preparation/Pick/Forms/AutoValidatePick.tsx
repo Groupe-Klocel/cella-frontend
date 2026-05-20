@@ -30,9 +30,9 @@ import { handlePickProcessResult } from '../Elements/endOfProcessHandling';
 export interface IAutoValidatePickProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
     toBePalletized: boolean;
     autoValidateLoading: { [label: string]: any };
+    buttons?: { [label: string]: any };
 }
 
 export const AutoValidatePickForm = ({
