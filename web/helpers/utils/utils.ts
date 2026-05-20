@@ -578,6 +578,34 @@ const getLanguageCode = (router: any): string => {
     return router.locale?.split('-')[0] || 'en';
 };
 
+const findValueByScopeAndCode = (items: any[], scope: string, code: string) => {
+    return items.find(
+        (item: any) => item.scope === scope && item.code.toLowerCase() === code.toLowerCase()
+    )?.value;
+};
+
+const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+    return items.find(
+        (item: any) => item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+    )?.code;
+};
+
+/** @deprecated: use filterItems instead with exclude option
+ * Helper function to find all items by scope and code
+ */
+const findAllByScope = (items: any[], scope: string) => {
+    return items
+        .filter((item: any) => item.scope === scope)
+        .sort((a, b) => a.code - b.code)
+        .map((item: any) => {
+            return {
+                ...item,
+                code: parseInt(item.code),
+                value: item.value
+            };
+        });
+};
+
 export {
     isNumeric,
     formatDigitsForData,
@@ -627,5 +655,8 @@ export {
     areObjectsIdentical,
     checkUndefinedValues,
     formatFeatures,
-    getLanguageCode
+    getLanguageCode,
+    findValueByScopeAndCode,
+    findCodeByScopeAndValue,
+    findAllByScope
 };

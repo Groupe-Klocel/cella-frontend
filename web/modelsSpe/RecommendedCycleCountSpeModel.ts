@@ -19,28 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
 export function RecommendedCycleCountSpeModel(): [string | null, string, any][] {
-    const genericArticleComment = {
-        isListRequested: true,
-        isDefaultHiddenList: false,
-        isExcludedFromList: false,
-        isSortable: true,
-        searchingFormat: 'String',
-        isDetailRequested: true,
-        isExcludedFromDetail: false,
-        detailGroup: '{"label":"general", "position":0}',
-        link: null,
-        addEditFormat: null,
-        addEditStep: null,
-        maxLength: 70,
-        displayName: 'supplier-article-code',
-        isMandatory: false,
-        minRule: null,
-        maxRule: null,
-        config: null,
-        param: null,
-        defaultSort: null,
-        isEditDisabled: false
-    };
     const extraText1 = {
         isListRequested: true,
         isDefaultHiddenList: false,
@@ -61,8 +39,5 @@ export function RecommendedCycleCountSpeModel(): [string | null, string, any][] 
         config: null,
         param: null
     };
-    return [
-        ['article{name}', 'article{genericArticleComment}', genericArticleComment],
-        ['statusText', 'extraText1', extraText1]
-    ];
+    return [['statusText', 'extraText1', extraText1]];
 }

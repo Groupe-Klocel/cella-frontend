@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { MenuOutlined, SettingOutlined } from '@ant-design/icons';
+import { ExportOutlined, MenuOutlined, SettingOutlined } from '@ant-design/icons';
 import { DrawerItems, Logo, ProfileMenu, UserSettings } from '@components';
 import { Button, Col, Layout, Row, Space } from 'antd';
 import { useAppState, useAppDispatch } from 'context/AppContext';
@@ -170,6 +170,12 @@ const Header: FC<IHeaderProps> = ({ showMenuButton = false, onMenuButtonClick }:
             title: t('menu:settings'),
             icon: <SettingOutlined />,
             onClick: () => setIsSearchDrawerOpen(true)
+        },
+        {
+            key: 'logout',
+            title: t('menu:logout'),
+            icon: <ExportOutlined />,
+            onClick: () => logout()
         }
     ];
 

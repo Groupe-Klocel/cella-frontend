@@ -88,40 +88,48 @@ const HandlingUnitContentsPage: PageComponent = () => {
         })
     };
 
+    const canChangeContent = getModesFromPermissions(
+        permissions,
+        'wm_button_change-content'
+    ).includes(ModeEnum.Read);
+
+    const canDeleteContent = getModesFromPermissions(
+        permissions,
+        'wm_button_delete-content'
+    ).includes(ModeEnum.Read);
+
     const actionButtons: ActionButtons = {
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Update) ? (
                 <>
-                    <>
-                        <span className="selected-span" style={{ marginLeft: 16 }}>
-                            {hasSelected
-                                ? `${t('messages:selected-items-number', {
-                                      number: selectedRows.length
-                                  })}`
-                                : ''}
-                        </span>
-                        <span style={{ marginLeft: 16 }}>
-                            <Button
-                                type="primary"
-                                onClick={() => {
-                                    setShowModal(true);
-                                }}
-                                disabled={!hasSelected}
-                                loading={loading}
-                            >
-                                {t('actions:edit')}
-                            </Button>
-                        </span>
-                        <EditHandlingUnitContentsRenderModal
-                            visible={showModal}
-                            rows={selectedRows}
-                            setRefetch={toggleRefetch}
-                            refetch={refetch}
-                            showhideModal={() => {
-                                setShowModal(!showModal);
+                    <span className="selected-span" style={{ marginLeft: 16 }}>
+                        {hasSelected
+                            ? `${t('messages:selected-items-number', {
+                                  number: selectedRows.length
+                              })}`
+                            : ''}
+                    </span>
+                    <span style={{ marginLeft: 16 }}>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setShowModal(true);
                             }}
-                        />
-                    </>
+                            disabled={!hasSelected}
+                            loading={loading}
+                        >
+                            {t('actions:edit')}
+                        </Button>
+                    </span>
+                    <EditHandlingUnitContentsRenderModal
+                        visible={showModal}
+                        rows={selectedRows}
+                        setRefetch={toggleRefetch}
+                        refetch={refetch}
+                        showhideModal={() => {
+                            setShowModal(!showModal);
+                        }}
+                    />
                 </>
             ) : null
     };
@@ -157,6 +165,13 @@ const HandlingUnitContentsPage: PageComponent = () => {
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}
                 checkbox={true}
+                advancedFilters={[
+                    {
+                        filter: [
+                            { searchType: 'DIFFERENT', field: { handlingUnit_LocationId: null } }
+                        ]
+                    }
+                ]}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -192,7 +207,8 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                 record.handlingUnit_status ==
                                 configs.HANDLING_UNIT_STATUS_VALIDATED*/ &&
                                 record.handlingUnit_category ==
-                                    parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
+                                    parameters.HANDLING_UNIT_CATEGORY_STOCK &&
+                                canChangeContent ? (
                                     <LinkButton
                                         icon={<EditTwoTone />}
                                         path={pathParams(`${rootPath}/edit/[id]`, record.id)}
@@ -222,7 +238,8 @@ const HandlingUnitContentsPage: PageComponent = () => {
                                 record.handlingUnit_status ==
                                     configs.HANDLING_UNIT_STATUS_VALIDATED*/ &&
                                 record.handlingUnit_category ==
-                                    parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
+                                    parameters.HANDLING_UNIT_CATEGORY_STOCK &&
+                                canDeleteContent ? (
                                     <Button
                                         icon={<DeleteOutlined />}
                                         danger

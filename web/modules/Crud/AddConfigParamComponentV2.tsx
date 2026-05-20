@@ -76,7 +76,7 @@ const AddConfigParamComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps
             FormDataType[
                 props.dataModel.fieldsInfo[key].addEditFormat as keyof typeof FormDataType
             ];
-        const languages = ['en', 'fr'];
+        const languages = ['en', 'fr', 'de'];
 
         props.dataModel.fieldsInfo[key].addEditFormat !== null ? (
             (props.dataModel.fieldsInfo[key].isMandatory ? (
