@@ -18,11 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect } from 'react';
-import configs from '../../../../../common/configs.json';
-import parameters from '../../../../../common/parameters.json';
+import { useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IHandlingUnitChecksProps {
@@ -45,6 +43,27 @@ export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitCh
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
+    const { parameters, configs } = useAppState();
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScope = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+        const palletHuType = findCodeByScope(parameters, 'handling_unit_type', 'PALLET');
+        const boxHuType = findCodeByScope(parameters, 'handling_unit_type', 'BOX');
+        const equipmentHuType = parseInt(
+            findCodeByScope(parameters, 'handling_unit_type', 'EQUIPMENT')
+        );
+
+        return {
+            palletHuType,
+            boxHuType,
+            equipmentHuType
+        };
+    }, [parameters, configs]);
     // TYPED SAFE ALL
 
     useEffect(() => {
@@ -53,8 +72,8 @@ export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitCh
             if (!handlingUnitInfos.handlingUnits?.results[0] && isANewHUEquipment) {
                 const type =
                     scannedInfo[0] == '0' || scannedInfo[0] == 'P'
-                        ? parameters.HANDLING_UNIT_TYPE_PALLET
-                        : parameters.HANDLING_UNIT_TYPE_BOX;
+                        ? configsParamsCodes.palletHuType
+                        : configsParamsCodes.boxHuType;
                 data['handlingUnit'] = scannedInfo;
                 data['handlingUnitType'] = type;
                 data['isHUToCreate'] = true;
@@ -73,7 +92,8 @@ export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitCh
                 // Check if handlingUnitOutbounds[0] exists and if the roundId matches
                 if (
                     handlingUnit.handlingUnitOutbounds?.[0] &&
-                    handlingUnit.handlingUnitOutbounds[0].roundId === currentRoundId
+                    handlingUnit.handlingUnitOutbounds[0].roundId === currentRoundId &&
+                    handlingUnit.type === configsParamsCodes.equipmentHuType
                 ) {
                     data['handlingUnit'] = handlingUnit;
                     data['isHUToCreate'] = false;

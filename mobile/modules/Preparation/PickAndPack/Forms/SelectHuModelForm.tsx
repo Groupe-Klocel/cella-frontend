@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, showError } from '@helpers';
+import { showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -36,15 +36,17 @@ import { useAppDispatch, useAppState } from 'context/AppContext';
 export interface ISelectHuModelProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
+    buttons?: { [label: string]: any };
     defaultValue?: any;
+    formToUse?: any;
 }
 
 export const SelectHuModelForm = ({
     processName,
     stepNumber,
     buttons,
-    defaultValue
+    defaultValue,
+    formToUse
 }: ISelectHuModelProps) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
@@ -56,7 +58,7 @@ export const SelectHuModelForm = ({
     const [huModels, setHuModels] = useState<Array<any>>();
 
     //camera scanner section
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState();
 
     useEffect(() => {

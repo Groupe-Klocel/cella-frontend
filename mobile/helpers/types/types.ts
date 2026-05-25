@@ -95,3 +95,13 @@ export type RequireKeys<T, TNames extends keyof T> = T & {
 export type GraphQLResponseType = {
     [key: string]: any;
 };
+
+export type ButtonManagementType = {
+    label: string;
+    icon?: any;
+    visibleOnSteps: number[];
+    permissionsToSeeTheButton?: boolean; // Optional: if not provided, the button will be visible based on steps only
+    onClick: (e?: any) => void;
+    position: 'top' | 'bottom';
+    style?: React.CSSProperties;
+}[];

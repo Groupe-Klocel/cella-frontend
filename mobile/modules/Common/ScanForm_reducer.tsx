@@ -49,6 +49,7 @@ export interface IScanReducerProps {
     mask?: string;
     required?: boolean;
     style?: any;
+    formToUse?: any;
 }
 
 export const ScanForm_reducer = ({
@@ -73,14 +74,15 @@ export const ScanForm_reducer = ({
     setFormData,
     mask,
     required = true,
-    style
+    style,
+    formToUse
 }: IScanReducerProps) => {
     const { t } = useTranslation('common');
     const state = useAppState();
     const dispatch = useAppDispatch();
 
     const storedObject = state[processName] || {};
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState();
 
     // TYPED SAFE ALL

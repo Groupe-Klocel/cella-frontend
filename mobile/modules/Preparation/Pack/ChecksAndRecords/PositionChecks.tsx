@@ -116,13 +116,5 @@ export const PositionChecks = ({
         }
     }, [scannedInfo, handlingUnitOutboundInfos]);
 
-    const onBack = () => {
-        dispatch({
-            type: 'ON_BACK',
-            processName: processName,
-            stepToReturn: `step${getLastStepWithPreviousStep(storedObject)}`
-        });
-    };
-
     return <WrapperForm>{scannedInfo ? <ContentSpin /> : <></>}</WrapperForm>;
 };

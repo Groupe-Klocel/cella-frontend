@@ -19,12 +19,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer, DatePickerForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
 import { Typography } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
-import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
@@ -32,13 +30,14 @@ export interface IScanFeatureProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
     checkComponent: any;
+    buttons?: { [label: string]: any };
     featureType?: any;
     processedFeatures?: any;
     nextFeatureCode?: any;
     action1Trigger?: any;
     dataInfos?: any;
+    formToUse?: any;
 }
 const { Title } = Typography;
 
@@ -63,7 +62,8 @@ export const ScanFeature = ({
     featureType,
     processedFeatures,
     nextFeatureCode,
-    dataInfos
+    dataInfos,
+    formToUse
 }: IScanFeatureProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -179,6 +179,7 @@ export const ScanFeature = ({
                     action1Label={t('common:finish-features-entry')}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
+                    formToUse={formToUse}
                 ></ScanForm_reducer>
             ) : (
                 <DatePickerForm_reducer
@@ -188,6 +189,7 @@ export const ScanFeature = ({
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
+                    formToUse={formToUse}
                 ></DatePickerForm_reducer>
             )}
             {checkComponent(dataToCheck)}

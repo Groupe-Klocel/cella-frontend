@@ -366,7 +366,10 @@ const CycleCounts: PageComponent = () => {
                     buttons={{ submitButton: true, backButton: true }}
                     defaultValue={
                         storedObject['step40']?.data?.resType !== 'serialNumber'
-                            ? 'N/A'
+                            ? storedObject['step40']?.data.handlingUnitContent == 'isHucToCreate' &&
+                              storedObject['step40']?.data.article?.featureType
+                                ? undefined
+                                : 'N/A'
                             : (storedObject['step40']?.data.feature?.featureCode ?? undefined)
                     }
                 ></SelectFeatureCodeForm>
