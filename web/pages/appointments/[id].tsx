@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-import { AppHead, LinkButton, SinglePrintModalV2 } from '@components';
+import { AppHead, LinkButton, SinglePrintDocumentSetModal } from '@components';
 import { getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useMemo, useState } from 'react';
@@ -344,7 +344,7 @@ const AppointmentPage: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    <SinglePrintModalV2
+                    <SinglePrintDocumentSetModal
                         showModal={{
                             showSinglePrintModal,
                             setShowSinglePrintModal
