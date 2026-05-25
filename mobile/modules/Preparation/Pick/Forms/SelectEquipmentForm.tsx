@@ -30,13 +30,15 @@ import { round } from 'lodash';
 export interface ISelectEquipementProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
+    buttons?: { [label: string]: any };
+    formToUse?: any;
 }
 
 export const SelectEquipmentForm = ({
     processName,
     stepNumber,
-    buttons
+    buttons,
+    formToUse
 }: ISelectEquipementProps) => {
     const { graphqlRequestClient, user } = useAuth();
     const { t } = useTranslation();
@@ -49,7 +51,7 @@ export const SelectEquipmentForm = ({
     const [equipments, setEquipments] = useState<any[]>([]);
 
     //camera scanner section
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState();
 
     useEffect(() => {

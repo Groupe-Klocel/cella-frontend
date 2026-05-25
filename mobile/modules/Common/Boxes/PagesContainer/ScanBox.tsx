@@ -19,9 +19,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useBoxes } from '@helpers';
-import { LsIsSecured, getLanguageCode } from '@helpers';
+import { LsIsSecured } from '@helpers';
 import { useRouter } from 'next/router';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 export interface IScanBoxProps {
     process: string;
@@ -40,12 +41,13 @@ export const ScanBox = ({
     buttons,
     checkComponent
 }: IScanBoxProps) => {
+    const { graphqlRequestClient } = useAuth();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [scannedInfo, setScannedInfo] = useState<string>();
+    const [handlingUnitOutboundInfos, setHandlingUnitOutboundInfos] = useState<any>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const router = useRouter();
-    const filteredLanguage = getLanguageCode(router);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -59,13 +61,149 @@ export const ScanBox = ({
         storage.set(process, JSON.stringify(storedObject));
     }, []);
 
-    const boxesInfos = useBoxes({ name: `${scannedInfo}` }, 1, 100, null, filteredLanguage);
+    const getHUO = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
+        if (scannedInfo) {
+            const query = gql`
+                query handlingUnitOutbounds(
+                    $advancedFilters: [HandlingUnitOutboundAdvancedSearchFilters!]
+                ) {
+                    handlingUnitOutbounds(advancedFilters: $advancedFilters) {
+                        count
+                        itemsPerPage
+                        totalPages
+                        results {
+                            id
+                            name
+                            status
+                            statusText
+                            preparationMode
+                            preparationModeText
+                            theoriticalWeight
+                            carrier {
+                                id
+                                name
+                            }
+                            carrierShippingModeId
+                            carrierShippingMode {
+                                id
+                                toBePalletized
+                                shippingMode
+                                carrier {
+                                    name
+                                }
+                            }
+                            deliveryId
+                            delivery {
+                                id
+                                name
+                                carrierShippingMode {
+                                    carrierId
+                                    carrier {
+                                        id
+                                        name
+                                    }
+                                }
+                            }
+                            handlingUnitModelId
+                            handlingUnitModel {
+                                id
+                                name
+                                weight
+                                closureWeight
+                            }
+                            roundId
+                            round {
+                                id
+                                name
+                            }
+                            loadId
+                            load {
+                                id
+                                name
+                            }
+                            handlingUnitId
+                            handlingUnit {
+                                id
+                                name
+                                type
+                                typeText
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                                status
+                                statusText
+                                warehouseCode
+                                parentHandlingUnitId
+                            }
+                            handlingUnitContentOutbounds {
+                                id
+                                lineNumber
+                                status
+                                statusText
+                                pickedQuantity
+                                quantityToBePicked
+                                pickingLocationId
+                                pickingLocation {
+                                    id
+                                    name
+                                }
+                                handlingUnitContentId
+                                handlingUnitContent {
+                                    id
+                                    articleId
+                                    article {
+                                        id
+                                        name
+                                        description
+                                        stockOwnerId
+                                        stockOwner {
+                                            name
+                                        }
+                                        baseUnitWeight
+                                    }
+                                }
+                            }
+                            createdBy
+                            created
+                            modifiedBy
+                            modified
+                            extras
+                        }
+                    }
+                }
+            `;
+
+            const variables = {
+                advancedFilters: {
+                    filter: [
+                        { searchType: 'EQUAL', field: { handlingUnit_Barcode: scannedInfo } },
+                        { searchType: 'EQUAL', field: { carrierBox: scannedInfo } }
+                    ]
+                }
+            };
+            const handlingUnitOutboundInfos = await graphqlRequestClient.request(query, variables);
+            return handlingUnitOutboundInfos;
+        }
+    };
+
+    useEffect(() => {
+        if (scannedInfo) {
+            const fetchData = async () => {
+                const dataHUO = await getHUO(scannedInfo);
+                const data = { data: { ...dataHUO } };
+                setHandlingUnitOutboundInfos(data);
+            };
+            fetchData();
+            setTriggerRender(!triggerRender);
+        }
+    }, [scannedInfo]);
 
     const dataToCheck = {
         process,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
-        boxesInfos,
+        boxesInfos: handlingUnitOutboundInfos,
         trigger: { triggerRender, setTriggerRender },
         setResetForm
     };

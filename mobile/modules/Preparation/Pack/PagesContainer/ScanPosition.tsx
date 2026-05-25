@@ -25,10 +25,11 @@ export interface IScanPositionProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
     checkComponent: any;
+    buttons?: { [label: string]: any };
     defaultValue?: any;
     enforcedValue?: any;
+    formToUse?: any;
 }
 
 export const ScanPosition = ({
@@ -38,7 +39,8 @@ export const ScanPosition = ({
     buttons,
     checkComponent,
     defaultValue,
-    enforcedValue
+    enforcedValue,
+    formToUse
 }: IScanPositionProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -90,6 +92,7 @@ export const ScanPosition = ({
                 buttons={{ ...buttons }}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
+                formToUse={formToUse}
             ></ScanForm_reducer>
             {checkComponent(dataToCheck)}
         </>

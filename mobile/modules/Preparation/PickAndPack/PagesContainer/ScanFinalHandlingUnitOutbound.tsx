@@ -19,7 +19,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
@@ -28,9 +27,10 @@ export interface IScanFinalHandlingUnitOutboundProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
     checkComponent: any;
     defaultValue?: any;
+    buttons?: { [label: string]: any };
+    formToUse?: any;
 }
 
 export const ScanFinalHandlingUnitOutbound = ({
@@ -39,7 +39,8 @@ export const ScanFinalHandlingUnitOutbound = ({
     label,
     buttons,
     checkComponent,
-    defaultValue
+    defaultValue,
+    formToUse
 }: IScanFinalHandlingUnitOutboundProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -136,6 +137,7 @@ export const ScanFinalHandlingUnitOutbound = ({
                 buttons={{ ...buttons }}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
+                formToUse={formToUse}
             ></ScanForm_reducer>
             {checkComponent(dataToCheck)}
         </>

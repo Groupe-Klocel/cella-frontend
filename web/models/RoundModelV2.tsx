@@ -207,7 +207,7 @@ export const RoundModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: null,
+            searchingFormat: 'String',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
@@ -486,7 +486,7 @@ export const RoundModelV2: ModelType = {
         },
         nbBox: {
             isListRequested: true,
-            isDefaultHiddenList: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
             searchingFormat: null,

@@ -23,9 +23,9 @@ import { WrapperForm, StyledForm, StyledFormItem } from '@components';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useRef, useState } from 'react';
-import configs from '../../../../../common/configs.json';
-import parameters from '../../../../../common/parameters.json';
+import { useEffect, useMemo, useRef, useState } from 'react';
+// import configs from '../../../../../common/configs.json';
+// import parameters from '../../../../../common/parameters.json';
 import { ParametersQuery, useParametersQuery } from 'generated/graphql';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
@@ -34,12 +34,12 @@ import { EnterNumberForm } from 'modules/Common/EnterNumberForm_reducer';
 export interface IReviewHuModelWeightProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
+    buttons?: { [label: string]: any };
     checkComponent: any;
     currentHuo: any;
     defaultValue?: any;
     initialControlState?: boolean | null;
-    triggerAlternativeSubmit1?: any;
+    formToUse?: any;
 }
 
 export const ReviewHuModelWeightForm = ({
@@ -49,8 +49,7 @@ export const ReviewHuModelWeightForm = ({
     checkComponent,
     currentHuo,
     defaultValue,
-    initialControlState,
-    triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 }
+    formToUse
 }: IReviewHuModelWeightProps) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
@@ -58,16 +57,76 @@ export const ReviewHuModelWeightForm = ({
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
     const inputNumberRef: any = useRef(null);
+    const { parameters, configs } = useAppState();
 
     const [huModels, setHuModels] = useState<Array<any>>();
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [enteredWeightInfo, setEnteredWeightInfo] = useState<number>();
+
+    const configsParamsCodes = useMemo(() => {
+        const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+
+        const inProgressHuModelStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'handling_unit_model_status', 'In progress')
+        );
+
+        const equipmentHuType = parseInt(
+            findCodeByScopeAndValue(parameters, 'handling_unit_type', 'EQUIPMENT')
+        );
+
+        const palletHuType = parseInt(
+            findCodeByScopeAndValue(parameters, 'handling_unit_type', 'PALLET')
+        );
+
+        const inboundOutboundHuModelCategory = parseInt(
+            findCodeByScopeAndValue(parameters, 'handling_unit_model_category', 'Inbound/Outbound')
+        );
+
+        const outboundHuModelCategory = parseInt(
+            findCodeByScopeAndValue(parameters, 'handling_unit_model_category', 'Outbound')
+        );
+
+        const outboundStockHuModelCategory = parseInt(
+            findCodeByScopeAndValue(parameters, 'handling_unit_model_category', 'Outbound/Stock')
+        );
+
+        const InboundOutBoundStockModelCategory = parseInt(
+            findCodeByScopeAndValue(
+                parameters,
+                'handling_unit_model_category',
+                'Inbound/Stock/Outbound'
+            )
+        );
+
+        return {
+            inProgressHuModelStatus,
+            equipmentHuType,
+            palletHuType,
+            inboundOutboundHuModelCategory,
+            outboundHuModelCategory,
+            outboundStockHuModelCategory,
+            InboundOutBoundStockModelCategory
+        };
+    }, [parameters, configs]);
 
     //query hums
     const getHUMs = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
-            query handlingUnitModels($filters: HandlingUnitModelSearchFilters) {
-                handlingUnitModels(filters: $filters) {
+            query handlingUnitModels(
+                $filters: HandlingUnitModelSearchFilters
+                $advancedFilters: [HandlingUnitModelAdvancedSearchFilters!]
+                $itemsPerPage: Int!
+            ) {
+                handlingUnitModels(
+                    filters: $filters
+                    advancedFilters: $advancedFilters
+                    itemsPerPage: $itemsPerPage
+                ) {
                     results {
                         id
                         name
@@ -94,20 +153,23 @@ export const ReviewHuModelWeightForm = ({
 
         const variables = {
             filters: {
-                status: [configs.HANDLING_UNIT_MODEL_STATUS_IN_PROGRESS],
+                status: [configsParamsCodes.inProgressHuModelStatus],
                 category: [
-                    parameters['HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND'],
-                    parameters['HANDLING_UNIT_MODEL_CATEGORY_INBOUND/OUTBOUND'],
-                    parameters['HANDLING_UNIT_MODEL_CATEGORY_OUTBOUND/STOCK'],
-                    parameters['HANDLING_UNIT_MODEL_CATEGORY_INBOUND/STOCK/OUTBOUND']
+                    configsParamsCodes.inboundOutboundHuModelCategory,
+                    configsParamsCodes.outboundHuModelCategory,
+                    configsParamsCodes.outboundStockHuModelCategory,
+                    configsParamsCodes.InboundOutBoundStockModelCategory
                 ]
             },
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
+            advancedFilters: {
+                filter: [
+                    { searchType: 'DIFFERENT', field: { type: configsParamsCodes.equipmentHuType } }
+                ]
+            },
+            itemsPerPage: 10000
         };
-        const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
-        return handlingUnitInfos;
+        const huModelInfos = await graphqlRequestClient.request(query, variables);
+        return huModelInfos;
     };
 
     //Pre-requisite: initialize current step
@@ -127,7 +189,7 @@ export const ReviewHuModelWeightForm = ({
                     const huModels = await getHUMs();
                     if (huModels) {
                         defaultValueToSend = huModels.handlingUnitModels.results.find(
-                            (e: any) => e.type === parameters.HANDLING_UNIT_TYPE_PALLET
+                            (e: any) => e.type === configsParamsCodes.palletHuType
                         );
                     }
                 } else {
@@ -193,8 +255,7 @@ export const ReviewHuModelWeightForm = ({
         huModel: huModelsList?.find((e: any) => {
             return e.id == form.getFieldValue('huModel');
         }),
-        enteredInfo: { enteredWeightInfo, setEnteredWeightInfo },
-        triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 }
+        enteredInfo: { enteredWeightInfo, setEnteredWeightInfo }
     };
 
     return (
@@ -248,13 +309,9 @@ export const ReviewHuModelWeightForm = ({
                 initialValue={currentHuo?.theoriticalWeight ?? undefined}
                 isSelected={true}
                 isCommentDisplayed={false}
-                triggerAlternativeSubmit1={{
-                    triggerAlternativeSubmit1,
-                    setTriggerAlternativeSubmit1
-                }}
-                alternativeSubmitLabel1={t('actions:enforce-control')}
                 autoFocus={false}
                 inputNumberRef={inputNumberRef}
+                formToUse={form}
             ></EnterNumberForm>
             {checkComponent(dataToCheck)}
         </>

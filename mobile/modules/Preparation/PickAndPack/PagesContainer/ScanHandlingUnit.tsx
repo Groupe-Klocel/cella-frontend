@@ -29,9 +29,11 @@ export interface IScanHandlingUnitProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
     checkComponent: any;
+    buttons?: { [label: string]: any };
     defaultValue?: any;
+    scanCarrierBox?: boolean;
+    formToUse?: any;
 }
 
 export const ScanHandlingUnit = ({
@@ -40,7 +42,9 @@ export const ScanHandlingUnit = ({
     label,
     buttons,
     checkComponent,
-    defaultValue
+    defaultValue,
+    scanCarrierBox = true,
+    formToUse
 }: IScanHandlingUnitProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -113,8 +117,8 @@ export const ScanHandlingUnit = ({
     const getHU = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
             const query = gql`
-                query handlingUnits($filters: HandlingUnitSearchFilters) {
-                    handlingUnits(filters: $filters) {
+                query handlingUnits($advancedFilters: [HandlingUnitAdvancedSearchFilters!]) {
+                    handlingUnits(advancedFilters: $advancedFilters) {
                         count
                         itemsPerPage
                         totalPages
@@ -192,7 +196,20 @@ export const ScanHandlingUnit = ({
             `;
 
             const variables = {
-                filters: { barcode: [`${scannedInfo}`], locationId: chosenLocation?.id }
+                advancedFilters: [
+                    {
+                        filter: scanCarrierBox
+                            ? [
+                                  { searchType: 'EQUAL', field: { barcode: scannedInfo } },
+                                  {
+                                      searchType: 'EQUAL',
+                                      field: { handlingUnitOutbound_CarrierBox: scannedInfo }
+                                  }
+                              ]
+                            : { searchType: 'EQUAL', field: { barcode: scannedInfo } }
+                    },
+                    { filter: { searchType: 'EQUAL', field: { locationId: chosenLocation?.id } } }
+                ]
             };
             const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitInfos;
@@ -226,6 +243,7 @@ export const ScanHandlingUnit = ({
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
+                    formToUse={formToUse}
                 ></ScanForm_reducer>
                 {checkComponent(dataToCheck)}
             </>

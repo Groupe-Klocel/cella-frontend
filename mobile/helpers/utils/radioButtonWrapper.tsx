@@ -19,7 +19,7 @@ import React, { ReactNode } from 'react';
 import { Button } from 'antd';
 import { WrapperButtons, StyledButton } from '@components';
 
-interface ButtonConfig {
+export interface ButtonConfig {
     label: string;
     icon?: any;
     visibleOnSteps: number[];
@@ -65,8 +65,8 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
 
     const buttonStyle: React.CSSProperties = {
         boxShadow: 'inset 0px 1px 0px 0px #f2c794',
-        background: '#d46b08',
-        border: '1px solid #b8530a',
+        background: 'radial-gradient(circle, #f5c73d 70%, #f4a261 100%)',
+        border: '1px solid #f5c73d',
         color: '#000000',
         fontSize: '10px',
         maxWidth: '25%',
@@ -83,7 +83,7 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
         .custom-button:active {
             transform: translateY(1px) !important;
             box-shadow: inset 0px 2px 4px 0px rgba(0,0,0,0.3) !important;
-            background: #c2610a !important;
+            background:  #f5c73d !important;
         }
     `;
 
@@ -113,6 +113,7 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
                             key={`bottom-${index}`}
                             icon={button.icon}
                             onClick={button.onClick}
+                            className="custom-button"
                             style={button.style ? { ...buttonStyle, ...button.style } : buttonStyle}
                         >
                             {button.label}

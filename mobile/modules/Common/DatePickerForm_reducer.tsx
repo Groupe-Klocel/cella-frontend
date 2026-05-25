@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, getLanguageCode } from '@helpers';
+import { getLanguageCode } from '@helpers';
 import { Form, DatePicker } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
@@ -49,6 +49,7 @@ export interface IDatePickerReducerProps {
     action1Label?: any;
     action1Trigger?: any;
     initValue?: string;
+    formToUse?: any;
 }
 
 export const DatePickerForm_reducer = ({
@@ -67,13 +68,14 @@ export const DatePickerForm_reducer = ({
     alternativeSubmitLabel1,
     action1Label,
     action1Trigger,
-    initValue
+    initValue,
+    formToUse
 }: IDatePickerReducerProps) => {
     const { t } = useTranslation('common');
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState();
     const router = useRouter();
     const filteredLanguage = getLanguageCode(router);

@@ -18,21 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton, NumberOfPrintsModalV2 } from '@components';
-import {
-    BarcodeOutlined,
-    DeleteOutlined,
-    EditTwoTone,
-    EyeTwoTone,
-    LockTwoTone,
-    DownloadOutlined
-} from '@ant-design/icons';
-import {
-    pathParams,
-    getModesFromPermissions,
-    pathParamsFromDictionary,
-    showError,
-    showSuccess
-} from '@helpers';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
+import { getModesFromPermissions, pathParamsFromDictionary, DeliveryExtrasModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
@@ -41,17 +28,14 @@ import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListCompo
 import { DeliveryAddressModelV2 } from '@helpers';
 import { DeliveryLineModelV2 } from '@helpers';
 import { HandlingUnitOutboundModelV2 } from '@helpers';
-import { DocumentAttachmentModelV2 } from 'models/DocumentAttachmentModelV2';
 import configs from '../../../../common/configs.json';
 import { useEffect, useState } from 'react';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 import { BoxesManualAllocationModal } from '../Forms/BoxesManualAllocationModal';
-import { AddDocumentsModal } from 'components/common/AddDocumentsModal';
-import { useAuth } from 'context/AuthContext';
-import { gql } from 'graphql-request';
-
-const { Title } = Typography;
+import { DocumentAttachedListComponent } from 'components/common/DocumentAttachedListComponent';
+import parameters from '../../../../common/parameters.json';
+import { DeliveryExtrasListComponent } from './DeliveryExtrasListComponent';
 
 export interface IItemDetailsProps {
     deliveryId?: string | any;
@@ -63,6 +47,7 @@ export interface IItemDetailsProps {
     refetchHUO?: any;
     setRefetchHUO?: any;
     setDocumentAttachmentsData?: any;
+    isExtrasDisplayed?: boolean | any;
 }
 
 const DeliveryDetailsExtra = ({
@@ -74,11 +59,11 @@ const DeliveryDetailsExtra = ({
     setShippingAddress,
     refetchHUO,
     setRefetchHUO,
-    setDocumentAttachmentsData
+    setDocumentAttachmentsData,
+    isExtrasDisplayed
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const { permissions } = useAppState();
-    const { graphqlRequestClient } = useAuth();
     const boxesModes = getModesFromPermissions(permissions, HandlingUnitOutboundModelV2.tableName);
     const [idToDeleteAddress, setIdToDeleteAddress] = useState<string | undefined>();
     const [idToDisableAddress, setIdToDisableAddress] = useState<string | undefined>();
@@ -86,8 +71,9 @@ const DeliveryDetailsExtra = ({
     const [idToDisableLine, setIdToDisableLine] = useState<string | undefined>();
     const [idToDeleteBox, setIdToDeleteBox] = useState<string | undefined>();
     const [idToDisableBox, setIdToDisableBox] = useState<string | undefined>();
-    const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
-    const [refetchTrigger, setRefetchTrigger] = useState(false);
+    const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [idToDelete, setIdToDelete] = useState<string | undefined>();
+    const deliveryModes = getModesFromPermissions(permissions, Table.Delivery);
     const deliveryAddressModes = getModesFromPermissions(permissions, Table.DeliveryAddress);
     const deliveryLineModes = getModesFromPermissions(permissions, Table.DeliveryLine);
     const huOutboundModes = getModesFromPermissions(permissions, Table.HandlingUnitOutbound);
@@ -175,6 +161,12 @@ const DeliveryDetailsExtra = ({
         actionsComponent: null
     };
 
+    const shippingUnitHeaderData: HeaderData = {
+        title: t('common:associated', { name: t('common:shipping-units') }),
+        routes: [],
+        actionsComponent: null
+    };
+
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
         return () => {
             Modal.confirm({
@@ -195,75 +187,7 @@ const DeliveryDetailsExtra = ({
         actionsComponent: null
     };
 
-    // header RELATED to Documents
     const canModifyDelivery = deliveryStatus < configs.DELIVERY_STATUS_DISPATCHED;
-    const deliveryDocumentsHeaderData: HeaderData = {
-        title: `${t('common:documents')}`,
-        routes: [],
-        actionsComponent: canModifyDelivery ? (
-            <Button type="primary" onClick={() => setShowAddDocumentModal(true)}>
-                {t('actions:add')}
-            </Button>
-        ) : null
-    };
-
-    // Fonction pour refetch les données
-    const handleRefetch = () => {
-        setRefetchTrigger((prev) => !prev);
-    };
-
-    // Fonction pour télécharger un document
-    const downloadDocument = (base64Data: string, fileName: string, fileType: string) => {
-        try {
-            const byteCharacters = window.atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: fileType });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Error downloading document:', error);
-            showError(t('messages:error-downloading-document'));
-        }
-    };
-
-    // Fonction pour supprimer un document
-    const removeDocument = async (documentId: string, documentName: string) => {
-        Modal.confirm({
-            title: t('messages:delete-confirm'),
-            onOk: async () => {
-                try {
-                    const mutation = gql`
-                        mutation deleteDocumentAttachment($id: String!) {
-                            deleteDocumentAttachment(id: $id)
-                        }
-                    `;
-
-                    const variables = {
-                        id: documentId
-                    };
-
-                    await graphqlRequestClient.request(mutation, variables);
-                    showSuccess(t('messages:success-deleted'));
-                    handleRefetch();
-                } catch (error) {
-                    console.error('Error deleting document:', error);
-                    showError(t('messages:error-deleting-data'));
-                }
-            },
-            okText: t('messages:confirm'),
-            cancelText: t('messages:cancel')
-        });
-    };
 
     const boxesActionButtons: ActionButtons = {
         actionsComponent:
@@ -289,18 +213,23 @@ const DeliveryDetailsExtra = ({
                                 {t('actions:print')}
                             </Button>
                         </span>
-                        <span style={{ marginLeft: 16 }}>
-                            <Button
-                                type="primary"
-                                onClick={() => {
-                                    setShowBoxesManualAllocationModal(true);
-                                }}
-                                disabled={!hasSelected || !boxesCommonStatus}
-                                loading={loading}
-                            >
-                                {t('actions:manual-allocation')}
-                            </Button>
-                        </span>
+                        {getModesFromPermissions(
+                            permissions,
+                            'wm_button_manual-allocation'
+                        ).includes(ModeEnum.Read) ? (
+                            <span style={{ marginLeft: 16 }}>
+                                <Button
+                                    type="primary"
+                                    onClick={() => {
+                                        setShowBoxesManualAllocationModal(true);
+                                    }}
+                                    disabled={!hasSelected || !boxesCommonStatus}
+                                    loading={loading}
+                                >
+                                    {t('actions:manual-allocation')}
+                                </Button>
+                            </span>
+                        ) : null}
                     </>
                 </>
             ) : null
@@ -308,6 +237,25 @@ const DeliveryDetailsExtra = ({
 
     return (
         <>
+            {deliveryModes.length > 0 &&
+            deliveryModes.includes(ModeEnum.Read) &&
+            isExtrasDisplayed ? (
+                <>
+                    <DeliveryExtrasListComponent
+                        searchCriteria={{ id: deliveryId }}
+                        deliveryId={deliveryId}
+                        deliveryName={deliveryName}
+                        canModify={canModifyDelivery}
+                        dataModel={DeliveryExtrasModelV2}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        searchable={false}
+                        refresh={true}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
             {deliveryAddressModes.length > 0 && deliveryAddressModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
@@ -526,7 +474,7 @@ const DeliveryDetailsExtra = ({
                         ]}
                         searchable={false}
                         setData={setDeliveryLinesData}
-                        sortDefault={[{ field: 'created', ascending: true }]}
+                        sortDefault={[{ field: 'lineNumber', ascending: true }]}
                     />
                 </>
             ) : (
@@ -544,7 +492,10 @@ const DeliveryDetailsExtra = ({
                         resetSelection={boxesResetSelection}
                     />
                     <ListComponent
-                        searchCriteria={{ deliveryId: deliveryId }}
+                        searchCriteria={{
+                            deliveryId: deliveryId,
+                            handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_BOX
+                        }}
                         dataModel={HandlingUnitOutboundModelV2}
                         headerData={huOutboundHeaderData}
                         actionButtons={boxesActionButtons}
@@ -622,52 +573,99 @@ const DeliveryDetailsExtra = ({
                     />
                     <Divider />
                     <ListComponent
-                        searchCriteria={{ objectId: deliveryId, objectName: 'Delivery' }}
-                        dataModel={DocumentAttachmentModelV2}
-                        headerData={deliveryDocumentsHeaderData}
-                        setData={setDocumentAttachmentsData}
+                        searchCriteria={{
+                            handlingUnit_ChildrenHandlingUnit_HandlingUnitOutbound_DeliveryId:
+                                deliveryId,
+                            deliveryId: '**null**',
+                            handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_PALLET
+                        }}
+                        dataModel={HandlingUnitOutboundModelV2}
+                        headerData={shippingUnitHeaderData}
+                        rowSelection={boxRowSelection}
+                        checkbox={true}
+                        triggerDelete={{
+                            idToDelete: idToDeleteBox,
+                            setIdToDelete: setIdToDeleteBox
+                        }}
+                        triggerSoftDelete={{
+                            idToDisable: idToDisableBox,
+                            setIdToDisable: setIdToDisableBox
+                        }}
+                        routeDetailPage={'/deliveries/detail/:id'}
                         actionColumns={[
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (record: {
-                                    id: string;
-                                    name: string;
-                                    filename: string;
-                                    fileContent: string;
-                                    extras?: { fullFileType: string };
-                                }) => (
+                                render: (record: { id: string; status: number }) => (
                                     <Space>
-                                        <Button
-                                            icon={<DownloadOutlined />}
-                                            onClick={() =>
-                                                downloadDocument(
-                                                    record.fileContent,
-                                                    record.filename || record.name,
-                                                    record.extras?.fullFileType ||
-                                                        'application/octet-stream'
-                                                )
-                                            }
-                                            title={t('actions:download')}
-                                        />
-                                        {canModifyDelivery && (
-                                            <Button
-                                                icon={<DeleteOutlined />}
-                                                danger
-                                                onClick={() =>
-                                                    removeDocument(record.id, record.name)
-                                                }
-                                                title={t('actions:delete')}
+                                        {huOutboundModes.length == 0 ||
+                                        !huOutboundModes.includes(ModeEnum.Read) ? (
+                                            <></>
+                                        ) : (
+                                            <>
+                                                <LinkButton
+                                                    icon={<EyeTwoTone />}
+                                                    path={pathParamsFromDictionary(
+                                                        '/shipping-units/[id]',
+                                                        {
+                                                            id: record.id
+                                                        }
+                                                    )}
+                                                />
+                                            </>
+                                        )}
+                                        {huOutboundModes.length > 0 &&
+                                        huOutboundModes.includes(ModeEnum.Update) &&
+                                        HandlingUnitOutboundModelV2.isEditable &&
+                                        record?.status <
+                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
+                                            <LinkButton
+                                                icon={<EditTwoTone />}
+                                                path={pathParamsFromDictionary(
+                                                    '/shipping-units/edit/[id]',
+                                                    {
+                                                        id: record.id,
+                                                        deliveryId,
+                                                        deliveryName
+                                                    }
+                                                )}
                                             />
+                                        ) : (
+                                            <></>
+                                        )}
+                                        {huOutboundModes.length > 0 &&
+                                        huOutboundModes.includes(ModeEnum.Delete) &&
+                                        HandlingUnitOutboundModelV2.isSoftDeletable &&
+                                        statusForCancelation.HUO.includes(record?.status) ? (
+                                            <Button
+                                                icon={<LockTwoTone twoToneColor="#ffbbaf" />}
+                                                onClick={() =>
+                                                    confirmAction(
+                                                        record.id,
+                                                        setIdToDisableBox,
+                                                        'disable'
+                                                    )()
+                                                }
+                                            ></Button>
+                                        ) : (
+                                            <></>
                                         )}
                                     </Space>
                                 )
                             }
                         ]}
                         searchable={false}
-                        triggerDelete={undefined}
-                        triggerSoftDelete={undefined}
-                        refetch={refetchTrigger}
+                        refetch={refetchHUO}
+                        setData={setHandlingUnitOutboundsData}
+                        sortDefault={[{ field: 'created', ascending: true }]}
+                    />
+                    <Divider />
+                    <DocumentAttachedListComponent
+                        objectId={deliveryId}
+                        objectName="Delivery"
+                        objectData={{ id: deliveryId, name: deliveryName }}
+                        canModify={canModifyDelivery}
+                        setData={setDocumentAttachmentsData}
                     />
                     <NumberOfPrintsModalV2
                         showModal={{
@@ -680,17 +678,6 @@ const DeliveryDetailsExtra = ({
                 </>
             ) : (
                 <></>
-            )}
-            {deliveryId && (
-                <AddDocumentsModal
-                    showModal={{
-                        showAddDocumentModal,
-                        setShowAddDocumentModal
-                    }}
-                    objectType="Delivery"
-                    objectData={{ id: deliveryId, name: deliveryName }}
-                    refetch={handleRefetch}
-                />
             )}
         </>
     );

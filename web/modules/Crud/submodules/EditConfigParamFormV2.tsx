@@ -109,10 +109,13 @@ export const EditConfigParamForm: FC<IEditItemFormProps> = (props: IEditItemForm
             .then(() => {
                 const formData = form.getFieldsValue(true);
                 const translation =
-                    !formData.en && !formData.fr ? null : { en: formData.en, fr: formData.fr };
+                    !formData.en && !formData.fr && !formData.de
+                        ? null
+                        : { en: formData.en, fr: formData.fr, de: formData.de };
                 formData['translation'] = translation;
                 delete formData['en'];
                 delete formData['fr'];
+                delete formData['de'];
                 mutate({
                     id: props.id,
                     input: { ...formData }
@@ -128,7 +131,8 @@ export const EditConfigParamForm: FC<IEditItemFormProps> = (props: IEditItemForm
         const tmp_details = {
             ...props.details,
             en: props?.details?.translation?.en,
-            fr: props?.details?.translation?.fr
+            fr: props?.details?.translation?.fr,
+            de: props?.details?.translation?.de
         };
 
         if (props.editSteps.length > 0) {

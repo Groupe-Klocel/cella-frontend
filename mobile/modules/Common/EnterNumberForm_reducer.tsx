@@ -42,6 +42,7 @@ export interface IEnterNumberFormProps {
     style?: any;
     autoFocus?: boolean;
     inputNumberRef?: any;
+    formToUse?: any;
 }
 
 export const EnterNumberForm = ({
@@ -60,13 +61,14 @@ export const EnterNumberForm = ({
     triggerAlternativeSubmit1,
     style,
     autoFocus,
-    inputNumberRef
+    inputNumberRef,
+    formToUse
 }: IEnterNumberFormProps) => {
     const { t } = useTranslation('common');
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
 
     // TYPED SAFE ALL
     //EnterNumberForm-1a: retrieve chosen level from select and set information

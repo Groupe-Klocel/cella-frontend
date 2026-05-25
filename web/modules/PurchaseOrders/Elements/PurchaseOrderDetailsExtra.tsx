@@ -30,7 +30,7 @@ import { MovementModelV2 } from '@helpers';
 import { useState } from 'react';
 import configs from '../../../../common/configs.json';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
-//import { PurchaseOrderLineDetailsExtra } from './PurchaseOrderLineDetailsExtra';
+import { DocumentAttachedListComponent } from 'components/common/DocumentAttachedListComponent';
 
 export interface IItemDetailsProps {
     purchaseOrderId?: string | any;
@@ -40,6 +40,7 @@ export interface IItemDetailsProps {
     status?: number | any;
     type?: number | any;
     refetchSubList?: any;
+    setDocumentAttachmentsData?: any;
 }
 
 const PurchaseOrderDetailsExtra = ({
@@ -49,7 +50,8 @@ const PurchaseOrderDetailsExtra = ({
     stockOwnerName,
     status,
     type,
-    refetchSubList
+    refetchSubList,
+    setDocumentAttachmentsData
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const [, setPurchaseOrderLinesData] = useState<any>();
@@ -253,6 +255,13 @@ const PurchaseOrderDetailsExtra = ({
                 searchable={false}
             />
             <Divider />
+            <DocumentAttachedListComponent
+                objectId={purchaseOrderId}
+                objectName="PurchaseOrder"
+                objectData={{ id: purchaseOrderId, name: purchaseOrderName }}
+                canModify={true}
+                setData={setDocumentAttachmentsData}
+            />
         </>
     );
 };

@@ -46,7 +46,7 @@ export * from './common/smart/HeaderContent/HeaderContent';
 export * from './common/smart/Modals/NumberOfPrintsModal';
 export * from './common/smart/Modals/NumberOfPrintsModalV2';
 export * from './common/smart/Modals/SinglePrintModal';
-export * from './common/smart/Modals/SinglePrintModalV2';
+export * from './common/smart/Modals/SinglePrintDocumentSetModal';
 export * from './common/smart/Page/Page';
 export * from './common/smart/SideMenu/SideMenu';
 export * from './common/smart/Modals/CrontabModalV2';

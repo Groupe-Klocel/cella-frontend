@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Form, Input } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC } from 'react';
+import { FC, useEffect, useState } from 'react';
 import CaseJokerButton from '../SubInputs/CaseJokerButton';
 
 export interface IDraggerInputProps {
@@ -32,22 +32,42 @@ export interface IDraggerInputProps {
         rules?: any[];
     };
     key?: string;
-    filtersParameters?: {
-        selectCase: string[];
-        setSelectCase: React.Dispatch<React.SetStateAction<string[]>>;
-        selectJoker: string[];
-        setSelectJoker: React.Dispatch<React.SetStateAction<string[]>>;
-    };
+    form?: any;
+    filtersParameters?: boolean;
 }
 
-const StringInput: FC<IDraggerInputProps> = ({ item, filtersParameters }) => {
+const StringInput: FC<IDraggerInputProps> = ({ item, form, filtersParameters }) => {
     const { t } = useTranslation();
+
+    const [selectCase, setSelectCase] = useState<boolean>(
+        form?.getFieldValue(item.name)?.[0]?.includes('^') ? false : true
+    );
+    const [selectJoker, setSelectJoker] = useState<boolean>(
+        form?.getFieldValue(item.name)?.[0]?.includes('%') ? true : false
+    );
+
+    const flags = `${selectJoker ? '%' : ''}${selectCase ? '' : '^'}`;
+
+    useEffect(() => {
+        if (filtersParameters && form) {
+            const current = form.getFieldValue(item.name);
+            const text = Array.isArray(current) ? current[1] : current;
+            if (text) {
+                form.setFieldsValue({ [item.name]: [flags, text] });
+            }
+        }
+    }, [selectCase, selectJoker]);
 
     return (
         <Form.Item
             name={item.name}
             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
-            normalize={(value) => (value ? value : undefined)}
+            normalize={(value) => {
+                if (!value) return undefined;
+                const text = Array.isArray(value) ? value[1] : value;
+                return filtersParameters ? [flags, text] : text;
+            }}
+            getValueProps={(value) => ({ value: Array.isArray(value) ? value[1] : value })}
             initialValue={item?.initialValue ? item?.initialValue : undefined}
             rules={item.rules!}
         >
@@ -58,10 +78,10 @@ const StringInput: FC<IDraggerInputProps> = ({ item, filtersParameters }) => {
                     filtersParameters && (
                         <CaseJokerButton
                             item={item}
-                            selectCase={filtersParameters.selectCase}
-                            setSelectCase={filtersParameters.setSelectCase}
-                            selectJoker={filtersParameters.selectJoker}
-                            setSelectJoker={filtersParameters.setSelectJoker}
+                            selectCase={selectCase}
+                            setSelectCase={setSelectCase}
+                            selectJoker={selectJoker}
+                            setSelectJoker={setSelectJoker}
                         />
                     )
                 }

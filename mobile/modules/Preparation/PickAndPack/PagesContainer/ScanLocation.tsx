@@ -31,15 +31,15 @@ export interface IScanLocationProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
+    checkComponent: any;
+    buttons?: { [label: string]: any };
     showEmptyLocations?: any;
     showSimilarLocations?: any;
-    checkComponent: any;
     headerContent?: any;
-    triggerAlternativeSubmit1?: any;
-    action1Trigger?: any;
     enforcedValue?: string;
     forceLocation?: any;
+    isHuClosureLoading?: boolean;
+    formToUse?: any;
 }
 
 export const ScanLocation = ({
@@ -49,12 +49,12 @@ export const ScanLocation = ({
     buttons,
     showEmptyLocations,
     showSimilarLocations,
-    triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-    action1Trigger: { action1Trigger, setAction1Trigger },
     checkComponent,
     headerContent,
     enforcedValue,
-    forceLocation: { tmpForceLocation, setTmpforceLocation }
+    forceLocation: { tmpForceLocation, setTmpforceLocation },
+    isHuClosureLoading,
+    formToUse
 }: IScanLocationProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -237,12 +237,9 @@ export const ScanLocation = ({
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
-        triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 },
-        action1Trigger: { action1Trigger, setAction1Trigger },
-        alternativeSubmitInput: storedObject?.step10?.data?.round.extraText1 ?? undefined,
         showSimilarLocations: { showSimilarLocations },
-        forceLocation: { setTmpforceLocation },
-        setResetForm
+        setResetForm,
+        isHuClosureLoading
     };
 
     const newLabel =
@@ -254,19 +251,13 @@ export const ScanLocation = ({
                 processName={processName}
                 stepNumber={stepNumber}
                 label={newLabel}
-                triggerAlternativeSubmit1={{
-                    triggerAlternativeSubmit1,
-                    setTriggerAlternativeSubmit1
-                }}
-                action1Trigger={{ action1Trigger, setAction1Trigger }}
-                action1Label={t('actions:next')}
                 buttons={{ ...buttons }}
                 setScannedInfo={setScannedInfo}
                 showEmptyLocations={showEmptyLocations}
                 showSimilarLocations={showSimilarLocations}
                 resetForm={{ resetForm, setResetForm }}
                 headerContent={headerContent}
-                alternativeSubmitLabel1={t('actions:close-shipping-hu')}
+                formToUse={formToUse}
             ></ScanForm_reducer>
             {checkComponent(dataToCheck)}
         </>

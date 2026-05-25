@@ -17,29 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton, SinglePrintModalV2 } from '@components';
+import { AppHead, LinkButton, SinglePrintDocumentSetModal } from '@components';
 import { DeliveryModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
-import { FC, useMemo, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import {
-    META_DEFAULTS,
-    getModesFromPermissions,
-    showError,
-    showSuccess,
-    useDeliveryLineIds
-} from '@helpers';
+import { getModesFromPermissions, showError, showSuccess, useDeliveryLineIds } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { Button, Modal, Space } from 'antd';
-import {
-    CancelDeliveryMutation,
-    CancelDeliveryMutationVariables,
-    ModeEnum,
-    useCancelDeliveryMutation
-} from 'generated/graphql';
+import { CancelDeliveryMutationVariables, ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { DeliveryDetailsExtra } from 'modules/Deliveries/Elements/DeliveryDetailsExtra';
 import { useAuth } from 'context/AuthContext';
@@ -53,7 +42,7 @@ const DeliveryPage: PageComponent = () => {
     const { permissions, parameters } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
-    const [shippingAddress, setShippingAddress] = useState<any>();
+    const [, setShippingAddress] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
@@ -63,22 +52,32 @@ const DeliveryPage: PageComponent = () => {
     const [idToPrint, setIdToPrint] = useState<string>();
     const [refetchHUO, setRefetchHUO] = useState(false);
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
+    const [defaultDeliveryDocuments, setDefaultDeliveryDocuments] = useState<any>();
 
-    const configsParamsCodes = useMemo(() => {
-        const findextrasByScopeAndCode = (items: any[], scope: string, value: string) => {
-            return items.find((item: any) => item.scope === scope && item.code === value).extras;
+    useEffect(() => {
+        const fetchRuleResult = async () => {
+            const ruleVariables = {
+                context: {
+                    object_name: 'delivery',
+                    stock_owner: data?.stockOwner_name ?? undefined,
+                    shipping_type: data?.shippingType ?? undefined,
+                    carrier: data?.carrierShippingMode_carrier_name ?? undefined,
+                    delivery_po_type: data?.type ?? undefined,
+                    delivery_customer_code: data?.thirdPartyCodeStr ?? undefined,
+                    dangerous: data?.extras_dangereux ?? undefined
+                }
+            };
+            const ruleQuery = gql`
+                query executeRule($context: JSON!) {
+                    executeRule(ruleName: "DOCUMENT_LIST", context: $context)
+                }
+            `;
+            const ruleResult = await graphqlRequestClient.request(ruleQuery, ruleVariables);
+            setDefaultDeliveryDocuments(ruleResult?.executeRule?.document_list?.value);
         };
 
-        const defaultDeliveryDocuments = findextrasByScopeAndCode(
-            parameters,
-            'documents',
-            'default_delivery_documents'
-        );
-
-        return {
-            defaultDeliveryDocuments
-        };
-    }, [parameters]);
+        fetchRuleResult();
+    }, [data]);
 
     // #region to customize information
     const breadCrumb = [
@@ -89,6 +88,10 @@ const DeliveryPage: PageComponent = () => {
     ];
 
     const pageTitle = `${t('common:delivery')} ${data?.name}`;
+
+    const isExtrasDisplayed = Object.keys(data || {}).some((key) => key.startsWith('extras_'))
+        ? true
+        : false;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
@@ -237,6 +240,7 @@ const DeliveryPage: PageComponent = () => {
                         <Space>
                             {
                                 // CUBING button
+                                !data?.managedByExternalSystem &&
                                 data?.status <= configs.DELIVERY_STATUS_TO_BE_ESTIMATED &&
                                 deliveryLines?.data?.deliveryLines &&
                                 deliveryLines?.data?.deliveryLines?.count > 0 ? (
@@ -252,6 +256,7 @@ const DeliveryPage: PageComponent = () => {
                             }
                             {
                                 // RECUBING button only if TO_BE_ESTIMATED < status <= ESTIMATED
+                                !data?.managedByExternalSystem &&
                                 data?.status > configs.DELIVERY_STATUS_TO_BE_ESTIMATED &&
                                 data?.status <= configs.DELIVERY_STATUS_ESTIMATED &&
                                 deliveryLines?.data?.deliveryLines &&
@@ -307,9 +312,9 @@ const DeliveryPage: PageComponent = () => {
                                 <Button
                                     type="primary"
                                     onClick={() => {
-                                        if (shippingAddress) {
+                                        if (data?.id) {
                                             setShowSinglePrintModal(true);
-                                            setIdToPrint(shippingAddress.id);
+                                            setIdToPrint(data.id);
                                         } else {
                                             showError(t('messages:no-delivery-address'));
                                         }
@@ -359,9 +364,9 @@ const DeliveryPage: PageComponent = () => {
                                     <Button
                                         type="primary"
                                         onClick={() => {
-                                            if (shippingAddress) {
+                                            if (data?.id) {
                                                 setShowSinglePrintModal(true);
-                                                setIdToPrint(shippingAddress.id);
+                                                setIdToPrint(data.id);
                                             } else {
                                                 showError(t('messages:no-delivery-address'));
                                             }
@@ -375,13 +380,13 @@ const DeliveryPage: PageComponent = () => {
                             )}
                         </>
                     )}
-                    <SinglePrintModalV2
+                    <SinglePrintDocumentSetModal
                         showModal={{
                             showSinglePrintModal,
                             setShowSinglePrintModal
                         }}
                         dataToPrint={{ id: idToPrint }}
-                        allDocumentName={configsParamsCodes.defaultDeliveryDocuments}
+                        allDocumentName={defaultDeliveryDocuments}
                         documentReference={data?.name}
                         customLanguage={data?.printLanguage ?? undefined}
                         documentAttachmentsData={documentAttachmentsData}
@@ -409,6 +414,7 @@ const DeliveryPage: PageComponent = () => {
                         refetchHUO={refetchHUO}
                         setRefetchHUO={setRefetchHUO}
                         setDocumentAttachmentsData={setDocumentAttachmentsData}
+                        isExtrasDisplayed={isExtrasDisplayed}
                     />
                 }
                 id={id!}

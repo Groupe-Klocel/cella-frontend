@@ -18,10 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { LsIsSecured, showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { AdvisedInventoryModal } from 'components/common/smart/Modals/AdvisedInventoryModal';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 export interface IQuantityChecksProps {
     dataToCheck: any;
@@ -33,32 +33,72 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
     const {
         processName,
         stepNumber,
-        enteredInfo: { enteredInfo, setEnteredInfo }
+        enteredInfo: { enteredInfo, setEnteredInfo },
+        stockMaxQuantity
     } = dataToCheck;
 
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
+
+    const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+    // Secure extraction of IDs needed for inventory
+    const { locationId } = useMemo(() => {
+        const locId =
+            storedObject['step30']?.data?.chosenLocation?.id ||
+            storedObject['step10']?.data?.proposedRoundAdvisedAddresses?.[0]?.location?.id;
+        return { locationId: locId };
+    }, [storedObject]);
+
+    const proceedToNextStep = () => {
+        setIsModalVisible(false);
+        const data: { [label: string]: any } = {};
+        data['movingQuantity'] = enteredInfo;
+
+        dispatch({
+            type: 'UPDATE_BY_STEP',
+            processName,
+            stepName: `step${stepNumber}`,
+            object: {
+                ...storedObject[`step${stepNumber}`],
+                data
+            }
+        });
+    };
+
     // TYPED SAFE ALL
     useEffect(() => {
         if (enteredInfo) {
-            const data: { [label: string]: any } = {};
-            data['movingQuantity'] = enteredInfo;
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName,
-                stepName: `step${stepNumber}`,
-                object: {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                }
-            });
+            const remainingQuantity = stockMaxQuantity - enteredInfo;
+
+            if (remainingQuantity <= 0) {
+                setIsModalVisible(true);
+            } else {
+                proceedToNextStep();
+            }
         }
     }, [enteredInfo]);
 
+    const handleCancel = () => {
+        setIsModalVisible(false);
+        setEnteredInfo(undefined);
+    };
+
     return (
         <WrapperForm>
-            {enteredInfo && !storedObject[`step${stepNumber}`]?.data ? <ContentSpin /> : <></>}
+            {enteredInfo && !storedObject[`step${stepNumber}`]?.data && !isModalVisible ? (
+                <ContentSpin />
+            ) : (
+                <></>
+            )}
+
+            <AdvisedInventoryModal
+                visible={isModalVisible}
+                locationId={locationId}
+                onSuccess={proceedToNextStep}
+                onCancel={handleCancel}
+            />
         </WrapperForm>
     );
 };

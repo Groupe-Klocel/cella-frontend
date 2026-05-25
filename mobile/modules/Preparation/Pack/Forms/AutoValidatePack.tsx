@@ -29,10 +29,10 @@ import { useAppDispatch, useAppState } from 'context/AppContext';
 export interface IAutoValidatePackProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
     toBePalletized: boolean;
     autoValidateLoading: { [label: string]: any };
     controlManagement: { [label: string]: any };
+    buttons?: { [label: string]: any };
 }
 
 export const AutoValidatePackForm = ({
@@ -128,7 +128,7 @@ export const AutoValidatePackForm = ({
                     onBack();
                     setIsAutoValidateLoading(false);
                 } else {
-                    showSuccess(t('messages:packed-successfully'));
+                    showSuccess(t('messages:updated-Huco-successfully'));
                     console.log(validateFullBoxResult.executeFunction.output.output, 'output');
 
                     const storedObject: any = {};
@@ -142,7 +142,7 @@ export const AutoValidatePackForm = ({
                             processName: processName,
                             object: storedObject
                         });
-                        setIsToControl(false);
+                        setIsToControl(null);
                         showSuccess(t('messages:pack-round-finished'));
                     } else {
                         storedObject['currentStep'] = 20;

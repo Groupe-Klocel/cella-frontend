@@ -19,6 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 // models/index.ts
 import { injectedModel } from 'helpers/utils/InjectedModel';
+import { AppointmentLineModelV2 as _AppointmentLineModelV2 } from '../../models/AppointmentLineModelV2';
+import { AppointmentModelV2 as _AppointmentModelV2 } from '../../models/AppointmentModelV2';
 import { ArticleExtrasModelV2 as _ArticleExtrasModelV2 } from '../../models/ArticleExtrasModelV2';
 import { ArticleLuBarcodeModelV2 as _ArticleLuBarcodeModelV2 } from '../../models/ArticleLuBarcodeModelV2';
 import { ArticleLuModelV2 as _ArticleLuModelV2 } from '../../models/ArticleLuModelV2';
@@ -47,6 +49,7 @@ import { CycleCountLineModelV2 as _CycleCountLineModelV2 } from '../../models/Cy
 import { CycleCountModelV2 as _CycleCountModelV2 } from '../../models/CycleCountModelV2';
 import { CycleCountMovementModelV2 as _CycleCountMovementModelV2 } from '../../models/CycleCountMovementModelV2';
 import { DeliveryAddressModelV2 as _DeliveryAddressModelV2 } from '../../models/DeliveryAddressModelV2';
+import { DeliveryExtrasModelV2 as _DeliveryExtrasModelV2 } from '../../models/DeliveryExtrasModelV2';
 import { DeliveryLineModelV2 as _DeliveryLineModelV2 } from '../../models/DeliveryLineModelV2';
 import { DeliveryModelV2 as _DeliveryModelV2 } from '../../models/DeliveryModelV2';
 import { DocumentAttachmentModelV2 as _DocumentAttachmentModelV2 } from '../../models/DocumentAttachmentModelV2';
@@ -58,6 +61,7 @@ import { FeatureTypeDetailModelV2 as _FeatureTypeDetailModelV2 } from '../../mod
 import { FeaturesListModelV2 as _FeaturesListModelV2 } from '../../models/FeaturesListModelV2';
 import { GoodsInLineDetailModelV2 as _GoodsInLineDetailModelV2 } from '../../models/GoodsInLineDetailModelV2';
 import { GoodsInModelV2 as _GoodsInModelV2 } from '../../models/GoodsInModelV2';
+import { GoodsInLineModelV2 as _GoodsInLineModelV2 } from '../../models/GoodsInLineModelV2';
 import { HandlingUnitContentFeatureModelV2 as _HandlingUnitContentFeatureModelV2 } from '../../models/HandlingUnitContentFeatureModelV2';
 import { HandlingUnitContentInboundModelV2 as _HandlingUnitContentInboundModelV2 } from '../../models/HandlingUnitContentInboundModelV2';
 import { HandlingUnitContentModelV2 as _HandlingUnitContentModelV2 } from '../../models/HandlingUnitContentModelV2';
@@ -71,6 +75,8 @@ import { HandlingUnitOutboundModelV2 as _HandlingUnitOutboundModelV2 } from '../
 import { HookConfigDetailArgumentModelV2 as _HookConfigDetailArgumentModelV2 } from '../../models/HookConfigDetailArgumentModelV2';
 import { HookConfigModelV2 as _HookConfigModelV2 } from '../../models/HookConfigModelV2';
 import { LoadModelV2 as _LoadModelV2 } from '../../models/LoadModelV2';
+import { LoadExtrasModelV2 as _LoadExtrasModelV2 } from '../../models/LoadExtrasModelV2';
+import { LocationExtrasModelV2 as _LocationExtrasModelV2 } from '../../models/LocationExtrasModelV2';
 import { LocationModelV2 as _LocationModelV2 } from '../../models/LocationModelV2';
 import { LogisticUnitModelV2 as _LogisticUnitModelV2 } from '../../models/LogisticUnitModelV2';
 import { ManualAllocationModelV2 as _ManualAllocationModelV2 } from '../../models/ManualAllocationModelV2';
@@ -122,6 +128,11 @@ import { WarehouseWorkerModelV2 as _WarehouseWorkerModelV2 } from '../../models/
 import { WarehouseWorkerStockOwnerModelV2 as _WarehouseWorkerStockOwnerModelV2 } from '../../models/WarehouseWorkerStockOwnerModelV2';
 import { WarehouseWorkerUserRoleModelV2 as _WarehouseWorkerUserRoleModelV2 } from '../../models/WarehouseWorkerUserRoleModelV2';
 
+export const AppointmentLineModelV2 = injectedModel(
+    _AppointmentLineModelV2,
+    'AppointmentLineSpeModel'
+);
+export const AppointmentModelV2 = injectedModel(_AppointmentModelV2, 'AppointmentSpeModel');
 export const ArticleExtrasModelV2 = injectedModel(_ArticleExtrasModelV2, 'ArticleExtrasSpeModel');
 export const ArticleLuBarcodeModelV2 = injectedModel(
     _ArticleLuBarcodeModelV2,
@@ -187,6 +198,10 @@ export const DeliveryAddressModelV2 = injectedModel(
     _DeliveryAddressModelV2,
     'DeliveryAddressSpeModel'
 );
+export const DeliveryExtrasModelV2 = injectedModel(
+    _DeliveryExtrasModelV2,
+    'DeliveryExtrasSpeModel'
+);
 export const DeliveryLineModelV2 = injectedModel(_DeliveryLineModelV2, 'DeliveryLineSpeModel');
 export const DeliveryModelV2 = injectedModel(_DeliveryModelV2, 'DeliverySpeModel');
 export const DocumentAttachmentModelV2 = injectedModel(
@@ -213,6 +228,7 @@ export const GoodsInLineDetailModelV2 = injectedModel(
     'GoodsInLineDetailSpeModel'
 );
 export const GoodsInModelV2 = injectedModel(_GoodsInModelV2, 'GoodsInSpeModel');
+export const GoodsInLineModelV2 = injectedModel(_GoodsInLineModelV2, 'GoodsInLineSpeModel');
 export const HandlingUnitContentFeatureModelV2 = injectedModel(
     _HandlingUnitContentFeatureModelV2,
     'HandlingUnitContentFeatureSpeModel'
@@ -259,6 +275,11 @@ export const HookConfigDetailArgumentModelV2 = injectedModel(
 );
 export const HookConfigModelV2 = injectedModel(_HookConfigModelV2, 'HookConfigSpeModel');
 export const LoadModelV2 = injectedModel(_LoadModelV2, 'LoadSpeModel');
+export const LoadExtrasModelV2 = injectedModel(_LoadExtrasModelV2, 'LoadExtrasSpeModel');
+export const LocationExtrasModelV2 = injectedModel(
+    _LocationExtrasModelV2,
+    'LocationExtrasSpeModel'
+);
 export const LocationModelV2 = injectedModel(_LocationModelV2, 'LocationSpeModel');
 export const LogisticUnitModelV2 = injectedModel(_LogisticUnitModelV2, 'LogisticUnitSpeModel');
 export const ManualAllocationModelV2 = injectedModel(

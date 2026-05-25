@@ -183,6 +183,27 @@ export const ArticleLuModelV2: ModelType = {
             param: null,
             isEditDisabled: true
         },
+        'article{genericArticleComment}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: 70,
+            displayName: 'supplier-article-code',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            isEditDisabled: false
+        },
         'article{description}': {
             isListRequested: true,
             isDefaultHiddenList: false,

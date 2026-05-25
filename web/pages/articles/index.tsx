@@ -47,10 +47,17 @@ const ArticlePages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [tableData, setTableData] = useState<any[]>([]);
     const [reopenInfo, setReopenInfo] = useState<string | undefined>();
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [initializeBooleanModalValues, setInitializeBooleanModalValues] = useState({
+        isAllPicking: false,
+        isAllPermanentProduct: false,
+        isAllNewProduct: false,
+        isAllEndOfLife: false
+    });
 
     const headerData: HeaderData = {
         title: t('common:articles'),
@@ -91,9 +98,38 @@ const ArticlePages: PageComponent = () => {
     const hasSelected = selectedRowKeys.length > 0;
     const [refetch, setRefetch] = useState<boolean>(false);
 
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
-        setSelectedRowKeys(newSelectedRowKeys);
+    const onSelectChange = (newSelectedRowKeys: any[], record: any) => {
+        selectedRowKeys.forEach((key: string) => {
+            if (!newSelectedRowKeys.includes(key) && tableData.map((d) => d.id).includes(key)) {
+                setSelectedRowKeys((prevKeys: React.Key[]) => prevKeys.filter((k) => k !== key));
+            }
+        });
+        newSelectedRowKeys.forEach((value: string) => {
+            if (!selectedRowKeys?.includes(value)) {
+                setSelectedRowKeys((prevKeys: React.Key[]) => [...prevKeys, value]);
+            }
+        });
+        const initializeBooleanModalValues: any = {
+            isAllPicking: false,
+            isAllPermanentProduct: false,
+            isAllNewProduct: false,
+            isAllEndOfLife: false
+        };
+        initializeBooleanModalValues.isAllPicking = record.every(
+            (item: any) => item.baseUnitPicking === true
+        );
+        initializeBooleanModalValues.isAllPermanentProduct = record.every(
+            (item: any) => item.permanentProduct === true
+        );
+        initializeBooleanModalValues.isAllNewProduct = record.every(
+            (item: any) => item.newProduct === true
+        );
+        initializeBooleanModalValues.isAllEndOfLife = record.every(
+            (item: any) => item.endOfLife === true
+        );
+        setInitializeBooleanModalValues(initializeBooleanModalValues);
     };
+
     const rowSelection = {
         selectedRowKeys,
         onChange: onSelectChange,
@@ -129,6 +165,7 @@ const ArticlePages: PageComponent = () => {
                         <EditArticlesRenderModal
                             visible={showModal}
                             rows={rowSelection}
+                            initializeBooleanModalValues={initializeBooleanModalValues}
                             showhideModal={() => {
                                 setShowModal(!showModal);
                             }}
@@ -136,6 +173,7 @@ const ArticlePages: PageComponent = () => {
                             setRefetch={() => {
                                 setRefetch(!refetch);
                             }}
+                            setSelectedRowKeys={setSelectedRowKeys}
                         />
                     </>
                 </>
@@ -151,6 +189,7 @@ const ArticlePages: PageComponent = () => {
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}
                 refetch={refetch}
+                setData={setTableData}
                 checkbox={true}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
