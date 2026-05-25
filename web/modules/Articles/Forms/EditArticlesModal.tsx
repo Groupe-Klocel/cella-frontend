@@ -17,22 +17,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Checkbox, Col, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     SimpleGetInProgressStockOwnersQuery,
     UpdateArticlesMutation,
     UpdateArticlesMutationVariables,
-    useListConfigsForAScopeQuery,
-    useListParametersForAScopeQuery,
     useSimpleGetInProgressStockOwnersQuery,
     useUpdateArticlesMutation
 } from 'generated/graphql';
 import { showError, showSuccess } from '@helpers';
 import { useAuth } from 'context/AuthContext';
-import { useRouter } from 'next/router';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import { useAppState } from 'context/AppContext';
 
 export interface IEditArticlesRenderModalProps {
     visible: boolean;
@@ -40,28 +37,45 @@ export interface IEditArticlesRenderModalProps {
     showhideModal: () => void;
     refetch: boolean;
     setRefetch: () => void;
+    initializeBooleanModalValues: any;
+    setSelectedRowKeys: ([]) => void;
 }
 
 const EditArticlesRenderModal = ({
     visible,
     showhideModal,
     rows,
-    setRefetch
+    setRefetch,
+    initializeBooleanModalValues,
+    setSelectedRowKeys
 }: IEditArticlesRenderModalProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
-    const router = useRouter();
-    const filteredLanguage = getLanguageCode(router);
+    const { configs, parameters } = useAppState();
     const [form] = Form.useForm();
     const errorMessageUpdateData = t('messages:error-update-data');
     const successMessageUpdateData = t('messages:success-updated');
-    const [cubingTypes, setCubingTypes] = useState<any>();
-    const [featureTypes, setFeatureTypes] = useState<any>();
-    const [rotations, setRotations] = useState<any>();
-    const [statuses, setStatuses] = useState<any>();
-    const [familyArticle, setFamilyArticle] = useState<any>();
-    const [subFamilyArticle, setSubFamilyArticle] = useState<any>();
     const [stockOwners, setStockOwners] = useState<any>();
+
+    const configsParamtersList = useMemo(() => {
+        const findAllByScope = (configs: any, scope: string) => {
+            return configs.filter((config: any) => config.scope === scope);
+        };
+
+        const cubingTypes = findAllByScope(configs, 'article_cubing_type');
+        const featureTypes = findAllByScope(parameters, 'feature_type');
+        const familyArticle = findAllByScope(parameters, 'article_family');
+        const subFamilyArticle = findAllByScope(parameters, 'article_subfamily');
+        const rotations = findAllByScope(parameters, 'rotation');
+
+        return {
+            cubingTypes,
+            featureTypes,
+            familyArticle,
+            subFamilyArticle,
+            rotations
+        };
+    }, [configs, parameters]);
 
     //To render Simple In progress stock owners list
     const stockOwnersList = useSimpleGetInProgressStockOwnersQuery<
@@ -75,86 +89,23 @@ const EditArticlesRenderModal = ({
         }
     }, [stockOwnersList]);
 
-    //To render cubing_types from configs
-    const cubingTypesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: 'article_cubing_type',
-        language: filteredLanguage
-    });
+    // Synchronize form values when modal opens or values change
     useEffect(() => {
-        if (cubingTypesTextList) {
-            setCubingTypes(cubingTypesTextList?.data?.listConfigsForAScope);
+        if (visible) {
+            form.setFieldsValue({
+                newProduct: initializeBooleanModalValues.isAllNewProduct || false
+            });
+            form.setFieldsValue({
+                endOfLife: initializeBooleanModalValues.isAllEndOfLife || false
+            });
+            form.setFieldsValue({
+                permanentProduct: initializeBooleanModalValues.isAllPermanentProduct || false
+            });
+            form.setFieldsValue({
+                baseUnitPicking: initializeBooleanModalValues.isAllPicking || false
+            });
         }
-    }, [cubingTypesTextList.data]);
-
-    //To render feature_types from parameters
-    const featureTypesTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'feature_type',
-        language: filteredLanguage
-    });
-    useEffect(() => {
-        if (featureTypesTextList) {
-            setFeatureTypes(featureTypesTextList?.data?.listParametersForAScope);
-        }
-    }, [featureTypesTextList.data]);
-
-    //To render article_family from parameters
-    const familyArticleList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'article_family',
-        language: filteredLanguage
-    });
-    useEffect(() => {
-        if (familyArticleList) {
-            setFamilyArticle(familyArticleList?.data?.listParametersForAScope);
-        }
-    }, [familyArticleList.data]);
-
-    //To render article_subfamily from parameters
-    const subFamilyArticleList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'article_subfamily',
-        language: filteredLanguage
-    });
-    useEffect(() => {
-        if (subFamilyArticleList) {
-            setSubFamilyArticle(subFamilyArticleList?.data?.listParametersForAScope);
-        }
-    }, [subFamilyArticleList.data]);
-
-    //To render rotations from parameters
-    const rotationsTextList = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'rotation',
-        language: filteredLanguage
-    });
-    useEffect(() => {
-        if (rotationsTextList) {
-            setRotations(rotationsTextList?.data?.listParametersForAScope);
-        }
-    }, [rotationsTextList.data]);
-
-    //To render statuses from parameters
-    const statusesTextList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: 'article_status',
-        language: filteredLanguage
-    });
-    useEffect(() => {
-        if (statusesTextList) {
-            setStatuses(statusesTextList?.data?.listConfigsForAScope);
-        }
-    }, [statusesTextList.data]);
-
-    //Checkbox baseUnitPicking
-    const onBaseUnitPickingChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ baseUnitPicking: e.target.checked });
-    };
-
-    //Checkbox endOfLife
-    const onEndOfLifeChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ endOfLife: e.target.checked });
-    };
-
-    //Checkbox permanentProduct
-    const onPermanentProductChange = (e: CheckboxChangeEvent) => {
-        form.setFieldsValue({ permanentProduct: e.target.checked });
-    };
+    }, [visible, initializeBooleanModalValues, form]);
 
     // UPDATE Articles
     const {
@@ -195,6 +146,7 @@ const EditArticlesRenderModal = ({
                 showError(errorMessageUpdateData);
             });
         showhideModal();
+        setSelectedRowKeys([]);
     };
 
     return (
@@ -245,12 +197,12 @@ const EditArticlesRenderModal = ({
                                 })}`}
                             >
                                 <Select.Option value={null}> </Select.Option>
-                                {familyArticle?.map((familyArticle: any) => (
+                                {configsParamtersList.familyArticle?.map((familyArticle: any) => (
                                     <Select.Option
-                                        key={parseInt(familyArticle.code)}
+                                        key={familyArticle.code}
                                         value={familyArticle.code}
                                     >
-                                        {familyArticle.text}
+                                        {familyArticle.value}
                                     </Select.Option>
                                 ))}
                             </Select>
@@ -263,14 +215,16 @@ const EditArticlesRenderModal = ({
                                 })}`}
                             >
                                 <Select.Option value={null}> </Select.Option>
-                                {subFamilyArticle?.map((subFamilyArticle: any) => (
-                                    <Select.Option
-                                        key={parseInt(subFamilyArticle.code)}
-                                        value={subFamilyArticle.code}
-                                    >
-                                        {subFamilyArticle.text}
-                                    </Select.Option>
-                                ))}
+                                {configsParamtersList.subFamilyArticle?.map(
+                                    (subFamilyArticle: any) => (
+                                        <Select.Option
+                                            key={subFamilyArticle.code}
+                                            value={subFamilyArticle.code}
+                                        >
+                                            {subFamilyArticle.value}
+                                        </Select.Option>
+                                    )
+                                )}
                             </Select>
                         </Form.Item>
                         <Form.Item label={t('d:cubingType')} name="cubingType">
@@ -279,12 +233,13 @@ const EditArticlesRenderModal = ({
                                     name: t('d:cubingType')
                                 })}`}
                             >
-                                {cubingTypes?.map((cubingTypes: any) => (
+                                <Select.Option value={null}> </Select.Option>
+                                {configsParamtersList.cubingTypes?.map((cubingTypes: any) => (
                                     <Select.Option
-                                        key={parseInt(cubingTypes.code)}
+                                        key={cubingTypes.code}
                                         value={parseInt(cubingTypes.code)}
                                     >
-                                        {cubingTypes.text}
+                                        {cubingTypes.value}
                                     </Select.Option>
                                 ))}
                             </Select>
@@ -297,12 +252,12 @@ const EditArticlesRenderModal = ({
                                 })}`}
                             >
                                 <Select.Option value={null}> </Select.Option>
-                                {featureTypes?.map((featureTypes: any) => (
+                                {configsParamtersList.featureTypes?.map((featureTypes: any) => (
                                     <Select.Option
-                                        key={parseInt(featureTypes.code)}
+                                        key={featureTypes.code}
                                         value={parseInt(featureTypes.code)}
                                     >
-                                        {featureTypes.text}
+                                        {featureTypes.value}
                                     </Select.Option>
                                 ))}
                             </Select>
@@ -323,12 +278,12 @@ const EditArticlesRenderModal = ({
                                 })}`}
                             >
                                 <Select.Option value={null}> </Select.Option>
-                                {rotations?.map((rotations: any) => (
+                                {configsParamtersList.rotations?.map((rotations: any) => (
                                     <Select.Option
-                                        key={parseInt(rotations.code)}
+                                        key={rotations.code}
                                         value={parseInt(rotations.code)}
                                     >
-                                        {rotations.text}
+                                        {rotations.value}
                                     </Select.Option>
                                 ))}
                             </Select>
@@ -338,14 +293,33 @@ const EditArticlesRenderModal = ({
                         </Form.Item>
                     </Col>
                     <Col xs={2} xl={4}>
-                        <Form.Item label={t('d:baseUnitPicking')} name="baseUnitPicking">
-                            <Checkbox onChange={onBaseUnitPickingChange}></Checkbox>
+                        <Form.Item
+                            label={t('d:baseUnitPicking')}
+                            name="baseUnitPicking"
+                            valuePropName="checked"
+                        >
+                            <Checkbox />
                         </Form.Item>
-                        <Form.Item label={t('d:endOfLife')} name="endOfLife">
-                            <Checkbox onChange={onEndOfLifeChange}></Checkbox>
+                        <Form.Item
+                            label={t('d:endOfLife')}
+                            name="endOfLife"
+                            valuePropName="checked"
+                        >
+                            <Checkbox />
                         </Form.Item>
-                        <Form.Item label={t('d:permanentProduct')} name="permanentProduct">
-                            <Checkbox onChange={onPermanentProductChange}></Checkbox>
+                        <Form.Item
+                            label={t('d:permanentProduct')}
+                            name="permanentProduct"
+                            valuePropName="checked"
+                        >
+                            <Checkbox />
+                        </Form.Item>
+                        <Form.Item
+                            label={t('d:newProduct')}
+                            name="newProduct"
+                            valuePropName="checked"
+                        >
+                            <Checkbox />
                         </Form.Item>
                     </Col>
                 </Row>

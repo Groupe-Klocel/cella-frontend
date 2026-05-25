@@ -17,11 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton, SinglePrintModalV2 } from '@components';
+import { AppHead, LinkButton, SinglePrintDocumentSetModal } from '@components';
 import { getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { LoadDetailsExtra } from 'modules/Loads/Elements/LoadDetailsExtra';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -29,7 +29,7 @@ import { LoadModelV2 as model } from '@helpers';
 import { loadsRoutes as itemRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { Button, Modal, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
-import { ModeEnum, useListParametersForAScopeQuery } from 'generated/graphql';
+import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { useAuth } from 'context/AuthContext';
 import 'moment/min/locales';
@@ -51,22 +51,31 @@ const LoadsPage: PageComponent = () => {
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
+    const [defaultLoadDocuments, setDefaultLoadDocuments] = useState<any>();
 
-    const configsParamsCodes = useMemo(() => {
-        const findextrasByScopeAndCode = (items: any[], scope: string, value: string) => {
-            return items.find((item: any) => item.scope === scope && item.code === value)?.extras;
+    useEffect(() => {
+        const fetchRuleResult = async () => {
+            const ruleVariables = {
+                context: {
+                    object_name: 'load',
+                    stock_owner: data?.extras_stockOwnerName ?? undefined,
+                    shipping_type: data?.extras_shippingType ?? undefined,
+                    carrier: data?.extras_carrierName ?? undefined,
+                    delivery_po_type: data?.extras_deliveryType ?? undefined,
+                    delivery_customer_code: data?.extras_thirdPartyCode ?? undefined,
+                    dangerous: data?.extras_dangereux ?? undefined
+                }
+            };
+            const ruleQuery = gql`
+                query executeRule($context: JSON!) {
+                    executeRule(ruleName: "DOCUMENT_LIST", context: $context)
+                }
+            `;
+            const ruleResult = await graphqlRequestClient.request(ruleQuery, ruleVariables);
+            setDefaultLoadDocuments(ruleResult?.executeRule?.document_list?.value);
         };
-
-        const defaultLoadDocuments = findextrasByScopeAndCode(
-            parameters,
-            'documents',
-            'default_load_documents'
-        );
-
-        return {
-            defaultLoadDocuments
-        };
-    }, [parameters]);
+        fetchRuleResult();
+    }, [data]);
 
     // #region to customize information
     const breadCrumb = [
@@ -77,93 +86,20 @@ const LoadsPage: PageComponent = () => {
     ];
 
     const pageTitle = `${t('common:load')} ${data?.name}`;
+
+    // Detect if extras are displayed
+    const isExtrasDisplayed = Object.keys(data || {}).some((key) => key.startsWith('extras_'))
+        ? true
+        : false;
     // #endregions
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
 
-    const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'global',
-        code: 'default_print_language'
-    });
-    const [printLanguage, setPrintLanguage] = useState<string>();
-    useEffect(() => {
-        if (defaultPrintLanguage) {
-            setPrintLanguage(defaultPrintLanguage.data?.listParametersForAScope[0].text);
-        }
-    }, [defaultPrintLanguage.data]);
-
-    const defaultPrinterLaserParameter = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'global',
-        code: 'default_printer_laser'
-    });
-    const [defaultPrinterLaser, setDefaultPrinterLaser] = useState<string>();
-    useEffect(() => {
-        if (defaultPrinterLaserParameter) {
-            setDefaultPrinterLaser(
-                defaultPrinterLaserParameter.data?.listParametersForAScope[0].text
-            );
-        }
-    }, [defaultPrinterLaserParameter.data]);
-
     //retrieve client's date for printing
     const local = moment();
     local.locale();
     const dateLocal = local.format('l') + ', ' + local.format('LT');
-
-    const printLoad = async (inputForPrinting: any, printer: string | undefined) => {
-        const documentMutation = gql`
-            mutation generateDocument(
-                $documentName: String!
-                $language: String!
-                $printer: String
-                $context: JSON!
-            ) {
-                generateDocument(
-                    documentName: $documentName
-                    language: $language
-                    printer: $printer
-                    context: $context
-                ) {
-                    __typename
-                    ... on RenderedDocument {
-                        url
-                    }
-                    ... on TemplateDoesNotExist {
-                        message
-                    }
-                    ... on TemplateError {
-                        message
-                    }
-                    ... on MissingContext {
-                        message
-                    }
-                }
-            }
-        `;
-
-        const documentVariables = {
-            documentName: 'K_LoadLoadingList',
-            language: printLanguage,
-            printer,
-            context: { ...inputForPrinting, date: dateLocal }
-        };
-
-        const documentResult = await graphqlRequestClient.request(
-            documentMutation,
-            documentVariables
-        );
-
-        console.log('documentResult', documentResult);
-
-        if (documentResult.generateDocument.__typename !== 'RenderedDocument') {
-            showError(t('messages:error-print-data'));
-        } else {
-            printer
-                ? showSuccess(t('messages:success-print-data'))
-                : window.open(documentResult.generateDocument.url, '_blank');
-        }
-    };
 
     // DISPATCH LOAD
     const statusDispatched = configs.DELIVERY_STATUS_DISPATCHED;
@@ -186,7 +122,6 @@ const LoadsPage: PageComponent = () => {
                     event: { input: { loadId: id } }
                 };
                 setIsDispatchLoading(true);
-                let dispatchSuccessful = false;
                 try {
                     const deliveryHUO = await graphqlRequestClient.request(query, variables);
                     if (deliveryHUO.executeFunction.status === 'ERROR') {
@@ -206,21 +141,6 @@ const LoadsPage: PageComponent = () => {
                     } else {
                         showSuccess(t('messages:success-dispatched'));
                         setTriggerRefresh(!triggerRefresh);
-                        dispatchSuccessful = true;
-                    }
-                    if (dispatchSuccessful) {
-                        try {
-                            printLoad(
-                                {
-                                    id: id,
-                                    statusDispatched
-                                },
-                                defaultPrinterLaser
-                            );
-                        } catch (error) {
-                            console.error('Print error :', error);
-                            showError(t('messages:error-print'));
-                        }
                     }
                 } catch (error) {
                     console.error('Error during dispatch request:', error);
@@ -266,6 +186,7 @@ const LoadsPage: PageComponent = () => {
                 modes.includes(ModeEnum.Delete) &&
                 data?.status == configs.LOAD_STATUS_CREATED &&
                 data?.numberHuLoaded <= 0 &&
+                !data.managedByExternalSystem &&
                 model.isDeletable ? (
                     <Button onClick={() => confirmAction(data.id, setIdToDelete, 'delete')()}>
                         {t('actions:delete')}
@@ -278,6 +199,7 @@ const LoadsPage: PageComponent = () => {
                 data?.status > configs.LOAD_LINE_STATUS_CREATED &&
                 data?.status < configs.LOAD_STATUS_DISPATCHED &&
                 data?.numberHuLoaded > 0 &&
+                !data.managedByExternalSystem &&
                 model.isEditable ? (
                     <Button loading={isDispatchLoading} onClick={() => dispatchLoad(data.id)}>
                         {t('actions:dispatch')}
@@ -298,7 +220,7 @@ const LoadsPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                <SinglePrintModalV2
+                <SinglePrintDocumentSetModal
                     showModal={{
                         showSinglePrintModal,
                         setShowSinglePrintModal
@@ -308,7 +230,7 @@ const LoadsPage: PageComponent = () => {
                         date: dateLocal,
                         statusDispatched
                     }}
-                    allDocumentName={configsParamsCodes.defaultLoadDocuments}
+                    allDocumentName={defaultLoadDocuments}
                     documentReference={data?.name}
                     documentAttachmentsData={documentAttachmentsData}
                 />
@@ -324,7 +246,9 @@ const LoadsPage: PageComponent = () => {
                     <LoadDetailsExtra
                         loadId={id!}
                         loadData={data}
+                        loadName={data?.name}
                         setDocumentAttachmentsData={setDocumentAttachmentsData}
+                        isExtrasDisplayed={isExtrasDisplayed}
                     />
                 }
                 headerData={headerData}

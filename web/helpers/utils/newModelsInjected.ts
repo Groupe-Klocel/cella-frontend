@@ -47,6 +47,7 @@ import { CycleCountLineModelV2 as _CycleCountLineModelV2 } from '../../models/Cy
 import { CycleCountModelV2 as _CycleCountModelV2 } from '../../models/CycleCountModelV2';
 import { CycleCountMovementModelV2 as _CycleCountMovementModelV2 } from '../../models/CycleCountMovementModelV2';
 import { DeliveryAddressModelV2 as _DeliveryAddressModelV2 } from '../../models/DeliveryAddressModelV2';
+import { DeliveryExtrasModelV2 as _DeliveryExtrasModelV2 } from '../../models/DeliveryExtrasModelV2';
 import { DeliveryLineModelV2 as _DeliveryLineModelV2 } from '../../models/DeliveryLineModelV2';
 import { DeliveryModelV2 as _DeliveryModelV2 } from '../../models/DeliveryModelV2';
 import { DocumentAttachmentModelV2 as _DocumentAttachmentModelV2 } from '../../models/DocumentAttachmentModelV2';
@@ -58,6 +59,7 @@ import { FeatureTypeDetailModelV2 as _FeatureTypeDetailModelV2 } from '../../mod
 import { FeaturesListModelV2 as _FeaturesListModelV2 } from '../../models/FeaturesListModelV2';
 import { GoodsInLineDetailModelV2 as _GoodsInLineDetailModelV2 } from '../../models/GoodsInLineDetailModelV2';
 import { GoodsInModelV2 as _GoodsInModelV2 } from '../../models/GoodsInModelV2';
+import { GoodsInLineModelV2 as _GoodsInLineModelV2 } from '../../models/GoodsInLineModelV2';
 import { HandlingUnitContentFeatureModelV2 as _HandlingUnitContentFeatureModelV2 } from '../../models/HandlingUnitContentFeatureModelV2';
 import { HandlingUnitContentInboundModelV2 as _HandlingUnitContentInboundModelV2 } from '../../models/HandlingUnitContentInboundModelV2';
 import { HandlingUnitContentModelV2 as _HandlingUnitContentModelV2 } from '../../models/HandlingUnitContentModelV2';
@@ -188,6 +190,10 @@ export const DeliveryAddressModelV2 = injectedModel(
     _DeliveryAddressModelV2,
     'DeliveryAddressSpeModel'
 );
+export const DeliveryExtrasModelV2 = injectedModel(
+    _DeliveryExtrasModelV2,
+    'DeliveryExtrasSpeModel'
+);
 export const DeliveryLineModelV2 = injectedModel(_DeliveryLineModelV2, 'DeliveryLineSpeModel');
 export const DeliveryModelV2 = injectedModel(_DeliveryModelV2, 'DeliverySpeModel');
 export const DocumentAttachmentModelV2 = injectedModel(
@@ -214,6 +220,7 @@ export const GoodsInLineDetailModelV2 = injectedModel(
     'GoodsInLineDetailSpeModel'
 );
 export const GoodsInModelV2 = injectedModel(_GoodsInModelV2, 'GoodsInSpeModel');
+export const GoodsInLineModelV2 = injectedModel(_GoodsInLineModelV2, 'GoodsInLineSpeModel');
 export const HandlingUnitContentFeatureModelV2 = injectedModel(
     _HandlingUnitContentFeatureModelV2,
     'HandlingUnitContentFeatureSpeModel'

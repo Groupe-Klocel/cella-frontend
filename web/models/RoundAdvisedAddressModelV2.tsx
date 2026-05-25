@@ -237,6 +237,27 @@ export const RoundAdvisedAddressModelV2: ModelType = {
             config: null,
             param: null
         },
+        'roundLineDetail{roundLine{article{genericArticleComment}}}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: 70,
+            displayName: 'supplier-article-code',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            isEditDisabled: false
+        },
         'roundLineDetail{roundLine{article{description}}}': {
             isListRequested: true,
             isDefaultHiddenList: false,
