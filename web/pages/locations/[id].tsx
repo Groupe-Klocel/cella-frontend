@@ -30,6 +30,7 @@ import { locationsRoutes as itemRoutes } from 'modules/Locations/Static/location
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
+import { LocationDetailsExtra } from 'modules/Locations/Elements/LocationDetailsExtra';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -122,6 +123,14 @@ const LocationPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                extraDataComponent={
+                    <LocationDetailsExtra
+                        locationId={id}
+                        locationName={data?.name}
+                        locationCategory={data?.category}
+                        details={data}
+                    />
+                }
             />
         </>
     );
