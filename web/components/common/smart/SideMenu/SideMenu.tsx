@@ -653,6 +653,14 @@ const SideMenu: FC = () => {
             icon: <TruckOutlined />,
             label: t('truck-management'),
             children: [
+                // SCHEDULE
+                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
+                    ? {
+                          key: 'truck-management-schedule',
+                          label: <Link href="/appointments/schedule">{t('common:agenda')}</Link>
+                      }
+                    : null,
+
                 // APPOINTMENTS
                 getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
                     ? {
