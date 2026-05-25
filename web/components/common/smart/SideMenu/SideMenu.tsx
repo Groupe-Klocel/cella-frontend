@@ -25,7 +25,8 @@ import {
     HourglassOutlined,
     QuestionCircleOutlined,
     SettingOutlined,
-    SlidersOutlined
+    SlidersOutlined,
+    TruckOutlined
 } from '@ant-design/icons';
 import { Menu } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -644,9 +645,33 @@ const SideMenu: FC = () => {
                     : null
             ].filter(Boolean)
         },
+        // TRUCK MANAGEMENT
+        ['wm_appointments', 'wm_loads'].some((perm) =>
+            getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+        ) && {
+            key: 'truck-management',
+            icon: <TruckOutlined />,
+            label: t('truck-management'),
+            children: [
+                // APPOINTMENTS
+                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
+                    ? {
+                          key: 'truck-management-appointments',
+                          label: <Link href="/appointments">{t('appointments')}</Link>
+                      }
+                    : null,
+
+                // LOADS
+                getModesFromPermissions(permissions, 'wm_loads').includes(ModeEnum.Read)
+                    ? {
+                          key: 'preparation-management-loads',
+                          label: <Link href="/loads">{t('loads')}</Link>
+                      }
+                    : null
+            ].filter(Boolean)
+        },
         // PREPARATION
         [
-            'wm_loads',
             'wm_handling-unit-outbound-barcodes',
             'wm_boxes',
             'wm_deliveries',
@@ -659,13 +684,6 @@ const SideMenu: FC = () => {
             icon: <HourglassOutlined />,
             label: t('preparation-management'),
             children: [
-                // LOADS
-                getModesFromPermissions(permissions, 'wm_loads').includes(ModeEnum.Read)
-                    ? {
-                          key: 'preparation-management-loads',
-                          label: <Link href="/loads">{t('loads')}</Link>
-                      }
-                    : null,
                 // BOX BARCODES
                 getModesFromPermissions(permissions, 'wm_handling-unit-outbound-barcodes').includes(
                     ModeEnum.Read
