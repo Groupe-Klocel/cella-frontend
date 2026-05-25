@@ -24,26 +24,14 @@ import {
     PrinterOutlined,
     DeleteOutlined
 } from '@ant-design/icons';
-import { AppHead, LinkButton, SinglePrintModal } from '@components';
-import {
-    getModesFromPermissions,
-    META_DEFAULTS,
-    pathParams,
-    showError,
-    showSuccess
-} from '@helpers';
+import { AppHead, LinkButton, SinglePrintDocumentSetModal } from '@components';
+import { getModesFromPermissions, pathParams, showError, showSuccess } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import 'moment/min/locales';
 import moment from 'moment';
-import {
-    ModeEnum,
-    UpdateLoadMutation,
-    UpdateLoadMutationVariables,
-    useListParametersForAScopeQuery,
-    useUpdateLoadMutation
-} from 'generated/graphql';
+import { ModeEnum, useListParametersForAScopeQuery } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
@@ -69,6 +57,56 @@ const LoadsPage: PageComponent = () => {
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [referenceToPrint, setReferenceToPrint] = useState<string>();
+    const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
+    const [defaultLoadDocuments, setDefaultLoadDocuments] = useState<any>();
+
+    const fetchDocumentsList = async (record: any) => {
+        const ruleVariables = {
+            context: {
+                object_name: 'load',
+                stock_owner: record?.extras_stockOwnerName ?? undefined,
+                shipping_type: record?.extras_shippingType ?? undefined,
+                carrier: record?.extras_carrierName ?? undefined,
+                delivery_po_type: record?.extras_deliveryType ?? undefined,
+                delivery_customer_code: record?.extras_thirdPartyCode,
+                dangerous: record?.extras_dangereux ?? undefined
+            }
+        };
+
+        const ruleQuery = gql`
+            query executeRule($context: JSON!) {
+                executeRule(ruleName: "DOCUMENT_LIST", context: $context)
+            }
+        `;
+
+        const documentAttachmentsQuery = gql`
+            query documentAttachments($filters: DocumentAttachmentSearchFilters) {
+                documentAttachments(filters: $filters) {
+                    results {
+                        id
+                        name
+                        description
+                    }
+                }
+            }
+        `;
+
+        const documentAttachmentsVariables = {
+            filters: {
+                objectId: record.id
+            }
+        };
+
+        const [ruleResult, documentAttachmentsResult] = await Promise.all([
+            graphqlRequestClient.request(ruleQuery, ruleVariables),
+            graphqlRequestClient.request(documentAttachmentsQuery, documentAttachmentsVariables)
+        ]);
+
+        return {
+            documentList: ruleResult?.executeRule?.document_list?.value,
+            documentAttachments: documentAttachmentsResult?.documentAttachments?.results || []
+        };
+    };
 
     const headerData: HeaderData = {
         title: t('common:loads'),
@@ -83,92 +121,13 @@ const LoadsPage: PageComponent = () => {
             ) : null
     };
 
-    const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'global',
-        code: 'default_print_language'
-    });
-    const [printLanguage, setPrintLanguage] = useState<string>();
-    useEffect(() => {
-        if (defaultPrintLanguage) {
-            setPrintLanguage(defaultPrintLanguage.data?.listParametersForAScope[0].text);
-        }
-    }, [defaultPrintLanguage.data]);
-
-    const defaultPrinterLaserParameter = useListParametersForAScopeQuery(graphqlRequestClient, {
-        scope: 'global',
-        code: 'default_printer_laser'
-    });
-    const [defaultPrinterLaser, setDefaultPrinterLaser] = useState<string>();
-    useEffect(() => {
-        if (defaultPrinterLaserParameter) {
-            setDefaultPrinterLaser(
-                defaultPrinterLaserParameter.data?.listParametersForAScope[0].text
-            );
-        }
-    }, [defaultPrinterLaserParameter.data]);
-
     //retrieve client's date for printing
     const local = moment();
     local.locale();
     const dateLocal = local.format('l') + ', ' + local.format('LT');
 
-    const printLoad = async (inputForPrinting: any, printer: string | undefined) => {
-        const documentMutation = gql`
-            mutation generateDocument(
-                $documentName: String!
-                $language: String!
-                $printer: String
-                $context: JSON!
-            ) {
-                generateDocument(
-                    documentName: $documentName
-                    language: $language
-                    printer: $printer
-                    context: $context
-                ) {
-                    __typename
-                    ... on RenderedDocument {
-                        url
-                    }
-                    ... on TemplateDoesNotExist {
-                        message
-                    }
-                    ... on TemplateError {
-                        message
-                    }
-                    ... on MissingContext {
-                        message
-                    }
-                }
-            }
-        `;
-
-        const documentVariables = {
-            documentName: 'K_LoadLoadingList',
-            language: printLanguage,
-            printer,
-            context: { ...inputForPrinting, date: dateLocal }
-        };
-
-        const documentResult = await graphqlRequestClient.request(
-            documentMutation,
-            documentVariables
-        );
-
-        console.log('documentResult', documentResult);
-
-        if (documentResult.generateDocument.__typename !== 'RenderedDocument') {
-            showError(t('messages:error-print-data'));
-        } else {
-            printer
-                ? showSuccess(t('messages:success-print-data'))
-                : window.open(documentResult.generateDocument.url, '_blank');
-        }
-    };
-
     // DISPATCH LOAD
     const statusDispatched = configs.DELIVERY_STATUS_DISPATCHED;
-    const [isDispatchLoading, setIsDispatchLoading] = useState(false);
     const dispatchLoad = async (id: String) => {
         Modal.confirm({
             title: t('messages:dispatch-load-confirm'),
@@ -186,8 +145,6 @@ const LoadsPage: PageComponent = () => {
                     functionName: 'load_dispatch',
                     event: { input: { loadId: id } }
                 };
-                setIsDispatchLoading(true);
-                let dispatchSuccessful = false;
                 try {
                     const deliveryHUO = await graphqlRequestClient.request(query, variables);
                     if (deliveryHUO.executeFunction.status === 'ERROR') {
@@ -207,27 +164,11 @@ const LoadsPage: PageComponent = () => {
                     } else {
                         showSuccess(t('messages:success-dispatched'));
                         setTriggerRefresh(!triggerRefresh);
-                        dispatchSuccessful = true;
-                    }
-                    if (dispatchSuccessful) {
-                        try {
-                            printLoad(
-                                {
-                                    id: id,
-                                    statusDispatched
-                                },
-                                defaultPrinterLaser
-                            );
-                        } catch (error) {
-                            console.error('Print error :', error);
-                            showError(t('messages:error-print'));
-                        }
                     }
                 } catch (error) {
                     console.error('Error during dispatch request:', error);
                     showError(t('messages:error-executing-function'));
                 }
-                setIsDispatchLoading(false);
             },
             okText: t('messages:confirm'),
             cancelText: t('messages:cancel')
@@ -246,6 +187,7 @@ const LoadsPage: PageComponent = () => {
             });
         };
     };
+
     return (
         <>
             <AppHead title={headerData.title} />
@@ -264,6 +206,13 @@ const LoadsPage: PageComponent = () => {
                             status: number;
                             numberHuLoaded: number;
                             name: string;
+                            managedByExternalSystem?: boolean;
+                            extras_stockOwnerName?: string;
+                            extras_shippingType?: string;
+                            extras_carrierName?: string;
+                            extras_deliveryType?: string;
+                            extras_thirdPartyCode?: string;
+                            extras_dangereux?: boolean;
                         }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
@@ -290,6 +239,7 @@ const LoadsPage: PageComponent = () => {
                                 record.status > configs.LOAD_LINE_STATUS_CREATED &&
                                 record.status < configs.LOAD_STATUS_DISPATCHED &&
                                 record.numberHuLoaded > 0 &&
+                                !record.managedByExternalSystem &&
                                 model.isEditable ? (
                                     <Button
                                         icon={<InboxOutlined />}
@@ -302,6 +252,7 @@ const LoadsPage: PageComponent = () => {
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isDeletable &&
                                 record.status == configs.LOAD_STATUS_CREATED &&
+                                !record.managedByExternalSystem &&
                                 record.numberHuLoaded <= 0 ? (
                                     <Button
                                         icon={<DeleteOutlined />}
@@ -316,10 +267,14 @@ const LoadsPage: PageComponent = () => {
                                 {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
                                     <Button
                                         icon={<PrinterOutlined />}
-                                        onClick={() => {
+                                        onClick={async () => {
                                             setShowSinglePrintModal(true);
                                             setIdToPrint(record.id);
                                             setReferenceToPrint(record.name);
+                                            const { documentList, documentAttachments } =
+                                                await fetchDocumentsList(record);
+                                            setDefaultLoadDocuments(documentList);
+                                            setDocumentAttachmentsData(documentAttachments);
                                         }}
                                     />
                                 ) : (
@@ -331,7 +286,7 @@ const LoadsPage: PageComponent = () => {
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
             />
-            <SinglePrintModal
+            <SinglePrintDocumentSetModal
                 showModal={{
                     showSinglePrintModal,
                     setShowSinglePrintModal
@@ -341,8 +296,10 @@ const LoadsPage: PageComponent = () => {
                     date: dateLocal,
                     statusDispatched
                 }}
-                documentName="K_LoadLoadingList"
+                allDocumentName={defaultLoadDocuments}
+                setAllDocumentName={setDefaultLoadDocuments}
                 documentReference={referenceToPrint}
+                documentAttachmentsData={documentAttachmentsData}
             />
         </>
     );

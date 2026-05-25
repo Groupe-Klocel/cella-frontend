@@ -62,6 +62,7 @@ const CustomerOrderPages: PageComponent = () => {
     const { graphqlRequestClient } = useAuth();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [selectedRows, setSelectedRows] = useState<any>([]);
+    const [tableData, setTableData] = useState<any[]>([]);
     const [commonStatus, setCommonStatus] = useState<number | undefined>();
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [orderId, setOrderId] = useState<any>();
@@ -122,12 +123,34 @@ const CustomerOrderPages: PageComponent = () => {
         rows: any[];
     } | null>(null);
 
-    const onSelectChange = async (newSelectedRowKeys: React.Key[], newSelectedRows: any) => {
-        setSelectedRowKeys(newSelectedRowKeys);
-        setSelectedRows(newSelectedRows);
-        setFetchOrderAddressTrigger({ keys: newSelectedRowKeys, rows: newSelectedRows });
-        if (newSelectedRows.length === 0) return undefined;
-        const firstStatus = newSelectedRows[0].status;
+    const onSelectChange = (newSelectedRowKeys: React.Key[], newSelectedRows: any[]) => {
+        const currentPageIds = tableData.map((d) => d.id);
+
+        setSelectedRowKeys((prevKeys) => {
+            const retainedKeys = prevKeys.filter(
+                (key) => !currentPageIds.includes(key) || newSelectedRowKeys.includes(key)
+            );
+            const keysToAdd = newSelectedRowKeys.filter((key) => !retainedKeys.includes(key));
+
+            return [...retainedKeys, ...keysToAdd];
+        });
+
+        setSelectedRows((prevRows: any[]) => {
+            const retainedRows = prevRows.filter(
+                (row) => !currentPageIds.includes(row.id) || newSelectedRowKeys.includes(row.id)
+            );
+
+            const retainedRowIds = retainedRows.map((r) => r.id);
+            const rowsToAdd = newSelectedRows.filter((row) => !retainedRowIds.includes(row.id));
+
+            return [...retainedRows, ...rowsToAdd];
+        });
+    };
+
+    useEffect(() => {
+        setFetchOrderAddressTrigger({ keys: selectedRowKeys, rows: selectedRows });
+        if (selectedRows.length === 0) return undefined;
+        const firstStatus = selectedRows[0].status;
         //this section manages conditions to allow or not bulk status change button
         const allowedStatuses = [
             configs.ORDER_STATUS_CREATED,
@@ -136,16 +159,16 @@ const CustomerOrderPages: PageComponent = () => {
             configs.ORDER_STATUS_TO_BE_DELIVERED
         ];
         const allowedStatus = allowedStatuses.includes(firstStatus);
-        const allSameStatus = newSelectedRows.every((item: any) => item.status === firstStatus);
+        const allSameStatus = selectedRows.every((item: any) => item.status === firstStatus);
         setCommonStatus(allSameStatus ? (allowedStatus ? firstStatus : undefined) : undefined);
 
-        const allStatusesValid = newSelectedRows.every(
+        const allStatusesValid = selectedRows.every(
             (item: any) =>
                 item.status >= configs.ORDER_STATUS_QUOTE_TRANSMITTED &&
                 item.status <= configs.ORDER_STATUS_TO_BE_DELIVERED
         );
         setStatusAuthorizedToBulk(allStatusesValid);
-    };
+    }, [selectedRowKeys, selectedRows, tableData]);
 
     //this useEffect checks deliveries addresses for selected orders and allow create delivery button or not
     useEffect(() => {
@@ -275,6 +298,48 @@ const CustomerOrderPages: PageComponent = () => {
         });
     };
 
+    const [isCreateOrderLoading, setIsCreateOrderLoading] = useState(false);
+    const duplicateOrder = async (orderIds: [string]) => {
+        setIsCreateOrderLoading(true);
+
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'duplicate_orders',
+            event: {
+                orderIds
+            }
+        };
+
+        try {
+            const orderDuplicatedResult = await graphqlRequestClient.request(query, variables);
+            setTriggerRefresh((current) => !current);
+            if (orderDuplicatedResult.executeFunction.status === 'ERROR') {
+                showError(orderDuplicatedResult.executeFunction.output);
+            } else if (
+                orderDuplicatedResult.executeFunction.status === 'OK' &&
+                orderDuplicatedResult.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${orderDuplicatedResult.executeFunction.output.output.code}`));
+                console.log('Backend_message', orderDuplicatedResult.executeFunction.output.output);
+            } else {
+                showSuccess(t('messages:success-order-duplication'));
+            }
+            setIsCreateOrderLoading(false);
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+            setIsCreateOrderLoading(false);
+        }
+    };
+
     //#endregion
 
     const confirmSwitchStatus = (ids: [string], status: any) => {
@@ -361,6 +426,24 @@ const CustomerOrderPages: PageComponent = () => {
                             {t('actions:create-bulk-delivery')}
                         </Button>
                     </span>
+                    <span style={{ marginLeft: 16 }}>
+                        <Button
+                            type="primary"
+                            loading={isCreateOrderLoading}
+                            onClick={() => {
+                                duplicateOrder(selectedRowKeys as [string]);
+                            }}
+                            disabled={!hasSelected || !commonStatus}
+                        >
+                            {selectedRowKeys && selectedRowKeys.length > 0
+                                ? t('actions:duplicate-order', {
+                                      number: selectedRowKeys.length
+                                  })
+                                : t('actions:duplicate-order', {
+                                      number: ' '
+                                  })}
+                        </Button>
+                    </span>
                 </>
             ) : null
     };
@@ -371,6 +454,7 @@ const CustomerOrderPages: PageComponent = () => {
             <ListComponent
                 searchCriteria={{ orderType: configs.ORDER_TYPE_CUSTOMER_ORDER }}
                 headerData={headerData}
+                setData={setTableData}
                 dataModel={model}
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}

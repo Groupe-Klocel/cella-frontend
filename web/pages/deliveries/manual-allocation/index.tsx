@@ -53,9 +53,11 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
         actionsComponent: null
     };
     const autocountFilter = useMemo(
-        () => ({
-            filter: [{ field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }]
-        }),
+        () => [
+            {
+                filter: [{ field: { autocountHandlingUnitOutbound: 0 }, searchType: 'SUPERIOR' }]
+            }
+        ],
         []
     );
 

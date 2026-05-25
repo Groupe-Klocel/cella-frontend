@@ -44,7 +44,7 @@ import {
     isStringDate,
     formatUTCLocaleDate
 } from '@helpers';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FilterFieldType, ModelType } from 'models/ModelsV2';
 import { useAppState } from 'context/AppContext';
 import { ExportFormat, ModeEnum } from 'generated/graphql';
@@ -89,7 +89,7 @@ export interface IListProps {
 }
 
 const ArticleExtrasListComponent = (props: IListProps) => {
-    const { permissions } = useAppState();
+    const { permissions, parameters } = useAppState();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
@@ -120,6 +120,28 @@ const ArticleExtrasListComponent = (props: IListProps) => {
             </Space>
         )
     };
+
+    //retrieve extras parameters so that we can compare them to current extras
+    const configsParamsCodes = useMemo(() => {
+        const findAllByScope = (items: any[], scope: string) => {
+            return items
+                .filter((item: any) => item.scope === scope)
+                .sort((a, b) => a.code - b.code)
+                .map((item: any) => {
+                    return {
+                        ...item,
+                        value: item.translation?.[filteredLanguage] || item.value
+                    };
+                });
+        };
+
+        const extrasKeys = findAllByScope(
+            parameters,
+            `extrasKey_${props.dataModel.tableName.toLowerCase()}`
+        );
+
+        return { extrasKeys };
+    }, [parameters]);
 
     const actionColumns = [
         {
@@ -350,8 +372,8 @@ const ArticleExtrasListComponent = (props: IListProps) => {
         props.dataModel.endpoints.list,
         listFields,
         search,
-        pagination.current,
-        pagination.itemsPerPage,
+        1, // Always page 1 on backend side
+        999999, // Fetch all data at once on backend side
         sort,
         filteredLanguage,
         defaultModelSort
@@ -359,7 +381,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
 
     useEffect(() => {
         reloadData();
-    }, [search, props.refetch, pagination.current, pagination.itemsPerPage, sort, router.locale]);
+    }, [search, props.refetch, sort, router.locale]); // Remove pagination.current and pagination.itemsPerPage from deps
 
     // #region EXPORT DATA
     const exportFields = Object.keys(props.dataModel.fieldsInfo).filter((key) => {
@@ -439,14 +461,14 @@ const ArticleExtrasListComponent = (props: IListProps) => {
     // make wrapper function to give child
     const onChangePagination = useCallback(
         (currentPage: number, itemsPerPage: number) => {
-            // Re fetch data for new current page or items per page
-            setPagination({
-                total: rows?.count,
+            // Frontend-only pagination - no backend call
+            setPagination((prevPagination) => ({
+                ...prevPagination,
                 current: currentPage,
                 itemsPerPage: itemsPerPage
-            });
+            }));
         },
-        [setPagination, rows]
+        [setPagination]
     );
 
     // For pagination
@@ -539,7 +561,7 @@ const ArticleExtrasListComponent = (props: IListProps) => {
             let i = 0;
             let stringJsonData = '';
 
-            // Première passe : construire extraData
+            // First pass: build extraData
             for (const [key, value] of Object.entries(rowsCopy[0])) {
                 if (key.includes('extras_')) {
                     const argKey = key.replace('extras_', '');
@@ -547,32 +569,50 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                 }
             }
 
-            // Deuxième passe : construire jsonData avec extraData inclus
+            // Second pass: build jsonData with extraData included
             for (const [key, value] of Object.entries(rowsCopy[0])) {
                 const arg = key.split('_');
                 if (key.includes('extras_')) {
                     const argKey = key.replace('extras_', '');
-                    jsonData.push({
-                        index: `${i}`,
-                        key: t(`d:${argKey}`),
-                        rawKey: `${argKey}`,
-                        value: `${value}`,
-                        extraData: stringJsonData // Inclure extraData dans chaque record
-                    });
-                    i++;
+
+                    // Check if argKey exists in configsParamsCodes.extrasKeys
+                    const matchingExtraKey = configsParamsCodes.extrasKeys.find(
+                        (extraKey: any) => extraKey.code === argKey
+                    );
+
+                    // Only add to jsonData if argKey is found in configsParamsCodes.extrasKeys
+                    if (matchingExtraKey) {
+                        jsonData.push({
+                            index: `${i}`,
+                            key: matchingExtraKey.value, // Use translated value from configsParamsCodes
+                            rawKey: `${argKey}`,
+                            value: `${value}`,
+                            extraData: stringJsonData
+                        });
+                        i++;
+                    }
                 }
             }
             setExtraData(stringJsonData);
         }
         const newColumns = [
-            // { title: t('d:index'), dataIndex: 'index', key: 'index', showSorterTooltip: false },
             { title: t('d:key'), dataIndex: 'key', key: 'key', showSorterTooltip: false },
             { title: t('d:value'), dataIndex: 'value', key: 'value', showSorterTooltip: false }
         ];
 
         setColumns(newColumns);
-        setNewRows(jsonData);
-    }, [data, router, sort]);
+
+        // Frontend pagination on extras
+        const startIndex = (pagination.current - 1) * pagination.itemsPerPage;
+        const endIndex = startIndex + pagination.itemsPerPage;
+        const paginatedJsonData = jsonData.slice(startIndex, endIndex);
+
+        setNewRows(paginatedJsonData);
+        setPagination({
+            ...pagination,
+            total: jsonData.length // Total = total number of extras (unpaginated)
+        });
+    }, [data, router, sort, pagination.current, pagination.itemsPerPage]); // Added pagination deps
 
     const handleTableChange = async (_pagination: number, _filter: number, sorter: number) => {
         const newSorter = orderByFormater(sorter);

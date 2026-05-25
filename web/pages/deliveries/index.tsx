@@ -202,7 +202,11 @@ const DeliveryPages: PageComponent = () => {
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: { id: string; status: number }) => (
+                        render: (record: {
+                            id: string;
+                            status: number;
+                            managedByExternalSystem: boolean;
+                        }) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
@@ -226,6 +230,7 @@ const DeliveryPages: PageComponent = () => {
                                 {modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isSoftDeletable &&
+                                !record?.managedByExternalSystem &&
                                 statusForCancelation.delivery.includes(record?.status) ? (
                                     <Button
                                         icon={<LockTwoTone twoToneColor="#ffbbaf" />}

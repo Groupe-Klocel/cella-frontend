@@ -261,9 +261,13 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
             if (excludedDetailFields)
                 flattenedData = Object.keys(flattenedData)
                     .filter(function (key) {
+                        const isExcludedField = excludedDetailFields!.includes(key);
+                        const isExtrasRelatedField =
+                            excludedDetailFields!.includes('extras') && key.startsWith('extras_');
                         return (
                             !Array.isArray(flattenedData[key]) &&
-                            !excludedDetailFields!.includes(key)
+                            !isExcludedField &&
+                            !isExtrasRelatedField
                         );
                     })
                     .reduce((obj: any, key: any) => {
