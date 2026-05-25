@@ -344,9 +344,7 @@ const RoundPages: PageComponent = () => {
 
             const allCanBeEdited = selectedRounds.every((round: any) => {
                 const status = round.status;
-                const pasDeStockDisponible = parseInt(
-                    configsParamsCodes.noStockAvailableStatusCode
-                );
+                const noStockAvailable = parseInt(configsParamsCodes.noStockAvailableStatusCode);
                 const estimated = parseInt(configsParamsCodes.estimatedStatusCode);
                 const startedStatusCode = parseInt(configsParamsCodes.startedStatusCode);
                 const inPreparationStatusCode = parseInt(
@@ -356,7 +354,7 @@ const RoundPages: PageComponent = () => {
                     status == startedStatusCode ||
                     status == inPreparationStatusCode ||
                     status == estimated ||
-                    status == pasDeStockDisponible
+                    status == noStockAvailable
                 );
             });
 
@@ -364,10 +362,8 @@ const RoundPages: PageComponent = () => {
             const allCanBeStartRounds = selectedRounds.every((round: any) => {
                 const status = round.status;
                 const estimated = parseInt(configsParamsCodes.estimatedStatusCode);
-                const pasDeStockDisponible = parseInt(
-                    configsParamsCodes.noStockAvailableStatusCode
-                );
-                return status == pasDeStockDisponible || status == estimated;
+                const noStockAvailable = parseInt(configsParamsCodes.noStockAvailableStatusCode);
+                return status == noStockAvailable || status == estimated;
             });
 
             // Check status to allow Assignment/Unassignment
