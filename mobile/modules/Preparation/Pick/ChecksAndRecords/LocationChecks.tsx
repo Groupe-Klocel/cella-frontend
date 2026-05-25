@@ -18,11 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, showSuccess } from '@helpers';
-import { gql } from 'graphql-request';
+import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
-import { useAuth } from 'context/AuthContext';
+import { useEffect } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ILocationChecksProps {
@@ -31,17 +29,14 @@ export interface ILocationChecksProps {
 
 export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     const { t } = useTranslation();
-    const { graphqlRequestClient } = useAuth();
 
     const {
         processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         locationInfos,
-        triggerAlternativeSubmit1,
-        action1Trigger,
-        alternativeSubmitInput,
         showSimilarLocations,
+        isHuClosureLoading,
         setResetForm
     } = dataToCheck;
 
@@ -52,9 +47,6 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     const handlingUnitContentArticleId =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
             ?.id;
-    const handlingUnitContentId =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.id;
-    const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
 
     // TYPED SAFE ALL
     useEffect(() => {
@@ -102,6 +94,7 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         console.log('No matching handling unit content', data);
                         showError(t('messages:unexpected-scanned-item'));
                         setResetForm(true);
+                        setScannedInfo(undefined);
                         return;
                     }
                 }
@@ -118,158 +111,6 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
             }
         }
     }, [locationInfos]);
-
-    const [isHuClosureLoading, setIsHuClosureLoading] = useState(false);
-    async function closeHUO(currentShippingPalletId: any) {
-        setIsHuClosureLoading(true);
-        const query = gql`
-            mutation executeFunction($functionName: String!, $event: JSON!) {
-                executeFunction(functionName: $functionName, event: $event) {
-                    status
-                    output
-                }
-            }
-        `;
-
-        const variables = {
-            functionName: 'RF_pickAndPack_closeShippingPallet',
-            event: {
-                input: { currentShippingPalletId }
-            }
-        };
-
-        try {
-            const closeHUOsResult = await graphqlRequestClient.request(query, variables);
-            if (closeHUOsResult.executeFunction.status === 'ERROR') {
-                showError(closeHUOsResult.executeFunction.output);
-            } else if (
-                closeHUOsResult.executeFunction.status === 'OK' &&
-                closeHUOsResult.executeFunction.output.status === 'KO'
-            ) {
-                showError(t(`errors:${closeHUOsResult.executeFunction.output.output.code}`));
-                console.log('Backend_message', closeHUOsResult.executeFunction.output.output);
-            } else {
-                showSuccess(t('messages:hu-ready-to-be-loaded'));
-                const newStoredObject: any = storedObject;
-                if (ignoreHUContentIds.length > 0) {
-                    newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
-                } else {
-                    newStoredObject.ignoreHUContentIds = [];
-                }
-                const { updatedRound } = closeHUOsResult.executeFunction.output.output;
-
-                let remainingHUContentIds = updatedRound.roundAdvisedAddresses
-                    .filter((raa: any) => {
-                        return !newStoredObject.ignoreHUContentIds.includes(
-                            raa.handlingUnitContentId
-                        );
-                    })
-                    .filter((raa: any) => raa.quantity != 0);
-                if (remainingHUContentIds.length === 0) {
-                    newStoredObject.ignoreHUContentIds = [];
-                    remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
-                        (raa: any) => raa.quantity != 0
-                    );
-                }
-
-                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses.filter(
-                    (raa: any) => raa.quantity != 0
-                );
-                const data = {
-                    proposedRoundAdvisedAddresses: roundAdvisedAddresses.filter(
-                        (raa: any) =>
-                            raa.handlingUnitContentId ==
-                            remainingHUContentIds[0].handlingUnitContentId
-                    ),
-                    round: updatedRound,
-                    pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
-                };
-                newStoredObject['currentStep'] = 10;
-                if (storedObject[`step5`]) {
-                    newStoredObject[`step5`] = {
-                        ...storedObject[`step5`]
-                    };
-                }
-                newStoredObject[`step10`] = { previousStep: storedObject[`step5`] ? 5 : 0, data };
-                delete newStoredObject['step10']['data']['currentShippingPallet'];
-                dispatch({
-                    type: 'UPDATE_BY_PROCESS',
-                    processName,
-                    object: newStoredObject
-                });
-            }
-            setIsHuClosureLoading(false);
-        } catch (error) {
-            showError(t('messages:error-updating-data'));
-            console.log('updateHUOsError', error);
-            setIsHuClosureLoading(false);
-        }
-    }
-
-    useEffect(() => {
-        if (action1Trigger.action1Trigger) {
-            action1Trigger.setAction1Trigger(false);
-            let newIgnoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
-            let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
-                .filter((raa: any) => {
-                    return !newIgnoreHUContentIds.includes(raa.handlingUnitContentId);
-                })
-                .filter((raa: any) => raa.quantity != 0);
-            if (remainingHUContentIds.length === 0) {
-                newIgnoreHUContentIds = [];
-                remainingHUContentIds = storedObject[
-                    `step10`
-                ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
-            }
-            const raaForHUC = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
-                .filter((raa: any) => raa.quantity != 0)
-                .filter(
-                    (raa: any) =>
-                        raa.handlingUnitContentId ===
-                        remainingHUContentIds[0]?.handlingUnitContentId
-                );
-
-            // Find next roundAdvisedAddress with different locationId
-            const currentLocationId =
-                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.locationId;
-            const differentLocationRaa = raaForHUC.find(
-                (raa: any) => raa.locationId !== currentLocationId
-            );
-            const raaToUse = differentLocationRaa || raaForHUC[0];
-
-            // Apply checkPosition condition to propose one or cumulated article
-            const newProposedRoundAdvisedAddresses = storedObject[`step10`]?.data?.round.equipment
-                .checkPosition
-                ? [raaToUse]
-                : raaForHUC;
-            showSimilarLocations?.showSimilarLocations.setShowSimilarLocations(false);
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName,
-                stepName: `step10`,
-                object: {
-                    ...storedObject[`step10`],
-                    data: {
-                        ...storedObject[`step10`]?.data,
-                        proposedRoundAdvisedAddresses: newProposedRoundAdvisedAddresses
-                    }
-                },
-                customFields: [{ key: 'ignoreHUContentIds', value: newIgnoreHUContentIds }]
-            });
-        }
-    }, [action1Trigger]);
-
-    useEffect(() => {
-        if (triggerAlternativeSubmit1.triggerAlternativeSubmit1) {
-            if (!alternativeSubmitInput) {
-                showError(t('messages:no-hu-to-close'));
-                triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
-            } else {
-                triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
-                closeHUO(alternativeSubmitInput);
-            }
-        }
-    }, [triggerAlternativeSubmit1, alternativeSubmitInput]);
 
     return (
         <WrapperForm>

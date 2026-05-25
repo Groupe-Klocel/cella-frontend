@@ -20,12 +20,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select list handling unit type = pallet corresponding to a given barcode
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { showError, LsIsSecured, useBoxes, getLanguageCode } from '@helpers';
+import { showError, LsIsSecured } from '@helpers';
 import { Form, Input } from 'antd';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { gql } from 'graphql-request';
+import { useAuth } from 'context/AuthContext';
 
 export interface IScanBoxFormProps {
     process: string;
@@ -42,12 +44,12 @@ export const ScanBoxForm = ({
     trigger: { triggerRender, setTriggerRender },
     buttons
 }: IScanBoxFormProps) => {
+    const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
-    const router = useRouter();
-    const filteredLanguage = getLanguageCode(router);
+    const [handlingUnitOutboundInfos, setHandlingUnitOutboundInfos] = useState<any>();
 
     //camera scanner section
     const [camData, setCamData] = useState();
@@ -81,14 +83,140 @@ export const ScanBoxForm = ({
     };
 
     // ScanBox-2: launch query
-    const { data: handlingUnitOutboundInfos, error } = useBoxes(
-        { name: `${handlingUnitOutboundName}` },
-        1,
-        100,
-        null,
-        filteredLanguage
-    );
+    const getHUO = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
+        if (scannedInfo) {
+            const query = gql`
+                query handlingUnitOutbounds(
+                    $advancedFilters: [HandlingUnitOutboundAdvancedSearchFilters!]
+                ) {
+                    handlingUnitOutbounds(advancedFilters: $advancedFilters) {
+                        count
+                        itemsPerPage
+                        totalPages
+                        results {
+                            id
+                            name
+                            status
+                            statusText
+                            preparationMode
+                            preparationModeText
+                            theoriticalWeight
+                            carrier {
+                                id
+                                name
+                            }
+                            carrierShippingModeId
+                            carrierShippingMode {
+                                id
+                                toBePalletized
+                                shippingMode
+                                carrier {
+                                    name
+                                }
+                            }
+                            deliveryId
+                            delivery {
+                                id
+                                name
+                                carrierShippingMode {
+                                    carrierId
+                                    carrier {
+                                        id
+                                        name
+                                    }
+                                }
+                            }
+                            handlingUnitModelId
+                            handlingUnitModel {
+                                id
+                                name
+                                weight
+                                closureWeight
+                            }
+                            roundId
+                            round {
+                                id
+                                name
+                            }
+                            loadId
+                            load {
+                                id
+                                name
+                            }
+                            handlingUnitId
+                            handlingUnit {
+                                id
+                                name
+                                type
+                                typeText
+                                stockOwnerId
+                                stockOwner {
+                                    name
+                                }
+                                status
+                                statusText
+                                warehouseCode
+                                parentHandlingUnitId
+                            }
+                            handlingUnitContentOutbounds {
+                                id
+                                lineNumber
+                                status
+                                statusText
+                                pickedQuantity
+                                quantityToBePicked
+                                pickingLocationId
+                                pickingLocation {
+                                    id
+                                    name
+                                }
+                                handlingUnitContentId
+                                handlingUnitContent {
+                                    id
+                                    articleId
+                                    article {
+                                        id
+                                        name
+                                        description
+                                        stockOwnerId
+                                        stockOwner {
+                                            name
+                                        }
+                                        baseUnitWeight
+                                    }
+                                }
+                            }
+                            createdBy
+                            created
+                            modifiedBy
+                            modified
+                            extras
+                        }
+                    }
+                }
+            `;
 
+            const variables = {
+                advancedFilters: {
+                    filter: [
+                        { searchType: 'EQUAL', field: { handlingUnit_Barcode: scannedInfo } },
+                        { searchType: 'EQUAL', field: { carrierBox: scannedInfo } }
+                    ]
+                }
+            };
+            const handlingUnitOutboundInfos = await graphqlRequestClient.request(query, variables);
+            return handlingUnitOutboundInfos;
+        }
+    };
+    useEffect(() => {
+        if (handlingUnitOutboundName) {
+            const fetchData = async () => {
+                const dataHUO = await getHUO(handlingUnitOutboundName);
+                setHandlingUnitOutboundInfos(dataHUO);
+            };
+            fetchData();
+        }
+    }, [handlingUnitOutboundName]);
     //ScanBox-3: manage information for persistence storage and front-end errors
     useEffect(() => {
         if (handlingUnitOutboundName && handlingUnitOutboundInfos) {

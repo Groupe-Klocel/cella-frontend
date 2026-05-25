@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useBoxes, useLocationIds } from '@helpers';
+import { useLocationIds } from '@helpers';
 import { LsIsSecured, getLanguageCode } from '@helpers';
 import { useRouter } from 'next/router';
 

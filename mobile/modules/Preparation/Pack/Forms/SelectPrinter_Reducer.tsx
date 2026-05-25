@@ -33,14 +33,16 @@ export interface ISelectPrinterProps {
     processName: string;
     ruleName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
+    buttons?: { [label: string]: any };
+    formToUse?: any;
 }
 
 export const SelectPrinter = ({
     processName,
     ruleName,
     stepNumber,
-    buttons
+    buttons,
+    formToUse
 }: ISelectPrinterProps) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
@@ -52,7 +54,7 @@ export const SelectPrinter = ({
     const [printerList, setPrinterList] = useState<any[]>([]);
 
     //camera scanner section
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState();
 
     useEffect(() => {

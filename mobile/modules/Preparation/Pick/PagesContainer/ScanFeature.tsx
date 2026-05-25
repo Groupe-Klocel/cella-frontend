@@ -32,13 +32,14 @@ export interface IScanFeatureProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
     checkComponent: any;
+    buttons?: { [label: string]: any };
     featureType?: any;
     processedFeatures?: any;
     nextFeatureCode?: any;
     action1Trigger?: any;
     dataInfos?: any;
+    form?: any;
 }
 const { Title } = Typography;
 
@@ -59,6 +60,7 @@ export const ScanFeature = ({
     label,
     action1Trigger: { action1Trigger, setAction1Trigger },
     buttons,
+    form,
     checkComponent,
     featureType,
     processedFeatures,
@@ -179,6 +181,7 @@ export const ScanFeature = ({
                     action1Label={t('common:finish-features-entry')}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
+                    formToUse={form}
                 ></ScanForm_reducer>
             ) : (
                 <DatePickerForm_reducer
@@ -188,6 +191,7 @@ export const ScanFeature = ({
                     buttons={{ ...buttons }}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
+                    formToUse={form}
                 ></DatePickerForm_reducer>
             )}
             {checkComponent(dataToCheck)}

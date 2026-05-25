@@ -20,11 +20,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //SPECIFIC FOR RECEPTION
 //DESCRIPTION: retrieve information from local storage and validate them for database updates
 
-import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
-import { showError, showSuccess, LsIsSecured, getLastStepWithPreviousStep } from '@helpers';
+import { WrapperForm, ContentSpin } from '@components';
+import { showError, getLastStepWithPreviousStep } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
-import configs from '../../../../../common/configs.json';
+import { useEffect } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
@@ -33,10 +32,10 @@ import { handlePickAndPackProcessResult } from '../Elements/endOfProcessHandling
 export interface IAutoValidatePickAndPackProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
     headerContent: { [label: string]: any };
     toBePalletized: boolean;
     autoValidateLoading: { [label: string]: any };
+    buttons?: { [label: string]: any };
 }
 
 export const AutoValidatePickAndPackForm = ({
@@ -68,9 +67,8 @@ export const AutoValidatePickAndPackForm = ({
         }
     }, []);
     // retrieve values for update contents/boxline and create movement
-    const { step5, step10, step15, step30, step40, step50, step60, step70, step80 } = storedObject;
+    const { step10, step15, step30, step40, step50, step60, step70, step80 } = storedObject;
 
-    const initialIgnoreHUContentIds = storedObject.ignoreHUContentIds || [];
     const proposedRoundAdvisedAddresses = step10?.data?.proposedRoundAdvisedAddresses;
     const round = step10?.data?.round;
     const huName = step15?.data?.handlingUnit;
