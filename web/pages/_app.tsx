@@ -19,6 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { META_DEFAULTS } from 'helpers/configs/misc';
 import 'antd/dist/reset.css';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { AppProvider } from 'context/AppContext';
 import { AuthProvider } from 'context/AuthContext';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
