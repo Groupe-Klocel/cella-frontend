@@ -92,6 +92,16 @@ const HandlingUnitContentPage: PageComponent = () => {
         }
     };
 
+    const canChangeContent = getModesFromPermissions(
+        permissions,
+        'wm_button_change-content'
+    ).includes(ModeEnum.Read);
+
+    const canDeleteContent = getModesFromPermissions(
+        permissions,
+        'wm_button_delete-content'
+    ).includes(ModeEnum.Read);
+
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadCrumb,
@@ -102,7 +112,8 @@ const HandlingUnitContentPage: PageComponent = () => {
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&
                 /*data?.handlingUnit_status == configs.HANDLING_UNIT_STATUS_VALIDATED &&*/
-                data?.handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
+                data?.handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK &&
+                canChangeContent ? (
                     <LinkButton
                         title={t('actions:edit')}
                         path={`${rootPath}/edit/${id}`}
@@ -129,7 +140,8 @@ const HandlingUnitContentPage: PageComponent = () => {
                 modes.includes(ModeEnum.Delete) &&
                 model.isDeletable &&
                 /*data?.handlingUnit_status == configs.HANDLING_UNIT_STATUS_VALIDATED &&*/
-                data?.handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
+                data?.handlingUnit_category == parameters.HANDLING_UNIT_CATEGORY_STOCK &&
+                canDeleteContent ? (
                     <Button onClick={() => confirmAction(id as string, setIdToDelete)()}>
                         {t('actions:delete')}
                     </Button>

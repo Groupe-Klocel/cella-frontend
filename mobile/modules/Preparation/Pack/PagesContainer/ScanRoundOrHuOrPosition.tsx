@@ -25,12 +25,13 @@ export interface IScanRoundOrHuOrPositionProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
+    checkComponent: any;
+    buttons?: { [label: string]: any };
     showEmptyLocations?: any;
     showSimilarLocations?: any;
     triggerAlternativeSubmit?: any;
-    checkComponent: any;
     headerContent?: any;
+    formToUse?: any;
 }
 
 export const ScanRoundOrHuOrPosition = ({
@@ -42,7 +43,8 @@ export const ScanRoundOrHuOrPosition = ({
     showSimilarLocations,
     triggerAlternativeSubmit,
     checkComponent,
-    headerContent
+    headerContent,
+    formToUse
 }: IScanRoundOrHuOrPositionProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -82,6 +84,7 @@ export const ScanRoundOrHuOrPosition = ({
                 showSimilarLocations={showSimilarLocations}
                 triggerAlternativeSubmit={triggerAlternativeSubmit}
                 headerContent={headerContent}
+                formToUse={formToUse}
                 setScannedInfo={setScannedInfo}
                 resetForm={{ resetForm, setResetForm }}
             ></ScanForm_reducer>

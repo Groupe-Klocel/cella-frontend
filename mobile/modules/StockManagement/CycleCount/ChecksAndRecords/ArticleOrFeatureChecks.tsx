@@ -52,8 +52,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     //retrieve necessary values for CC specific checks
     const currentCycleCountId: string = storedObject.step10?.data?.cycleCount?.id;
     const currentCycleCountLineId: string = storedObject.step10?.data?.currentCycleCountLine?.id;
-    const expectedArticleId: string =
-        storedObject.step10?.data?.currentCycleCountLine?.articleNameId;
+    const expectedArticleId: string = storedObject.step10?.data?.currentCycleCountLine?.articleId;
     const isHuToCreate: boolean = storedObject.step30?.data?.isHuToCreate;
     const isHuFromCCM: boolean = storedObject.step30?.data?.isHuFromCCM;
     const huToCreate: any = storedObject.step30?.data?.huToCreate?.name;
@@ -152,6 +151,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     const [fetchResult, setFetchResult] = useState<any>();
     const [contents, setContents] = useState<any>();
     const [newHUCFeatures, setNewHUCFeatures] = useState<any>();
+    const [isHucToCreate, setIsHucToCreate] = useState<boolean>(false);
 
     async function scanArticleOrFeatures(scannedItem: any) {
         const query = gql`
@@ -211,7 +211,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                         articleResponse.resType === 'serialNumber'
                             ? articleResponse.article.featureType
                             : articleResponse.articleLuBarcodes[0].article.featureType;
-
+                    let contentsResults: any;
                     const fetchContents = async () => {
                         const query = gql`
                             query huCs($filters: HandlingUnitContentSearchFilters) {
@@ -289,49 +289,11 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                             }
                         };
 
-                        const contentsResults = await graphqlRequestClient.request(
-                            query,
-                            variables
-                        );
+                        contentsResults = await graphqlRequestClient.request(query, variables);
                         setContents(contentsResults.handlingUnitContents.results);
+                        setIsHucToCreate(contentsResults.handlingUnitContents.results.length === 0);
                     };
-                    fetchContents();
-                    // this to retrieve features when creating new couple HU/HUC
-                    if (isHuToCreate && featureType) {
-                        const fetchFeatures = async () => {
-                            const query = gql`
-                                query featureCodes($filters: FeatureCodeSearchFilters) {
-                                    featureCodes(filters: $filters) {
-                                        results {
-                                            id
-                                            name
-                                            identifiable
-                                            unique
-                                            dateType
-                                        }
-                                    }
-                                }
-                            `;
-
-                            const variables = {
-                                filters: {
-                                    featureTypeDetail_FeatureType:
-                                        articleResponse.articleLuBarcodes[0].article.featureType
-                                }
-                            };
-
-                            const featureCodes = await graphqlRequestClient.request(
-                                query,
-                                variables
-                            );
-                            const formattedFeatures: any[] = [];
-                            featureCodes.featureCodes.results.forEach((item: any) => {
-                                formattedFeatures.push({ featureCode: item, value: undefined });
-                            });
-                            setNewHUCFeatures(formattedFeatures);
-                        };
-                        fetchFeatures();
-                    }
+                    await fetchContents();
                 }
             };
             fetchData();
@@ -341,143 +303,207 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     // perform checks and manage information for persistence storage and front-end errors
     useEffect(() => {
         if (scannedInfo && fetchResult && contents) {
-            //set ExpectedFeatures depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
-            const expectedFeatures = isHuToCreate
-                ? newHUCFeatures
-                : isHuFromCCM
-                  ? currentCCMovements[0].features
-                  : contents
-                    ? contents?.[0]?.handlingUnitContentFeatures.filter(
-                          (feature: any) => !feature.featureCode.identifiable
-                      )
-                    : undefined;
+            const processData = async () => {
+                // Récupérer les features si nécessaire
+                let featuresForNewHUC = newHUCFeatures;
 
-            //set content depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
-            const content = isHuToCreate || isHuFromCCM ? undefined : contents?.[0];
+                const shouldFetchFeatures =
+                    (isHuToCreate || isHucToCreate) &&
+                    (fetchResult.resType === 'serialNumber'
+                        ? fetchResult.article.featureType
+                        : fetchResult.articleLuBarcodes[0].article.featureType) &&
+                    !newHUCFeatures;
 
-            // define what will be sent to storage
-            let workingObject: { [label: string]: any } = {};
-            fetchResult.resType === 'serialNumber'
-                ? (workingObject = {
-                      resType: fetchResult.resType,
-                      article: { ...fetchResult.article, id: fetchResult.article.articleId },
-                      feature: fetchResult.handlingUnitContentFeature,
-                      handlingUnitContent: content,
-                      expectedFeatures,
-                      defaultQuantity: 1
-                  })
-                : (workingObject = {
-                      resType: fetchResult.resType,
-                      article: fetchResult.articleLuBarcodes[0].article,
-                      handlingUnitContent: content,
-                      expectedFeatures
-                  });
+                if (shouldFetchFeatures) {
+                    const query = gql`
+                        query featureCodes($filters: FeatureCodeSearchFilters) {
+                            featureCodes(filters: $filters) {
+                                results {
+                                    id
+                                    name
+                                    identifiable
+                                    unique
+                                    dateType
+                                }
+                            }
+                        }
+                    `;
 
-            const currentCCMovement =
-                workingObject.resType == 'serialNumber'
-                    ? searchByIdInCCMs(currentCcmsCreatedByCc, scannedInfo)
-                    : currentCCMovements.find(
-                          (item: any) =>
-                              item.articleId === workingObject.article.id &&
-                              item.handlingUnitNameStr === choosenHu?.name // name because if from CCM, there is no id
-                      );
-            //Used as reference to check if item scanned passX+n is the same as previous passes
-            const ccmFromPreviousPass = currentCCMovements.find(
-                (item: any) =>
-                    item.createdByCycleCount && item.handlingUnitNameStr === choosenHu?.name
-            );
+                    const variables = {
+                        filters: {
+                            featureTypeDetail_FeatureType:
+                                fetchResult.resType === 'serialNumber'
+                                    ? fetchResult.article.featureType
+                                    : fetchResult.articleLuBarcodes[0].article.featureType
+                        }
+                    };
 
-            // Function to handle errors and reset state
-            const handleCycleCountError = (messageKey: string, extra?: any) => {
-                createCycleCountError(
-                    currentCycleCountId,
-                    `Step ${stepNumber} - ${t(messageKey, extra)} - ${scannedInfo}`
-                );
-                showError(t(messageKey, extra));
-                setResetForm(true);
-                setScannedInfo(undefined);
-                setIsLoading(false);
-                setContents(undefined);
-            };
+                    const featureCodes = await graphqlRequestClient.request(query, variables);
+                    const formattedFeatures: any[] = [];
+                    featureCodes.featureCodes.results.forEach((item: any) => {
+                        formattedFeatures.push({ featureCode: item, value: undefined });
+                    });
 
-            if (expectedArticleId) {
-                if (expectedArticleId !== workingObject.article.id) {
-                    handleCycleCountError('messages:unexpected-scanned-item');
+                    featuresForNewHUC = formattedFeatures;
+                    setNewHUCFeatures(formattedFeatures);
                 }
-            } else if (
-                ccmFromPreviousPass &&
-                ccmFromPreviousPass.articleId !== workingObject.article.id
-            ) {
-                handleCycleCountError('messages:unexpected-scanned-item');
-            } else if (
-                contents?.length === 0 ||
-                (fetchResult.resType === 'serialNumber' &&
+
+                //set ExpectedFeatures depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
+                const expectedFeatures = isHuToCreate
+                    ? featuresForNewHUC
+                    : isHuFromCCM
+                      ? currentCCMovements[0].features
+                      : contents
+                        ? contents.length != 0
+                            ? contents?.[0]?.handlingUnitContentFeatures.filter(
+                                  (feature: any) => !feature.featureCode.identifiable
+                              )
+                            : featuresForNewHUC
+                        : undefined;
+
+                //set content depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
+                const content = isHuToCreate || isHuFromCCM ? undefined : contents?.[0];
+
+                // define what will be sent to storage
+                let workingObject: { [label: string]: any } = {};
+                fetchResult.resType === 'serialNumber'
+                    ? (workingObject = {
+                          resType: fetchResult.resType,
+                          article: { ...fetchResult.article, id: fetchResult.article.articleId },
+                          feature: fetchResult.handlingUnitContentFeature,
+                          handlingUnitContent: content,
+                          expectedFeatures,
+                          defaultQuantity: 1
+                      })
+                    : (workingObject = {
+                          resType: fetchResult.resType,
+                          article: fetchResult.articleLuBarcodes[0].article,
+                          handlingUnitContent: isHucToCreate ? 'isHucToCreate' : content,
+                          expectedFeatures
+                      });
+
+                const currentCCMovement =
+                    workingObject.resType == 'serialNumber'
+                        ? searchByIdInCCMs(currentCcmsCreatedByCc, scannedInfo)
+                        : currentCCMovements.find(
+                              (item: any) =>
+                                  item.articleId === workingObject.article.id &&
+                                  item.handlingUnitNameStr === choosenHu?.name // name because if from CCM, there is no id
+                          );
+                //Used as reference to check if item scanned passX+n is the same as previous passes
+                const ccmFromPreviousPass = currentCCMovements.find(
+                    (item: any) =>
+                        item.createdByCycleCount &&
+                        item.handlingUnitNameStr === choosenHu?.name &&
+                        item.articleId === workingObject.article.id
+                );
+                // Function to handle errors and reset state
+                const handleCycleCountError = (messageKey: string, extra?: any) => {
+                    createCycleCountError(
+                        currentCycleCountId,
+                        `Step ${stepNumber} - ${t(messageKey, extra)} - ${scannedInfo}`
+                    );
+                    showError(t(messageKey, extra));
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    setIsLoading(false);
+                    setContents(undefined);
+                };
+
+                if (expectedArticleId) {
+                    if (expectedArticleId !== workingObject.article.id) {
+                        handleCycleCountError('messages:unexpected-scanned-item');
+                    }
+                } else if (
+                    !currentCCMovement &&
+                    ccmFromPreviousPass &&
+                    ccmFromPreviousPass.articleId !== workingObject.article.id
+                ) {
+                    handleCycleCountError('messages:unexpected-scanned-item');
+                } else if (
+                    // contents?.length === 0 ||
+                    fetchResult.resType === 'serialNumber' &&
                     (contents[0].handlingUnitContentFeatures.length === 0 ||
                         (contents[0]?.handlingUnitContentFeatures.length !== 0 &&
                             !contents[0]?.handlingUnitContentFeatures?.some(
                                 (item: any) => item.value === scannedInfo
-                            ))))
-            ) {
-                createCycleCountError(
-                    currentCycleCountId,
-                    `Step ${stepNumber} - ${t('messages:article-not-available-for-hu', {
-                        huName: choosenHu.name
-                    })} - ${scannedInfo}`
-                );
-                showError(
-                    t('messages:article-not-available-for-hu', {
-                        huName: choosenHu.name
-                    })
-                );
-                setResetForm(true);
-                setScannedInfo(undefined);
-                setIsLoading(false);
-                setContents(undefined);
-            } else {
-                if (currentCCMovement) {
-                    if (
-                        (currentCCMovement.status === 90 && currentCCMovement.quantityPass1) ||
-                        (currentCCMovement.status === 190 && currentCCMovement.quantityPass2) ||
-                        (currentCCMovement.status === 290 && currentCCMovement.quantityPass3)
-                    ) {
-                        if (!isOverwrittingModalVisible) {
-                            setIsOverwrittingModalVisible(true);
-                            Modal.confirm({
-                                title: (
-                                    <span style={{ fontSize: '14px' }}>
-                                        {t('messages:quantity-overwritting-confirm')}
-                                    </span>
-                                ),
-                                onOk: () => {
-                                    //RESTART HERE see how to refresh workingObject with the relevant value
-                                    console.log('ConfirmQuantityOverwritting');
-                                    const data = { ...workingObject, currentCCMovement };
-                                    setTriggerRender(!triggerRender);
-                                    storedObject[`step${stepNumber}`] = {
-                                        ...storedObject[`step${stepNumber}`],
-                                        data
-                                    };
-                                    if (
-                                        storedObject[`step${stepNumber}`] &&
-                                        Object.keys(storedObject[`step${stepNumber}`]).length != 0
-                                    ) {
-                                        storage.set(process, JSON.stringify(storedObject));
-                                    }
-                                    setIsOverwrittingModalVisible(false);
-                                },
-                                onCancel: () => {
-                                    console.log('CancelQuantityOverwritting');
-                                    setResetForm(true);
-                                    setIsLoading(false);
-                                    setScannedInfo(undefined);
-                                    setFetchResult(undefined);
-                                    setContents(undefined);
-                                    setIsOverwrittingModalVisible(false);
-                                },
-                                okText: t('messages:confirm'),
-                                cancelText: t('messages:cancel'),
-                                bodyStyle: { fontSize: '2px' }
-                            });
+                            )))
+                ) {
+                    createCycleCountError(
+                        currentCycleCountId,
+                        `Step ${stepNumber} - ${t('messages:article-not-available-for-hu', {
+                            huName: choosenHu.name
+                        })} - ${scannedInfo}`
+                    );
+                    showError(
+                        t('messages:article-not-available-for-hu', {
+                            huName: choosenHu.name
+                        })
+                    );
+                    setResetForm(true);
+                    setScannedInfo(undefined);
+                    setIsLoading(false);
+                    setContents(undefined);
+                } else {
+                    if (currentCCMovement) {
+                        if (
+                            (currentCCMovement.status === 90 && currentCCMovement.quantityPass1) ||
+                            (currentCCMovement.status === 190 && currentCCMovement.quantityPass2) ||
+                            (currentCCMovement.status === 290 && currentCCMovement.quantityPass3)
+                        ) {
+                            if (!isOverwrittingModalVisible) {
+                                setIsOverwrittingModalVisible(true);
+                                Modal.confirm({
+                                    title: (
+                                        <span style={{ fontSize: '14px' }}>
+                                            {t('messages:quantity-overwritting-confirm')}
+                                        </span>
+                                    ),
+                                    onOk: () => {
+                                        //RESTART HERE see how to refresh workingObject with the relevant value
+                                        console.log('ConfirmQuantityOverwritting');
+                                        const data = { ...workingObject, currentCCMovement };
+                                        setTriggerRender(!triggerRender);
+                                        storedObject[`step${stepNumber}`] = {
+                                            ...storedObject[`step${stepNumber}`],
+                                            data
+                                        };
+                                        if (
+                                            storedObject[`step${stepNumber}`] &&
+                                            Object.keys(storedObject[`step${stepNumber}`]).length !=
+                                                0
+                                        ) {
+                                            storage.set(process, JSON.stringify(storedObject));
+                                        }
+                                        setIsOverwrittingModalVisible(false);
+                                    },
+                                    onCancel: () => {
+                                        console.log('CancelQuantityOverwritting');
+                                        setResetForm(true);
+                                        setIsLoading(false);
+                                        setScannedInfo(undefined);
+                                        setFetchResult(undefined);
+                                        setContents(undefined);
+                                        setIsOverwrittingModalVisible(false);
+                                    },
+                                    okText: t('messages:confirm'),
+                                    cancelText: t('messages:cancel'),
+                                    bodyStyle: { fontSize: '2px' }
+                                });
+                            }
+                        } else {
+                            const data = { ...workingObject, currentCCMovement };
+                            setTriggerRender(!triggerRender);
+                            storedObject[`step${stepNumber}`] = {
+                                ...storedObject[`step${stepNumber}`],
+                                data
+                            };
+                            if (
+                                storedObject[`step${stepNumber}`] &&
+                                Object.keys(storedObject[`step${stepNumber}`]).length != 0
+                            ) {
+                                storage.set(process, JSON.stringify(storedObject));
+                            }
                         }
                     } else {
                         const data = { ...workingObject, currentCCMovement };
@@ -493,23 +519,11 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                             storage.set(process, JSON.stringify(storedObject));
                         }
                     }
-                } else {
-                    const data = { ...workingObject, currentCCMovement };
-                    setTriggerRender(!triggerRender);
-                    storedObject[`step${stepNumber}`] = {
-                        ...storedObject[`step${stepNumber}`],
-                        data
-                    };
-                    if (
-                        storedObject[`step${stepNumber}`] &&
-                        Object.keys(storedObject[`step${stepNumber}`]).length != 0
-                    ) {
-                        storage.set(process, JSON.stringify(storedObject));
-                    }
                 }
-            }
+            };
+            processData();
         }
-    }, [fetchResult, contents]);
+    }, [fetchResult, contents, newHUCFeatures]);
 
     // HU closure function
     const [isClosureLoading, setIsClosureLoading] = useState(false);

@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { extractGivenConfigsParams, showError } from '@helpers';
+import { showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -33,10 +33,16 @@ import { useAppDispatch, useAppState } from 'context/AppContext';
 export interface ISelectRoundProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
+    buttons?: { [label: string]: any };
+    formToUse?: any;
 }
 
-export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRoundProps) => {
+export const SelectRoundForm = ({
+    processName,
+    stepNumber,
+    buttons,
+    formToUse
+}: ISelectRoundProps) => {
     const { graphqlRequestClient, user } = useAuth();
     const { t } = useTranslation();
     const { configs } = useAppState();
@@ -48,7 +54,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
     const [rounds, setRounds] = useState<Array<any>>([]);
 
     //camera scanner section
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState();
 
     useEffect(() => {
@@ -75,6 +81,7 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
                 type: 'UPDATE_BY_STEP',
                 processName,
                 stepName: `step${stepNumber}`,
+                object: { previousStep: storedObject.currentStep },
                 customFields: [{ key: 'currentStep', value: stepNumber }]
             });
         }
@@ -178,7 +185,8 @@ export const SelectRoundForm = ({ processName, stepNumber, buttons }: ISelectRou
             orderBy: [
                 { field: 'assignedUser', ascending: true },
                 { field: 'priority', ascending: false },
-                { field: 'expectedDeliveryDate', ascending: false }
+                { field: 'expectedDeliveryDate', ascending: false },
+                { field: 'name', ascending: true }
             ],
             page: 1,
             itemsPerPage: 100

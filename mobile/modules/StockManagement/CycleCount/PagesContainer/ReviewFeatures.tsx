@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { useEffect, useState } from 'react';
-import { LsIsSecured, getLanguageCode } from '@helpers';
+import { LsIsSecured } from '@helpers';
 import { Form, Space, Typography } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import styled from 'styled-components';
@@ -62,7 +62,17 @@ export const ReviewFeatures = ({
     const [isEditable, setIsEditable] = useState(false);
     const isHuToCreate: boolean = storedObject.step30?.data?.isHuToCreate;
     const router = useRouter();
-    const filteredLanguage = getLanguageCode(router);
+    const locale = router.locale;
+
+    const hasEmptyValues = expectedFeatures
+        ? expectedFeatures.some(
+              (feature: any) =>
+                  !feature.hasOwnProperty('value') ||
+                  feature.value === null ||
+                  feature.value === undefined ||
+                  feature.value === ''
+          )
+        : false;
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -85,7 +95,7 @@ export const ReviewFeatures = ({
     const [showSwitch, setShowSwitch] = useState(true);
 
     useEffect(() => {
-        if (isHuToCreate) {
+        if (isHuToCreate || hasEmptyValues) {
             setIsEditable(true);
             setShowSwitch(false);
         }
@@ -106,15 +116,18 @@ export const ReviewFeatures = ({
         const formData = form.getFieldsValue(true);
         const newFormData = { ...formData };
 
+        const dateTypeKeys = new Set(
+            expectedFeatures
+                ?.filter((f: any) => f.featureCode.dateType)
+                .map((f: any) => f.featureCode.name) ?? []
+        );
+
         for (const key in formData) {
             if (formData.hasOwnProperty(key)) {
                 const value = formData[key];
-                if (!/^\d+$/.test(value)) {
+                if (dateTypeKeys.has(key) && value) {
                     const date = dayjs(value);
-                    if (date.isValid()) {
-                        newFormData[key] = date.format('YYYY-MM-DD');
-                        continue;
-                    }
+                    newFormData[key] = date.isValid() ? date.format('YYYY-MM-DD') : value;
                 } else {
                     newFormData[key] = value;
                 }
@@ -253,7 +266,7 @@ export const ReviewFeatures = ({
                             ]}
                         >
                             <StyledFeaturesDatePicker
-                                format={filteredLanguage === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
+                                format={locale === 'fr' ? 'DD/MM/YYYY' : 'MM/DD/YYYY'}
                                 picker="date"
                                 disabled={!isEditable}
                             />

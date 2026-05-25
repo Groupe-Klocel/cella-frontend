@@ -310,9 +310,9 @@ export const HandlingUnitContentInboundModelV2: ModelType = {
             optionTable: null
         },
         'handlingUnitContent{articleId}': {
-            isListRequested: true,
+            isListRequested: false,
             isDefaultHiddenList: true,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: false,
             searchingFormat: 'Dropdown',
             isDetailRequested: true,
@@ -350,6 +350,27 @@ export const HandlingUnitContentInboundModelV2: ModelType = {
             config: null,
             param: null,
             optionTable: null
+        },
+        'handlingUnitContent{article{genericArticleComment}}': {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: 70,
+            displayName: 'supplier-article-code',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            isEditDisabled: false
         },
         'handlingUnitContent{article{description}}': {
             isListRequested: true,

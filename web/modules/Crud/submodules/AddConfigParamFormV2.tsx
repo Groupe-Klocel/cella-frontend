@@ -120,12 +120,13 @@ export const AddConfigParamForm: FC<IAddItemFormProps> = (props: IAddItemFormPro
                     .then(() => {
                         const formData = form.getFieldsValue(true);
                         const translation =
-                            !formData.en && !formData.fr
+                            !formData.en && !formData.fr && !formData.de
                                 ? null
-                                : { en: formData.en, fr: formData.fr };
+                                : { en: formData.en, fr: formData.fr, de: formData.de };
                         formData['translation'] = translation;
                         delete formData['en'];
                         delete formData['fr'];
+                        delete formData['de'];
                         mutate({
                             input: { ...formData, ...props.extraData }
                         });

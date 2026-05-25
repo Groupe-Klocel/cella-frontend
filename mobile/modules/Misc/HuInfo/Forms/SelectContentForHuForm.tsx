@@ -32,6 +32,9 @@ import parameters from '../../../../../common/parameters.json';
 import graphqlRequestClient from 'graphql/graphqlRequestClient';
 import { gql } from 'graphql-request';
 import { ChangeStockStatusModal } from 'modules/Misc/HuInfo/Modals/ChangeStockStatusModal';
+import { useAppState } from 'context/AppContext';
+import { getModesFromPermissions } from '@helpers';
+import { ModeEnum } from 'generated/graphql';
 
 const { Title } = Typography;
 export interface ISelectContentForHuProps {
@@ -83,6 +86,7 @@ export const SelectContentForHuForm = ({
     headerContent: { setHeaderContent }
 }: ISelectContentForHuProps) => {
     const { t } = useTranslation('common');
+    const { permissions } = useAppState();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
@@ -249,6 +253,11 @@ export const SelectContentForHuForm = ({
         storage.set(process, JSON.stringify(storedObject));
     };
 
+    const canChangeContent = getModesFromPermissions(
+        permissions,
+        'mobile_button_change-content'
+    ).includes(ModeEnum.Read);
+
     return (
         <>
             <WrapperForm>
@@ -354,7 +363,8 @@ export const SelectContentForHuForm = ({
                                     <br />
                                     {radio?.text == 1 &&
                                     content.handlingUnit.category ==
-                                        parameters.HANDLING_UNIT_CATEGORY_STOCK ? (
+                                        parameters.HANDLING_UNIT_CATEGORY_STOCK &&
+                                    canChangeContent ? (
                                         <Row justify="center">
                                             <Button
                                                 onClick={() => {

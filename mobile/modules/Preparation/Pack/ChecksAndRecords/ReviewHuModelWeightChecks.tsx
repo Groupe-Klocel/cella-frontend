@@ -26,10 +26,7 @@ export interface IReviewHuModelWeightChecksProps {
     isToControl?: any;
 }
 
-export const ReviewHuModelWeightChecks = ({
-    dataToCheck,
-    isToControl: { isToControl, setIsToControl }
-}: IReviewHuModelWeightChecksProps) => {
+export const ReviewHuModelWeightChecks = ({ dataToCheck }: IReviewHuModelWeightChecksProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
 
@@ -37,8 +34,7 @@ export const ReviewHuModelWeightChecks = ({
         processName,
         stepNumber,
         huModel,
-        enteredInfo: { enteredWeightInfo },
-        triggerAlternativeSubmit1
+        enteredInfo: { enteredWeightInfo }
     } = dataToCheck;
 
     const storedObject = state[processName] || {};
@@ -63,28 +59,6 @@ export const ReviewHuModelWeightChecks = ({
             });
         }
     }, [enteredWeightInfo]);
-
-    useEffect(() => {
-        if (triggerAlternativeSubmit1.triggerAlternativeSubmit1) {
-            setIsToControl(true);
-            //N.B. : Need initializing step 40 to have the relevant previousStep before going back
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName: processName,
-                stepName: `step40`,
-                object: {
-                    previousStep: storedObject[`step${storedObject.currentStep}`].previousStep
-                },
-                customFields: undefined
-            });
-            dispatch({
-                type: 'ON_BACK',
-                processName: processName,
-                stepToReturn: `step40`
-            });
-            triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
-        }
-    }, [triggerAlternativeSubmit1]);
 
     return (
         <WrapperForm>

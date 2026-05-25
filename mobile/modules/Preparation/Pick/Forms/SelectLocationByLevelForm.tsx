@@ -20,25 +20,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, showError } from '@helpers';
+import { showError } from '@helpers';
 import { Select, Form, Modal } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
-import configs from '../../../../../common/configs.json';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ISelectLocationByLevelProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
-    showSimilarLocations?: any;
     locations: Array<any>;
     setTmpforceLocation: any;
+    buttons?: { [label: string]: any };
+    showSimilarLocations?: any;
     roundsCheck?: boolean;
     dontAskBeforeLocationChange?: boolean;
+    formToUse?: any;
 }
 
 export const SelectLocationByLevelForm = ({
@@ -49,7 +49,8 @@ export const SelectLocationByLevelForm = ({
     locations,
     setTmpforceLocation,
     roundsCheck,
-    dontAskBeforeLocationChange
+    dontAskBeforeLocationChange,
+    formToUse
 }: ISelectLocationByLevelProps) => {
     const { t } = useTranslation();
     const state = useAppState();
@@ -61,7 +62,7 @@ export const SelectLocationByLevelForm = ({
     const [levelsChoices, setLevelsChoices] = useState<Array<any>>();
 
     //camera scanner section
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState();
     const [popModal, setPopModal] = useState(0);
 

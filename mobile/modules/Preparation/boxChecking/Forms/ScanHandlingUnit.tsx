@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { ScanForm } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { LsIsSecured } from '@helpers';
-import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 
@@ -66,8 +65,8 @@ export const ScanHandlingUnit = ({
     const getHU = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
             const query = gql`
-                query handlingUnits($filters: HandlingUnitSearchFilters) {
-                    handlingUnits(filters: $filters) {
+                query handlingUnits($advancedFilters: [HandlingUnitAdvancedSearchFilters!]) {
+                    handlingUnits(advancedFilters: $advancedFilters) {
                         count
                         itemsPerPage
                         totalPages
@@ -135,7 +134,15 @@ export const ScanHandlingUnit = ({
                 }
             `;
             const variables = {
-                filters: { barcode: [`${scannedInfo}`] }
+                advancedFilters: {
+                    filter: [
+                        { searchType: 'EQUAL', field: { barcode: scannedInfo } },
+                        {
+                            searchType: 'EQUAL',
+                            field: { handlingUnitOutbound_CarrierBox: scannedInfo }
+                        }
+                    ]
+                }
             };
             const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitInfos;

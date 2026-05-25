@@ -100,7 +100,6 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                 },
                 customFields: [{ key: 'currentStep', value: stepNumber }]
             });
-            // storage.set(process, JSON.stringify(storedObject));
         }
     }, [handlingUnitInfos]);
 

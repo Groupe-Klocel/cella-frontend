@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
 import { ModelType } from '../../models/ModelsV2';
-let SpeModel: (() => [string | null, string, any][]) | undefined;
+let SpeModel: (() => [string | null, string, any, string?][]) | undefined;
 
 export function injectedModel(
     model: ModelType,
@@ -28,25 +28,33 @@ export function injectedModel(
 ): ModelType {
     let newModel = JSON.parse(JSON.stringify(model)) as ModelType;
 
-    function insertFieldAfter(newFieldEntries: [string | null, string, any][]) {
+    function insertFieldAfter(newFieldEntries: [string | null, string, any, string?][]) {
         const fieldsInfo = Object.entries(newModel.fieldsInfo);
         const result: typeof newModel.fieldsInfo = {};
 
         for (const [key, value] of fieldsInfo) {
             result[key] = value;
-            for (const [targetKey, newFieldKey, newFieldValue] of newFieldEntries) {
+            for (const [targetKey, newFieldKey, newFieldValue, newKeyName] of newFieldEntries) {
                 if (key === targetKey) {
                     if (result[newFieldKey]) {
                         delete result[newFieldKey];
                     }
-                    result[newFieldKey] = newFieldValue;
+                    if (newKeyName) {
+                        result[newKeyName] = newFieldValue;
+                    } else {
+                        result[newFieldKey] = newFieldValue;
+                    }
                 }
             }
         }
         // If not inserted or targetKey is null, append at the end
-        for (const [targetKey, newFieldKey, newFieldValue] of newFieldEntries) {
+        for (const [targetKey, newFieldKey, newFieldValue, newKeyName] of newFieldEntries) {
             if (!(newFieldKey in result) || targetKey === null) {
-                result[newFieldKey] = newFieldValue;
+                if (newKeyName) {
+                    result[newKeyName] = newFieldValue;
+                } else {
+                    result[newFieldKey] = newFieldValue;
+                }
             }
         }
         return result;

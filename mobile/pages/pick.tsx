@@ -19,11 +19,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, use, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
+    ButtonManagementType,
     getModesFromPermissions,
     getMoreInfos,
+    showError,
+    showSuccess,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { Form, InputNumber, Modal, Space } from 'antd';
@@ -59,9 +62,10 @@ import { handlePickProcessResult } from 'modules/Preparation/Pick/Elements/endOf
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const Pick: PageComponent = () => {
+    //#region Common variables
     const { t } = useTranslation();
     const router = useRouter();
-    const { parameters, permissions } = useAppState();
+    const { parameters, configs, permissions } = useAppState();
     const [headerContent, setHeaderContent] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
     const [finishUniqueFeatures, setFinishUniqueFeatures] = useState<boolean>(false);
@@ -76,7 +80,10 @@ const Pick: PageComponent = () => {
     const [toBePalletizedForBackEnd, setToBePalletizedForBackEnd] = useState<boolean>(true);
     const [visible, setVisible] = useState<boolean>(false);
     const [form] = Form.useForm();
+    const [missingForm] = Form.useForm();
     const { graphqlRequestClient } = useAuth();
+    const [uptodateQty, setUptodateQty] = useState<number | null>(null);
+    const [isEnterQtyDisplay, setIsEnterQtyDisplay] = useState<boolean>(false);
 
     const processName = 'pick';
 
@@ -96,7 +103,9 @@ const Pick: PageComponent = () => {
     const storedObject = state[processName] || {};
 
     console.log(`${processName}`, storedObject);
+    //#endregion
 
+    //#region Configs and parameters
     const configsParamsCodes = useMemo(() => {
         const findValueByScopeAndCode = (items: any[], scope: string, code: string) => {
             return items.find(
@@ -148,7 +157,45 @@ const Pick: PageComponent = () => {
             'outbound',
             'IS_QUANTITY_HIGHLIGHTED'
         );
+        const checkRemainingQuantityValue = findValueByScopeAndCode(
+            parameters,
+            'outbound',
+            'PICK_CHECK_REMAINING_QUANTITY'
+        );
+
+        const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
+            return items.find(
+                (item: any) =>
+                    item.scope === scope && item.value.toLowerCase() === value.toLowerCase()
+            )?.code;
+        };
+
+        const movementValidatedValue = findCodeByScopeAndValue(
+            configs,
+            'movement_status',
+            'VALIDATED'
+        );
+
+        const movementPreparationValue = findCodeByScopeAndValue(
+            configs,
+            'movement_type',
+            'PREPARATION'
+        );
+
+        const movementProductPickValue = findCodeByScopeAndValue(
+            parameters,
+            'movement_code',
+            'PRODUCT PICK'
+        );
+
         // Convert value in boolean or number as needed
+        const movementValidated = movementValidatedValue ? parseInt(movementValidatedValue) : null;
+        const movementPreparation = movementPreparationValue
+            ? parseInt(movementPreparationValue)
+            : null;
+        const movementProductPick = movementProductPickValue
+            ? parseInt(movementProductPickValue)
+            : null;
         const equipmentScanAtPreparation = equipmentScanAtPreparationValue === '1';
         const manuallyGenerateParent = manuallyGenerateParentValue === '1';
         const noAskBeforeLocationChange = noAskBeforeLocationChangeValue === '1';
@@ -167,6 +214,8 @@ const Pick: PageComponent = () => {
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
         const highlightQuantity = highlightedQuantity === '1';
 
+        const checkRemainingQuantity = checkRemainingQuantityValue === '1';
+
         const findCodeByScope = (items: any[], scope: string, value: string) => {
             return items.find(
                 (item: any) =>
@@ -177,6 +226,9 @@ const Pick: PageComponent = () => {
         const equipmentHuType = findCodeByScope(parameters, 'handling_unit_type', 'EQUIPMENT');
 
         return {
+            movementValidated,
+            movementPreparation,
+            movementProductPick,
             equipmentScanAtPreparation,
             manuallyGenerateParent,
             noAskBeforeLocationChange,
@@ -185,7 +237,8 @@ const Pick: PageComponent = () => {
             defaultQuantity,
             autoValidate1Quantity,
             highlightQuantity,
-            equipmentHuType
+            equipmentHuType,
+            checkRemainingQuantity
         };
     }, [parameters]);
 
@@ -199,14 +252,19 @@ const Pick: PageComponent = () => {
     const quantityDefaultValue = configsParamsCodes.defaultQuantity;
     const autoValidate1Quantity = configsParamsCodes.autoValidate1Quantity;
     const isQuantityHighlighted = configsParamsCodes.highlightQuantity;
+    const checkRemainingQuantity = configsParamsCodes.checkRemainingQuantity;
+    //#endregion
 
+    //#region forcelocation
     const [tmpForceLocation, setTmpforceLocation] = useState<any>(forceLocationScan);
     useEffect(() => {
         if (parameters && parameters.length > 0) {
             setIsLoading(false);
         }
     }, [parameters]);
+    ///#endregion
 
+    //#region extract data & checks
     const proposedRoundAdvisedAddress =
         storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0] || [];
     const isLocationDefined = !!proposedRoundAdvisedAddress.locationId;
@@ -271,8 +329,9 @@ const Pick: PageComponent = () => {
             currentLocationName
         );
     };
+    //#endregion
 
-    //function to retrieve information to display in RadioInfosHeader
+    //#region RadioInfosHeader settings
     let headerDisplay: { [k: string]: any } = {};
     if (storedObject['step5']?.data?.equipmentName) {
         headerDisplay[t('common:equipment')] = storedObject['step5']?.data?.equipmentName;
@@ -357,7 +416,10 @@ const Pick: PageComponent = () => {
                     )
                 )
             );
-            headerDisplay[t('common:available-quantity')] = handling_unit_contents?.quantity;
+            headerDisplay[t('common:available-quantity')] = Math.min(
+                handling_unit_contents?.quantity,
+                uptodateQty ?? Infinity
+            );
             processedFeatures.map((feature: any) => {
                 const { featureCode, value } = feature;
                 let formattedValue = value;
@@ -391,8 +453,9 @@ const Pick: PageComponent = () => {
         }
         headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
     }
+    //#endregion
 
-    // retrieve location, article and qty to propose
+    //#region settings for this module
     useEffect(() => {
         if (
             storedObject['step10']?.data &&
@@ -412,7 +475,7 @@ const Pick: PageComponent = () => {
             setTmpforceLocation(forceLocationScan);
         }
 
-        // Si isLocationDefined est false après l'étape de sélection de ramasse, forcer le scan de location
+        // If isLocationDefined is false after the pick selection step, force location scan
         if (storedObject['step10']?.data && !isLocationDefined) {
             setTmpforceLocation(true);
         }
@@ -435,17 +498,21 @@ const Pick: PageComponent = () => {
             ? false
             : true;
     }
+    //#endregion
 
+    //#region global buttons
     const onReset = () => {
         dispatch({
             type: 'DELETE_RF_PROCESS',
             processName
         });
-        // storage.remove(processName);
         setHeaderContent(false);
         setShowEmptyLocations(false);
         setShowSimilarLocations(false);
         setTmpforceLocation(forceLocationScan);
+        setIsEnterQtyDisplay(false);
+        setUptodateQty(null);
+        form.resetFields();
     };
 
     const previousPage = () => {
@@ -454,33 +521,305 @@ const Pick: PageComponent = () => {
             processName
         });
         router.back();
-        // storage.remove(processName);
         setHeaderContent(false);
         setShowSimilarLocations(false);
         setShowEmptyLocations(false);
         setTmpforceLocation(forceLocationScan);
-    };
-
-    type ButtonManagementType = {
-        label: string;
-        icon?: any;
-        visibleOnSteps: number[];
-        permissionsToSeeTheButton?: boolean; // Optional: if not provided, the button will be visible based on steps only
-        onClick: (e?: any) => void;
-        position: 'top' | 'bottom';
-        style?: React.CSSProperties;
-    }[];
-
-    const handleCancel = () => {
-        setVisible(false);
         form.resetFields();
     };
 
+    const onBack = () => {
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${storedObject.currentStep}`].previousStep}`
+        });
+        form.resetFields();
+    };
+
+    const handleCancel = () => {
+        setVisible(false);
+        missingForm.resetFields();
+    };
+    //#endregion
+
+    //#region specific functions
+    const [isHuClosureLoading, setIsHuClosureLoading] = useState(false);
+    async function closeHUO(currentShippingPalletId: any) {
+        const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
+        setIsHuClosureLoading(true);
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'RF_pickAndPack_closeShippingPallet',
+            event: {
+                input: { currentShippingPalletId }
+            }
+        };
+
+        try {
+            const closeHUOsResult = await graphqlRequestClient.request(query, variables);
+            if (closeHUOsResult.executeFunction.status === 'ERROR') {
+                showError(closeHUOsResult.executeFunction.output);
+            } else if (
+                closeHUOsResult.executeFunction.status === 'OK' &&
+                closeHUOsResult.executeFunction.output.status === 'KO'
+            ) {
+                showError(t(`errors:${closeHUOsResult.executeFunction.output.output.code}`));
+                console.log('Backend_message', closeHUOsResult.executeFunction.output.output);
+            } else {
+                showSuccess(t('messages:hu-ready-to-be-loaded'));
+                const newStoredObject: any = storedObject;
+                if (ignoreHUContentIds.length > 0) {
+                    newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
+                } else {
+                    newStoredObject.ignoreHUContentIds = [];
+                }
+                const { updatedRound } = closeHUOsResult.executeFunction.output.output;
+
+                let remainingHUContentIds = updatedRound.roundAdvisedAddresses
+                    .filter((raa: any) => {
+                        return !newStoredObject.ignoreHUContentIds.includes(
+                            raa.handlingUnitContentId
+                        );
+                    })
+                    .filter((raa: any) => raa.quantity != 0);
+                if (remainingHUContentIds.length === 0) {
+                    newStoredObject.ignoreHUContentIds = [];
+                    remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
+                        (raa: any) => raa.quantity != 0
+                    );
+                }
+
+                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses.filter(
+                    (raa: any) => raa.quantity != 0
+                );
+                const data = {
+                    proposedRoundAdvisedAddresses: roundAdvisedAddresses.filter(
+                        (raa: any) =>
+                            raa.handlingUnitContentId ==
+                            remainingHUContentIds[0].handlingUnitContentId
+                    ),
+                    round: updatedRound,
+                    pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
+                };
+                newStoredObject['currentStep'] = 10;
+                if (storedObject[`step5`]) {
+                    newStoredObject[`step5`] = {
+                        ...storedObject[`step5`]
+                    };
+                }
+                newStoredObject[`step10`] = { previousStep: storedObject[`step5`] ? 5 : 0, data };
+                delete newStoredObject['step10']['data']['currentShippingPallet'];
+                dispatch({
+                    type: 'UPDATE_BY_PROCESS',
+                    processName,
+                    object: newStoredObject
+                });
+            }
+            setIsHuClosureLoading(false);
+        } catch (error) {
+            showError(t('messages:error-updating-data'));
+            console.log('updateHUOsError', error);
+            setIsHuClosureLoading(false);
+        }
+    }
+
+    const handlingUnitContentId =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.id;
+    const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
+
+    useEffect(() => {
+        if (triggerNextRaa && storedObject['step20']) {
+            setTriggerNextRaa(false);
+            let newIgnoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
+            let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => {
+                    return !newIgnoreHUContentIds.includes(raa.handlingUnitContentId);
+                })
+                .filter((raa: any) => raa.quantity != 0);
+            if (remainingHUContentIds.length === 0) {
+                newIgnoreHUContentIds = [];
+                remainingHUContentIds = storedObject[
+                    `step10`
+                ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
+            }
+            const raaForHUC = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => raa.quantity != 0)
+                .filter(
+                    (raa: any) =>
+                        raa.handlingUnitContentId ===
+                        remainingHUContentIds[0]?.handlingUnitContentId
+                );
+
+            // Find next roundAdvisedAddress with different locationId
+            const currentLocationId =
+                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.locationId;
+            const differentLocationRaa = raaForHUC.find(
+                (raa: any) => raa.locationId !== currentLocationId
+            );
+            const raaToUse = differentLocationRaa || raaForHUC[0];
+
+            // Apply checkPosition condition to propose one or cumulated article
+            const newProposedRoundAdvisedAddresses = storedObject[`step10`]?.data?.round.equipment
+                .checkPosition
+                ? [raaToUse]
+                : raaForHUC;
+            setShowSimilarLocations(false);
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step10`,
+                object: {
+                    ...storedObject[`step10`],
+                    data: {
+                        ...storedObject[`step10`]?.data,
+                        proposedRoundAdvisedAddresses: newProposedRoundAdvisedAddresses
+                    }
+                },
+                customFields: [{ key: 'ignoreHUContentIds', value: newIgnoreHUContentIds }]
+            });
+        }
+        if (triggerNextRaa && storedObject['step50']) {
+            setTriggerNextRaa(false);
+            let newIgnoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
+            let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => {
+                    return !newIgnoreHUContentIds.includes(raa.handlingUnitContentId);
+                })
+                .filter((raa: any) => raa.quantity != 0);
+            if (remainingHUContentIds.length === 0) {
+                newIgnoreHUContentIds = [];
+                remainingHUContentIds = storedObject[
+                    `step10`
+                ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
+            }
+            const raaForHUC = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+                .filter((raa: any) => raa.quantity != 0)
+                .filter(
+                    (raa: any) =>
+                        raa.handlingUnitContentId ===
+                        remainingHUContentIds[0]?.handlingUnitContentId
+                );
+
+            // Find next roundAdvisedAddress with different locationId
+            const currentLocationId =
+                storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.locationId;
+            const differentLocationRaa = raaForHUC.find(
+                (raa: any) => raa.locationId !== currentLocationId
+            );
+            const raaToUse = differentLocationRaa || raaForHUC[0];
+
+            // Apply checkPosition condition to propose one or cumulated article
+            const newProposedRoundAdvisedAddresses = storedObject[`step10`]?.data?.round.equipment
+                .checkPosition
+                ? [raaToUse]
+                : raaForHUC;
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step10`,
+                object: {
+                    ...storedObject[`step10`],
+                    data: {
+                        ...storedObject[`step10`]?.data,
+                        proposedRoundAdvisedAddresses: newProposedRoundAdvisedAddresses
+                    }
+                },
+                customFields: [{ key: 'ignoreHUContentIds', value: newIgnoreHUContentIds }]
+            });
+
+            // Transform raaToUse.handlingUnitContent to handlingUnit format
+            const handlingUnitContent = raaToUse?.handlingUnitContent;
+            const handlingUnitFromRaa = {
+                id: handlingUnitContent?.handlingUnit?.id,
+                name: handlingUnitContent?.handlingUnit?.name,
+                locationId: raaToUse?.locationId,
+                location: raaToUse?.location,
+                handlingUnitContents: [
+                    {
+                        id: handlingUnitContent?.id,
+                        quantity: handlingUnitContent?.quantity,
+                        reservation: handlingUnitContent?.reservation,
+                        stockStatus: handlingUnitContent?.stockStatus,
+                        stockStatusText: handlingUnitContent?.stockStatusText,
+                        stockOwnerId: handlingUnitContent?.stockOwnerId,
+                        stockOwner: handlingUnitContent?.stockOwner,
+                        articleId: handlingUnitContent?.articleId,
+                        article: handlingUnitContent?.article,
+                        handlingUnitContentFeatures:
+                            handlingUnitContent?.handlingUnitContentFeatures || []
+                    }
+                ]
+            };
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step30`,
+                object: {
+                    ...storedObject[`step30`],
+                    data: {
+                        ...storedObject[`step30`]?.data,
+                        chosenLocation: { ...raaToUse?.location, id: raaToUse?.locationId },
+                        handlingUnit: handlingUnitFromRaa
+                    }
+                }
+            });
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step40`,
+                object: {
+                    ...storedObject[`step40`],
+                    data: {
+                        ...storedObject[`step40`]?.data,
+                        handlingUnit: handlingUnitFromRaa
+                    }
+                }
+            });
+        }
+    }, [triggerNextRaa]);
+
+    const currentShippingPalletId = storedObject?.step10?.data?.round.extraText1 ?? undefined;
+    useEffect(() => {
+        if (triggerHuClose) {
+            if (!currentShippingPalletId) {
+                showError(t('messages:no-hu-to-close'));
+                setTriggerHuClose(false);
+            } else {
+                setTriggerHuClose(false);
+                closeHUO(currentShippingPalletId);
+            }
+        }
+    }, [triggerHuClose, currentShippingPalletId]);
+
+    useEffect(() => {
+        if (triggerChangeLocationFromArticle) {
+            dispatch({
+                type: 'ON_BACK',
+                processName: processName,
+                stepToReturn: `step20`
+            });
+            setTriggerChangeLocationFromArticle(false);
+            setTmpforceLocation(true);
+        }
+    }, [triggerChangeLocationFromArticle, currentShippingPalletId]);
+    //#endregion
+
+    //#region missing declaration modal
     const [missingModalConfirmLoading, setMissingModalConfirmLoading] = useState<boolean>(false);
 
     const onClickOk = () => {
         setMissingModalConfirmLoading(true);
-        form.validateFields()
+        missingForm
+            .validateFields()
             .then(async (values) => {
                 console.log('Missing modal form values:', values);
                 const inputToValidate = {
@@ -522,7 +861,7 @@ const Pick: PageComponent = () => {
                 });
 
                 setVisible(false);
-                form.resetFields();
+                missingForm.resetFields();
                 setMissingModalConfirmLoading(false);
             })
             .catch((errorInfo) => {
@@ -547,7 +886,7 @@ const Pick: PageComponent = () => {
                 okText={t('actions:submit')}
                 cancelText={t('actions:cancel')}
             >
-                <Form form={form} layout="vertical" scrollToFirstError size="small">
+                <Form form={missingForm} layout="vertical" scrollToFirstError size="small">
                     <Form.Item
                         label={t('common:quantity')}
                         name="missingQuantity"
@@ -569,17 +908,36 @@ const Pick: PageComponent = () => {
                             }
                         ]}
                     >
-                        <InputNumber min={1} max={maxQuantity} style={{ width: '100%' }} />
+                        <InputNumber
+                            min={1}
+                            max={maxQuantity}
+                            style={{ width: '100%' }}
+                            autoFocus
+                        />
                     </Form.Item>
                 </Form>
             </Modal>
         );
     };
+    //#endregion
 
+    //#region module buttons
     const buttonManagement: ButtonManagementType = [
         {
+            label: t('actions:submit'),
+            visibleOnSteps: [5, 10, 15, 20, 30, 40, 50, 60, 70, 75],
+            onClick: () => form.submit(),
+            position: 'bottom'
+        },
+        {
+            label: t('actions:close-shipping-hu'),
+            visibleOnSteps: [20],
+            permissionsToSeeTheButton: isHuInProgress,
+            onClick: () => setTriggerHuClose(true),
+            position: 'bottom'
+        },
+        {
             label: t('common:missing-quantity'),
-            icon: null,
             visibleOnSteps: [50],
             permissionsToSeeTheButton: getModesFromPermissions(
                 permissions,
@@ -590,11 +948,135 @@ const Pick: PageComponent = () => {
             },
             position: 'top',
             style: {
-                background: '#d46b08'
+                background: 'radial-gradient(circle, #ff8a1ce8 5%, #f4a261 100%)'
             }
+        },
+        {
+            label: t('common:locations_abbr'),
+            icon: null,
+            visibleOnSteps: [20],
+            permissionsToSeeTheButton: !showSimilarLocations && !showEmptyLocations,
+            onClick: () => {
+                setShowSimilarLocations(true);
+            },
+            position: 'bottom'
+        },
+        {
+            label: t('common:change-location'),
+            visibleOnSteps: [50],
+            permissionsToSeeTheButton: !forceLocationScan && forceArticleScan ? true : false,
+            onClick: () => {
+                setTriggerChangeLocationFromArticle(true);
+            },
+            position: 'bottom'
+        },
+        {
+            label: t('actions:next'),
+            visibleOnSteps: [20, 50],
+            permissionsToSeeTheButton: hasMultipleLocationIds ? true : false,
+            onClick: () => {
+                setTriggerNextRaa(true);
+            },
+            position: 'bottom'
+        },
+        {
+            label: t('actions:back'),
+            visibleOnSteps: [10, 15, 20, 30, 40, 50, 60, 70, 75],
+            permissionsToSeeTheButton:
+                equipmentScanAtPreparation && storedObject['step10'] ? true : false || true,
+            onClick: () => {
+                if (showSimilarLocations) {
+                    setShowSimilarLocations(false);
+                } else {
+                    setIsEnterQtyDisplay(false);
+                    onBack();
+                }
+            },
+            position: 'bottom'
         }
     ];
+    //#endregion
 
+    //#region reset form on step change
+    useEffect(() => {
+        form.resetFields();
+    }, [storedObject.currentStep]);
+    //#endregion
+
+    // #region EnterQuantity pre checks
+    // this part to adjust pick movement quantitites not yet terminated and display step 70 accordingly
+    if (
+        storedObject['step60']?.data &&
+        storedObject['step60']?.data.processedFeatures?.length >=
+            storedObject['step50'].data?.article?.featureType?.length &&
+        !storedObject['step70']?.data &&
+        !isEnterQtyDisplay
+    ) {
+        const getUptodateQuantity = async (originalContentId: string) => {
+            const contentQuery = gql`
+                query handlingUnitContent($id: String!) {
+                    handlingUnitContent(id: $id) {
+                        id
+                        quantity
+                    }
+                }
+            `;
+
+            const movementQuery = gql`
+                query movementsQuantities(
+                    $filters: MovementSearchFilters!
+                    $advancedFilters: [MovementAdvancedSearchFilters!]
+                    $functions: [JSON!]
+                ) {
+                    movements(
+                        filters: $filters
+                        advancedFilters: $advancedFilters
+                        functions: $functions
+                    ) {
+                        results {
+                            originalContentIdStr
+                            functionSum
+                        }
+                    }
+                }
+            `;
+
+            const [contentResponse, movementsResponse] = await Promise.all([
+                graphqlRequestClient.request(contentQuery, { id: originalContentId }),
+                graphqlRequestClient.request(movementQuery, {
+                    filters: {
+                        originalContentIdStr: originalContentId,
+                        code: configsParamsCodes.movementProductPick,
+                        type: configsParamsCodes.movementPreparation
+                    },
+                    advancedFilters: {
+                        filter: [
+                            {
+                                field: { status: configsParamsCodes.movementValidated },
+                                searchType: 'INFERIOR'
+                            }
+                        ]
+                    },
+                    functions: [{ function: 'sum', fields: ['quantity'] }]
+                })
+            ]);
+
+            if (movementsResponse.movements.results && contentResponse.handlingUnitContent) {
+                const movementsQuantity =
+                    movementsResponse.movements.results[0]?.functionSum.quantity ?? 0;
+                const contentQuantity = contentResponse.handlingUnitContent?.quantity ?? 0;
+                const adjustedQuantity = contentQuantity - movementsQuantity;
+                setIsEnterQtyDisplay(true);
+                setUptodateQty(adjustedQuantity);
+            }
+        };
+        getUptodateQuantity(storedObject['step60']?.data?.content?.id);
+    } else if (storedObject['step70']?.data && isEnterQtyDisplay) {
+        setIsEnterQtyDisplay(false);
+    }
+    //#end region
+
+    //#region RETURN
     return (
         <PageContentWrapper>
             <HeaderContent
@@ -651,7 +1133,7 @@ const Pick: PageComponent = () => {
                         <SelectEquipmentForm
                             processName={processName}
                             stepNumber={5}
-                            buttons={{ submitButton: true, backButton: false }}
+                            formToUse={form}
                         ></SelectEquipmentForm>
                     ) : (
                         <></>
@@ -661,7 +1143,7 @@ const Pick: PageComponent = () => {
                         <SelectRoundForm
                             processName={processName}
                             stepNumber={10}
-                            buttons={{ submitButton: true, backButton: equipmentScanAtPreparation }}
+                            formToUse={form}
                         ></SelectRoundForm>
                     ) : (
                         <></>
@@ -673,10 +1155,7 @@ const Pick: PageComponent = () => {
                             processName={processName}
                             stepNumber={15}
                             label={t('common:pick_handling-unit_grouping')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
+                            formToUse={form}
                             isANewHUEquipment={isANewHUEquipment}
                             checkComponent={(data: any) => (
                                 <HandlingUnitChecksWithoutChecks dataToCheck={data} />
@@ -703,21 +1182,6 @@ const Pick: PageComponent = () => {
                                       })
                                     : t('common:location')
                             }
-                            triggerAlternativeSubmit1={{
-                                triggerAlternativeSubmit1: triggerHuClose,
-                                setTriggerAlternativeSubmit1: setTriggerHuClose
-                            }}
-                            action1Trigger={{
-                                action1Trigger: triggerNextRaa,
-                                setAction1Trigger: setTriggerNextRaa
-                            }}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true,
-                                alternativeSubmitButton1: isHuInProgress,
-                                locationButton: true,
-                                action1Button: hasMultipleLocationIds
-                            }}
                             enforcedValue={
                                 !tmpForceLocation
                                     ? proposedRoundAdvisedAddress.location?.name ||
@@ -727,8 +1191,10 @@ const Pick: PageComponent = () => {
                             checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
                             showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                             showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
+                            isHuClosureLoading={isHuClosureLoading}
                             headerContent={{ headerContent, setHeaderContent }}
                             forceLocation={{ tmpForceLocation, setTmpforceLocation }}
+                            formToUse={form}
                         ></ScanLocation>
                     ) : (
                         <></>
@@ -737,11 +1203,11 @@ const Pick: PageComponent = () => {
                         <SelectLocationByLevelForm
                             processName={processName}
                             stepNumber={30}
-                            buttons={{ submitButton: true, backButton: true }}
                             showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
                             locations={storedObject['step20'].data.locations}
                             setTmpforceLocation={setTmpforceLocation}
                             dontAskBeforeLocationChange={dontAskBeforeLocationChange}
+                            formToUse={form}
                         ></SelectLocationByLevelForm>
                     ) : (
                         <></>
@@ -751,14 +1217,11 @@ const Pick: PageComponent = () => {
                             processName={processName}
                             stepNumber={40}
                             label={t('common:handling-unit')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             checkComponent={(data: any) => (
                                 <HandlingUnitChecks dataToCheck={data} />
                             )}
                             defaultValue={storedObject['step30'].data.handlingUnit ?? undefined}
+                            formToUse={form}
                         ></ScanHandlingUnit>
                     ) : (
                         <></>
@@ -770,30 +1233,12 @@ const Pick: PageComponent = () => {
                             label={t('common:article-var', {
                                 name: `${proposedRoundAdvisedAddress?.handlingUnitContent?.article?.name}`
                             })}
-                            triggerAlternativeSubmit1={{
-                                triggerAlternativeSubmit1: triggerChangeLocationFromArticle,
-                                setTriggerAlternativeSubmit1: setTriggerChangeLocationFromArticle
-                            }}
-                            action1Trigger={{
-                                action1Trigger: triggerNextRaa,
-                                setAction1Trigger: setTriggerNextRaa
-                            }}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true,
-                                alternativeSubmitButton1: !forceLocationScan && forceArticleScan,
-                                action1Button: hasMultipleLocationIds
-                            }}
+                            form={form}
                             forceArticleScan={forceArticleScan}
                             contents={
                                 storedObject['step40']?.data?.handlingUnit?.handlingUnitContents
                             }
-                            checkComponent={(data: any) => (
-                                <ArticleChecks
-                                    dataToCheck={data}
-                                    setTmpforceLocation={setTmpforceLocation}
-                                />
-                            )}
+                            checkComponent={(data: any) => <ArticleChecks dataToCheck={data} />}
                         ></ScanArticleEAN>
                     ) : (
                         <></>
@@ -807,10 +1252,6 @@ const Pick: PageComponent = () => {
                             processName={processName}
                             stepNumber={60}
                             label={t('common:feature-code')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             dataInfos={storedObject['step50']?.data}
                             action1Trigger={{
                                 action1Trigger: finishUniqueFeatures,
@@ -823,15 +1264,13 @@ const Pick: PageComponent = () => {
                             nextFeatureCode={
                                 storedObject['step60']?.data?.nextFeatureCode ?? undefined
                             }
+                            form={form}
                             checkComponent={(data: any) => <FeatureChecks dataToCheck={data} />}
                         ></ScanFeature>
                     ) : (
                         <></>
                     )}
-                    {storedObject['step60']?.data &&
-                    storedObject['step60']?.data.processedFeatures?.length >=
-                        storedObject['step50'].data?.article?.featureType?.length &&
-                    !storedObject['step70']?.data ? (
+                    {isEnterQtyDisplay ? (
                         <EnterQuantity_reducer
                             processName={processName}
                             stepNumber={70}
@@ -843,12 +1282,8 @@ const Pick: PageComponent = () => {
                                     0
                                 )}`
                             })}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             initialValueType={quantityDefaultValue}
-                            availableQuantity={Math.min(
+                            requiredMaxQuantity={Math.min(
                                 storedObject['step10'].data.proposedRoundAdvisedAddresses.reduce(
                                     (total: number, current: any) => total + current.quantity,
                                     0
@@ -865,9 +1300,13 @@ const Pick: PageComponent = () => {
                                                     feature_content.value === feature_filter.value
                                             )
                                     )
-                                )?.quantity
+                                )?.quantity,
+                                uptodateQty ?? Infinity
                             )}
+                            stockMaxQuantity={uptodateQty ?? Infinity}
                             autoValidate1Quantity={autoValidate1Quantity}
+                            checkRemainingQuantity={checkRemainingQuantity}
+                            formToUse={form}
                             checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
                         ></EnterQuantity_reducer>
                     ) : (
@@ -880,10 +1319,6 @@ const Pick: PageComponent = () => {
                             processName={processName}
                             stepNumber={75}
                             label={t('common:pick_position')}
-                            buttons={{
-                                submitButton: true,
-                                backButton: true
-                            }}
                             checkComponent={(data: any) => (
                                 <PositionChecks
                                     dataToCheck={data}
@@ -898,6 +1333,7 @@ const Pick: PageComponent = () => {
                                     ? 'fullBox'
                                     : undefined
                             }
+                            formToUse={form}
                         ></ScanPosition>
                     ) : (
                         <></>
@@ -907,7 +1343,6 @@ const Pick: PageComponent = () => {
                         <AutoValidatePickForm
                             processName={processName}
                             stepNumber={80}
-                            buttons={{ submitButton: true, backButton: true }}
                             toBePalletized={toBePalletizedForBackEnd}
                             autoValidateLoading={{
                                 isAutoValidateLoading,
@@ -923,6 +1358,7 @@ const Pick: PageComponent = () => {
         </PageContentWrapper>
     );
 };
+// #endregion
 
 Pick.layout = MainLayout;
 

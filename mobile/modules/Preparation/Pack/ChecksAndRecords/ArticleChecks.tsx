@@ -22,7 +22,6 @@ import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { Modal } from 'antd';
 
 export interface IArticleChecksProps {
     dataToCheck: any;
@@ -38,9 +37,7 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
         scannedInfo: { scannedInfo, setScannedInfo },
         proposedHuos,
         articleLuBarcodesInfos,
-        setResetForm,
-        triggerAlternativeSubmit1,
-        alternativeSubmitInput
+        setResetForm
     } = dataToCheck;
 
     const state = useAppState();
@@ -98,78 +95,6 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
             }
         }
     }, [articleLuBarcodesInfos]);
-
-    useEffect(() => {
-        if (triggerAlternativeSubmit1.triggerAlternativeSubmit1) {
-            // Check if all HUCOs of proposedHuos[0] are complete
-            const firstHuo = proposedHuos[0];
-            const incompleteHucos = firstHuo?.handlingUnitContentOutbounds?.filter(
-                (huco: any) =>
-                    huco.quantityToBePicked !== huco.missingQuantity + huco.pickedQuantity
-            );
-
-            if (incompleteHucos && incompleteHucos.length > 0) {
-                Modal.confirm({
-                    title: t('messages:confirmation'),
-                    content: t('messages:confirm-incomplete-box-closure'),
-                    onOk: () => {
-                        // Continue with dispatches
-                        const step40Data: { [label: string]: any } = {};
-                        step40Data['currentHuo'] = proposedHuos[0];
-                        step40Data['isBoxForcedClosed'] = true;
-                        dispatch({
-                            type: 'UPDATE_BY_STEP',
-                            processName,
-                            stepName: 'step40',
-                            object: {
-                                ...storedObject['step40'],
-                                data: step40Data
-                            }
-                        });
-
-                        dispatch({
-                            type: 'UPDATE_BY_STEP',
-                            processName,
-                            stepName: 'step50',
-                            object: {
-                                ...storedObject['step50'],
-                                data: 'allQuantites'
-                            }
-                        });
-                        triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
-                    },
-                    onCancel: () => {
-                        // Return to current step
-                        triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
-                    }
-                });
-                return;
-            }
-
-            const step40Data: { [label: string]: any } = {};
-            step40Data['currentHuo'] = proposedHuos[0];
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName,
-                stepName: 'step40',
-                object: {
-                    ...storedObject['step40'],
-                    data: step40Data
-                }
-            });
-
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName,
-                stepName: 'step50',
-                object: {
-                    ...storedObject['step50'],
-                    data: 'allQuantites'
-                }
-            });
-            triggerAlternativeSubmit1.setTriggerAlternativeSubmit1(false);
-        }
-    }, [triggerAlternativeSubmit1, alternativeSubmitInput]);
 
     return (
         <WrapperForm>
