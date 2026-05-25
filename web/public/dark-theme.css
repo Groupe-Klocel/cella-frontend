@@ -6632,9 +6632,10 @@ tr > .ant-picker-cell-in-view.ant-picker-cell-range-hover:last-child::after {
 }
 .ant-picker-cell-disabled .ant-picker-cell-inner {
     background: 0 0;
+    color: #585757ba !important;
 }
 .ant-picker-cell-disabled::before {
-    background: #303030;
+    background: #5857575f !important;
 }
 .ant-picker-cell-disabled.ant-picker-cell-today .ant-picker-cell-inner::before {
     border-color: rgba(255, 255, 255, 0.3);

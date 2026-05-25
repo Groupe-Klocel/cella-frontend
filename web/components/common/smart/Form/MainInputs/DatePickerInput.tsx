@@ -17,57 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+
 import { Form, DatePicker } from 'antd';
-import moment from 'moment';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import de_DE from 'antd/lib/date-picker/locale/de_DE';
+import { getLanguageCode, useTranslationWithFallback as useTranslation } from '@helpers';
 import { FormOptionType } from '../../../../../models/ModelsV2';
-import { FC } from 'react';
-
-// return (
-//     <Form.Item
-//         name={item.name}
-//         label={item.displayName ? item.displayName : t(`d:${item.name}`)}
-//         key={item.name}
-//         rules={item.rules!}
-//         normalize={(value) => (value ? value : undefined)}
-//         initialValue={item?.initialValue ? dayjs(item?.initialValue) : undefined}
-//     >
-//         <DatePicker
-//             format={localeDateTimeFormat}
-//             locale={router.locale === 'fr' ? fr_FR : en_US}
-//             showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-//             allowClear
-//         />
-//     </Form.Item>
-// );
-
-{
-    /* <Form.Item
-    name={item.name}
-    label={item.displayName ? item.displayName : t(`d:${item.name}`)}
-    key={item.name}
-    rules={item.rules!}
->
-    {item.initialValue ? (
-        <DatePicker
-            format={localeDateTimeFormat}
-            locale={router.locale === 'fr' ? fr_FR : en_US}
-            showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-            defaultValue={item.initialValue}
-        />
-    ) : (
-        <DatePicker
-            format={localeDateTimeFormat}
-            locale={router.locale === 'fr' ? fr_FR : en_US}
-            showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
-        />
-    )}
-</Form.Item>; */
-}
+import { FC, useMemo } from 'react';
+import 'dayjs/locale/fr';
+import 'dayjs/locale/de';
 
 export interface IDraggerDatePickerInputProps {
     item: {
@@ -81,13 +42,43 @@ export interface IDraggerDatePickerInputProps {
     format?: string;
     key?: string;
     mode?: 'multiple' | undefined;
+    disabledDate?: any;
+    disabledTime?: any;
+    showTime?: any;
+    disabled?: boolean;
 }
 
-const DatePickerInput: FC<IDraggerDatePickerInputProps> = ({ item, format }) => {
+const getLocaleDatePicker = (locale: string) => {
+    switch (locale) {
+        case 'fr':
+            return fr_FR;
+        case 'de':
+            return de_DE;
+        default:
+            return en_US;
+    }
+};
+
+const DatePickerInput: FC<IDraggerDatePickerInputProps> = ({
+    item,
+    format,
+    disabledDate,
+    disabledTime,
+    showTime,
+    disabled
+}) => {
     const { t } = useTranslation();
 
     const router = useRouter();
-    moment.locale(router.locale);
+    const language = getLanguageCode(router);
+
+    const mergedShowTime = useMemo(() => {
+        const baseDefault = { defaultValue: dayjs('00:00:00', 'HH:mm:ss') };
+        if (!showTime) return baseDefault;
+        return typeof showTime === 'object' ? { ...baseDefault, ...showTime } : showTime;
+    }, [showTime]);
+
+    const isDisabled = disabled !== undefined ? disabled : item.disabled;
 
     return (
         <Form.Item
@@ -100,15 +91,21 @@ const DatePickerInput: FC<IDraggerDatePickerInputProps> = ({ item, format }) => 
             {item.initialValue ? (
                 <DatePicker
                     format={format}
-                    locale={router.locale === 'fr' ? fr_FR : en_US}
-                    showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                    locale={getLocaleDatePicker(language)}
+                    showTime={mergedShowTime}
                     defaultValue={item.initialValue}
+                    disabled={isDisabled}
+                    disabledDate={disabledDate}
+                    disabledTime={disabledTime}
                 />
             ) : (
                 <DatePicker
                     format={format}
-                    locale={router.locale === 'fr' ? fr_FR : en_US}
-                    showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                    locale={getLocaleDatePicker(language)}
+                    showTime={mergedShowTime}
+                    disabled={isDisabled}
+                    disabledDate={disabledDate}
+                    disabledTime={disabledTime}
                 />
             )}
         </Form.Item>
