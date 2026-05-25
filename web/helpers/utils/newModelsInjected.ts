@@ -19,6 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 // models/index.ts
 import { injectedModel } from 'helpers/utils/InjectedModel';
+import { AppointmentLineModelV2 as _AppointmentLineModelV2 } from '../../models/AppointmentLineModelV2';
+import { AppointmentModelV2 as _AppointmentModelV2 } from '../../models/AppointmentModelV2';
 import { ArticleExtrasModelV2 as _ArticleExtrasModelV2 } from '../../models/ArticleExtrasModelV2';
 import { ArticleLuBarcodeModelV2 as _ArticleLuBarcodeModelV2 } from '../../models/ArticleLuBarcodeModelV2';
 import { ArticleLuModelV2 as _ArticleLuModelV2 } from '../../models/ArticleLuModelV2';
@@ -126,6 +128,11 @@ import { WarehouseWorkerModelV2 as _WarehouseWorkerModelV2 } from '../../models/
 import { WarehouseWorkerStockOwnerModelV2 as _WarehouseWorkerStockOwnerModelV2 } from '../../models/WarehouseWorkerStockOwnerModelV2';
 import { WarehouseWorkerUserRoleModelV2 as _WarehouseWorkerUserRoleModelV2 } from '../../models/WarehouseWorkerUserRoleModelV2';
 
+export const AppointmentLineModelV2 = injectedModel(
+    _AppointmentLineModelV2,
+    'AppointmentLineSpeModel'
+);
+export const AppointmentModelV2 = injectedModel(_AppointmentModelV2, 'AppointmentSpeModel');
 export const ArticleExtrasModelV2 = injectedModel(_ArticleExtrasModelV2, 'ArticleExtrasSpeModel');
 export const ArticleLuBarcodeModelV2 = injectedModel(
     _ArticleLuBarcodeModelV2,
