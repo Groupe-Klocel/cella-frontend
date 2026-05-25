@@ -367,7 +367,7 @@ const CycleCounts: PageComponent = () => {
                     defaultValue={
                         storedObject['step40']?.data?.resType !== 'serialNumber'
                             ? storedObject['step40']?.data.handlingUnitContent == 'isHucToCreate' &&
-                              storedObject['step40']?.data.feature?.featureCode
+                              storedObject['step40']?.data.article?.featureType
                                 ? undefined
                                 : 'N/A'
                             : (storedObject['step40']?.data.feature?.featureCode ?? undefined)
