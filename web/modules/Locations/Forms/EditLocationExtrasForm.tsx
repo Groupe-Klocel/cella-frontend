@@ -42,12 +42,15 @@ import {
     UpdateLocationMutation,
     UpdateLocationMutationVariables,
     useSimpleGetAllCarriersQuery,
-    SimpleGetAllCarriersQuery,
-    useListParametersForAScopeQuery,
-    ListParametersForAScopeQuery
+    SimpleGetAllCarriersQuery
 } from 'generated/graphql';
 import { gql } from 'graphql-request';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -261,16 +264,17 @@ export const EditLocationExtrasForm: FC<EditLocationExtrasFormProps> = ({
             .then((values) => {
                 const extras: Record<string, any> = {};
 
-                // dock_type
                 if (values.dock_type) {
                     extras['dock_type'] = values.dock_type;
                 }
 
-                // authorized_carriers: empty = *, otherwise comma-separated
+                // dayjs.tz.guess() automatically identifies the local IANA timezone string
+                // (e.g., 'Europe/Paris', 'America/New_York') based on the browser env.
+                extras['timezone'] = dayjs.tz.guess();
+
                 const carrierIds: string[] = values.authorized_carriers || [];
                 extras['authorized_carriers'] = carrierIds.length > 0 ? carrierIds.join(',') : '*';
 
-                // authorized_truck_types: empty = *, otherwise comma-separated
                 const truckTypeCodes: string[] = values.authorized_truck_types || [];
                 extras['authorized_truck_types'] =
                     truckTypeCodes.length > 0 ? truckTypeCodes.join(',') : '*';
@@ -278,7 +282,6 @@ export const EditLocationExtrasForm: FC<EditLocationExtrasFormProps> = ({
                 // operating_schedules — stored as JSON object (not string)
                 extras['operating_schedules'] = schedules;
 
-                // First clear extras, then set new ones (same pattern as ArticleExtras)
                 const clearQuery = gql`
                     mutation ClearLocationExtras($id: String!, $input: UpdateLocationInput!) {
                         updateLocation(id: $id, input: $input) {
