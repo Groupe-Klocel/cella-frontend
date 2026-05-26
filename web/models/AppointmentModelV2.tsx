@@ -252,7 +252,7 @@ export const AppointmentModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: null,
+            searchingFormat: 'Dropdown',
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,
