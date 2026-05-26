@@ -169,3 +169,115 @@ height: calc(100vh - 110px);
         opacity: 1;
     }
 }
+
+/* ─── react-big-calendar ───────────────────────────────────────────────────── */
+.rbc-event-label {
+    display: none;
+}
+.rbc-day-slot .rbc-events-container {
+    pointer-events: none;
+}
+.rbc-day-slot .rbc-events-container .rbc-event {
+    pointer-events: auto;
+}
+.rbc-time-slot.slot-available {
+    cursor: pointer !important;
+}
+.rbc-time-slot.slot-unavailable {
+    cursor: not-allowed !important;
+}
+
+/* Compact resource/day columns with horizontal scroll.
+   .rbc-time-view is NOT a scroll container so position:sticky
+   on the header anchors to the page (window) scroll. */
+.rbc-time-view {
+    overflow-x: scroll !important;
+    overflow-y: visible !important;
+    display: flex;
+    flex-direction: column;
+}
+.rbc-time-header {
+    margin-right: 0 !important;
+    overflow: visible !important;
+    flex: 0 0 auto;
+    top: 0;
+    z-index: 5;
+    background: #fff;
+}
+.rbc-time-header-content {
+    overflow: visible !important;
+}
+.rbc-time-content {
+    overflow: visible !important;
+    flex: 1 1 auto;
+}
+
+/* Keep the time gutter visible while scrolling horizontally */
+.rbc-time-gutter,
+.rbc-time-header-gutter {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    background: #fff;
+}
+.rbc-time-header-gutter {
+    z-index: 6;
+}
+
+/* Hide the empty all-day events row under the header */
+.rbc-allday-cell,
+.rbc-time-header-content > .rbc-row:not(.rbc-row-resource):not(:first-child) {
+    display: none !important;
+}
+
+/* Column widths — set --rbc-col-width and --rbc-gutter on the calendar container */
+.rbc-time-header-content .rbc-row-resource .rbc-header,
+.rbc-time-header-content .rbc-header {
+    flex: 0 0 var(--rbc-col-width) !important;
+    width: var(--rbc-col-width) !important;
+    min-width: var(--rbc-col-width) !important;
+    max-width: var(--rbc-col-width) !important;
+    font-size: 12px;
+    padding: 4px 2px;
+    box-sizing: border-box;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.2;
+    text-align: center;
+}
+.rbc-time-content > .rbc-day-slot {
+    flex: 0 0 var(--rbc-col-width) !important;
+    width: var(--rbc-col-width) !important;
+    min-width: var(--rbc-col-width) !important;
+    max-width: var(--rbc-col-width) !important;
+    box-sizing: border-box;
+}
+
+/* Gutter (time labels) — fixed width */
+.rbc-time-gutter,
+.rbc-time-header-gutter {
+    min-width: 50px !important;
+    max-width: 50px !important;
+    width: 50px !important;
+    flex: 0 0 50px !important;
+    box-sizing: border-box;
+    font-size: 11px;
+}
+
+/* Mobile breakpoint: max 3 columns visible */
+@media (max-width: 768px) {
+    .rbc-time-header-content .rbc-row-resource .rbc-header,
+    .rbc-time-header-content .rbc-header {
+        flex: 0 0 calc((100vw - 50px) / 3) !important;
+        width: calc((100vw - 50px) / 3) !important;
+        min-width: calc((100vw - 50px) / 3) !important;
+        max-width: calc((100vw - 50px) / 3) !important;
+    }
+    .rbc-time-content > .rbc-day-slot {
+        flex: 0 0 calc((100vw - 50px) / 3) !important;
+        width: calc((100vw - 50px) / 3) !important;
+        min-width: calc((100vw - 50px) / 3) !important;
+        max-width: calc((100vw - 50px) / 3) !important;
+    }
+}
