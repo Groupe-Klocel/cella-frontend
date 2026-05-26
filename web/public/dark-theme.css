@@ -26442,3 +26442,212 @@ div.ant-typography-edit-content.ant-typography-rtl {
 .ant-popconfirm .ant-popconfirm-message .ant-popconfirm-title {
     color: rgba(255, 255, 255, 0.85) !important;
 }
+
+/* ─── React Big Calendar dark mode ─────────────────────────────────────────── */
+.rbc-toolbar {
+    color: #e8e8e8;
+}
+.rbc-toolbar button {
+    color: #e8e8e8;
+    background: #1f1f1f;
+    border-color: #303030;
+}
+.rbc-toolbar button:hover {
+    background: #2a2a2a;
+    border-color: #404040;
+    color: #e8e8e8;
+}
+.rbc-time-view-resources .rbc-time-gutter,
+.rbc-time-view-resources .rbc-time-header-gutter {
+    background: #1f1f1f;
+    border-color: #303030 !important;
+}
+.rbc-toolbar button.rbc-active,
+.rbc-toolbar button.rbc-active:hover {
+    background: #1677ff;
+    border-color: #1677ff;
+    color: #fff;
+}
+.rbc-header {
+    background: #1f1f1f;
+    border-color: #303030 !important;
+    color: #e8e8e8;
+}
+.rbc-header + .rbc-header {
+    border-left-color: #303030 !important;
+}
+.rbc-time-view {
+    background: #141414;
+    border-color: #303030 !important;
+}
+.rbc-time-header {
+    background: #1f1f1f;
+    border-color: #303030 !important;
+}
+.rbc-time-header-content {
+    border-left-color: #303030 !important;
+}
+.rbc-time-content {
+    background: #141414;
+    border-top-color: #303030 !important;
+}
+.rbc-time-content > * + * > * {
+    border-left-color: #303030 !important;
+}
+.rbc-time-gutter {
+    background: #1f1f1f;
+}
+.rbc-timeslot-group {
+    border-bottom-color: #303030 !important;
+}
+.rbc-time-slot {
+    border-top-color: #262626 !important;
+    color: #8c8c8c;
+}
+.rbc-label {
+    color: white !important;
+}
+.rbc-day-slot .rbc-time-slot {
+    border-top-color: #262626 !important;
+}
+.rbc-time-slot.slot-unavailable {
+    background-color: #2a2a2a !important;
+}
+.rbc-today {
+    background-color: rgba(22, 119, 255, 0.07) !important;
+}
+.rbc-off-range-bg {
+    background: #0d0d0d !important;
+}
+.rbc-month-view {
+    background: #141414;
+    border-color: #303030 !important;
+}
+.rbc-month-row + .rbc-month-row {
+    border-top-color: #303030 !important;
+}
+.rbc-day-bg + .rbc-day-bg {
+    border-left-color: #303030 !important;
+}
+.rbc-resource-header {
+    background: #1f1f1f;
+    border-bottom-color: #303030 !important;
+    border-left-color: #303030 !important;
+    color: #e8e8e8;
+}
+.rbc-agenda-view table.rbc-agenda-table {
+    border-color: #303030 !important;
+}
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+    border-bottom-color: #303030 !important;
+    background: #1f1f1f;
+    color: #e8e8e8;
+}
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+    border-top-color: #303030 !important;
+}
+.rbc-agenda-view table.rbc-agenda-table tbody > tr + tr {
+    border-top-color: #303030 !important;
+}
+.rbc-agenda-date-cell,
+.rbc-agenda-time-cell {
+    background: #1a1a1a;
+    color: #8c8c8c;
+}
+.rbc-agenda-event-cell {
+    color: #e8e8e8;
+}
+.rbc-show-more {
+    background: #141414;
+    color: #4096ff;
+}
+/* ─── Schedule page: status legend bar ─────────────────────────────────────── */
+.ant-spin-nested-loading + div {
+    background-color: #1f1f1f !important;
+    border-color: #303030 !important;
+}
+
+/* ─── Schedule page: detail side panel container ────────────────────────────── */
+div:has(> .ant-tabs-top) {
+    background: #1f1f1f !important;
+    border-color: #303030 !important;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ─── Schedule page: Descriptions (bordered) inside detail panel ─────────────── */
+div:has(> .ant-tabs-top) .ant-descriptions-bordered .ant-descriptions-item-label {
+    background: #262626 !important;
+    border-color: #303030 !important;
+    color: #8c8c8c !important;
+}
+div:has(> .ant-tabs-top) .ant-descriptions-bordered .ant-descriptions-item-content {
+    background: #1f1f1f !important;
+    border-color: #303030 !important;
+    color: #e8e8e8 !important;
+}
+div:has(> .ant-tabs-top) .ant-descriptions-bordered .ant-descriptions-row {
+    border-color: #303030 !important;
+}
+div:has(> .ant-tabs-top) .ant-descriptions-view {
+    border-color: #303030 !important;
+}
+:where(.css-dev-only-do-not-override-qnu6hi).ant-tabs .ant-tabs-tab-btn {
+    color: #e8e8e8 !important;
+}
+:where(.css-dev-only-do-not-override-qnu6hi).ant-list .ant-list-empty-text {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ─── Schedule page: Collapse inside detail panel ────────────────────────────── */
+div:has(> .ant-tabs-top) .ant-collapse-ghost > .ant-collapse-item > .ant-collapse-content {
+    background: transparent !important;
+}
+div:has(> .ant-tabs-top) .ant-collapse-content {
+    background: #1f1f1f !important;
+    border-color: #303030 !important;
+}
+div:has(> .ant-tabs-top) .ant-collapse > .ant-collapse-item {
+    border-color: #303030 !important;
+}
+
+/* ─── Schedule page: List (bordered) inside detail panel ─────────────────────── */
+div:has(> .ant-tabs-top) .ant-list-bordered {
+    border-color: #303030 !important;
+}
+div:has(> .ant-tabs-top) .ant-list-item {
+    border-color: #303030 !important;
+    color: #e8e8e8 !important;
+}
+
+/* ─── Schedule page: Steps inside detail panel ───────────────────────────────── */
+div:has(> .ant-tabs-top) .ant-steps-item-tail::after {
+    background: #303030 !important;
+}
+div:has(> .ant-tabs-top) .ant-steps-item-wait .ant-steps-item-icon {
+    background: #262626 !important;
+    border-color: #434343 !important;
+}
+div:has(> .ant-tabs-top) .ant-steps-item-wait .ant-steps-item-icon .ant-steps-icon {
+    color: #595959 !important;
+}
+div:has(> .ant-tabs-top)
+    .ant-steps-item-wait
+    > .ant-steps-item-container
+    > .ant-steps-item-content
+    > .ant-steps-item-title {
+    color: #595959 !important;
+}
+div:has(> .ant-tabs-top)
+    .ant-steps-item-finish
+    > .ant-steps-item-container
+    > .ant-steps-item-content
+    > .ant-steps-item-title {
+    color: #e8e8e8 !important;
+}
+div:has(> .ant-tabs-top)
+    .ant-steps-item-process
+    > .ant-steps-item-container
+    > .ant-steps-item-content
+    > .ant-steps-item-title {
+    color: #e8e8e8 !important;
+}
