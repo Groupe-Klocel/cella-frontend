@@ -61,7 +61,7 @@ export const CycleCountErrorModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: null,
+            searchingFormat: 'Number',
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,
