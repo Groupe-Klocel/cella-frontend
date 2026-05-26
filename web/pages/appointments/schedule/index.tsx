@@ -15,7 +15,7 @@ dayjs.extend(isBetween);
 dayjs.extend(weekday);
 dayjs.extend(weekOfYear);
 import MainLayout from 'components/layouts/MainLayout';
-import { FC, useState, useEffect, ReactNode, useMemo } from 'react';
+import { FC, useState, useEffect, ReactNode, useMemo, CSSProperties } from 'react';
 import { useAppState } from 'context/AppContext';
 import { useRouter } from 'next/router';
 import {
@@ -608,7 +608,7 @@ const MyCalendar: PageComponent = () => {
 
         const params = new URLSearchParams({ start: start.toISOString(), end: end.toISOString() });
         if (resourceId != null) params.set('locationId', String(resourceId));
-        router.push(`/appointements/add?${params.toString()}`);
+        router.push(`/appointments/add?${params.toString()}`);
     };
 
     const slotPropGetter = (date: Date, resourceId?: number | string) => {
@@ -634,6 +634,13 @@ const MyCalendar: PageComponent = () => {
     const visibleRamps = selectedBuildingId
         ? ramps.filter((r) => r.buildingId === selectedBuildingId)
         : ramps;
+
+    // Column widths expressed in vw so they scale with the screen
+    const GUTTER_VW = 4;
+    const colWidthCss =
+        currentView === 'week'
+            ? `calc((87.5vw - ${GUTTER_VW}vw) / 7)`
+            : `calc((90vw - ${GUTTER_VW}vw) / ${Math.max(1, visibleRamps.length)})`;
 
     const cancelledCode = statusFlow.find((s) => statusConfig[s]?.value === 'Cancelled');
     const refusedCode = statusFlow.find((s) => statusConfig[s]?.value === 'Refused');
@@ -731,14 +738,15 @@ const MyCalendar: PageComponent = () => {
                     margin: 30
                 }}
             >
-                <style>{`
-                .rbc-event-label { display: none; }
-                .rbc-day-slot .rbc-events-container { pointer-events: none; }
-                .rbc-day-slot .rbc-events-container .rbc-event { pointer-events: auto; }
-                .rbc-time-slot.slot-available { cursor: pointer !important; }
-                .rbc-time-slot.slot-unavailable { cursor: not-allowed !important; }
-            `}</style>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                    style={
+                        {
+                            flex: 1,
+                            minWidth: 0,
+                            '--rbc-col-width': colWidthCss
+                        } as CSSProperties
+                    }
+                >
                     <div
                         style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}
                     >
@@ -790,7 +798,7 @@ const MyCalendar: PageComponent = () => {
                             events={filteredEvents}
                             startAccessor="start"
                             endAccessor="end"
-                            style={{ height: 1000 }}
+                            style={{ height: 1250 }}
                             selectable
                             onSelectSlot={handleSelectSlot}
                             onSelectEvent={handleSelectEvent}
