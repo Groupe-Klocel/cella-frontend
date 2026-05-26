@@ -43,7 +43,7 @@ export const ArticleExtrasModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: false,
-            searchingFormat: null,
+            searchingFormat: 'String',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,

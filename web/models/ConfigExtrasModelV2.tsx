@@ -42,7 +42,7 @@ export const ConfigExtrasModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: null,
+            searchingFormat: 'String',
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,
