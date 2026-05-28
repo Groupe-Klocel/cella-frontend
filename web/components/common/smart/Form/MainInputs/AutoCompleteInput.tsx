@@ -33,6 +33,7 @@ export interface IFormGroupProps {
     setAllSubOptions?: any;
     advancedFilters?: any[];
     isSingleSelect?: boolean;
+    style?: React.CSSProperties;
 }
 
 interface OptionTableType {
@@ -173,6 +174,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             name={autoCompleteValue.name}
             initialValue={autoCompleteValue.initialValue}
             normalize={(value) => (value ? value : undefined)}
+            style={props.style}
         >
             <Select
                 showSearch
