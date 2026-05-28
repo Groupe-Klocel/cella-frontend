@@ -2298,8 +2298,8 @@ const ListComponent = (props: IListProps) => {
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
-                                        width: '100%',
-                                        maxHeight: 40
+                                        width: '100%'
+                                        // maxHeight: 40
                                     }}
                                 >
                                     <div>{props.actionButtons?.actionsComponent}</div>
