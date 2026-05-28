@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 export const appointmentsRoutes = [
     {
-        breadcrumbName: 'menu:business-management'
+        breadcrumbName: 'menu:truck-management'
     },
     {
         breadcrumbName: 'menu:appointments',
