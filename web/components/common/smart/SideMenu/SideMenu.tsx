@@ -507,6 +507,37 @@ const SideMenu: FC = () => {
                 }
             ].filter(Boolean)
         },
+        // BUSINESS MANAGEMENT
+        ['wm_credits', 'wm_customer-orders', 'wm_payments'].some((perm) =>
+            getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+        ) && {
+            key: 'business-management',
+            icon: <DeploymentUnitOutlined />,
+            label: t('business-management'),
+            children: [
+                // CREDITS
+                getModesFromPermissions(permissions, 'wm_credits').includes(ModeEnum.Read)
+                    ? {
+                          key: 'business-management-credits',
+                          label: <Link href="/credits">{t('credits')}</Link>
+                      }
+                    : null,
+                // CUSTOMER ORDERS
+                getModesFromPermissions(permissions, 'wm_customer-orders').includes(ModeEnum.Read)
+                    ? {
+                          key: 'business-management-orders',
+                          label: <Link href="/customer-orders">{t('customer-orders')}</Link>
+                      }
+                    : null,
+                // PAYMENTS
+                getModesFromPermissions(permissions, 'wm_payments').includes(ModeEnum.Read)
+                    ? {
+                          key: 'business-management-payments',
+                          label: <Link href="/payments">{t('payments')}</Link>
+                      }
+                    : null
+            ].filter(Boolean)
+        },
         // STOCK MANAGEMENT
         [
             'wm_goods-ins',
@@ -614,76 +645,11 @@ const SideMenu: FC = () => {
                     : null
             ].filter(Boolean)
         },
-        // BUSINESS MANAGEMENT
-        ['wm_credits', 'wm_customer-orders', 'wm_payments'].some((perm) =>
-            getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
-        ) && {
-            key: 'business-management',
-            icon: <DeploymentUnitOutlined />,
-            label: t('business-management'),
-            children: [
-                // CREDITS
-                getModesFromPermissions(permissions, 'wm_credits').includes(ModeEnum.Read)
-                    ? {
-                          key: 'business-management-credits',
-                          label: <Link href="/credits">{t('credits')}</Link>
-                      }
-                    : null,
-                // CUSTOMER ORDERS
-                getModesFromPermissions(permissions, 'wm_customer-orders').includes(ModeEnum.Read)
-                    ? {
-                          key: 'business-management-orders',
-                          label: <Link href="/customer-orders">{t('customer-orders')}</Link>
-                      }
-                    : null,
-                // PAYMENTS
-                getModesFromPermissions(permissions, 'wm_payments').includes(ModeEnum.Read)
-                    ? {
-                          key: 'business-management-payments',
-                          label: <Link href="/payments">{t('payments')}</Link>
-                      }
-                    : null
-            ].filter(Boolean)
-        },
-        // TRUCK MANAGEMENT
-        ['wm_appointments', 'wm_loads'].some((perm) =>
-            getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
-        ) && {
-            key: 'truck-management',
-            icon: <TruckOutlined />,
-            label: t('truck-management'),
-            children: [
-                // SCHEDULE
-                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
-                    ? {
-                          key: 'truck-management-schedule',
-                          label: <Link href="/appointments/schedule">{t('common:agenda')}</Link>
-                      }
-                    : null,
-
-                // APPOINTMENTS
-                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
-                    ? {
-                          key: 'truck-management-appointments',
-                          label: <Link href="/appointments">{t('appointments')}</Link>
-                      }
-                    : null,
-
-                // LOADS
-                getModesFromPermissions(permissions, 'wm_loads').includes(ModeEnum.Read)
-                    ? {
-                          key: 'preparation-management-loads',
-                          label: <Link href="/loads">{t('loads')}</Link>
-                      }
-                    : null
-            ].filter(Boolean)
-        },
         // PREPARATION
         [
             'wm_handling-unit-outbound-barcodes',
             'wm_boxes',
             'wm_deliveries',
-            'wm_pre-assigned-load',
             'wm_manual-allocation',
             'wm_shipping-units',
             'wm_rounds'
@@ -719,17 +685,6 @@ const SideMenu: FC = () => {
                           label: <Link href="/deliveries">{t('deliveries')}</Link>
                       }
                     : null,
-                // PRE-ASSIGNED LOADS
-                getModesFromPermissions(permissions, 'wm_pre-assigned-load').includes(ModeEnum.Read)
-                    ? {
-                          key: 'preparation-management-pre-assigned-load',
-                          label: (
-                              <Link href="/deliveries/pre-assigned-load">
-                                  {t('pre-assigned-load')}
-                              </Link>
-                          )
-                      }
-                    : null,
                 // MANUAl ALLOCATION
                 getModesFromPermissions(permissions, 'wm_manual-allocation').includes(ModeEnum.Read)
                     ? {
@@ -753,6 +708,50 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'preparation-management-rounds',
                           label: <Link href="/rounds">{t('rounds')}</Link>
+                      }
+                    : null
+            ].filter(Boolean)
+        },
+        // TRUCK MANAGEMENT
+        ['wm_appointments', 'wm_loads', 'wm_pre-assigned-load'].some((perm) =>
+            getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+        ) && {
+            key: 'truck-management',
+            icon: <TruckOutlined />,
+            label: t('truck-management'),
+            children: [
+                // PRE-ASSIGNED LOADS
+                getModesFromPermissions(permissions, 'wm_pre-assigned-load').includes(ModeEnum.Read)
+                    ? {
+                          key: 'preparation-management-pre-assigned-load',
+                          label: (
+                              <Link href="/deliveries/pre-assigned-load">
+                                  {t('pre-assigned-load')}
+                              </Link>
+                          )
+                      }
+                    : null,
+                // LOADS
+                getModesFromPermissions(permissions, 'wm_loads').includes(ModeEnum.Read)
+                    ? {
+                          key: 'preparation-management-loads',
+                          label: <Link href="/loads">{t('loads')}</Link>
+                      }
+                    : null,
+
+                // APPOINTMENTS
+                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
+                    ? {
+                          key: 'truck-management-appointments',
+                          label: <Link href="/appointments">{t('appointments')}</Link>
+                      }
+                    : null,
+
+                // SCHEDULE
+                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
+                    ? {
+                          key: 'truck-management-schedule',
+                          label: <Link href="/appointments/schedule">{t('common:agenda')}</Link>
                       }
                     : null
             ].filter(Boolean)

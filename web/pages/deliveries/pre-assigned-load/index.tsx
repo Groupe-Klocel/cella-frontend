@@ -57,6 +57,8 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
     const [selectedRowKeysInfo, setSelectedRowKeysInfo] = useState<any>([]);
     const [tableData, setTableData] = useState<any[]>([]);
     const [carrierFilter, setCarrierFilter] = useState<number | null>(null);
+    const [carrierName, setCarrierName] = useState<string | null>(null);
+    const [expectedShippingDate, setExpectedShippingDate] = useState<string | null>(null);
     const [form] = Form.useForm();
     const [allSubOptions, setAllSubOptions] = useState<any>([]);
     const [advancedFilters, setAdvancedFilters] = useState<any[]>([
@@ -118,6 +120,7 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
                             results {
                                 id
                                 name
+                                loadExpectedShippingDate
                                 carrierId
                                 carrier {
                                     id
@@ -139,7 +142,13 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
 
                 if (selectedLoads && selectedLoads.length > 0) {
                     const carrierId = selectedLoads[0].carrierId;
+                    const carrierName = selectedLoads[0].carrier
+                        ? selectedLoads[0].carrier.name
+                        : null;
+                    const expectedShippingDate = selectedLoads[0].loadExpectedShippingDate;
                     setCarrierFilter(carrierId);
+                    setCarrierName(carrierName);
+                    setExpectedShippingDate(expectedShippingDate);
                 } else {
                     setCarrierFilter(null);
                 }
@@ -190,9 +199,9 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
                         {
                             id: deliveryInfo.id,
                             name: deliveryInfo.name || deliveryInfo.id,
-                            status: deliveryInfo.status,
-                            carrierName: deliveryInfo.carrierShippingMode?.carrier?.name || 'N/A',
-                            priority: deliveryInfo.priority
+                            estimatedNumberOfBoxes: deliveryInfo.estimatedNumberOfBoxes,
+                            estimatedNumberOfPalettes: deliveryInfo.estimatedNumberOfPalettes,
+                            estimatedLoadMeters: deliveryInfo.estimatedLoadMeters
                         }
                     ]);
                 }
@@ -301,14 +310,28 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
                         <Form
                             form={form}
                             onValuesChange={onValuesChange}
-                            style={{ marginBottom: 16, width: '400px' }}
+                            style={{ marginBottom: 16, width: '850px' }}
                         >
-                            <AutoComplete
-                                key={`loadSelector-${loadId || 'default'}`}
-                                item={autoCompleteInfos}
-                                setAllSubOptions={setAllSubOptions}
-                                isSingleSelect={true}
-                            />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                <AutoComplete
+                                    key={`loadSelector-${loadId || 'default'}`}
+                                    item={autoCompleteInfos}
+                                    setAllSubOptions={setAllSubOptions}
+                                    isSingleSelect={true}
+                                    style={{ width: '400px' }}
+                                />
+                                {carrierName && (
+                                    <div style={{ marginBottom: 16 }}>
+                                        <strong>{t('d:carrier')}:</strong> {carrierName}
+                                    </div>
+                                )}
+                                {expectedShippingDate && (
+                                    <div style={{ marginBottom: 16 }}>
+                                        <strong>{t('d:expectedShippingDate')}:</strong>{' '}
+                                        {new Date(expectedShippingDate).toLocaleDateString()}
+                                    </div>
+                                )}
+                            </div>
                             <Button
                                 type="primary"
                                 onClick={handleShowConfirmModal}
@@ -400,9 +423,39 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
                             ))}
                         </div>
                     </div>
+                    <div style={{ marginBottom: '16px' }}>
+                        <strong>{t('messages:estimated-load-details')}:</strong>
+                        <div style={{ marginLeft: '16px', marginTop: '4px' }}>
+                            <div style={{ padding: '8px 0' }}>
+                                <div>
+                                    {t('d:estimatedNumberOfBoxes')}:{' '}
+                                    {selectedRowKeysInfo.reduce(
+                                        (total: number, delivery: any) =>
+                                            total + (delivery.estimatedNumberOfBoxes || 0),
+                                        0
+                                    )}
+                                </div>
+                                <div>
+                                    {t('d:estimatedNumberOfPalettes')}:{' '}
+                                    {selectedRowKeysInfo.reduce(
+                                        (total: number, delivery: any) =>
+                                            total + (delivery.estimatedNumberOfPalettes || 0),
+                                        0
+                                    )}
+                                </div>
+                                <div>
+                                    {t('d:estimatedLoadMeters')}:{' '}
+                                    {selectedRowKeysInfo.reduce(
+                                        (total: number, delivery: any) =>
+                                            total + (delivery.estimatedLoadMeters || 0),
+                                        0
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </Modal>
-            <AppHead title={headerData.title} />
             <ListComponent
                 headerData={headerData}
                 dataModel={model}
