@@ -208,6 +208,7 @@ const ListComponent = (props: IListProps) => {
         ...(userSettings?.valueJson?.advancedFilters ?? []),
         ...(props?.advancedFilters ?? [])
     ]);
+    const [editingAdvFilter, setEditingAdvFilter] = useState<any>(null);
     useEffect(() => {
         setAdvancedFilters([
             ...(userSettings?.valueJson?.advancedFilters ?? []),
@@ -1704,7 +1705,10 @@ const ListComponent = (props: IListProps) => {
                                         ? 'ascend'
                                         : 'descend'
                                     : undefined,
-                                ...(props.searchable ? getColumnSearchProps(column_name) : {})
+                                ...(props.searchable ? getColumnSearchProps(column_name) : {}),
+                                filterFieldKey: props.searchable
+                                    ? getFilterFieldName(column_name)
+                                    : undefined
                             };
 
                             // Hide fields if there is any hidden selected.
@@ -2070,6 +2074,7 @@ const ListComponent = (props: IListProps) => {
     // #region adjust columns for resizable
     // 1. Add state for column widths
     const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>({});
+    const thRefsMap = useRef<Map<string, HTMLElement>>(new Map());
 
     useEffect(() => {
         setColumnWidths(() =>
@@ -2091,9 +2096,13 @@ const ListComponent = (props: IListProps) => {
     }, [allColumns]); // Reset column widths when userSettings or dataModel changes
     // 2. Custom header cell for resizing
     const ResizableTitle = (props: any) => {
-        const { onResize, width, ...restProps } = props;
+        const { onResize, width, colKey, ...restProps } = props;
         return (
             <th
+                ref={(el) => {
+                    if (el && colKey) thRefsMap.current.set(colKey, el);
+                    else if (!el && colKey) thRefsMap.current.delete(colKey);
+                }}
                 {...restProps}
                 style={{
                     ...restProps.style,
@@ -2139,6 +2148,7 @@ const ListComponent = (props: IListProps) => {
         ...col,
         width: columnWidths[col.key], // width is a number
         onHeaderCell: (column: any) => ({
+            colKey: col.filterFieldKey ?? col.key,
             width: columnWidths[col.key],
             onResize: (newWidth: number) => {
                 setColumnWidths((prev) => ({
@@ -2196,7 +2206,10 @@ const ListComponent = (props: IListProps) => {
                                                         return (
                                                             <Tag
                                                                 key={info.key + index}
-                                                                style={{ margin: '2px' }}
+                                                                style={{
+                                                                    margin: '2px',
+                                                                    cursor: 'pointer'
+                                                                }}
                                                                 color={(() => {
                                                                     return tagColor.find(
                                                                         (color: string) =>
@@ -2207,6 +2220,52 @@ const ListComponent = (props: IListProps) => {
                                                                 })()}
                                                                 closable
                                                                 onClose={(e) => onTagClose(e, info)}
+                                                                onClick={() => {
+                                                                    const th =
+                                                                        thRefsMap.current.get(
+                                                                            info.originalKey
+                                                                        );
+                                                                    if (!th) return;
+                                                                    // Find the Ant Design horizontal scroll container
+                                                                    let scrollEl: HTMLElement | null =
+                                                                        th.parentElement;
+                                                                    while (scrollEl) {
+                                                                        if (
+                                                                            scrollEl.scrollWidth >
+                                                                                scrollEl.clientWidth &&
+                                                                            scrollEl.clientWidth > 0
+                                                                        )
+                                                                            break;
+                                                                        scrollEl =
+                                                                            scrollEl.parentElement;
+                                                                    }
+                                                                    if (scrollEl) {
+                                                                        const thRect =
+                                                                            th.getBoundingClientRect();
+                                                                        const containerRect =
+                                                                            scrollEl.getBoundingClientRect();
+                                                                        const targetScroll =
+                                                                            scrollEl.scrollLeft +
+                                                                            thRect.left -
+                                                                            containerRect.left -
+                                                                            containerRect.width /
+                                                                                2 +
+                                                                            th.offsetWidth / 2;
+                                                                        scrollEl.scrollTo({
+                                                                            left: targetScroll,
+                                                                            behavior: 'smooth'
+                                                                        });
+                                                                    }
+                                                                    setTimeout(() => {
+                                                                        const trigger =
+                                                                            th.querySelector(
+                                                                                '[class*="filter-trigger"]'
+                                                                            );
+                                                                        (
+                                                                            trigger as HTMLElement
+                                                                        )?.click();
+                                                                    }, 400);
+                                                                }}
                                                             >
                                                                 {`${info.key}: ${info.value.text ?? info.value}`}
                                                             </Tag>
@@ -2238,6 +2297,9 @@ const ListComponent = (props: IListProps) => {
                                                             getAdvSubOptions(newFilters)
                                                         );
                                                     }}
+                                                    onTagEdit={(filter) =>
+                                                        setEditingAdvFilter(filter)
+                                                    }
                                                 />
                                                 {(tagFormatter(searchCriterias).length > 0 ||
                                                     advancedFilters.length -
@@ -2331,6 +2393,8 @@ const ListComponent = (props: IListProps) => {
                                                 advancedFilters={advancedFilters}
                                                 defaultSubOptions={props.defaultSubOptions}
                                                 setAllSubOptions={setAllSubOptions}
+                                                editingFilter={editingAdvFilter}
+                                                onEditingClose={() => setEditingAdvFilter(null)}
                                                 onFiltersChange={(newFilters) => {
                                                     handleUserSettings(
                                                         null,
