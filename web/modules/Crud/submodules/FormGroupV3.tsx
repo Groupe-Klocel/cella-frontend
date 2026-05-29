@@ -41,6 +41,7 @@ export interface IGeneralSearchProps {
     setAllSubOptions?: any;
     handleSubmit?: any;
     filtersParameters?: boolean;
+    type?: 'Filters' | 'AdvancedFilters' | 'Others';
 }
 
 const FormGroupV3: FC<IGeneralSearchProps> = ({
@@ -50,7 +51,8 @@ const FormGroupV3: FC<IGeneralSearchProps> = ({
     allSubOptions,
     setAllSubOptions,
     handleSubmit,
-    filtersParameters
+    filtersParameters,
+    type
 }: IGeneralSearchProps) => {
     const router = useRouter();
 
@@ -93,9 +95,15 @@ const FormGroupV3: FC<IGeneralSearchProps> = ({
                                 mode="multiple"
                             />
                         );
-                    } else if (item.type === FormDataType.Calendar) {
+                    } else if (
+                        item.type === FormDataType.Calendar ||
+                        (item.type === FormDataType.CalendarRange && type === 'AdvancedFilters')
+                    ) {
                         return <DatePickerInput item={item} key={item.name} />;
-                    } else if (item.type === FormDataType.CalendarRange) {
+                    } else if (
+                        item.type === FormDataType.CalendarRange &&
+                        type !== 'AdvancedFilters'
+                    ) {
                         return <RangePickerInput item={item} key={item.name} />;
                     } else if (item.type === FormDataType.AutoComplete) {
                         return (
