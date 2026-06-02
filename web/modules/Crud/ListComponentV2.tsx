@@ -88,6 +88,10 @@ import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { FormGroupV3 } from './submodules/FormGroupV3';
 import { AdvancedFilters, AdvancedFilterTags } from './listComponentSubModule/AdvancedFilters';
 import { useImportData } from './listComponentSubModule/import';
+import {
+    RANGE_PRESET_TODAY,
+    RANGE_PRESET_TOMORROW
+} from 'components/common/smart/Form/MainInputs/RangePickerInput';
 
 export type HeaderData = {
     title: string;
@@ -208,6 +212,7 @@ const ListComponent = (props: IListProps) => {
         ...(userSettings?.valueJson?.advancedFilters ?? []),
         ...(props?.advancedFilters ?? [])
     ]);
+    const [editingAdvFilter, setEditingAdvFilter] = useState<any>(null);
     useEffect(() => {
         setAdvancedFilters([
             ...(userSettings?.valueJson?.advancedFilters ?? []),
@@ -253,6 +258,34 @@ const ListComponent = (props: IListProps) => {
         ...(userSettings?.valueJson?.filter ?? undefined),
         ...props.searchCriteria
     };
+
+    function resolveDynamicDateFilters(filters: any): any {
+        if (!filters) return filters;
+        const result: any = {};
+        for (const [key, value] of Object.entries(filters)) {
+            if (Array.isArray(value) && value.length === 2) {
+                const [start] = value as any[];
+                if (start === RANGE_PRESET_TODAY) {
+                    result[key] = [
+                        dayjs().startOf('day').toISOString(),
+                        dayjs().endOf('day').toISOString()
+                    ];
+                } else if (start === RANGE_PRESET_TOMORROW) {
+                    result[key] = [
+                        dayjs().add(1, 'day').startOf('day').toISOString(),
+                        dayjs().add(1, 'day').endOf('day').toISOString()
+                    ];
+                } else {
+                    result[key] = value;
+                }
+            } else {
+                result[key] = value;
+            }
+        }
+        return result;
+    }
+
+    const resolvedSearchCriterias = resolveDynamicDateFilters(searchCriterias);
 
     // #region sorter / pagination
 
@@ -846,6 +879,7 @@ const ListComponent = (props: IListProps) => {
     // #region SEARCH OPERATIONS
     const allSubOptionsRef = useRef<any>(userSettings?.valueJson?.subOptions ?? []);
     const allSubOptions = allSubOptionsRef.current;
+
     function setAllSubOptions(newSubOptions: any) {
         // Support both direct values and callback functions like setState
         // Using a ref avoids re-renders (which close column filter dropdowns) while
@@ -903,7 +937,7 @@ const ListComponent = (props: IListProps) => {
                             }
                         }
 
-                        const allSubOptionsFiltered = allSubOptions
+                        const allSubOptionsFiltered = allSubOptionsRef.current
                             .map((item: any) => {
                                 const itemKey = Object.keys(item)[0];
                                 if (savedFilters[itemKey] && item[itemKey]) {
@@ -1010,7 +1044,7 @@ const ListComponent = (props: IListProps) => {
         props.dataModel.resolverName,
         props.dataModel.endpoints.list,
         listFields,
-        searchCriterias,
+        resolvedSearchCriterias,
         pagination.current,
         pagination.itemsPerPage,
         sort,
@@ -1704,7 +1738,10 @@ const ListComponent = (props: IListProps) => {
                                         ? 'ascend'
                                         : 'descend'
                                     : undefined,
-                                ...(props.searchable ? getColumnSearchProps(column_name) : {})
+                                ...(props.searchable ? getColumnSearchProps(column_name) : {}),
+                                filterFieldKey: props.searchable
+                                    ? getFilterFieldName(column_name)
+                                    : undefined
                             };
 
                             // Hide fields if there is any hidden selected.
@@ -1918,6 +1955,14 @@ const ListComponent = (props: IListProps) => {
                 }
                 if (filterFields.find((field: any) => field.name === key)?.type === 7) {
                     // if type is 7, it means it is a date field
+                    const firstVal = Array.isArray(searchForTags[key])
+                        ? searchForTags[key][0]
+                        : null;
+                    if (firstVal === RANGE_PRESET_TODAY || firstVal === RANGE_PRESET_TOMORROW) {
+                        return {
+                            [key]: [{ text: t(`common:${firstVal}`), code: firstVal }]
+                        };
+                    }
                     return {
                         [key]: searchForTags[key].map((date: any) => ({
                             text: date ? new Date(date).toLocaleString(router.locale) : '*',
@@ -1966,7 +2011,9 @@ const ListComponent = (props: IListProps) => {
                     allTags.push({
                         key: findDisplayNameForKey(key),
                         value: {
-                            text: (item[key][0]?.text ?? '-') + ' -> ' + (item[key][1]?.text ?? '-')
+                            text:
+                                (item[key][0]?.text ?? '-') +
+                                (item[key][1]?.text ? ' -> ' + item[key][1]?.text : '')
                         },
                         originalKey: key
                     });
@@ -2070,6 +2117,7 @@ const ListComponent = (props: IListProps) => {
     // #region adjust columns for resizable
     // 1. Add state for column widths
     const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>({});
+    const thRefsMap = useRef<Map<string, HTMLElement>>(new Map());
 
     useEffect(() => {
         setColumnWidths(() =>
@@ -2091,9 +2139,13 @@ const ListComponent = (props: IListProps) => {
     }, [allColumns]); // Reset column widths when userSettings or dataModel changes
     // 2. Custom header cell for resizing
     const ResizableTitle = (props: any) => {
-        const { onResize, width, ...restProps } = props;
+        const { onResize, width, colKey, ...restProps } = props;
         return (
             <th
+                ref={(el) => {
+                    if (el && colKey) thRefsMap.current.set(colKey, el);
+                    else if (!el && colKey) thRefsMap.current.delete(colKey);
+                }}
                 {...restProps}
                 style={{
                     ...restProps.style,
@@ -2139,6 +2191,7 @@ const ListComponent = (props: IListProps) => {
         ...col,
         width: columnWidths[col.key], // width is a number
         onHeaderCell: (column: any) => ({
+            colKey: col.filterFieldKey ?? col.key,
             width: columnWidths[col.key],
             onResize: (newWidth: number) => {
                 setColumnWidths((prev) => ({
@@ -2196,7 +2249,10 @@ const ListComponent = (props: IListProps) => {
                                                         return (
                                                             <Tag
                                                                 key={info.key + index}
-                                                                style={{ margin: '2px' }}
+                                                                style={{
+                                                                    margin: '2px',
+                                                                    cursor: 'pointer'
+                                                                }}
                                                                 color={(() => {
                                                                     return tagColor.find(
                                                                         (color: string) =>
@@ -2207,6 +2263,52 @@ const ListComponent = (props: IListProps) => {
                                                                 })()}
                                                                 closable
                                                                 onClose={(e) => onTagClose(e, info)}
+                                                                onClick={() => {
+                                                                    const th =
+                                                                        thRefsMap.current.get(
+                                                                            info.originalKey
+                                                                        );
+                                                                    if (!th) return;
+                                                                    // Find the Ant Design horizontal scroll container
+                                                                    let scrollEl: HTMLElement | null =
+                                                                        th.parentElement;
+                                                                    while (scrollEl) {
+                                                                        if (
+                                                                            scrollEl.scrollWidth >
+                                                                                scrollEl.clientWidth &&
+                                                                            scrollEl.clientWidth > 0
+                                                                        )
+                                                                            break;
+                                                                        scrollEl =
+                                                                            scrollEl.parentElement;
+                                                                    }
+                                                                    if (scrollEl) {
+                                                                        const thRect =
+                                                                            th.getBoundingClientRect();
+                                                                        const containerRect =
+                                                                            scrollEl.getBoundingClientRect();
+                                                                        const targetScroll =
+                                                                            scrollEl.scrollLeft +
+                                                                            thRect.left -
+                                                                            containerRect.left -
+                                                                            containerRect.width /
+                                                                                2 +
+                                                                            th.offsetWidth / 2;
+                                                                        scrollEl.scrollTo({
+                                                                            left: targetScroll,
+                                                                            behavior: 'smooth'
+                                                                        });
+                                                                    }
+                                                                    setTimeout(() => {
+                                                                        const trigger =
+                                                                            th.querySelector(
+                                                                                '[class*="filter-trigger"]'
+                                                                            );
+                                                                        (
+                                                                            trigger as HTMLElement
+                                                                        )?.click();
+                                                                    }, 400);
+                                                                }}
                                                             >
                                                                 {`${info.key}: ${info.value.text ?? info.value}`}
                                                             </Tag>
@@ -2238,6 +2340,9 @@ const ListComponent = (props: IListProps) => {
                                                             getAdvSubOptions(newFilters)
                                                         );
                                                     }}
+                                                    onTagEdit={(filter) =>
+                                                        setEditingAdvFilter(filter)
+                                                    }
                                                 />
                                                 {(tagFormatter(searchCriterias).length > 0 ||
                                                     advancedFilters.length -
@@ -2331,6 +2436,8 @@ const ListComponent = (props: IListProps) => {
                                                 advancedFilters={advancedFilters}
                                                 defaultSubOptions={props.defaultSubOptions}
                                                 setAllSubOptions={setAllSubOptions}
+                                                editingFilter={editingAdvFilter}
+                                                onEditingClose={() => setEditingAdvFilter(null)}
                                                 onFiltersChange={(newFilters) => {
                                                     handleUserSettings(
                                                         null,
