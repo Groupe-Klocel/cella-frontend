@@ -85,7 +85,7 @@ export const CarrierShippingModeModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: 'String',
+            searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
