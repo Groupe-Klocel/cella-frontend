@@ -449,7 +449,7 @@ export const RoundModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: 'Number',
+            searchingFormat: 'Dropdown',
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,
@@ -462,7 +462,7 @@ export const RoundModelV2: ModelType = {
             minRule: null,
             maxRule: null,
             config: null,
-            param: null
+            param: 'priority'
         },
         priorityText: {
             isListRequested: true,

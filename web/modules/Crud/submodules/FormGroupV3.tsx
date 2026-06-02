@@ -111,6 +111,7 @@ const FormGroupV3: FC<IGeneralSearchProps> = ({
                                 item={item}
                                 key={item.name}
                                 setAllSubOptions={setAllSubOptions}
+                                isMultipleSelect={true}
                             />
                         );
                     } else if (item.type === FormDataType.CheckBox) {

@@ -226,7 +226,7 @@ export const RecordHistoryModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
-            searchingFormat: 'String',
+            searchingFormat: 'Boolean',
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,

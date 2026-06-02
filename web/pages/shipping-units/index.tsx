@@ -34,7 +34,6 @@ import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListCompo
 import { shippingUnitsRoutes as itemRoutes } from 'modules/ShippingUnits/Static/shippingUnitsRoutes';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
-import 'moment/min/locales';
 import { useAppState } from 'context/AppContext';
 import configs from '../../../common/configs.json';
 import parameters from '../../../common/parameters.json';
