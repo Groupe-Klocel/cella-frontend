@@ -32,7 +32,7 @@ export interface IFormGroupProps {
     key: string;
     setAllSubOptions?: any;
     advancedFilters?: any[];
-    isSingleSelect?: boolean;
+    isMultipleSelect?: boolean;
     style?: React.CSSProperties;
 }
 
@@ -111,7 +111,12 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             const variables = {
                 filters: modifiedFilters,
                 advancedFilters: isAdvancedFilters ? item?.advancedFilters : undefined,
-                orderBy: null,
+                orderBy: [
+                    {
+                        field: optionTable.fieldToDisplay,
+                        ascending: true
+                    }
+                ],
                 page: 1,
                 itemsPerPage: 100
             };
@@ -174,12 +179,13 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             name={autoCompleteValue.name}
             initialValue={autoCompleteValue.initialValue}
             normalize={(value) => (value ? value : undefined)}
+            rules={item.rules!}
             style={props.style}
         >
             <Select
                 showSearch
                 value={autoCompleteValue.value}
-                mode={props.isSingleSelect ? undefined : 'multiple'}
+                mode={props.isMultipleSelect ? 'multiple' : undefined}
                 filterOption={false}
                 onSearch={handleSearch}
                 allowClear

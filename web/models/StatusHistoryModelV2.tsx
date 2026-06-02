@@ -169,7 +169,7 @@ export const StatusHistoryModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: 'String',
+            searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,
