@@ -142,7 +142,7 @@ export const PaymentModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: 'Dropdown',
+            searchingFormat: 'AutoComplete',
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,

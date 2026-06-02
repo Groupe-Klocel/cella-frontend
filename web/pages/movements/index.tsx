@@ -43,7 +43,6 @@ const MovementPages: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [tableData, setTableData] = useState<any[]>([]);
     const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-    console.log('AXC - index.tsx - MovementPages - selectedRowKeys:', selectedRowKeys);
     const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
     const [assignmentManagementLoading, setAssignmentManagementLoading] = useState(false);
     const [selectedMovementsHaveUser, setSelectedMovementsHaveUser] = useState(false);

@@ -25,30 +25,22 @@ import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FormOptionType } from '../../../../../models/ModelsV2';
-import { FC } from 'react';
+import { FC, useRef } from 'react';
 
-// return (
-//     <Form.Item
-//         name={item.name}
-//         label={item.displayName ? item.displayName : t(`d:${item.name}`)}
-//         key={item.name}
-//         rules={item.rules!}
-//         normalize={(value) => (value ? value : undefined)}
-//     >
-//         <RangePicker
-//             showTime={{ format: 'HH:mm' }}
-//             format={localeDateTimeFormat}
-//             locale={router.locale === 'fr' ? fr_FR : en_US}
-//             value={[null, null]}
-//             allowEmpty={[true, true]}
-//             onChange={onChange}
-//             onOk={onOk}
-//             placeholder={[t('common:start-date'), t('common:end-date')]}
-//             allowClear
-//             defaultValue={[startDate, endDate]}
-//         />
-//     </Form.Item>
-// );
+export const RANGE_PRESET_TODAY = 'today';
+export const RANGE_PRESET_TOMORROW = 'tommorow';
+
+export function resolveRangePreset(value: any): any {
+    if (!Array.isArray(value) || value.length !== 2) return value;
+    const [start] = value;
+    if (start === RANGE_PRESET_TODAY) {
+        return [dayjs().startOf('day'), dayjs().endOf('day')];
+    }
+    if (start === RANGE_PRESET_TOMORROW) {
+        return [dayjs().add(1, 'day').startOf('day'), dayjs().add(1, 'day').endOf('day')];
+    }
+    return value;
+}
 
 export interface IDraggerRangePickerInputProps {
     item: {
@@ -75,29 +67,76 @@ const RangePickerInput: FC<IDraggerRangePickerInputProps> = ({ item, mode }) => 
     const router = useRouter();
     moment.locale(router.locale);
 
+    const presetKeyRef = useRef<string | null>(null);
+
+    const todayLabel = t('common:today');
+    const tomorrowLabel = t('common:tomorrow');
+
+    const presets = [
+        {
+            label: (
+                <span
+                    onMouseDown={() => {
+                        presetKeyRef.current = RANGE_PRESET_TODAY;
+                    }}
+                >
+                    {todayLabel}
+                </span>
+            ),
+            value: [dayjs().startOf('day'), dayjs().endOf('day')] as [
+                ReturnType<typeof dayjs>,
+                ReturnType<typeof dayjs>
+            ]
+        },
+        {
+            label: (
+                <span
+                    onMouseDown={() => {
+                        presetKeyRef.current = RANGE_PRESET_TOMORROW;
+                    }}
+                >
+                    {tomorrowLabel}
+                </span>
+            ),
+            value: [dayjs().add(1, 'day').startOf('day'), dayjs().add(1, 'day').endOf('day')] as [
+                ReturnType<typeof dayjs>,
+                ReturnType<typeof dayjs>
+            ]
+        }
+    ];
+
     return (
         <Form.Item
             name={item.name}
             label={item.displayName ? item.displayName : t(`d:${item.name}`)}
             normalize={(value) => (value ? value : undefined)}
             rules={item.rules!}
+            getValueFromEvent={(dates) => {
+                const preset = presetKeyRef.current;
+                presetKeyRef.current = null;
+                if (preset) {
+                    return [preset, preset];
+                }
+                return dates;
+            }}
+            getValueProps={(value) => ({ value: resolveRangePreset(value) })}
             initialValue={
                 item?.initialValue
-                    ? [
-                          item.initialValue[0] ? dayjs(item.initialValue[0]) : null,
-                          item.initialValue[1] ? dayjs(item.initialValue[1]) : null
-                      ]
+                    ? resolveRangePreset([
+                          item.initialValue[0] ?? null,
+                          item.initialValue[1] ?? null
+                      ])
                     : undefined
             }
         >
             <RangePicker
                 showTime={item.showTime}
                 format={item.localeDateTimeFormat}
-                locale={router.locale === 'fr' ? fr_FR : en_US}
-                value={[null, null]}
+                locale={router.locale === 'fr-FR' ? fr_FR : en_US}
                 allowEmpty={[true, true]}
                 placeholder={[t('common:start-date'), t('common:end-date')]}
                 allowClear
+                presets={presets}
                 defaultValue={[
                     item.startDate ? dayjs(item.startDate) : null,
                     item.endDate ? dayjs(item.endDate) : null
