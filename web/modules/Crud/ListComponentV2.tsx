@@ -88,6 +88,10 @@ import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { FormGroupV3 } from './submodules/FormGroupV3';
 import { AdvancedFilters, AdvancedFilterTags } from './listComponentSubModule/AdvancedFilters';
 import { useImportData } from './listComponentSubModule/import';
+import {
+    RANGE_PRESET_TODAY,
+    RANGE_PRESET_TOMORROW
+} from 'components/common/smart/Form/MainInputs/RangePickerInput';
 
 export type HeaderData = {
     title: string;
@@ -254,6 +258,34 @@ const ListComponent = (props: IListProps) => {
         ...(userSettings?.valueJson?.filter ?? undefined),
         ...props.searchCriteria
     };
+
+    function resolveDynamicDateFilters(filters: any): any {
+        if (!filters) return filters;
+        const result: any = {};
+        for (const [key, value] of Object.entries(filters)) {
+            if (Array.isArray(value) && value.length === 2) {
+                const [start] = value as any[];
+                if (start === RANGE_PRESET_TODAY) {
+                    result[key] = [
+                        dayjs().startOf('day').toISOString(),
+                        dayjs().endOf('day').toISOString()
+                    ];
+                } else if (start === RANGE_PRESET_TOMORROW) {
+                    result[key] = [
+                        dayjs().add(1, 'day').startOf('day').toISOString(),
+                        dayjs().add(1, 'day').endOf('day').toISOString()
+                    ];
+                } else {
+                    result[key] = value;
+                }
+            } else {
+                result[key] = value;
+            }
+        }
+        return result;
+    }
+
+    const resolvedSearchCriterias = resolveDynamicDateFilters(searchCriterias);
 
     // #region sorter / pagination
 
@@ -847,6 +879,7 @@ const ListComponent = (props: IListProps) => {
     // #region SEARCH OPERATIONS
     const allSubOptionsRef = useRef<any>(userSettings?.valueJson?.subOptions ?? []);
     const allSubOptions = allSubOptionsRef.current;
+
     function setAllSubOptions(newSubOptions: any) {
         // Support both direct values and callback functions like setState
         // Using a ref avoids re-renders (which close column filter dropdowns) while
@@ -904,7 +937,7 @@ const ListComponent = (props: IListProps) => {
                             }
                         }
 
-                        const allSubOptionsFiltered = allSubOptions
+                        const allSubOptionsFiltered = allSubOptionsRef.current
                             .map((item: any) => {
                                 const itemKey = Object.keys(item)[0];
                                 if (savedFilters[itemKey] && item[itemKey]) {
@@ -1011,7 +1044,7 @@ const ListComponent = (props: IListProps) => {
         props.dataModel.resolverName,
         props.dataModel.endpoints.list,
         listFields,
-        searchCriterias,
+        resolvedSearchCriterias,
         pagination.current,
         pagination.itemsPerPage,
         sort,
@@ -1922,6 +1955,14 @@ const ListComponent = (props: IListProps) => {
                 }
                 if (filterFields.find((field: any) => field.name === key)?.type === 7) {
                     // if type is 7, it means it is a date field
+                    const firstVal = Array.isArray(searchForTags[key])
+                        ? searchForTags[key][0]
+                        : null;
+                    if (firstVal === RANGE_PRESET_TODAY || firstVal === RANGE_PRESET_TOMORROW) {
+                        return {
+                            [key]: [{ text: t(`common:${firstVal}`), code: firstVal }]
+                        };
+                    }
                     return {
                         [key]: searchForTags[key].map((date: any) => ({
                             text: date ? new Date(date).toLocaleString(router.locale) : '*',
@@ -1970,7 +2011,9 @@ const ListComponent = (props: IListProps) => {
                     allTags.push({
                         key: findDisplayNameForKey(key),
                         value: {
-                            text: (item[key][0]?.text ?? '-') + ' -> ' + (item[key][1]?.text ?? '-')
+                            text:
+                                (item[key][0]?.text ?? '-') +
+                                (item[key][1]?.text ? ' -> ' + item[key][1]?.text : '')
                         },
                         originalKey: key
                     });

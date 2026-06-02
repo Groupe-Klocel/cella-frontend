@@ -974,9 +974,9 @@ export const ArticleModelV2: ModelType = {
         extras: {
             isListRequested: true,
             isDefaultHiddenList: false,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: 'String',
+            searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,
@@ -994,9 +994,9 @@ export const ArticleModelV2: ModelType = {
         translation: {
             isListRequested: true,
             isDefaultHiddenList: false,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: 'String',
+            searchingFormat: null,
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: null,

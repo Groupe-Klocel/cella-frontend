@@ -647,7 +647,7 @@ export const CreditModelV2: ModelType = {
             isDefaultHiddenList: true,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: 'String',
+            searchingFormat: null,
             isDetailRequested: false,
             isExcludedFromDetail: true,
             detailGroup: null,

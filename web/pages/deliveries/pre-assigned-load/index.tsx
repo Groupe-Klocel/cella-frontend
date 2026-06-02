@@ -317,7 +317,6 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
                                     key={`loadSelector-${loadId || 'default'}`}
                                     item={autoCompleteInfos}
                                     setAllSubOptions={setAllSubOptions}
-                                    isSingleSelect={true}
                                     style={{ width: '400px' }}
                                 />
                                 {carrierName && (
