@@ -111,7 +111,12 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             const variables = {
                 filters: modifiedFilters,
                 advancedFilters: isAdvancedFilters ? item?.advancedFilters : undefined,
-                orderBy: null,
+                orderBy: [
+                    {
+                        field: optionTable.fieldToDisplay,
+                        ascending: true
+                    }
+                ],
                 page: 1,
                 itemsPerPage: 100
             };
