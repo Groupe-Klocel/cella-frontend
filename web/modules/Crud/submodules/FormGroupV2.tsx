@@ -18,14 +18,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Form, Spin } from 'antd';
-import moment from 'moment';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+import 'dayjs/locale/en';
+import 'dayjs/locale/de';
+import localeDataPlugin from 'dayjs/plugin/localeData';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
+
+dayjs.extend(localeDataPlugin);
 import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, ModelType } from '../../../models/ModelsV2';
 import { DraggerInput } from 'components/common/smart/Form/MainInputs/DraggerInput';
 import { useRouter } from 'next/router';
 import AutoComplete from '../../../components/common/smart/Form/MainInputs/AutoCompleteInput';
-import 'moment/locale/fr';
 import NumberInput from 'components/common/smart/Form/MainInputs/NumberInput';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import TextAreaInput from 'components/common/smart/Form/MainInputs/TextAreaInput';
@@ -63,9 +68,10 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
         setIsLoading(false);
     }
 
-    moment.locale(router.locale);
+    const locale = router.locale?.split('-')[0] ?? 'en';
+    dayjs.locale(locale);
 
-    const localeData = moment.localeData();
+    const localeData = dayjs.localeData();
     const localeDateTimeFormat =
         localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
 

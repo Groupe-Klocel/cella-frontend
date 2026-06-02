@@ -581,10 +581,10 @@ const ArticleExtrasListComponent = (props: IListProps) => {
                     );
 
                     // Only add to jsonData if argKey is found in configsParamsCodes.extrasKeys
-                    if (matchingExtraKey) {
+                    if (matchingExtraKey || configsParamsCodes.extrasKeys.length === 0) {
                         jsonData.push({
                             index: `${i}`,
-                            key: matchingExtraKey.value, // Use translated value from configsParamsCodes
+                            key: matchingExtraKey?.value ?? argKey, // Use translated value from configsParamsCodes
                             rawKey: `${argKey}`,
                             value: `${value}`,
                             extraData: stringJsonData

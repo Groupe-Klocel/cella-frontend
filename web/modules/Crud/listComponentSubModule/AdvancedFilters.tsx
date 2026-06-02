@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Form, Modal, Select, Space, Tag } from 'antd';
 import { isNumeric, useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { FormGroupV3 } from '../submodules/FormGroupV3';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -49,6 +49,8 @@ interface AdvancedFiltersProps {
     defaultSubOptions?: any;
     setAllSubOptions: (v: any) => void;
     onFiltersChange: (newFilters: any[]) => void;
+    editingFilter?: any | null;
+    onEditingClose?: () => void;
 }
 
 export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
@@ -56,17 +58,49 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
     advancedFilters,
     defaultSubOptions,
     setAllSubOptions,
-    onFiltersChange
+    onFiltersChange,
+    editingFilter,
+    onEditingClose
 }) => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [advFilterField, setAdvFilterField] = useState<any>(null);
     const [advSearchType, setAdvSearchType] = useState<string>('EQUAL');
+    const [advFilterInitialValue, setAdvFilterInitialValue] = useState<any>(undefined);
     const [form] = Form.useForm();
+
+    // Pre-fill the modal when an editing filter is passed
+    useEffect(() => {
+        if (!editingFilter) return;
+        form.resetFields();
+        const fi = editingFilter.filter[0];
+        const fieldName = Object.keys(fi.field)[0];
+        const rawValue = fi.field[fieldName];
+        let searchType = fi.searchType;
+        if (searchType === 'EQUAL' && rawValue === null) searchType = 'EMPTY';
+        if (searchType === 'DIFFERENT' && rawValue === null) searchType = 'NOT_EMPTY';
+        const field = filterFields.find((f: any) => f.name === fieldName) ?? null;
+        setAdvFilterInitialValue(rawValue ?? undefined);
+        setAdvFilterField(field);
+        setAdvSearchType(searchType);
+        setIsOpen(true);
+    }, [editingFilter]);
 
     function handleAdd() {
         if (!advFilterField || !advSearchType) return;
         const fieldValue = form.getFieldValue(advFilterField.name);
+        if (['EMPTY', 'NOT_EMPTY'].includes(advSearchType)) {
+            // For these types, we don't need a value and we set it to null
+            form.setFieldsValue({ [advFilterField.name]: null });
+        } else if (
+            fieldValue === undefined ||
+            fieldValue === '' ||
+            fieldValue === null ||
+            (Array.isArray(fieldValue) && fieldValue.length === 0)
+        ) {
+            // For other types, value is required
+            return;
+        }
         let newFilter = {
             filter: [{ searchType: advSearchType, field: { [advFilterField.name]: fieldValue } }]
         };
@@ -90,18 +124,29 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
                 ]
             };
         }
-        onFiltersChange([...advancedFilters, newFilter]);
+        if (editingFilter) {
+            const newFilters = advancedFilters.map((f: any) =>
+                JSON.stringify(f) === JSON.stringify(editingFilter) ? newFilter : f
+            );
+            onFiltersChange(newFilters);
+        } else {
+            onFiltersChange([...advancedFilters, newFilter]);
+        }
         form.resetFields();
         setAdvFilterField(null);
         setAdvSearchType('EQUAL');
+        setAdvFilterInitialValue(undefined);
         setIsOpen(false);
+        onEditingClose?.();
     }
 
     function handleClose() {
         form.resetFields();
         setAdvFilterField(null);
         setAdvSearchType('EQUAL');
+        setAdvFilterInitialValue(undefined);
         setIsOpen(false);
+        onEditingClose?.();
     }
 
     const needValue = !['EMPTY', 'NOT_EMPTY'].includes(advSearchType);
@@ -120,11 +165,13 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
                         <div style={{ marginBottom: 4 }}>{t('d:field')}</div>
                         <Select
                             style={{ width: '100%' }}
+                            value={advFilterField?.name ?? undefined}
                             options={filterFields
                                 .filter((f: any) => f.name !== 'allFields')
                                 .map((f: any) => ({ label: f.displayName, value: f.name }))}
                             onChange={(val: string) => {
                                 if (advFilterField) form.resetFields([advFilterField.name]);
+                                setAdvFilterInitialValue(undefined);
                                 setAdvFilterField(
                                     filterFields.find((f: any) => f.name === val) ?? null
                                 );
@@ -153,10 +200,11 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
                     {advFilterField && needValue && (
                         <FormGroupV3
                             form={form}
-                            item={{ ...advFilterField, initialValue: undefined }}
+                            item={{ ...advFilterField, initialValue: advFilterInitialValue }}
                             defaultSubOptions={defaultSubOptions}
                             setAllSubOptions={setAllSubOptions}
                             handleSubmit={handleAdd}
+                            type="AdvancedFilters"
                         />
                     )}
                 </Space>
@@ -175,6 +223,7 @@ interface AdvancedFilterTagsProps {
     filteredLanguage: string;
     allSubOptions?: any[];
     onTagClose: (filter: any) => void;
+    onTagEdit?: (filter: any) => void;
 }
 
 export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
@@ -183,7 +232,8 @@ export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
     filterFields,
     filteredLanguage,
     allSubOptions = [],
-    onTagClose
+    onTagClose,
+    onTagEdit
 }) => {
     const propAdvFiltersSet = new Set(propAdvancedFilters.map((f: any) => JSON.stringify(f)));
     const forcedStatusValues = [2000, 1005, 1600];
@@ -200,6 +250,10 @@ export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
     if (userAdvFilters.length === 0) return null;
 
     const resolveValue = (val: any, fieldDef: any): string => {
+        // Format single date values (Calendar type = 6)
+        if ((fieldDef?.type === 6 || fieldDef?.type === 7) && val) {
+            return new Date(val).toLocaleString();
+        }
         // Check allSubOptions first
         const subOptionEntry = allSubOptions?.find((item: any) => item[fieldDef?.name]);
         if (subOptionEntry) {
@@ -233,7 +287,7 @@ export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
                 const opSymbol =
                     searchTypes.find((o) => o.value === fi.searchType)?.symbol ?? fi.searchType;
                 const displayValue: string = Array.isArray(rawValue)
-                    ? fieldDef.type === 7
+                    ? fieldDef?.type === 7
                         ? rawValue
                               .map((date: any) => (date ? new Date(date).toLocaleString() : '*'))
                               .join('->')
@@ -244,12 +298,13 @@ export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
                     <Tag
                         key={`adv-filter-${index}`}
                         color="geekblue"
-                        style={{ margin: '2px' }}
+                        style={{ margin: '2px', cursor: onTagEdit ? 'pointer' : 'default' }}
                         closable
                         onClose={(e) => {
                             e.preventDefault();
                             onTagClose(af);
                         }}
+                        onClick={() => onTagEdit?.(af)}
                     >
                         {`${displayName} ${opSymbol} ${displayValue}`}
                     </Tag>

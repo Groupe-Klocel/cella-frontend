@@ -102,7 +102,7 @@ export const PatternPathLocationModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: false,
-            searchingFormat: null,
+            searchingFormat: 'String',
             isDetailRequested: false,
             isExcludedFromDetail: false,
             detailGroup: null,
