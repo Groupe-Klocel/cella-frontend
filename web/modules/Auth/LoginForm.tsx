@@ -187,7 +187,11 @@ export const LoginForm = () => {
                         name="username"
                         rules={[{ required: true, message: errorEmptyMessage }]}
                     >
-                        <Input prefix={<UserOutlined />} placeholder={username} />
+                        <Input
+                            style={{ color: '#000' }}
+                            prefix={<UserOutlined />}
+                            placeholder={username}
+                        />
                     </Form.Item>
                     <Form.Item
                         name="password"

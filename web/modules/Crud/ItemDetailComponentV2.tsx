@@ -40,6 +40,7 @@ import { ModeEnum } from 'generated/graphql';
 import { useAppState } from 'context/AppContext';
 import { GroupItemDetailList } from './submodules/GroupItemDetailList';
 import { useAuth } from 'context/AuthContext';
+import { useAiContextStore } from 'context/CellaBotContext';
 import { gql } from 'graphql-request';
 import { useAppDispatch } from 'context/AppContext';
 import { ReloadOutlined } from '@ant-design/icons';
@@ -94,6 +95,16 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     // Define pageName to retrieve screen permissions
     const pageName = router.pathname.split('/').filter(Boolean)[0];
     const permissionTableName = 'wm_' + pageName;
+
+    // Tell the AI assistant (CellaBot) which entity is on screen (deps are primitives, so the
+    // shallow-merge patch is a no-op unless the viewed entity actually changes).
+    const { patchAiContext } = useAiContextStore();
+    useEffect(() => {
+        patchAiContext({
+            entityType: props.dataModel.tableName,
+            entityId: props.id
+        });
+    }, [props.id, props.dataModel.tableName, patchAiContext]);
 
     // #region extract data from modelV2
     const detailFields = Object.keys(props.dataModel.fieldsInfo).filter(
