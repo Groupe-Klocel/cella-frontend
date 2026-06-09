@@ -21,6 +21,9 @@ export const IS_DEV = process.env.APP_ENV === 'development';
 export const IS_PROD = process.env.APP_ENV === 'production';
 export const IS_FAKE = process.env.NEXT_PUBLIC_FAKE_DATA_ON === 'true';
 export const IS_SAME_SEED = process.env.NEXT_PUBLIC_SAME_SEED_ON === 'true';
+// CellaBot AI assistant kill switch. Only the exact value 'true' enables it; anything else
+// (undefined, 'false', or invalid) disables it. NEXT_PUBLIC_-prefixed so it reaches the client.
+export const IS_CELLABOT_ENABLED = process.env.NEXT_PUBLIC_AI_CELLABOT_ENABLED === 'true';
 
 export function getEnvironmentLabel(): string | null {
     const endpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? '';
