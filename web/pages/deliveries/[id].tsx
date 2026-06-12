@@ -17,11 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { AppHead, LinkButton, SinglePrintDocumentSetModal } from '@components';
-import { DeliveryModelV2 as model } from '@helpers';
+
+import { AppHead, LinkButton, SinglePrintDocumentSetModal, SinglePrintModal } from '@components';
+import { findCodeByScopeAndValue, DeliveryModelV2 as model } from '@helpers';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
 import { getModesFromPermissions, showError, showSuccess, useDeliveryLineIds } from '@helpers';
 import { useAppState } from 'context/AppContext';
@@ -29,7 +30,6 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { Button, Modal, Space } from 'antd';
 import { CancelDeliveryMutationVariables, ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
 import { DeliveryDetailsExtra } from 'modules/Deliveries/Elements/DeliveryDetailsExtra';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -39,10 +39,11 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const DeliveryPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions, parameters } = useAppState();
+    const { permissions } = useAppState();
+    const { parameters, configs } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
-    const [, setShippingAddress] = useState<any>();
+    const [shippingAddress, setShippingAddress] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
@@ -78,6 +79,48 @@ const DeliveryPage: PageComponent = () => {
 
         fetchRuleResult();
     }, [data]);
+
+    const configsParamsCodes = useMemo(() => {
+        const toBeEstimatedDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `To be estimated`)
+        );
+
+        const estimatedDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `Estimated`)
+        );
+        const startedDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `Started`)
+        );
+        const toBeLoadedDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `To be loaded`)
+        );
+        const loadedDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `Loaded`)
+        );
+
+        const dispatchedDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `Dispatched`)
+        );
+
+        const canceledDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `Canceled`)
+        );
+
+        const l3AfterSaleDeliveryType = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_po_type', `L3 After-Sales`)
+        );
+
+        return {
+            startedDeliveryStatus,
+            estimatedDeliveryStatus,
+            toBeEstimatedDeliveryStatus,
+            loadedDeliveryStatus,
+            toBeLoadedDeliveryStatus,
+            dispatchedDeliveryStatus,
+            canceledDeliveryStatus,
+            l3AfterSaleDeliveryType
+        };
+    }, [configs, parameters]);
 
     // #region to customize information
     const breadCrumb = [
@@ -115,7 +158,7 @@ const DeliveryPage: PageComponent = () => {
             Modal.confirm({
                 title: t('messages:action-confirm'),
                 onOk: async () => {
-                    setId({ id, status: configs.DELIVERY_STATUS_CANCELED });
+                    setId({ id, status: configsParamsCodes.canceledDeliveryStatus });
                 },
                 okText: t('messages:confirm'),
                 cancelText: t('messages:cancel')
@@ -127,6 +170,8 @@ const DeliveryPage: PageComponent = () => {
 
     // CUBING
     const [isCubingLoading, setIsCubingLoading] = useState(false);
+    // AUTO PREPARATION
+    const [isAutoPrepareLoading, setIsAutoPrepareLoading] = useState(false);
     const cubingDelivery = (deliveryId: string) => {
         Modal.confirm({
             title: t('messages:cubing-confirm'),
@@ -232,16 +277,15 @@ const DeliveryPage: PageComponent = () => {
         routes: breadCrumb,
         onBackRoute: rootPath,
         actionsComponent:
-            data?.status !== configs.DELIVERY_STATUS_CANCELED ? (
+            data?.status !== configsParamsCodes.canceledDeliveryStatus ? (
                 <Space>
                     {modes.length > 0 &&
                     modes.includes(ModeEnum.Update) &&
-                    data?.status < configs.DELIVERY_STATUS_DISPATCHED ? (
+                    data?.status < configsParamsCodes.dispatchedDeliveryStatus ? (
                         <Space>
                             {
                                 // CUBING button
-                                !data?.managedByExternalSystem &&
-                                data?.status <= configs.DELIVERY_STATUS_TO_BE_ESTIMATED &&
+                                data?.status <= configsParamsCodes.toBeEstimatedDeliveryStatus &&
                                 deliveryLines?.data?.deliveryLines &&
                                 deliveryLines?.data?.deliveryLines?.count > 0 ? (
                                     <Button
@@ -256,9 +300,8 @@ const DeliveryPage: PageComponent = () => {
                             }
                             {
                                 // RECUBING button only if TO_BE_ESTIMATED < status <= ESTIMATED
-                                !data?.managedByExternalSystem &&
-                                data?.status > configs.DELIVERY_STATUS_TO_BE_ESTIMATED &&
-                                data?.status <= configs.DELIVERY_STATUS_ESTIMATED &&
+                                data?.status > configsParamsCodes.toBeEstimatedDeliveryStatus &&
+                                data?.status <= configsParamsCodes.estimatedDeliveryStatus &&
                                 deliveryLines?.data?.deliveryLines &&
                                 deliveryLines?.data?.deliveryLines?.count > 0 ? (
                                     <Button onClick={() => cubingDelivery(data?.id)}>
@@ -271,7 +314,7 @@ const DeliveryPage: PageComponent = () => {
                             {
                                 // Start button
                                 data?.status ==
-                                /*configs.DELIVERY_STATUS_ESTIMATED - de-activation for Findit*/ -99999 ? (
+                                /*configsParamsCodes.delivery_status_estimated - de-activation for Findit*/ -99999 ? (
                                     <Button onClick={() => startDelivery(data?.id, data?.status)}>
                                         {t('actions:start')}
                                     </Button>
@@ -282,7 +325,7 @@ const DeliveryPage: PageComponent = () => {
                             {
                                 // ASSOCIATE TO ROUND button
                                 // IKI 20230403 : intentionally disabled for demo
-                                // props.status == configs.DELIVERY_STATUS_ESTIMATED ? (
+                                // props.status == configsParamsCodes.delivery_status_estimated ? (
                                 //     <Button
                                 //         loading={cancelLoading}
                                 //         onClick={() => associateToRound({ deliveryId: props.id })}
@@ -297,7 +340,7 @@ const DeliveryPage: PageComponent = () => {
                             {modes.length > 0 &&
                             modes.includes(ModeEnum.Update) &&
                             model.isEditable &&
-                            data?.status < configs.DELIVERY_STATUS_LOADED ? (
+                            data?.status < configsParamsCodes.loadedDeliveryStatus ? (
                                 <LinkButton
                                     title={t('actions:edit')}
                                     path={`/deliveries/edit/${data?.id}`}
@@ -308,13 +351,13 @@ const DeliveryPage: PageComponent = () => {
                             )}
                             {modes.length > 0 &&
                             modes.includes(ModeEnum.Read) &&
-                            data?.status <= configs.DELIVERY_STATUS_CANCELED ? (
+                            data?.status <= configsParamsCodes.canceledDeliveryStatus ? (
                                 <Button
                                     type="primary"
                                     onClick={() => {
-                                        if (data?.id) {
+                                        if (shippingAddress) {
                                             setShowSinglePrintModal(true);
-                                            setIdToPrint(data.id);
+                                            setIdToPrint(data?.id);
                                         } else {
                                             showError(t('messages:no-delivery-address'));
                                         }
@@ -358,8 +401,8 @@ const DeliveryPage: PageComponent = () => {
                         <>
                             {modes.length > 0 &&
                             modes.includes(ModeEnum.Read) &&
-                            data?.status >= configs.DELIVERY_STATUS_STARTED &&
-                            data?.status <= configs.DELIVERY_STATUS_DISPATCHED ? (
+                            data?.status >= configsParamsCodes.startedDeliveryStatus &&
+                            data?.status <= configsParamsCodes.dispatchedDeliveryStatus ? (
                                 <>
                                     <Button
                                         type="primary"
@@ -408,6 +451,7 @@ const DeliveryPage: PageComponent = () => {
                         deliveryId={id}
                         deliveryName={data?.name}
                         deliveryStatus={data?.status}
+                        deliveryType={data?.type}
                         stockOwnerName={data?.stockOwner_name}
                         stockOwnerId={data?.stockOwnerId}
                         setShippingAddress={setShippingAddress}
