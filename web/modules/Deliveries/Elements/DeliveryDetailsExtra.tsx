@@ -19,7 +19,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton, NumberOfPrintsModalV2 } from '@components';
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
-import { getModesFromPermissions, pathParamsFromDictionary, DeliveryExtrasModelV2 } from '@helpers';
+import {
+    getModesFromPermissions,
+    pathParamsFromDictionary,
+    DeliveryExtrasModelV2,
+    findCodeByScopeAndValue
+} from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useAppState } from 'context/AppContext';
@@ -28,19 +33,18 @@ import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListCompo
 import { DeliveryAddressModelV2 } from '@helpers';
 import { DeliveryLineModelV2 } from '@helpers';
 import { HandlingUnitOutboundModelV2 } from '@helpers';
-import configs from '../../../../common/configs.json';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 import { BoxesManualAllocationModal } from '../Forms/BoxesManualAllocationModal';
 import { DocumentAttachedListComponent } from 'components/common/DocumentAttachedListComponent';
-import parameters from '../../../../common/parameters.json';
 import { DeliveryExtrasListComponent } from './DeliveryExtrasListComponent';
 
 export interface IItemDetailsProps {
     deliveryId?: string | any;
     deliveryName?: string | any;
     deliveryStatus?: number | any;
+    deliveryType?: number | any;
     stockOwnerId?: string | any;
     stockOwnerName?: string | any;
     setShippingAddress?: any;
@@ -54,6 +58,7 @@ const DeliveryDetailsExtra = ({
     deliveryId,
     deliveryName,
     deliveryStatus,
+    deliveryType,
     stockOwnerId,
     stockOwnerName,
     setShippingAddress,
@@ -63,7 +68,7 @@ const DeliveryDetailsExtra = ({
     isExtrasDisplayed
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
-    const { permissions } = useAppState();
+    const { configs, parameters, permissions } = useAppState();
     const boxesModes = getModesFromPermissions(permissions, HandlingUnitOutboundModelV2.tableName);
     const [idToDeleteAddress, setIdToDeleteAddress] = useState<string | undefined>();
     const [idToDisableAddress, setIdToDisableAddress] = useState<string | undefined>();
@@ -89,11 +94,63 @@ const DeliveryDetailsExtra = ({
 
     const hasSelected = boxesSelectedRowKeys.length > 0;
 
+    const {
+        startedHuoStatus,
+        cancelledHuoStatus,
+        createdDeliveryStatus,
+        inPreparationDeliveryStatus,
+        loadInProgressDeliveryStatus,
+        handlingUnitTypeBox,
+        handlingUnitTypePallet,
+        deliveryStatusDispatched
+    } = useMemo(() => {
+        const startedHuoStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'handling_unit_outbound_status', `started`)
+        );
+
+        const cancelledHuoStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'handling_unit_outbound_status', `cancelled`)
+        );
+
+        const createdDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `created`)
+        );
+
+        const inPreparationDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `in preparation`)
+        );
+
+        const loadInProgressDeliveryStatus = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `load in progress`)
+        );
+
+        const handlingUnitTypeBox = parseInt(
+            findCodeByScopeAndValue(parameters, 'handling_unit_type', `Box`)
+        );
+
+        const handlingUnitTypePallet = parseInt(
+            findCodeByScopeAndValue(parameters, 'handling_unit_type', `Pallet`)
+        );
+
+        const deliveryStatusDispatched = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', `Dispatched`)
+        );
+
+        return {
+            startedHuoStatus,
+            cancelledHuoStatus,
+            createdDeliveryStatus,
+            inPreparationDeliveryStatus,
+            loadInProgressDeliveryStatus,
+            handlingUnitTypeBox,
+            handlingUnitTypePallet,
+            deliveryStatusDispatched
+        };
+    }, [configs, parameters]);
+
     const onSelectChange = (newSelectedRowKeys: React.Key[], newSelectedRows: any) => {
         setBoxesSelectedRowKeys(newSelectedRowKeys);
-        const allSameStatus = newSelectedRows.every(
-            (item: any) => item.status < configs.HANDLING_UNIT_OUTBOUND_STATUS_STARTED
-        );
+        const allSameStatus = newSelectedRows.every((item: any) => item.status < startedHuoStatus);
         setBoxesCommonStatus(allSameStatus);
     };
 
@@ -101,8 +158,7 @@ const DeliveryDetailsExtra = ({
         selectedRowKeys: boxesSelectedRowKeys,
         onChange: onSelectChange,
         getCheckboxProps: (record: any) => ({
-            disabled:
-                record.status == configs.HANDLING_UNIT_OUTBOUND_STATUS_CANCELLED ? true : false
+            disabled: record.status == cancelledHuoStatus ? true : false
         })
     };
 
@@ -117,7 +173,7 @@ const DeliveryDetailsExtra = ({
         actionsComponent:
             deliveryAddressModes.length > 0 &&
             deliveryAddressModes.includes(ModeEnum.Create) &&
-            deliveryStatus < configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
+            deliveryStatus < loadInProgressDeliveryStatus ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:delivery-address') })}
                     path={pathParamsFromDictionary('/deliveries/address/add', {
@@ -141,7 +197,7 @@ const DeliveryDetailsExtra = ({
         actionsComponent:
             deliveryLineModes.length > 0 &&
             deliveryLineModes.includes(ModeEnum.Create) &&
-            deliveryStatus <= configs.DELIVERY_STATUS_CREATED ? (
+            deliveryStatus <= createdDeliveryStatus ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:delivery-line') })}
                     path={pathParamsFromDictionary('/deliveries/line/add', {
@@ -187,7 +243,7 @@ const DeliveryDetailsExtra = ({
         actionsComponent: null
     };
 
-    const canModifyDelivery = deliveryStatus < configs.DELIVERY_STATUS_DISPATCHED;
+    const canModifyDelivery = deliveryStatus < deliveryStatusDispatched;
 
     const boxesActionButtons: ActionButtons = {
         actionsComponent:
@@ -307,8 +363,7 @@ const DeliveryDetailsExtra = ({
                                         {deliveryAddressModes.length > 0 &&
                                         deliveryAddressModes.includes(ModeEnum.Update) &&
                                         DeliveryLineModelV2.isEditable &&
-                                        deliveryStatus <
-                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
+                                        deliveryStatus < loadInProgressDeliveryStatus ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary(
@@ -326,8 +381,7 @@ const DeliveryDetailsExtra = ({
                                         {deliveryAddressModes.length > 0 &&
                                         deliveryAddressModes.includes(ModeEnum.Delete) &&
                                         DeliveryAddressModelV2.isSoftDeletable &&
-                                        deliveryStatus <
-                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
+                                        deliveryStatus < loadInProgressDeliveryStatus ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
@@ -344,8 +398,7 @@ const DeliveryDetailsExtra = ({
                                         {deliveryAddressModes.length > 0 &&
                                         deliveryAddressModes.includes(ModeEnum.Delete) &&
                                         DeliveryLineModelV2.isDeletable &&
-                                        deliveryStatus <
-                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
+                                        deliveryStatus < loadInProgressDeliveryStatus ? (
                                             <Button
                                                 icon={<DeleteOutlined />}
                                                 danger
@@ -418,7 +471,7 @@ const DeliveryDetailsExtra = ({
                                         {deliveryLineModes.length > 0 &&
                                         deliveryLineModes.includes(ModeEnum.Update) &&
                                         DeliveryLineModelV2.isEditable &&
-                                        record.status < configs.DELIVERY_STATUS_IN_PREPARATION ? (
+                                        record.status < inPreparationDeliveryStatus ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary(
@@ -436,7 +489,7 @@ const DeliveryDetailsExtra = ({
                                         {deliveryLineModes.length > 0 &&
                                         deliveryLineModes.includes(ModeEnum.Delete) &&
                                         DeliveryLineModelV2.isSoftDeletable &&
-                                        record.status < configs.DELIVERY_STATUS_IN_PREPARATION ? (
+                                        record.status < inPreparationDeliveryStatus ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
@@ -453,7 +506,7 @@ const DeliveryDetailsExtra = ({
                                         {deliveryLineModes.length > 0 &&
                                         deliveryLineModes.includes(ModeEnum.Delete) &&
                                         DeliveryLineModelV2.isDeletable &&
-                                        record.status == configs.DELIVERY_STATUS_CREATED ? (
+                                        record.status == createdDeliveryStatus ? (
                                             <Button
                                                 icon={<DeleteOutlined />}
                                                 danger
@@ -474,7 +527,7 @@ const DeliveryDetailsExtra = ({
                         ]}
                         searchable={false}
                         setData={setDeliveryLinesData}
-                        sortDefault={[{ field: 'lineNumber', ascending: true }]}
+                        sortDefault={[{ field: 'created', ascending: true }]}
                     />
                 </>
             ) : (
@@ -494,7 +547,7 @@ const DeliveryDetailsExtra = ({
                     <ListComponent
                         searchCriteria={{
                             deliveryId: deliveryId,
-                            handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_BOX
+                            handlingUnit_Type: handlingUnitTypeBox
                         }}
                         dataModel={HandlingUnitOutboundModelV2}
                         headerData={huOutboundHeaderData}
@@ -532,8 +585,7 @@ const DeliveryDetailsExtra = ({
                                         {huOutboundModes.length > 0 &&
                                         huOutboundModes.includes(ModeEnum.Update) &&
                                         HandlingUnitOutboundModelV2.isEditable &&
-                                        record?.status <
-                                            configs.DELIVERY_STATUS_LOAD_IN_PROGRESS ? (
+                                        record?.status < loadInProgressDeliveryStatus ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary('/boxes/edit/[id]', {
@@ -577,7 +629,7 @@ const DeliveryDetailsExtra = ({
                             handlingUnit_ChildrenHandlingUnit_HandlingUnitOutbound_DeliveryId:
                                 deliveryId,
                             deliveryId: '**null**',
-                            handlingUnit_Type: parameters.HANDLING_UNIT_TYPE_PALLET
+                            handlingUnit_Type: handlingUnitTypePallet
                         }}
                         dataModel={HandlingUnitOutboundModelV2}
                         headerData={shippingUnitHeaderData}

@@ -891,6 +891,45 @@ const ListComponent = (props: IListProps) => {
         }
     }
 
+    // Build the complete subOptions for the CURRENT state, covering BOTH filter systems:
+    // - searchFilters: the search-form / column filters (saved as valueJson.filter)
+    // - advFilters: the advanced filters (saved as valueJson.advancedFilters)
+    // Every save path must use this. Computing only one system (as the old getAdvSubOptions did)
+    // overwrites and silently drops the other system's subOptions. Falls back to the saved
+    // subOptions for fields whose dropdown wasn't loaded this session.
+    function buildSubOptions(searchFilters: any, advFilters: any[]): any[] {
+        const saved = userSettings?.valueJson?.subOptions ?? [];
+        const lookup = (fieldName: string) =>
+            allSubOptionsRef.current.find((item: any) => Object.keys(item)[0] === fieldName) ??
+            saved.find((item: any) => Object.keys(item)[0] === fieldName);
+
+        const result: any[] = [];
+        const seen = new Set<string>();
+
+        const addField = (fieldName: string, value: any) => {
+            if (seen.has(fieldName)) return;
+            const entry = lookup(fieldName);
+            if (!entry) return;
+            const valuesToKeep = Array.isArray(value) ? value : [value];
+            result.push({
+                [fieldName]: entry[fieldName].filter((opt: any) =>
+                    valuesToKeep.some((v: any) => String(opt.key) === String(v))
+                )
+            });
+            seen.add(fieldName);
+        };
+
+        for (const fieldName of Object.keys(searchFilters ?? {})) {
+            addField(fieldName, searchFilters[fieldName]);
+        }
+        for (const f of advFilters ?? []) {
+            const fieldName = Object.keys(f.filter[0].field)[0];
+            addField(fieldName, f.filter[0].field[fieldName]);
+        }
+
+        return result;
+    }
+
     // #endregion
 
     // #region Search Drawer
@@ -937,20 +976,10 @@ const ListComponent = (props: IListProps) => {
                             }
                         }
 
-                        const allSubOptionsFiltered = allSubOptionsRef.current
-                            .map((item: any) => {
-                                const itemKey = Object.keys(item)[0];
-                                if (savedFilters[itemKey] && item[itemKey]) {
-                                    return {
-                                        ...item,
-                                        [itemKey]: item[itemKey].filter((option: any) =>
-                                            savedFilters[itemKey].includes(option.key)
-                                        )
-                                    };
-                                }
-                                return null;
-                            })
-                            .filter(Boolean);
+                        const allSubOptionsFiltered = buildSubOptions(
+                            savedFilters,
+                            advancedFilters
+                        );
 
                         handleUserSettings(
                             savedFilters,
@@ -975,25 +1004,6 @@ const ListComponent = (props: IListProps) => {
         } else {
             return false;
         }
-    }
-
-    function getAdvSubOptions(filters: any[]): any[] {
-        return filters
-            .map((f: any) => {
-                const fieldName = Object.keys(f.filter[0].field)[0];
-                const value = f.filter[0].field[fieldName];
-                const entry = allSubOptionsRef.current.find(
-                    (item: any) => Object.keys(item)[0] === fieldName
-                );
-                if (!entry) return null;
-                const valuesToKeep = Array.isArray(value) ? value : [value];
-                return {
-                    [fieldName]: entry[fieldName].filter((opt: any) =>
-                        valuesToKeep.some((v: any) => String(opt.key) === String(v))
-                    )
-                };
-            })
-            .filter(Boolean);
     }
 
     // #endregion
@@ -2337,7 +2347,10 @@ const ListComponent = (props: IListProps) => {
                                                             null,
                                                             defaultPagination,
                                                             newFilters,
-                                                            getAdvSubOptions(newFilters)
+                                                            buildSubOptions(
+                                                                searchCriterias,
+                                                                newFilters
+                                                            )
                                                         );
                                                     }}
                                                     onTagEdit={(filter) =>
@@ -2444,7 +2457,7 @@ const ListComponent = (props: IListProps) => {
                                                         null,
                                                         defaultPagination,
                                                         newFilters,
-                                                        getAdvSubOptions(newFilters)
+                                                        buildSubOptions(searchCriterias, newFilters)
                                                     );
                                                 }}
                                             />
