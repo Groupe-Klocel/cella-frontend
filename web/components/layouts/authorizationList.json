@@ -945,6 +945,26 @@
         "mode": "read"
     },
     {
+        "route": "/mail-templates/[id]",
+        "permission": "wm_mail-templates",
+        "mode": "read"
+    },
+    {
+        "route": "/mail-templates/add",
+        "permission": "wm_mail-templates",
+        "mode": "create"
+    },
+    {
+        "route": "/mail-templates/edit/[id]",
+        "permission": "wm_mail-templates",
+        "mode": "update"
+    },
+    {
+        "route": "/mail-templates",
+        "permission": "wm_mail-templates",
+        "mode": "read"
+    },
+    {
         "route": "/manual-recubing",
         "permission": "wm_manual-recubing",
         "mode": "read"
