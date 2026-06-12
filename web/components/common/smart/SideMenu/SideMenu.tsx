@@ -68,7 +68,8 @@ const SideMenu: FC = () => {
             'wm_parameters',
             'wm_excel-imports',
             'wm_scheduler-configs',
-            'wm_translations'
+            'wm_translations',
+            'wm_mail-templates'
         ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)) && {
             key: 'administration',
             icon: <AuditOutlined />,
@@ -144,6 +145,13 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'administration-translations',
                           label: <Link href="/translations">{t('translations')}</Link>
+                      }
+                    : null,
+                // MAIL TEMPLATES
+                getModesFromPermissions(permissions, 'wm_mail-templates').includes(ModeEnum.Read)
+                    ? {
+                          key: 'administration-mail-templates',
+                          label: <Link href="/mail-templates">{t('mail-templates')}</Link>
                       }
                     : null
             ].filter(Boolean)
@@ -752,6 +760,14 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'truck-management-schedule',
                           label: <Link href="/appointments/schedule">{t('common:agenda')}</Link>
+                      }
+                    : null,
+
+                // GATE VALIDATION
+                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
+                    ? {
+                          key: 'truck-management-gate-validation',
+                          label: <Link href="/gate-validation">{t('common:validation-title')}</Link>
                       }
                     : null
             ].filter(Boolean)
