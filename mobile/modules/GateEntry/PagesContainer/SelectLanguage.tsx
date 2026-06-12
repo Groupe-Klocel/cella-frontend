@@ -35,9 +35,9 @@ export interface ISelectLanguageProps {
 }
 
 const LANGUAGES: Array<{ code: string; label: string; flag: string }> = [
-    { code: 'fr-FR', label: 'Français', flag: '🇫🇷' },
-    { code: 'en-US', label: 'English', flag: '🇬🇧' },
-    { code: 'de-DE', label: 'Deutsch', flag: '🇩🇪' }
+    { code: 'fr-FR', label: 'Français', flag: '/images/fr.png' },
+    { code: 'en-US', label: 'English', flag: '/images/usa.png' },
+    { code: 'de-DE', label: 'Deutsch', flag: '/images/de.png' }
 ];
 
 export const SelectLanguage = ({ processName, stepNumber }: ISelectLanguageProps) => {
@@ -71,7 +71,12 @@ export const SelectLanguage = ({ processName, stepNumber }: ISelectLanguageProps
             <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: 360 }}>
                 {LANGUAGES.map((l) => (
                     <GateButton key={l.code} onClick={() => onSelect(l.code)}>
-                        {l.flag}&nbsp;&nbsp;{l.label}
+                        <img
+                            src={l.flag}
+                            alt={l.label}
+                            style={{ width: 18, height: 'auto', verticalAlign: 'middle' }}
+                        />
+                        &nbsp;&nbsp;{l.label}
                     </GateButton>
                 ))}
             </Space>
