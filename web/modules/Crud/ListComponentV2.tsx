@@ -83,6 +83,7 @@ import { useAuth } from 'context/AuthContext';
 import _, { debounce, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import { useAiContextStore } from 'context/CellaBotContext';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { FormGroupV3 } from './submodules/FormGroupV3';
@@ -219,6 +220,29 @@ const ListComponent = (props: IListProps) => {
             ...(props?.advancedFilters ?? [])
         ]);
     }, [props.advancedFilters, userSettings]);
+
+    // Tell the AI assistant (CellaBot) what this list shows: entity, active filters and the
+    // current row selection (selection is best-effort — owned by the page via props.rowSelection).
+    // Skip when this list is a sub-list embedded on a detail/edit page (route contains "[id]"):
+    // there the ItemDetailComponent owns the primary entity, and a sub-list (e.g. articleLuBarcode
+    // on an article detail) must not overwrite it. Using router.pathname (not query.id) avoids the
+    // initial render race where query.id is not yet populated.
+    const isEmbeddedSubList = router.pathname.includes('[id]');
+    const { patchAiContext } = useAiContextStore();
+    useEffect(() => {
+        if (isEmbeddedSubList) return;
+        patchAiContext({
+            entityType: props.dataModel.tableName,
+            filters: advancedFilters,
+            selection: props.rowSelection?.selectedRowKeys ?? undefined
+        });
+    }, [
+        isEmbeddedSubList,
+        advancedFilters,
+        props.rowSelection?.selectedRowKeys,
+        props.dataModel.tableName,
+        patchAiContext
+    ]);
 
     let initialState = userSettings?.valueJson?.allColumnsInfos;
     const [allColumns, setAllColumns] = useState<any[]>(initialState);
