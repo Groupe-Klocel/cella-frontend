@@ -3,5 +3,8 @@
   "workspaces": [
     "web",
     "mobile"
-  ]
+  ],
+  "resolutions": {
+    "graphql": "16.14.1"
+  }
 }
