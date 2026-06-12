@@ -52,6 +52,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         movementToProcess,
         pick,
         pack,
+        gateEntry,
         equipmentPositionRelease
     } = useAppState();
     const router = useRouter();
@@ -164,6 +165,15 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [equipmentPositionRelease, storage]);
 
     useEffect(() => {
+        if (storage && gateEntry) {
+            const timer = setTimeout(() => {
+                storage.set('gateEntry', JSON.stringify(gateEntry));
+            }, debounceTimeout);
+            return () => clearTimeout(timer);
+        }
+    }, [gateEntry, storage]);
+
+    useEffect(() => {
         if (storage) {
             dispatchUser({
                 type: 'UPDATE_BY_PROCESS',
@@ -199,6 +209,11 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 type: 'UPDATE_BY_PROCESS',
                 processName: 'equipmentPositionRelease',
                 object: JSON.parse(storage.get('equipmentPositionRelease') || '{}')
+            });
+            dispatchUser({
+                type: 'UPDATE_BY_PROCESS',
+                processName: 'gateEntry',
+                object: JSON.parse(storage.get('gateEntry') || '{}')
             });
         }
     }, [storage]);

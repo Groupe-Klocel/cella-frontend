@@ -25,6 +25,7 @@ import { HeaderContent, MenuCard } from '@components';
 import { useAppState } from 'context/AppContext';
 import { getModesFromPermissions, useTranslationWithFallback as useTranslation } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
+import { TruckOutlined } from '@ant-design/icons';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -74,6 +75,12 @@ const HomePage: PageComponent = () => {
             title: 'menu:misc',
             icon: <img src="/images/misc.svg" alt="info" width={55} />,
             path: '/misc'
+        },
+        // Gate entry kiosk (label served from the `gate` DB catalog).
+        {
+            title: 'common:title',
+            icon: <TruckOutlined style={{ fontSize: 40, color: '#000' }} />,
+            path: '/gate-entry'
         }
     ].filter(Boolean);
 
