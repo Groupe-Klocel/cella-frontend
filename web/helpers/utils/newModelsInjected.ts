@@ -79,6 +79,7 @@ import { LoadExtrasModelV2 as _LoadExtrasModelV2 } from '../../models/LoadExtras
 import { LocationExtrasModelV2 as _LocationExtrasModelV2 } from '../../models/LocationExtrasModelV2';
 import { LocationModelV2 as _LocationModelV2 } from '../../models/LocationModelV2';
 import { LogisticUnitModelV2 as _LogisticUnitModelV2 } from '../../models/LogisticUnitModelV2';
+import { MailTemplateModelV2 as _MailTemplateModelV2 } from '../../models/MailTemplateModelV2';
 import { ManualAllocationModelV2 as _ManualAllocationModelV2 } from '../../models/ManualAllocationModelV2';
 import { MovementModelV2 as _MovementModelV2 } from '../../models/MovementModelV2';
 import { NotificationModelV2 as _NotificationModelV2 } from '../../models/NotificationModelV2';
@@ -282,6 +283,7 @@ export const LocationExtrasModelV2 = injectedModel(
 );
 export const LocationModelV2 = injectedModel(_LocationModelV2, 'LocationSpeModel');
 export const LogisticUnitModelV2 = injectedModel(_LogisticUnitModelV2, 'LogisticUnitSpeModel');
+export const MailTemplateModelV2 = injectedModel(_MailTemplateModelV2, 'MailTemplateSpeModel');
 export const ManualAllocationModelV2 = injectedModel(
     _ManualAllocationModelV2,
     'ManualAllocationSpeModel'
