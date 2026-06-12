@@ -635,12 +635,16 @@ const MyCalendar: PageComponent = () => {
         ? ramps.filter((r) => r.buildingId === selectedBuildingId)
         : ramps;
 
-    // Column widths expressed in vw so they scale with the screen
+    // Column widths expressed in vw so they scale with the screen.
+    // For docks (day view) we keep a minimum width per column: when there are
+    // few docks they stretch to fill the table, and when there are many they
+    // keep that minimum and the table scrolls horizontally instead of shrinking.
     const GUTTER_VW = 4;
+    const MIN_COL_PX = 110;
     const colWidthCss =
         currentView === 'week'
-            ? `calc((87.5vw - ${GUTTER_VW}vw) / 7)`
-            : `calc((90vw - ${GUTTER_VW}vw) / ${Math.max(1, visibleRamps.length)})`;
+            ? `calc((100vw - 110px) / 7)`
+            : `max(${MIN_COL_PX}px, calc((90vw - ${GUTTER_VW}vw) / ${Math.max(1, visibleRamps.length)}))`;
 
     const cancelledCode = statusFlow.find((s) => statusConfig[s]?.value === 'Cancelled');
     const refusedCode = statusFlow.find((s) => statusConfig[s]?.value === 'Refused');
