@@ -22,6 +22,8 @@ import 'antd/dist/reset.css';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { AppProvider } from 'context/AppContext';
 import { AuthProvider } from 'context/AuthContext';
+import { CellaBotProvider } from 'context/CellaBotContext';
+import { CellaBotWidget } from 'modules/CellaBot';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
@@ -66,12 +68,16 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppLayoutProps
                 <SessionProvider session={session}>
                     <AuthProvider>
                         <AppProvider>
-                            <AppLayout
-                                Component={ComponentToRender}
-                                pageProps={pageProps}
-                                getLayout={getLayout}
-                                Layout={Layout}
-                            />
+                            <CellaBotProvider>
+                                <AppLayout
+                                    Component={ComponentToRender}
+                                    pageProps={pageProps}
+                                    getLayout={getLayout}
+                                    Layout={Layout}
+                                />
+                                {/* Global AI assistant — mounted once, self-gates on auth + availability */}
+                                <CellaBotWidget />
+                            </CellaBotProvider>
                         </AppProvider>
                     </AuthProvider>
                     {/* <ReactQueryDevtools initialIsOpen={false} /> */}
