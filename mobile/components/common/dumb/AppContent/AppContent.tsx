@@ -23,6 +23,7 @@ import styled from 'styled-components';
 
 const StyledAppContent = styled(Layout.Content)`
 overflow-y: auto;
+background: #ffffff;
 scrollbar-width: auto;
 scrollbar-color: #8f54a0 #ffffff;
 &::-webkit-scrollbar {
