@@ -381,7 +381,6 @@ const CustomerOrderDetailsExtra = ({
                                         )}
                                         {customerOrderLineModes.length > 0 &&
                                         customerOrderLineModes.includes(ModeEnum.Update) &&
-                                        !fixedPrice &&
                                         CustomerOrderLineModelV2.isEditable ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
