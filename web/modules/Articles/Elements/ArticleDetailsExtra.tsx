@@ -403,6 +403,16 @@ const ArticleDetailsExtra = ({
                     <Divider />
                     <ListComponent
                         searchCriteria={{ articleId: articleId }}
+                        advancedFilters={[
+                            {
+                                filter: [
+                                    {
+                                        searchType: 'DIFFERENT',
+                                        field: { handlingUnit_LocationId: null }
+                                    }
+                                ]
+                            }
+                        ]}
                         dataModel={HandlingUnitContentModelV2}
                         headerData={handlingUnitContentHeaderData}
                         routeDetailPage={'/handling-unit-contents/:id'}
