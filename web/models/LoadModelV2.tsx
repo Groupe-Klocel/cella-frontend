@@ -102,8 +102,7 @@ export const LoadModelV2: ModelType = {
             maxRule: null,
             config: null,
             param: null,
-            optionTable:
-                '{"table": "Carrier", "fieldToDisplay": "name","filtersToApply": {"toBeLoaded":true}}',
+            optionTable: '{"table": "Carrier", "fieldToDisplay": "name"}',
             isEditDisabled: true
         },
         'carrier{name}': {
