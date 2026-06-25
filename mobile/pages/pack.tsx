@@ -23,6 +23,7 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
     ButtonManagementType,
+    applyRfActionButtonsConfig,
     getMoreInfos,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
@@ -478,12 +479,14 @@ const Pack: PageComponent = () => {
     //#region module buttons
     const buttonManagement: ButtonManagementType = [
         {
+            key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [10, 20, 30, 40, 50, 60, 70],
             onClick: () => form.submit(),
             position: 'bottom'
         },
         {
+            key: 'close-box',
             label: t('common:close-box'),
             visibleOnSteps: [40],
             permissionsToSeeTheButton: isBoxClosureAllowed ? true : false,
@@ -493,6 +496,7 @@ const Pack: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'enforce-control',
             label: t('actions:enforce-control'),
             visibleOnSteps: [60],
             permissionsToSeeTheButton: !isToControl && isToControl !== null ? true : false,
@@ -502,6 +506,7 @@ const Pack: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'back',
             label: t('actions:back'),
             visibleOnSteps: [20, 30, 40, 50, 60, 70],
             permissionsToSeeTheButton: true,
@@ -511,6 +516,10 @@ const Pack: PageComponent = () => {
             position: 'bottom'
         }
     ];
+
+    // Apply configurable order/color to any button (matched by its `key`) from the
+    // 'RF_PREPARATION_ACTION_BUTTONS' parameter extras; keeps base behaviour when unset.
+    const orderedButtonManagement = applyRfActionButtonsConfig(buttonManagement, parameters);
     //#endregion
 
     //#region reset form on step change
@@ -548,7 +557,7 @@ const Pack: PageComponent = () => {
                 <UpperMobileSpinner></UpperMobileSpinner>
             ) : (
                 <RadioButtonWrapper
-                    buttonManagement={buttonManagement}
+                    buttonManagement={orderedButtonManagement}
                     currentStep={storedObject.currentStep}
                 >
                     {!storedObject['step10']?.data ? (
