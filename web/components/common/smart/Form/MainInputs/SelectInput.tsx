@@ -23,12 +23,13 @@ import {
     pascalToSnakeUpper,
     pluralize,
     getLanguageCode,
+    buildListQuery,
+    reportSubOptions,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { FormOptionType } from '../../../../../models/ModelsV2';
 import { FC, useEffect, useState } from 'react';
 import { useAppState } from 'context/AppContext';
-import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 
@@ -93,28 +94,11 @@ const SelectInput: FC<IDraggerSelectProps> = ({
                 ? ['id', `${fieldToDisplay}`, 'status']
                 : ['id', `${fieldToDisplay}`];
 
-            const query = gql`
-            query CustomListQuery(
-                $filters: ${tableName}SearchFilters
-                $orderBy: [${tableName}OrderByCriterion!]
-                $page: Int!
-                $itemsPerPage: Int!
-                $language: String = "en"
-            ) {
-                ${queryName}(
-                    filters: $filters
-                    orderBy: $orderBy
-                    page: $page
-                    itemsPerPage: $itemsPerPage
-                    language: $language
-                ) {
-                    count
-                    results {
-                        ${queriedFields.join(', ')}
-                    }
-                }
-            }
-        `;
+            const query = buildListQuery({
+                tableName,
+                queryName,
+                fields: queriedFields.join(', ')
+            });
 
             const variables = {
                 filters: filtersToApply,
@@ -157,24 +141,8 @@ const SelectInput: FC<IDraggerSelectProps> = ({
         return;
     }
 
-    function setParentSubOptions(options: FormOptionType[]) {
-        setAllSubOptions((prev: any) => {
-            const existingIndex = prev.findIndex((obj: any) => obj.hasOwnProperty(item.name));
-            if (existingIndex !== -1) {
-                const newArray = [...prev];
-                newArray[existingIndex] = {
-                    [item.name]: options
-                };
-                return newArray;
-            }
-            return [
-                ...prev,
-                {
-                    [item.name]: options
-                }
-            ];
-        });
-    }
+    const setParentSubOptions = (options: FormOptionType[]) =>
+        reportSubOptions(setAllSubOptions, item.name, options);
 
     useEffect(() => {
         const defaultOptionsForItem = defaultSubOptions

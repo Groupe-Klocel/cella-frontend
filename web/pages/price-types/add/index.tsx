@@ -28,7 +28,7 @@ import {
     priceTypesRoutes
 } from 'modules/PriceTypes/Static/priceTypesRoutes';
 import { META_DEFAULTS } from '@helpers';
-import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -43,7 +43,7 @@ const AddPriceTypePage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-price-type')} />
-            <AddConfigParamComponent
+            <AddEditItemComponent
                 dataModel={model}
                 headerComponent={
                     <HeaderContent

@@ -25,7 +25,7 @@ import { ParameterModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { featureTypesRoutes } from 'modules/FeatureTypes/Static/featureTypesRoutes';
 import { META_DEFAULTS } from '@helpers';
-import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -40,7 +40,7 @@ const AddFeatureTypePage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-feature-type')} />
-            <AddConfigParamComponent
+            <AddEditItemComponent
                 dataModel={ParameterModelV2}
                 headerComponent={
                     <HeaderContent

@@ -25,11 +25,23 @@ import { ParameterModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { parametersRoutes } from 'modules/Parameters/Static/ParametersRoutes';
 import { META_DEFAULTS } from '@helpers';
-import { EditConfigParamComponent } from 'modules/Crud/EditConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData } from '@helpers';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditParameterPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, ParameterModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditParameterPage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -46,8 +58,9 @@ const EditParameterPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('actions:edit-parameter')} ${data?.scope} - ${data?.code}`} />
-            <EditConfigParamComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={ParameterModelV2}
                 headerComponent={
