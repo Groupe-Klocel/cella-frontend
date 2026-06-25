@@ -20,6 +20,7 @@ import { Button } from 'antd';
 import { WrapperButtons, StyledButton } from '@components';
 
 export interface ButtonConfig {
+    key?: string; // Optional stable identifier (language-independent) used to configure the button via the RF_PREPARATION_ACTION_BUTTONS parameter
     label: string;
     icon?: any;
     visibleOnSteps: number[];
