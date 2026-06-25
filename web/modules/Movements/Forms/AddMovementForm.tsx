@@ -121,7 +121,7 @@ export const AddMovementForm = () => {
                 key: parseInt(item.code),
                 value: item.translation?.[filteredLanguage!] || item.value
             }))
-            .sort((a: any, b: any) => a.key - b.key);
+            .sort((a: any, b: any) => b.key - a.key);
 
         return {
             normalMovementModel,
