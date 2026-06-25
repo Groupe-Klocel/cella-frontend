@@ -25,7 +25,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { addConfigurationsRoutes } from 'modules/Configurations/Static/configurationRoutes';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC } from 'react';
-import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -39,7 +39,7 @@ const AddConfigurationPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-configuration')} />
-            <AddConfigParamComponent
+            <AddEditItemComponent
                 dataModel={ConfigModelV2}
                 headerComponent={
                     <HeaderContent
