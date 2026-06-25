@@ -27,6 +27,7 @@ import { getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { movementsRoutes as itemRoutes } from 'modules/Movements/Static/MovementRoutes';
+import { EditPriorityMovementsModal } from 'modules/Movements/Forms/EditPriorityMovementsModal';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import { gql } from 'graphql-request';
@@ -47,6 +48,8 @@ const MovementPage: PageComponent = () => {
     const [refetch, setRefetch] = useState(false);
     const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
     const [assignmentManagementLoading, setAssignmentManagementLoading] = useState(false);
+    const [showEditPriorityMovementsModal, setShowEditPriorityMovementsModal] = useState(false);
+    const [editPriorityMovementsLoading, setEditPriorityMovementsLoading] = useState(false);
 
     const configsParamsCodes = useMemo(() => {
         const findCodeByScope = (items: any[], scope: string, value: string) => {
@@ -168,6 +171,21 @@ const MovementPage: PageComponent = () => {
                     )}
                     {modes.length > 0 &&
                     modes.includes(ModeEnum.Update) &&
+                    data?.status === parseInt(configsParamsCodes.toBeProcessedStatusCode) ? (
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setShowEditPriorityMovementsModal(true);
+                            }}
+                            loading={editPriorityMovementsLoading}
+                        >
+                            {t('actions:edit-priority')}
+                        </Button>
+                    ) : (
+                        <></>
+                    )}
+                    {modes.length > 0 &&
+                    modes.includes(ModeEnum.Update) &&
                     data?.status === parseInt(configsParamsCodes.errorStatusCode) ? (
                         <Button
                             onClick={() => confirmMovement('messages:reprocess-error')}
@@ -256,6 +274,14 @@ const MovementPage: PageComponent = () => {
                         ? { status: parseInt(configsParamsCodes.toBeProcessedStatusCode) }
                         : undefined
                 }
+            />
+            <EditPriorityMovementsModal
+                showModal={{
+                    showEditPriorityMovementsModal,
+                    setShowEditPriorityMovementsModal
+                }}
+                updateMovements={updateMovements}
+                loading={setEditPriorityMovementsLoading}
             />
         </>
     );
