@@ -97,6 +97,7 @@ export type GraphQLResponseType = {
 };
 
 export type ButtonManagementType = {
+    key?: string; // Optional stable identifier (language-independent) used to configure the button via the RF_PREPARATION_ACTION_BUTTONS parameter
     label: string;
     icon?: any;
     visibleOnSteps: number[];

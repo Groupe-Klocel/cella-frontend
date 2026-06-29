@@ -22,6 +22,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
+    applyRfActionButtonsConfig,
     getMoreInfos,
     getModesFromPermissions,
     useTranslationWithFallback as useTranslation,
@@ -738,12 +739,14 @@ const PickAndPack: PageComponent = () => {
     //#region module buttons
     const buttonManagement: ButtonManagementType = [
         {
+            key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [5, 10, 15, 20, 30, 40, 50, 60, 70, 75, 80],
             onClick: () => form.submit(),
             position: 'bottom'
         },
         {
+            key: 'close-shipping-hu',
             label: t('actions:close-shipping-hu'),
             visibleOnSteps: [20],
             permissionsToSeeTheButton: isHuInProgress,
@@ -751,6 +754,7 @@ const PickAndPack: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'missing-quantity',
             label: t('common:missing-quantity'),
             visibleOnSteps: [50],
             permissionsToSeeTheButton: getModesFromPermissions(
@@ -766,6 +770,7 @@ const PickAndPack: PageComponent = () => {
             }
         },
         {
+            key: 'locations',
             label: t('common:locations_abbr'),
             icon: null,
             visibleOnSteps: [20],
@@ -776,6 +781,7 @@ const PickAndPack: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'change-location',
             label: t('common:change-location'),
             visibleOnSteps: [50],
             permissionsToSeeTheButton: !forceLocationScan && forceArticleScan ? true : false,
@@ -785,6 +791,7 @@ const PickAndPack: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'next',
             label: t('actions:next'),
             visibleOnSteps: [20, 50],
             permissionsToSeeTheButton: hasMultipleLocationIds ? true : false,
@@ -794,6 +801,7 @@ const PickAndPack: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'back',
             label: t('actions:back'),
             visibleOnSteps: [10, 15, 20, 30, 40, 50, 60, 70, 75, 80],
             permissionsToSeeTheButton:
@@ -808,6 +816,10 @@ const PickAndPack: PageComponent = () => {
             position: 'bottom'
         }
     ];
+
+    // Apply configurable order/color to any button (matched by its `key`) from the
+    // 'RF_PREPARATION_ACTION_BUTTONS' parameter extras; keeps base behaviour when unset.
+    const orderedButtonManagement = applyRfActionButtonsConfig(buttonManagement, parameters);
     //#endregion
 
     //#region reset form on step change
@@ -845,7 +857,7 @@ const PickAndPack: PageComponent = () => {
                 <UpperMobileSpinner></UpperMobileSpinner>
             ) : (
                 <RadioButtonWrapper
-                    buttonManagement={buttonManagement}
+                    buttonManagement={orderedButtonManagement}
                     currentStep={storedObject.currentStep}
                 >
                     {showSimilarLocations && storedObject['step10']?.data ? (

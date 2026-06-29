@@ -23,5 +23,6 @@ export * from './utils/constant';
 export * from './utils/utils';
 export * from './utils/TranslationFromDB';
 export * from './utils/getMoreInfos';
+export * from './utils/rfActionButtons';
 export * from './configs/env';
 export * from './configs/misc';
