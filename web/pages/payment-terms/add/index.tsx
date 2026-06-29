@@ -25,7 +25,7 @@ import { SingleParameterModelV2 as model } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { paymentTermsRoutes as itemRoutes } from 'modules/PaymentTerms/Static/paymentTermsRoutes';
 import { META_DEFAULTS } from '@helpers';
-import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -40,7 +40,7 @@ const AddPaymentTermPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-payment-term')} />
-            <AddConfigParamComponent
+            <AddEditItemComponent
                 dataModel={model}
                 headerComponent={
                     <HeaderContent

@@ -20,11 +20,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { Form, Select } from 'antd';
 import { debounce } from 'lodash';
-import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState, useEffect, useCallback } from 'react';
 import { FilterFieldType } from '../../../../../models/Models';
-import { getRulesWithNoSpacesValidator, pluralize } from '@helpers';
+import { getRulesWithNoSpacesValidator, pluralize, buildListQuery, reportSubOptions } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 
 export interface IFormGroupProps {
@@ -63,10 +62,27 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
 
     const [autoCompleteValue, setAutoCompleteValue] = useState<AutoCompleteValueType>(item as any);
     const [filteredOptions, setFilteredOptions] = useState<any>({});
-    const optionTable: any = autoCompleteValue?.optionTable ?? {};
+    // subOptions is undefined until options are received; this drives the hidden state of the field
+    const [subOptions, setSubOptions] = useState<FormOptionType[] | undefined>(undefined);
+    const optionTable: any = (item as any)?.optionTable ?? {};
     const isAdvancedFilters = props?.advancedFilters?.length !== 0;
 
+    // a dynamic filter is "not yet sent" while its value is still the placeholder (value contained in its key),
+    // (see processedOptions in AddEditItemComponentV2) -> hide the field until the real value arrives
+    const filtersToApply: { [key: string]: any } = optionTable?.filtersToApply ?? {};
+    const isFilterPending = Object.entries(filtersToApply).some(
+        ([key, value]) => typeof value === 'string' && key.includes(value as string)
+    );
+
     useEffect(() => {
+        // while the filter that depends on another field is not sent yet, keep the field hidden and skip the query,
+        // but still report to the parent so the form's global loading gate can resolve
+        if (isFilterPending) {
+            setSubOptions(undefined);
+            reportSubOptions(props.setAllSubOptions, item.name as string, []);
+            return;
+        }
+
         async function fetchData() {
             const tableName = optionTable?.table;
 
@@ -75,31 +91,12 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                 : '';
             const queriedFields =
                 autoCompleteValue && optionTable ? optionTable.fieldToDisplay : [];
-            const query = gql`
-            query CustomListQuery(
-                $filters: ${tableName}SearchFilters
-                ${isAdvancedFilters ? `$advancedFilters: [${tableName}AdvancedSearchFilters!]` : ''}
-                $orderBy: [${tableName}OrderByCriterion!]
-                $page: Int!
-                $itemsPerPage: Int!
-                $language: String = "en"
-            ) {
-                ${queryName}(
-                    filters: $filters
-                    ${isAdvancedFilters ? 'advancedFilters: $advancedFilters' : ''}
-                    orderBy: $orderBy
-                    page: $page
-                    itemsPerPage: $itemsPerPage
-                    language: $language
-                ) {
-                    count
-                    results {
-                        id,
-                        ${queriedFields}
-                    }
-                }
-            }
-        `;
+            const query = buildListQuery({
+                tableName,
+                queryName,
+                fields: `id, ${queriedFields}`,
+                withAdvancedFilters: isAdvancedFilters
+            });
 
             // Modify the filters to use a "startsWith" condition
             const modifiedFilters = {
@@ -120,16 +117,17 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                 page: 1,
                 itemsPerPage: 100
             };
-
             const options = await graphqlRequestClient.request(query, variables);
 
-            setAutoCompleteValue({ ...autoCompleteValue, subOptions: options[queryName].results });
+            const results = options[queryName].results;
+            setSubOptions(results);
+            setAutoCompleteValue((prev) => ({ ...prev, subOptions: results }));
             if (props.setAllSubOptions) {
                 props.setAllSubOptions((prev: any) => {
                     const existingIndex = prev.findIndex((obj: any) =>
                         obj.hasOwnProperty(item.name)
                     );
-                    const newValue = options[queryName].results.map((v: any) => {
+                    const newValue = results.map((v: any) => {
                         return {
                             key: v.id,
                             text: v[optionTable.fieldToDisplay]
@@ -139,23 +137,23 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                         const newArray = [...prev];
                         // Merge and remove duplicates by 'key'
                         const merged = [
-                            ...newArray[existingIndex][autoCompleteValue.name as string],
+                            ...newArray[existingIndex][item.name as string],
                             ...newValue
                         ];
                         const unique = merged.filter(
                             (item, idx, arr) => arr.findIndex((i) => i.key === item.key) === idx
                         );
                         newArray[existingIndex] = {
-                            [autoCompleteValue.name as string]: unique
+                            [item.name as string]: unique
                         };
                         return newArray;
                     }
-                    return [...prev, { [autoCompleteValue.name as string]: newValue }];
+                    return [...prev, { [item.name as string]: newValue }];
                 });
             }
         }
         fetchData();
-    }, [filteredOptions]);
+    }, [filteredOptions, JSON.stringify(filtersToApply)]);
 
     //useCallback to avoid re-rendering
     const handleSearch = useCallback(
@@ -181,6 +179,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             normalize={(value) => (value ? value : undefined)}
             rules={item.rules!}
             style={props.style}
+            hidden={subOptions ? false : true}
         >
             <Select
                 showSearch
@@ -190,7 +189,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                 onSearch={handleSearch}
                 allowClear
             >
-                {autoCompleteValue.subOptions?.map((option: FormOptionType, index: number) => {
+                {subOptions?.map((option: FormOptionType, index: number) => {
                     const firstKeyOfOtpion = Object.keys(option)[1] as keyof FormOptionType;
                     return (
                         <Select.Option key={option.id || index} value={option.id}>

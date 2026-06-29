@@ -27,10 +27,10 @@ import { META_DEFAULTS, showError, showSuccess } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { addLoadRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import 'moment/min/locales';
-import { AddLoadComponent } from 'modules/Loads/PageContainer/AddLoadComponent';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -39,8 +39,7 @@ const AddLoadPage: PageComponent = () => {
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
     const defaultValues = { status: configs.LOAD_STATUS_CREATED };
-    const [print, setPrint] = useState<any>();
-    const [loadPrint, setLoadPrint] = useState<string>('');
+    const [loadId, setLoadId] = useState<string>();
 
     const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'global',
@@ -115,16 +114,16 @@ const AddLoadPage: PageComponent = () => {
     };
 
     useEffect(() => {
-        if (print) {
-            setLoadPrint(print);
-            printLoad({ id: print?.id }, defaultPrinter);
+        if (loadId) {
+            printLoad({ id: loadId }, defaultPrinter);
+            setLoadId(undefined);
         }
-    }, [print]);
+    }, [loadId]);
 
     return (
         <>
             <AppHead title={t('actions:add2', { name: t('common:load') })} />
-            <AddLoadComponent
+            <AddEditItemComponent
                 dataModel={LoadModelV2}
                 headerComponent={
                     <HeaderContent
@@ -133,13 +132,13 @@ const AddLoadPage: PageComponent = () => {
                         onBack={() => router.push(`/loads`)}
                     />
                 }
-                setPrint={setPrint}
-                print={loadPrint}
+                setId={setLoadId}
                 extraData={
                     defaultValues || Object.keys(defaultValues).length !== 0
                         ? defaultValues
                         : undefined
                 }
+                routeAfterSuccess={`/loads/:id`}
                 routeOnCancel={`/loads`}
             />
         </>

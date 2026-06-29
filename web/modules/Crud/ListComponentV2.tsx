@@ -215,10 +215,16 @@ const ListComponent = (props: IListProps) => {
     ]);
     const [editingAdvFilter, setEditingAdvFilter] = useState<any>(null);
     useEffect(() => {
-        setAdvancedFilters([
+        const next = [
             ...(userSettings?.valueJson?.advancedFilters ?? []),
             ...(props?.advancedFilters ?? [])
-        ]);
+        ];
+        // Keep the previous reference when the content is unchanged: this effect runs on every
+        // mount (and whenever props.advancedFilters is an inline literal, on every parent render),
+        // and a new array reference would needlessly re-trigger the fetch effect below.
+        setAdvancedFilters((prev: any) =>
+            JSON.stringify(prev) === JSON.stringify(next) ? prev : next
+        );
     }, [props.advancedFilters, userSettings]);
 
     // Tell the AI assistant (CellaBot) what this list shows: entity, active filters and the
@@ -612,16 +618,33 @@ const ListComponent = (props: IListProps) => {
                         {
                             code: `${resolverName}${router.pathname}/${props.headerData?.title}`,
                             valueJson: {
-                                filter: newFilter,
+                                filter: newFilter ?? userSettings?.valueJson?.filter,
                                 advancedFilters: newAdvancedFilters ?? advancedFilters,
-                                sorter: newSorter ?? props.sortDefault ?? null,
+                                sorter:
+                                    newSorter ??
+                                    userSettings?.valueJson?.sorter ??
+                                    props.sortDefault ??
+                                    null,
                                 pagination: newPagination ?? defaultPagination,
-                                subOptions: newSubOptions ?? undefined,
-                                allColumnsInfos: newAllColumnsInfos ?? allColumns ?? undefined,
-                                columnsWidth: newColumnWidths ?? {}
+                                subOptions:
+                                    newSubOptions ??
+                                    userSettings?.valueJson?.subOptions ??
+                                    undefined,
+                                allColumnsInfos:
+                                    newAllColumnsInfos ??
+                                    userSettings?.valueJson?.allColumnsInfos ??
+                                    allColumns ??
+                                    undefined,
+                                columnsWidth:
+                                    newColumnWidths ?? userSettings?.valueJson?.columnsWidth ?? {}
                             }
                         } as any
                     ]
+                });
+                setPagination({
+                    ...pagination,
+                    current: newPagination?.current ?? pagination.current,
+                    itemsPerPage: newPagination?.itemsPerPage ?? pagination.itemsPerPage
                 });
                 return;
             }
@@ -1101,7 +1124,18 @@ const ListComponent = (props: IListProps) => {
         return () => {
             debouncedReload.cancel();
         };
-    }, [props.refetch, router.locale, advancedFilters, pagination.current]);
+        // Refetch whenever any actual query input changes. Compared by value (JSON.stringify),
+        // not reference, so a content-equal array/object doesn't refetch — this both fixes basic
+        // filters/search/sort no longer applying and keeps the "no duplicate reload" behaviour.
+    }, [
+        props.refetch,
+        router.locale,
+        JSON.stringify(resolvedSearchCriterias),
+        JSON.stringify(advancedFilters),
+        JSON.stringify(sort),
+        pagination.current,
+        pagination.itemsPerPage
+    ]);
 
     // #endregion
 
@@ -2248,6 +2282,23 @@ const ListComponent = (props: IListProps) => {
     };
     // #endregion
 
+    // Count of advanced filters the user can actually clear: excludes the default filters
+    // injected via props.advancedFilters AND the forced "without closed/cancel" status filters.
+    // Must match AdvancedFilterTags' own filtering so the "clear all" button only shows when
+    // there is something removable (and disappears once only default filters remain).
+    const propAdvFiltersSet = new Set(
+        (props.advancedFilters ?? []).map((f: any) => JSON.stringify(f))
+    );
+    const forcedStatusValues = [2000, 1005, 1600];
+    const userAdvancedFiltersCount = advancedFilters.filter((af: any) => {
+        const fi = af.filter?.[0];
+        if (!fi) return false;
+        if (forcedStatusValues.includes(fi.field?.status) && fi.searchType === 'DIFFERENT')
+            return false;
+        if (propAdvFiltersSet.has(JSON.stringify(af))) return false;
+        return true;
+    }).length;
+
     // #region return
     return (
         <>
@@ -2382,9 +2433,7 @@ const ListComponent = (props: IListProps) => {
                                                     }
                                                 />
                                                 {(tagFormatter(searchCriterias).length > 0 ||
-                                                    advancedFilters.length -
-                                                        (props?.advancedFilters?.length ?? 0) >
-                                                        0) && (
+                                                    userAdvancedFiltersCount > 0) && (
                                                     <Button
                                                         key="clear-all-filters"
                                                         size="small"

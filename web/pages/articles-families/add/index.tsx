@@ -25,7 +25,7 @@ import { SingleParameterModelV2 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { articlesFamiliesRoutes } from 'modules/ArticlesFamilies/Static/articlesFamiliesRoutes';
 import { META_DEFAULTS } from '@helpers';
-import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -40,7 +40,7 @@ const AddArticleFamilyPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-articles-family')} />
-            <AddConfigParamComponent
+            <AddEditItemComponent
                 dataModel={SingleParameterModelV2}
                 headerComponent={
                     <HeaderContent
