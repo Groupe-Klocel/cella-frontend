@@ -240,7 +240,7 @@ export const PurchaseOrderLineModelV2: ModelType = {
             isDetailRequested: true,
             isExcludedFromDetail: false,
             detailGroup: '{"label":"general", "position":0}',
-            link: null,
+            link: 'articles/articleId',
             addEditFormat: 'String',
             addEditStep: null,
             maxLength: null,
