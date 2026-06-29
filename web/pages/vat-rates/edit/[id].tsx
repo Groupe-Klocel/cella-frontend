@@ -25,11 +25,23 @@ import { SingleParameterModelV2 as model } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { vatRatesRoutes as itemRoutes } from 'modules/VatRates/Static/vatRatesRoutes';
 import { META_DEFAULTS } from '@helpers';
-import { EditConfigParamComponent } from 'modules/Crud/EditConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData } from '@helpers';
+import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditVatRatePage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, model);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditVatRatePage: PageComponent = (props) => {
     const { t } = useTranslation();
 
     const router = useRouter();
@@ -46,8 +58,9 @@ const EditVatRatePage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('actions:edit-vat-rate')} ${data?.value}`} />
-            <EditConfigParamComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={model}
                 headerComponent={

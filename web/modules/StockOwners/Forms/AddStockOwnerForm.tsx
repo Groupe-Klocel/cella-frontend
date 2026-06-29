@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { useState, useEffect, FC } from 'react';
+import { useState, useEffect, useMemo, FC } from 'react';
 import { Form, Button, Space, Modal, Select, Card, Divider, Collapse } from 'antd';
 import { WrapperForm, StepsPanel, WrapperStepContent } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -37,7 +37,7 @@ import {
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import configs from '../../../../common/configs.json';
-import { FormGroup } from 'modules/Crud/submodules/FormGroup';
+import { FormGroup } from 'modules/Crud/submodules/FormGroupV2';
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -464,6 +464,26 @@ export const AddStockOwnerForm: FC<IAddStockOwnerFormProps> = (props: IAddStockO
         };
     });
 
+    // adapt the container-provided steps to FormGroupV2's expected shape:
+    // - rulesInfos drives validation (FormGroupV2 rebuilds the antd rules from it)
+    // - optionTable must be an object (FormGroupV2's SelectInput reads table/fieldToDisplay from it)
+    // memoised so the inputs reference is stable (FormGroupV2 has a useEffect on `inputs`)
+    const currentInputs = useMemo(
+        () =>
+            (props.addSteps[current] ?? []).map((item: any) => {
+                const fieldInfo = props.dataModel.fieldsInfo[item.name];
+                return {
+                    ...item,
+                    rulesInfos: [fieldInfo?.isMandatory, fieldInfo?.minRule, fieldInfo?.maxRule],
+                    optionTable:
+                        item.optionTable && typeof item.optionTable === 'string'
+                            ? JSON.parse(item.optionTable)
+                            : item.optionTable
+                };
+            }),
+        [props.addSteps, current, props.dataModel]
+    );
+
     useEffect(() => {
         if (createLoading) {
             showInfo(t('messages:info-create-wip'));
@@ -591,7 +611,12 @@ export const AddStockOwnerForm: FC<IAddStockOwnerFormProps> = (props: IAddStockO
                             </Form.Item>
                         </Panel>
                     </Collapse>
-                    <FormGroup inputs={props.addSteps[current]} setValues={form.setFieldsValue} />
+                    <FormGroup
+                        inputs={currentInputs}
+                        setValues={form.setFieldsValue}
+                        dataModel={props.dataModel}
+                        setFormInfos={props.setFormInfos}
+                    />
                 </Form>
             </WrapperStepContent>
             <div style={{ textAlign: 'center' }}>

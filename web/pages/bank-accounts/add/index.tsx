@@ -25,7 +25,7 @@ import { SingleParameterModelV2 as model } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { bankAccountsRoutes as itemRoutes } from 'modules/BankAccounts/Static/bankAccountsRoutes';
 import { META_DEFAULTS } from '@helpers';
-import { AddConfigParamComponent } from 'modules/Crud/AddConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -40,7 +40,7 @@ const AddBankAccountPage: PageComponent = () => {
     return (
         <>
             <AppHead title={t('actions:add-bank-account')} />
-            <AddConfigParamComponent
+            <AddEditItemComponent
                 dataModel={model}
                 headerComponent={
                     <HeaderContent
