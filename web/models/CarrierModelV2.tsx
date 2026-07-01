@@ -226,6 +226,28 @@ export const CarrierModelV2: ModelType = {
             toBeEditDisabled:
                 '[{"table": "HandlingUnitOutbound","field": "status","conditions": "value >= estimated && value < dispatched"}]'
         },
+        isVirtual: {
+            // Visible in list and detail, but read-only: no addEditFormat -> not rendered as an
+            // editable input by the add/edit stack (carriers use bespoke add/edit forms anyway).
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'Boolean',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         contactName: {
             isListRequested: true,
             isDefaultHiddenList: true,

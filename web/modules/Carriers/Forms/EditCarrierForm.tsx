@@ -20,15 +20,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import { Button, Input, Form, Space, Modal, AutoComplete, Checkbox, Select } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
+import { useAppState } from 'context/AppContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo, checkUndefinedValues, getLanguageCode } from '@helpers';
 import {
-    GetAllCarriersQuery,
+    showError,
+    showSuccess,
+    showInfo,
+    checkUndefinedValues,
+    getLanguageCode,
+    getReservedCarrierExclusionFilters,
+    findCodeByScopeAndValue
+} from '@helpers';
+import {
     UpdateCarrierMutation,
     UpdateCarrierMutationVariables,
-    useGetAllCarriersQuery,
     useUpdateCarrierMutation
 } from 'generated/graphql';
 import { gql } from 'graphql-request';
@@ -46,8 +53,17 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
 }: EditCarrierFormProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
+    const { configs: appConfigs } = useAppState();
     const router = useRouter();
     const filteredLanguage = getLanguageCode(router);
+
+    // Backend advancedFilters excluding reserved carriers (virtual / closed) from the
+    // parent-carrier selection. The closed status code is resolved from AppState configs
+    // (scope 'carrier_status', value 'closed') and parsed to a number (status is an Int).
+    const carrierExclusionFilters = useMemo(() => {
+        const code = findCodeByScopeAndValue(appConfigs ?? [], 'carrier_status', 'closed');
+        return getReservedCarrierExclusionFilters(code != null ? parseInt(code, 10) : undefined);
+    }, [appConfigs]);
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [availableValue, setAvailableValue] = useState(details.available);
     const [toBeLoadedValue, setToBeLoadedValue] = useState(details.toBeLoaded);
@@ -150,15 +166,41 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
         form.setFieldsValue({ contactCivility: value });
     };
 
-    // Get all carriers
-    const carrierParents = useGetAllCarriersQuery<Partial<GetAllCarriersQuery>, Error>(
-        graphqlRequestClient,
-        {
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
-        }
-    );
+    // Get all carriers (bespoke gql) — reserved carriers (virtual / closed) are excluded
+    // from the parent-carrier selection via backend advancedFilters.
+    const [carrierParents, setCarrierParents] = useState<any[]>([]);
+    useEffect(() => {
+        const query = gql`
+            query getCarrierParents(
+                $advancedFilters: [CarrierAdvancedSearchFilters!]
+                $orderBy: [CarrierOrderByCriterion!]
+                $page: Int!
+                $itemsPerPage: Int!
+            ) {
+                carriers(
+                    advancedFilters: $advancedFilters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                ) {
+                    results {
+                        id
+                        name
+                    }
+                }
+            }
+        `;
+        graphqlRequestClient
+            .request(query, {
+                advancedFilters: carrierExclusionFilters,
+                orderBy: null,
+                page: 1,
+                itemsPerPage: 100
+            })
+            .then((data: any) => {
+                setCarrierParents(data?.carriers?.results ?? []);
+            });
+    }, [carrierExclusionFilters]);
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
         const handleWindowClose = (e: BeforeUnloadEvent) => {
@@ -267,7 +309,7 @@ export const EditCarrierForm: FC<EditCarrierFormProps> = ({
                             name: t('d:parentCarrier')
                         })}`}
                     >
-                        {carrierParents?.data?.carriers?.results.map((carrierParent: any) => (
+                        {carrierParents.map((carrierParent: any) => (
                             <Option key={carrierParent.id} value={carrierParent.id}>
                                 {carrierParent.name}
                             </Option>
