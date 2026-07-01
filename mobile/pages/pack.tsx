@@ -24,9 +24,13 @@ import { HeaderContent, RadioInfosHeader } from '@components';
 import {
     ButtonManagementType,
     applyRfActionButtonsConfig,
+    getModesFromPermissions,
     getMoreInfos,
+    showError,
+    showSuccess,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
+import { ModeEnum } from 'generated/graphql';
 import { Form, Modal, Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
@@ -55,8 +59,9 @@ const Pack: PageComponent = () => {
     const { t } = useTranslation();
     const { graphqlRequestClient, user } = useAuth();
     const router = useRouter();
-    const { parameters, configs } = useAppState();
+    const { parameters, configs, permissions } = useAppState();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [finishPositionLoading, setFinishPositionLoading] = useState<boolean>(false);
     const [closeBox, setCloseBox] = useState<boolean>(false);
     const [isToControl, setIsToControl] = useState<boolean | null>(null);
     const [triggerEnforcedControl, setTriggerEnforcedControl] = useState<boolean>(false);
@@ -105,11 +110,22 @@ const Pack: PageComponent = () => {
             }
         })();
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
+
+        // Location (without HU management) where the missing stock is booked when finishing a position.
+        // Customer-configurable through the 'outbound' parameter flagged 'DEFAULT_MISSING_LOCATION'
+        // (same convention as 'DEFAULT_ROUND_LOCATION'); defaults to 'MANQUANT PACK'.
+        const missingLocationName = findValueByScopeAndCode(
+            parameters,
+            'outbound',
+            'DEFAULT_MISSING_LOCATION'
+        );
+
         return {
             defaultQuantity,
             autoValidate1Quantity,
             equipmentHuType,
-            packingWithControlInprogressHuoStatus
+            packingWithControlInprogressHuoStatus,
+            missingLocationName
         };
     }, [parameters, configs]);
 
@@ -474,6 +490,89 @@ const Pack: PageComponent = () => {
             setTriggerEnforcedControl(false);
         }
     }, [triggerEnforcedControl]);
+
+    // "Finish position": declare as missing the remaining quantity of every non-prepared HUCO
+    // of the box currently at the scanned position, then go back to scan the next round/position.
+    const positionHuo = storedObject?.step30?.data?.currentHuos?.[0];
+    const positionMissingHucos =
+        positionHuo?.handlingUnitContentOutbounds?.filter(
+            (huco: any) => huco.pickedQuantity + huco.missingQuantity < huco.quantityToBePicked
+        ) ?? [];
+    const positionRemainingQuantity = positionMissingHucos.reduce(
+        (total: number, huco: any) =>
+            total + (huco.quantityToBePicked - huco.pickedQuantity - huco.missingQuantity),
+        0
+    );
+
+    const onFinishPosition = () => {
+        if (!positionHuo || positionRemainingQuantity <= 0) {
+            return;
+        }
+        Modal.confirm({
+            title: t('messages:confirmation'),
+            content: t('messages:confirm-finish-position-missing', {
+                quantity: positionRemainingQuantity
+            }),
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel'),
+            onOk: async () => {
+                setFinishPositionLoading(true);
+                const equipmentHuoPalletId = round?.handlingUnitOutbounds?.find(
+                    (huo: any) => huo.handlingUnit?.type === equipmentHuType
+                )?.id;
+                const inputToValidate = {
+                    handlingUnitOutboundId: positionHuo.id,
+                    round: { id: round?.id },
+                    equipmentHUOPalletId: equipmentHuoPalletId,
+                    missingLocationName: configsParamsCodes.missingLocationName
+                };
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+                const variables = {
+                    functionName: 'declare_missing_quantity_post_picking',
+                    event: {
+                        input: inputToValidate
+                    }
+                };
+                try {
+                    const result = await graphqlRequestClient.request(query, variables);
+                    if (result.executeFunction.status === 'ERROR') {
+                        showError(result.executeFunction.output);
+                    } else if (
+                        result.executeFunction.status === 'OK' &&
+                        result.executeFunction.output.status === 'KO'
+                    ) {
+                        showError(t(`errors:${result.executeFunction.output.output.code}`));
+                        console.log('Backend_message', result.executeFunction.output.output);
+                    } else {
+                        showSuccess(t('messages:position-finished-successfully'));
+                        if (result.executeFunction.output.output?.isRoundClosed) {
+                            showSuccess(t('messages:pack-round-finished'));
+                        }
+                        // Back to scan round/equipment/position with a fresh fetch (keep the printer).
+                        dispatch({
+                            type: 'UPDATE_BY_PROCESS',
+                            processName,
+                            object: { currentStep: 20, step10: storedObject['step10'] }
+                        });
+                        setIsToControl(null);
+                        form.resetFields();
+                    }
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                } finally {
+                    setFinishPositionLoading(false);
+                }
+            }
+        });
+    };
     //#endregion
 
     //#region module buttons
@@ -494,6 +593,25 @@ const Pack: PageComponent = () => {
                 setCloseBox(true);
             },
             position: 'bottom'
+        },
+        {
+            key: 'finish-position',
+            label: t('actions:finish-position'),
+            visibleOnSteps: [40],
+            permissionsToSeeTheButton: Boolean(
+                round?.equipment?.checkPosition &&
+                    getModesFromPermissions(permissions, 'mobile_button_missing-handling').includes(
+                        ModeEnum.Read
+                    ) &&
+                    positionRemainingQuantity > 0
+            ),
+            onClick: () => {
+                onFinishPosition();
+            },
+            position: 'top',
+            style: {
+                background: 'radial-gradient(circle, #ff8a1ce8 5%, #f4a261 100%)'
+            }
         },
         {
             key: 'enforce-control',
@@ -553,7 +671,7 @@ const Pack: PageComponent = () => {
                     }}
                 ></RadioInfosHeader>
             )}
-            {isLoading ? (
+            {isLoading || finishPositionLoading ? (
                 <UpperMobileSpinner></UpperMobileSpinner>
             ) : (
                 <RadioButtonWrapper
