@@ -385,6 +385,22 @@ const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => 
     )?.code;
 };
 
+/**
+ * Backend `advancedFilters` excluding reserved carriers (virtual or closed) from an option list.
+ * Uses DIFFERENT so carriers with a null value are kept (only the excluded value is filtered out).
+ * `carrierClosedStatus` is the closed status code resolved from AppState configs
+ * (scope 'carrier_status', value 'closed'); pass a number since status is an Int.
+ */
+const getReservedCarrierExclusionFilters = (carrierClosedStatus?: any): any[] => {
+    const filters: any[] = [{ filter: [{ searchType: 'DIFFERENT', field: { isVirtual: true } }] }];
+    if (carrierClosedStatus != null) {
+        filters.push({
+            filter: [{ searchType: 'DIFFERENT', field: { status: carrierClosedStatus } }]
+        });
+    }
+    return filters;
+};
+
 /** @deprecated: use filterItems instead with exclude option
  * Helper function to find all items by scope and code
  */
@@ -487,6 +503,7 @@ export {
     getLastStepWithPreviousStep,
     findValueByScopeAndCode,
     findCodeByScopeAndValue,
+    getReservedCarrierExclusionFilters,
     findAllByScope,
     advancedFilter,
     snakeToCamel,

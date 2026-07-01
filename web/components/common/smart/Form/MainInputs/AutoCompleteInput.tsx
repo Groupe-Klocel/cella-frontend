@@ -65,7 +65,11 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
     // subOptions is undefined until options are received; this drives the hidden state of the field
     const [subOptions, setSubOptions] = useState<FormOptionType[] | undefined>(undefined);
     const optionTable: any = (item as any)?.optionTable ?? {};
-    const isAdvancedFilters = props?.advancedFilters?.length !== 0;
+    // Advanced filters narrowing the option list can be provided generically through the field's
+    // optionTable (constraint set by the calling page), via props, or on the item itself.
+    const advancedFilters =
+        optionTable?.advancedFilters ?? props?.advancedFilters ?? (item as any)?.advancedFilters;
+    const isAdvancedFilters = Array.isArray(advancedFilters) && advancedFilters.length > 0;
 
     // a dynamic filter is "not yet sent" while its value is still the placeholder (value contained in its key),
     // (see processedOptions in AddEditItemComponentV2) -> hide the field until the real value arrives
@@ -107,7 +111,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
 
             const variables = {
                 filters: modifiedFilters,
-                advancedFilters: isAdvancedFilters ? item?.advancedFilters : undefined,
+                advancedFilters: isAdvancedFilters ? advancedFilters : undefined,
                 orderBy: [
                     {
                         field: optionTable.fieldToDisplay,

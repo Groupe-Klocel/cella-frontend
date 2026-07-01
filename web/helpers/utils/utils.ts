@@ -590,6 +590,22 @@ const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => 
     )?.code;
 };
 
+/**
+ * Backend `advancedFilters` excluding reserved carriers (virtual or closed) from an option list.
+ * Uses DIFFERENT so carriers with a null value are kept (only the excluded value is filtered out).
+ * Meant to be passed as a generic option-list filtering constraint (e.g. to AddEditItemComponent)
+ * for carrier autocompletes rendered by the generic add/edit stack.
+ */
+const getReservedCarrierExclusionFilters = (carrierClosedStatus?: any): any[] => {
+    const filters: any[] = [{ filter: [{ searchType: 'DIFFERENT', field: { isVirtual: true } }] }];
+    if (carrierClosedStatus != null) {
+        filters.push({
+            filter: [{ searchType: 'DIFFERENT', field: { status: carrierClosedStatus } }]
+        });
+    }
+    return filters;
+};
+
 /** @deprecated: use filterItems instead with exclude option
  * Helper function to find all items by scope and code
  */
@@ -658,5 +674,6 @@ export {
     getLanguageCode,
     findValueByScopeAndCode,
     findCodeByScopeAndValue,
-    findAllByScope
+    findAllByScope,
+    getReservedCarrierExclusionFilters
 };
