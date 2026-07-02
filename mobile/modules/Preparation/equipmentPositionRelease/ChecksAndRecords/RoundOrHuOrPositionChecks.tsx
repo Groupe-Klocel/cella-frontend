@@ -168,10 +168,6 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
                 }
             }
         };
-        console.log(
-            'AXC - RoundOrHuOrPositionChecks.tsx - scanRoundOrEquipment - variables:',
-            variables
-        );
 
         try {
             const result = await graphqlRequestClient.request(query, variables);

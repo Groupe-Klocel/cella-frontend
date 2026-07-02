@@ -42,9 +42,14 @@ const DetailsList: FC<IDetailsListProps> = ({ details }: IDetailsListProps) => {
                                         typeof details[key] === 'object' && details[key]?.highlight
                                             ? 'red'
                                             : 'black',
-                                    fontSize: '10px',
+                                    fontSize:
+                                        typeof details[key] === 'object' &&
+                                        (details[key]?.highlight || details[key]?.bold)
+                                            ? '12px'
+                                            : '10px',
                                     fontWeight:
-                                        typeof details[key] === 'object' && details[key]?.highlight
+                                        typeof details[key] === 'object' &&
+                                        (details[key]?.highlight || details[key]?.bold)
                                             ? 'bold'
                                             : 'normal'
                                 }}

@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
@@ -229,6 +229,8 @@ const Reception: PageComponent = () => {
         const articleLuBarcode = storedObject['step50']?.data?.chosenArticleLuBarcode;
         headerDisplay[t('common:article_abbr')] =
             articleLuBarcode.article.name + '-' + articleLuBarcode.article.description;
+        headerDisplay[t('common:supplier-article-code')] =
+            articleLuBarcode.article?.genericArticleComment;
     }
     if (storedObject['step40']?.data?.currentPurchaseOrderLine) {
         headerDisplay[t('common:stock-owner')] =
@@ -275,8 +277,6 @@ const Reception: PageComponent = () => {
         const handlingUnit = storedObject['step110']?.data?.handlingUnit;
         headerDisplay[t('common:hu')] = handlingUnit.barcode;
     }
-    headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
-
     const onReset = () => {
         dispatch({
             type: 'DELETE_RF_PROCESS',
@@ -354,9 +354,7 @@ const Reception: PageComponent = () => {
                         stockOwnerId={
                             storedObject['step40'].data.currentPurchaseOrderLine[0].stockOwnerId
                         }
-                        stockStatus={
-                            storedObject['step70']?.data?.stockStatus.code
-                        }
+                        stockStatus={storedObject['step70']?.data?.stockStatus.code}
                         processName={'reception'}
                         features={storedObject['step60']?.data?.processedFeatures}
                     />
