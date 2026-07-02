@@ -491,21 +491,32 @@ const Pack: PageComponent = () => {
         }
     }, [triggerEnforcedControl]);
 
-    // "Finish position": declare as missing the remaining quantity of every non-prepared HUCO
-    // of the box currently at the scanned position, then go back to scan the next round/position.
+    // "Finish position": declare as missing the remaining quantity of every non-prepared HUCO,
+    // then go back to scan the next round/position. With position scan the missing quantities are
+    // declared on the box at the scanned position; without position scan they are declared on
+    // every unpacked box of the round.
+    const getHuoRemainingQuantity = (huo: any) =>
+        huo?.handlingUnitContentOutbounds?.reduce(
+            (total: number, huco: any) =>
+                total +
+                Math.max(huco.quantityToBePicked - huco.pickedQuantity - huco.missingQuantity, 0),
+            0
+        ) ?? 0;
     const positionHuo = storedObject?.step30?.data?.currentHuos?.[0];
-    const positionMissingHucos =
-        positionHuo?.handlingUnitContentOutbounds?.filter(
-            (huco: any) => huco.pickedQuantity + huco.missingQuantity < huco.quantityToBePicked
-        ) ?? [];
-    const positionRemainingQuantity = positionMissingHucos.reduce(
-        (total: number, huco: any) =>
-            total + (huco.quantityToBePicked - huco.pickedQuantity - huco.missingQuantity),
+    const finishPositionHuos = (
+        round?.equipment?.checkPosition
+            ? positionHuo
+                ? [positionHuo]
+                : []
+            : (destinationHuos ?? [])
+    ).filter((huo: any) => getHuoRemainingQuantity(huo) > 0);
+    const positionRemainingQuantity = finishPositionHuos.reduce(
+        (total: number, huo: any) => total + getHuoRemainingQuantity(huo),
         0
     );
 
     const onFinishPosition = () => {
-        if (!positionHuo || positionRemainingQuantity <= 0) {
+        if (finishPositionHuos.length === 0) {
             return;
         }
         Modal.confirm({
@@ -520,12 +531,6 @@ const Pack: PageComponent = () => {
                 const equipmentHuoPalletId = round?.handlingUnitOutbounds?.find(
                     (huo: any) => huo.handlingUnit?.type === equipmentHuType
                 )?.id;
-                const inputToValidate = {
-                    handlingUnitOutboundId: positionHuo.id,
-                    round: { id: round?.id },
-                    equipmentHUOPalletId: equipmentHuoPalletId,
-                    missingLocationName: configsParamsCodes.missingLocationName
-                };
                 const query = gql`
                     mutation executeFunction($functionName: String!, $event: JSON!) {
                         executeFunction(functionName: $functionName, event: $event) {
@@ -534,28 +539,53 @@ const Pack: PageComponent = () => {
                         }
                     }
                 `;
-                const variables = {
-                    functionName: 'declare_missing_quantity_post_picking',
-                    event: {
-                        input: inputToValidate
-                    }
-                };
+                let processedHuosCount = 0;
+                let lastOutput: any = null;
+                let hasError = false;
                 try {
-                    const result = await graphqlRequestClient.request(query, variables);
-                    if (result.executeFunction.status === 'ERROR') {
-                        showError(result.executeFunction.output);
-                    } else if (
-                        result.executeFunction.status === 'OK' &&
-                        result.executeFunction.output.status === 'KO'
-                    ) {
-                        showError(t(`errors:${result.executeFunction.output.output.code}`));
-                        console.log('Backend_message', result.executeFunction.output.output);
-                    } else {
+                    for (const huo of finishPositionHuos) {
+                        const variables = {
+                            functionName: 'declare_missing_quantity_post_picking',
+                            event: {
+                                input: {
+                                    handlingUnitOutboundId: huo.id,
+                                    round: { id: round?.id },
+                                    equipmentHUOPalletId: equipmentHuoPalletId,
+                                    missingLocationName: configsParamsCodes.missingLocationName
+                                }
+                            }
+                        };
+                        const result = await graphqlRequestClient.request(query, variables);
+                        if (result.executeFunction.status === 'ERROR') {
+                            showError(result.executeFunction.output);
+                            hasError = true;
+                            break;
+                        }
+                        if (
+                            result.executeFunction.status === 'OK' &&
+                            result.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(t(`errors:${result.executeFunction.output.output.code}`));
+                            console.log('Backend_message', result.executeFunction.output.output);
+                            hasError = true;
+                            break;
+                        }
+                        processedHuosCount += 1;
+                        lastOutput = result.executeFunction.output.output;
+                    }
+                    if (!hasError) {
                         showSuccess(t('messages:position-finished-successfully'));
-                        if (result.executeFunction.output.output?.isRoundClosed) {
+                        if (lastOutput?.isRoundClosed) {
                             showSuccess(t('messages:pack-round-finished'));
                         }
-                        // Back to scan round/equipment/position with a fresh fetch (keep the printer).
+                    }
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                } finally {
+                    if (processedHuosCount > 0) {
+                        // Back to scan round/equipment/position with a fresh fetch (keep the printer),
+                        // including after a partial failure so the screen reflects what was declared.
                         dispatch({
                             type: 'UPDATE_BY_PROCESS',
                             processName,
@@ -564,10 +594,6 @@ const Pack: PageComponent = () => {
                         setIsToControl(null);
                         form.resetFields();
                     }
-                } catch (error) {
-                    showError(t('messages:error-executing-function'));
-                    console.log('executeFunctionError', error);
-                } finally {
                     setFinishPositionLoading(false);
                 }
             }
@@ -599,11 +625,9 @@ const Pack: PageComponent = () => {
             label: t('actions:finish-position'),
             visibleOnSteps: [40],
             permissionsToSeeTheButton: Boolean(
-                round?.equipment?.checkPosition &&
-                    getModesFromPermissions(permissions, 'mobile_button_missing-handling').includes(
-                        ModeEnum.Read
-                    ) &&
-                    positionRemainingQuantity > 0
+                getModesFromPermissions(permissions, 'mobile_button_missing-handling').includes(
+                    ModeEnum.Read
+                ) && positionRemainingQuantity > 0
             ),
             onClick: () => {
                 onFinishPosition();
