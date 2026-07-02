@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { LanguageType } from '@helpers';
+import { HeaderManagementType, LanguageType } from '@helpers';
 import Cookies from 'js-cookie';
 import { isoLangs } from './constant';
 import { message } from 'antd';
@@ -463,6 +463,20 @@ const getLanguageCode = (router: any): string | undefined => {
     return router.locale?.split('-')[0] || 'en';
 };
 
+// Build the RadioInfosHeader `displayed` object from a declarative HeaderManagementType
+// configuration: skips non-visible rows and wraps bold/highlight values for DetailsList
+const buildHeaderDisplay = (headerManagement: HeaderManagementType): { [k: string]: any } => {
+    const headerDisplay: { [k: string]: any } = {};
+    headerManagement.forEach((item) => {
+        if (!item.visible) return;
+        headerDisplay[item.label] =
+            item.bold || item.highlight
+                ? { value: item.value, bold: item.bold, highlight: item.highlight }
+                : item.value;
+    });
+    return headerDisplay;
+};
+
 export {
     isEmpty,
     pathParams,
@@ -507,5 +521,6 @@ export {
     findAllByScope,
     advancedFilter,
     snakeToCamel,
-    getLanguageCode
+    getLanguageCode,
+    buildHeaderDisplay
 };
