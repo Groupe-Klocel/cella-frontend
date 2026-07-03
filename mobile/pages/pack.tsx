@@ -625,14 +625,60 @@ const Pack: PageComponent = () => {
                     console.log('executeFunctionError', error);
                 } finally {
                     if (processedHuosCount > 0) {
-                        // Back to scan round/equipment/position with a fresh fetch (keep the printer),
-                        // including after a partial failure so the screen reflects what was declared.
-                        dispatch({
-                            type: 'UPDATE_BY_PROCESS',
-                            processName,
-                            object: { currentStep: 20, step10: storedObject['step10'] }
-                        });
-                        setIsToControl(null);
+                        // In "finish box" mode, if the round still has other boxes with quantities
+                        // left to pack, skip re-scanning the round/equipment and jump straight back
+                        // to the article scan: keep the round loaded (minus the just-finished box)
+                        // and let the position step auto-select the remaining boxes. Only the
+                        // in-progress box was touched, so the other boxes' locally-held remaining
+                        // quantities stay accurate without a refetch.
+                        const finishedHuoIds = new Set(finishPositionHuos.map((huo: any) => huo.id));
+                        const remainingHuos = (destinationHuos ?? []).filter(
+                            (huo: any) =>
+                                !finishedHuoIds.has(huo.id) && getHuoRemainingQuantity(huo) > 0
+                        );
+
+                        if (
+                            !hasError &&
+                            !lastOutput?.isRoundClosed &&
+                            isFinishBoxMode &&
+                            remainingHuos.length > 0
+                        ) {
+                            // Keep the round/equipment loaded (clearing the finished in-progress box)
+                            // so the position step auto-selects the remaining boxes and the flow lands
+                            // back on the article scan. isToControl stays true (non-position packing).
+                            dispatch({
+                                type: 'UPDATE_BY_PROCESS',
+                                processName,
+                                object: {
+                                    currentStep: 20,
+                                    step10: storedObject['step10'],
+                                    step20: {
+                                        ...storedObject['step20'],
+                                        data: {
+                                            ...storedObject['step20']?.data,
+                                            inProgressHuo: undefined,
+                                            round: {
+                                                ...round,
+                                                handlingUnitOutbounds:
+                                                    round?.handlingUnitOutbounds?.filter(
+                                                        (huo: any) => !finishedHuoIds.has(huo.id)
+                                                    )
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            // Round finished or nothing left to pack here: back to a fresh
+                            // round/equipment/position scan (keep the printer). Also covers partial
+                            // failures so the screen reflects what was actually declared.
+                            dispatch({
+                                type: 'UPDATE_BY_PROCESS',
+                                processName,
+                                object: { currentStep: 20, step10: storedObject['step10'] }
+                            });
+                            setIsToControl(null);
+                        }
                         form.resetFields();
                     }
                     setFinishPositionLoading(false);
