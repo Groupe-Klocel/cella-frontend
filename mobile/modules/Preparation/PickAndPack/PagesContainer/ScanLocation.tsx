@@ -92,7 +92,7 @@ export const ScanLocation = ({
     }, []);
 
     const locationName =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location.name;
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location?.name;
 
     const PRAADeliveryLineInfos =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.roundLineDetail

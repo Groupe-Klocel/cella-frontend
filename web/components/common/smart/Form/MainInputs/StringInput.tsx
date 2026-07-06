@@ -38,6 +38,21 @@ export interface IDraggerInputProps {
 
 const StringInput: FC<IDraggerInputProps> = ({ item, form, filtersParameters }) => {
     const { t } = useTranslation();
+    const contextForm = Form.useFormInstance();
+    const formToUse = form ?? contextForm;
+
+    // trim the entered text on blur/enter (normalize would prevent typing inner spaces)
+    const trimValue = () => {
+        const current = formToUse?.getFieldValue(item.name);
+        const text = Array.isArray(current) ? current[1] : current;
+        if (typeof text === 'string' && text !== text.trim()) {
+            formToUse?.setFieldsValue({
+                [item.name]: Array.isArray(current)
+                    ? [current[0], text.trim()]
+                    : text.trim() || undefined
+            });
+        }
+    };
 
     const [selectCase, setSelectCase] = useState<boolean>(
         form?.getFieldValue(item.name)?.[0]?.includes('^') ? false : true
@@ -74,6 +89,8 @@ const StringInput: FC<IDraggerInputProps> = ({ item, form, filtersParameters }) 
             <Input
                 maxLength={item.maxLength ? item.maxLength : 100}
                 disabled={item.disabled ? true : false}
+                onBlur={trimValue}
+                onPressEnter={trimValue}
                 suffix={
                     filtersParameters && (
                         <CaseJokerButton

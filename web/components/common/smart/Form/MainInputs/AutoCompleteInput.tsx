@@ -181,7 +181,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
         debounce((data: string) => {
             const filteredData = {
                 ...filteredOptions,
-                [optionTable.fieldToDisplay]: data
+                [optionTable.fieldToDisplay]: (data ?? '').trim()
             };
             setFilteredOptions(filteredData);
         }, 400),
