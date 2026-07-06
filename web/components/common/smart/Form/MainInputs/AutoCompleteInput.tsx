@@ -23,7 +23,12 @@ import { debounce } from 'lodash';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState, useEffect, useCallback } from 'react';
 import { FilterFieldType } from '../../../../../models/Models';
-import { getRulesWithNoSpacesValidator, pluralize, buildListQuery, reportSubOptions } from '@helpers';
+import {
+    getRulesWithNoSpacesValidator,
+    pluralize,
+    buildListQuery,
+    reportSubOptions
+} from '@helpers';
 import { useAuth } from 'context/AuthContext';
 
 export interface IFormGroupProps {
@@ -120,6 +125,18 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
             const options = await graphqlRequestClient.request(query, variables);
 
             const results = options[queryName].results;
+            // the current value (edit mode) must always have a matching option, otherwise the
+            // Select displays the raw id; fetch it separately when outside the first page
+            const initialIds = (
+                Array.isArray(item.initialValue) ? item.initialValue : [item.initialValue]
+            ).filter((id: any) => id && !results.some((result: any) => result.id === id));
+            if (initialIds.length > 0) {
+                const initialOptions = await graphqlRequestClient.request(query, {
+                    ...variables,
+                    filters: { id: initialIds }
+                });
+                results.push(...initialOptions[queryName].results);
+            }
             setSubOptions(results);
             setAutoCompleteValue((prev) => ({ ...prev, subOptions: results }));
             if (props.setAllSubOptions) {
@@ -160,7 +177,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
         debounce((data: string) => {
             const filteredData = {
                 ...filteredOptions,
-                [optionTable.fieldToDisplay]: data
+                [optionTable.fieldToDisplay]: (data ?? '').trim()
             };
             setFilteredOptions(filteredData);
         }, 400),
@@ -188,6 +205,7 @@ const AutoComplete: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                 filterOption={false}
                 onSearch={handleSearch}
                 allowClear
+                disabled={(item as any).disabled ? true : false}
             >
                 {subOptions?.map((option: FormOptionType, index: number) => {
                     const firstKeyOfOtpion = Object.keys(option)[1] as keyof FormOptionType;
