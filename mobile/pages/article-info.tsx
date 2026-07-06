@@ -75,8 +75,13 @@ const ArticleInfo: PageComponent = () => {
             const article = chosenArticleLuBarcode.article
                 ? chosenArticleLuBarcode.article
                 : chosenArticleLuBarcode;
-            object[t('common:article_abbr')] = chosenArticleLuBarcode.stockOwner
-                ? article.name + ' (' + chosenArticleLuBarcode.stockOwner.name + ')'
+            // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
+            const stockOwnerName =
+                chosenArticleLuBarcode.stockOwner?.name ??
+                chosenArticleLuBarcode.articleLu?.stockOwner?.name ??
+                chosenArticleLuBarcode.article?.stockOwner?.name;
+            object[t('common:article_abbr')] = stockOwnerName
+                ? article.name + ' (' + stockOwnerName + ')'
                 : article.name;
             object[t('common:supplier-article-code')] = article?.genericArticleComment;
             object[t('common:article-description')] = article.description;

@@ -20,7 +20,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
-import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
+import {
+    useTranslationWithFallback as useTranslation,
+    getLanguageCode,
+    getStockOwnerIdFromArticleLuBarcode
+} from '@helpers';
 import { HeaderContent, NavButton, PageContentWrapper, RadioInfosHeader } from '@components';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
@@ -121,8 +125,12 @@ const InitStock: PageComponent = () => {
             object[t('common:supplier-article-code')] = article?.genericArticleComment;
         }
         if (storedObject['step50']?.data) {
+            // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
+            const chosenArticleLuBarcode = storedObject['step50']?.data?.chosenArticleLuBarcode;
             const stockOwner =
-                storedObject['step50']?.data?.chosenArticleLuBarcode?.stockOwner.name;
+                chosenArticleLuBarcode?.stockOwner?.name ??
+                chosenArticleLuBarcode?.articleLu?.stockOwner?.name ??
+                chosenArticleLuBarcode?.article?.stockOwner?.name;
             object[t('common:stock-owner')] = stockOwner;
         }
         if (storedObject['step70']?.data) {
@@ -282,9 +290,9 @@ const InitStock: PageComponent = () => {
                     stepNumber={50}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ submitButton: true, backButton: true }}
-                    defaultValue={
-                        storedObject['step40']?.data?.articleLuBarcodesInfos[0]?.stockOwnerId
-                    }
+                    defaultValue={getStockOwnerIdFromArticleLuBarcode(
+                        storedObject['step40']?.data?.articleLuBarcodesInfos[0]
+                    )}
                     articleLuBarcodes={storedObject['step40']?.data?.articleLuBarcodesInfos}
                 ></SelectArticleByStockOwnerForm>
             ) : (
