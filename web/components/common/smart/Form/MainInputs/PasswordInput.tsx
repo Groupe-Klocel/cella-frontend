@@ -48,6 +48,15 @@ export interface IDraggerPasswordInputProps {
 
 const PasswordInput: FC<IDraggerPasswordInputProps> = ({ item }) => {
     const { t } = useTranslation();
+    const form = Form.useFormInstance();
+
+    // trim the entered text on blur/enter (normalize would prevent typing inner spaces)
+    const trimValue = () => {
+        const current = form?.getFieldValue(item.name);
+        if (typeof current === 'string' && current !== current.trim()) {
+            form?.setFieldsValue({ [item.name]: current.trim() || undefined });
+        }
+    };
 
     return (
         <Form.Item
@@ -57,7 +66,11 @@ const PasswordInput: FC<IDraggerPasswordInputProps> = ({ item }) => {
             initialValue={item?.initialValue ? item?.initialValue : undefined}
             rules={item.rules!}
         >
-            <Input.Password disabled={item.disabled ? true : false} />
+            <Input.Password
+                disabled={item.disabled ? true : false}
+                onBlur={trimValue}
+                onPressEnter={trimValue}
+            />
         </Form.Item>
     );
 };
