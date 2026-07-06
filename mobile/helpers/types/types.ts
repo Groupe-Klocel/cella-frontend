@@ -106,3 +106,13 @@ export type ButtonManagementType = {
     position: 'top' | 'bottom';
     style?: React.CSSProperties;
 }[];
+
+// Declarative configuration of the RadioInfosHeader rows (mirrors ButtonManagementType).
+// Array order = display order; rows are kept in the config and toggled via `visible`.
+export type HeaderManagementType = {
+    label: string;
+    value: any;
+    visible: boolean;
+    bold?: boolean;
+    highlight?: boolean;
+}[];
