@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState, useMemo } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -139,6 +139,10 @@ const HuMovement: PageComponent = () => {
                 originalHu.handlingUnitContents.length > 0
                     ? originalHu.handlingUnitContents[0].article.name
                     : null;
+            object[t('common:supplier-article-code')] =
+                originalHu.handlingUnitContents.length > 0
+                    ? originalHu.handlingUnitContents[0].article.genericArticleComment
+                    : null;
         }
         if (storedObject['step35']?.data?.chosenLocation) {
             const location = storedObject['step35']?.data?.chosenLocation;
@@ -148,7 +152,6 @@ const HuMovement: PageComponent = () => {
             const hu = storedObject['step40']?.data?.handlingUnit;
             object[t('common:handling-unit-final_abbr')] = hu.name;
         }
-        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 
@@ -167,6 +170,10 @@ const HuMovement: PageComponent = () => {
                 originalHu.handlingUnitContents.length > 0
                     ? originalHu.handlingUnitContents[0].article.name
                     : null;
+            finalObject[t('common:supplier-article-code')] =
+                originalHu.handlingUnitContents.length > 0
+                    ? originalHu.handlingUnitContents[0].article.genericArticleComment
+                    : null;
         }
         if (storedObject['step35']?.data?.chosenLocation) {
             const chosenLocation = storedObject['step35']?.data.chosenLocation;
@@ -176,7 +183,6 @@ const HuMovement: PageComponent = () => {
             const finalHandlingUnit = storedObject['step40']?.data.finalHandlingUnit;
             finalObject[t('common:handling-unit-final_abbr')] = finalHandlingUnit.name;
         }
-        finalObject = getMoreInfos(finalObject, storedObject, processName, t);
         setFinalDisplay(finalObject);
     }, [triggerRender]);
 

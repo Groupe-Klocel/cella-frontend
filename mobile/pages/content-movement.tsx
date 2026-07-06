@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -226,6 +226,7 @@ const ContentMvmt: PageComponent = () => {
             stockOwnerName
                 ? (object[t('common:article')] = article.name + ' (' + stockOwnerName + ')')
                 : (object[t('common:article')] = article.name);
+            object[t('common:supplier-article-code')] = article?.genericArticleComment;
             object[t('common:article-description')] = article.description;
             if (storedObject['step30']?.data?.feature) {
                 const serialNumber = storedObject['step30']?.data.feature.value;
@@ -241,7 +242,6 @@ const ContentMvmt: PageComponent = () => {
             const movingQuantity = storedObject['step50']?.data?.movingQuantity;
             object[t('common:quantity')] = movingQuantity;
         }
-        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 

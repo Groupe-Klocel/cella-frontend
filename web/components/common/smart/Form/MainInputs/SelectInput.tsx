@@ -315,7 +315,9 @@ const SelectInput: FC<IDraggerSelectProps> = ({
                 showSearch
                 defaultValue={item?.initialValue}
                 filterOption={(inputValue, option) =>
-                    option!.props.children.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                    option!.props.children
+                        .toUpperCase()
+                        .indexOf(inputValue.trim().toUpperCase()) !== -1
                 }
             >
                 {subOptions?.map((option: FormOptionType, selectIndex: number) => (

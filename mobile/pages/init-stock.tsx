@@ -20,11 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
-import {
-    getMoreInfos,
-    useTranslationWithFallback as useTranslation,
-    getLanguageCode
-} from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { HeaderContent, NavButton, PageContentWrapper, RadioInfosHeader } from '@components';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
@@ -120,8 +116,9 @@ const InitStock: PageComponent = () => {
             object[t('common:handling-unit-model')] = huModel;
         }
         if (storedObject['step40']?.data) {
-            const article = storedObject['step40']?.data?.articleLuBarcodesInfos[0].article.name;
-            object[t('common:article')] = article;
+            const article = storedObject['step40']?.data?.articleLuBarcodesInfos[0].article;
+            object[t('common:article')] = article.name;
+            object[t('common:supplier-article-code')] = article?.genericArticleComment;
         }
         if (storedObject['step50']?.data) {
             const stockOwner =
@@ -147,7 +144,6 @@ const InitStock: PageComponent = () => {
             const comment = storedObject['step110']?.data?.comment;
             object[t('common:comment')] = comment;
         }
-        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 
