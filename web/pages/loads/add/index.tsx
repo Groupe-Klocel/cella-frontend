@@ -19,9 +19,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { LoadModelV2 } from '@helpers';
+import { LoadModelV2, getReservedCarrierExclusionFilters, findCodeByScopeAndValue } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { META_DEFAULTS, showError, showSuccess } from '@helpers';
 import configs from '../../../../common/configs.json';
@@ -29,6 +29,7 @@ import { addLoadRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import 'moment/min/locales';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import { useAppState } from 'context/AppContext';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
 
@@ -37,9 +38,19 @@ type PageComponent = FC & { layout: typeof MainLayout };
 const AddLoadPage: PageComponent = () => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
+    const { configs: appConfigs } = useAppState();
     const router = useRouter();
     const defaultValues = { status: configs.LOAD_STATUS_CREATED };
     const [loadId, setLoadId] = useState<string>();
+
+    // Exclude reserved carriers (virtual / closed) from the carrier dropdown. The closed status
+    // code is resolved from AppState configs (scope 'carrier_status', value 'closed').
+    const carrierExclusionFilters = useMemo(() => {
+        // status is an Int -> parse the resolved code (undefined stays undefined so the
+        // status clause is dropped and only isVirtual is applied).
+        const code = findCodeByScopeAndValue(appConfigs ?? [], 'carrier_status', 'closed');
+        return getReservedCarrierExclusionFilters(code != null ? parseInt(code, 10) : undefined);
+    }, [appConfigs]);
 
     const defaultPrintLanguage = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'global',
@@ -132,6 +143,11 @@ const AddLoadPage: PageComponent = () => {
                         onBack={() => router.push(`/loads`)}
                     />
                 }
+                // Exclude reserved carriers (virtual / closed) from the carrier dropdown — generic
+                // option-list constraint, applied only here (the loads list/filter is unaffected).
+                optionsConstraints={{
+                    carrierId: { advancedFilters: carrierExclusionFilters }
+                }}
                 setId={setLoadId}
                 extraData={
                     defaultValues || Object.keys(defaultValues).length !== 0
