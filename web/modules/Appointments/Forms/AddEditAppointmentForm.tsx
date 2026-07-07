@@ -44,7 +44,9 @@ import {
     useTranslationWithFallback as useTranslation,
     showSuccess,
     setUTCDateTime,
-    flatten
+    flatten,
+    getReservedCarrierExclusionFilters,
+    findCodeByScopeAndValue
 } from '@helpers';
 
 const { Option } = Select;
@@ -226,7 +228,13 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
             ),
             loadStatusCreated: parseInt(findConfigCode('load_status', 'Created') || '0', 10),
             loadTypePreLoading: parseInt(findConfigCode('load_type', 'Pre-loading') || '0', 10),
-            locationCategoryDock: findConfigCode('location_category', 'Dock')
+            locationCategoryDock: findConfigCode('location_category', 'Dock'),
+            // status is an Int -> parse the resolved code; keep undefined when absent so the
+            // exclusion filter drops the status clause (only isVirtual is then applied).
+            carrierClosedStatus: (() => {
+                const code = findCodeByScopeAndValue(configs, 'carrier_status', 'closed');
+                return code != null ? parseInt(code, 10) : undefined;
+            })()
         };
     }, [configs]);
 
@@ -298,11 +306,13 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 }
             `;
             const carrQuery = gql`
-                query c {
-                    carriers {
+                query c($advancedFilters: [CarrierAdvancedSearchFilters!]) {
+                    carriers(advancedFilters: $advancedFilters) {
                         results {
                             id
                             name
+                            status
+                            isVirtual
                         }
                     }
                 }
@@ -335,7 +345,11 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                     graphqlRequestClient.request(locQuery, {
                         filters: { category: configsParamsCodes.locationCategoryDock }
                     }),
-                    graphqlRequestClient.request(carrQuery),
+                    graphqlRequestClient.request(carrQuery, {
+                        advancedFilters: getReservedCarrierExclusionFilters(
+                            configsParamsCodes.carrierClosedStatus
+                        )
+                    }),
                     graphqlRequestClient.request(stockQuery),
                     graphqlRequestClient.request(aptQuery)
                 ]);

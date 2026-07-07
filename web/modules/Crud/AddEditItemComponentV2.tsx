@@ -70,6 +70,13 @@ export interface IAddItemFormProps {
     extraRules?: Array<any>;
     id?: string | undefined;
     setData?: (data: any) => void;
+    // Generic per-field option-list filtering constraints provided by the calling page.
+    // Keyed by field name; merged into the field's optionTable so the option dropdown can be
+    // narrowed (inclusion via filtersToApply, inclusion/exclusion via advancedFilters) without
+    // adding entity-specific logic in the generic components.
+    optionsConstraints?: {
+        [fieldName: string]: { filtersToApply?: any; advancedFilters?: any[] };
+    };
     setId?: (id: any) => void;
     // when true, the `scope` field is pre-filled through `extraData` and hidden from the form
     // (config/param screens that were previously handled by AddConfigParamComponent)
@@ -364,7 +371,30 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                         return obj;
                     }
                 });
-            setProcessedOptions(processedOptionsTables());
+            // Merge the page-provided per-field constraints into the matching field optionTables.
+            // Stays generic: the calling page decides what to include/exclude, no entity logic here.
+            const withConstraints = props.optionsConstraints
+                ? processedOptionsTables().map((obj: any) => {
+                      const constraint = props.optionsConstraints?.[obj.name];
+                      if (constraint && obj.optionTable && typeof obj.optionTable === 'object') {
+                          return {
+                              ...obj,
+                              optionTable: {
+                                  ...obj.optionTable,
+                                  filtersToApply: {
+                                      ...(obj.optionTable.filtersToApply ?? {}),
+                                      ...(constraint.filtersToApply ?? {})
+                                  },
+                                  ...(constraint.advancedFilters
+                                      ? { advancedFilters: constraint.advancedFilters }
+                                      : {})
+                              }
+                          };
+                      }
+                      return obj;
+                  })
+                : processedOptionsTables();
+            setProcessedOptions(withConstraints);
         }
     }, [formInfos]);
     // end sub-region

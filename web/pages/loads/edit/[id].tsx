@@ -19,12 +19,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, ContentSpin, HeaderContent } from '@components';
 import { useRouter } from 'next/router';
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { LoadModelV2 } from '@helpers';
+import { LoadModelV2, getReservedCarrierExclusionFilters, findCodeByScopeAndValue } from '@helpers';
 import { fetchInitialData, useTranslationWithFallback as useTranslation } from '@helpers';
 import { loadsRoutes } from 'modules/Loads/Static/LoadsRoutes';
 import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { useAppState } from 'context/AppContext';
 import { GetServerSideProps } from 'next';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -41,10 +42,20 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 const EditLoadsPage: PageComponent = (props) => {
     const { t } = useTranslation();
+    const { configs: appConfigs } = useAppState();
 
     const router = useRouter();
     const { id } = router.query;
     const [data, setData] = useState<any>();
+
+    // Exclude reserved carriers (virtual / closed) from the carrier dropdown. The closed status
+    // code is resolved from AppState configs (scope 'carrier_status', value 'closed').
+    const carrierExclusionFilters = useMemo(() => {
+        // status is an Int -> parse the resolved code (undefined stays undefined so the
+        // status clause is dropped and only isVirtual is applied).
+        const code = findCodeByScopeAndValue(appConfigs ?? [], 'carrier_status', 'closed');
+        return getReservedCarrierExclusionFilters(code != null ? parseInt(code, 10) : undefined);
+    }, [appConfigs]);
 
     const breadsCrumb = [
         ...loadsRoutes,
@@ -61,6 +72,11 @@ const EditLoadsPage: PageComponent = (props) => {
                 initialProps={props}
                 setData={setData}
                 dataModel={LoadModelV2}
+                // Exclude reserved carriers (virtual / closed) from the carrier dropdown — generic
+                // option-list constraint, applied only here (the loads list/filter is unaffected).
+                optionsConstraints={{
+                    carrierId: { advancedFilters: carrierExclusionFilters }
+                }}
                 headerComponent={
                     data ? (
                         <HeaderContent

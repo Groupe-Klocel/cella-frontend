@@ -24,10 +24,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 // end = begin + duration), mirroring web appointments/add.
 
 import { WrapperForm, StyledForm, StyledFormItem } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    useTranslationWithFallback as useTranslation,
+    findCodeByScopeAndValue,
+    getReservedCarrierExclusionFilters
+} from '@helpers';
 import { Form, Input, InputNumber, Select } from 'antd';
 import { gql } from 'graphql-request';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { GateAppointment, RegistrationData } from '../types';
@@ -64,21 +68,32 @@ export const RegistrationForm = ({
     const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [carriers, setCarriers] = useState<Array<{ id: string; name: string }>>([]);
 
+    // Backend advancedFilters excluding reserved carriers (virtual / closed) from the ad-hoc
+    // selection. The closed status code is resolved from AppState configs (scope
+    // 'carrier_status', value 'closed') and parsed to a number (status is an Int).
+    const carrierExclusionFilters = useMemo(() => {
+        const code = findCodeByScopeAndValue(state.configs, 'carrier_status', 'closed');
+        return getReservedCarrierExclusionFilters(code != null ? parseInt(code, 10) : undefined);
+    }, [state.configs]);
+
     // Ad-hoc: load the carrier list (no carrier is known yet).
     useEffect(() => {
         if (!isAdHoc) return;
         let active = true;
         graphqlRequestClient
-            .request(gql`
-                query gateCarriers {
-                    carriers {
-                        results {
-                            id
-                            name
+            .request(
+                gql`
+                    query gateCarriers($advancedFilters: [CarrierAdvancedSearchFilters!]) {
+                        carriers(advancedFilters: $advancedFilters) {
+                            results {
+                                id
+                                name
+                            }
                         }
                     }
-                }
-            `)
+                `,
+                { advancedFilters: carrierExclusionFilters }
+            )
             .then((res: any) => {
                 if (active) setCarriers(res?.carriers?.results ?? []);
             })
@@ -86,7 +101,7 @@ export const RegistrationForm = ({
         return () => {
             active = false;
         };
-    }, [isAdHoc, graphqlRequestClient]);
+    }, [isAdHoc, graphqlRequestClient, carrierExclusionFilters]);
 
     const onFinish = (values: any) => {
         const registration: RegistrationData = {
