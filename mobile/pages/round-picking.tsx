@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -83,6 +83,8 @@ const RoundPicking: PageComponent = () => {
             }
             object[t('common:article_abbr')] =
                 proposedRoundAdvisedAddress.handlingUnitContent?.article?.name;
+            object[t('common:supplier-article-code')] =
+                proposedRoundAdvisedAddress.handlingUnitContent?.article?.genericArticleComment;
             object[t('common:quantity_abbr')] = proposedRoundAdvisedAddress.quantity;
         }
         if (
@@ -93,7 +95,6 @@ const RoundPicking: PageComponent = () => {
                 storedObject[`step${workflow.expectedSteps[2]}`]?.data?.handlingUnit;
             object[t('common:handling-unit_abbr')] = handlingUnit.name;
         }
-        object = getMoreInfos(object, storedObject, workflow.processName, t);
         setOriginDisplay(object);
         setFinalDisplay(object);
     }, [triggerRender]);

@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -98,6 +98,8 @@ const Preparation: PageComponent = () => {
                 storedObject[`step${workflow.expectedSteps[3]}`]?.data?.articleLuBarcode;
             object[t('common:article-description_abbr')] = articleLuBarcode.article.description;
             object[t('common:article_abbr')] = articleLuBarcode.article.name;
+            object[t('common:supplier-article-code')] =
+                articleLuBarcode.article?.genericArticleComment;
             object[t('common:article-barcode')] = articleLuBarcode.barcode.name;
         }
         if (
@@ -111,7 +113,6 @@ const Preparation: PageComponent = () => {
             object[t('common:article_abbr')] =
                 movingQuantity + ' x ' + articleLuBarcode.article.name;
         }
-        object = getMoreInfos(object, storedObject, workflow.processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 

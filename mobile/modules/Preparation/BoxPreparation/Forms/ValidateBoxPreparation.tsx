@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: retrieve information from local storage and validate them for database updates
 
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
-import { showError, showSuccess, LsIsSecured } from '@helpers';
+import { showError, showSuccess, LsIsSecured, getStockOwnerIdFromArticleLuBarcode } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -66,8 +66,13 @@ export const ValidateBoxPreparationForm = ({
     const articleInfo: { [k: string]: any } = {};
     articleInfo.articleId = step30.data.articleLuBarcode.articleId;
     articleInfo.articleName = step30.data.articleLuBarcode.article.name;
-    articleInfo.stockOwnerId = step30.data.articleLuBarcode.stockOwnerId;
-    articleInfo.stockOwnerName = step30.data.articleLuBarcode.stockOwner.name;
+    articleInfo.stockOwnerId = getStockOwnerIdFromArticleLuBarcode(step30.data.articleLuBarcode);
+    // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
+    articleInfo.stockOwnerName =
+        step30.data.articleLuBarcode.stockOwner?.name ??
+        step30.data.articleLuBarcode.articleLu?.stockOwner?.name ??
+        step30.data.articleLuBarcode.article?.stockOwner?.name ??
+        undefined;
     const movingQuantity = step50?.data?.movingQuantity;
 
     //ValidateBoxPreparation-1a: fetch front API

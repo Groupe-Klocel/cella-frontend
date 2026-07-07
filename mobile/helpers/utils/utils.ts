@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { LanguageType } from '@helpers';
+import { HeaderManagementType, LanguageType } from '@helpers';
 import Cookies from 'js-cookie';
 import { isoLangs } from './constant';
 import { message } from 'antd';
@@ -385,6 +385,22 @@ const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => 
     )?.code;
 };
 
+/**
+ * Backend `advancedFilters` excluding reserved carriers (virtual or closed) from an option list.
+ * Uses DIFFERENT so carriers with a null value are kept (only the excluded value is filtered out).
+ * `carrierClosedStatus` is the closed status code resolved from AppState configs
+ * (scope 'carrier_status', value 'closed'); pass a number since status is an Int.
+ */
+const getReservedCarrierExclusionFilters = (carrierClosedStatus?: any): any[] => {
+    const filters: any[] = [{ filter: [{ searchType: 'DIFFERENT', field: { isVirtual: true } }] }];
+    if (carrierClosedStatus != null) {
+        filters.push({
+            filter: [{ searchType: 'DIFFERENT', field: { status: carrierClosedStatus } }]
+        });
+    }
+    return filters;
+};
+
 /** @deprecated: use filterItems instead with exclude option
  * Helper function to find all items by scope and code
  */
@@ -447,6 +463,36 @@ const getLanguageCode = (router: any): string | undefined => {
     return router.locale?.split('-')[0] || 'en';
 };
 
+/**
+ * Extract the stockOwnerId from an articleLuBarcode object.
+ * The stockOwnerId is resolved following the priority:
+ *   articleLuBarcode.stockOwnerId  >  articleLu.stockOwnerId  >  article.stockOwnerId
+ * Returns the first non-null/undefined value found, or undefined if none (any stock owner).
+ */
+const getStockOwnerIdFromArticleLuBarcode = (articleLuBarcode: any): string | undefined => {
+    if (!articleLuBarcode) return undefined;
+    return (
+        articleLuBarcode.stockOwnerId ??
+        articleLuBarcode.articleLu?.stockOwnerId ??
+        articleLuBarcode.article?.stockOwnerId ??
+        undefined
+    );
+};
+
+// Build the RadioInfosHeader `displayed` object from a declarative HeaderManagementType
+// configuration: skips non-visible rows and wraps bold/highlight values for DetailsList
+const buildHeaderDisplay = (headerManagement: HeaderManagementType): { [k: string]: any } => {
+    const headerDisplay: { [k: string]: any } = {};
+    headerManagement.forEach((item) => {
+        if (!item.visible) return;
+        headerDisplay[item.label] =
+            item.bold || item.highlight
+                ? { value: item.value, bold: item.bold, highlight: item.highlight }
+                : item.value;
+    });
+    return headerDisplay;
+};
+
 export {
     isEmpty,
     pathParams,
@@ -487,8 +533,11 @@ export {
     getLastStepWithPreviousStep,
     findValueByScopeAndCode,
     findCodeByScopeAndValue,
+    getReservedCarrierExclusionFilters,
     findAllByScope,
     advancedFilter,
     snakeToCamel,
-    getLanguageCode
+    getLanguageCode,
+    buildHeaderDisplay,
+    getStockOwnerIdFromArticleLuBarcode
 };

@@ -23,8 +23,10 @@ import { FC, use, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
     ButtonManagementType,
+    HeaderManagementType,
+    applyRfActionButtonsConfig,
+    buildHeaderDisplay,
     getModesFromPermissions,
-    getMoreInfos,
     showError,
     showSuccess,
     useTranslationWithFallback as useTranslation
@@ -332,127 +334,175 @@ const Pick: PageComponent = () => {
     //#endregion
 
     //#region RadioInfosHeader settings
-    let headerDisplay: { [k: string]: any } = {};
-    if (storedObject['step5']?.data?.equipmentName) {
-        headerDisplay[t('common:equipment')] = storedObject['step5']?.data?.equipmentName;
-    }
-    if (
-        storedObject['step10']?.data?.round &&
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses
-    ) {
-        const round = storedObject['step10']?.data?.round;
-        const totalProcessedQuantity = round.roundAdvisedAddresses.reduce(
-            (sum: number, address: any) => {
-                return sum + address.roundLineDetail.processedQuantity;
-            },
-            0
-        );
-        const totalQuantityToBeProcessed = round.roundAdvisedAddresses.reduce(
-            (sum: number, address: any) => {
-                return sum + address.roundLineDetail.quantityToBeProcessed;
-            },
-            0
-        );
-        headerDisplay[t('common:round')] = round.name;
-        headerDisplay[t('common:total-picked-quantity')] =
-            totalProcessedQuantity + '/' + totalQuantityToBeProcessed;
-        if (storedObject['step10']?.data?.pickAndPackType === 'detail') {
-            headerDisplay[t('common:handling-unit-final_abbr')] =
-                proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.name;
-        }
-        if (storedObject['step15']?.data?.handlingUnit) {
-            const handlingUnit = storedObject['step15']?.data?.handlingUnit;
-            headerDisplay[t('common:pick_handling-unit_grouping')] =
-                typeof handlingUnit === 'string' ? handlingUnit : handlingUnit.name;
-        }
-        if (isPositionChecked) {
-            headerDisplay[t('common:pick_position')] =
-                proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]?.handlingUnitOutbound?.roundPosition;
-        }
-        if (!storedObject['step30']?.data?.chosenLocation) {
-            if (isLocationDefined) {
-                headerDisplay[t('common:expected-location_abbr')] = addNextLocationDisplay(
-                    proposedRoundAdvisedAddress.location.name
-                );
-            } else {
-                headerDisplay[t('common:location_abbr')] = t('d:no-location-defined');
-            }
-        } else {
-            headerDisplay[t('common:location_abbr')] = addNextLocationDisplay(
-                storedObject['step30']?.data?.chosenLocation.name
-            );
-        }
+    const round = storedObject['step10']?.data?.round;
+    const hasRound = !!(round && storedObject['step10']?.data?.proposedRoundAdvisedAddresses);
 
-        if (proposedRoundAdvisedAddress?.handlingUnitContent?.stockOwner) {
-            if (!storedObject['step40']?.data?.handlingUnit) {
-                const handlingUnitContent = proposedRoundAdvisedAddress?.handlingUnitContent;
-                headerDisplay[t('common:expected-stock-owner_abbr')] =
-                    handlingUnitContent.stockOwner?.name;
-            } else {
-                headerDisplay[t('common:handling-unit_abbr')] =
-                    storedObject['step40']?.data?.handlingUnit?.name;
-                headerDisplay[t('common:stock-owner_abbr')] =
-                    storedObject[
-                        'step40'
-                    ]?.data?.handlingUnit?.handlingUnitContents[0]?.stockOwner?.name;
-            }
-        }
-        if (!storedObject['step50']?.data?.article) {
-            headerDisplay[t('common:expected-article_abbr')] = expectedArticle?.name;
-        } else {
-            headerDisplay[t('common:article_abbr')] = storedObject['step50']?.data?.article.name;
-        }
-        headerDisplay[t('common:article-description')] = expectedArticle?.description;
-        if (storedObject['step60']?.data?.processedFeatures) {
-            const processedFeatures = storedObject['step60']?.data?.processedFeatures;
-            const handling_unit_contents = storedObject[
-                'step40'
-            ]?.data?.handlingUnit?.handlingUnitContents.find((content: any) =>
-                processedFeatures.every((feature_filter: any) =>
-                    content.handlingUnitContentFeatures.some(
-                        (feature_content: any) =>
-                            feature_content.featureCode.id === feature_filter.featureCodeId &&
-                            feature_content.value === feature_filter.value
-                    )
+    // Global picking progress of the round
+    const totalProcessedQuantity = hasRound
+        ? round.roundAdvisedAddresses.reduce(
+              (sum: number, address: any) => sum + address.roundLineDetail.processedQuantity,
+              0
+          )
+        : 0;
+    const totalQuantityToBeProcessed = hasRound
+        ? round.roundAdvisedAddresses.reduce(
+              (sum: number, address: any) => sum + address.roundLineDetail.quantityToBeProcessed,
+              0
+          )
+        : 0;
+
+    // Grouping HU (either the scanned string or the fetched object)
+    const groupingHu = storedObject['step15']?.data?.handlingUnit;
+    const groupingHuValue = typeof groupingHu === 'string' ? groupingHu : groupingHu?.name;
+
+    // Location: expected (before choosing) vs actual, with a dynamic label
+    const chosenLocation = storedObject['step30']?.data?.chosenLocation;
+    const locationLabel =
+        !chosenLocation && isLocationDefined
+            ? t('common:expected-location_abbr')
+            : t('common:location_abbr');
+    const locationValue = !chosenLocation
+        ? isLocationDefined
+            ? addNextLocationDisplay(proposedRoundAdvisedAddress.location.name)
+            : t('d:no-location-defined')
+        : addNextLocationDisplay(chosenLocation.name);
+
+    // Features + available quantity (variable number of dynamic rows)
+    const featureRows: HeaderManagementType = [];
+    let availableQuantity: any;
+    if (storedObject['step60']?.data?.processedFeatures) {
+        const processedFeatures = storedObject['step60']?.data?.processedFeatures;
+        const handling_unit_contents = storedObject[
+            'step40'
+        ]?.data?.handlingUnit?.handlingUnitContents.find((content: any) =>
+            processedFeatures.every((feature_filter: any) =>
+                content.handlingUnitContentFeatures.some(
+                    (feature_content: any) =>
+                        feature_content.featureCode.id === feature_filter.featureCodeId &&
+                        feature_content.value === feature_filter.value
                 )
-            );
-            headerDisplay[t('common:available-quantity')] = Math.min(
-                handling_unit_contents?.quantity,
-                uptodateQty ?? Infinity
-            );
-            processedFeatures.map((feature: any) => {
-                const { featureCode, value } = feature;
-                let formattedValue = value;
-                if (!Array.isArray(value)) {
-                    // If it's a date type and a valid date in 'YYYY-MM-DD' format, format it
-                    if (featureCode.dateType && moment(value, 'YYYY-MM-DD', true).isValid()) {
-                        formattedValue = moment(value).format('YYYY-MM-DD');
-                    }
-                } else {
-                    formattedValue = value.join(' / ');
+            )
+        );
+        availableQuantity = Math.min(handling_unit_contents?.quantity, uptodateQty ?? Infinity);
+        processedFeatures.forEach((feature: any) => {
+            const { featureCode, value } = feature;
+            let formattedValue = value;
+            if (!Array.isArray(value)) {
+                // If it's a date type and a valid date in 'YYYY-MM-DD' format, format it
+                if (featureCode.dateType && moment(value, 'YYYY-MM-DD', true).isValid()) {
+                    formattedValue = moment(value).format('YYYY-MM-DD');
                 }
-                headerDisplay[featureCode.name] = formattedValue;
-            });
-        }
-        if (!storedObject['step70']?.data?.movingQuantity) {
-            headerDisplay[t('common:expected-quantity_abbr')] = {
-                value: storedObject['step10']?.data?.proposedRoundAdvisedAddresses.reduce(
-                    (total: number, current: any) => total + current.quantity,
-                    0
-                ),
-                highlight: isQuantityHighlighted
-            };
-        } else {
-            headerDisplay[t('common:quantity_abbr')] =
-                storedObject['step70']?.data?.movingQuantity +
-                '/' +
-                storedObject['step10']?.data?.proposedRoundAdvisedAddresses.reduce(
-                    (total: number, current: any) => total + current.quantity,
-                    0
-                );
-        }
-        headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
+            } else {
+                formattedValue = value.join(' / ');
+            }
+            featureRows.push({ label: featureCode.name, value: formattedValue, visible: true });
+        });
     }
+
+    const totalExpectedQuantity = hasRound
+        ? storedObject['step10']?.data?.proposedRoundAdvisedAddresses.reduce(
+              (total: number, current: any) => total + current.quantity,
+              0
+          )
+        : 0;
+    const movingQuantity = storedObject['step70']?.data?.movingQuantity;
+    const hasStockOwner = !!proposedRoundAdvisedAddress?.handlingUnitContent?.stockOwner;
+    const scannedHu = storedObject['step40']?.data?.handlingUnit;
+
+    // Declarative header configuration (mirrors buttonManagement). Order = display order.
+    const headerManagement: HeaderManagementType = [
+        {
+            label: t('common:equipment'),
+            value: storedObject['step5']?.data?.equipmentName,
+            visible: !!storedObject['step5']?.data?.equipmentName
+        }
+    ];
+
+    if (hasRound) {
+        headerManagement.push(
+            { label: t('common:round'), value: round.name, visible: true },
+            {
+                label: t('common:total-picked-quantity'),
+                value: totalProcessedQuantity + '/' + totalQuantityToBeProcessed,
+                visible: true
+            },
+            {
+                label: t('common:handling-unit-final_abbr'),
+                value: proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
+                    ?.handlingUnitOutbound?.name,
+                visible: storedObject['step10']?.data?.pickAndPackType === 'detail'
+            },
+            {
+                label: t('common:pick_handling-unit_grouping'),
+                value: groupingHuValue,
+                visible: !!groupingHu
+            },
+            {
+                label: t('common:pick_position'),
+                value: proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
+                    ?.handlingUnitOutbound?.roundPosition,
+                visible: !!isPositionChecked
+            },
+            { label: locationLabel, value: locationValue, visible: true },
+            {
+                label: t('common:expected-stock-owner_abbr'),
+                value: proposedRoundAdvisedAddress?.handlingUnitContent?.stockOwner?.name,
+                visible: hasStockOwner && !scannedHu
+            },
+            {
+                // UM (handling unit): once scanned
+                label: t('common:handling-unit_abbr'),
+                value: scannedHu?.name,
+                visible: hasStockOwner && !!scannedHu
+            },
+            {
+                label: t('common:stock-owner_abbr'),
+                value: scannedHu?.handlingUnitContents?.[0]?.stockOwner?.name,
+                visible: hasStockOwner && !!scannedHu
+            },
+            {
+                label: t('common:expected-article_abbr'),
+                value: expectedArticle?.name,
+                visible: !storedObject['step50']?.data?.article
+            },
+            {
+                label: t('common:article_abbr'),
+                value: storedObject['step50']?.data?.article?.name,
+                visible: !!storedObject['step50']?.data?.article
+            },
+            {
+                label: t('common:supplier-article-code'),
+                value: (storedObject['step50']?.data?.article ?? expectedArticle)
+                    ?.genericArticleComment,
+                visible: true
+            },
+            {
+                label: t('common:article-description'),
+                value: expectedArticle?.description,
+                visible: true
+            },
+            {
+                label: t('common:available-quantity'),
+                value: availableQuantity,
+                visible: !!storedObject['step60']?.data?.processedFeatures
+            },
+            ...featureRows,
+            {
+                label: t('common:expected-quantity_abbr'),
+                value: totalExpectedQuantity,
+                visible: !movingQuantity,
+                highlight: isQuantityHighlighted
+            },
+            {
+                label: t('common:quantity_abbr'),
+                value: movingQuantity ? `${movingQuantity}/${totalExpectedQuantity}` : undefined,
+                visible: !!movingQuantity
+            }
+        );
+    }
+
+    // Build the displayed object from the declarative configuration
+    const headerDisplay = buildHeaderDisplay(headerManagement);
     //#endregion
 
     //#region settings for this module
@@ -924,12 +974,14 @@ const Pick: PageComponent = () => {
     //#region module buttons
     const buttonManagement: ButtonManagementType = [
         {
+            key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [5, 10, 15, 20, 30, 40, 50, 60, 70, 75],
             onClick: () => form.submit(),
             position: 'bottom'
         },
         {
+            key: 'close-shipping-hu',
             label: t('actions:close-shipping-hu'),
             visibleOnSteps: [20],
             permissionsToSeeTheButton: isHuInProgress,
@@ -937,6 +989,7 @@ const Pick: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'missing-quantity',
             label: t('common:missing-quantity'),
             visibleOnSteps: [50],
             permissionsToSeeTheButton: getModesFromPermissions(
@@ -952,6 +1005,7 @@ const Pick: PageComponent = () => {
             }
         },
         {
+            key: 'locations',
             label: t('common:locations_abbr'),
             icon: null,
             visibleOnSteps: [20],
@@ -962,6 +1016,7 @@ const Pick: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'change-location',
             label: t('common:change-location'),
             visibleOnSteps: [50],
             permissionsToSeeTheButton: !forceLocationScan && forceArticleScan ? true : false,
@@ -971,6 +1026,7 @@ const Pick: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'next',
             label: t('actions:next'),
             visibleOnSteps: [20, 50],
             permissionsToSeeTheButton: hasMultipleLocationIds ? true : false,
@@ -980,6 +1036,7 @@ const Pick: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'back',
             label: t('actions:back'),
             visibleOnSteps: [10, 15, 20, 30, 40, 50, 60, 70, 75],
             permissionsToSeeTheButton:
@@ -995,6 +1052,10 @@ const Pick: PageComponent = () => {
             position: 'bottom'
         }
     ];
+
+    // Apply configurable order/color to any button (matched by its `key`) from the
+    // 'RF_PREPARATION_ACTION_BUTTONS' parameter extras; keeps base behaviour when unset.
+    const orderedButtonManagement = applyRfActionButtonsConfig(buttonManagement, parameters);
     //#endregion
 
     //#region reset form on step change
@@ -1105,7 +1166,7 @@ const Pick: PageComponent = () => {
                 <UpperMobileSpinner></UpperMobileSpinner>
             ) : (
                 <RadioButtonWrapper
-                    buttonManagement={buttonManagement}
+                    buttonManagement={orderedButtonManagement}
                     currentStep={storedObject.currentStep}
                 >
                     {showSimilarLocations && storedObject['step10']?.data ? (

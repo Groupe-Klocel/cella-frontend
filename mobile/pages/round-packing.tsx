@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -95,6 +95,7 @@ const RoundPacking: PageComponent = () => {
             object[t('common:article')] = serialNumber
                 ? '1 x ' + article.name + ' / ' + serialNumber
                 : article.name;
+            object[t('common:supplier-article-code')] = article?.genericArticleComment;
         }
         if (storedObject[`step${workflow.expectedSteps[2]}`]?.data?.reference2) {
             object[t('common:order-type')] =
@@ -106,7 +107,6 @@ const RoundPacking: PageComponent = () => {
                 storedObject[`step${workflow.expectedSteps[3]}`]?.data?.movingQuantity;
             object[t('common:article')] = movingQuantity + ' x ' + article.name;
         }
-        object = getMoreInfos(object, storedObject, workflow.processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 

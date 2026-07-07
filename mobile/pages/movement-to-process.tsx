@@ -175,7 +175,7 @@ const MovementToProcess: PageComponent = () => {
         if (!isFullHuMoving) {
             const movingQuantity = storedObject['step60']?.data?.movingQuantity;
             const totalQuantity = movement?.quantity;
-            const isPartialQuantity = movingQuantity && movingQuantity < totalQuantity;
+            const isPartialQuantity = movingQuantity && movingQuantity !== totalQuantity;
 
             headerDisplay[t('common:quantity')] = (
                 <span>
@@ -414,8 +414,14 @@ const MovementToProcess: PageComponent = () => {
                         stepNumber={60}
                         buttons={{ submitButton: true, backButton: true }}
                         availableQuantity={storedObject['step50']?.data.chosenContent?.quantity}
-                        checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
-                        initialValueType={2}
+                        checkComponent={(data: any) => (
+                            <QuantityChecks
+                                dataToCheck={data}
+                                expectedQuantity={storedObject['step10']?.data.movement?.quantity}
+                                stockQuantity={storedObject['step50']?.data.chosenContent?.quantity}
+                            />
+                        )}
+                        initialValueType={undefined}
                     ></EnterQuantity_reducer>
                 ) : (
                     <></>

@@ -21,9 +21,9 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import {
-    getMoreInfos,
     useTranslationWithFallback as useTranslation,
-    getLanguageCode
+    getLanguageCode,
+    getStockOwnerIdFromArticleLuBarcode
 } from '@helpers';
 import { HeaderContent, NavButton, PageContentWrapper, RadioInfosHeader } from '@components';
 import { LsIsSecured } from '@helpers';
@@ -120,12 +120,17 @@ const InitStock: PageComponent = () => {
             object[t('common:handling-unit-model')] = huModel;
         }
         if (storedObject['step40']?.data) {
-            const article = storedObject['step40']?.data?.articleLuBarcodesInfos[0].article.name;
-            object[t('common:article')] = article;
+            const article = storedObject['step40']?.data?.articleLuBarcodesInfos[0].article;
+            object[t('common:article')] = article.name;
+            object[t('common:supplier-article-code')] = article?.genericArticleComment;
         }
         if (storedObject['step50']?.data) {
+            // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
+            const chosenArticleLuBarcode = storedObject['step50']?.data?.chosenArticleLuBarcode;
             const stockOwner =
-                storedObject['step50']?.data?.chosenArticleLuBarcode?.stockOwner.name;
+                chosenArticleLuBarcode?.stockOwner?.name ??
+                chosenArticleLuBarcode?.articleLu?.stockOwner?.name ??
+                chosenArticleLuBarcode?.article?.stockOwner?.name;
             object[t('common:stock-owner')] = stockOwner;
         }
         if (storedObject['step70']?.data) {
@@ -147,7 +152,6 @@ const InitStock: PageComponent = () => {
             const comment = storedObject['step110']?.data?.comment;
             object[t('common:comment')] = comment;
         }
-        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 
@@ -286,9 +290,9 @@ const InitStock: PageComponent = () => {
                     stepNumber={50}
                     trigger={{ triggerRender, setTriggerRender }}
                     buttons={{ submitButton: true, backButton: true }}
-                    defaultValue={
-                        storedObject['step40']?.data?.articleLuBarcodesInfos[0]?.stockOwnerId
-                    }
+                    defaultValue={getStockOwnerIdFromArticleLuBarcode(
+                        storedObject['step40']?.data?.articleLuBarcodesInfos[0]
+                    )}
                     articleLuBarcodes={storedObject['step40']?.data?.articleLuBarcodesInfos}
                 ></SelectArticleByStockOwnerForm>
             ) : (
