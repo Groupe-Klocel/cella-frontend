@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -75,15 +75,20 @@ const ArticleInfo: PageComponent = () => {
             const article = chosenArticleLuBarcode.article
                 ? chosenArticleLuBarcode.article
                 : chosenArticleLuBarcode;
-            object[t('common:article_abbr')] = chosenArticleLuBarcode.stockOwner
-                ? article.name + ' (' + chosenArticleLuBarcode.stockOwner.name + ')'
+            // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
+            const stockOwnerName =
+                chosenArticleLuBarcode.stockOwner?.name ??
+                chosenArticleLuBarcode.articleLu?.stockOwner?.name ??
+                chosenArticleLuBarcode.article?.stockOwner?.name;
+            object[t('common:article_abbr')] = stockOwnerName
+                ? article.name + ' (' + stockOwnerName + ')'
                 : article.name;
+            object[t('common:supplier-article-code')] = article?.genericArticleComment;
             object[t('common:article-description')] = article.description;
             chosenArticleLuBarcode.barcode
                 ? (object[t('common:barcode')] = chosenArticleLuBarcode.barcode.name)
                 : undefined;
         }
-        object = getMoreInfos(object, articleInfo, workflow.processName, t);
         setOriginDisplay(object);
         setFinalDisplay(object);
     }, [triggerRender]);

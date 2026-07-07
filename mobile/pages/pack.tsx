@@ -23,9 +23,15 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
     ButtonManagementType,
-    getMoreInfos,
+    HeaderManagementType,
+    applyRfActionButtonsConfig,
+    buildHeaderDisplay,
+    getModesFromPermissions,
+    showError,
+    showSuccess,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
+import { ModeEnum } from 'generated/graphql';
 import { Form, Modal, Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
@@ -54,8 +60,9 @@ const Pack: PageComponent = () => {
     const { t } = useTranslation();
     const { graphqlRequestClient, user } = useAuth();
     const router = useRouter();
-    const { parameters, configs } = useAppState();
+    const { parameters, configs, permissions } = useAppState();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [finishPositionLoading, setFinishPositionLoading] = useState<boolean>(false);
     const [closeBox, setCloseBox] = useState<boolean>(false);
     const [isToControl, setIsToControl] = useState<boolean | null>(null);
     const [triggerEnforcedControl, setTriggerEnforcedControl] = useState<boolean>(false);
@@ -104,11 +111,22 @@ const Pack: PageComponent = () => {
             }
         })();
         const autoValidate1Quantity = autoValidate1QuantityValue === '1';
+
+        // Location (without HU management) where the missing stock is booked when finishing a position.
+        // Customer-configurable through the 'outbound' parameter flagged 'DEFAULT_MISSING_LOCATION'
+        // (same convention as 'DEFAULT_ROUND_LOCATION'); defaults to 'MANQUANT PACK'.
+        const missingLocationName = findValueByScopeAndCode(
+            parameters,
+            'outbound',
+            'DEFAULT_MISSING_LOCATION'
+        );
+
         return {
             defaultQuantity,
             autoValidate1Quantity,
             equipmentHuType,
-            packingWithControlInprogressHuoStatus
+            packingWithControlInprogressHuoStatus,
+            missingLocationName
         };
     }, [parameters, configs]);
 
@@ -180,6 +198,15 @@ const Pack: PageComponent = () => {
         : true;
     const proposedHuos = storedObject['step30']?.data?.currentHuos;
 
+    // total quantity remaining to prepare on a box (sum of its non-prepared HUCO remainders)
+    const getHuoRemainingQuantity = (huo: any) =>
+        huo?.handlingUnitContentOutbounds?.reduce(
+            (total: number, huco: any) =>
+                total +
+                Math.max(huco.quantityToBePicked - huco.pickedQuantity - huco.missingQuantity, 0),
+            0
+        ) ?? 0;
+
     // this to check if we need to display step 60 (ReviewHuModelWeightForm) or if we can directly go to autovalidate (step 70) after quantity entering (step 50)
     const isBoxReviewNeeded =
         (storedObject['step40']?.data?.isBoxForcedClosed ||
@@ -192,59 +219,83 @@ const Pack: PageComponent = () => {
     //#endregion
 
     //#region RadioInfosHeader settings
-    let headerDisplay: { [k: string]: any } = {};
+    const inProgressHuco = inProgressHuo?.handlingUnitContentOutbounds?.[0];
+    const movingQuantity = storedObject['step50']?.data?.movingQuantity;
 
-    if (storedObject['step10']?.data?.printers) {
-        headerDisplay[t('common:printer')] = storedObject['step10']?.data?.printers.value;
-    }
-
-    if (round) {
-        headerDisplay[t('common:round')] = round.name;
-    }
-    if (equipmentHu) {
-        headerDisplay[t('common:equipment')] = equipmentHu.name;
-    }
-    if (step30Position && round?.equipment?.checkPosition) {
-        headerDisplay[t('common:pack_position')] = step30Position;
-    }
-    if (inProgressHuo && !round?.equipment?.checkPosition) {
-        headerDisplay[t('common:huo-in-progress')] = inProgressHuo.name;
-        headerDisplay[t('common:expected-article_abbr')] =
-            inProgressHuo.handlingUnitContentOutbounds[0].article.name;
-        headerDisplay[t('common:expected-quantity_abbr')] =
-            inProgressHuo.handlingUnitContentOutbounds[0].quantityToBePicked -
-            inProgressHuo.handlingUnitContentOutbounds[0].pickedQuantity -
-            inProgressHuo.handlingUnitContentOutbounds[0].missingQuantity;
-    }
-    if (
-        storedObject['step30']?.data?.currentHuos?.length > 0 &&
-        !isToControl &&
-        isToControl !== null
-    ) {
-        const currentHuo = storedObject['step30'].data.currentHuos[0];
-        let quantityDisplay = 0;
-        currentHuo?.handlingUnitContentOutbounds.forEach((hu: any, index: number) => {
-            quantityDisplay += hu.quantityToBePicked - hu.pickedQuantity - hu.missingQuantity;
-        });
-        headerDisplay[t('common:quantity')] = {
-            value: quantityDisplay,
+    // Declarative header configuration (mirrors buttonManagement). Order = display order.
+    const headerManagement: HeaderManagementType = [
+        {
+            label: t('common:printer'),
+            value: storedObject['step10']?.data?.printers?.value,
+            visible: !!storedObject['step10']?.data?.printers
+        },
+        { label: t('common:round'), value: round?.name, visible: !!round },
+        { label: t('common:equipment'), value: equipmentHu?.name, visible: !!equipmentHu },
+        {
+            label: t('common:pack_position'),
+            value: step30Position,
+            visible: !!(step30Position && round?.equipment?.checkPosition)
+        },
+        {
+            label: t('common:huo-in-progress'),
+            value: inProgressHuo?.name,
+            visible: !!(inProgressHuo && !round?.equipment?.checkPosition)
+        },
+        {
+            label: t('common:expected-article_abbr'),
+            value: inProgressHuco?.article?.name,
+            visible: !!(inProgressHuo && !round?.equipment?.checkPosition)
+        },
+        {
+            label: t('common:expected-quantity_abbr'),
+            value: inProgressHuco
+                ? inProgressHuco.quantityToBePicked -
+                  inProgressHuco.pickedQuantity -
+                  inProgressHuco.missingQuantity
+                : undefined,
+            visible: !!(inProgressHuo && !round?.equipment?.checkPosition)
+        },
+        {
+            // remaining quantity to prepare on the proposed box
+            label: t('common:quantity'),
+            value: getHuoRemainingQuantity(storedObject['step30']?.data?.currentHuos?.[0]),
+            visible:
+                storedObject['step30']?.data?.currentHuos?.length > 0 &&
+                !isToControl &&
+                isToControl !== null,
             highlight: true
-        };
-    }
-    if (storedObject['step40']?.data?.currentHuco) {
-        headerDisplay[t('common:article_abbr')] =
-            storedObject['step40']?.data?.currentHuco.article.name;
-    }
-    if (storedObject['step50']?.data?.movingQuantity && currentHuco) {
-        headerDisplay[t('common:quantity')] =
-            storedObject['step50'].data.movingQuantity +
-            '/' +
-            (currentHuco.quantityToBePicked -
-                currentHuco.pickedQuantity -
-                currentHuco.missingQuantity);
-    }
+        },
+        {
+            label: t('common:article_abbr'),
+            value: storedObject['step40']?.data?.currentHuco?.article?.name,
+            visible: !!storedObject['step40']?.data?.currentHuco
+        },
+        {
+            label: t('common:supplier-article-code'),
+            value: (storedObject['step40']?.data?.currentHuco?.article ?? inProgressHuco?.article)
+                ?.genericArticleComment,
+            visible: !!(
+                storedObject['step40']?.data?.currentHuco ||
+                (inProgressHuo && storedObject['step40']?.data && !round?.equipment?.checkPosition)
+            )
+        },
+        {
+            // quantity being packed vs remaining on the current HUCO
+            label: t('common:quantity'),
+            value:
+                movingQuantity && currentHuco
+                    ? movingQuantity +
+                      '/' +
+                      (currentHuco.quantityToBePicked -
+                          currentHuco.pickedQuantity -
+                          currentHuco.missingQuantity)
+                    : undefined,
+            visible: !!(movingQuantity && currentHuco)
+        }
+    ];
 
-    headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
+    // Build the displayed object from the declarative configuration
+    const headerDisplay = buildHeaderDisplay(headerManagement);
     //#endregion
 
     //#region control while packing
@@ -473,17 +524,181 @@ const Pack: PageComponent = () => {
             setTriggerEnforcedControl(false);
         }
     }, [triggerEnforcedControl]);
+
+    // "Finish position": declare as missing the remaining quantity of every non-prepared HUCO,
+    // then go back to scan the next round/position. With position scan the missing quantities are
+    // declared on the box at the scanned position; without position scan they are declared on the
+    // in-progress box if any ("finish box" mode), otherwise on every unpacked box of the round.
+    const positionHuo = storedObject?.step30?.data?.currentHuos?.[0];
+    const isFinishBoxMode = !round?.equipment?.checkPosition && Boolean(inProgressHuo);
+    const finishPositionHuos = (
+        round?.equipment?.checkPosition
+            ? positionHuo
+                ? [positionHuo]
+                : []
+            : isFinishBoxMode
+              ? [inProgressHuo]
+              : (destinationHuos ?? [])
+    ).filter((huo: any) => getHuoRemainingQuantity(huo) > 0);
+    const positionRemainingQuantity = finishPositionHuos.reduce(
+        (total: number, huo: any) => total + getHuoRemainingQuantity(huo),
+        0
+    );
+
+    const onFinishPosition = () => {
+        if (finishPositionHuos.length === 0) {
+            return;
+        }
+        Modal.confirm({
+            title: t('messages:confirmation'),
+            content: t(
+                isFinishBoxMode
+                    ? 'messages:confirm-finish-box-missing'
+                    : 'messages:confirm-finish-position-missing',
+                {
+                    quantity: positionRemainingQuantity
+                }
+            ),
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel'),
+            onOk: async () => {
+                setFinishPositionLoading(true);
+                const equipmentHuoPalletId = round?.handlingUnitOutbounds?.find(
+                    (huo: any) => huo.handlingUnit?.type === equipmentHuType
+                )?.id;
+                const query = gql`
+                    mutation executeFunction($functionName: String!, $event: JSON!) {
+                        executeFunction(functionName: $functionName, event: $event) {
+                            status
+                            output
+                        }
+                    }
+                `;
+                let processedHuosCount = 0;
+                let lastOutput: any = null;
+                let hasError = false;
+                try {
+                    for (const huo of finishPositionHuos) {
+                        const variables = {
+                            functionName: 'declare_missing_quantity_post_picking',
+                            event: {
+                                input: {
+                                    handlingUnitOutboundId: huo.id,
+                                    round: { id: round?.id },
+                                    equipmentHUOPalletId: equipmentHuoPalletId,
+                                    missingLocationName: configsParamsCodes.missingLocationName
+                                }
+                            }
+                        };
+                        const result = await graphqlRequestClient.request(query, variables);
+                        if (result.executeFunction.status === 'ERROR') {
+                            showError(result.executeFunction.output);
+                            hasError = true;
+                            break;
+                        }
+                        if (
+                            result.executeFunction.status === 'OK' &&
+                            result.executeFunction.output.status === 'KO'
+                        ) {
+                            showError(t(`errors:${result.executeFunction.output.output.code}`));
+                            console.log('Backend_message', result.executeFunction.output.output);
+                            hasError = true;
+                            break;
+                        }
+                        processedHuosCount += 1;
+                        lastOutput = result.executeFunction.output.output;
+                    }
+                    if (!hasError) {
+                        showSuccess(
+                            t(
+                                isFinishBoxMode
+                                    ? 'messages:box-finished-successfully'
+                                    : 'messages:position-finished-successfully'
+                            )
+                        );
+                        if (lastOutput?.isRoundClosed) {
+                            showSuccess(t('messages:pack-round-finished'));
+                        }
+                    }
+                } catch (error) {
+                    showError(t('messages:error-executing-function'));
+                    console.log('executeFunctionError', error);
+                } finally {
+                    if (processedHuosCount > 0) {
+                        // In "finish box" mode, if the round still has other boxes with quantities
+                        // left to pack, skip re-scanning the round/equipment and jump straight back
+                        // to the article scan: keep the round loaded (minus the just-finished box)
+                        // and let the position step auto-select the remaining boxes. Only the
+                        // in-progress box was touched, so the other boxes' locally-held remaining
+                        // quantities stay accurate without a refetch.
+                        const finishedHuoIds = new Set(finishPositionHuos.map((huo: any) => huo.id));
+                        const remainingHuos = (destinationHuos ?? []).filter(
+                            (huo: any) =>
+                                !finishedHuoIds.has(huo.id) && getHuoRemainingQuantity(huo) > 0
+                        );
+
+                        if (
+                            !hasError &&
+                            !lastOutput?.isRoundClosed &&
+                            isFinishBoxMode &&
+                            remainingHuos.length > 0
+                        ) {
+                            // Keep the round/equipment loaded (clearing the finished in-progress box)
+                            // so the position step auto-selects the remaining boxes and the flow lands
+                            // back on the article scan. isToControl stays true (non-position packing).
+                            dispatch({
+                                type: 'UPDATE_BY_PROCESS',
+                                processName,
+                                object: {
+                                    currentStep: 20,
+                                    step10: storedObject['step10'],
+                                    step20: {
+                                        ...storedObject['step20'],
+                                        data: {
+                                            ...storedObject['step20']?.data,
+                                            inProgressHuo: undefined,
+                                            round: {
+                                                ...round,
+                                                handlingUnitOutbounds:
+                                                    round?.handlingUnitOutbounds?.filter(
+                                                        (huo: any) => !finishedHuoIds.has(huo.id)
+                                                    )
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            // Round finished or nothing left to pack here: back to a fresh
+                            // round/equipment/position scan (keep the printer). Also covers partial
+                            // failures so the screen reflects what was actually declared.
+                            dispatch({
+                                type: 'UPDATE_BY_PROCESS',
+                                processName,
+                                object: { currentStep: 20, step10: storedObject['step10'] }
+                            });
+                            setIsToControl(null);
+                        }
+                        form.resetFields();
+                    }
+                    setFinishPositionLoading(false);
+                }
+            }
+        });
+    };
     //#endregion
 
     //#region module buttons
     const buttonManagement: ButtonManagementType = [
         {
+            key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [10, 20, 30, 40, 50, 60, 70],
             onClick: () => form.submit(),
             position: 'bottom'
         },
         {
+            key: 'close-box',
             label: t('common:close-box'),
             visibleOnSteps: [40],
             permissionsToSeeTheButton: isBoxClosureAllowed ? true : false,
@@ -493,6 +708,24 @@ const Pack: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'finish-position',
+            label: t(isFinishBoxMode ? 'actions:finish-box' : 'actions:finish-position'),
+            visibleOnSteps: [40],
+            permissionsToSeeTheButton: Boolean(
+                getModesFromPermissions(permissions, 'mobile_button_missing-handling').includes(
+                    ModeEnum.Read
+                ) && positionRemainingQuantity > 0
+            ),
+            onClick: () => {
+                onFinishPosition();
+            },
+            position: 'top',
+            style: {
+                background: 'radial-gradient(circle, #ff8a1ce8 5%, #f4a261 100%)'
+            }
+        },
+        {
+            key: 'enforce-control',
             label: t('actions:enforce-control'),
             visibleOnSteps: [60],
             permissionsToSeeTheButton: !isToControl && isToControl !== null ? true : false,
@@ -502,6 +735,7 @@ const Pack: PageComponent = () => {
             position: 'bottom'
         },
         {
+            key: 'back',
             label: t('actions:back'),
             visibleOnSteps: [20, 30, 40, 50, 60, 70],
             permissionsToSeeTheButton: true,
@@ -511,6 +745,10 @@ const Pack: PageComponent = () => {
             position: 'bottom'
         }
     ];
+
+    // Apply configurable order/color to any button (matched by its `key`) from the
+    // 'RF_PREPARATION_ACTION_BUTTONS' parameter extras; keeps base behaviour when unset.
+    const orderedButtonManagement = applyRfActionButtonsConfig(buttonManagement, parameters);
     //#endregion
 
     //#region reset form on step change
@@ -544,11 +782,11 @@ const Pack: PageComponent = () => {
                     }}
                 ></RadioInfosHeader>
             )}
-            {isLoading ? (
+            {isLoading || finishPositionLoading ? (
                 <UpperMobileSpinner></UpperMobileSpinner>
             ) : (
                 <RadioButtonWrapper
-                    buttonManagement={buttonManagement}
+                    buttonManagement={orderedButtonManagement}
                     currentStep={storedObject.currentStep}
                 >
                     {!storedObject['step10']?.data ? (

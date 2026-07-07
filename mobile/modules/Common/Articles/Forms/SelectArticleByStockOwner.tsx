@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select an article among a list of stock owners corresponding to a given article
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, showError } from '@helpers';
+import { LsIsSecured, showError, getStockOwnerIdFromArticleLuBarcode } from '@helpers';
 import { Select, Form } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
@@ -95,7 +95,10 @@ export const SelectArticleByStockOwnerForm = ({
         const newIdOpts: Array<any> = [];
         articleLuBarcodes?.forEach((e: any) => {
             if (e.stockOwner) {
-                newIdOpts.push({ text: e.stockOwner.name!, key: e.stockOwnerId! });
+                newIdOpts.push({
+                    text: e.stockOwner.name!,
+                    key: getStockOwnerIdFromArticleLuBarcode(e)!
+                });
             }
         });
         function compare(a: any, b: any) {
@@ -115,7 +118,7 @@ export const SelectArticleByStockOwnerForm = ({
     const onFinish = (values: any) => {
         const data: { [label: string]: any } = {};
         data['chosenArticleLuBarcode'] = articleLuBarcodes?.find((e: any) => {
-            return e.stockOwnerId == values.stockOwnerId;
+            return getStockOwnerIdFromArticleLuBarcode(e) == values.stockOwnerId;
         });
         storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
         storage.set(process, JSON.stringify(storedObject));

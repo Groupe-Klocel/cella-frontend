@@ -97,6 +97,7 @@ export type GraphQLResponseType = {
 };
 
 export type ButtonManagementType = {
+    key?: string; // Optional stable identifier (language-independent) used to configure the button via the RF_PREPARATION_ACTION_BUTTONS parameter
     label: string;
     icon?: any;
     visibleOnSteps: number[];
@@ -104,4 +105,14 @@ export type ButtonManagementType = {
     onClick: (e?: any) => void;
     position: 'top' | 'bottom';
     style?: React.CSSProperties;
+}[];
+
+// Declarative configuration of the RadioInfosHeader rows (mirrors ButtonManagementType).
+// Array order = display order; rows are kept in the config and toggled via `visible`.
+export type HeaderManagementType = {
+    label: string;
+    value: any;
+    visible: boolean;
+    bold?: boolean;
+    highlight?: boolean;
 }[];

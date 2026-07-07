@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: retrieve information from local storage and validate them for database updates
 
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
-import { showError, showSuccess, LsIsSecured } from '@helpers';
+import { showError, showSuccess, LsIsSecured, getStockOwnerIdFromArticleLuBarcode } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -72,13 +72,15 @@ export const ValidateQuantityMoveForm = ({
         articleInfo.name = storedObject.step35.data.chosenArticleLuBarcode.article
             ? storedObject.step35.data.chosenArticleLuBarcode.article.name
             : storedObject.step35.data.chosenArticleLuBarcode.name;
-        articleInfo.stockOwnerId = storedObject.step35.data.chosenArticleLuBarcode.article
-            ? storedObject.step35.data.chosenArticleLuBarcode.article.stockOwnerId
-            : (storedObject.step35.data.chosenArticleLuBarcode.stockOwnerId ?? undefined);
+        articleInfo.stockOwnerId = getStockOwnerIdFromArticleLuBarcode(
+            storedObject.step35.data.chosenArticleLuBarcode
+        );
         articleInfo.stockOwner = {
-            name: storedObject.step35.data.chosenArticleLuBarcode.article
-                ? storedObject.step35.data.chosenArticleLuBarcode.article.stockOwner?.name
-                : (storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ?? undefined)
+            name:
+                storedObject.step35.data.chosenArticleLuBarcode.stockOwner?.name ??
+                storedObject.step35.data.chosenArticleLuBarcode.articleLu?.stockOwner?.name ??
+                storedObject.step35.data.chosenArticleLuBarcode.article?.stockOwner?.name ??
+                undefined
         };
         articleLuBarcodeId = storedObject.step35.data.chosenArticleLuBarcode.id ?? undefined;
     }

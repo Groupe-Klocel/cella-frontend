@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //SPECIFIC FOR INIT STOCK
 //DESCRIPTION: retrieve information from local storage and validate them for database updates
 import { WrapperForm, StyledForm, RadioButtons, ContentSpin } from '@components';
-import { showError, showSuccess, LsIsSecured } from '@helpers';
+import { showError, showSuccess, LsIsSecured, getStockOwnerIdFromArticleLuBarcode } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -74,7 +74,7 @@ export const ValidateInitStockForm = ({
         articleInfo.articleId = step50?.data?.chosenArticleLuBarcode.articleId;
         articleInfo.articleName = step50?.data?.chosenArticleLuBarcode.article.name;
     }
-    const stockOwner = step50?.data?.chosenArticleLuBarcode.stockOwnerId;
+    const stockOwner = getStockOwnerIdFromArticleLuBarcode(step50?.data?.chosenArticleLuBarcode);
     const features = step60?.data?.processedFeatures;
     const movingQuantity = step70?.data?.movingQuantity;
     const stockStatus = step80?.data?.stockStatus?.key;

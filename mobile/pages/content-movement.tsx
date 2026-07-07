@@ -21,7 +21,10 @@ import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    getStockOwnerIdFromArticleLuBarcode,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
 import { LsIsSecured } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -221,11 +224,17 @@ const ContentMvmt: PageComponent = () => {
         }
         if (storedObject['step35']?.data?.chosenArticleLuBarcode) {
             const articleLuBarcode = storedObject['step35']?.data.chosenArticleLuBarcode;
-            const stockOwnerName = articleLuBarcode?.stockOwner?.name ?? undefined;
+            // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
+            const stockOwnerName =
+                articleLuBarcode?.stockOwner?.name ??
+                articleLuBarcode?.articleLu?.stockOwner?.name ??
+                articleLuBarcode?.article?.stockOwner?.name ??
+                undefined;
             const article = articleLuBarcode.article ? articleLuBarcode.article : articleLuBarcode;
             stockOwnerName
                 ? (object[t('common:article')] = article.name + ' (' + stockOwnerName + ')')
                 : (object[t('common:article')] = article.name);
+            object[t('common:supplier-article-code')] = article?.genericArticleComment;
             object[t('common:article-description')] = article.description;
             if (storedObject['step30']?.data?.feature) {
                 const serialNumber = storedObject['step30']?.data.feature.value;
@@ -241,7 +250,6 @@ const ContentMvmt: PageComponent = () => {
             const movingQuantity = storedObject['step50']?.data?.movingQuantity;
             object[t('common:quantity')] = movingQuantity;
         }
-        object = getMoreInfos(object, storedObject, processName, t);
         setOriginDisplay(object);
     }, [triggerRender]);
 
@@ -263,7 +271,12 @@ const ContentMvmt: PageComponent = () => {
         ) {
             const articleLuBarcode = storedObject['step35']?.data?.chosenArticleLuBarcode;
             const movingQuantity = storedObject['step50']?.data?.movingQuantity;
-            const stockOwnerName = articleLuBarcode?.stockOwner?.name ?? undefined;
+            // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
+            const stockOwnerName =
+                articleLuBarcode?.stockOwner?.name ??
+                articleLuBarcode?.articleLu?.stockOwner?.name ??
+                articleLuBarcode?.article?.stockOwner?.name ??
+                undefined;
             const article = articleLuBarcode.article ? articleLuBarcode.article : articleLuBarcode;
             stockOwnerName
                 ? (finalObject[t('common:article')] =
@@ -477,12 +490,9 @@ const ContentMvmt: PageComponent = () => {
                             articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
                             locationId={storedObject['step15'].data.chosenLocation.id}
                             handlingUnitId={storedObject['step20'].data.handlingUnit.id}
-                            stockOwnerId={
-                                storedObject['step35'].data.chosenArticleLuBarcode.article
-                                    ? storedObject['step35'].data.chosenArticleLuBarcode.article
-                                          .stockOwnerId
-                                    : undefined
-                            }
+                            stockOwnerId={getStockOwnerIdFromArticleLuBarcode(
+                                storedObject['step35'].data.chosenArticleLuBarcode
+                            )}
                         ></SelectContentForArticleForm>
                     ) : (
                         <SelectContentForFeatureForm

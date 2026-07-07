@@ -65,6 +65,15 @@ export interface IDraggerTextAreaInputProps {
 
 const TextAreaInput: FC<IDraggerTextAreaInputProps> = ({ item }) => {
     const { t } = useTranslation();
+    const form = Form.useFormInstance();
+
+    // trim the entered text on blur (normalize would prevent typing inner spaces/newlines)
+    const trimValue = () => {
+        const current = form?.getFieldValue(item.name);
+        if (typeof current === 'string' && current !== current.trim()) {
+            form?.setFieldsValue({ [item.name]: current.trim() || undefined });
+        }
+    };
 
     return (
         <Form.Item
@@ -78,6 +87,7 @@ const TextAreaInput: FC<IDraggerTextAreaInputProps> = ({ item }) => {
                 maxLength={item.maxLength ? item.maxLength : undefined}
                 allowClear
                 disabled={item.disabled ? true : false}
+                onBlur={trimValue}
             />
         </Form.Item>
     );

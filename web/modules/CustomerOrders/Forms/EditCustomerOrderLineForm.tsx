@@ -89,6 +89,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
     const [articleCubingType, setArticleCubingType] = useState<any>();
     const [stockStatuses, setStockStatuses] = useState<Array<FormOptionType>>();
     const [selectedDiscountType, setSelectedDiscountType] = useState<number | undefined>(undefined);
+    const fixedPrice: boolean | undefined = details?.order?.fixedPrice;
 
     const configsParamsCodes = useMemo(() => {
         const findAllByScope = (items: any[], scope: string) => {
@@ -390,7 +391,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                                 { type: 'number', min: 0, message: errorMessageNegativeNumberInput }
                             ]}
                         >
-                            <InputNumber onChange={onQuantityChange} />
+                            <InputNumber disabled={fixedPrice} onChange={onQuantityChange} />
                         </Form.Item>
                         <Form.Item
                             label={unitPriceExcludingTaxes}
@@ -399,10 +400,11 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                                 { type: 'number', min: 0, message: errorMessageNegativeNumberInput }
                             ]}
                         >
-                            <InputNumber />
+                            <InputNumber disabled={fixedPrice} />
                         </Form.Item>
                         <Form.Item name="vatRateCode" label={vatRate}>
                             <Select
+                                disabled={fixedPrice}
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:vatRate')
                                 })}`}
@@ -418,6 +420,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                         </Form.Item>
                         <Form.Item label={discountTypeLabel} name="discountType">
                             <Select
+                                disabled={fixedPrice}
                                 allowClear
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:discount_type')
@@ -447,7 +450,7 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                                     }
                                 ]}
                             >
-                                <InputNumber />
+                                <InputNumber disabled={fixedPrice} />
                             </Form.Item>
                         )}
                         {selectedDiscountType == 10 && selectedDiscountType != undefined && (
@@ -458,11 +461,12 @@ export const EditCustomerOrderLineForm: FC<EditCustomerOrderLineFormProps> = ({
                                     { type: 'number', min: 0, message: errorMessageMinInputNumber }
                                 ]}
                             >
-                                <InputNumber />
+                                <InputNumber disabled={fixedPrice} />
                             </Form.Item>
                         )}
                         <Form.Item name="stockStatus" label={stockStatus}>
                             <Select
+                                disabled={fixedPrice}
                                 placeholder={`${t('messages:please-select-a', {
                                     name: t('d:stockStatus')
                                 })}`}

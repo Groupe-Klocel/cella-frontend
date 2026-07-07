@@ -115,26 +115,39 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
             setIsLoading(true);
             const fetchData = async () => {
                 const response: any = await scanRoundOrEquipment(scannedInfo);
-                setFetchResult(response.executeFunction.output.response);
-                if (response.executeFunction.status === 'ERROR') {
-                    showError(response.executeFunction.output);
+                // scanRoundOrEquipment returns undefined when the request throws (error already shown)
+                const executeFunction = response?.executeFunction;
+                if (!executeFunction) {
+                    setResetForm(true);
+                    setIsLoading(false);
+                    setScannedInfo(undefined);
+                    return;
+                }
+                if (executeFunction.status === 'ERROR') {
+                    showError(executeFunction.output);
+                    setResetForm(true);
+                    setIsLoading(false);
+                    setScannedInfo(undefined);
                 } else if (
-                    response.executeFunction.status === 'OK' &&
-                    response.executeFunction.output.status === 'KO'
+                    executeFunction.status === 'OK' &&
+                    executeFunction.output?.status === 'KO'
                 ) {
-                    if (response.executeFunction.output.output.code === 'FAPI_000001') {
+                    if (executeFunction.output?.output?.code === 'FAPI_000001') {
                         showError(t('errors:FAPI_000001'));
-                    } else if (response.executeFunction.output.output.code === 'FAPI_000002') {
+                    } else if (executeFunction.output?.output?.code === 'FAPI_000002') {
                         showError(t('errors:FAPI_000002'));
-                    } else if (response.executeFunction.output.output.code === 'FAPI_000003') {
+                    } else if (executeFunction.output?.output?.code === 'FAPI_000003') {
                         showError(t('errors:FAPI_000003'));
                     } else {
-                        showError(t(`errors:${response.executeFunction.output.output.code}`));
-                        console.log('Backend_message', response.executeFunction.output.output);
+                        showError(t(`errors:${executeFunction.output?.output?.code}`));
+                        console.log('Backend_message', executeFunction.output?.output);
                     }
                     setResetForm(true);
                     setIsLoading(false);
                     setScannedInfo(undefined);
+                } else {
+                    // success path only: output.response is meaningful here
+                    setFetchResult(executeFunction.output?.response);
                 }
             };
             fetchData();

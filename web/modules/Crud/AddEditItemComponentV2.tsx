@@ -70,6 +70,17 @@ export interface IAddItemFormProps {
     extraRules?: Array<any>;
     id?: string | undefined;
     setData?: (data: any) => void;
+    // Generic per-field option-list filtering constraints provided by the calling page.
+    // Keyed by field name; merged into the field's optionTable so the option dropdown can be
+    // narrowed (inclusion via filtersToApply, inclusion/exclusion via advancedFilters) without
+    // adding entity-specific logic in the generic components.
+    optionsConstraints?: {
+        [fieldName: string]: { filtersToApply?: any; advancedFilters?: any[] };
+    };
+    setId?: (id: any) => void;
+    // when true, the `scope` field is pre-filled through `extraData` and hidden from the form
+    // (config/param screens that were previously handled by AddConfigParamComponent)
+    comeFromFiltered?: boolean;
 }
 
 const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
@@ -78,38 +89,52 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
     const router = useRouter();
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const [itemComponent, setItemComponent] = useState<any[]>(
-        Object.keys(props.dataModel.fieldsInfo)
-            .map((key) => {
-                return props.dataModel.fieldsInfo[key].addEditFormat !== null
-                    ? {
-                          displayName: t(`d:${props.dataModel.fieldsInfo[key].displayName ?? key}`),
-                          name: key,
-                          type: FormDataType[
-                              props.dataModel.fieldsInfo[key]
-                                  .addEditFormat as keyof typeof FormDataType
-                          ],
-                          maxLength: props.dataModel.fieldsInfo[key].maxLength ?? undefined,
-                          config: props.dataModel.fieldsInfo[key].config ?? undefined,
-                          param: props.dataModel.fieldsInfo[key].param ?? undefined,
-                          rulesInfos: [
-                              props.dataModel.fieldsInfo[key].isMandatory,
-                              props.dataModel.fieldsInfo[key].minRule,
-                              props.dataModel.fieldsInfo[key].maxRule
-                          ],
-                          numberPrecision:
-                              props.dataModel.fieldsInfo[key].numberPrecision ?? undefined,
-                          initialValue:
-                              props.initialProps?.initialData?.[key] !== undefined
-                                  ? props.initialProps.initialData?.[key]
-                                  : undefined,
-                          optionTable: props.dataModel.fieldsInfo[key].optionTable ?? undefined,
-                          filterConfigParam: props.dataModel.fieldsInfo[key].filterConfigParam
-                              ? JSON.parse(props.dataModel.fieldsInfo[key].filterConfigParam)
-                              : undefined
-                      }
-                    : null;
-            })
-            .filter(Boolean)
+        Object.keys(props.dataModel.fieldsInfo).flatMap((key) => {
+            const fieldInfo = props.dataModel.fieldsInfo[key];
+            if (fieldInfo.addEditFormat === null) return [];
+            // hide the scope field when it is pre-filled through a filtered scope (config/param)
+            if (props.comeFromFiltered && key === 'scope') return [];
+
+            const makeItem = (name: string, displayName: string, initialValue: any) => ({
+                displayName,
+                name,
+                type: FormDataType[fieldInfo.addEditFormat as keyof typeof FormDataType],
+                maxLength: fieldInfo.maxLength ?? undefined,
+                config: fieldInfo.config ?? undefined,
+                param: fieldInfo.param ?? undefined,
+                rulesInfos: [fieldInfo.isMandatory, fieldInfo.minRule, fieldInfo.maxRule],
+                numberPrecision: fieldInfo.numberPrecision ?? undefined,
+                initialValue,
+                optionTable: fieldInfo.optionTable ?? undefined,
+                filterConfigParam: fieldInfo.filterConfigParam
+                    ? JSON.parse(fieldInfo.filterConfigParam)
+                    : undefined
+            });
+
+            // the `translation` field is edited as one input per language (en/fr/de) and
+            // re-assembled into a single `translation` object on submit (see buildInput)
+            if (key === 'translation') {
+                return ['en', 'fr', 'de'].map((lang) =>
+                    makeItem(
+                        lang,
+                        t(`d:${lang}`),
+                        props.initialProps?.initialData?.translation?.[lang] !== undefined
+                            ? props.initialProps.initialData.translation[lang]
+                            : undefined
+                    )
+                );
+            }
+
+            return [
+                makeItem(
+                    key,
+                    t(`d:${fieldInfo.displayName ?? key}`),
+                    props.initialProps?.initialData?.[key] !== undefined
+                        ? props.initialProps.initialData?.[key]
+                        : undefined
+                )
+            ];
+        })
     );
     const { graphqlRequestClient } = useAuth();
     const [formInfos, setFormInfos] = useState<any>({});
@@ -257,7 +282,7 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                 const updated = await Promise.all(
                     itemComponent.map(async (item: any) => {
                         let isDisabled = false;
-                        if (props.dataModel.fieldsInfo[item.name].toBeEditDisabled && props.id) {
+                        if (props.dataModel.fieldsInfo[item.name]?.toBeEditDisabled && props.id) {
                             isDisabled = await checkDisable(
                                 props.id,
                                 JSON.parse(
@@ -346,7 +371,30 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                         return obj;
                     }
                 });
-            setProcessedOptions(processedOptionsTables());
+            // Merge the page-provided per-field constraints into the matching field optionTables.
+            // Stays generic: the calling page decides what to include/exclude, no entity logic here.
+            const withConstraints = props.optionsConstraints
+                ? processedOptionsTables().map((obj: any) => {
+                      const constraint = props.optionsConstraints?.[obj.name];
+                      if (constraint && obj.optionTable && typeof obj.optionTable === 'object') {
+                          return {
+                              ...obj,
+                              optionTable: {
+                                  ...obj.optionTable,
+                                  filtersToApply: {
+                                      ...(obj.optionTable.filtersToApply ?? {}),
+                                      ...(constraint.filtersToApply ?? {})
+                                  },
+                                  ...(constraint.advancedFilters
+                                      ? { advancedFilters: constraint.advancedFilters }
+                                      : {})
+                              }
+                          };
+                      }
+                      return obj;
+                  })
+                : processedOptionsTables();
+            setProcessedOptions(withConstraints);
         }
     }, [formInfos]);
     // end sub-region
@@ -399,6 +447,10 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
             : props.dataModel.endpoints.update;
         if (!(result && result.data)) return;
 
+        if (props.setId) {
+            props.setId(result.data[endpoint].id);
+        }
+
         if (result.success) {
             router.push(props.routeAfterSuccess.replace(':id', result.data[endpoint]?.id));
             showSuccess(successMessage);
@@ -407,6 +459,18 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
         }
     }, [createResult, updateResult]);
 
+    // models exposing an editable `translation` field split it into en/fr/de inputs; collapse
+    // them back into a single `translation` object (or null when all empty) before submitting
+    const hasTranslation = props.dataModel.fieldsInfo['translation']?.addEditFormat != null;
+    const buildInput = (values: any) => {
+        if (!hasTranslation) return values;
+        const { en, fr, de, ...rest } = values;
+        return {
+            ...rest,
+            translation: !en && !fr && !de ? null : { en, fr, de }
+        };
+    };
+
     const onFinish = () => {
         if (props.dataModel.endpoints.update && props.id) {
             form.validateFields()
@@ -414,7 +478,7 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                     checkUndefinedValues(form);
                     mutateUpdate({
                         id: props.id,
-                        input: { ...form.getFieldsValue(true) }
+                        input: buildInput({ ...form.getFieldsValue(true) })
                     });
                     setUnsavedChanges(false);
                 })
@@ -428,7 +492,10 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                     form.validateFields()
                         .then(() => {
                             mutateCreate({
-                                input: { ...form.getFieldsValue(true), ...props.extraData }
+                                input: buildInput({
+                                    ...form.getFieldsValue(true),
+                                    ...props.extraData
+                                })
                             });
                             setUnsavedChanges(false);
                         })

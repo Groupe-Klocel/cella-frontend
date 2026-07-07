@@ -22,7 +22,7 @@ import { HeaderContent, NavButton, PageContentWrapper, RadioInfosHeader } from '
 import { Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { getMoreInfos, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { ScanRoundOrHuOrPosition } from 'modules/Preparation/equipmentPositionRelease/PagesContainer/ScanRoundOrHuOrPosition';
@@ -130,8 +130,6 @@ const EquipmentPositionRelease: PageComponent = () => {
     if (storedObject.step30?.data?.handlingUnit) {
         headerDisplay[t('common:handling-unit-final')] = storedObject.step30.data.handlingUnit;
     }
-
-    headerDisplay = getMoreInfos(headerDisplay, storedObject, processName, t);
 
     const onReset = () => {
         dispatch({

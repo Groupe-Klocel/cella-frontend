@@ -92,7 +92,7 @@ export const ScanLocation = ({
     }, []);
 
     const locationName =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location.name;
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location?.name;
 
     const PRAADeliveryLineInfos =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.roundLineDetail
@@ -103,8 +103,8 @@ export const ScanLocation = ({
         locationName: any
     ): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
-            query GetLocationIds($filters: LocationSearchFilters) {
-                locations(filters: $filters) {
+            query GetLocationIds($advancedFilters: [LocationAdvancedSearchFilters!]) {
+                locations(advancedFilters: $advancedFilters) {
                     count
                     itemsPerPage
                     totalPages
@@ -173,22 +173,20 @@ export const ScanLocation = ({
                 }
             }
         `;
-        if (scannedInfo) {
-            const variables = {
-                filters: { barcode: [`${scannedInfo}`] }
-            };
-            const locationInfos = await graphqlRequestClient.request(query, variables);
+        const searchValue = scannedInfo || locationName;
+        if (!searchValue) return;
 
-            return locationInfos;
-        }
-        if (locationName) {
-            const variables = {
-                filters: { name: [`${locationName}`] }
-            };
-            const locationInfos = await graphqlRequestClient.request(query, variables);
+        const variables = {
+            advancedFilters: {
+                filter: [
+                    { searchType: 'EQUAL', field: { name: `${searchValue}` } },
+                    { searchType: 'EQUAL', field: { barcode: `${searchValue}` } }
+                ]
+            }
+        };
+        const locationInfos = await graphqlRequestClient.request(query, variables);
 
-            return locationInfos;
-        }
+        return locationInfos;
     };
 
     useEffect(() => {

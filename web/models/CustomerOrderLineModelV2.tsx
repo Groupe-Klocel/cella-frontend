@@ -142,6 +142,26 @@ export const CustomerOrderLineModelV2: ModelType = {
             config: null,
             param: null
         },
+        'order{fixedPrice}': {
+            isListRequested: false,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         lineNumber: {
             isListRequested: true,
             isDefaultHiddenList: false,

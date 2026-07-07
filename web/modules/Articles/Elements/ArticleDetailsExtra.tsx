@@ -35,6 +35,7 @@ import { ModeEnum, Table } from 'generated/graphql';
 import { ArticleLuBarcodeModelV2 } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { ArticleLuModelV2 } from '@helpers';
+import { HandlingUnitContentModelV2 } from '@helpers';
 import { ArticleExtrasModelV2 } from '@helpers';
 import configs from '../../../../common/configs.json';
 import { ArticleExtrasListComponent } from './ArticleExtrasListComponent';
@@ -74,6 +75,10 @@ const ArticleDetailsExtra = ({
     const articleModes = getModesFromPermissions(permissions, Table.Article);
     const articleLuModes = getModesFromPermissions(permissions, Table.ArticleLu);
     const articleLuBarcodeModes = getModesFromPermissions(permissions, Table.ArticleLuBarcode);
+    const handlingUnitContentModes = getModesFromPermissions(
+        permissions,
+        Table.HandlingUnitContent
+    );
     const [showNumberOfPrintsModal, setShowNumberOfPrintsModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
@@ -116,6 +121,12 @@ const ArticleDetailsExtra = ({
                     type="primary"
                 />
             ) : null
+    };
+
+    const handlingUnitContentHeaderData: HeaderData = {
+        title: t('common:associated', { name: t('common:handlingUnitContents') }),
+        routes: [],
+        actionsComponent: null
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -381,6 +392,56 @@ const ArticleDetailsExtra = ({
                         }}
                         dataToPrint={{ id: idToPrint }}
                         documentName="K_BarcodeLabel"
+                    />
+                </>
+            ) : (
+                <></>
+            )}
+            {handlingUnitContentModes.length > 0 &&
+            handlingUnitContentModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ articleId: articleId }}
+                        advancedFilters={[
+                            {
+                                filter: [
+                                    {
+                                        searchType: 'DIFFERENT',
+                                        field: { handlingUnit_LocationId: null }
+                                    }
+                                ]
+                            }
+                        ]}
+                        dataModel={HandlingUnitContentModelV2}
+                        headerData={handlingUnitContentHeaderData}
+                        routeDetailPage={'/handling-unit-contents/:id'}
+                        triggerDelete={{ idToDelete, setIdToDelete }}
+                        triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                        actionColumns={[
+                            {
+                                title: 'actions:actions',
+                                key: 'actions',
+                                render: (record: { id: string }) => (
+                                    <Space>
+                                        {handlingUnitContentModes.length > 0 &&
+                                        handlingUnitContentModes.includes(ModeEnum.Read) ? (
+                                            <LinkButton
+                                                icon={<EyeTwoTone />}
+                                                path={pathParams(
+                                                    '/handling-unit-contents/[id]',
+                                                    record.id
+                                                )}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
+                                    </Space>
+                                )
+                            }
+                        ]}
+                        searchable={true}
+                        noDBSave={true}
                     />
                 </>
             ) : (
