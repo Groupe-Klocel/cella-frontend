@@ -18,45 +18,90 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
+import { Modal } from 'antd';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 export interface IQuantityChecksProps {
     dataToCheck: any;
+    expectedQuantity?: number;
+    stockQuantity?: number;
 }
 
-export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
+export const QuantityChecks = ({
+    dataToCheck,
+    expectedQuantity,
+    stockQuantity
+}: IQuantityChecksProps) => {
+    const { t } = useTranslation();
     const {
         processName,
         stepNumber,
-        enteredInfo: { enteredInfo }
+        enteredInfo: { enteredInfo, setEnteredInfo }
     } = dataToCheck;
 
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     // TYPED SAFE ALL
     useEffect(() => {
         if (enteredInfo) {
-            const data: { [label: string]: any } = {};
-            data['movingQuantity'] = enteredInfo;
-            storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
-            dispatch({
-                type: 'UPDATE_BY_STEP',
-                processName,
-                stepName: `step${stepNumber}`,
-                object: {
-                    ...storedObject[`step${stepNumber}`],
-                    data
-                }
-            });
+            setIsLoading(true);
+            const confirmAndDispatch = () => {
+                const data: { [label: string]: any } = {};
+                data['movingQuantity'] = enteredInfo;
+                storedObject[`step${stepNumber}`] = { ...storedObject[`step${stepNumber}`], data };
+
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: `step${stepNumber}`,
+                    object: {
+                        ...storedObject[`step${stepNumber}`],
+                        data
+                    }
+                });
+                setIsLoading(false);
+            };
+
+            if (expectedQuantity && enteredInfo > expectedQuantity) {
+                Modal.confirm({
+                    title: t('common:quantity-exceeds-expected'),
+                    content: t('messages:quantity-exceeds-expected', {
+                        movingQuantity: enteredInfo,
+                        expectedQuantity
+                    }),
+                    okText: t('common:bool-yes'),
+                    cancelText: t('common:bool-no'),
+                    onOk() {
+                        confirmAndDispatch();
+                    },
+                    onCancel() {
+                        setIsLoading(false);
+                        setEnteredInfo(null);
+                        dispatch({
+                            type: 'UPDATE_BY_STEP',
+                            processName,
+                            stepName: `step${stepNumber}`,
+                            object: {
+                                ...storedObject[`step${stepNumber}`],
+                                data: undefined
+                            }
+                        });
+                    }
+                });
+            } else {
+                confirmAndDispatch();
+            }
         }
-    }, [enteredInfo]);
+    }, [enteredInfo, stockQuantity, expectedQuantity]);
 
     return (
         <WrapperForm>
-            {enteredInfo && !storedObject[`step${stepNumber}`]?.data ? <ContentSpin /> : <></>}
+            {isLoading && !storedObject[`step${stepNumber}`]?.data ? <ContentSpin /> : <></>}
         </WrapperForm>
     );
 };
