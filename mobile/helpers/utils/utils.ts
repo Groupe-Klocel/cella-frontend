@@ -463,6 +463,22 @@ const getLanguageCode = (router: any): string | undefined => {
     return router.locale?.split('-')[0] || 'en';
 };
 
+/**
+ * Extract the stockOwnerId from an articleLuBarcode object.
+ * The stockOwnerId is resolved following the priority:
+ *   articleLuBarcode.stockOwnerId  >  articleLu.stockOwnerId  >  article.stockOwnerId
+ * Returns the first non-null/undefined value found, or undefined if none (any stock owner).
+ */
+const getStockOwnerIdFromArticleLuBarcode = (articleLuBarcode: any): string | undefined => {
+    if (!articleLuBarcode) return undefined;
+    return (
+        articleLuBarcode.stockOwnerId ??
+        articleLuBarcode.articleLu?.stockOwnerId ??
+        articleLuBarcode.article?.stockOwnerId ??
+        undefined
+    );
+};
+
 // Build the RadioInfosHeader `displayed` object from a declarative HeaderManagementType
 // configuration: skips non-visible rows and wraps bold/highlight values for DetailsList
 const buildHeaderDisplay = (headerManagement: HeaderManagementType): { [k: string]: any } => {
@@ -522,5 +538,6 @@ export {
     advancedFilter,
     snakeToCamel,
     getLanguageCode,
-    buildHeaderDisplay
+    buildHeaderDisplay,
+    getStockOwnerIdFromArticleLuBarcode
 };

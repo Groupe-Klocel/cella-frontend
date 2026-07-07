@@ -184,29 +184,41 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
             setIsLoading(true);
             const fetchData = async () => {
                 const response = await scanArticleOrFeatures(scannedInfo);
-                setFetchResult(response.executeFunction.output.response);
-                if (response.executeFunction.status === 'ERROR') {
-                    showError(response.executeFunction.output);
+                // scanArticleOrFeatures returns undefined when the request throws (error already shown)
+                const executeFunction = response?.executeFunction;
+                if (!executeFunction) {
+                    setResetForm(true);
+                    setIsLoading(false);
+                    setScannedInfo(undefined);
+                    return;
+                }
+                if (executeFunction.status === 'ERROR') {
+                    showError(executeFunction.output);
+                    setResetForm(true);
+                    setIsLoading(false);
+                    setScannedInfo(undefined);
                 } else if (
-                    response.executeFunction.status === 'OK' &&
-                    response.executeFunction.output.status === 'KO'
+                    executeFunction.status === 'OK' &&
+                    executeFunction.output?.status === 'KO'
                 ) {
-                    if (response.executeFunction.output.output.code === 'FAPI_000001') {
+                    if (executeFunction.output?.output?.code === 'FAPI_000001') {
                         createCycleCountError(
                             currentCycleCountId,
                             `Step ${stepNumber} - ${t('messages:no-article')} - ${scannedInfo}`
                         );
                         showError(t('messages:no-article'));
                     } else {
-                        showError(t(`errors:${response.executeFunction.output.output.code}`));
-                        console.log('Backend_message', response.executeFunction.output.output);
+                        showError(t(`errors:${executeFunction.output?.output?.code}`));
+                        console.log('Backend_message', executeFunction.output?.output);
                     }
                     // setTriggerOnBack(true);
                     setResetForm(true);
                     setIsLoading(false);
                     setScannedInfo(undefined);
                 } else {
-                    const articleResponse = response.executeFunction.output.response;
+                    // success path only: output.response is meaningful here
+                    setFetchResult(executeFunction.output?.response);
+                    const articleResponse = executeFunction.output?.response;
                     const featureType =
                         articleResponse.resType === 'serialNumber'
                             ? articleResponse.article.featureType

@@ -306,17 +306,20 @@ export const SimilarLocationsV2 = ({
     useEffect(() => {
         async function fetchLocationsData() {
             const result = await retrieveSimilarLocations();
-            if (result) {
-                if (
-                    result.executeFunction.status === 'OK' &&
-                    result.executeFunction.output.status === 'KO'
-                ) {
-                    console.log('Backend_message', result.executeFunction.output.output);
-                    setSimilarLocationsV2Infos([]);
-                    return;
-                }
-                setSimilarLocationsV2Infos(result.executeFunction.output.response.locations);
+            // retrieveSimilarLocations returns undefined when the request throws (error already shown)
+            const executeFunction = result?.executeFunction;
+            if (!executeFunction) {
+                return;
             }
+            if (
+                executeFunction.status === 'ERROR' ||
+                (executeFunction.status === 'OK' && executeFunction.output?.status === 'KO')
+            ) {
+                console.log('Backend_message', executeFunction.output?.output ?? executeFunction.output);
+                setSimilarLocationsV2Infos([]);
+                return;
+            }
+            setSimilarLocationsV2Infos(executeFunction.output?.response?.locations ?? []);
         }
         fetchLocationsData();
     }, [block]);
