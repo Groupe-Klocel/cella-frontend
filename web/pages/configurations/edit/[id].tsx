@@ -24,12 +24,24 @@ import { FC, useState } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { configurationsRoutes } from 'modules/Configurations/Static/configurationRoutes';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { EditConfigParamComponent } from 'modules/Crud/EditConfigParamComponentV2';
+import { AddEditItemComponent } from 'modules/Crud/AddEditItemComponentV2';
+import { fetchInitialData } from '@helpers';
+import { GetServerSideProps } from 'next';
 import { ConfigModelV2 } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
-const EditConfigurationPage: PageComponent = () => {
+// edit with caution: https://nextjs.org/docs/pages/building-your-application/data-fetching/get-server-side-props
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const initialData = await fetchInitialData(context, ConfigModelV2);
+    return {
+        props: {
+            ...initialData
+        }
+    };
+};
+
+const EditConfigurationPage: PageComponent = (props) => {
     const router = useRouter();
     const { id } = router.query;
     const { t } = useTranslation();
@@ -45,8 +57,9 @@ const EditConfigurationPage: PageComponent = () => {
     return (
         <>
             <AppHead title={`${t('actions:edit-configuration')} ${data?.scope} - ${data?.code}`} />
-            <EditConfigParamComponent
-                id={id!}
+            <AddEditItemComponent
+                id={id as string}
+                initialProps={props}
                 setData={setData}
                 dataModel={ConfigModelV2}
                 headerComponent={

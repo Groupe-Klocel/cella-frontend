@@ -29,6 +29,7 @@ import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListCompo
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { movementsRoutes as itemRoutes } from 'modules/Movements/Static/MovementRoutes';
+import { EditPriorityMovementsModal } from 'modules/Movements/Forms/EditPriorityMovementsModal';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -45,6 +46,8 @@ const MovementPages: PageComponent = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
     const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
     const [assignmentManagementLoading, setAssignmentManagementLoading] = useState(false);
+    const [showEditPriorityMovementsModal, setShowEditPriorityMovementsModal] = useState(false);
+    const [editPriorityMovementsLoading, setEditPriorityMovementsLoading] = useState(false);
     const [selectedMovementsHaveUser, setSelectedMovementsHaveUser] = useState(false);
     const [selectionState, setSelectionState] = useState<'none' | 'assign' | 'unassign' | 'mixed'>(
         'none'
@@ -380,6 +383,16 @@ const MovementPages: PageComponent = () => {
                     </span>
                     <span style={{ marginLeft: 16 }}>
                         <Button
+                            type="primary"
+                            onClick={() => setShowEditPriorityMovementsModal(true)}
+                            disabled={!hasSelected || !allSelectedHaveCorrectStatus}
+                            loading={editPriorityMovementsLoading}
+                        >
+                            {t('actions:edit-priority')}
+                        </Button>
+                    </span>
+                    <span style={{ marginLeft: 16 }}>
+                        <Button
                             danger
                             onClick={cancelMovements}
                             disabled={!hasSelected || !allSelectedCanBeCanceled}
@@ -484,6 +497,14 @@ const MovementPages: PageComponent = () => {
                         ? { status: parseInt(configsParamsCodes.toBeProcessedStatusCode) }
                         : undefined
                 }
+            />
+            <EditPriorityMovementsModal
+                showModal={{
+                    showEditPriorityMovementsModal,
+                    setShowEditPriorityMovementsModal
+                }}
+                updateMovements={updateMovements}
+                loading={setEditPriorityMovementsLoading}
             />
         </>
     );

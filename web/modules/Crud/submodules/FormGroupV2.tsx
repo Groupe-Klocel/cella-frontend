@@ -76,7 +76,7 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
         localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
 
     function ruleAttribution(rules: any, name: string) {
-        const [isMandatory, minRule, maxRule] = rules;
+        const [isMandatory, minRule, maxRule] = Array.isArray(rules) ? rules : [];
         let ruleArray = [];
         if (isMandatory) {
             ruleArray.push({ required: true, message: errorMessageEmptyInput });

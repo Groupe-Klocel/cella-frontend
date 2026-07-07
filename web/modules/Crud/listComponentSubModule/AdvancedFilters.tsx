@@ -87,7 +87,7 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
     }, [editingFilter]);
 
     function handleAdd() {
-        if (!advFilterField || !advSearchType) return;
+        if (!advFilterField || !advSearchType) return false;
         const fieldValue = form.getFieldValue(advFilterField.name);
         if (['EMPTY', 'NOT_EMPTY'].includes(advSearchType)) {
             // For these types, we don't need a value and we set it to null
@@ -99,7 +99,7 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
             (Array.isArray(fieldValue) && fieldValue.length === 0)
         ) {
             // For other types, value is required
-            return;
+            return false;
         }
         let newFilter = {
             filter: [{ searchType: advSearchType, field: { [advFilterField.name]: fieldValue } }]
@@ -138,6 +138,7 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
         setAdvFilterInitialValue(undefined);
         setIsOpen(false);
         onEditingClose?.();
+        return true;
     }
 
     function handleClose() {
@@ -157,7 +158,17 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
                 open={isOpen}
                 title={t('actions:advanced-filter')}
                 onOk={handleAdd}
-                onCancel={handleClose}
+                onCancel={(e: any) => {
+                    // Clicking outside (on the modal mask) validates the data inside,
+                    // while the X icon and the Cancel button still close without applying.
+                    const target = e?.target as HTMLElement | undefined;
+                    if (target?.classList?.contains('ant-modal-wrap')) {
+                        // Apply if the filter is complete; otherwise just close (discard).
+                        if (!handleAdd()) handleClose();
+                    } else {
+                        handleClose();
+                    }
+                }}
                 destroyOnClose
             >
                 <Space direction="vertical" style={{ width: '100%' }}>
@@ -167,7 +178,12 @@ export const AdvancedFilters: FC<AdvancedFiltersProps> = ({
                             style={{ width: '100%' }}
                             value={advFilterField?.name ?? undefined}
                             options={filterFields
-                                .filter((f: any) => f.name !== 'allFields')
+                                .filter(
+                                    (f: any) =>
+                                        f.name !== 'allFields' &&
+                                        f.type !== undefined &&
+                                        f.type !== null
+                                )
                                 .map((f: any) => ({ label: f.displayName, value: f.name }))}
                             onChange={(val: string) => {
                                 if (advFilterField) form.resetFields([advFilterField.name]);

@@ -17,27 +17,32 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { useState, useEffect, FC } from 'react';
+import { useState, useEffect, useMemo, FC } from 'react';
 import { Form, Button, Modal, Collapse, Select, Input, AutoComplete, Checkbox } from 'antd';
 import { WrapperForm } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, getLanguageCode } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    getLanguageCode,
+    getReservedCarrierExclusionFilters,
+    findCodeByScopeAndValue
+} from '@helpers';
 import { FilterFieldType, FormOptionType, ModelType } from 'models/ModelsV2';
 import {
     CreateCarrierMutation,
     CreateCarrierMutationVariables,
-    GetAllCarriersQuery,
     GetThirdPartyAddressContactsQuery,
     GetThirdPartyAddressesQuery,
     SimpleGetThirdPartiesQuery,
     useCreateCarrierMutation,
-    useGetAllCarriersQuery,
     useGetThirdPartyAddressContactsQuery,
     useGetThirdPartyAddressesQuery,
     useSimpleGetThirdPartiesQuery
 } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
+import { useAppState } from 'context/AppContext';
 import configs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
@@ -59,7 +64,16 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
+    const { configs: appConfigs } = useAppState();
     const filteredLanguage = getLanguageCode(router);
+
+    // Backend advancedFilters excluding reserved carriers (virtual / closed) from the
+    // parent-carrier selection. The closed status code is resolved from AppState configs
+    // (scope 'carrier_status', value 'closed') and parsed to a number (status is an Int).
+    const carrierExclusionFilters = useMemo(() => {
+        const code = findCodeByScopeAndValue(appConfigs ?? [], 'carrier_status', 'closed');
+        return getReservedCarrierExclusionFilters(code != null ? parseInt(code, 10) : undefined);
+    }, [appConfigs]);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [selectedAvailable, setSelectedAvailable] = useState<any>();
     const [selectedToBeLoaded, setSelectedToBeLoaded] = useState<any>();
@@ -247,15 +261,41 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
         );
     };
 
-    // Get all carriers
-    const carrierParents = useGetAllCarriersQuery<Partial<GetAllCarriersQuery>, Error>(
-        graphqlRequestClient,
-        {
-            orderBy: null,
-            page: 1,
-            itemsPerPage: 100
-        }
-    );
+    // Get all carriers (bespoke gql) — reserved carriers (virtual / closed) are excluded
+    // from the parent-carrier selection.
+    const [carrierParents, setCarrierParents] = useState<any[]>([]);
+    useEffect(() => {
+        const query = gql`
+            query getCarrierParents(
+                $advancedFilters: [CarrierAdvancedSearchFilters!]
+                $orderBy: [CarrierOrderByCriterion!]
+                $page: Int!
+                $itemsPerPage: Int!
+            ) {
+                carriers(
+                    advancedFilters: $advancedFilters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                ) {
+                    results {
+                        id
+                        name
+                    }
+                }
+            }
+        `;
+        graphqlRequestClient
+            .request(query, {
+                advancedFilters: carrierExclusionFilters,
+                orderBy: null,
+                page: 1,
+                itemsPerPage: 100
+            })
+            .then((data: any) => {
+                setCarrierParents(data?.carriers?.results ?? []);
+            });
+    }, [carrierExclusionFilters]);
 
     //ThirdPartyAddressContacts
     const contactsList = useGetThirdPartyAddressContactsQuery<
@@ -480,7 +520,7 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
                             name: t('d:parentCarrier')
                         })}`}
                     >
-                        {carrierParents?.data?.carriers?.results.map((carrierParent: any) => (
+                        {carrierParents.map((carrierParent: any) => (
                             <Option key={carrierParent.id} value={carrierParent.id}>
                                 {carrierParent.name}
                             </Option>
