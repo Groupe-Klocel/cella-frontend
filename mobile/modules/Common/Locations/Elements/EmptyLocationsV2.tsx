@@ -203,18 +203,20 @@ export const EmptyLocationsV2 = ({ withAvailableHU }: IEmptyLocationsV2Props) =>
     useEffect(() => {
         async function fetchLocationsData() {
             const result = await retrieveEmptyLocations();
-
-            if (result) {
-                if (
-                    result.executeFunction.status === 'OK' &&
-                    result.executeFunction.output.status === 'KO'
-                ) {
-                    console.log('Backend_message', result.executeFunction.output.output);
-                    setLocationsData([]);
-                    return;
-                }
-                setLocationsData(result.executeFunction.output.response.locations);
+            // retrieveEmptyLocations returns undefined when the request throws (error already shown)
+            const executeFunction = result?.executeFunction;
+            if (!executeFunction) {
+                return;
             }
+            if (
+                executeFunction.status === 'ERROR' ||
+                (executeFunction.status === 'OK' && executeFunction.output?.status === 'KO')
+            ) {
+                console.log('Backend_message', executeFunction.output?.output ?? executeFunction.output);
+                setLocationsData([]);
+                return;
+            }
+            setLocationsData(executeFunction.output?.response?.locations ?? []);
         }
         fetchLocationsData();
     }, [block]);
