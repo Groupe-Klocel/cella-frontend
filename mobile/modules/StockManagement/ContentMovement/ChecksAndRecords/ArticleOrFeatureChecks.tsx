@@ -19,6 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
 import { showError, LsIsSecured } from '@helpers';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 
@@ -30,6 +32,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { graphqlRequestClient } = useAuth();
 
     const {
         process,
@@ -41,35 +44,66 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
 
     const storedObject = JSON.parse(storage.get(process) || '{}');
     // TYPED SAFE ALL
-    //ScanArticleOrFeature-2: call and process frontAPIResponse
+    //ScanArticleOrFeature-2: call and process backend function response
     const [fetchResult, setFetchResult] = useState<any>();
+
+    async function scanArticleOrFeatures(scannedItem: any) {
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'K_RF_scanArticleOrFeature',
+            event: {
+                input: { scannedItem }
+            }
+        };
+
+        try {
+            const result = await graphqlRequestClient.request(query, variables);
+            return result;
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+        }
+    }
+
     useEffect(() => {
         if (scannedInfo) {
             setIsLoading(true);
             const fetchData = async () => {
-                const res = await fetch(`/api/stock-management/scanArticleOrFeature`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        scannedInfo
-                    })
-                });
-                const response = await res.json();
-                setFetchResult(response.response);
-                if (!res.ok) {
-                    if (response.error.is_error) {
-                        // specific error
-                        showError(t(`errors:${response.error.code}`));
-                    } else {
-                        // generic error
-                        showError(t('messages:check-failed'));
-                    }
+                const response = await scanArticleOrFeatures(scannedInfo);
+                // scanArticleOrFeatures returns undefined when the request throws (error already shown)
+                const executeFunction = response?.executeFunction;
+                if (!executeFunction) {
+                    setResetForm(true);
+                    setIsLoading(false);
+                    setScannedInfo(undefined);
+                    return;
+                }
+                if (executeFunction.status === 'ERROR') {
+                    showError(executeFunction.output);
+                    setResetForm(true);
+                    setIsLoading(false);
+                    setScannedInfo(undefined);
+                } else if (
+                    executeFunction.status === 'OK' &&
+                    executeFunction.output?.status === 'KO'
+                ) {
+                    showError(t(`errors:${executeFunction.output?.output?.code}`));
+                    console.log('Backend_message', executeFunction.output?.output);
                     // setTriggerOnBack(true);
                     setResetForm(true);
                     setIsLoading(false);
                     setScannedInfo(undefined);
+                } else {
+                    // success path only: output.response is meaningful here
+                    setFetchResult(executeFunction.output?.response);
                 }
             };
             fetchData();

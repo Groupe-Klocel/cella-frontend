@@ -109,9 +109,8 @@ export const SelectContentForArticleForm = ({
     const defaultFilter = { articleId: `${articleId}` };
     const locationFilter = locationId ? { handlingUnit_LocationId: `${locationId}` } : undefined;
     const handlingUnitFilter = handlingUnitId ? { handlingUnitId: `${handlingUnitId}` } : undefined;
-    const stockOwnerFilter = stockOwnerId
-        ? { stockOwnerId: `${stockOwnerId}` }
-        : { stockOwnerId: `null` };
+    // when no stockOwnerId is provided, do not filter on stock owner (any stock owner is accepted)
+    const stockOwnerFilter = stockOwnerId ? { stockOwnerId: `${stockOwnerId}` } : undefined;
     let filter = {
         ...defaultFilter,
         ...locationFilter,
