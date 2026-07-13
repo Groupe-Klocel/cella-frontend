@@ -1044,6 +1044,15 @@ const ListComponent = (props: IListProps) => {
             });
     };
 
+    // The column-header filter dropdowns are baked into the allColumns STATE by the [data]
+    // effect below, so every callback they capture is frozen at bake time. They must submit
+    // through this ref: a directly captured handleSubmit would save user settings computed
+    // from the context state as it was at the last data reload, silently reverting any
+    // column visibility/order/width change made since.
+    const handleSubmitRef = useRef(handleSubmit);
+    handleSubmitRef.current = handleSubmit;
+    const submitLatestSearch = useCallback(() => handleSubmitRef.current(), []);
+
     function isSelectCaseExptions() {
         // because they are not in the resolver of the dictionary manageur
         if (router.pathname.includes('roles') || router.pathname.includes('warehouse-workers')) {
@@ -1719,7 +1728,7 @@ const ListComponent = (props: IListProps) => {
                                                     optionTable: filterField?.optionTable
                                                 }}
                                                 defaultSubOptions={props.defaultSubOptions}
-                                                handleSubmit={handleSubmit}
+                                                handleSubmit={submitLatestSearch}
                                                 setAllSubOptions={setAllSubOptions}
                                                 filtersParameters={!isSelectCaseExptions() && true}
                                             />
@@ -1729,7 +1738,7 @@ const ListComponent = (props: IListProps) => {
                                     onFilterDropdownOpenChange: (visible) => {
                                         if (!visible) {
                                             // Auto-submit when dropdown closes
-                                            handleSubmit();
+                                            submitLatestSearch();
                                         }
                                     },
                                     filterIcon: () => {
@@ -2169,15 +2178,10 @@ const ListComponent = (props: IListProps) => {
 
         const defaultAdvancedFilters = props?.advancedFilters ?? [];
 
-        handleUserSettings(
-            newSearch,
-            null,
-            defaultPagination,
-            defaultAdvancedFilters,
-            [],
-            [],
-            null
-        );
+        // subOptions are cleared ([]) along with the filters they belong to, but the column
+        // configuration must be preserved: [] here would overwrite the saved allColumnsInfos
+        // and permanently reset the user's column visibility/order.
+        handleUserSettings(newSearch, null, defaultPagination, defaultAdvancedFilters, [], null);
     }
 
     // #endregion

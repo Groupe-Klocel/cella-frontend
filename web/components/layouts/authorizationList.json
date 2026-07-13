@@ -1585,6 +1585,46 @@
         "mode": "read"
     },
     {
+        "route": "/visitors/[id]",
+        "permission": "wm_visitors",
+        "mode": "read"
+    },
+    {
+        "route": "/visitors/add",
+        "permission": "wm_visitors",
+        "mode": "create"
+    },
+    {
+        "route": "/visitors/edit/[id]",
+        "permission": "wm_visitors",
+        "mode": "update"
+    },
+    {
+        "route": "/visitors",
+        "permission": "wm_visitors",
+        "mode": "read"
+    },
+    {
+        "route": "/visitors/check-in",
+        "permission": "wm_visitor-check-in",
+        "mode": "read"
+    },
+    {
+        "route": "/visitors/check-in/[id]",
+        "permission": "wm_visitor-check-in",
+        "mode": "read"
+    },
+    {
+        "route": "/visitors/check-out",
+        "permission": "wm_visitor-check-out",
+        "mode": "read"
+    },
+    {
+        "route": "/visitors/schedule",
+        "permission": "wm_visitors",
+        "mode": "read"
+    },
+    {
         "route": "/warehouse-workers/[id]",
         "permission": "wm_warehouse-workers",
         "mode": "read"
