@@ -125,6 +125,7 @@ import { ThirdPartyAddressModelV2 as _ThirdPartyAddressModelV2 } from '../../mod
 import { ThirdPartyDocumentModelV2 as _ThirdPartyDocumentModelV2 } from '../../models/ThirdPartyDocumentModelV2';
 import { ThirdPartyModelV2 as _ThirdPartyModelV2 } from '../../models/ThirdPartyModelV2';
 import { TranslationModelV2 as _TranslationModelV2 } from '../../models/TranslationModelV2';
+import { VisitorModelV2 as _VisitorModelV2 } from '../../models/VisitorModelV2';
 import { WarehouseWorkerModelV2 as _WarehouseWorkerModelV2 } from '../../models/WarehouseWorkerModelV2';
 import { WarehouseWorkerStockOwnerModelV2 as _WarehouseWorkerStockOwnerModelV2 } from '../../models/WarehouseWorkerStockOwnerModelV2';
 import { WarehouseWorkerUserRoleModelV2 as _WarehouseWorkerUserRoleModelV2 } from '../../models/WarehouseWorkerUserRoleModelV2';
@@ -407,6 +408,7 @@ export const ThirdPartyDocumentModelV2 = injectedModel(
 );
 export const ThirdPartyModelV2 = injectedModel(_ThirdPartyModelV2, 'ThirdPartySpeModel');
 export const TranslationModelV2 = injectedModel(_TranslationModelV2, 'TranslationSpeModel');
+export const VisitorModelV2 = injectedModel(_VisitorModelV2, 'VisitorSpeModel');
 export const WarehouseWorkerModelV2 = injectedModel(
     _WarehouseWorkerModelV2,
     'WarehouseWorkerSpeModel'

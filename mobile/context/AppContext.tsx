@@ -53,6 +53,7 @@ interface State {
     pick: Record<string, any>;
     pack: Record<string, any>;
     gateEntry: Record<string, any>;
+    visitorEntry: Record<string, any>;
     [key: string]: any;
 }
 
@@ -197,6 +198,7 @@ const initialState: State = {
     pick: {},
     pack: {},
     gateEntry: {},
+    visitorEntry: {},
     equipmentPositionRelease: {}
 };
 
@@ -298,6 +300,7 @@ function reducer(state: State, action: Action): State {
                     pick: {},
                     pack: {},
                     gateEntry: {},
+                    visitorEntry: {},
                     equipmentPositionRelease: {}
                 };
             }

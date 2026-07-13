@@ -48,14 +48,24 @@ const LinkButton: FC<ILinkButtonProps> = ({
     return (
         <>
             {disabled ? (
-                <Tooltip placement="top" title={tooltip}>
+                <Tooltip
+                    placement="top"
+                    title={tooltip}
+                    align={{ offset: [0, 0] }}
+                    overlayStyle={{ pointerEvents: 'none' }}
+                >
                     <Button icon={icon} type={type} disabled>
                         {title}
                     </Button>
                 </Tooltip>
             ) : (
                 <Link href={path} passHref replace={replace}>
-                    <Tooltip placement="top" title={tooltip}>
+                    <Tooltip
+                        placement="top"
+                        title={tooltip}
+                        align={{ offset: [0, 0] }}
+                        overlayStyle={{ pointerEvents: 'none' }}
+                    >
                         <Button icon={icon} type={type}>
                             {title}
                         </Button>
@@ -70,13 +80,23 @@ const UsualButton: any = ({ title, type, danger, icon, onClick, disabled, toolti
     return (
         <>
             {disabled ? (
-                <Tooltip placement="top" title={tooltip}>
+                <Tooltip
+                    placement="top"
+                    title={tooltip}
+                    align={{ offset: [0, 0] }}
+                    overlayStyle={{ pointerEvents: 'none' }}
+                >
                     <Button icon={icon} type={type} disabled>
                         {title}
                     </Button>
                 </Tooltip>
             ) : (
-                <Tooltip placement="top" title={tooltip}>
+                <Tooltip
+                    placement="top"
+                    title={tooltip}
+                    align={{ offset: [0, 0] }}
+                    overlayStyle={{ pointerEvents: 'none' }}
+                >
                     <Button icon={icon} type={type} onClick={onClick} danger={danger}>
                         {title}
                     </Button>
