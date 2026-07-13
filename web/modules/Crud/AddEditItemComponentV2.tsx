@@ -103,6 +103,7 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                 config: fieldInfo.config ?? undefined,
                 param: fieldInfo.param ?? undefined,
                 rulesInfos: [fieldInfo.isMandatory, fieldInfo.minRule, fieldInfo.maxRule],
+                mode: fieldInfo.isMultipleAddEdit ? 'multiple' : undefined,
                 numberPrecision: fieldInfo.numberPrecision ?? undefined,
                 initialValue,
                 optionTable: fieldInfo.optionTable ?? undefined,
