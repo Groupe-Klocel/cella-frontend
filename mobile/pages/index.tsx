@@ -25,7 +25,7 @@ import { HeaderContent, MenuCard } from '@components';
 import { useAppState } from 'context/AppContext';
 import { getModesFromPermissions, useTranslationWithFallback as useTranslation } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
-import { TruckOutlined } from '@ant-design/icons';
+import { IdcardOutlined, TruckOutlined } from '@ant-design/icons';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -81,6 +81,12 @@ const HomePage: PageComponent = () => {
             title: 'common:title',
             icon: <TruckOutlined style={{ fontSize: 40, color: '#000' }} />,
             path: '/gate-entry'
+        },
+        // Visitor check-in kiosk
+        {
+            title: 'common:visitor-title',
+            icon: <IdcardOutlined style={{ fontSize: 40, color: '#000' }} />,
+            path: '/visitor-entry'
         }
     ].filter(Boolean);
 

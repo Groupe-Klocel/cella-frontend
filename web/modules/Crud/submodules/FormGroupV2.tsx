@@ -23,9 +23,13 @@ import 'dayjs/locale/fr';
 import 'dayjs/locale/en';
 import 'dayjs/locale/de';
 import localeDataPlugin from 'dayjs/plugin/localeData';
+import localizedFormatPlugin from 'dayjs/plugin/localizedFormat';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 
 dayjs.extend(localeDataPlugin);
+// localizedFormat provides the L/LT format definitions for the base 'en'
+// locale; without it localeData.longDateFormat('L') throws in English
+dayjs.extend(localizedFormatPlugin);
 import { FC, useEffect, useState } from 'react';
 import { FilterFieldType, FormDataType, ModelType } from '../../../models/ModelsV2';
 import { DraggerInput } from 'components/common/smart/Form/MainInputs/DraggerInput';
@@ -145,6 +149,7 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                         return (
                             <SelectInput
                                 item={item}
+                                mode={item.mode}
                                 setValues={props.setValues}
                                 key={item.name + index}
                                 setAllSubOptions={setAllSubOptions}
