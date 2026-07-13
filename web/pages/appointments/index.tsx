@@ -26,6 +26,8 @@ import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import {
     getModesFromPermissions,
+    getTruckTypeCodes,
+    getVisitTypeCode,
     pathParams,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
@@ -53,7 +55,7 @@ import {
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const AppointmentsPages: PageComponent = () => {
-    const { permissions } = useAppState();
+    const { permissions, configs } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
@@ -62,6 +64,14 @@ const AppointmentsPages: PageComponent = () => {
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const [configsAppointment, setConfigAppointments] = useState<any>([]);
     const { graphqlRequestClient } = useAuth();
+
+    // visits (type Visit) never appear in the truck appointment list: when the
+    // Visit type is configured, the list is locked to the truck type codes
+    const visitTypeCode = useMemo(() => getVisitTypeCode(configs), [configs]);
+    const truckSearchCriteria = useMemo(
+        () => (visitTypeCode !== undefined ? { appointmentType: getTruckTypeCodes(configs) } : {}),
+        [configs, visitTypeCode]
+    );
 
     const ICON_MAP: Record<string, ComponentType<any>> = {
         FileAddOutlined,
@@ -272,7 +282,7 @@ const AppointmentsPages: PageComponent = () => {
         <>
             <AppHead title={headerData.title} />
             <ListComponent
-                searchCriteria={{}}
+                searchCriteria={truckSearchCriteria}
                 headerData={headerData}
                 dataModel={model}
                 actionButtons={actionButtons}

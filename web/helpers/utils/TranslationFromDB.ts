@@ -77,7 +77,8 @@ export function useTranslationWithFallback(keyInfo?: string): TranslationRespons
                     .split(/{{([^}]+)}}/)
                     .filter((part: any) => part)
                     .map((part: any) => {
-                        return args[0][part] || part;
+                        // ?? keeps falsy values like 0 (e.g. "0 of 2 confirmed")
+                        return args[0][part] ?? part;
                     })
                     .join('');
             }
