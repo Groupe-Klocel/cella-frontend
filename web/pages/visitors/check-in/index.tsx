@@ -21,10 +21,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead, HeaderContent, LinkButton, PageTableContentWrapper } from '@components';
 import {
     getModesFromPermissions,
+    getVisitStatusCodes,
+    getVisitTypeCode,
     pathParams,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
-import { Badge, Space, Table, Tabs, Tag } from 'antd';
+import { Badge, Table, Tabs, Tag } from 'antd';
 import { EyeTwoTone } from '@ant-design/icons';
 import { gql } from 'graphql-request';
 import MainLayout from 'components/layouts/MainLayout';
@@ -33,149 +35,134 @@ import { useAuth } from 'context/AuthContext';
 import { ModeEnum } from 'generated/graphql';
 import dayjs from 'dayjs';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-    classifyGateEntry,
-    GateEntry,
-    GateStatusCodes,
-    GATE_ENTRY_FIELDS
-} from 'modules/GateValidation/types';
+import { classifyVisitEntry, VisitEntry, VISIT_ENTRY_FIELDS } from 'modules/Visitors/types';
+import { visitorCheckInRoutes } from 'modules/Visitors/Static/visitorsRoutes';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const REFRESH_MS = 3000;
-const rootPath = '/gate-validation';
+const rootPath = '/visitors/check-in';
 
-const GateValidationDashboard: PageComponent = () => {
+const VisitorCheckInDashboard: PageComponent = () => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const { permissions, configs } = useAppState();
-    const modes = getModesFromPermissions(permissions, 'wm_appointments');
+    const modes = getModesFromPermissions(permissions, 'wm_visitor-check-in');
 
-    const [entries, setEntries] = useState<GateEntry[]>([]);
+    const [entries, setEntries] = useState<VisitEntry[]>([]);
     const [activeTab, setActiveTab] = useState('pending');
 
-    // CONFIRMED / ON_SITE codes from the configs reducer (no extra request).
-    const codes = useMemo<GateStatusCodes | null>(() => {
-        if (!configs || configs.length === 0) return null;
-        const find = (re: RegExp) =>
-            parseInt(
-                configs.find((c: any) => c.scope === 'appointment_status' && re.test(c.value ?? ''))
-                    ?.code,
-                10
-            );
-        return {
-            confirmed: find(/confirm/i),
-            onSite: find(/on.?site|sur.?site|vor.?ort/i),
-            cancelled: find(/cancel|annul|stornier/i)
-        };
-    }, [configs]);
+    const visitTypeCode = useMemo(() => getVisitTypeCode(configs), [configs]);
+    const codes = useMemo(() => getVisitStatusCodes(configs), [configs]);
+    const ready =
+        visitTypeCode !== undefined &&
+        codes.toBeChecked !== undefined &&
+        codes.checkedIn !== undefined;
 
     const refresh = useCallback(async () => {
-        if (!codes) return;
+        if (!ready) return;
         try {
             const res = await graphqlRequestClient.request(
                 gql`
-                    query listGateEntries($filters: AppointmentSearchFilters) {
+                    query listVisitorCheckIns($filters: AppointmentSearchFilters) {
                         appointments(filters: $filters, itemsPerPage: 1000) {
-                            results { ${GATE_ENTRY_FIELDS} }
+                            results { ${VISIT_ENTRY_FIELDS} }
                         }
                     }
                 `,
                 {
                     filters: {
-                        status: [codes.confirmed, codes.onSite, codes.cancelled].filter(Boolean)
+                        appointmentType: visitTypeCode,
+                        status: [
+                            codes.toBeChecked,
+                            codes.preRegistered,
+                            codes.checkedIn,
+                            codes.cancelled
+                        ].filter(Boolean)
                     }
                 }
             );
             const results: any[] = res?.appointments?.results ?? [];
-            setEntries(
-                results
-                    .map((r) => ({ ...r, locationName: r.location?.name ?? null }))
-                    .filter((e) => e.extras?.gateCheckIn)
-            );
+            // only visitors who went through the tablet (signed) are in the queue
+            setEntries(results.filter((entry) => entry.extras?.visitorCheckIn));
         } catch (e) {
             // keep previous data on transient errors
         }
-    }, [graphqlRequestClient, codes]);
+    }, [graphqlRequestClient, ready, visitTypeCode, codes]);
 
-    // Auto-refresh while the dashboard is open.
     useEffect(() => {
-        if (!codes) return;
+        if (!ready) return;
         refresh();
         const id = setInterval(refresh, REFRESH_MS);
         return () => clearInterval(id);
-    }, [codes, refresh]);
+    }, [ready, refresh]);
 
     const { pending, approved, refused } = useMemo(() => {
         const isToday = (iso?: string) => iso && dayjs(iso).isSame(dayjs(), 'day');
         const buckets = {
-            pending: [] as GateEntry[],
-            approved: [] as GateEntry[],
-            refused: [] as GateEntry[]
+            pending: [] as VisitEntry[],
+            approved: [] as VisitEntry[],
+            refused: [] as VisitEntry[]
         };
-        if (!codes) return buckets;
-        entries.forEach((e) => {
-            const decision = classifyGateEntry(e, codes);
-            const decidedAt = e.extras?.gateCheckIn?.decidedAt;
-            if (decision === 'pending') buckets.pending.push(e);
-            else if (decision === 'approved' && isToday(decidedAt)) buckets.approved.push(e);
-            else if (decision === 'refused' && isToday(decidedAt)) buckets.refused.push(e);
+        entries.forEach((entry) => {
+            const decision = classifyVisitEntry(entry, codes);
+            const decidedAt = entry.extras?.visitorCheckIn?.decidedAt;
+            if (decision === 'pending') buckets.pending.push(entry);
+            else if (decision === 'approved' && isToday(decidedAt)) buckets.approved.push(entry);
+            else if (decision === 'refused' && isToday(decidedAt)) buckets.refused.push(entry);
         });
-        const byArrival = (a: GateEntry, b: GateEntry) =>
-            (b.extras?.gateCheckIn?.at ?? '').localeCompare(a.extras?.gateCheckIn?.at ?? '');
+        const byArrival = (a: VisitEntry, b: VisitEntry) =>
+            (b.extras?.visitorCheckIn?.at ?? '').localeCompare(a.extras?.visitorCheckIn?.at ?? '');
         buckets.pending.sort(byArrival);
         buckets.approved.sort(byArrival);
         buckets.refused.sort(byArrival);
         return buckets;
     }, [entries, codes]);
 
-    const baseColumns = [
+    const columns = [
         {
             title: t('common:arrival-time'),
             key: 'arrival',
-            render: (record: GateEntry) => {
-                const at = record.extras?.gateCheckIn?.at;
+            render: (record: VisitEntry) => {
+                const at = record.extras?.visitorCheckIn?.at;
                 return at ? dayjs(at).format('YYYY-MM-DD HH:mm') : '-';
             }
         },
-        { title: t('common:driver-name'), dataIndex: 'driverName', key: 'driverName' },
-        { title: t('common:truck-plate'), dataIndex: 'truckLicensePlate', key: 'truckLicensePlate' }
-    ];
-
-    const statusColumn = {
-        title: t('common:status'),
-        key: 'status',
-        render: (record: GateEntry) => {
-            const decision = codes ? classifyGateEntry(record, codes) : 'pending';
-            const map: Record<string, { color: string; label: string }> = {
-                pending: { color: 'orange', label: t('common:status-pending') },
-                approved: { color: 'green', label: t('common:status-approved') },
-                refused: { color: 'red', label: t('common:status-refused') }
-            };
-            return <Tag color={map[decision].color}>{map[decision].label}</Tag>;
+        { title: t('d:visitor-name'), dataIndex: 'driverName', key: 'driverName' },
+        { title: t('d:company'), dataIndex: 'entityName', key: 'entityName' },
+        { title: t('d:internal-referent'), dataIndex: 'contactName', key: 'contactName' },
+        {
+            title: t('common:status'),
+            key: 'status',
+            render: (record: VisitEntry) => {
+                const decision = classifyVisitEntry(record, codes);
+                const map: Record<string, { color: string; label: string }> = {
+                    pending: { color: 'orange', label: t('common:status-pending') },
+                    approved: { color: 'green', label: t('common:status-approved') },
+                    refused: { color: 'red', label: t('common:status-refused') }
+                };
+                return <Tag color={map[decision].color}>{map[decision].label}</Tag>;
+            }
+        },
+        {
+            title: t('common:actions'),
+            key: 'actions',
+            render: (record: VisitEntry) =>
+                modes.includes(ModeEnum.Read) ? (
+                    <LinkButton
+                        icon={<EyeTwoTone />}
+                        path={pathParams(`${rootPath}/[id]`, record.id)}
+                    />
+                ) : null
         }
-    };
-
-    const actionColumn = {
-        title: t('common:actions'),
-        key: 'actions',
-        render: (record: GateEntry) =>
-            modes.includes(ModeEnum.Read) ? (
-                <LinkButton
-                    icon={<EyeTwoTone />}
-                    path={pathParams(`${rootPath}/[id]`, record.id)}
-                />
-            ) : null
-    };
-
-    const columns = [...baseColumns, statusColumn, actionColumn];
+    ];
 
     const dataForTab =
         activeTab === 'pending' ? pending : activeTab === 'approved' ? approved : refused;
 
     const headerData = {
-        title: t('common:validation-title'),
-        routes: [{ breadcrumbName: t('common:validation-title') }]
+        title: t('common:visitor-check-in'),
+        routes: visitorCheckInRoutes
     };
 
     const tabItems = [
@@ -201,7 +188,7 @@ const GateValidationDashboard: PageComponent = () => {
                     rowKey="id"
                     columns={columns}
                     dataSource={dataForTab}
-                    loading={!codes}
+                    loading={!ready}
                     pagination={{ pageSize: 20 }}
                     locale={{ emptyText: t('common:empty') }}
                 />
@@ -210,6 +197,6 @@ const GateValidationDashboard: PageComponent = () => {
     );
 };
 
-GateValidationDashboard.layout = MainLayout;
+VisitorCheckInDashboard.layout = MainLayout;
 
-export default GateValidationDashboard;
+export default VisitorCheckInDashboard;

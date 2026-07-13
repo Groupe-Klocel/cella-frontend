@@ -28,5 +28,6 @@ export * from './utils/formInputsHelpers';
 export * from './utils/newModelsInjected';
 export * from './configs/env';
 export * from './utils/TranslationFromDB';
+export * from './utils/visitorManagement';
 export * from './configs/misc';
 export * from './configs/cors-config';

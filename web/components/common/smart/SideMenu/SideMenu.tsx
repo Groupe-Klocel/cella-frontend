@@ -23,6 +23,7 @@ import {
     AuditOutlined,
     DeploymentUnitOutlined,
     HourglassOutlined,
+    IdcardOutlined,
     QuestionCircleOutlined,
     SettingOutlined,
     SlidersOutlined,
@@ -768,6 +769,55 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'truck-management-gate-validation',
                           label: <Link href="/gate-validation">{t('common:validation-title')}</Link>
+                      }
+                    : null
+            ].filter(Boolean)
+        },
+        // VISITOR MANAGEMENT
+        ['wm_visitors', 'wm_visitor-check-in', 'wm_visitor-check-out'].some((perm) =>
+            getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+        ) && {
+            key: 'visitor-management',
+            icon: <IdcardOutlined />,
+            label: t('visitor-management'),
+            children: [
+                // PRE-REGISTER VISITOR
+                getModesFromPermissions(permissions, 'wm_visitors').includes(ModeEnum.Create)
+                    ? {
+                          key: 'visitor-management-pre-register',
+                          label: <Link href="/visitors/add">{t('pre-register-visitor')}</Link>
+                      }
+                    : null,
+
+                // VISITOR CHECK-IN
+                getModesFromPermissions(permissions, 'wm_visitor-check-in').includes(ModeEnum.Read)
+                    ? {
+                          key: 'visitor-management-check-in',
+                          label: <Link href="/visitors/check-in">{t('visitor-check-in')}</Link>
+                      }
+                    : null,
+
+                // VISITOR CHECK-OUT
+                getModesFromPermissions(permissions, 'wm_visitor-check-out').includes(ModeEnum.Read)
+                    ? {
+                          key: 'visitor-management-check-out',
+                          label: <Link href="/visitors/check-out">{t('visitor-check-out')}</Link>
+                      }
+                    : null,
+
+                // VISITORS
+                getModesFromPermissions(permissions, 'wm_visitors').includes(ModeEnum.Read)
+                    ? {
+                          key: 'visitor-management-visitors',
+                          label: <Link href="/visitors">{t('visitors')}</Link>
+                      }
+                    : null,
+
+                // VISITORS SCHEDULE
+                getModesFromPermissions(permissions, 'wm_visitors').includes(ModeEnum.Read)
+                    ? {
+                          key: 'visitor-management-schedule',
+                          label: <Link href="/visitors/schedule">{t('common:agenda')}</Link>
                       }
                     : null
             ].filter(Boolean)

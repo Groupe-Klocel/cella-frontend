@@ -130,6 +130,7 @@ export type FieldInfo = {
     numberPrecision?: number;
     toBeEditDisabled?: string;
     isMultipleSearch?: boolean;
+    isMultipleAddEdit?: boolean | null;
     filterConfigParam?: string;
     highlight?: any;
 };

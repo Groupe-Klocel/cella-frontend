@@ -34,25 +34,16 @@ import {
     Spin,
     List
 } from 'antd';
+import { ReloadOutlined, FileOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
+import { getVisitTypeCode, useTranslationWithFallback as useTranslation } from '@helpers';
 import {
-    CloseOutlined,
-    FileAddOutlined,
-    SendOutlined,
-    CalendarOutlined,
-    CarOutlined,
-    AimOutlined,
-    ThunderboltOutlined,
-    CheckCircleOutlined,
-    TrophyOutlined,
-    StopOutlined,
-    DislikeOutlined,
-    QuestionCircleOutlined,
-    ReloadOutlined,
-    FileOutlined,
-    EyeOutlined,
-    DownloadOutlined
-} from '@ant-design/icons';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+    ScheduleSidePanel,
+    ScheduleStatusConfig,
+    ScheduleStatusEntry,
+    buildScheduleStatusConfig,
+    parseUtcToLocalDate,
+    useCalendarMessages
+} from '@components';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 
@@ -104,15 +95,9 @@ type Ramp = {
 
 type Building = { id: number; title: string };
 
-type StatusEntry = {
-    label: string;
-    value: string;
-    icon: ReactNode;
-    color: string;
-    bgColor: string;
-};
+type StatusEntry = ScheduleStatusEntry;
 
-type StatusConfig = Record<AppointmentStatus, StatusEntry>;
+type StatusConfig = ScheduleStatusConfig;
 
 type ActionButton = {
     key: string;
@@ -128,20 +113,6 @@ type PageComponent = FC & { layout: typeof MainLayout };
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-
-const ICON_MAP: Record<string, ReactNode> = {
-    FileAddOutlined: <FileAddOutlined />,
-    SendOutlined: <SendOutlined />,
-    CalendarOutlined: <CalendarOutlined />,
-    CarOutlined: <CarOutlined />,
-    AimOutlined: <AimOutlined />,
-    ThunderboltOutlined: <ThunderboltOutlined />,
-    CheckCircleOutlined: <CheckCircleOutlined />,
-    TrophyOutlined: <TrophyOutlined />,
-    DislikeOutlined: <DislikeOutlined />,
-    QuestionCircleOutlined: <QuestionCircleOutlined />,
-    StopOutlined: <StopOutlined />
-};
 
 // ─── File preview helpers ────────────────────────────────────────────────────
 
@@ -310,16 +281,7 @@ const MyCalendar: PageComponent = () => {
 
         const statusFlow: AppointmentStatus[] = appointmentConfigs.map((c) => String(c.code));
 
-        const statusConfig = appointmentConfigs.reduce((acc, c) => {
-            acc[String(c.code)] = {
-                label: c.translation?.[locale] ?? c.translation?.en ?? c.value,
-                value: c.value as string,
-                icon: ICON_MAP[c.extras?.icon] ?? <QuestionCircleOutlined />,
-                color: c.extras?.color ?? '#8c8c8c',
-                bgColor: c.extras?.color ?? '#8c8c8c'
-            };
-            return acc;
-        }, {} as StatusConfig);
+        const statusConfig = buildScheduleStatusConfig(appointmentConfigs, locale);
 
         const typeConfig = (configs as any[])
             .filter((c) => c.scope === 'appointment_type')
@@ -338,22 +300,11 @@ const MyCalendar: PageComponent = () => {
         return { statusConfig, statusFlow, typeConfig, locationCategoryDocksConfig };
     }, [configs, locale]);
 
-    const calendarMessages = useMemo(
-        () => ({
-            today: t('common:today'),
-            previous: t('common:previous'),
-            next: t('common:next'),
-            month: t('d:month'),
-            week: t('common:week'),
-            day: t('common:day'),
-            agenda: t('common:agenda'),
-            date: t('d:date'),
-            time: t('common:time'),
-            event: t('common:event'),
-            noEventsInRange: t('messages:no events in range')
-        }),
-        [t]
-    );
+    // Visit-type appointments are shown on the visitors schedule, not here.
+    // When the Visit config does not exist, visitTypeCode is undefined and no filtering occurs.
+    const visitTypeCode = useMemo(() => getVisitTypeCode(configs as any[]), [configs]);
+
+    const calendarMessages = useCalendarMessages();
 
     // ── Data fetching ──────────────────────────────────────────────────────────
     const getRamps = async () => {
@@ -506,8 +457,10 @@ const MyCalendar: PageComponent = () => {
 
         const formattedAppointments: CalendarEvent[] = appointments.results.map((a: any) => ({
             title: a.name,
-            start: new Date(a.appointmentDateBegin),
-            end: new Date(a.appointmentDateEnd),
+            // API dates are naive UTC strings: parse as UTC so the calendar
+            // renders them in the user's local time
+            start: parseUtcToLocalDate(a.appointmentDateBegin),
+            end: parseUtcToLocalDate(a.appointmentDateEnd),
             resourceId: a?.location?.id,
             status: String(a.status) as AppointmentStatus,
             appointmentTypeCode: a.appointmentType != null ? String(a.appointmentType) : undefined,
@@ -667,7 +620,14 @@ const MyCalendar: PageComponent = () => {
                     selectedBuildingId ? visibleRamps.some((r) => r.id === e.resourceId) : true
                 )
               : events.filter((e) => e.resourceId === selectedRampId)
-    ).filter((e) => statusConfig[e.status]?.value !== 'In Creation');
+    )
+        .filter((e) => statusConfig[e.status]?.value !== 'In Creation')
+        .filter(
+            (e) =>
+                visitTypeCode === undefined ||
+                e.appointmentTypeCode === undefined ||
+                Number(e.appointmentTypeCode) !== visitTypeCode
+        );
 
     const actionButtons: ActionButton[] =
         selectedEvent && !isTerminalStatus(statusConfig, selectedEvent.status)
@@ -895,354 +855,303 @@ const MyCalendar: PageComponent = () => {
                     </div>
                 </div>
 
-                <div
-                    style={{
-                        width: drawerOpen ? 320 : 0,
-                        opacity: drawerOpen ? 1 : 0,
-                        flexShrink: 0,
-                        overflow: 'hidden',
-                        transition: 'width 0.3s ease, opacity 0.3s ease'
-                    }}
+                <ScheduleSidePanel
+                    open={drawerOpen}
+                    title={selectedEvent?.title}
+                    onClose={handleClose}
                 >
-                    <div
-                        style={{
-                            width: 320,
-                            border: '1px solid #f0f0f0',
-                            borderRadius: 8,
-                            padding: 20,
-                            background: '#fff',
-                            boxShadow: '-2px 0 8px rgba(0,0,0,0.06)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 12
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <Typography.Title level={5} style={{ margin: 0 }}>
-                                {selectedEvent?.title}
-                            </Typography.Title>
-                            <Button type="text" icon={<CloseOutlined />} onClick={handleClose} />
-                        </div>
-
-                        <Tabs
-                            size="small"
-                            style={{ marginTop: -8 }}
-                            items={[
-                                {
-                                    key: 'details',
-                                    label: t('common:detail'),
-                                    children: (
-                                        <Space
-                                            direction="vertical"
-                                            style={{ width: '100%' }}
-                                            size={12}
-                                        >
-                                            <Descriptions column={1} bordered size="small">
-                                                <Descriptions.Item label={t('common:title')}>
-                                                    {selectedEvent?.title}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label={t('common:status')}>
-                                                    {selectedEvent && (
-                                                        <Tag
-                                                            icon={
-                                                                statusConfig[selectedEvent.status]
-                                                                    ?.icon
-                                                            }
-                                                            color={
-                                                                statusConfig[selectedEvent.status]
-                                                                    ?.color
-                                                            }
-                                                        >
-                                                            {
-                                                                statusConfig[selectedEvent.status]
-                                                                    ?.label
-                                                            }
-                                                        </Tag>
-                                                    )}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label={t('common:building')}>
-                                                    {eventBuilding?.title}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label={t('common:schedule')}>
-                                                    {selectedEvent
-                                                        ? dayjs(selectedEvent.start).format(
-                                                              'DD/MM/YYYY HH:mm'
-                                                          )
-                                                        : ''}{' '}
-                                                    -{' '}
-                                                    {selectedEvent
-                                                        ? dayjs(selectedEvent.end).format('HH:mm')
-                                                        : ''}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label={t('common:duration')}>
-                                                    {selectedEvent
-                                                        ? dayjs(selectedEvent.end).diff(
-                                                              dayjs(selectedEvent.start),
-                                                              'minute'
-                                                          )
-                                                        : 0}{' '}
-                                                    min
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label={t('common:type')}>
-                                                    {typeConfig[
-                                                        selectedEvent?.appointmentTypeCode ?? ''
-                                                    ] ??
-                                                        selectedEvent?.appointmentTypeCode ??
-                                                        '—'}
-                                                </Descriptions.Item>
-                                                <Descriptions.Item label={t('common:dock')}>
-                                                    {eventRamp?.title}
-                                                </Descriptions.Item>
-                                            </Descriptions>
-
-                                            {selectedEvent?.appointmentLines &&
-                                                selectedEvent.appointmentLines.length > 0 && (
-                                                    <Collapse
-                                                        size="small"
-                                                        ghost
-                                                        items={[
-                                                            {
-                                                                key: 'loads',
-                                                                label: (
-                                                                    <Typography.Text
-                                                                        strong
-                                                                        style={{ fontSize: 13 }}
-                                                                    >
-                                                                        Chargements (
-                                                                        {
-                                                                            selectedEvent
-                                                                                .appointmentLines
-                                                                                .length
-                                                                        }
-                                                                        )
-                                                                    </Typography.Text>
-                                                                ),
-                                                                children: (
-                                                                    <Space
-                                                                        direction="vertical"
-                                                                        style={{ width: '100%' }}
-                                                                        size={4}
-                                                                    >
-                                                                        {selectedEvent.appointmentLines.map(
-                                                                            (line) => (
-                                                                                <div
-                                                                                    key={line.id}
-                                                                                    style={{
-                                                                                        display:
-                                                                                            'flex',
-                                                                                        justifyContent:
-                                                                                            'space-between',
-                                                                                        fontSize: 12,
-                                                                                        padding:
-                                                                                            '2px 0'
-                                                                                    }}
-                                                                                >
-                                                                                    <Typography.Text>
-                                                                                        {line.loadName ??
-                                                                                            '—'}
-                                                                                    </Typography.Text>
-                                                                                    <Typography.Text type="secondary">
-                                                                                        {line.carrierName ??
-                                                                                            '—'}
-                                                                                    </Typography.Text>
-                                                                                </div>
-                                                                            )
-                                                                        )}
-                                                                    </Space>
-                                                                )
-                                                            }
-                                                        ]}
-                                                    />
+                    <Tabs
+                        size="small"
+                        style={{ marginTop: -8 }}
+                        items={[
+                            {
+                                key: 'details',
+                                label: t('common:detail'),
+                                children: (
+                                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                                        <Descriptions column={1} bordered size="small">
+                                            <Descriptions.Item label={t('common:title')}>
+                                                {selectedEvent?.title}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label={t('common:status')}>
+                                                {selectedEvent && (
+                                                    <Tag
+                                                        icon={
+                                                            statusConfig[selectedEvent.status]?.icon
+                                                        }
+                                                        color={
+                                                            statusConfig[selectedEvent.status]
+                                                                ?.color
+                                                        }
+                                                    >
+                                                        {statusConfig[selectedEvent.status]?.label}
+                                                    </Tag>
                                                 )}
-                                        </Space>
-                                    )
-                                },
-                                {
-                                    key: 'status',
-                                    label: t('common:status'),
-                                    children: selectedEvent && (
-                                        <div>
-                                            {statusConfig[selectedEvent.status]?.value ===
-                                            'Cancelled' ? (
-                                                <Tag
-                                                    icon={statusConfig[selectedEvent.status]?.icon}
-                                                    color={
-                                                        statusConfig[selectedEvent.status]?.color
-                                                    }
-                                                    style={{
-                                                        width: '100%',
-                                                        textAlign: 'center',
-                                                        padding: '6px 0',
-                                                        fontSize: 13
-                                                    }}
-                                                >
-                                                    {statusConfig[selectedEvent.status]?.label}
-                                                </Tag>
-                                            ) : (
-                                                <>
-                                                    <Steps
-                                                        direction="vertical"
-                                                        size="small"
-                                                        current={displayFlow.indexOf(
-                                                            selectedEvent.status
-                                                        )}
-                                                        style={{ marginBottom: 12 }}
-                                                        items={displayFlow.map((s) => ({
-                                                            title: statusConfig[s]?.label,
-                                                            icon: (
-                                                                <Tooltip
-                                                                    title={statusConfig[s]?.label}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label={t('common:building')}>
+                                                {eventBuilding?.title}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label={t('common:schedule')}>
+                                                {selectedEvent
+                                                    ? dayjs(selectedEvent.start).format(
+                                                          'DD/MM/YYYY HH:mm'
+                                                      )
+                                                    : ''}{' '}
+                                                -{' '}
+                                                {selectedEvent
+                                                    ? dayjs(selectedEvent.end).format('HH:mm')
+                                                    : ''}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label={t('common:duration')}>
+                                                {selectedEvent
+                                                    ? dayjs(selectedEvent.end).diff(
+                                                          dayjs(selectedEvent.start),
+                                                          'minute'
+                                                      )
+                                                    : 0}{' '}
+                                                min
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label={t('common:type')}>
+                                                {typeConfig[
+                                                    selectedEvent?.appointmentTypeCode ?? ''
+                                                ] ??
+                                                    selectedEvent?.appointmentTypeCode ??
+                                                    '—'}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label={t('common:dock')}>
+                                                {eventRamp?.title}
+                                            </Descriptions.Item>
+                                        </Descriptions>
+
+                                        {selectedEvent?.appointmentLines &&
+                                            selectedEvent.appointmentLines.length > 0 && (
+                                                <Collapse
+                                                    size="small"
+                                                    ghost
+                                                    items={[
+                                                        {
+                                                            key: 'loads',
+                                                            label: (
+                                                                <Typography.Text
+                                                                    strong
+                                                                    style={{ fontSize: 13 }}
                                                                 >
-                                                                    <span>
-                                                                        {statusConfig[s]?.icon}
-                                                                    </span>
-                                                                </Tooltip>
+                                                                    Chargements (
+                                                                    {
+                                                                        selectedEvent
+                                                                            .appointmentLines.length
+                                                                    }
+                                                                    )
+                                                                </Typography.Text>
+                                                            ),
+                                                            children: (
+                                                                <Space
+                                                                    direction="vertical"
+                                                                    style={{ width: '100%' }}
+                                                                    size={4}
+                                                                >
+                                                                    {selectedEvent.appointmentLines.map(
+                                                                        (line) => (
+                                                                            <div
+                                                                                key={line.id}
+                                                                                style={{
+                                                                                    display: 'flex',
+                                                                                    justifyContent:
+                                                                                        'space-between',
+                                                                                    fontSize: 12,
+                                                                                    padding: '2px 0'
+                                                                                }}
+                                                                            >
+                                                                                <Typography.Text>
+                                                                                    {line.loadName ??
+                                                                                        '—'}
+                                                                                </Typography.Text>
+                                                                                <Typography.Text type="secondary">
+                                                                                    {line.carrierName ??
+                                                                                        '—'}
+                                                                                </Typography.Text>
+                                                                            </div>
+                                                                        )
+                                                                    )}
+                                                                </Space>
                                                             )
-                                                        }))}
-                                                    />
-                                                    {actionButtons.length > 0 && (
-                                                        <Space
-                                                            direction="vertical"
-                                                            style={{ width: '100%' }}
-                                                        >
-                                                            {actionButtons.map((btn) =>
-                                                                btn.confirm ? (
-                                                                    <Popconfirm
-                                                                        key={btn.key}
-                                                                        title={btn.confirm}
-                                                                        onConfirm={btn.onClick}
-                                                                        okText={t('d:bool-yes')}
-                                                                        cancelText={t('d:bool-no')}
-                                                                    >
-                                                                        <Button
-                                                                            danger={btn.danger}
-                                                                            block
-                                                                        >
-                                                                            {btn.label}
-                                                                        </Button>
-                                                                    </Popconfirm>
-                                                                ) : (
+                                                        }
+                                                    ]}
+                                                />
+                                            )}
+                                    </Space>
+                                )
+                            },
+                            {
+                                key: 'status',
+                                label: t('common:status'),
+                                children: selectedEvent && (
+                                    <div>
+                                        {statusConfig[selectedEvent.status]?.value ===
+                                        'Cancelled' ? (
+                                            <Tag
+                                                icon={statusConfig[selectedEvent.status]?.icon}
+                                                color={statusConfig[selectedEvent.status]?.color}
+                                                style={{
+                                                    width: '100%',
+                                                    textAlign: 'center',
+                                                    padding: '6px 0',
+                                                    fontSize: 13
+                                                }}
+                                            >
+                                                {statusConfig[selectedEvent.status]?.label}
+                                            </Tag>
+                                        ) : (
+                                            <>
+                                                <Steps
+                                                    direction="vertical"
+                                                    size="small"
+                                                    current={displayFlow.indexOf(
+                                                        selectedEvent.status
+                                                    )}
+                                                    style={{ marginBottom: 12 }}
+                                                    items={displayFlow.map((s) => ({
+                                                        title: statusConfig[s]?.label,
+                                                        icon: (
+                                                            <Tooltip title={statusConfig[s]?.label}>
+                                                                <span>{statusConfig[s]?.icon}</span>
+                                                            </Tooltip>
+                                                        )
+                                                    }))}
+                                                />
+                                                {actionButtons.length > 0 && (
+                                                    <Space
+                                                        direction="vertical"
+                                                        style={{ width: '100%' }}
+                                                    >
+                                                        {actionButtons.map((btn) =>
+                                                            btn.confirm ? (
+                                                                <Popconfirm
+                                                                    key={btn.key}
+                                                                    title={btn.confirm}
+                                                                    onConfirm={btn.onClick}
+                                                                    okText={t('d:bool-yes')}
+                                                                    cancelText={t('d:bool-no')}
+                                                                >
                                                                     <Button
-                                                                        key={btn.key}
-                                                                        type={btn.buttonType}
                                                                         danger={btn.danger}
                                                                         block
-                                                                        onClick={btn.onClick}
                                                                     >
                                                                         {btn.label}
                                                                     </Button>
-                                                                )
-                                                            )}
-                                                        </Space>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                    )
-                                },
-                                {
-                                    key: 'files',
-                                    label: t('common:files'),
-                                    children: (
-                                        <List
-                                            size="small"
-                                            bordered
-                                            locale={{ emptyText: t('messages:no files attached') }}
-                                            dataSource={selectedEvent?.documentAttachments ?? []}
-                                            renderItem={(file) => {
-                                                const mimeType = getMimeType(
-                                                    file.filename,
-                                                    file.fileCategory
-                                                );
-                                                const canPreview =
-                                                    mimeType.startsWith('image/') ||
-                                                    mimeType === 'application/pdf';
-                                                const handleDownload = () => {
-                                                    const link = document.createElement('a');
-                                                    link.href = `data:application/octet-stream;base64,${file.fileContent}`;
-                                                    link.download = file.filename || file.name;
-                                                    link.click();
-                                                };
-                                                return (
-                                                    <List.Item
-                                                        key={file.id}
-                                                        style={{ padding: '8px 12px' }}
-                                                        actions={[
-                                                            <Button
-                                                                key="preview"
-                                                                type="text"
-                                                                size="small"
-                                                                icon={<EyeOutlined />}
-                                                                onClick={() => setPreviewFile(file)}
-                                                                title={t('actions:preview')}
-                                                                disabled={!canPreview}
-                                                            />,
-                                                            <Button
-                                                                key="dl"
-                                                                type="text"
-                                                                size="small"
-                                                                icon={<DownloadOutlined />}
-                                                                onClick={handleDownload}
-                                                                title={t('actions:download')}
+                                                                </Popconfirm>
+                                                            ) : (
+                                                                <Button
+                                                                    key={btn.key}
+                                                                    type={btn.buttonType}
+                                                                    danger={btn.danger}
+                                                                    block
+                                                                    onClick={btn.onClick}
+                                                                >
+                                                                    {btn.label}
+                                                                </Button>
+                                                            )
+                                                        )}
+                                                    </Space>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                )
+                            },
+                            {
+                                key: 'files',
+                                label: t('common:files'),
+                                children: (
+                                    <List
+                                        size="small"
+                                        bordered
+                                        locale={{ emptyText: t('messages:no files attached') }}
+                                        dataSource={selectedEvent?.documentAttachments ?? []}
+                                        renderItem={(file) => {
+                                            const mimeType = getMimeType(
+                                                file.filename,
+                                                file.fileCategory
+                                            );
+                                            const canPreview =
+                                                mimeType.startsWith('image/') ||
+                                                mimeType === 'application/pdf';
+                                            const handleDownload = () => {
+                                                const link = document.createElement('a');
+                                                link.href = `data:application/octet-stream;base64,${file.fileContent}`;
+                                                link.download = file.filename || file.name;
+                                                link.click();
+                                            };
+                                            return (
+                                                <List.Item
+                                                    key={file.id}
+                                                    style={{ padding: '8px 12px' }}
+                                                    actions={[
+                                                        <Button
+                                                            key="preview"
+                                                            type="text"
+                                                            size="small"
+                                                            icon={<EyeOutlined />}
+                                                            onClick={() => setPreviewFile(file)}
+                                                            title={t('actions:preview')}
+                                                            disabled={!canPreview}
+                                                        />,
+                                                        <Button
+                                                            key="dl"
+                                                            type="text"
+                                                            size="small"
+                                                            icon={<DownloadOutlined />}
+                                                            onClick={handleDownload}
+                                                            title={t('actions:download')}
+                                                        />
+                                                    ]}
+                                                >
+                                                    <List.Item.Meta
+                                                        avatar={
+                                                            <FileOutlined
+                                                                style={{
+                                                                    fontSize: 20,
+                                                                    color: '#8c8c8c',
+                                                                    marginTop: 2
+                                                                }}
                                                             />
-                                                        ]}
-                                                    >
-                                                        <List.Item.Meta
-                                                            avatar={
-                                                                <FileOutlined
-                                                                    style={{
-                                                                        fontSize: 20,
-                                                                        color: '#8c8c8c',
-                                                                        marginTop: 2
-                                                                    }}
-                                                                />
-                                                            }
-                                                            title={
+                                                        }
+                                                        title={
+                                                            <Typography.Text
+                                                                ellipsis
+                                                                style={{ maxWidth: 180 }}
+                                                            >
+                                                                {file.name || file.filename}
+                                                            </Typography.Text>
+                                                        }
+                                                        description={
+                                                            <Space direction="vertical" size={0}>
                                                                 <Typography.Text
-                                                                    ellipsis
-                                                                    style={{ maxWidth: 180 }}
+                                                                    type="secondary"
+                                                                    style={{ fontSize: 11 }}
                                                                 >
-                                                                    {file.name || file.filename}
+                                                                    {file.filename}
                                                                 </Typography.Text>
-                                                            }
-                                                            description={
-                                                                <Space
-                                                                    direction="vertical"
-                                                                    size={0}
-                                                                >
+                                                                {file.fileCategory && (
                                                                     <Typography.Text
                                                                         type="secondary"
                                                                         style={{ fontSize: 11 }}
                                                                     >
-                                                                        {file.filename}
+                                                                        {file.fileCategory}
                                                                     </Typography.Text>
-                                                                    {file.fileCategory && (
-                                                                        <Typography.Text
-                                                                            type="secondary"
-                                                                            style={{ fontSize: 11 }}
-                                                                        >
-                                                                            {file.fileCategory}
-                                                                        </Typography.Text>
-                                                                    )}
-                                                                </Space>
-                                                            }
-                                                        />
-                                                    </List.Item>
-                                                );
-                                            }}
-                                        />
-                                    )
-                                }
-                            ]}
-                        />
-                    </div>
-                </div>
+                                                                )}
+                                                            </Space>
+                                                        }
+                                                    />
+                                                </List.Item>
+                                            );
+                                        }}
+                                    />
+                                )
+                            }
+                        ]}
+                    />
+                </ScheduleSidePanel>
             </div>
 
             {/* File preview modal */}
