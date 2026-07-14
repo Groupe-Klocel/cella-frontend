@@ -25,15 +25,24 @@ import { useState } from 'react';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { RecordHistoryDetailBeforeModelV2 as modelBefore } from '@helpers';
 import { RecordHistoryDetailAfterModelV2 as modelAfter } from '@helpers';
+import { RecordHistoryDiffComponent } from './RecordHistoryDiffComponent';
 
 export interface IItemDetailsProps {
-    sequenceId?: string | any;
+    // From next/router: a string on the [id] route, but string[] | undefined in the general case.
+    sequenceId?: string | string[];
 }
 
 const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+
+    // Normalize the router param once. Guarding against a missing/non-numeric id avoids a NaN
+    // sequenceId, which would serialize to a null filter (an unfiltered fetch) on the lists.
+    const resolvedSequenceId = Array.isArray(sequenceId) ? sequenceId[0] : sequenceId;
+    if (!resolvedSequenceId) return <></>;
+    const numericSequenceId = parseInt(resolvedSequenceId, 10);
+    if (Number.isNaN(numericSequenceId)) return <></>;
 
     const headerDataBefore: HeaderData = {
         title: t('common:object-before'),
@@ -52,9 +61,10 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
 
     return (
         <>
+            <RecordHistoryDiffComponent sequenceId={resolvedSequenceId} />
             <Divider />
             <ListComponent
-                searchCriteria={{ sequenceId: parseInt(sequenceId) }}
+                searchCriteria={{ sequenceId: numericSequenceId }}
                 headerData={headerDataBefore}
                 dataModel={modelBefore}
                 triggerDelete={{ idToDelete, setIdToDelete }}
@@ -64,7 +74,7 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
             />
             <Divider />
             <ListComponent
-                searchCriteria={{ sequenceId: parseInt(sequenceId) }}
+                searchCriteria={{ sequenceId: numericSequenceId }}
                 headerData={headerDataAfter}
                 dataModel={modelAfter}
                 triggerDelete={{ idToDelete, setIdToDelete }}

@@ -58,6 +58,26 @@ export const RecordHistoryModelV2: ModelType = {
             config: null,
             param: null
         },
+        transactionId: {
+            displayName: null,
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         objectName: {
             displayName: null,
             isListRequested: true,
