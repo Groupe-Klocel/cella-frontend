@@ -23,6 +23,8 @@ export const IS_FAKE = process.env.NEXT_PUBLIC_FAKE_DATA_ON === 'true';
 export const IS_SAME_SEED = process.env.NEXT_PUBLIC_SAME_SEED_ON === 'true';
 export const IS_LS_SECURED = process.env.NEXT_PUBLIC_LS_SECURE === 'true';
 export const WMS_URL = process.env.NEXT_PUBLIC_WMS_URL;
+// Kill switch for the mobile AI assistant (same env var as the web CellaBot).
+export const IS_CELLABOT_ENABLED = process.env.NEXT_PUBLIC_AI_CELLABOT_ENABLED === 'true';
 
 export function getEnvironmentLabel(): string | null {
     const endpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? '';
