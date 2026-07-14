@@ -825,6 +825,7 @@ const SideMenu: FC = () => {
         // MONITORING
         [
             'wm_record-history',
+            'wm_ai-conversations',
             'wm_document-histories',
             'wm_status-history',
             'wm_metabase',
@@ -840,6 +841,13 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'monitoring-record-history',
                           label: <Link href="/record-history">{t('record-history')}</Link>
+                      }
+                    : null,
+                // AI CONVERSATIONS
+                getModesFromPermissions(permissions, 'wm_ai-conversations').includes(ModeEnum.Read)
+                    ? {
+                          key: 'monitoring-ai-conversations',
+                          label: <Link href="/ai-conversations">{t('ai-conversations')}</Link>
                       }
                     : null,
                 // DOCUMENT HISTORIES

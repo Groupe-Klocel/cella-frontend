@@ -32,7 +32,13 @@ const Scroller = styled.div`
     flex-direction: column;
 `;
 
-const CellaBotMessageList = ({ messages }: { messages: Array<AiChatMessage> }) => {
+const CellaBotMessageList = ({
+    messages,
+    onProposalDecision
+}: {
+    messages: Array<AiChatMessage>;
+    onProposalDecision?: (index: number, confirmed: boolean) => void;
+}) => {
     const { t } = useTranslation();
     const tt = (key: string, def: string) => {
         const v = t(key);
@@ -62,7 +68,15 @@ const CellaBotMessageList = ({ messages }: { messages: Array<AiChatMessage> }) =
     return (
         <Scroller>
             {messages.map((message, idx) => (
-                <CellaBotMessage key={idx} message={message} />
+                <CellaBotMessage
+                    key={idx}
+                    message={message}
+                    onProposalDecision={
+                        onProposalDecision
+                            ? (confirmed: boolean) => onProposalDecision(idx, confirmed)
+                            : undefined
+                    }
+                />
             ))}
             <div ref={bottomRef} />
         </Scroller>

@@ -266,9 +266,11 @@ export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
     if (userAdvFilters.length === 0) return null;
 
     const resolveValue = (val: any, fieldDef: any): string => {
-        // Format single date values (Calendar type = 6)
+        // Format single date values (Calendar type = 6). Guard against an unparseable value (e.g. a
+        // magic-filter predicate that arrived malformed): show it raw rather than "Invalid Date".
         if ((fieldDef?.type === 6 || fieldDef?.type === 7) && val) {
-            return new Date(val).toLocaleString();
+            const parsed = new Date(val);
+            return isNaN(parsed.getTime()) ? String(val) : parsed.toLocaleString();
         }
         // Check allSubOptions first
         const subOptionEntry = allSubOptions?.find((item: any) => item[fieldDef?.name]);
@@ -292,37 +294,66 @@ export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
         return String(val);
     };
 
+    // Format a single predicate ({field:{name:value}, searchType}) as "Label op value".
+    const formatPredicate = (predicate: any): string => {
+        const field = predicate?.field;
+        // A malformed predicate — no field, or an array where a field object was expected
+        // (`typeof [] === 'object'`, and `Object.keys(['x'])[0]` would be the bogus name "0") —
+        // has no usable key: show a neutral placeholder instead of a misleading label.
+        if (!field || typeof field !== 'object' || Array.isArray(field)) return '—';
+        const fieldName = Object.keys(field)[0];
+        if (!fieldName) return '—';
+        const rawValue = field[fieldName];
+        const fieldDef = filterFields.find((f: any) => f.name === fieldName);
+        const displayName = fieldDef?.displayName ?? fieldName;
+        // Default the operator to EQUAL: an AI-built/malformed predicate may omit searchType, and we
+        // must not render the literal "undefined" as the operator.
+        const searchType = predicate.searchType ?? 'EQUAL';
+        const opSymbol = searchTypes.find((o) => o.value === searchType)?.symbol ?? searchType;
+        const displayValue: string = Array.isArray(rawValue)
+            ? fieldDef?.type === 7
+                ? rawValue
+                      .map((date: any) => {
+                          if (!date) return '*';
+                          const parsed = new Date(date);
+                          return isNaN(parsed.getTime()) ? String(date) : parsed.toLocaleString();
+                      })
+                      .join('->')
+                : rawValue.map((v) => resolveValue(v, fieldDef)).join(', ')
+            : resolveValue(rawValue, fieldDef);
+        return `${displayName} ${opSymbol} ${displayValue}`;
+    };
+
     return (
         <div key="adv-filter-tags" style={{ marginTop: 4, width: '100%' }}>
             {userAdvFilters.map((af: any, index: number) => {
-                const fi = af.filter[0];
-                const fieldName = Object.keys(fi.field)[0];
-                const rawValue = fi.field[fieldName];
-                const fieldDef = filterFields.find((f: any) => f.name === fieldName);
-                const displayName = fieldDef?.displayName ?? fieldName;
-                const opSymbol =
-                    searchTypes.find((o) => o.value === fi.searchType)?.symbol ?? fi.searchType;
-                const displayValue: string = Array.isArray(rawValue)
-                    ? fieldDef?.type === 7
-                        ? rawValue
-                              .map((date: any) => (date ? new Date(date).toLocaleString() : '*'))
-                              .join('->')
-                        : rawValue.map((v) => resolveValue(v, fieldDef)).join(', ')
-                    : resolveValue(rawValue, fieldDef);
+                // A group can hold several OR-ed predicates (e.g. an AI-built "status A or B", or the
+                // combined-conditions case): show them ALL, joined by ∨, so nothing is hidden. Editing
+                // reads only the first predicate, so only single-predicate groups are click-to-edit —
+                // a multi-predicate group is removable (whole group) but not editable in place.
+                // Keep only real predicate objects: an AI-built group may carry null/invalid OR-ed
+                // entries beyond the first, and mapping those would break tag rendering.
+                const predicates: any[] = (Array.isArray(af.filter) ? af.filter : []).filter(
+                    (p: any) => p && typeof p === 'object' && !Array.isArray(p)
+                );
+                const isEditable = !!onTagEdit && predicates.length === 1;
+                // Fallback so an empty/all-invalid group still shows a visible, removable tag rather
+                // than a blank one.
+                const label = predicates.map(formatPredicate).join(' ∨ ') || '—';
 
                 return (
                     <Tag
                         key={`adv-filter-${index}`}
                         color="geekblue"
-                        style={{ margin: '2px', cursor: onTagEdit ? 'pointer' : 'default' }}
+                        style={{ margin: '2px', cursor: isEditable ? 'pointer' : 'default' }}
                         closable
                         onClose={(e) => {
                             e.preventDefault();
                             onTagClose(af);
                         }}
-                        onClick={() => onTagEdit?.(af)}
+                        onClick={isEditable ? () => onTagEdit?.(af) : undefined}
                     >
-                        {`${displayName} ${opSymbol} ${displayValue}`}
+                        {label}
                     </Tag>
                 );
             })}

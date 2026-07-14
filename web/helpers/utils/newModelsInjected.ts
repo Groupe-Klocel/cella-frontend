@@ -19,6 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 // models/index.ts
 import { injectedModel } from 'helpers/utils/InjectedModel';
+import { AiConversationModelV2 as _AiConversationModelV2 } from '../../models/AiConversationModelV2';
+import { AiMessageModelV2 as _AiMessageModelV2 } from '../../models/AiMessageModelV2';
 import { AppointmentLineModelV2 as _AppointmentLineModelV2 } from '../../models/AppointmentLineModelV2';
 import { AppointmentModelV2 as _AppointmentModelV2 } from '../../models/AppointmentModelV2';
 import { ArticleExtrasModelV2 as _ArticleExtrasModelV2 } from '../../models/ArticleExtrasModelV2';
@@ -130,6 +132,11 @@ import { WarehouseWorkerModelV2 as _WarehouseWorkerModelV2 } from '../../models/
 import { WarehouseWorkerStockOwnerModelV2 as _WarehouseWorkerStockOwnerModelV2 } from '../../models/WarehouseWorkerStockOwnerModelV2';
 import { WarehouseWorkerUserRoleModelV2 as _WarehouseWorkerUserRoleModelV2 } from '../../models/WarehouseWorkerUserRoleModelV2';
 
+export const AiConversationModelV2 = injectedModel(
+    _AiConversationModelV2,
+    'AiConversationSpeModel'
+);
+export const AiMessageModelV2 = injectedModel(_AiMessageModelV2, 'AiMessageSpeModel');
 export const AppointmentLineModelV2 = injectedModel(
     _AppointmentLineModelV2,
     'AppointmentLineSpeModel'
