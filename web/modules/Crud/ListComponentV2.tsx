@@ -88,6 +88,7 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { FormGroupV3 } from './submodules/FormGroupV3';
 import { AdvancedFilters, AdvancedFilterTags } from './listComponentSubModule/AdvancedFilters';
+import MagicFilterButton from './listComponentSubModule/MagicFilter';
 import { useImportData } from './listComponentSubModule/import';
 import {
     RANGE_PRESET_TODAY,
@@ -950,29 +951,44 @@ const ListComponent = (props: IListProps) => {
             allSubOptionsRef.current.find((item: any) => Object.keys(item)[0] === fieldName) ??
             saved.find((item: any) => Object.keys(item)[0] === fieldName);
 
-        const result: any[] = [];
-        const seen = new Set<string>();
-
-        const addField = (fieldName: string, value: any) => {
-            if (seen.has(fieldName)) return;
-            const entry = lookup(fieldName);
-            if (!entry) return;
-            const valuesToKeep = Array.isArray(value) ? value : [value];
-            result.push({
-                [fieldName]: entry[fieldName].filter((opt: any) =>
-                    valuesToKeep.some((v: any) => String(opt.key) === String(v))
-                )
-            });
-            seen.add(fieldName);
+        // Aggregate the values referenced per field across BOTH filter systems BEFORE resolving
+        // labels. A field can appear in the search filters AND the advanced filters at once (and an
+        // advanced-filter group can hold multiple predicates, with several groups touching the same
+        // field). Resolving each system with its own pass and a first-wins dedup would keep only the
+        // first system's values for a shared field, so the other system's tags fall back to raw IDs
+        // after saving — build one value list per field, then resolve labels once against the union.
+        const valuesByField = new Map<string, any[]>();
+        const addValues = (fieldName: string, value: any) => {
+            if (!fieldName) return;
+            const values = Array.isArray(value) ? value : [value];
+            valuesByField.set(fieldName, (valuesByField.get(fieldName) ?? []).concat(values));
         };
 
         for (const fieldName of Object.keys(searchFilters ?? {})) {
-            addField(fieldName, searchFilters[fieldName]);
+            addValues(fieldName, searchFilters[fieldName]);
         }
         for (const f of advFilters ?? []) {
-            const fieldName = Object.keys(f.filter[0].field)[0];
-            addField(fieldName, f.filter[0].field[fieldName]);
+            const predicates = Array.isArray(f?.filter) ? f.filter : [];
+            for (const predicate of predicates) {
+                const fieldObj = predicate?.field;
+                // `typeof [] === 'object'` too, and `Object.keys(['x'])[0]` would be the bogus field
+                // name "0" — exclude arrays so a malformed predicate is skipped, not misread.
+                if (!fieldObj || typeof fieldObj !== 'object' || Array.isArray(fieldObj)) continue;
+                const fieldName = Object.keys(fieldObj)[0];
+                addValues(fieldName, fieldObj[fieldName]);
+            }
         }
+
+        const result: any[] = [];
+        valuesByField.forEach((values, fieldName) => {
+            const entry = lookup(fieldName);
+            if (!entry) return;
+            result.push({
+                [fieldName]: entry[fieldName].filter((opt: any) =>
+                    values.some((v: any) => String(opt.key) === String(v))
+                )
+            });
+        });
 
         return result;
     }
@@ -2521,6 +2537,28 @@ const ListComponent = (props: IListProps) => {
                                                     key={'globalSearch'}
                                                 />
                                             </Form>
+                                            <MagicFilterButton
+                                                model={props.dataModel.endpoints.detail}
+                                                language={filteredLanguage}
+                                                onApply={(aiFilters) => {
+                                                    // A magic filter REPLACES the user's current
+                                                    // advanced filters: a fresh natural-language
+                                                    // description is a complete new intent, not
+                                                    // something to stack on top of the old filters.
+                                                    // The page's forced filters (props.advancedFilters)
+                                                    // are preserved — handleUserSettings persists only
+                                                    // the user-level filters and the sync effect
+                                                    // re-adds the forced ones. The AI filters stay
+                                                    // editable/removable via the tags.
+                                                    handleUserSettings(
+                                                        null,
+                                                        null,
+                                                        defaultPagination,
+                                                        aiFilters,
+                                                        buildSubOptions(searchCriterias, aiFilters)
+                                                    );
+                                                }}
+                                            />
                                             <AdvancedFilters
                                                 filterFields={filterFields}
                                                 advancedFilters={advancedFilters}
