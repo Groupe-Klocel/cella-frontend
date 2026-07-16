@@ -65,6 +65,7 @@ const SideMenu: FC = () => {
             'wm_configurations',
             'wm_roles',
             'wm_warehouse-workers',
+            'wm_custom-permissions',
             'wm_hook-configs',
             'wm_parameters',
             'wm_excel-imports',
@@ -85,7 +86,7 @@ const SideMenu: FC = () => {
                     : null,
 
                 // ACCESS-MANAGEMENT
-                ['wm_roles', 'wm_warehouse-workers'].some((perm) =>
+                ['wm_roles', 'wm_warehouse-workers', 'wm_custom-permissions'].some((perm) =>
                     getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
                 ) && {
                     key: 'administration-access-management',
@@ -107,6 +108,19 @@ const SideMenu: FC = () => {
                                   label: (
                                       <Link href="/warehouse-workers">
                                           {t('warehouse-workers')}
+                                      </Link>
+                                  )
+                              }
+                            : null,
+                        // CUSTOM PERMISSIONS
+                        getModesFromPermissions(permissions, 'wm_custom-permissions').includes(
+                            ModeEnum.Read
+                        )
+                            ? {
+                                  key: 'administration-access-management-custom-permissions',
+                                  label: (
+                                      <Link href="/custom-permissions">
+                                          {t('custom-permissions')}
                                       </Link>
                                   )
                               }

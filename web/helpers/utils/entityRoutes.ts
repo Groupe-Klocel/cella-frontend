@@ -64,6 +64,8 @@ export const ENTITY_ROUTES: EntityRoute[] = [
     { tableName: Table.Order, path: 'customer-orders' },
     { tableName: Table.OrderAddress, path: 'customer-orders/address' },
     { tableName: Table.OrderLine, path: 'customer-orders/line' },
+    { tableName: Table.CustomPermission, path: 'custom-permissions' },
+    { tableName: Table.CustomPermissionLine, path: 'custom-permissions/line' },
     { tableName: Table.CycleCount, path: 'cycle-counts' },
     { tableName: Table.CycleCountError, path: 'cycle-counts/cycle-count-errors' },
     { tableName: Table.CycleCountLine, path: 'cycle-counts/cycle-count-lines' },
@@ -113,6 +115,10 @@ export const ENTITY_ROUTES: EntityRoute[] = [
     { tableName: Table.ThirdPartyAddress, path: 'third-parties/address' },
     { tableName: Table.ThirdPartyAddressContact, path: 'third-parties/address/contact' },
     { tableName: Table.WarehouseWorker, path: 'warehouse-workers' },
+    {
+        tableName: Table.WarehouseWorkerCustomPermission,
+        path: 'warehouse-workers/custom-permissions'
+    },
     { tableName: Table.WarehouseWorkerStockOwner, path: 'warehouse-workers/stock-owners' }
 ];
 
