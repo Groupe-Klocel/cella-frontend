@@ -46,6 +46,8 @@ import { CreditModelV2 as _CreditModelV2 } from '../../models/CreditModelV2';
 import { CustomerOrderAddressModelV2 as _CustomerOrderAddressModelV2 } from '../../models/CustomerOrderAddressModelV2';
 import { CustomerOrderLineModelV2 as _CustomerOrderLineModelV2 } from '../../models/CustomerOrderLineModelV2';
 import { CustomerOrderModelV2 as _CustomerOrderModelV2 } from '../../models/CustomerOrderModelV2';
+import { CustomPermissionLineModelV2 as _CustomPermissionLineModelV2 } from '../../models/CustomPermissionLineModelV2';
+import { CustomPermissionModelV2 as _CustomPermissionModelV2 } from '../../models/CustomPermissionModelV2';
 import { CycleCountErrorModelV2 as _CycleCountErrorModelV2 } from '../../models/CycleCountErrorModelV2';
 import { CycleCountLineModelV2 as _CycleCountLineModelV2 } from '../../models/CycleCountLineModelV2';
 import { CycleCountModelV2 as _CycleCountModelV2 } from '../../models/CycleCountModelV2';
@@ -129,6 +131,7 @@ import { ThirdPartyModelV2 as _ThirdPartyModelV2 } from '../../models/ThirdParty
 import { TranslationModelV2 as _TranslationModelV2 } from '../../models/TranslationModelV2';
 import { VisitorModelV2 as _VisitorModelV2 } from '../../models/VisitorModelV2';
 import { WarehouseWorkerModelV2 as _WarehouseWorkerModelV2 } from '../../models/WarehouseWorkerModelV2';
+import { WarehouseWorkerCustomPermissionModelV2 as _WarehouseWorkerCustomPermissionModelV2 } from '../../models/WarehouseWorkerCustomPermissionModelV2';
 import { WarehouseWorkerStockOwnerModelV2 as _WarehouseWorkerStockOwnerModelV2 } from '../../models/WarehouseWorkerStockOwnerModelV2';
 import { WarehouseWorkerUserRoleModelV2 as _WarehouseWorkerUserRoleModelV2 } from '../../models/WarehouseWorkerUserRoleModelV2';
 
@@ -186,6 +189,14 @@ export const CustomerOrderLineModelV2 = injectedModel(
     'CustomerOrderLineSpeModel'
 );
 export const CustomerOrderModelV2 = injectedModel(_CustomerOrderModelV2, 'CustomerOrderSpeModel');
+export const CustomPermissionLineModelV2 = injectedModel(
+    _CustomPermissionLineModelV2,
+    'CustomPermissionLineSpeModel'
+);
+export const CustomPermissionModelV2 = injectedModel(
+    _CustomPermissionModelV2,
+    'CustomPermissionSpeModel'
+);
 export const CycleCountErrorModelV2 = injectedModel(
     _CycleCountErrorModelV2,
     'CycleCountErrorSpeModel'
@@ -419,6 +430,10 @@ export const VisitorModelV2 = injectedModel(_VisitorModelV2, 'VisitorSpeModel');
 export const WarehouseWorkerModelV2 = injectedModel(
     _WarehouseWorkerModelV2,
     'WarehouseWorkerSpeModel'
+);
+export const WarehouseWorkerCustomPermissionModelV2 = injectedModel(
+    _WarehouseWorkerCustomPermissionModelV2,
+    'WarehouseWorkerCustomPermissionSpeModel'
 );
 export const WarehouseWorkerStockOwnerModelV2 = injectedModel(
     _WarehouseWorkerStockOwnerModelV2,
