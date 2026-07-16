@@ -17,19 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-export * from './hooks/crudHooks';
-export * from './hooks/hooks';
-export * from './types/types';
-export * from './utils/cancelHuoDeliveryStatus';
-export * from './utils/constant';
-export * from './utils/utils';
-export * from './utils/utilsServerSide';
-export * from './utils/formInputsHelpers';
-export * from './utils/newModelsInjected';
-export * from './utils/entityRoutes';
-export * from './configs/env';
-export * from './utils/TranslationFromDB';
-export * from './utils/visitorManagement';
-export * from './configs/misc';
-export * from './configs/cors-config';
-export * from './utils/passwordValidation';
+// Breadcrumb Name should be the same as in the translation file
+
+export const securityRoutes = [
+    {
+        breadcrumbName: 'menu:administration'
+    },
+    {
+        breadcrumbName: 'menu:access-management'
+    },
+    {
+        path: '/security',
+        breadcrumbName: 'menu:security'
+    }
+];
