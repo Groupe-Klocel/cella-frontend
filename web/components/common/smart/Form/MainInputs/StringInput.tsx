@@ -87,7 +87,7 @@ const StringInput: FC<IDraggerInputProps> = ({ item, form, filtersParameters }) 
             rules={item.rules!}
         >
             <Input
-                maxLength={item.maxLength ? item.maxLength : 100}
+                maxLength={item.maxLength}
                 disabled={item.disabled ? true : false}
                 onBlur={trimValue}
                 onPressEnter={trimValue}

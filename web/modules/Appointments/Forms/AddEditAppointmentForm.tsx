@@ -213,7 +213,9 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
 
     const language = getLanguageCode(router);
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
-    const localeDateTimeFormat = `${dayjs.Ls[language]?.formats.L} ${dayjs.Ls[language]?.formats.LT}`;
+    // the dayjs 'en' locale ships without a formats object: fall back to explicit patterns
+    const localeFormats = dayjs.Ls[language]?.formats;
+    const localeDateTimeFormat = `${localeFormats?.L ?? (language === 'en' ? 'MM/DD/YYYY' : 'DD/MM/YYYY')} ${localeFormats?.LT ?? 'HH:mm'}`;
     const operationalRequiredMode = props.id ? ModeEnum.Update : ModeEnum.Create;
 
     const configsParamsCodes = useMemo(() => {

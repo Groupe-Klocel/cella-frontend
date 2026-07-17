@@ -236,7 +236,7 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
                     <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityName')} name="entityName">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
                     <Input />

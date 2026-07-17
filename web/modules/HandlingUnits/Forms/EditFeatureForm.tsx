@@ -351,7 +351,7 @@ export const EditFeatureForm: FC<IEditItemFormProps> = (props: IEditItemFormProp
                             rules={[{ required: true, message: errorMessageEmptyInput }]}
                             normalize={(value) => (value ? value : undefined)}
                         >
-                            <Input disabled={false} maxLength={100} />
+                            <Input disabled={false} />
                         </Form.Item>
                     )}
                 </Form>
