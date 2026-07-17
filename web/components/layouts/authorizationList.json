@@ -925,6 +925,11 @@
         "mode": "read"
     },
     {
+        "route": "/locations-occupancy",
+        "permission": "wm_locations-occupancy",
+        "mode": "read"
+    },
+    {
         "route": "/logistic-units/[id]",
         "permission": "wm_logistic-units",
         "mode": "read"
