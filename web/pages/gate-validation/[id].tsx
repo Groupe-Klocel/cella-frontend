@@ -375,7 +375,11 @@ const GateValidationDetail: PageComponent = () => {
                         </Descriptions.Item>
                         <Descriptions.Item label={t('common:timing')} span={2}>
                             <TimingTag
-                                dateBegin={dayjs.utc(entry?.appointmentDateBegin).tz(tz)}
+                                dateBegin={
+                                    entry?.appointmentDateBegin
+                                        ? dayjs.utc(entry.appointmentDateBegin).tz(tz)
+                                        : null
+                                }
                                 t={t}
                             />
                         </Descriptions.Item>

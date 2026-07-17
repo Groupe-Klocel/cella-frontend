@@ -570,13 +570,13 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
                     <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress2')} name="entityAddress2">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress3')} name="entityAddress3">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityStreetNumber')} name="entityStreetNumber">
                     <Input />
@@ -621,13 +621,13 @@ export const AddCarrierForm: FC<IAddCarrierFormProps> = (props: IAddCarrierFormP
                 </Form.Item>
 
                 <Form.Item label={t('d:entityLanguage')} name="entityLanguage">
-                    <Input maxLength={15} />
+                    <Input />
                 </Form.Item>
                 <Form.Item
                     label={t('d:entityDeliveryPointNumber')}
                     name="entityDeliveryPointNumber"
                 >
-                    <Input maxLength={15} />
+                    <Input />
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>

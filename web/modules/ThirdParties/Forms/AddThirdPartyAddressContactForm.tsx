@@ -261,11 +261,11 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
                 </Form.Item>
 
                 <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
-                    <Input maxLength={50} onChange={handleFirstNameFill} />
+                    <Input onChange={handleFirstNameFill} />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactLastName')} name="contactLastName">
-                    <Input maxLength={50} onChange={handleLastNameFill} />
+                    <Input onChange={handleLastNameFill} />
                 </Form.Item>
 
                 <Form.Item
@@ -273,15 +273,15 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
                     name="contactName"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactPhone')} name="contactPhone">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactMobile')} name="contactMobile">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactEmail')} name="contactEmail">
@@ -289,7 +289,7 @@ export const AddThirdPartyAddressContactForm = (props: ISingleItemProps) => {
                 </Form.Item>
 
                 <Form.Item label={t('d:contactLanguage')} name="contactLanguage">
-                    <Input maxLength={15} />
+                    <Input />
                 </Form.Item>
             </Form>
             <div style={{ textAlign: 'center' }}>

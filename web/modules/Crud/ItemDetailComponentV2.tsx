@@ -557,7 +557,7 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
                         )}
 
                         <StyledPageContent>
-                            {!isLoading ? (
+                            {!isLoading && !detail?.isLoading ? (
                                 detailData ? (
                                     <>
                                         <WrapperStickyActions>

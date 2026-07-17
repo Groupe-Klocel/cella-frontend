@@ -512,7 +512,7 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                     name="entityName"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityCode')} name="entityCode">
                     <Input />
@@ -545,13 +545,13 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                     </Select>
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress2')} name="entityAddress2">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress3')} name="entityAddress3">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityStreetNumber')} name="entityStreetNumber">
                     <Input />
@@ -591,19 +591,19 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                     <Input />
                 </Form.Item>
                 <Form.Item label={t('d:contactLanguage')} name="contactLanguage">
-                    <Input maxLength={15} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityLanguage')} name="entityLanguage">
-                    <Input maxLength={15} />
+                    <Input />
                 </Form.Item>
                 <Form.Item
                     label={t('d:entityDeliveryPointNumber')}
                     name="entityDeliveryPointNumber"
                 >
-                    <Input maxLength={15} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:contactName')} name="contactName">
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
                     <AutoComplete
@@ -617,19 +617,19 @@ export const AddPurchaseOrderForm: FC<IAddPurchaseOrderFormProps> = (
                     ></AutoComplete>
                 </Form.Item>
                 <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactLastName')} name="contactLastName">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactPhone')} name="contactPhone">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactMobile')} name="contactMobile">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item

@@ -113,11 +113,11 @@ const AppointmentPage: PageComponent = () => {
     const breadCrumb = [
         ...itemRoutes,
         {
-            breadcrumbName: `${data?.name}`
+            breadcrumbName: `${data?.name ?? ''}`
         }
     ];
 
-    const pageTitle = `${t('common:appointment')} ${data?.name}`;
+    const pageTitle = `${t('common:appointment')} ${data?.name ?? ''}`;
 
     // #endregions
 
