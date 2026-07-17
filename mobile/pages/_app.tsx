@@ -31,6 +31,7 @@ import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../styles/globals.css';
 import AppLayout from 'components/layouts/AppLayout';
+import CellaBotMobile from 'modules/CellaBot/CellaBotMobile';
 import { SessionProvider } from 'next-auth/react';
 
 const themes = {
@@ -74,6 +75,8 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppLayoutProps
                                 getLayout={getLayout}
                                 Layout={Layout}
                             />
+                            {/* Read-only AI assistant for RF operators (self-gated). */}
+                            <CellaBotMobile />
                         </AppProvider>
                     </AuthProvider>
                     {/* <ReactQueryDevtools initialIsOpen={false} /> */}
