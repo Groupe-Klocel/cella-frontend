@@ -70,7 +70,7 @@ export const LogisticUnitModelV2: ModelType = {
             link: 'logistic-units/id',
             addEditFormat: 'String',
             addEditStep: null,
-            maxLength: 25,
+            maxLength: null,
             displayName: null,
             isMandatory: true,
             minRule: null,

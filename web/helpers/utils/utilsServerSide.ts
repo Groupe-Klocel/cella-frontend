@@ -55,7 +55,7 @@ export const fetchInitialData = async (context: any, model: any) => {
 
         const data = await graphqlRequestClient.request<Record<string, any>>(query, {
             id,
-            language: locale === 'en-US' ? 'en' : locale
+            language: locale?.split('-')[0] || 'en'
         });
 
         const initialData = data[model.endpoints.detail];

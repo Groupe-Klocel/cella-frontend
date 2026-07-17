@@ -611,7 +611,7 @@ export const EquipmentModelV2: ModelType = {
             link: null,
             addEditFormat: 'String',
             addEditStep: null,
-            maxLength: 100,
+            maxLength: null,
             displayName: null,
             isMandatory: false,
             minRule: null,
