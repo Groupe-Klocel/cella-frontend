@@ -64,7 +64,7 @@ export const SelectStockStatusAndQuantityForm_reducer = ({
     const storedObject = state[processName] || {};
     const router = useRouter();
     const { locale } = router;
-    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
+    const language = locale?.split('-')[0] ?? 'en';
 
     const [enteredQuantityInfo, setEnteredQuantityInfo] = useState<number>();
 
