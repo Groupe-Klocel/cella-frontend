@@ -249,7 +249,7 @@ export const EditThirdPartyAddressContactForm: FC<EditThirdPartyAddressContactFo
                     name="contactName"
                     rules={[{ required: true }]}
                 >
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:contactCivility')} name={'contactCivility'}>
                     <AutoComplete
@@ -265,19 +265,19 @@ export const EditThirdPartyAddressContactForm: FC<EditThirdPartyAddressContactFo
                     ></AutoComplete>
                 </Form.Item>
                 <Form.Item label={t('d:contactFirstName')} name="contactFirstName">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactLastName')} name="contactLastName">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactPhone')} name="contactPhone">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:contactMobile')} name="contactMobile">
-                    <Input maxLength={50} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item
@@ -289,7 +289,7 @@ export const EditThirdPartyAddressContactForm: FC<EditThirdPartyAddressContactFo
                 </Form.Item>
 
                 <Form.Item label={t('d:contactLanguage')} name="contactLanguage">
-                    <Input maxLength={15} />
+                    <Input />
                 </Form.Item>
             </Form>
 

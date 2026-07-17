@@ -57,7 +57,7 @@ export const EditCustomerOrderForm: FC<EditCustomerOrderFormProps> = ({
     const router = useRouter();
     const filteredLanguage = getLanguageCode(router);
     const { locale } = router;
-    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
+    const language = locale?.split('-')[0] ?? 'en';
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [stockOwners, setStockOwners] = useState<any>();
     const errorMessageEmptyInput = t('messages:error-message-empty-input');

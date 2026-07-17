@@ -67,7 +67,7 @@ export const AddCycleCountForm = (props: ISingleItemProps) => {
     const router = useRouter();
     const { configs, parameters } = useAppState();
     const { locale } = router;
-    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
+    const language = locale?.split('-')[0] ?? 'en';
 
     const [stockOwners, setStockOwners] = useState<any>();
     // EQUIPMENT : const [equipmentWithPriorities, setEquipmentWithPriorities] = useState<any>();

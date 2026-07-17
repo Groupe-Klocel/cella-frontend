@@ -37,6 +37,7 @@ import {
 import { ReloadOutlined, FileOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
 import { getVisitTypeCode, useTranslationWithFallback as useTranslation } from '@helpers';
 import {
+    LinkButton,
     ScheduleSidePanel,
     ScheduleStatusConfig,
     ScheduleStatusEntry,
@@ -1151,6 +1152,13 @@ const MyCalendar: PageComponent = () => {
                             }
                         ]}
                     />
+                    {selectedEvent?.id && (
+                        <LinkButton
+                            title={t('common:detail')}
+                            path={`/appointments/${selectedEvent.id}`}
+                            type="primary"
+                        />
+                    )}
                 </ScheduleSidePanel>
             </div>
 

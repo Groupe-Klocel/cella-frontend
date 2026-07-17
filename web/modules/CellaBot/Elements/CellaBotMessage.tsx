@@ -17,13 +17,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DownloadOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import {
+    DownloadOutlined,
+    ExclamationCircleOutlined,
+    ThunderboltOutlined
+} from '@ant-design/icons';
 import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Button, Collapse, Space, Spin } from 'antd';
+import { Button, Collapse, Space, Spin, Tag } from 'antd';
 import { AiChatMessage } from 'context/CellaBotContext';
 import Markdown from 'markdown-to-jsx';
 import styled from 'styled-components';
+import { executableProposalOperations } from '../cellaBotApi';
 import { CELLA_ON_YELLOW, CELLA_YELLOW } from '../cellaBotColors';
+import CellaBotChart from './CellaBotChart';
+import CellaBotEntityLink from './CellaBotEntityLink';
+
+// Untrusted assistant Markdown may contain `![alt](url)`; render the alt text instead of an <img>
+// so the model can't trigger an external image request (tracking/privacy) from the chat.
+const BlockedImage = ({ alt }: { alt?: string }) => <>{alt ?? ''}</>;
 
 const Row = styled.div<{ $role: 'user' | 'assistant' }>`
     display: flex;
@@ -118,6 +129,21 @@ const Extras = styled.div`
     width: 100%;
 `;
 
+const ProposalCard = styled.div`
+    border: 1px solid #ffe58f;
+    background: #fffbe6;
+    border-radius: 8px;
+    padding: 10px 12px;
+
+    pre {
+        margin: 4px 0 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 11px;
+        opacity: 0.75;
+    }
+`;
+
 // Decode a base64 payload to a Blob and trigger a browser download
 // (same approach as components/common/DocumentAttachedListComponent.tsx).
 const downloadBase64 = (base64Data: string, fileName: string, onError: () => void) => {
@@ -143,7 +169,13 @@ const downloadBase64 = (base64Data: string, fileName: string, onError: () => voi
     }
 };
 
-const CellaBotMessage = ({ message }: { message: AiChatMessage }) => {
+const CellaBotMessage = ({
+    message,
+    onProposalDecision
+}: {
+    message: AiChatMessage;
+    onProposalDecision?: (confirmed: boolean) => void;
+}) => {
     const { t } = useTranslation();
     const tt = (key: string, def: string) => {
         const v = t(key);
@@ -152,6 +184,11 @@ const CellaBotMessage = ({ message }: { message: AiChatMessage }) => {
 
     const toolCalls = (message.toolCalls ?? []).filter(Boolean);
     const documents = (message.documents ?? []).filter(Boolean);
+    const proposal = message.proposedActions;
+    const charts = (message.charts ?? []).filter(Boolean);
+    // Count/list ONLY the operations that will actually run on confirm (same filter as the confirm
+    // path), so the card never advertises more operations than get executed.
+    const executableOps = executableProposalOperations(proposal);
 
     return (
         <Row $role={message.role}>
@@ -159,15 +196,26 @@ const CellaBotMessage = ({ message }: { message: AiChatMessage }) => {
                 {message.pending ? (
                     <Space size="small">
                         <Spin size="small" />
-                        {tt('common:cellabot-thinking', 'Thinking…')}
+                        {/* Streamed step progress lands in `content` (e.g. "Querying data…"). */}
+                        {message.content || tt('common:cellabot-thinking', 'Thinking…')}
                     </Space>
                 ) : message.role === 'assistant' && !message.error ? (
                     // Assistant replies are Markdown; user input + error text stay plain.
+                    // `a` is overridden: cella://<entity>/<id> links navigate in-app (permission
+                    // gated), other links open in a new tab (see CellaBotEntityLink).
                     <MarkdownContent>
                         <Markdown
                             options={{
+                                // Assistant content is untrusted: render any embedded raw HTML as
+                                // text (no iframes/forms/img injection). Our `a` override still applies.
+                                disableParsingRawHTML: true,
                                 overrides: {
-                                    a: { props: { target: '_blank', rel: 'noreferrer' } }
+                                    a: { component: CellaBotEntityLink },
+                                    // Markdown `![alt](url)` still renders an <img> even with raw
+                                    // HTML disabled; that would fire an external request from
+                                    // untrusted assistant content (tracking/privacy). Render the
+                                    // alt text instead of loading the image.
+                                    img: { component: BlockedImage }
                                 }
                             }}
                         >
@@ -178,6 +226,73 @@ const CellaBotMessage = ({ message }: { message: AiChatMessage }) => {
                     message.content
                 )}
             </Bubble>
+
+            {charts.length > 0 && (
+                <Extras>
+                    <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                        {charts.map((chart, idx) => (
+                            <CellaBotChart key={`chart-${idx}`} spec={chart} />
+                        ))}
+                    </Space>
+                </Extras>
+            )}
+
+            {proposal && (
+                <Extras>
+                    <ProposalCard>
+                        <Space size={6}>
+                            <ExclamationCircleOutlined style={{ color: '#d48806' }} />
+                            <strong>{proposal.summary}</strong>
+                        </Space>
+                        <div style={{ fontSize: 12, margin: '4px 0' }}>
+                            {tt('common:cellabot-proposal-count', 'Operations to apply')}:{' '}
+                            {executableOps.length}
+                        </div>
+                        <Collapse
+                            ghost
+                            size="small"
+                            items={[
+                                {
+                                    key: 'ops',
+                                    label: tt('common:cellabot-proposal-details', 'Details'),
+                                    children: (
+                                        <pre>
+                                            {executableOps
+                                                .map(
+                                                    (op: any) =>
+                                                        `${op.document}\n${JSON.stringify(
+                                                            op.variables ?? {}
+                                                        )}`
+                                                )
+                                                .join('\n\n')}
+                                        </pre>
+                                    )
+                                }
+                            ]}
+                        />
+                        {message.proposalResolution === 'confirmed' ? (
+                            <Tag color="green">
+                                {tt('common:cellabot-proposal-confirmed', 'Confirmed')}
+                            </Tag>
+                        ) : message.proposalResolution === 'cancelled' ? (
+                            <Tag>{tt('common:cellabot-proposal-cancelled', 'Cancelled')}</Tag>
+                        ) : (
+                            <Space>
+                                <Button
+                                    size="small"
+                                    type="primary"
+                                    onClick={() => onProposalDecision?.(true)}
+                                >
+                                    {tt('actions:confirm', 'Confirm')}
+                                </Button>
+                                <Button size="small" onClick={() => onProposalDecision?.(false)}>
+                                    {tt('actions:cancel', 'Cancel')}
+                                </Button>
+                            </Space>
+                        )}
+                    </ProposalCard>
+                </Extras>
+            )}
 
             {documents.length > 0 && (
                 <Extras>

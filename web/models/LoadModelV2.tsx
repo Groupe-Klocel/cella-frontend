@@ -72,7 +72,7 @@ export const LoadModelV2: ModelType = {
             link: 'loads/id',
             addEditFormat: 'String',
             addEditStep: null,
-            maxLength: 50,
+            maxLength: null,
             displayName: null,
             isMandatory: false,
             minRule: null,
