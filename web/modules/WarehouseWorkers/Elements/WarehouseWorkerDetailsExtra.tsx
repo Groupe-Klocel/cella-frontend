@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined, EyeTwoTone } from '@ant-design/icons';
+import { DeleteOutlined, EditTwoTone, EyeTwoTone } from '@ant-design/icons';
 import { LinkButton } from '@components';
 import {
     getModesFromPermissions,
@@ -32,6 +32,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { WarehouseWorkerUserRoleModelV2 } from '@helpers';
 import { WarehouseWorkerStockOwnerModelV2 } from '@helpers';
+import { WarehouseWorkerCustomPermissionModelV2 } from '@helpers';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
@@ -48,6 +49,10 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
     const { permissions } = useAppState();
     const userRoleModes = getModesFromPermissions(permissions, Table.UserRole);
     const RoleModes = getModesFromPermissions(permissions, Table.Role);
+    const customPermissionModes = getModesFromPermissions(
+        permissions,
+        WarehouseWorkerCustomPermissionModelV2.tableName
+    );
     const [idToDeleteUserRole, setIdToDeleteUserRole] = useState<string | undefined>();
     const [idToDisableUserRole, setIdToDisableUserRole] = useState<string | undefined>();
     const [idToDeleteWarehouseWorkerStockOwner, setIdToDeleteWarehouseWorkerStockOwner] = useState<
@@ -55,6 +60,14 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
     >();
     const [idToDisableWarehouseWorkerStockOwner, setIdToDisableWarehouseWorkerStockOwner] =
         useState<string | undefined>();
+    const [
+        idToDeleteWarehouseWorkerCustomPermission,
+        setIdToDeleteWarehouseWorkerCustomPermission
+    ] = useState<string | undefined>();
+    const [
+        idToDisableWarehouseWorkerCustomPermission,
+        setIdToDisableWarehouseWorkerCustomPermission
+    ] = useState<string | undefined>();
 
     const UserRoleData: HeaderData = {
         title: t('common:associated-roles'),
@@ -80,6 +93,22 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
                 <LinkButton
                     title={t('actions:add2', { name: t('common:warehouse-worker-stock-owners') })}
                     path={pathParamsFromDictionary('/warehouse-workers/stock-owners/add', {
+                        id,
+                        username
+                    })}
+                    type="primary"
+                />
+            ) : null
+    };
+
+    const WarehouseWorkerCustomPermissionData: HeaderData = {
+        title: t('common:warehouse-worker-custom-permissions'),
+        routes: [],
+        actionsComponent:
+            customPermissionModes.length > 0 && customPermissionModes.includes(ModeEnum.Create) ? (
+                <LinkButton
+                    title={t('actions:add2', { name: t('common:custom-permission') })}
+                    path={pathParamsFromDictionary('/warehouse-workers/custom-permissions/add', {
                         id,
                         username
                     })}
@@ -123,6 +152,29 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
             showError(t('messages:error-deleting-data'));
         }
     }, [deleteResultWarehouseWorkerStockOwner]);
+
+    const {
+        isLoading: deleteLoadingWarehouseWorkerCustomPermission,
+        result: deleteResultWarehouseWorkerCustomPermission,
+        mutate: deleteWarehouseWorkerCustomPermission
+    } = useDelete(WarehouseWorkerCustomPermissionModelV2.endpoints.delete);
+
+    useEffect(() => {
+        if (
+            !(
+                deleteResultWarehouseWorkerCustomPermission &&
+                deleteResultWarehouseWorkerCustomPermission.data
+            )
+        )
+            return;
+
+        if (deleteResultWarehouseWorkerCustomPermission.success) {
+            showSuccess(t('messages:success-deleted'));
+            router.reload();
+        } else {
+            showError(t('messages:error-deleting-data'));
+        }
+    }, [deleteResultWarehouseWorkerCustomPermission]);
 
     return (
         <>
@@ -216,6 +268,79 @@ const WarehouseWorkerDetailsExtra = ({ id, username }: IItemDetailsProps) => {
                                                     title: t('messages:delete-confirm'),
                                                     onOk: () => {
                                                         deleteWarehouseWorkerStockOwner(record.id);
+                                                    },
+
+                                                    okText: t('messages:confirm'),
+                                                    cancelText: t('messages:cancel')
+                                                })
+                                            }
+                                            danger
+                                        />
+                                    </>
+                                )}
+                            </Space>
+                        )
+                    }
+                ]}
+                searchable={false}
+            />
+            <ListComponent
+                searchCriteria={{ warehouseWorkerId: id }}
+                dataModel={WarehouseWorkerCustomPermissionModelV2}
+                headerData={WarehouseWorkerCustomPermissionData}
+                triggerDelete={{
+                    idToDelete: idToDeleteWarehouseWorkerCustomPermission,
+                    setIdToDelete: setIdToDeleteWarehouseWorkerCustomPermission
+                }}
+                triggerSoftDelete={{
+                    idToDisable: idToDisableWarehouseWorkerCustomPermission,
+                    setIdToDisable: setIdToDisableWarehouseWorkerCustomPermission
+                }}
+                actionColumns={[
+                    {
+                        title: 'actions:actions',
+                        key: 'actions',
+                        render: (record: { id: string }) => (
+                            <Space>
+                                {customPermissionModes.length > 0 &&
+                                customPermissionModes.includes(ModeEnum.Read) ? (
+                                    <LinkButton
+                                        icon={<EyeTwoTone />}
+                                        path={pathParams(
+                                            `/warehouse-workers/custom-permissions/[id]`,
+                                            record?.id
+                                        )}
+                                    />
+                                ) : (
+                                    <></>
+                                )}
+                                {customPermissionModes.length > 0 &&
+                                customPermissionModes.includes(ModeEnum.Update) &&
+                                WarehouseWorkerCustomPermissionModelV2.isEditable ? (
+                                    <LinkButton
+                                        icon={<EditTwoTone />}
+                                        path={pathParams(
+                                            `/warehouse-workers/custom-permissions/edit/[id]`,
+                                            record?.id
+                                        )}
+                                    />
+                                ) : (
+                                    <></>
+                                )}
+                                {customPermissionModes.length == 0 ||
+                                !customPermissionModes.includes(ModeEnum.Delete) ? (
+                                    <></>
+                                ) : (
+                                    <>
+                                        <Button
+                                            icon={<DeleteOutlined />}
+                                            onClick={() =>
+                                                Modal.confirm({
+                                                    title: t('messages:delete-confirm'),
+                                                    onOk: () => {
+                                                        deleteWarehouseWorkerCustomPermission(
+                                                            record.id
+                                                        );
                                                     },
 
                                                     okText: t('messages:confirm'),

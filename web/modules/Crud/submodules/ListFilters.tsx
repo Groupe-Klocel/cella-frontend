@@ -69,7 +69,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({ form, columns }: IGeneralSearchP
                                 label={item.displayName ? item.displayName : t(`d:${item.name}`)}
                                 key={item.name}
                             >
-                                <Input maxLength={item.maxLength ? item.maxLength : 100} />
+                                <Input maxLength={item.maxLength} />
                             </Form.Item>
                         );
                     else if (item.type == FormDataType.TextArea)
@@ -79,7 +79,7 @@ const ListFilters: FC<IGeneralSearchProps> = ({ form, columns }: IGeneralSearchP
                                 label={item.displayName ? item.displayName : t(`d:${item.name}`)}
                                 key={item.name}
                             >
-                                <Input.TextArea maxLength={item.maxLength ? item.maxLength : 100} />
+                                <Input.TextArea maxLength={item.maxLength} />
                             </Form.Item>
                         );
                     else if (item.type == FormDataType.Dropdown)

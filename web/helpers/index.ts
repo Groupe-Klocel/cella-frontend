@@ -26,6 +26,7 @@ export * from './utils/utils';
 export * from './utils/utilsServerSide';
 export * from './utils/formInputsHelpers';
 export * from './utils/newModelsInjected';
+export * from './utils/entityRoutes';
 export * from './configs/env';
 export * from './utils/TranslationFromDB';
 export * from './utils/visitorManagement';

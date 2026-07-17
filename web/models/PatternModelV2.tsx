@@ -70,7 +70,7 @@ export const PatternModelV2: ModelType = {
             link: 'patterns/id',
             addEditFormat: 'String',
             addEditStep: null,
-            maxLength: 25,
+            maxLength: null,
             displayName: null,
             isMandatory: true,
             minRule: null,

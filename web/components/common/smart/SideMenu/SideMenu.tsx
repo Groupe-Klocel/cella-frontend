@@ -65,6 +65,7 @@ const SideMenu: FC = () => {
             'wm_configurations',
             'wm_roles',
             'wm_warehouse-workers',
+            'wm_custom-permissions',
             'wm_hook-configs',
             'wm_parameters',
             'wm_excel-imports',
@@ -85,7 +86,7 @@ const SideMenu: FC = () => {
                     : null,
 
                 // ACCESS-MANAGEMENT
-                ['wm_roles', 'wm_warehouse-workers'].some((perm) =>
+                ['wm_roles', 'wm_warehouse-workers', 'wm_custom-permissions'].some((perm) =>
                     getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
                 ) && {
                     key: 'administration-access-management',
@@ -107,6 +108,19 @@ const SideMenu: FC = () => {
                                   label: (
                                       <Link href="/warehouse-workers">
                                           {t('warehouse-workers')}
+                                      </Link>
+                                  )
+                              }
+                            : null,
+                        // CUSTOM PERMISSIONS
+                        getModesFromPermissions(permissions, 'wm_custom-permissions').includes(
+                            ModeEnum.Read
+                        )
+                            ? {
+                                  key: 'administration-access-management-custom-permissions',
+                                  label: (
+                                      <Link href="/custom-permissions">
+                                          {t('custom-permissions')}
                                       </Link>
                                   )
                               }
@@ -557,7 +571,8 @@ const SideMenu: FC = () => {
             'wm_movements',
             'wm_purchase-orders',
             'wm_handling-unit-content-features',
-            'wm_cumulated-stock'
+            'wm_cumulated-stock',
+            'wm_locations-occupancy'
         ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)) && {
             key: 'stock-management',
             icon: <ApartmentOutlined />,
@@ -650,6 +665,15 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'stock-management-cumulated-stock',
                           label: <Link href="/cumulated-stock">{t('cumulated-stock')}</Link>
+                      }
+                    : null,
+                // LOCATIONS OCCUPANCY
+                getModesFromPermissions(permissions, 'wm_locations-occupancy').includes(
+                    ModeEnum.Read
+                )
+                    ? {
+                          key: 'stock-management-locations-occupancy',
+                          label: <Link href="/locations-occupancy">{t('locations-occupancy')}</Link>
                       }
                     : null
             ].filter(Boolean)
@@ -825,6 +849,7 @@ const SideMenu: FC = () => {
         // MONITORING
         [
             'wm_record-history',
+            'wm_ai-conversations',
             'wm_document-histories',
             'wm_status-history',
             'wm_metabase',
@@ -840,6 +865,13 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'monitoring-record-history',
                           label: <Link href="/record-history">{t('record-history')}</Link>
+                      }
+                    : null,
+                // AI CONVERSATIONS
+                getModesFromPermissions(permissions, 'wm_ai-conversations').includes(ModeEnum.Read)
+                    ? {
+                          key: 'monitoring-ai-conversations',
+                          label: <Link href="/ai-conversations">{t('ai-conversations')}</Link>
                       }
                     : null,
                 // DOCUMENT HISTORIES

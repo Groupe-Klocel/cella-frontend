@@ -363,7 +363,7 @@ export const HandlingUnitContentInboundModelV2: ModelType = {
             link: null,
             addEditFormat: null,
             addEditStep: null,
-            maxLength: 70,
+            maxLength: null,
             displayName: 'supplier-article-code',
             isMandatory: false,
             minRule: null,

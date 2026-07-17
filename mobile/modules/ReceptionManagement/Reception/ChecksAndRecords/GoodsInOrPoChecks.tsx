@@ -57,7 +57,7 @@ export const GoodsInOrPoChecks = ({ dataToCheck }: IGoodsInOrPoChecksProps) => {
 
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'stock_statuses',
-        language: locale === 'en-US' ? 'en' : locale
+        language: locale?.split('-')[0] || 'en'
     });
 
     //ScanGoodsInPO-2: launch query for barcodes handling

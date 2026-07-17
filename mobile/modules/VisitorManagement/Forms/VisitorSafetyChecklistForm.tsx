@@ -129,6 +129,9 @@ export const VisitorSafetyChecklistForm = ({
                         { context: { language, zone } }
                     )
                     .then((res: any) => ({ zone, groups: parseRuleResult(res?.executeRule) }))
+                    // a zone without a configured document set must not block
+                    // the whole checklist: treat it as "no documents"
+                    .catch(() => ({ zone, groups: [] as DocumentGroup[] }))
             )
         )
             .then((docs: ZoneDocuments[]) => {
@@ -141,9 +144,6 @@ export const VisitorSafetyChecklistForm = ({
                     setChecked(all);
                 }
             })
-            .catch(() => {
-                if (active) showError(t('common:generic-error'));
-            })
             .finally(() => {
                 if (active) setLoading(false);
             });
@@ -153,8 +153,11 @@ export const VisitorSafetyChecklistForm = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const acceptedCount = zoneDocs.filter((d) => checked[d.zone]).length;
-    const complete = zoneDocs.length > 0 && acceptedCount === zoneDocs.length;
+    // Only zones that actually have documents require an acceptance: when no
+    // document set is configured, the step must not block the check-in.
+    const zonesWithDocs = zoneDocs.filter((d) => d.groups.some((g) => g.images.length > 0));
+    const acceptedCount = zonesWithDocs.filter((d) => checked[d.zone]).length;
+    const complete = acceptedCount === zonesWithDocs.length;
 
     const toggle = (zone: string) => setChecked((prev) => ({ ...prev, [zone]: !prev[zone] }));
 
@@ -191,7 +194,7 @@ export const VisitorSafetyChecklistForm = ({
             />
             <StyledForm name="visitor-checklist" form={form} onFinish={onFinish}>
                 <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                    {zoneDocs.map((d) => (
+                    {zonesWithDocs.map((d) => (
                         <div
                             key={d.zone}
                             style={{
@@ -237,18 +240,22 @@ export const VisitorSafetyChecklistForm = ({
                     ))}
                 </Space>
                 <Divider />
-                <Alert
-                    type={complete ? 'success' : 'warning'}
-                    showIcon
-                    message={
-                        complete
-                            ? t('common:all-confirmed')
-                            : t('common:count-confirmed', {
-                                  y: acceptedCount,
-                                  total: zoneDocs.length
-                              })
-                    }
-                />
+                {zonesWithDocs.length === 0 ? (
+                    <Alert type="info" showIcon message={t('common:no-safety-documents')} />
+                ) : (
+                    <Alert
+                        type={complete ? 'success' : 'warning'}
+                        showIcon
+                        message={
+                            complete
+                                ? t('common:all-confirmed')
+                                : t('common:count-confirmed', {
+                                      y: acceptedCount,
+                                      total: zonesWithDocs.length
+                                  })
+                        }
+                    />
+                )}
             </StyledForm>
         </WrapperForm>
     );

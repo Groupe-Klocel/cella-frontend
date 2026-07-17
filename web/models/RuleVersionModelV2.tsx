@@ -153,7 +153,7 @@ export const RuleVersionModelV2: ModelType = {
             link: null,
             addEditFormat: 'String',
             addEditStep: null,
-            maxLength: 150,
+            maxLength: null,
             displayName: null,
             isMandatory: false,
             minRule: null,

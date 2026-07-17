@@ -41,6 +41,9 @@ export interface AiUiContext {
     filters?: any;
     selection?: any[];
     pageText?: string;
+    // The UI locale (router.locale, e.g. 'fr-FR'): lets the assistant answer in the user's
+    // language and pass the right `language` argument to queries (statusText etc.).
+    locale?: string;
 }
 
 // One chat bubble. `toolCalls`/`documents`/`pending`/`error` are UI-only extras and are
@@ -50,6 +53,12 @@ export interface AiChatMessage {
     content: string;
     toolCalls?: Array<{ tool?: string | null; arguments?: any }>;
     documents?: Array<{ filename?: string | null; base64?: string | null; url?: string | null }>;
+    // Mutations the assistant proposes instead of executing ({summary, operations, count});
+    // rendered as a Confirm/Cancel card, executed with the user's own client on confirmation.
+    proposedActions?: { summary: string; operations: Array<any>; count: number } | null;
+    proposalResolution?: 'confirmed' | 'cancelled';
+    // Validated chart specs (render_chart tool) rendered inline as SVG.
+    charts?: Array<any>;
     pending?: boolean;
     error?: boolean;
 }
@@ -74,6 +83,10 @@ interface ICellaBotChat {
     messages: Array<AiChatMessage>;
     setMessages: Dispatch<SetStateAction<Array<AiChatMessage>>>;
     clearMessages: () => void;
+    // Server-side conversation id (ai_conversation): lets aiChat append to the same persisted
+    // conversation across turns/devices. Null = new conversation on the next turn.
+    conversationId: string | null;
+    setConversationId: Dispatch<SetStateAction<string | null>>;
 }
 
 const AiContextStore = createContext<IAiContextStore | undefined>(undefined);
@@ -83,12 +96,16 @@ const deriveView = (pathname: string): string | undefined => {
     return pathname.split('/').filter(Boolean)[0] || undefined;
 };
 
+// sessionStorage key prefix for the per-user chat persistence (per-tab, cleared on tab close).
+const CHAT_STORAGE_PREFIX = 'cellabot-chat-';
+
 export const CellaBotProvider = ({ children }: { children: ReactNode }) => {
     const router = useRouter();
     const { user } = useAuth();
     const [aiContext, setAiContextState] = useState<AiUiContext>({});
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Array<AiChatMessage>>([]);
+    const [conversationId, setConversationId] = useState<string | null>(null);
 
     const setAiContext = useCallback((ctx: AiUiContext) => setAiContextState(ctx), []);
 
@@ -120,23 +137,71 @@ export const CellaBotProvider = ({ children }: { children: ReactNode }) => {
         patchAiContext({
             url: router.asPath,
             view: deriveView(router.pathname),
-            entityId: (router.query.id as string) ?? undefined
+            entityId: (router.query.id as string) ?? undefined,
+            locale: router.locale ?? undefined
         });
-    }, [router.asPath, router.pathname, router.query.id, patchAiContext]);
+    }, [router.asPath, router.pathname, router.query.id, router.locale, patchAiContext]);
 
     // Purge the conversation whenever the logged-in user changes (login / logout / switch),
-    // so one user's chat never carries over to another session. Keyed on a primitive identity
-    // so it fires only on an actual change (the first mount no-ops on an already-empty chat).
+    // so one user's chat never carries over to another session — then rehydrate that user's own
+    // conversation from sessionStorage (per-tab), so a hard page reload no longer wipes the chat.
+    // Keyed on a primitive identity so it fires only on an actual change.
     const userKey = user?.username ?? user?.id ?? null;
     useEffect(() => {
-        setMessages([]);
         setIsOpen(false);
+        if (!userKey || typeof window === 'undefined') {
+            setMessages([]);
+            setConversationId(null);
+            return;
+        }
+        try {
+            const raw = window.sessionStorage.getItem(CHAT_STORAGE_PREFIX + userKey);
+            const parsed = raw ? JSON.parse(raw) : null;
+            // Legacy shape was a plain array of messages; current shape is {messages, conversationId}.
+            const stored = Array.isArray(parsed) ? { messages: parsed } : (parsed ?? {});
+            setMessages(Array.isArray(stored.messages) ? stored.messages : []);
+            setConversationId(stored.conversationId ?? null);
+        } catch (e) {
+            setMessages([]);
+            setConversationId(null);
+        }
     }, [userKey]);
+
+    // Best-effort persistence of the completed turns (pending/error bubbles are transient, and
+    // base64 document payloads are dropped — they can be MBs and would blow the storage quota).
+    useEffect(() => {
+        if (!userKey || typeof window === 'undefined') return;
+        try {
+            const completed = messages
+                .filter((m) => !m.pending && !m.error)
+                .map((m) =>
+                    m.documents?.some((d) => d?.base64)
+                        ? {
+                              ...m,
+                              documents: m.documents.map((d) => ({ ...d, base64: undefined }))
+                          }
+                        : m
+                );
+            if (completed.length === 0 && !conversationId) {
+                window.sessionStorage.removeItem(CHAT_STORAGE_PREFIX + userKey);
+            } else {
+                window.sessionStorage.setItem(
+                    CHAT_STORAGE_PREFIX + userKey,
+                    JSON.stringify({ messages: completed, conversationId })
+                );
+            }
+        } catch (e) {
+            // Storage full or unavailable: persistence is best-effort, the in-memory chat still works.
+        }
+    }, [messages, conversationId, userKey]);
 
     const open = useCallback(() => setIsOpen(true), []);
     const close = useCallback(() => setIsOpen(false), []);
     const toggle = useCallback(() => setIsOpen((v) => !v), []);
-    const clearMessages = useCallback(() => setMessages([]), []);
+    const clearMessages = useCallback(() => {
+        setMessages([]);
+        setConversationId(null); // "new conversation": the next turn starts a fresh persisted one
+    }, []);
 
     const storeValue = useMemo(
         () => ({ aiContext, patchAiContext, setAiContext }),
@@ -144,8 +209,18 @@ export const CellaBotProvider = ({ children }: { children: ReactNode }) => {
     );
 
     const chatValue = useMemo(
-        () => ({ isOpen, open, close, toggle, messages, setMessages, clearMessages }),
-        [isOpen, open, close, toggle, messages, clearMessages]
+        () => ({
+            isOpen,
+            open,
+            close,
+            toggle,
+            messages,
+            setMessages,
+            clearMessages,
+            conversationId,
+            setConversationId
+        }),
+        [isOpen, open, close, toggle, messages, clearMessages, conversationId]
     );
 
     return (
