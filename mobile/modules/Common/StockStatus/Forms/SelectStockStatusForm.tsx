@@ -100,7 +100,7 @@ export const SelectStockStatusForm = ({
     //SelectStockStatus-1: retrieve stock statuses choices for select
     const stockStatusList = useListParametersForAScopeQuery(graphqlRequestClient, {
         scope: 'stock_statuses',
-        language: locale === 'en-US' ? 'en' : locale
+        language: locale?.split('-')[0] || 'en'
     });
 
     useEffect(() => {
