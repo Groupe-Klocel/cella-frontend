@@ -584,7 +584,8 @@ const SideMenu: FC = () => {
             'wm_movements',
             'wm_purchase-orders',
             'wm_handling-unit-content-features',
-            'wm_cumulated-stock'
+            'wm_cumulated-stock',
+            'wm_locations-occupancy'
         ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)) && {
             key: 'stock-management',
             icon: <ApartmentOutlined />,
@@ -677,6 +678,15 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'stock-management-cumulated-stock',
                           label: <Link href="/cumulated-stock">{t('cumulated-stock')}</Link>
+                      }
+                    : null,
+                // LOCATIONS OCCUPANCY
+                getModesFromPermissions(permissions, 'wm_locations-occupancy').includes(
+                    ModeEnum.Read
+                )
+                    ? {
+                          key: 'stock-management-locations-occupancy',
+                          label: <Link href="/locations-occupancy">{t('locations-occupancy')}</Link>
                       }
                     : null
             ].filter(Boolean)
