@@ -70,7 +70,7 @@ export const PatternPathModelV2: ModelType = {
             link: null,
             addEditFormat: 'String',
             addEditStep: null,
-            maxLength: 25,
+            maxLength: null,
             displayName: null,
             isMandatory: true,
             minRule: null,

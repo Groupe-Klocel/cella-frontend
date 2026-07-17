@@ -35,7 +35,7 @@ const AddAppointmentPage: PageComponent = () => {
     const { parameters, configs } = useAppState();
     const router = useRouter();
     const { locale } = router;
-    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
+    const language = locale?.split('-')[0] ?? 'en';
 
     const configsParamsCodes = useMemo(() => {
         const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {

@@ -80,7 +80,7 @@ export const AddCustomerOrderForm: FC<IAddItemFormProps> = (props: IAddItemFormP
     const router = useRouter();
     const filteredLanguage = getLanguageCode(router);
     const { locale } = router;
-    const language = (locale === 'en-US' ? 'en' : locale) ?? 'en';
+    const language = locale?.split('-')[0] ?? 'en';
     const [thirdParties, setThirdParties] = useState<Array<IOption>>([]);
     const [thirdPartyName, setThirdPartyName] = useState<string>('');
     const [debouncedThirdPartyName, setDebouncedThirdPartyName] = useState<string>('');

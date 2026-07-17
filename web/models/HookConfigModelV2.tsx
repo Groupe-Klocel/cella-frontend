@@ -249,7 +249,7 @@ export const HookConfigModelV2: ModelType = {
             link: null,
             addEditFormat: 'String',
             addEditStep: null,
-            maxLength: 500,
+            maxLength: null,
             displayName: null,
             isMandatory: false,
             minRule: null,

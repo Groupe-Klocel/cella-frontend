@@ -426,11 +426,11 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                     name="entityName"
                     rules={[{ required: true, message: errorMessageEmptyInput }]}
                 >
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:entityCode')} name="entityCode">
-                    <Input maxLength={30} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item
@@ -464,35 +464,35 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                     />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress1')} name="entityAddress1">
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress2')} name="entityAddress2">
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAddress3')} name="entityAddress3">
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityStreetNumber')} name="entityStreetNumber">
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityPostCode')} name="entityPostCode">
-                    <Input maxLength={20} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityCity')} name="entityCity">
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityState')} name="entityState">
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityDistrict')} name="entityDistrict">
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
                 <Form.Item
                     label={t('d:entityCountry')}
                     name="entityCountry"
                     initialValue={'France'}
                 >
-                    <Input maxLength={100} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item
@@ -500,32 +500,32 @@ export const AddThirdPartyAddressForm = (props: ISingleItemProps) => {
                     name="entityCountryCode"
                     initialValue={'FR'}
                 >
-                    <Input maxLength={3} />
+                    <Input />
                 </Form.Item>
 
                 <Form.Item label={t('d:entityVatCode')} name="entityVatCode">
-                    <Input maxLength={20} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityEoriCode')} name="entityEoriCode">
-                    <Input maxLength={20} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityAccountingCode')} name="entityAccountingCode">
-                    <Input maxLength={20} />
+                    <Input />
                 </Form.Item>
                 <Form.Item
                     label={t('d:entityIdentificationNumber')}
                     name="entityIdentificationNumber"
                 >
-                    <Input maxLength={30} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:entityLanguage')} name="entityLanguage">
-                    <Input maxLength={15} />
+                    <Input />
                 </Form.Item>
                 <Form.Item
                     label={t('d:entityDeliveryPointNumber')}
                     name="entityDeliveryPointNumber"
                 >
-                    <Input maxLength={20} />
+                    <Input />
                 </Form.Item>
                 <Form.Item label={t('d:defaultCurrency')} name="defaultCurrency">
                     <Select

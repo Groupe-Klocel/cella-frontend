@@ -32,9 +32,15 @@ export interface ITimingTagProps {
 export const TimingTag: FC<ITimingTagProps> = ({ dateBegin, t }) => {
     if (!dateBegin) return null;
 
+    // A missing planned slot yields an invalid (but truthy) dayjs object whose
+    // diff is NaN: render nothing rather than "Very late (NaN min)".
+    const begin = dayjs(dateBegin);
+    if (!begin.isValid()) return null;
+
     // Positive = late (arrived after the planned start), negative = early.
     // dateBegin is a true UTC instant; diffing two instants is timezone-independent.
-    const diffMin = Math.round(dayjs().diff(dayjs(dateBegin), 'minute'));
+    const diffMin = Math.round(dayjs().diff(begin, 'minute'));
+    if (!Number.isFinite(diffMin)) return null;
 
     if (Math.abs(diffMin) <= 15) {
         return <Tag color="green">{t('common:on-time')}</Tag>;
