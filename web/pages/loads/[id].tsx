@@ -20,6 +20,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppHead, LinkButton, SinglePrintDocumentSetModal } from '@components';
 import { getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { LoadDetailsExtra } from 'modules/Loads/Elements/LoadDetailsExtra';
+import AssignToAppointmentModal from 'modules/Appointments/AssignToAppointmentModal';
+import { classifyLoadType, isAppointmentLinkEnabled } from '@helpers';
+import { AppointmentLinesSection } from 'modules/Appointments/AppointmentLinesSection';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
@@ -40,7 +43,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const LoadsPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions, parameters } = useAppState();
+    const { permissions, parameters, configs: dbConfigs } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -52,6 +55,17 @@ const LoadsPage: PageComponent = () => {
     const [idToPrint, setIdToPrint] = useState<string>();
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
     const [defaultLoadDocuments, setDefaultLoadDocuments] = useState<any>();
+    const [assignApptOpen, setAssignApptOpen] = useState(false);
+    // an outbound load links to appointments when appointment_with_loads is on; an inbound one
+    // when appointment_with_unloads is on. When the direction can't be classified (load type
+    // absent from DB configs), linking stays disabled rather than defaulting to outbound.
+    const loadDirection = classifyLoadType(data?.type, dbConfigs);
+    const apptLinkEnabled =
+        loadDirection === 'inbound'
+            ? isAppointmentLinkEnabled(dbConfigs, 'unloads')
+            : loadDirection === 'outbound'
+              ? isAppointmentLinkEnabled(dbConfigs, 'loads')
+              : false;
 
     useEffect(() => {
         const fetchRuleResult = async () => {
@@ -207,6 +221,16 @@ const LoadsPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                apptLinkEnabled &&
+                data?.status < configs.LOAD_STATUS_DISPATCHED ? (
+                    <Button onClick={() => setAssignApptOpen(true)}>
+                        {t('actions:assign-to-appointment')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
                 {/* Print List of boxes and code bar of load */}
                 {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
                     <Button
@@ -243,13 +267,22 @@ const LoadsPage: PageComponent = () => {
             <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={
-                    <LoadDetailsExtra
-                        loadId={id!}
-                        loadData={data}
-                        loadName={data?.name}
-                        setDocumentAttachmentsData={setDocumentAttachmentsData}
-                        isExtrasDisplayed={isExtrasDisplayed}
-                    />
+                    <>
+                        <LoadDetailsExtra
+                            loadId={id!}
+                            loadData={data}
+                            loadName={data?.name}
+                            setDocumentAttachmentsData={setDocumentAttachmentsData}
+                            isExtrasDisplayed={isExtrasDisplayed}
+                        />
+                        {apptLinkEnabled && id && (
+                            <AppointmentLinesSection
+                                fkField="loadId"
+                                entityId={id as string}
+                                canModify={modes.includes(ModeEnum.Update)}
+                            />
+                        )}
+                    </>
                 }
                 headerData={headerData}
                 id={id!}
@@ -257,6 +290,15 @@ const LoadsPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 refetch={triggerRefresh}
+            />
+            <AssignToAppointmentModal
+                open={assignApptOpen}
+                onClose={() => setAssignApptOpen(false)}
+                entityIds={id ? [id as string] : []}
+                fkField="loadId"
+                direction={classifyLoadType(data?.type, dbConfigs)}
+                carrierId={data?.carrierId}
+                onDone={() => setTriggerRefresh((prev) => !prev)}
             />
         </>
     );

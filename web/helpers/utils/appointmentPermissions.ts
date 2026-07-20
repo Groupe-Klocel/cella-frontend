@@ -17,21 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-export * from './hooks/crudHooks';
-export * from './hooks/hooks';
-export * from './types/types';
-export * from './utils/cancelHuoDeliveryStatus';
-export * from './utils/constant';
-export * from './utils/utils';
-export * from './utils/utilsServerSide';
-export * from './utils/formInputsHelpers';
-export * from './utils/newModelsInjected';
-export * from './utils/entityRoutes';
-export * from './configs/env';
-export * from './utils/TranslationFromDB';
-export * from './utils/visitorManagement';
-export * from './utils/loadDirection';
-export * from './utils/appointmentPermissions';
-export * from './configs/misc';
-export * from './configs/cors-config';
-export * from './utils/passwordValidation';
+
+// `wm_appointments-carrier` is a sentinel permission flag (not a real table). When a user carries
+// it, the appointment screens are shown in a restricted "carrier" mode: no dock choice, no
+// extra-status edit, no status change beyond Submitted, no appointment-line attach/modify, no
+// outbound links to purchase-order/delivery/load detail, and no recurring appointments. The carrier
+// can still pick a time, fill driver info, optional references, the truck composition and add
+// documents, then submit. Mirrors the flag-check pattern used in AppLayout for menu authorization.
+
+export const isCarrierAppointmentUser = (permissions: any): boolean =>
+    !!permissions?.some((p: any) => p.table === 'wm_appointments-carrier');

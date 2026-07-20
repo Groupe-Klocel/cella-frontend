@@ -19,21 +19,26 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LinkButton } from '@components';
 import { LoadExtrasListComponent } from './LoadExtrasListComponent';
-import { EyeTwoTone, LinkOutlined } from '@ant-design/icons';
+import { EyeTwoTone } from '@ant-design/icons';
 import { pathParams } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { Button, Divider, Modal, Space } from 'antd';
+import { Divider } from 'antd';
 import { ListComponent, HeaderData } from 'modules/Crud/ListComponentV2';
 import { DocumentAttachedListComponent } from 'components/common/DocumentAttachedListComponent';
-import { HandlingUnitOutboundModelV2, DeliveryModelV2, LoadExtrasModelV2 } from '@helpers';
+import {
+    HandlingUnitOutboundModelV2,
+    DeliveryModelV2,
+    CustomerOrderModelV2,
+    PurchaseOrderModelV2,
+    LoadExtrasModelV2
+} from '@helpers';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { useState } from 'react';
-import { useAuth } from 'context/AuthContext';
-import { gql } from 'graphql-request';
-import { showError, showSuccess, getModesFromPermissions } from '@helpers';
+import { getModesFromPermissions, classifyLoadType, isPreloadLinkEnabled } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../../common/configs.json';
+import { PreAssignedEntitySection } from './PreAssignedEntitySection';
 
 export interface IItemDetailsProps {
     loadId?: string | any;
@@ -50,16 +55,21 @@ const LoadDetailsExtra = ({
     isExtrasDisplayed
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
-    const { permissions } = useAppState();
-    const { graphqlRequestClient } = useAuth();
+    const { permissions, configs: dbConfigs } = useAppState();
     const loadModes = getModesFromPermissions(permissions, LoadExtrasModelV2.tableName);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
-    const [showAssignDeliveryModal, setShowAssignDeliveryModal] = useState(false);
-    const [refetchTrigger, setRefetchTrigger] = useState(false);
 
     //veriffy if load is not dispatched to show or not the assign delivery button
     const canModifyLoad = loadData?.status < configs.LOAD_STATUS_DISPATCHED;
+    // an inbound load links to purchase orders / buying orders; an outbound load to
+    // deliveries / sales orders. Left undefined when the type can't be classified (load type
+    // absent from DB configs) so no pre-assignment section is shown rather than a wrong one.
+    const direction = classifyLoadType(loadData?.type, dbConfigs);
+    // DB configs (scope "load") gate which entity types can be pre-assigned to this load
+    const preloadDeliveries = isPreloadLinkEnabled(dbConfigs, 'deliveries');
+    const preloadOrders = isPreloadLinkEnabled(dbConfigs, 'orders');
+    const preloadPurchaseOrders = isPreloadLinkEnabled(dbConfigs, 'purchase_orders');
 
     // header RELATED to Boxes
     const loadBoxesHeaderData: HeaderData = {
@@ -73,51 +83,6 @@ const LoadDetailsExtra = ({
         title: `${t('common:status-history')}`,
         routes: [],
         actionsComponent: null
-    };
-
-    // Fonction pour refetch les données
-    const handleRefetch = () => {
-        setRefetchTrigger((prev) => !prev);
-    };
-
-    // Fonction pour supprimer l'assignation d'une delivery
-    const removeDeliveryAssignment = async (deliveryId: string, deliveryName: string) => {
-        Modal.confirm({
-            title: t('messages:remove-assignment-confirm'),
-            content: t('messages:remove-delivery-from-load-confirm', {
-                delivery: deliveryName,
-                load: loadData?.name || loadId
-            }),
-            onOk: async () => {
-                try {
-                    const mutation = gql`
-                        mutation updateDelivery($id: String!, $input: UpdateDeliveryInput!) {
-                            updateDelivery(id: $id, input: $input) {
-                                id
-                                name
-                                preAssignedLoadId
-                            }
-                        }
-                    `;
-
-                    const variables = {
-                        id: deliveryId,
-                        input: {
-                            preAssignedLoadId: null
-                        }
-                    };
-
-                    await graphqlRequestClient.request(mutation, variables);
-                    showSuccess(t('messages:success-removed-assignment'));
-                    handleRefetch();
-                } catch (error) {
-                    console.error('Error removing delivery assignment:', error);
-                    showError(t('messages:error-removing-assignment'));
-                }
-            },
-            okText: t('messages:confirm'),
-            cancelText: t('messages:cancel')
-        });
     };
 
     return (
@@ -178,50 +143,67 @@ const LoadDetailsExtra = ({
                 canModify={canModifyLoad}
                 setData={setDocumentAttachmentsData}
             />
-            <Divider />
-            <ListComponent
-                searchCriteria={{ preAssignedLoadId: loadId }}
-                dataModel={DeliveryModelV2}
-                headerData={{
-                    title: `${t('common:deliveries-pre-assigned')}`,
-                    routes: [],
-                    actionsComponent: canModifyLoad ? (
-                        <LinkButton
-                            type="primary"
-                            path={`/deliveries/pre-assigned-load?loadId=${loadId}`}
-                            title={t('actions:assign-deliveries')}
-                        />
-                    ) : null
-                }}
-                actionColumns={[
-                    {
-                        title: 'actions:actions',
-                        key: 'actions',
-                        render: (record: { id: string; name: string }) => (
-                            <Space>
-                                <LinkButton
-                                    icon={<EyeTwoTone />}
-                                    path={pathParams('/deliveries/[id]', record.id)}
-                                />
-                                {canModifyLoad && (
-                                    <Button
-                                        icon={<LinkOutlined />}
-                                        danger
-                                        onClick={() =>
-                                            removeDeliveryAssignment(record.id, record.name)
-                                        }
-                                        title={t('actions:remove-from-load')}
-                                    />
-                                )}
-                            </Space>
-                        )
-                    }
-                ]}
-                searchable={false}
-                triggerDelete={undefined}
-                triggerSoftDelete={undefined}
-                refetch={refetchTrigger}
-            />
+            {direction === 'outbound' && (
+                <>
+                    {preloadDeliveries && (
+                        <>
+                            <Divider />
+                            <PreAssignedEntitySection
+                                dataModel={DeliveryModelV2}
+                                loadId={loadId}
+                                loadName={loadData?.name}
+                                canModify={canModifyLoad}
+                                title={`${t('common:deliveries-pre-assigned')}`}
+                                assignTitle={t('actions:assign-deliveries')}
+                                assignPath="/deliveries/pre-assigned-load"
+                                detailRoute="/deliveries/[id]"
+                                removeMutation={{
+                                    mutation: 'updateDelivery',
+                                    inputType: 'UpdateDeliveryInput'
+                                }}
+                            />
+                        </>
+                    )}
+                    {preloadOrders && (
+                        <>
+                            <Divider />
+                            <PreAssignedEntitySection
+                                dataModel={CustomerOrderModelV2}
+                                loadId={loadId}
+                                loadName={loadData?.name}
+                                canModify={canModifyLoad}
+                                title={`${t('common:orders-pre-assigned')}`}
+                                assignTitle={t('actions:assign-orders')}
+                                assignPath="/customer-orders/pre-assigned-load"
+                                detailRoute="/customer-orders/[id]"
+                                removeMutation={{
+                                    mutation: 'updateOrder',
+                                    inputType: 'UpdateOrderInput'
+                                }}
+                            />
+                        </>
+                    )}
+                </>
+            )}
+            {direction === 'inbound' && preloadPurchaseOrders && (
+                <>
+                    <Divider />
+                    <PreAssignedEntitySection
+                        dataModel={PurchaseOrderModelV2}
+                        loadId={loadId}
+                        loadName={loadData?.name}
+                        canModify={canModifyLoad}
+                        title={`${t('common:purchase-orders-pre-assigned')}`}
+                        assignTitle={t('actions:assign-purchase-orders')}
+                        assignPath="/purchase-orders/pre-assigned-load"
+                        detailRoute="/purchase-orders/[id]"
+                        removeMutation={{
+                            mutation: 'updatePurchaseOrder',
+                            inputType: 'UpdatePurchaseOrderInput'
+                        }}
+                    />
+                </>
+            )}
         </>
     );
 };

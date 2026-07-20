@@ -32,7 +32,7 @@ import {
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
-import { Button, Card, Descriptions, Image, Input, Modal, Space, Tag } from 'antd';
+import { Button, Card, Descriptions, Image, Input, Modal, Result, Select, Space, Tag } from 'antd';
 import { gql } from 'graphql-request';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -93,7 +93,9 @@ const GateValidationDetail: PageComponent = () => {
         (Array.isArray(timezoneQuery) ? timezoneQuery[0] : timezoneQuery) || dayjs.tz.guess();
     const { graphqlRequestClient } = useAuth();
     const { permissions, configs } = useAppState();
-    const modes = getModesFromPermissions(permissions, 'wm_appointments');
+    const modes = getModesFromPermissions(permissions, 'wm_appointments-gate-validation');
+    // fail closed: menu gating alone doesn't stop a direct URL hit — never fetch without READ.
+    const canRead = modes.includes(ModeEnum.Read);
 
     const [entry, setEntry] = useState<GateEntry | null>(null);
     const [loading, setLoading] = useState(true);
@@ -101,6 +103,9 @@ const GateValidationDetail: PageComponent = () => {
     const [approveOpen, setApproveOpen] = useState(false);
     const [rejectOpen, setRejectOpen] = useState(false);
     const [comment, setComment] = useState('');
+    // dock (Location of category "Dock") the agent can re-assign when validating access
+    const [docks, setDocks] = useState<Array<{ id: string; name: string }>>([]);
+    const [selectedDock, setSelectedDock] = useState<string | undefined>();
 
     // CONFIRMED / ON_SITE codes from the configs reducer (no extra request).
     const codes = useMemo<GateStatusCodes | null>(() => {
@@ -118,8 +123,45 @@ const GateValidationDetail: PageComponent = () => {
         };
     }, [configs]);
 
+    // Dock category code (location_category = "Dock"), used to list re-assignable docks.
+    const dockCategory = useMemo(() => {
+        const c = configs?.find(
+            (x: any) => x.scope === 'location_category' && /dock|quai|rampe|ramp/i.test(x.value ?? '')
+        )?.code;
+        return c != null ? parseInt(c, 10) : undefined;
+    }, [configs]);
+
+    // Load the dock locations once so the agent can re-assign the appointment to another dock.
     useEffect(() => {
-        if (!id) return;
+        if (dockCategory == null || !canRead) return;
+        graphqlRequestClient
+            .request(
+                gql`
+                    query gateDocks($filters: LocationSearchFilters) {
+                        locations(filters: $filters, itemsPerPage: 1000) {
+                            results {
+                                id
+                                name
+                            }
+                        }
+                    }
+                `,
+                { filters: { category: dockCategory } }
+            )
+            .then((res: any) => setDocks(res?.locations?.results ?? []))
+            .catch(() => undefined);
+    }, [graphqlRequestClient, dockCategory, canRead]);
+
+    // Default the dock selector to the appointment's planned dock once it is loaded.
+    useEffect(() => {
+        setSelectedDock(entry?.locationId ?? undefined);
+    }, [entry?.locationId]);
+
+    useEffect(() => {
+        if (!id || !canRead) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         graphqlRequestClient
             .request(
@@ -147,7 +189,7 @@ const GateValidationDetail: PageComponent = () => {
                 )
             )
             .finally(() => setLoading(false));
-    }, [graphqlRequestClient, id]);
+    }, [graphqlRequestClient, id, canRead]);
 
     const decision = useMemo(
         () => (entry && codes ? classifyGateEntry(entry, codes) : 'pending'),
@@ -223,6 +265,8 @@ const GateValidationDetail: PageComponent = () => {
                 id: entry.id,
                 input: {
                     status: codes.onSite,
+                    // allow the agent to re-assign the truck to another dock at validation time
+                    ...(selectedDock ? { locationId: selectedDock } : {}),
                     extras: mergeGate({
                         decision: 'approved',
                         decidedAt: dayjs().toISOString(),
@@ -295,6 +339,15 @@ const GateValidationDetail: PageComponent = () => {
         ) : (
             <LinkButton title={t('common:back-to-dashboard')} path={rootPath} />
         );
+
+    if (!canRead) {
+        return (
+            <>
+                <AppHead title={t('common:validation-title')} />
+                <Result status="403" title={t('messages:access-denied')} />
+            </>
+        );
+    }
 
     if (loading) {
         return (
@@ -452,6 +505,22 @@ const GateValidationDetail: PageComponent = () => {
                 okText={t('common:approve')}
                 cancelText={t('common:cancel')}
             >
+                <div style={{ marginBottom: 8 }}>
+                    <div style={{ marginBottom: 4 }}>
+                        <strong>{t('common:planned-dock')}:</strong>{' '}
+                        {entry?.locationName ?? '-'}
+                    </div>
+                    <Select
+                        allowClear
+                        showSearch
+                        optionFilterProp="label"
+                        style={{ width: '100%' }}
+                        placeholder={t('actions:choose-dock')}
+                        value={selectedDock}
+                        onChange={(v) => setSelectedDock(v)}
+                        options={docks.map((d) => ({ value: d.id, label: d.name }))}
+                    />
+                </div>
                 <Input.TextArea
                     rows={3}
                     placeholder={t('common:comment-optional')}

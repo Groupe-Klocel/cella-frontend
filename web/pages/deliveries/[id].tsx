@@ -34,6 +34,10 @@ import { DeliveryDetailsExtra } from 'modules/Deliveries/Elements/DeliveryDetail
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
+import AssignLoadModal from 'modules/Preload/AssignLoadModal';
+import AssignToAppointmentModal from 'modules/Appointments/AssignToAppointmentModal';
+import { AppointmentLinesSection } from 'modules/Appointments/AppointmentLinesSection';
+import { isAppointmentLinkEnabled, isPreloadLinkEnabled } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -45,13 +49,52 @@ const DeliveryPage: PageComponent = () => {
     const [data, setData] = useState<any>();
     const [shippingAddress, setShippingAddress] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
-    const { id } = router.query;
+    // [id] is a single dynamic segment; normalize defensively (Next can type it as string[])
+    const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [cancelInfo, setCancelInfo] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [refetchHUO, setRefetchHUO] = useState(false);
+    const [refetch, setRefetch] = useState(false);
+    const [assignLoadOpen, setAssignLoadOpen] = useState(false);
+    const [assignApptOpen, setAssignApptOpen] = useState(false);
+    // delivery ↔ appointment gate + carrier (via the shipping mode; delivery has no direct carrierId)
+    const apptLinkEnabled = isAppointmentLinkEnabled(configs, 'deliveries');
+    const preloadLinkEnabled = isPreloadLinkEnabled(configs, 'deliveries');
+    const deliveryCarrierId = data?.carrierShippingMode_carrierId;
+    const deAssignLoad = () => {
+        Modal.confirm({
+            title: t('messages:remove-assignment-confirm'),
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel'),
+            onOk: async () => {
+                if (!id) {
+                    showError(t('messages:error-removing-assignment'));
+                    return;
+                }
+                try {
+                    await graphqlRequestClient.request(
+                        gql`
+                            mutation u($id: String!, $input: UpdateDeliveryInput!) {
+                                updateDelivery(id: $id, input: $input) {
+                                    id
+                                    preAssignedLoadId
+                                }
+                            }
+                        `,
+                        { id, input: { preAssignedLoadId: null } }
+                    );
+                    showSuccess(t('messages:success-removed-assignment'));
+                    setRefetch((p) => !p);
+                } catch (e) {
+                    console.error('Error removing load assignment:', e);
+                    showError(t('messages:error-removing-assignment'));
+                }
+            }
+        });
+    };
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
     const [defaultDeliveryDocuments, setDefaultDeliveryDocuments] = useState<any>();
 
@@ -349,6 +392,35 @@ const DeliveryPage: PageComponent = () => {
                             ) : (
                                 <></>
                             )}
+                            {/* ASSIGN / DE-ASSIGN LOAD (delivery not shipped -> outbound loads).
+                                De-assign stays available for an existing link even if the config
+                                is off, so a link is never trapped; assign is gated by config. */}
+                            {modes.length > 0 && modes.includes(ModeEnum.Update) ? (
+                                data?.preAssignedLoadId ? (
+                                    <Button danger onClick={deAssignLoad}>
+                                        {t('actions:deassign-load')}
+                                    </Button>
+                                ) : preloadLinkEnabled &&
+                                  data?.status < configsParamsCodes.dispatchedDeliveryStatus ? (
+                                    <Button onClick={() => setAssignLoadOpen(true)}>
+                                        {t('actions:assign-to-load')}
+                                    </Button>
+                                ) : (
+                                    <></>
+                                )
+                            ) : (
+                                <></>
+                            )}
+                            {modes.length > 0 &&
+                            modes.includes(ModeEnum.Update) &&
+                            apptLinkEnabled &&
+                            data?.status < configsParamsCodes.dispatchedDeliveryStatus ? (
+                                <Button onClick={() => setAssignApptOpen(true)}>
+                                    {t('actions:assign-to-appointment')}
+                                </Button>
+                            ) : (
+                                <></>
+                            )}
                             {modes.length > 0 &&
                             modes.includes(ModeEnum.Read) &&
                             data?.status <= configsParamsCodes.canceledDeliveryStatus ? (
@@ -447,19 +519,28 @@ const DeliveryPage: PageComponent = () => {
             <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={
-                    <DeliveryDetailsExtra
-                        deliveryId={id}
-                        deliveryName={data?.name}
-                        deliveryStatus={data?.status}
-                        deliveryType={data?.type}
-                        stockOwnerName={data?.stockOwner_name}
-                        stockOwnerId={data?.stockOwnerId}
-                        setShippingAddress={setShippingAddress}
-                        refetchHUO={refetchHUO}
-                        setRefetchHUO={setRefetchHUO}
-                        setDocumentAttachmentsData={setDocumentAttachmentsData}
-                        isExtrasDisplayed={isExtrasDisplayed}
-                    />
+                    <>
+                        <DeliveryDetailsExtra
+                            deliveryId={id}
+                            deliveryName={data?.name}
+                            deliveryStatus={data?.status}
+                            deliveryType={data?.type}
+                            stockOwnerName={data?.stockOwner_name}
+                            stockOwnerId={data?.stockOwnerId}
+                            setShippingAddress={setShippingAddress}
+                            refetchHUO={refetchHUO}
+                            setRefetchHUO={setRefetchHUO}
+                            setDocumentAttachmentsData={setDocumentAttachmentsData}
+                            isExtrasDisplayed={isExtrasDisplayed}
+                        />
+                        {apptLinkEnabled && id && (
+                            <AppointmentLinesSection
+                                fkField="deliveryId"
+                                entityId={id as string}
+                                canModify={modes.includes(ModeEnum.Update)}
+                            />
+                        )}
+                    </>
                 }
                 id={id!}
                 headerData={headerData}
@@ -467,6 +548,25 @@ const DeliveryPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerCancel={{ cancelInfo, setCancelInfo }}
+                refetch={refetch}
+            />
+            <AssignLoadModal
+                open={assignLoadOpen}
+                onClose={() => setAssignLoadOpen(false)}
+                entityIds={id ? [id as string] : []}
+                direction="outbound"
+                carrierId={deliveryCarrierId}
+                update={{ mutation: 'updateDeliveries', inputType: 'UpdateDeliveryInput' }}
+                onDone={() => setRefetch((prev) => !prev)}
+            />
+            <AssignToAppointmentModal
+                open={assignApptOpen}
+                onClose={() => setAssignApptOpen(false)}
+                entityIds={id ? [id as string] : []}
+                fkField="deliveryId"
+                direction="outbound"
+                carrierId={deliveryCarrierId}
+                onDone={() => setRefetchHUO((prev) => !prev)}
             />
         </>
     );

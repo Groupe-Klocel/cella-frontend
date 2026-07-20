@@ -23,31 +23,81 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
+import {
+    META_DEFAULTS,
+    getModesFromPermissions,
+    isAppointmentLinkEnabled,
+    isPreloadLinkEnabled,
+    showError,
+    showSuccess
+} from '@helpers';
 import { useAppState } from 'context/AppContext';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { purchaseOrdersRoutes as itemRoutes } from 'modules/PurchaseOrders/Static/purchaseOrdersRoutes';
 import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { PurchaseOrderDetailsExtra } from 'modules/PurchaseOrders/Elements/PurchaseOrderDetailsExtra';
+import AssignLoadModal from 'modules/Preload/AssignLoadModal';
+import AssignToAppointmentModal from 'modules/Appointments/AssignToAppointmentModal';
+import { AppointmentLinesSection } from 'modules/Appointments/AppointmentLinesSection';
 import moment from 'moment';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const PurchaseOrderPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions } = useAppState();
+    const { permissions, configs: dbConfigs } = useAppState();
+    const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
-    const { id } = router.query;
+    // [id] is a single dynamic segment; normalize defensively (Next can type it as string[])
+    const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [refetchSubList, setRefetchSubList] = useState(false);
+    const [refetch, setRefetch] = useState(false);
     const [documentToPrint, setDocumentToPrint] = useState<string>();
+    const [assignLoadOpen, setAssignLoadOpen] = useState(false);
+    const [assignApptOpen, setAssignApptOpen] = useState(false);
+    const apptLinkEnabled = isAppointmentLinkEnabled(dbConfigs, 'purchase_orders');
+    const preloadLinkEnabled = isPreloadLinkEnabled(dbConfigs, 'purchase_orders');
+    const deAssignLoad = () => {
+        Modal.confirm({
+            title: t('messages:remove-assignment-confirm'),
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel'),
+            onOk: async () => {
+                if (!id) {
+                    showError(t('messages:error-removing-assignment'));
+                    return;
+                }
+                try {
+                    await graphqlRequestClient.request(
+                        gql`
+                            mutation u($id: String!, $input: UpdatePurchaseOrderInput!) {
+                                updatePurchaseOrder(id: $id, input: $input) {
+                                    id
+                                    preAssignedLoadId
+                                }
+                            }
+                        `,
+                        { id, input: { preAssignedLoadId: null } }
+                    );
+                    showSuccess(t('messages:success-removed-assignment'));
+                    setRefetch((p) => !p);
+                } catch (e) {
+                    console.error('Error removing load assignment:', e);
+                    showError(t('messages:error-removing-assignment'));
+                }
+            }
+        });
+    };
 
     // #region to customize information
     const breadCrumb = [
@@ -99,6 +149,36 @@ const PurchaseOrderPage: PageComponent = () => {
                         path={`${rootPath}/edit/${id}`}
                         type="primary"
                     />
+                ) : (
+                    <></>
+                )}
+                {/* ASSIGN / DE-ASSIGN LOAD (purchase order not finished -> inbound loads) */}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                data?.status !== configs.PURCHASE_ORDER_STATUS_CLOSED &&
+                data?.status !== configs.PURCHASE_ORDER_STATUS_CANCELED ? (
+                    data?.preAssignedLoadId ? (
+                        <Button danger onClick={deAssignLoad}>
+                            {t('actions:deassign-load')}
+                        </Button>
+                    ) : preloadLinkEnabled ? (
+                        <Button onClick={() => setAssignLoadOpen(true)}>
+                            {t('actions:assign-to-load')}
+                        </Button>
+                    ) : (
+                        <></>
+                    )
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                apptLinkEnabled &&
+                data?.status !== configs.PURCHASE_ORDER_STATUS_CLOSED &&
+                data?.status !== configs.PURCHASE_ORDER_STATUS_CANCELED ? (
+                    <Button onClick={() => setAssignApptOpen(true)}>
+                        {t('actions:assign-to-appointment')}
+                    </Button>
                 ) : (
                     <></>
                 )}
@@ -182,19 +262,45 @@ const PurchaseOrderPage: PageComponent = () => {
                 dataModel={model}
                 setData={setData}
                 extraDataComponent={
-                    <PurchaseOrderDetailsExtra
-                        purchaseOrderId={id!}
-                        type={data?.type}
-                        purchaseOrderName={data?.name}
-                        stockOwnerName={data?.stockOwner_name}
-                        stockOwnerId={data?.stockOwnerId}
-                        status={data?.status}
-                        refetchSubList={refetchSubList}
-                    />
+                    <>
+                        <PurchaseOrderDetailsExtra
+                            purchaseOrderId={id!}
+                            type={data?.type}
+                            purchaseOrderName={data?.name}
+                            stockOwnerName={data?.stockOwner_name}
+                            stockOwnerId={data?.stockOwnerId}
+                            status={data?.status}
+                            refetchSubList={refetchSubList}
+                        />
+                        {apptLinkEnabled && id && (
+                            <AppointmentLinesSection
+                                fkField="purchaseOrderId"
+                                entityId={id as string}
+                                canModify={modes.includes(ModeEnum.Update)}
+                            />
+                        )}
+                    </>
                 }
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 refetchSubList={{ refetchSubList, setRefetchSubList }}
+                refetch={refetch}
+            />
+            <AssignLoadModal
+                open={assignLoadOpen}
+                onClose={() => setAssignLoadOpen(false)}
+                entityIds={id ? [id as string] : []}
+                direction="inbound"
+                update={{ mutation: 'updatePurchaseOrders', inputType: 'UpdatePurchaseOrderInput' }}
+                onDone={() => setRefetch((prev) => !prev)}
+            />
+            <AssignToAppointmentModal
+                open={assignApptOpen}
+                onClose={() => setAssignApptOpen(false)}
+                entityIds={id ? [id as string] : []}
+                fkField="purchaseOrderId"
+                direction="inbound"
+                onDone={() => setRefetchSubList((prev) => !prev)}
             />
         </>
     );

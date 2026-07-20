@@ -37,6 +37,7 @@ const AddAppointmentLinePage: PageComponent = () => {
             <AddAppointmentLine
                 appointmentId={router.query.appointmentId}
                 appointmentName={router.query.appointmentName}
+                appointmentType={router.query.appointmentType}
                 stockOwnerId={router.query.stockOwnerId}
                 stockOwnerName={router.query.stockOwnerName}
                 carrierId={router.query.carrierId}

@@ -179,39 +179,37 @@ const DeliveriesManualAllocationPages: PageComponent = () => {
         actionsComponent: null
     };
 
-    const onSelectChange = (newSelectedRowKeys: any) => {
-        selectedRowKeys.forEach((key: string) => {
-            if (!newSelectedRowKeys.includes(key) && tableData.map((d) => d.id).includes(key)) {
-                setSelectedRowKeys((prevKeys: React.Key[]) => prevKeys.filter((k) => k !== key));
-                setSelectedRowKeysInfo((prevInfo: any) =>
-                    prevInfo.filter((info: any) => info.id !== key)
-                );
-            }
-        });
-
-        newSelectedRowKeys.forEach((value: string) => {
-            if (!selectedRowKeys?.includes(value)) {
-                setSelectedRowKeys((prevKeys: React.Key[]) => [...prevKeys, value]);
-                const deliveryInfo = tableData.find((delivery) => delivery.id === value);
-                if (deliveryInfo) {
-                    setSelectedRowKeysInfo((prevInfo: any) => [
-                        ...prevInfo,
-                        {
-                            id: deliveryInfo.id,
-                            name: deliveryInfo.name || deliveryInfo.id,
-                            estimatedNumberOfBoxes: deliveryInfo.estimatedNumberOfBoxes,
-                            estimatedNumberOfPalettes: deliveryInfo.estimatedNumberOfPalettes,
-                            estimatedLoadMeters: deliveryInfo.estimatedLoadMeters
-                        }
-                    ]);
-                }
-            }
+    // Cross-page selection via antd's preserveSelectedRowKeys: merge the provided rows
+    // (current page + preserved) by id into the cubing snapshots, keeping only ids still in `keys`.
+    const onSelectChange = (newSelectedRowKeys: any, newSelectedRows?: any[]) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+        setSelectedRowKeysInfo((prevInfo: any) => {
+            const byId = new Map<any, any>();
+            const snapshot = (delivery: any) => ({
+                id: delivery.id,
+                name: delivery.name || delivery.id,
+                estimatedNumberOfBoxes: delivery.estimatedNumberOfBoxes,
+                estimatedNumberOfPalettes: delivery.estimatedNumberOfPalettes,
+                estimatedLoadMeters: delivery.estimatedLoadMeters
+            });
+            prevInfo.forEach((info: any) => byId.set(info.id, info));
+            (newSelectedRows ?? [])
+                .filter((row) => row && row.id != null)
+                .forEach((row) => byId.set(row.id, snapshot(row)));
+            return newSelectedRowKeys
+                .map((key: any) => {
+                    if (byId.has(key)) return byId.get(key);
+                    const info = tableData.find((delivery) => delivery.id === key);
+                    return info ? snapshot(info) : undefined;
+                })
+                .filter((info: any) => !!info);
         });
     };
 
     const rowSelection = {
         selectedRowKeys,
-        onChange: onSelectChange
+        onChange: onSelectChange,
+        preserveSelectedRowKeys: true
     };
 
     const handleShowConfirmModal = () => {
