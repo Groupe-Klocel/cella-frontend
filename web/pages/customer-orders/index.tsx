@@ -44,6 +44,9 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { customerOrdersRoutes as itemRoutes } from 'modules/CustomerOrders/Static/customerOrdersRoutes';
 import configs from '../../../common/configs.json';
+import AssignLoadModal from 'modules/Preload/AssignLoadModal';
+import AssignToAppointmentModal from 'modules/Appointments/AssignToAppointmentModal';
+import { isAppointmentLinkEnabled, isPreloadLinkEnabled } from '@helpers';
 import parameters from '../../../common/parameters.json';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
@@ -52,13 +55,15 @@ import { PaymentModal } from 'modules/CustomerOrders/Modals/PaymentModal';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const CustomerOrderPages: PageComponent = () => {
-    const { permissions } = useAppState();
+    const { permissions, configs: dbConfigs } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
+    const [assignLoadOpen, setAssignLoadOpen] = useState(false);
+    const [assignApptOpen, setAssignApptOpen] = useState(false);
     const { graphqlRequestClient } = useAuth();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [selectedRows, setSelectedRows] = useState<any>([]);
@@ -87,6 +92,25 @@ const CustomerOrderPages: PageComponent = () => {
     };
 
     const hasSelected = selectedRowKeys.length > 0;
+    // derive assign eligibility from selectedRows (accumulated across pages): an order can
+    // receive a load/appointment only while not finished (not Closed / Canceled); its carrier
+    // comes from the shipping mode. Buttons are disabled on mixed carriers.
+    const eligibleRows = (selectedRows as any[]).filter(
+        (r) =>
+            r &&
+            r.status !== configs.ORDER_STATUS_CLOSED &&
+            r.status !== configs.ORDER_STATUS_CANCELED
+    );
+    const eligibleIds = eligibleRows.map((r) => r.id);
+    const distinctOrderCarriers = Array.from(
+        new Set(eligibleRows.map((r) => r.carrierShippingMode_carrierId).filter((c) => c != null))
+    );
+    const hasMixedCarrier = distinctOrderCarriers.length > 1;
+    const commonCarrierId =
+        distinctOrderCarriers.length === 1 ? (distinctOrderCarriers[0] as string) : null;
+    const canAssign = eligibleIds.length > 0 && !hasMixedCarrier;
+    const apptLinkEnabled = isAppointmentLinkEnabled(dbConfigs, 'orders');
+    const preloadLinkEnabled = isPreloadLinkEnabled(dbConfigs, 'orders');
 
     // function that will retrieve delivery orderAddress for given orderId
     const getDeliveryOrderAddress = async (orderId: String[]) => {
@@ -123,27 +147,20 @@ const CustomerOrderPages: PageComponent = () => {
         rows: any[];
     } | null>(null);
 
+    // Cross-page selection: the table is server-side paginated, so we rely on antd's
+    // preserveSelectedRowKeys and merge the provided rows (current page + preserved) by id,
+    // keeping only ids still present in `keys`.
     const onSelectChange = (newSelectedRowKeys: React.Key[], newSelectedRows: any[]) => {
-        const currentPageIds = tableData.map((d) => d.id);
-
-        setSelectedRowKeys((prevKeys) => {
-            const retainedKeys = prevKeys.filter(
-                (key) => !currentPageIds.includes(key) || newSelectedRowKeys.includes(key)
-            );
-            const keysToAdd = newSelectedRowKeys.filter((key) => !retainedKeys.includes(key));
-
-            return [...retainedKeys, ...keysToAdd];
-        });
-
+        setSelectedRowKeys(newSelectedRowKeys);
         setSelectedRows((prevRows: any[]) => {
-            const retainedRows = prevRows.filter(
-                (row) => !currentPageIds.includes(row.id) || newSelectedRowKeys.includes(row.id)
-            );
-
-            const retainedRowIds = retainedRows.map((r) => r.id);
-            const rowsToAdd = newSelectedRows.filter((row) => !retainedRowIds.includes(row.id));
-
-            return [...retainedRows, ...rowsToAdd];
+            const byId = new Map<any, any>();
+            prevRows.forEach((r) => byId.set(r.id, r));
+            (newSelectedRows ?? [])
+                .filter((row) => row && row.id != null)
+                .forEach((row) => byId.set(row.id, row));
+            return newSelectedRowKeys
+                .map((key) => byId.get(key) ?? tableData.find((d) => d.id === key))
+                .filter((r) => !!r);
         });
     };
 
@@ -201,7 +218,8 @@ const CustomerOrderPages: PageComponent = () => {
 
     const rowSelection = {
         selectedRowKeys,
-        onChange: onSelectChange
+        onChange: onSelectChange,
+        preserveSelectedRowKeys: true
     };
 
     //#region : Specific functions for this page
@@ -444,6 +462,20 @@ const CustomerOrderPages: PageComponent = () => {
                                   })}
                         </Button>
                     </span>
+                    {preloadLinkEnabled && (
+                        <span style={{ marginLeft: 16 }}>
+                            <Button onClick={() => setAssignLoadOpen(true)} disabled={!canAssign}>
+                                {t('actions:assign-to-load')}
+                            </Button>
+                        </span>
+                    )}
+                    {apptLinkEnabled && (
+                        <span style={{ marginLeft: 16 }}>
+                            <Button onClick={() => setAssignApptOpen(true)} disabled={!canAssign}>
+                                {t('actions:assign-to-appointment')}
+                            </Button>
+                        </span>
+                    )}
                 </>
             ) : null
     };
@@ -546,6 +578,35 @@ const CustomerOrderPages: PageComponent = () => {
                 routeDetailPage={`${rootPath}/:id`}
                 checkbox={true}
                 refetch={triggerRefresh}
+            />
+            {/* This screen is scoped to Customer Orders (searchCriteria orderType =
+                ORDER_TYPE_CUSTOMER_ORDER), which are always outbound — hence the fixed direction
+                on both modals. Buying (inbound) orders live on the purchase-orders screen. */}
+            <AssignLoadModal
+                open={assignLoadOpen}
+                onClose={() => setAssignLoadOpen(false)}
+                entityIds={eligibleIds}
+                direction="outbound"
+                carrierId={commonCarrierId}
+                update={{ mutation: 'updateOrders', inputType: 'UpdateOrderInput' }}
+                onDone={() => {
+                    setSelectedRowKeys([]);
+                    setSelectedRows([]);
+                    setTriggerRefresh((prev) => !prev);
+                }}
+            />
+            <AssignToAppointmentModal
+                open={assignApptOpen}
+                onClose={() => setAssignApptOpen(false)}
+                entityIds={eligibleIds}
+                fkField="orderId"
+                direction="outbound"
+                carrierId={commonCarrierId}
+                onDone={() => {
+                    setSelectedRowKeys([]);
+                    setSelectedRows([]);
+                    setTriggerRefresh((prev) => !prev);
+                }}
             />
             <PaymentModal
                 showModal={{

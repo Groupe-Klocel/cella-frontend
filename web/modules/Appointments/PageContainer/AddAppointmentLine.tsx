@@ -19,21 +19,31 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
 import { EyeTwoTone } from '@ant-design/icons';
-import { AppHead, LinkButton } from '@components';
+import { LinkButton } from '@components';
 import {
     getModesFromPermissions,
     pathParams,
     showError,
     showSuccess,
-    LoadModelV2 as loadModel
+    findCodeByScopeAndValue,
+    getAppointmentDirection,
+    getLoadTypeCodesForDirection,
+    getOrderTypeCodesForDirection,
+    isAppointmentLinkEnabled,
+    isCarrierAppointmentUser,
+    LoadModelV2,
+    DeliveryModelV2,
+    CustomerOrderModelV2,
+    PurchaseOrderModelV2
 } from '@helpers';
-import { Button, Modal, Space } from 'antd';
+import type { LoadDirection } from '@helpers';
+import { Button, Empty, Modal, Radio, Space } from 'antd';
 import { gql } from 'graphql-request';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useState, useMemo } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { appointmentsRoutes } from '../Static/appointmentsRoutes';
 import { useAuth } from 'context/AuthContext';
@@ -41,10 +51,15 @@ import { useAuth } from 'context/AuthContext';
 export interface ISingleItemProps {
     appointmentId: string | any;
     appointmentName: string | any;
+    appointmentType?: string | any;
     stockOwnerId: string | any;
     stockOwnerName: string | any;
     carrierId: string | any;
 }
+
+// entity type -> its model / appointmentLine FK / detail route / label + whether the
+// appointment carrier|stockOwner filters apply. Loads carry a carrier but no stock owner.
+type EntityKey = 'loads' | 'deliveries' | 'orders' | 'purchaseOrders';
 
 const AddAppointmentLine = (props: ISingleItemProps) => {
     const { permissions, configs } = useAppState();
@@ -53,7 +68,64 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
     const router = useRouter();
 
     const modes = getModesFromPermissions(permissions, Table.AppointmentLine);
-    const rootPath = '/loads';
+    // carriers cannot attach appointment lines (read-only), even via a direct URL to this page
+    const isCarrier = isCarrierAppointmentUser(permissions);
+    // the real appointment direction (may be 'visit' or undefined when the type is missing, e.g.
+    // direct URL navigation without the query param) — availableTypes is gated on it below
+    const apptDirection = getAppointmentDirection(props.appointmentType, configs);
+    const direction: LoadDirection = apptDirection === 'inbound' ? 'inbound' : 'outbound';
+
+    const entityDefs: Record<EntityKey, any> = useMemo(
+        () => ({
+            loads: {
+                model: LoadModelV2,
+                fk: 'loadId',
+                detailRoot: '/loads',
+                label: t('common:loads')
+            },
+            deliveries: {
+                model: DeliveryModelV2,
+                fk: 'deliveryId',
+                detailRoot: '/deliveries',
+                label: t('common:deliveries')
+            },
+            orders: {
+                model: CustomerOrderModelV2,
+                fk: 'orderId',
+                detailRoot: '/customer-orders',
+                label: t('common:orders')
+            },
+            purchaseOrders: {
+                model: PurchaseOrderModelV2,
+                fk: 'purchaseOrderId',
+                detailRoot: '/purchase-orders',
+                label: t('common:purchaseOrders')
+            }
+        }),
+        [t]
+    );
+
+    // which entity types are available for this appointment (direction + DB configs)
+    const availableTypes = useMemo(() => {
+        const types: EntityKey[] = [];
+        if (apptDirection === 'inbound') {
+            if (isAppointmentLinkEnabled(configs, 'unloads')) types.push('loads');
+            if (isAppointmentLinkEnabled(configs, 'purchase_orders')) types.push('purchaseOrders');
+        } else if (apptDirection === 'outbound') {
+            if (isAppointmentLinkEnabled(configs, 'loads')) types.push('loads');
+            if (isAppointmentLinkEnabled(configs, 'deliveries')) types.push('deliveries');
+        } else {
+            // visit or unclassifiable appointment → no entity types can be linked
+            return [];
+        }
+        if (isAppointmentLinkEnabled(configs, 'orders')) types.push('orders');
+        return types;
+    }, [configs, apptDirection]);
+
+    const [activeType, setActiveType] = useState<EntityKey | undefined>(undefined);
+    useEffect(() => {
+        if (!activeType && availableTypes.length > 0) setActiveType(availableTypes[0]);
+    }, [availableTypes, activeType]);
 
     const [selectedRowKeys, setSelectedRowKeys] = useState<any[]>([]);
     const [selectedRowKeysInfo, setSelectedRowKeysInfo] = useState<any[]>([]);
@@ -64,19 +136,79 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [refetch, setRefetch] = useState(false);
 
+    // filters for the active entity type: loads by direction type + carrier; deliveries not
+    // shipped; orders by direction order-type; deliveries/orders/POs by carrier (via shipping
+    // mode) & stock owner when present. Loads have no stock owner.
     const advancedFilters = useMemo(() => {
-        const filters: any[] = [
-            {
-                filter: [
-                    {
-                        field: { carrierId: props.carrierId },
-                        searchType: 'EQUAL'
-                    }
-                ]
-            }
-        ];
-        return filters;
-    }, [props.carrierId]);
+        const carrierClause = props.carrierId
+            ? [{ filter: [{ searchType: 'EQUAL', field: { carrierId: props.carrierId } }] }]
+            : [];
+        const carrierShipClause = props.carrierId
+            ? [
+                  {
+                      filter: [
+                          {
+                              searchType: 'EQUAL',
+                              field: { carrierShippingMode_CarrierId: props.carrierId }
+                          }
+                      ]
+                  }
+              ]
+            : [];
+        const stockOwnerClause = props.stockOwnerId
+            ? [{ filter: [{ searchType: 'EQUAL', field: { stockOwnerId: props.stockOwnerId } }] }]
+            : [];
+        if (activeType === 'loads') {
+            const dispatched = parseInt(
+                findCodeByScopeAndValue(configs, 'load_status', 'Dispatched') ?? '0',
+                10
+            );
+            const typeCodes = getLoadTypeCodesForDirection(direction, configs);
+            return [
+                { filter: [{ searchType: 'INFERIOR', field: { status: dispatched } }] },
+                // fail-closed: unresolved load types must propose no load rather than any
+                // direction, which could attach a wrong-direction load to the appointment.
+                {
+                    filter: [
+                        { searchType: 'EQUAL', field: { type: typeCodes.length ? typeCodes : [-1] } }
+                    ]
+                },
+                ...carrierClause
+            ];
+        }
+        if (activeType === 'deliveries') {
+            const dispatched = parseInt(
+                findCodeByScopeAndValue(configs, 'delivery_status', 'Dispatched') ?? '0',
+                10
+            );
+            return [
+                { filter: [{ searchType: 'INFERIOR', field: { status: dispatched } }] },
+                ...carrierShipClause,
+                ...stockOwnerClause
+            ];
+        }
+        if (activeType === 'orders') {
+            const orderTypeCodes = getOrderTypeCodesForDirection(direction, configs);
+            return [
+                // fail-closed: unresolved order types must propose no order rather than any
+                // direction/type.
+                {
+                    filter: [
+                        {
+                            searchType: 'EQUAL',
+                            field: { orderType: orderTypeCodes.length ? orderTypeCodes : [-1] }
+                        }
+                    ]
+                },
+                ...carrierShipClause,
+                ...stockOwnerClause
+            ];
+        }
+        // purchaseOrders: no carrier
+        return [...stockOwnerClause];
+    }, [activeType, direction, configs, props.carrierId, props.stockOwnerId]);
+
+    const activeDef = activeType ? entityDefs[activeType] : undefined;
 
     const appointmentDetailBreadCrumb = [
         ...appointmentsRoutes,
@@ -92,33 +224,35 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
         }
     ];
 
-    const onSelectChange = (newSelectedRowKeys: any[]) => {
-        selectedRowKeys.forEach((key: string) => {
-            if (!newSelectedRowKeys.includes(key) && tableData.map((d) => d.id).includes(key)) {
-                setSelectedRowKeys((prev) => prev.filter((k) => k !== key));
-                setSelectedRowKeysInfo((prev) => prev.filter((info: any) => info.id !== key));
-            }
-        });
-        newSelectedRowKeys.forEach((value: string) => {
-            if (!selectedRowKeys.includes(value)) {
-                setSelectedRowKeys((prev) => [...prev, value]);
-                const loadInfo = tableData.find((load) => load.id === value);
-                if (loadInfo) {
-                    setSelectedRowKeysInfo((prev) => [
-                        ...prev,
-                        {
-                            id: loadInfo.id,
-                            name: loadInfo.name || loadInfo.id
-                        }
-                    ]);
-                }
-            }
+    const resetSelection = () => {
+        setSelectedRowKeys([]);
+        setSelectedRowKeysInfo([]);
+    };
+
+    // Cross-page selection via antd's preserveSelectedRowKeys: merge the provided rows
+    // (current page + preserved) by id into the name snapshots, keeping only ids still in `keys`.
+    const onSelectChange = (newSelectedRowKeys: any[], newSelectedRows?: any[]) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+        setSelectedRowKeysInfo((prev) => {
+            const byId = new Map<any, any>();
+            prev.forEach((info: any) => byId.set(info.id, info));
+            (newSelectedRows ?? [])
+                .filter((row) => row && row.id != null)
+                .forEach((row) => byId.set(row.id, { id: row.id, name: row.name || row.id }));
+            return newSelectedRowKeys
+                .map((key) => {
+                    if (byId.has(key)) return byId.get(key);
+                    const info = tableData.find((row) => row.id === key);
+                    return info ? { id: info.id, name: info.name || info.id } : undefined;
+                })
+                .filter((info) => !!info);
         });
     };
 
     const rowSelection = {
         selectedRowKeys,
-        onChange: onSelectChange
+        onChange: onSelectChange,
+        preserveSelectedRowKeys: true
     };
 
     const handleShowConfirmModal = () => {
@@ -129,13 +263,8 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
         setShowConfirmModal(true);
     };
 
-    const handleCancel = () => {
-        setSelectedRowKeys([]);
-        setSelectedRowKeysInfo([]);
-    };
-
     const handleAssign = async () => {
-        if (selectedRowKeys.length === 0) {
+        if (selectedRowKeys.length === 0 || !activeDef) {
             showError(t('messages:please-select-at-least-one-element'));
             return;
         }
@@ -145,23 +274,22 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                 mutation createAppointmentLine($input: CreateAppointmentLineInput!) {
                     createAppointmentLine(input: $input) {
                         id
-                        loadId
                     }
                 }
             `;
             await Promise.all(
-                selectedRowKeys.map((loadId: string) =>
+                selectedRowKeys.map((entityId: string) =>
                     graphqlRequestClient.request(mutation, {
                         input: {
                             appointmentId: props.appointmentId,
                             stockOwnerId: props.stockOwnerId,
-                            loadId
+                            [activeDef.fk]: entityId
                         }
                     })
                 )
             );
             showSuccess(t('messages:success-creating-data'));
-            handleCancel();
+            resetSelection();
             router.push(`/appointments/${props.appointmentId}`);
         } catch (error) {
             console.error('Error creating appointment lines:', error);
@@ -184,6 +312,22 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Create) ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    {availableTypes.length > 1 && (
+                        <Radio.Group
+                            value={activeType}
+                            onChange={(e) => {
+                                setActiveType(e.target.value);
+                                resetSelection();
+                            }}
+                            optionType="button"
+                        >
+                            {availableTypes.map((typeKey) => (
+                                <Radio.Button key={typeKey} value={typeKey}>
+                                    {entityDefs[typeKey].label}
+                                </Radio.Button>
+                            ))}
+                        </Radio.Group>
+                    )}
                     <Button
                         type="primary"
                         onClick={handleShowConfirmModal}
@@ -192,7 +336,7 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                     >
                         {t('actions:assign')}
                     </Button>
-                    <Button onClick={handleCancel} disabled={!hasSelected}>
+                    <Button onClick={resetSelection} disabled={!hasSelected}>
                         {t('actions:cancel')}
                     </Button>
                     {hasSelected && (
@@ -205,6 +349,13 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                 </div>
             ) : null
     };
+
+    if (isCarrier || !activeDef) {
+        // carriers can't attach lines (read-only); otherwise no linkable entity type for this
+        // appointment (unknown/visit direction, or every link type disabled by config) —
+        // show an empty state rather than a blank page
+        return <Empty description={t('messages:no-data')} style={{ marginTop: 48 }} />;
+    }
 
     return (
         <>
@@ -228,9 +379,6 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                 width={600}
             >
                 <div style={{ padding: '16px 0' }}>
-                    <h3 style={{ marginBottom: '16px', color: '#1890ff' }}>
-                        {t('messages:assignment-summary')}
-                    </h3>
                     <div style={{ marginBottom: '16px' }}>
                         <strong>{t('common:appointment')}:</strong>
                         <div style={{ marginLeft: '16px', marginTop: '4px' }}>
@@ -239,7 +387,7 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                     </div>
                     <div style={{ marginBottom: '16px' }}>
                         <strong>
-                            {t('common:loads')} ({selectedRowKeysInfo.length}):
+                            {activeDef.label} ({selectedRowKeysInfo.length}):
                         </strong>
                         <div
                             style={{
@@ -252,9 +400,9 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                                 padding: '8px'
                             }}
                         >
-                            {selectedRowKeysInfo.map((load: any, index: number) => (
+                            {selectedRowKeysInfo.map((row: any, index: number) => (
                                 <div
-                                    key={load.id}
+                                    key={row.id}
                                     style={{
                                         padding: '8px 0',
                                         borderBottom:
@@ -264,7 +412,7 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                                         fontWeight: '500'
                                     }}
                                 >
-                                    {load.name}
+                                    {row.name}
                                 </div>
                             ))}
                         </div>
@@ -272,8 +420,9 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                 </div>
             </Modal>
             <ListComponent
+                key={`add-line-${activeType}`}
                 headerData={headerData}
-                dataModel={loadModel}
+                dataModel={activeDef.model}
                 advancedFilters={advancedFilters}
                 setData={setTableData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
@@ -287,7 +436,7 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
                                         icon={<EyeTwoTone />}
-                                        path={pathParams(`${rootPath}/[id]`, record.id)}
+                                        path={pathParams(`${activeDef.detailRoot}/[id]`, record.id)}
                                     />
                                 ) : (
                                     <></>
@@ -296,7 +445,7 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                         )
                     }
                 ]}
-                routeDetailPage={`${rootPath}/:id`}
+                routeDetailPage={`${activeDef.detailRoot}/:id`}
                 checkbox={true}
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}

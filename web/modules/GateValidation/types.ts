@@ -41,6 +41,7 @@ export interface GateEntry {
     extraText1?: string | null;
     extraNumber1?: number | null;
     locationName?: string | null;
+    locationId?: string | null;
     extras?: any;
 }
 
@@ -51,7 +52,7 @@ export const GATE_ENTRY_FIELDS = `
     id name status statusText appointmentTypeText
     truckLicensePlate trailerLicensePlate driverName driverPhoneNumber entityName denyReason
     appointmentDateBegin appointmentDateEnd extraText1 extraNumber1 extras
-    location { name }
+    locationId location { name }
 `;
 
 /** Bucket a gate entry by its decision, given the resolved status codes. */

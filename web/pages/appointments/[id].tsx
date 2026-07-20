@@ -19,14 +19,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
 import { AppHead, LinkButton, SinglePrintDocumentSetModal } from '@components';
-import { getModesFromPermissions, showError, showSuccess } from '@helpers';
+import {
+    getModesFromPermissions,
+    showError,
+    showSuccess,
+    isCarrierAppointmentUser
+} from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useMemo, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { AppointmentModelV2 as model } from '@helpers';
-import { Button, Modal, Space } from 'antd';
+import { Button, Modal, Select, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { ModeEnum } from 'generated/graphql';
 import { appointmentsRoutes as itemRoutes } from 'modules/Appointments/Static/appointmentsRoutes';
@@ -44,13 +49,20 @@ const AppointmentPage: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [reopenInfo, setReopenInfo] = useState<any | undefined>();
-    const { id } = router.query;
+    // [id] is a single dynamic segment; normalize defensively (Next can type it as string[])
+    const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [configsAppointment, setConfigAppointments] = useState<any>([]);
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
+    // document set for the print modal, resolved from the DOCUMENT_LIST rule for the printed
+    // load (same as the load print) instead of a static config list.
+    const [defaultLoadDocuments, setDefaultLoadDocuments] = useState<any>();
+    // the generic detail hook flattens the record, which destroys the `content` JSON object
+    // (it becomes content_palettes_XX / content_instructions). Fetch it raw for the composition.
+    const [contentData, setContentData] = useState<any>();
 
     const appointmentStatuses = useMemo(() => {
         const statusMap: Record<string, number> = {};
@@ -68,21 +80,22 @@ const AppointmentPage: PageComponent = () => {
         return statusMap;
     }, [configsAppointment]);
 
-    const configsParamsCodes = useMemo(() => {
-        const findextrasByScopeAndCode = (items: any[], scope: string, value: string) => {
-            return items.find((item: any) => item.scope === scope && item.code === value).extras;
-        };
+    const isCarrier = isCarrierAppointmentUser(permissions);
 
-        const defaultAppointmentDocuments = findextrasByScopeAndCode(
-            parameters,
-            'documents',
-            'default_appointment_documents'
-        );
-
-        return {
-            defaultAppointmentDocuments
-        };
-    }, [parameters]);
+    // "docs & references" validation status, backed by parameter scope appointment_extra_status1.
+    // On confirmation it is forced to "Not OK"; a (non-carrier) user flips it to "OK" once they've
+    // checked the carrier filled everything in and attached the documents.
+    const extraStatusParams = useMemo(
+        () =>
+            (parameters ?? [])
+                .filter((p: any) => p.scope === 'appointment_extra_status1')
+                .map((p: any) => ({ code: parseInt(p.code, 10), value: p.value })),
+        [parameters]
+    );
+    const extraStatusNotOkCode = useMemo(
+        () => extraStatusParams.find((p: any) => /not.?ok|non.?ok|ko/i.test(p.value))?.code,
+        [extraStatusParams]
+    );
 
     const getConfigsByScope = async (scope: string) => {
         const query = gql`
@@ -193,7 +206,12 @@ const AppointmentPage: PageComponent = () => {
         const updateVariables = {
             id: id,
             input: {
-                status: newStatus
+                status: newStatus,
+                // on confirmation, the docs/refs check starts as "Not OK" until a user validates it
+                ...(newStatus === appointmentStatuses.appointmentStatusConfirmed &&
+                extraStatusNotOkCode != null
+                    ? { extraStatus1: extraStatusNotOkCode }
+                    : {})
             }
         };
 
@@ -214,6 +232,27 @@ const AppointmentPage: PageComponent = () => {
         return result;
     };
 
+    const updateExtraStatus = async (extraStatus1: number) => {
+        try {
+            await graphqlRequestClient.request(
+                gql`
+                    mutation updateAppointment($id: String!, $input: UpdateAppointmentInput!) {
+                        updateAppointment(id: $id, input: $input) {
+                            id
+                            extraStatus1
+                        }
+                    }
+                `,
+                { id, input: { extraStatus1 } }
+            );
+            showSuccess(t('messages:success-updated'));
+            setTriggerRefresh(!triggerRefresh);
+        } catch (e) {
+            console.error(e);
+            showError(t('messages:error-update-data'));
+        }
+    };
+
     useEffect(() => {
         const fetchAppointmentConfigs = async () => {
             const configs = await getConfigsByScope('appointment_status');
@@ -223,6 +262,27 @@ const AppointmentPage: PageComponent = () => {
         };
         fetchAppointmentConfigs();
     }, []);
+
+    // fetch the raw `content` JSON (truck composition) — not available via the flattened detail data
+    useEffect(() => {
+        const fetchContent = async () => {
+            if (!id) return;
+            const query = gql`
+                query appointment($id: String!) {
+                    appointment(id: $id) {
+                        content
+                    }
+                }
+            `;
+            try {
+                const result = await graphqlRequestClient.request(query, { id });
+                setContentData(result?.appointment?.content ?? undefined);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchContent();
+    }, [id, triggerRefresh]);
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
@@ -255,6 +315,15 @@ const AppointmentPage: PageComponent = () => {
                     getValidNextStatuses(data?.status).length > 0 ? (
                         <Space>
                             {getValidNextStatuses(data?.status).map((nextStatusCode: number) => {
+                                // a carrier can only advance up to "Submitted" (review/confirm is
+                                // done by the internal team)
+                                if (
+                                    isCarrier &&
+                                    nextStatusCode !==
+                                        appointmentStatuses.appointmentStatusSubmitted
+                                ) {
+                                    return null;
+                                }
                                 const nextStatusConfig = getConfigByCode(nextStatusCode);
                                 const buttonActionCode = getButtonActionCode(nextStatusCode);
                                 return (
@@ -276,19 +345,96 @@ const AppointmentPage: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {modes.length > 0 &&
+                    {!isCarrier &&
+                    modes.length > 0 &&
                     modes.includes(ModeEnum.Read) &&
                     data?.status >= appointmentStatuses.appointmentStatusConfirmed ? (
                         <>
                             <Button
                                 type="primary"
-                                onClick={() => {
-                                    if (data) {
-                                        setShowSinglePrintModal(true);
-                                        setIdToPrint(data.loadId);
-                                        console.log(data);
-                                    } else {
-                                        showError(t('messages:to-be-defined'));
+                                onClick={async () => {
+                                    // the load lives on the appointment lines, not on the
+                                    // appointment: resolve the first line carrying a load to print
+                                    try {
+                                        const res = await graphqlRequestClient.request(
+                                            gql`
+                                                query aptLines(
+                                                    $filters: AppointmentLineSearchFilters
+                                                ) {
+                                                    appointmentLines(
+                                                        filters: $filters
+                                                        itemsPerPage: 100
+                                                    ) {
+                                                        results {
+                                                            loadId
+                                                        }
+                                                    }
+                                                }
+                                            `,
+                                            { filters: { appointmentId: id } }
+                                        );
+                                        const loadId = res?.appointmentLines?.results?.find(
+                                            (l: any) => l.loadId
+                                        )?.loadId;
+                                        if (loadId) {
+                                            // resolve the printable document set from the
+                                            // DOCUMENT_LIST rule for this appointment (+ the
+                                            // printed load's attachments), instead of a static list
+                                            const [ruleResult, attachmentsResult] =
+                                                await Promise.all([
+                                                    graphqlRequestClient.request(
+                                                        gql`
+                                                            query executeRule($context: JSON!) {
+                                                                executeRule(
+                                                                    ruleName: "DOCUMENT_LIST"
+                                                                    context: $context
+                                                                )
+                                                            }
+                                                        `,
+                                                        {
+                                                            context: {
+                                                                object_name: 'appointment',
+                                                                stock_owner:
+                                                                    data?.stockOwner_name ??
+                                                                    undefined,
+                                                                carrier:
+                                                                    data?.carrier_name ?? undefined
+                                                            }
+                                                        }
+                                                    ),
+                                                    graphqlRequestClient.request(
+                                                        gql`
+                                                            query documentAttachments(
+                                                                $filters: DocumentAttachmentSearchFilters
+                                                            ) {
+                                                                documentAttachments(
+                                                                    filters: $filters
+                                                                ) {
+                                                                    results {
+                                                                        id
+                                                                        name
+                                                                        description
+                                                                    }
+                                                                }
+                                                            }
+                                                        `,
+                                                        { filters: { objectId: loadId } }
+                                                    )
+                                                ]);
+                                            setDefaultLoadDocuments(
+                                                ruleResult?.executeRule?.document_list?.value
+                                            );
+                                            setDocumentAttachmentsData(
+                                                attachmentsResult?.documentAttachments?.results ?? []
+                                            );
+                                            setIdToPrint(loadId);
+                                            setShowSinglePrintModal(true);
+                                        } else {
+                                            showError(t('messages:no-load-to-print'));
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                        showError(t('messages:error-fetching-data'));
                                     }
                                 }}
                             >
@@ -298,11 +444,41 @@ const AppointmentPage: PageComponent = () => {
                     ) : (
                         <></>
                     )}
+                    {/* "References complete" validation status: editable by a non-carrier
+                        (Weilbach) user from Submitted onward — the carrier can't change it */}
+                    {!isCarrier &&
+                    modes.length > 0 &&
+                    modes.includes(ModeEnum.Update) &&
+                    data?.status >= appointmentStatuses.appointmentStatusSubmitted &&
+                    extraStatusParams.length > 0 ? (
+                        <Space size={4}>
+                            <span style={{ whiteSpace: 'nowrap' }}>
+                                {t('d:references-complete')}:
+                            </span>
+                            <Select
+                                style={{ minWidth: 150 }}
+                                placeholder={t('d:references-complete')}
+                                value={data?.extraStatus1 ?? undefined}
+                                onChange={(v) => updateExtraStatus(v)}
+                                options={extraStatusParams.map((p: any) => ({
+                                    value: p.code,
+                                    label:
+                                        data?.extraStatus1Text && data.extraStatus1 === p.code
+                                            ? data.extraStatus1Text
+                                            : p.value
+                                }))}
+                            />
+                        </Space>
+                    ) : (
+                        <></>
+                    )}
                     {modes.length > 0 &&
                     modes.includes(ModeEnum.Update) &&
                     model.isEditable &&
                     data?.status != null &&
-                    !isFinalStatus(data.status) ? (
+                    !isFinalStatus(data.status) &&
+                    (!isCarrier ||
+                        data.status <= appointmentStatuses.appointmentStatusSubmitted) ? (
                         <LinkButton
                             title={t('actions:edit')}
                             path={`${rootPath}/edit/${id}`}
@@ -311,7 +487,8 @@ const AppointmentPage: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {modes.length > 0 &&
+                    {!isCarrier &&
+                    modes.length > 0 &&
                     modes.includes(ModeEnum.Update) &&
                     model.isSoftDeletable &&
                     data?.status != null &&
@@ -332,7 +509,8 @@ const AppointmentPage: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {modes.length > 0 &&
+                    {!isCarrier &&
+                    modes.length > 0 &&
                     modes.includes(ModeEnum.Delete) &&
                     model.isDeletable &&
                     data?.status <= appointmentStatuses.appointmentStatusInCreation ? (
@@ -350,7 +528,7 @@ const AppointmentPage: PageComponent = () => {
                             setShowSinglePrintModal
                         }}
                         dataToPrint={{ id: idToPrint }}
-                        allDocumentName={configsParamsCodes.defaultAppointmentDocuments}
+                        allDocumentName={defaultLoadDocuments}
                         documentReference={data?.name}
                         customLanguage={data?.printLanguage ?? undefined}
                         documentAttachmentsData={documentAttachmentsData}
@@ -369,10 +547,12 @@ const AppointmentPage: PageComponent = () => {
                     <AppointmentDetailsExtra
                         appointmentId={id}
                         appointmentName={data?.name}
+                        appointmentType={data?.appointmentType}
                         stockOwnerId={data?.stockOwnerId}
                         stockOwnerName={data?.stockOwner_name}
                         carrierId={data?.carrierId}
                         status={data?.status}
+                        content={contentData}
                         setDocumentAttachmentsData={setDocumentAttachmentsData}
                     />
                 }
