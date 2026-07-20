@@ -20,10 +20,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import { Button, Input, Form, Select, Modal, Space, InputNumber } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
-import { showError, showSuccess, showInfo } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    showInfo,
+    getPasswordPolicy,
+    passwordContainsPersonalInfo,
+    passwordHasSimplePattern,
+    passwordMeetsComplexity
+} from '@helpers';
 import {
     CreateWarehouseWorkerMutation,
     CreateWarehouseWorkerMutationVariables,
@@ -36,9 +44,11 @@ const { Option } = Select;
 export const AddWarehouseWorkerForm = () => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
-    const { user } = useAppState();
+    const { user, configs } = useAppState();
     const router = useRouter();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
+
+    const configsParamsCodes = useMemo(() => getPasswordPolicy(configs), [configs]);
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
     const username = t('d:username');
@@ -50,7 +60,11 @@ export const AddWarehouseWorkerForm = () => {
     const errorMessageEmailInput = t('messages:error-message-email-input');
     const errorMessagePassword = t('messages:error-message-empty-input');
     const errorWrongPassword = t('messages:error-message-wrong-password');
-    const errorWrongPasswordLength = t('messages:error-message-wrong-password-length');
+    const errorPasswordComplexity = t('messages:error-message-password-complexity');
+    const errorWrongPasswordLength = t('messages:error-message-wrong-password-length', {
+        nb: configsParamsCodes.passwordLength
+    });
+    const errorPasswordPersonalInfo = t('messages:error-message-password-personal-info');
     const submit = t('actions:submit');
     // END TEXTS TRANSLATION
 
@@ -169,6 +183,7 @@ export const AddWarehouseWorkerForm = () => {
                 <Form.Item
                     name="password"
                     label={password}
+                    dependencies={['username', 'email']}
                     rules={[
                         {
                             required: true,
@@ -176,16 +191,41 @@ export const AddWarehouseWorkerForm = () => {
                         },
                         ({ getFieldValue }) => ({
                             validator(_, value) {
-                                if (value.length >= 6) {
+                                if (!value || value.length >= configsParamsCodes.passwordLength) {
                                     return Promise.resolve();
                                 }
                                 return Promise.reject(new Error(errorWrongPasswordLength));
+                            }
+                        }),
+                        ({ getFieldValue }) => ({
+                            validator(_, value) {
+                                if (!value || passwordMeetsComplexity(value, configsParamsCodes)) {
+                                    return Promise.resolve();
+                                }
+                                return Promise.reject(new Error(errorPasswordComplexity));
+                            }
+                        }),
+                        ({ getFieldValue }) => ({
+                            validator(_, value) {
+                                if (!configsParamsCodes.passwordCheckPersonalInfo || !value) {
+                                    return Promise.resolve();
+                                }
+                                if (
+                                    passwordContainsPersonalInfo(value, [
+                                        getFieldValue('username'),
+                                        getFieldValue('email')?.split('@')[0]
+                                    ]) ||
+                                    passwordHasSimplePattern(value)
+                                ) {
+                                    return Promise.reject(new Error(errorPasswordPersonalInfo));
+                                }
+                                return Promise.resolve();
                             }
                         })
                     ]}
                     hasFeedback
                 >
-                    <Input.Password />
+                    <Input.Password autoComplete="new-password" />
                 </Form.Item>
                 <Form.Item
                     name="password2"
