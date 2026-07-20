@@ -12,5 +12,6 @@
     "SSO-000003": "Das Feld 'sso_metadata' ist erforderlich.",
     "SSO-000004": "Das Feld 'sso_front_secret' fehlt oder ist ungültig.",
     "SSO-000005": "Das SSO-Token ist ungültig oder abgelaufen. Bitte melden Sie sich erneut an.",
-    "SSO-000006": "Das SSO-Token konnte nicht überprüft werden. Bitte kontaktieren Sie den Administrator."
+    "SSO-000006": "Das SSO-Token konnte nicht überprüft werden. Bitte kontaktieren Sie den Administrator.",
+    "PASSWORD-000140": "Konto nach zu vielen fehlgeschlagenen Anmeldeversuchen gesperrt"
 }

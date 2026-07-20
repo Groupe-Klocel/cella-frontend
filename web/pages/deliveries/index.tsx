@@ -40,11 +40,15 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { DeliveryProgressBar } from 'modules/Deliveries/Elements/DeliveryProgressBar';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
+import AssignLoadModal from 'modules/Preload/AssignLoadModal';
+import AssignToAppointmentModal from 'modules/Appointments/AssignToAppointmentModal';
+import { useAssignSelection } from 'modules/Preload/useAssignSelection';
+import { isAppointmentLinkEnabled, isPreloadLinkEnabled } from '@helpers';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const DeliveryPages: PageComponent = () => {
-    const { permissions } = useAppState();
+    const { permissions, configs: dbConfigs } = useAppState();
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -53,8 +57,27 @@ const DeliveryPages: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [tableData, setTableData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [selectedRowKeys, setSelectedRowKeys] = useState<any>([]);
     const [refetch, setRefetch] = useState<boolean>(false);
+    const [assignLoadOpen, setAssignLoadOpen] = useState(false);
+    const [assignApptOpen, setAssignApptOpen] = useState(false);
+
+    // selection accumulated across pages; a delivery can receive a load/appointment only
+    // while it is not shipped (< Dispatched); its carrier comes from the shipping mode
+    const {
+        selectedRowKeys,
+        rowSelection,
+        eligibleIds,
+        commonCarrierId,
+        hasMixedCarrier,
+        reset: resetSelection
+    } = useAssignSelection({
+        tableData,
+        isEligible: (row) => row?.status < configs.DELIVERY_STATUS_DISPATCHED,
+        carrierOf: (row) => row?.carrierShippingMode_carrierId ?? null
+    });
+    const canAssign = eligibleIds.length > 0 && !hasMixedCarrier;
+    const apptLinkEnabled = isAppointmentLinkEnabled(dbConfigs, 'deliveries');
+    const preloadLinkEnabled = isPreloadLinkEnabled(dbConfigs, 'deliveries');
     const headerData: HeaderData = {
         title: t('common:deliveries'),
         routes: itemRoutes,
@@ -80,19 +103,6 @@ const DeliveryPages: PageComponent = () => {
             });
         };
     };
-    const onSelectChange = (newSelectedRowKeys: any) => {
-        selectedRowKeys.forEach((key: string) => {
-            if (!newSelectedRowKeys.includes(key) && tableData.map((d) => d.id).includes(key)) {
-                setSelectedRowKeys((prevKeys: React.Key[]) => prevKeys.filter((k) => k !== key));
-            }
-        });
-        newSelectedRowKeys.forEach((value: string) => {
-            if (!selectedRowKeys?.includes(value)) {
-                setSelectedRowKeys((prevKeys: React.Key[]) => [...prevKeys, value]);
-            }
-        });
-    };
-
     // CUBING
     const [isCubingLoading, setIsCubingLoading] = useState(false);
     //RESTART HERE: adapt to multi deliverylines
@@ -102,7 +112,7 @@ const DeliveryPages: PageComponent = () => {
             onOk: async () => {
                 setIsCubingLoading(true);
                 const deliveries: Array<any> = [];
-                selectedRowKeys?.forEach((deliveryId: 'string') => {
+                selectedRowKeys?.forEach((deliveryId: string) => {
                     deliveries.push({ id: deliveryId });
                 });
 
@@ -148,10 +158,6 @@ const DeliveryPages: PageComponent = () => {
         });
     };
 
-    const rowSelection = {
-        selectedRowKeys,
-        onChange: onSelectChange
-    };
     const hasSelected = selectedRowKeys.length > 0;
     const actionButtons: ActionButtons = {
         actionsComponent:
@@ -174,6 +180,20 @@ const DeliveryPages: PageComponent = () => {
                             {t('actions:cubing')}
                         </Button>
                     </span>
+                    {preloadLinkEnabled && (
+                        <span style={{ marginLeft: 16 }}>
+                            <Button onClick={() => setAssignLoadOpen(true)} disabled={!canAssign}>
+                                {t('actions:assign-to-load')}
+                            </Button>
+                        </span>
+                    )}
+                    {apptLinkEnabled && (
+                        <span style={{ marginLeft: 16 }}>
+                            <Button onClick={() => setAssignApptOpen(true)} disabled={!canAssign}>
+                                {t('actions:assign-to-appointment')}
+                            </Button>
+                        </span>
+                    )}
                 </>
             ) : null
     };
@@ -262,6 +282,30 @@ const DeliveryPages: PageComponent = () => {
                 checkbox={true}
                 actionButtons={actionButtons}
                 rowSelection={rowSelection}
+            />
+            <AssignLoadModal
+                open={assignLoadOpen}
+                onClose={() => setAssignLoadOpen(false)}
+                entityIds={eligibleIds}
+                direction="outbound"
+                carrierId={commonCarrierId}
+                update={{ mutation: 'updateDeliveries', inputType: 'UpdateDeliveryInput' }}
+                onDone={() => {
+                    resetSelection();
+                    setRefetch((prev) => !prev);
+                }}
+            />
+            <AssignToAppointmentModal
+                open={assignApptOpen}
+                onClose={() => setAssignApptOpen(false)}
+                entityIds={eligibleIds}
+                fkField="deliveryId"
+                direction="outbound"
+                carrierId={commonCarrierId}
+                onDone={() => {
+                    resetSelection();
+                    setRefetch((prev) => !prev);
+                }}
             />
         </>
     );

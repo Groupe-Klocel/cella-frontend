@@ -65,6 +65,7 @@ const SideMenu: FC = () => {
             'wm_configurations',
             'wm_roles',
             'wm_warehouse-workers',
+            'wm_security',
             'wm_custom-permissions',
             'wm_hook-configs',
             'wm_parameters',
@@ -86,7 +87,12 @@ const SideMenu: FC = () => {
                     : null,
 
                 // ACCESS-MANAGEMENT
-                ['wm_roles', 'wm_warehouse-workers', 'wm_custom-permissions'].some((perm) =>
+                [
+                    'wm_roles',
+                    'wm_warehouse-workers',
+                    'wm_security',
+                    'wm_custom-permissions'
+                ].some((perm) =>
                     getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
                 ) && {
                     key: 'administration-access-management',
@@ -110,6 +116,13 @@ const SideMenu: FC = () => {
                                           {t('warehouse-workers')}
                                       </Link>
                                   )
+                              }
+                            : null,
+                        // SECURITY
+                        getModesFromPermissions(permissions, 'wm_security').includes(ModeEnum.Read)
+                            ? {
+                                  key: 'administration-access-management-security',
+                                  label: <Link href="/security">{t('security')}</Link>
                               }
                             : null,
                         // CUSTOM PERMISSIONS
@@ -570,6 +583,7 @@ const SideMenu: FC = () => {
             'wm_recommended-cycle-counts',
             'wm_movements',
             'wm_purchase-orders',
+            'wm_purchase-orders-pre-assigned-load',
             'wm_handling-unit-content-features',
             'wm_cumulated-stock',
             'wm_locations-occupancy'
@@ -645,6 +659,20 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'stock-management-purchase-orders',
                           label: <Link href="/purchase-orders">{t('purchase-orders')}</Link>
+                      }
+                    : null,
+                // RECEPTIONS PRE-ASSIGNED LOAD
+                getModesFromPermissions(
+                    permissions,
+                    'wm_purchase-orders-pre-assigned-load'
+                ).includes(ModeEnum.Read)
+                    ? {
+                          key: 'stock-management-purchase-orders-pre-assigned-load',
+                          label: (
+                              <Link href="/purchase-orders/pre-assigned-load">
+                                  {t('purchase-orders-pre-assigned-load')}
+                              </Link>
+                          )
                       }
                     : null,
                 // FEATURES IN STOCK
@@ -746,9 +774,13 @@ const SideMenu: FC = () => {
             ].filter(Boolean)
         },
         // TRUCK MANAGEMENT
-        ['wm_appointments', 'wm_loads', 'wm_pre-assigned-load'].some((perm) =>
-            getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
-        ) && {
+        [
+            'wm_appointments',
+            'wm_appointments-schedule',
+            'wm_appointments-gate-validation',
+            'wm_loads',
+            'wm_pre-assigned-load'
+        ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)) && {
             key: 'truck-management',
             icon: <TruckOutlined />,
             label: t('truck-management'),
@@ -781,7 +813,9 @@ const SideMenu: FC = () => {
                     : null,
 
                 // SCHEDULE
-                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
+                getModesFromPermissions(permissions, 'wm_appointments-schedule').includes(
+                    ModeEnum.Read
+                )
                     ? {
                           key: 'truck-management-schedule',
                           label: <Link href="/appointments/schedule">{t('common:agenda')}</Link>
@@ -789,7 +823,9 @@ const SideMenu: FC = () => {
                     : null,
 
                 // GATE VALIDATION
-                getModesFromPermissions(permissions, 'wm_appointments').includes(ModeEnum.Read)
+                getModesFromPermissions(permissions, 'wm_appointments-gate-validation').includes(
+                    ModeEnum.Read
+                )
                     ? {
                           key: 'truck-management-gate-validation',
                           label: <Link href="/gate-validation">{t('common:validation-title')}</Link>

@@ -31,15 +31,17 @@ import {
     pathParamsFromDictionary,
     showError,
     showSuccess,
-    StatusHistoryDetailExtraModelV2
+    StatusHistoryDetailExtraModelV2,
+    isCarrierAppointmentUser
 } from '@helpers';
 import { DocumentAttachmentModelV2 } from 'models/DocumentAttachmentModelV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { Button, Divider, Modal, Space } from 'antd';
+import { Button, Descriptions, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import { AppointmentLineModelV2 } from '@helpers';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
@@ -48,23 +50,29 @@ import { AddDocumentsModal } from 'components/common/AddDocumentsModal';
 export interface IItemDetailsProps {
     appointmentId?: string | any;
     appointmentName?: string | any;
+    appointmentType?: string | any;
     stockOwnerId?: string | any;
     stockOwnerName?: string | any;
     carrierId?: string | any;
     status?: string | any;
+    content?: any;
     setDocumentAttachmentsData?: any;
 }
 
 const AppointmentDetailsExtra = ({
     appointmentId,
     appointmentName,
+    appointmentType,
     stockOwnerId,
     carrierId,
     status,
+    content,
     setDocumentAttachmentsData
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
+    const router = useRouter();
     const { parameters, configs, permissions } = useAppState();
+    const isCarrier = isCarrierAppointmentUser(permissions);
     const { graphqlRequestClient } = useAuth();
     const [idToDeleteLine, setIdToDeleteLine] = useState<string | undefined>();
     const [idToDisableLine, setIdToDisableLine] = useState<string | undefined>();
@@ -86,15 +94,48 @@ const AppointmentDetailsExtra = ({
             'appointment_status',
             'Confirmed'
         );
+        const appointmentStatusCompleted = findCodeByScopeAndValue(
+            configs,
+            'appointment_status',
+            'Completed'
+        );
         return {
-            appointmentStatusConfirmed
+            appointmentStatusConfirmed,
+            appointmentStatusCompleted
         };
     }, [configs, parameters]);
+
+    // read-only truck composition (pallets per type + instructions) from the content JSON
+    const composition = useMemo(() => {
+        const raw =
+            typeof content === 'string'
+                ? (() => {
+                      try {
+                          return JSON.parse(content);
+                      } catch {
+                          return null;
+                      }
+                  })()
+                : content;
+        if (!raw) return null;
+        const paletteLabel = (code: string) => {
+            const p = (parameters ?? []).find(
+                (x: any) => x.scope === 'appointment_palette_type' && String(x.code) === String(code)
+            );
+            return p?.translation?.[router.locale ?? ''] ?? p?.value ?? code;
+        };
+        const rows = Object.entries(raw.palettes ?? {})
+            .filter(([, n]) => n != null)
+            .map(([code, n]) => ({ label: paletteLabel(code), value: n as number }));
+        if (rows.length === 0 && !raw.instructions) return null;
+        return { rows, instructions: raw.instructions as string | undefined };
+    }, [content, parameters, router.locale]);
 
     const appointmentLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:appointment-lines') }),
         routes: [],
         actionsComponent:
+            !isCarrier &&
             appointmentLineModes.length > 0 &&
             appointmentLineModes.includes(ModeEnum.Create) &&
             status < configsParamsCodes.appointmentStatusConfirmed ? (
@@ -103,6 +144,7 @@ const AppointmentDetailsExtra = ({
                     path={pathParamsFromDictionary('/appointments/line/add', {
                         appointmentId: appointmentId,
                         appointmentName: appointmentName,
+                        appointmentType: appointmentType,
                         stockOwnerId: stockOwnerId,
                         carrierId: carrierId
                     })}
@@ -131,8 +173,14 @@ const AppointmentDetailsExtra = ({
         actionsComponent: null
     };
 
-    // header RELATED to Documents
-    const canModifyAppointment = status < configsParamsCodes.appointmentStatusConfirmed;
+    // header RELATED to Documents — documents can be added/removed until the appointment is
+    // Completed (later statuses like Cancelled/Refused/No Show are > Completed, so excluded).
+    // Fall back to the Confirmed threshold if the Completed code can't be resolved from DB
+    // configs, so a missing/unloaded config doesn't disable document management everywhere.
+    const documentCutoff =
+        configsParamsCodes.appointmentStatusCompleted ??
+        configsParamsCodes.appointmentStatusConfirmed;
+    const canModifyAppointment = documentCutoff == null || status < documentCutoff;
     const appointmentDocumentsHeaderData: HeaderData = {
         title: `${t('common:documents')}`,
         routes: [],
@@ -203,6 +251,26 @@ const AppointmentDetailsExtra = ({
 
     return (
         <>
+            {composition && (
+                <>
+                    <Divider orientation="left">{t('common:truck-composition')}</Divider>
+                    <Descriptions bordered size="small" column={2} style={{ marginBottom: 16 }}>
+                        {composition.rows.map((r, i) => (
+                            <Descriptions.Item key={i} label={r.label}>
+                                {r.value}
+                            </Descriptions.Item>
+                        ))}
+                        {composition.instructions && (
+                            <Descriptions.Item
+                                label={t('common:composition-instructions')}
+                                span={2}
+                            >
+                                {composition.instructions}
+                            </Descriptions.Item>
+                        )}
+                    </Descriptions>
+                </>
+            )}
             {appointmentLineModes.length > 0 && appointmentLineModes.includes(ModeEnum.Read) ? (
                 <>
                     <Divider />
@@ -242,8 +310,12 @@ const AppointmentDetailsExtra = ({
                                 key: 'actions',
                                 render: (value: any, record: { id: string }, index: number) => (
                                     <Space>
-                                        {appointmentLineModes.length == 0 ||
+                                        {isCarrier ||
+                                        appointmentLineModes.length == 0 ||
                                         !appointmentLineModes.includes(ModeEnum.Read) ? (
+                                            // carriers stay on the read-only sub-list: the line
+                                            // detail page still exposes entity links + edit/delete,
+                                            // which would bypass the carrier restriction
                                             <></>
                                         ) : (
                                             <>
@@ -259,7 +331,8 @@ const AppointmentDetailsExtra = ({
                                                 />
                                             </>
                                         )}
-                                        {appointmentLineModes.length > 0 &&
+                                        {!isCarrier &&
+                                        appointmentLineModes.length > 0 &&
                                         appointmentLineModes.includes(ModeEnum.Update) &&
                                         AppointmentLineModelV2.isEditable ? (
                                             <LinkButton
@@ -275,7 +348,8 @@ const AppointmentDetailsExtra = ({
                                         ) : (
                                             <></>
                                         )}
-                                        {appointmentLineModes.length > 0 &&
+                                        {!isCarrier &&
+                                        appointmentLineModes.length > 0 &&
                                         appointmentLineModes.includes(ModeEnum.Delete) &&
                                         AppointmentLineModelV2.isSoftDeletable ? (
                                             <Button
@@ -291,7 +365,8 @@ const AppointmentDetailsExtra = ({
                                         ) : (
                                             <></>
                                         )}
-                                        {appointmentLineModes.length > 0 &&
+                                        {!isCarrier &&
+                                        appointmentLineModes.length > 0 &&
                                         appointmentLineModes.includes(ModeEnum.Delete) &&
                                         AppointmentLineModelV2.isDeletable ? (
                                             <Button
@@ -314,6 +389,7 @@ const AppointmentDetailsExtra = ({
                         ]}
                         setData={setAppointmentLineData}
                         searchable={false}
+                        disableRowLinks={isCarrier}
                     />
                     <Divider />
                     <ListComponent

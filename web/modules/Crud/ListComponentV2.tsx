@@ -124,6 +124,9 @@ export interface IListProps {
     checkbox?: boolean;
     actionButtons?: ActionButtons;
     rowSelection?: any;
+    // when true, model `link` columns render as plain text instead of clickable <Link> (used to
+    // prevent carrier users from navigating to purchase-order/delivery/load detail from a list)
+    disableRowLinks?: boolean;
     mode?: string;
     refetch?: boolean;
     columnFilter?: boolean;
@@ -822,6 +825,16 @@ const ListComponent = (props: IListProps) => {
         const linkObject = linkFields.find((item: any) => item.name === dataIndex);
 
         if (linkObject?.link) {
+            // render as plain text (no navigation) when links are disabled for this list
+            if (props.disableRowLinks) {
+                return shouldHighlight ? (
+                    <StyledTooltip title={tooltipText}>
+                        <Tag color="red">{text}</Tag>
+                    </StyledTooltip>
+                ) : (
+                    <>{text}</>
+                );
+            }
             const suffix = linkObject.link.substring(linkObject.link.lastIndexOf('/') + 1);
             //handle case where the suffix is at the end of a chain of characters
             const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
