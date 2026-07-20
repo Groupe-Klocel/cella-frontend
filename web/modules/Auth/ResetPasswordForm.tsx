@@ -18,7 +18,16 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { Logo, StyledForm, WelcomeText, WrapperLogin, LinkButton } from '@components';
-import { showError, showSuccess } from '@helpers';
+import {
+    showError,
+    showSuccess,
+    getPasswordPolicy,
+    passwordDifferencePercent,
+    passwordContainsPersonalInfo,
+    passwordHasSimplePattern,
+    passwordMeetsComplexity
+} from '@helpers';
+import { useMemo } from 'react';
 import { Button, Form, Input } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import {
@@ -28,20 +37,33 @@ import {
 } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useRouter } from 'next/router';
+import { useAppState } from 'context/AppContext';
 
 export const ResetPasswordForm = () => {
     const { t } = useTranslation();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
     const { user } = useAuth();
+    const { configs } = useAppState();
+
+    const configsParamsCodes = useMemo(() => getPasswordPolicy(configs), [configs]);
+
     // TEXTS TRANSLATION
     const resetPass = t('actions:reset-password');
     const password = t('common:password');
+    const oldPassword = t('common:old-password');
     const confirmPass = t('common:confirm-password');
     const submitButton = t('actions:submit');
     const errorMessagePassword = t('messages:error-message-empty-input');
     const errorWrongPassword = t('messages:error-message-wrong-password');
-    const errorWrongPasswordLength = t('messages:error-message-wrong-password-length');
+    const errorPasswordComplexity = t('messages:error-message-password-complexity');
+    const errorWrongPasswordLength = t('messages:error-message-wrong-password-length', {
+        nb: configsParamsCodes.passwordLength
+    });
+    const errorPasswordDifference = t('messages:error-message-password-difference', {
+        nb: configsParamsCodes.passwordMinDifferencePercent
+    });
+    const errorPasswordPersonalInfo = t('messages:error-message-password-personal-info');
     // END TEXTS TRANSLATION
     const [form] = Form.useForm();
 
@@ -49,16 +71,18 @@ export const ResetPasswordForm = () => {
         ChangeWarehouseWorkerPassword({
             id: user.user_id,
             password: values.password,
-            password2: values.password2
+            password2: values.password2,
+            oldPassword: values.oldPassword
         });
     };
 
     const ChangeWarehouseWorkerPassword = ({
         id,
         password,
-        password2
+        password2,
+        oldPassword
     }: ChangeWarehouseWorkerPasswordMutationVariables) => {
-        ChangePasswordMutate({ id, password, password2 });
+        ChangePasswordMutate({ id, password, password2, oldPassword });
     };
 
     const { mutate: ChangePasswordMutate, isPending: changePasswordLoading } =
@@ -68,11 +92,19 @@ export const ResetPasswordForm = () => {
                 _variables: ChangeWarehouseWorkerPasswordMutationVariables,
                 _context: any
             ) => {
-                router.push('/');
-                showSuccess(t('messages:success-password-reset'));
+                if (data.changeWarehouseWorkerPassword.__typename === 'ChangePasswordSuccess') {
+                    showSuccess(data.changeWarehouseWorkerPassword.message);
+                    router.push('/');
+                } else {
+                    showError(data.changeWarehouseWorkerPassword.message);
+                }
             },
-            onError: (err) => {
-                showError(t('messages:error-password-reset'));
+            onError: (err: any) => {
+                if (err?.response?.errors?.[0]?.extensions) {
+                    showError(t(`errors:${err.response.errors[0].extensions.code}`));
+                } else {
+                    showError(t('messages:error-password-reset'));
+                }
             }
         });
 
@@ -90,9 +122,27 @@ export const ResetPasswordForm = () => {
                     autoComplete="off"
                     scrollToFirstError
                 >
+                    {configsParamsCodes.passwordMinDifferencePercent > 0 ? (
+                        <Form.Item
+                            name="oldPassword"
+                            label={<label style={{ color: 'black' }}>{oldPassword}</label>}
+                            rules={[
+                                {
+                                    required: true,
+                                    message: errorMessagePassword
+                                }
+                            ]}
+                        >
+                            <Input.Password autoComplete="current-password" />
+                        </Form.Item>
+                    ) : (
+                        <></>
+                    )}
+
                     <Form.Item
                         name="password"
                         label={<label style={{ color: 'black' }}>{password}</label>}
+                        dependencies={['oldPassword']}
                         rules={[
                             {
                                 required: true,
@@ -100,16 +150,64 @@ export const ResetPasswordForm = () => {
                             },
                             ({ getFieldValue }) => ({
                                 validator(_, value) {
-                                    if (value.length >= 6) {
+                                    if (
+                                        !value ||
+                                        value.length >= configsParamsCodes.passwordLength
+                                    ) {
                                         return Promise.resolve();
                                     }
                                     return Promise.reject(new Error(errorWrongPasswordLength));
+                                }
+                            }),
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (
+                                        !value ||
+                                        passwordMeetsComplexity(value, configsParamsCodes)
+                                    ) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error(errorPasswordComplexity));
+                                }
+                            }),
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (configsParamsCodes.passwordMinDifferencePercent <= 0) {
+                                        return Promise.resolve();
+                                    }
+                                    const previousPassword = getFieldValue('oldPassword');
+                                    if (
+                                        !value ||
+                                        !previousPassword ||
+                                        passwordDifferencePercent(previousPassword, value) >=
+                                            configsParamsCodes.passwordMinDifferencePercent
+                                    ) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error(errorPasswordDifference));
+                                }
+                            }),
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (!configsParamsCodes.passwordCheckPersonalInfo || !value) {
+                                        return Promise.resolve();
+                                    }
+                                    if (
+                                        passwordContainsPersonalInfo(value, [
+                                            user?.username,
+                                            user?.email?.split('@')[0]
+                                        ]) ||
+                                        passwordHasSimplePattern(value)
+                                    ) {
+                                        return Promise.reject(new Error(errorPasswordPersonalInfo));
+                                    }
+                                    return Promise.resolve();
                                 }
                             })
                         ]}
                         hasFeedback
                     >
-                        <Input.Password />
+                        <Input.Password autoComplete="new-password" />
                     </Form.Item>
 
                     <Form.Item
@@ -132,7 +230,7 @@ export const ResetPasswordForm = () => {
                             })
                         ]}
                     >
-                        <Input.Password />
+                        <Input.Password autoComplete="new-password" />
                     </Form.Item>
 
                     <Form.Item>

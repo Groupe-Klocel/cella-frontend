@@ -11,5 +11,6 @@
     "SSO-000003": "Le champ 'sso_metadata' est requis.",
     "SSO-000004": "Le champ 'sso_front_secret' est absent ou invalide.",
     "SSO-000005": "Le token SSO est invalide ou a expiré. Veuillez vous reconnecter.",
-    "SSO-000006": "Impossible de vérifier le token SSO. Veuillez contacter l'administrateur."
+    "SSO-000006": "Impossible de vérifier le token SSO. Veuillez contacter l'administrateur.",
+    "PASSWORD-000140": "Compte verrouillé après trop de tentatives de connexion échouées"
 }

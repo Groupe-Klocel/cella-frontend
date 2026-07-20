@@ -125,8 +125,18 @@ mutation ResetWarehouseWorkerPassword($id: String!) {
     }
 }
 
-mutation ChangeWarehouseWorkerPassword($id: String!, $password: String!, $password2: String!) {
-    changeWarehouseWorkerPassword(id: $id, password: $password, password2: $password2) {
+mutation ChangeWarehouseWorkerPassword(
+    $id: String!
+    $password: String!
+    $password2: String!
+    $oldPassword: String
+) {
+    changeWarehouseWorkerPassword(
+        id: $id
+        password: $password
+        password2: $password2
+        oldPassword: $oldPassword
+    ) {
         __typename
         ... on ChangePasswordSuccess {
             message

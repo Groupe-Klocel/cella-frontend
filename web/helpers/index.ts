@@ -32,3 +32,4 @@ export * from './utils/TranslationFromDB';
 export * from './utils/visitorManagement';
 export * from './configs/misc';
 export * from './configs/cors-config';
+export * from './utils/passwordValidation';
