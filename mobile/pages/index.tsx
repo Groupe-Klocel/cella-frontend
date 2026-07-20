@@ -77,13 +77,13 @@ const HomePage: PageComponent = () => {
             path: '/misc'
         },
         // Gate entry kiosk (label served from the `gate` DB catalog).
-        {
+        getModesFromPermissions(permissions, 'mobile_gate-entry').includes(ModeEnum.Read) && {
             title: 'common:title',
             icon: <TruckOutlined style={{ fontSize: 40, color: '#000' }} />,
             path: '/gate-entry'
         },
         // Visitor check-in kiosk
-        {
+        getModesFromPermissions(permissions, 'mobile_visitor-entry').includes(ModeEnum.Read) && {
             title: 'common:visitor-title',
             icon: <IdcardOutlined style={{ fontSize: 40, color: '#000' }} />,
             path: '/visitor-entry'
