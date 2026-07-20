@@ -32,10 +32,16 @@ import {
     Tag,
     Tooltip,
     Spin,
-    List
+    List,
+    Result
 } from 'antd';
 import { ReloadOutlined, FileOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
-import { getVisitTypeCode, useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    getModesFromPermissions,
+    getVisitTypeCode,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
+import { ModeEnum } from 'generated/graphql';
 import {
     LinkButton,
     ScheduleSidePanel,
@@ -77,6 +83,8 @@ type CalendarEvent = {
     status: AppointmentStatus;
     appointmentTypeCode?: string;
     id?: string;
+    extraStatus1?: number | null;
+    extraStatus1Text?: string | null;
     appointmentLines?: AppointmentLine[];
     documentAttachments?: DocumentAttachment[];
 };
@@ -192,6 +200,20 @@ const EventCard: FC<{ event: CalendarEvent; typeConfig: Record<string, string> }
                 whiteSpace: 'nowrap'
             }}
         >
+            {event.extraStatus1 != null && (
+                // docs & references validation marker (✔ OK / ✖ Not OK)
+                <span
+                    title={event.extraStatus1Text ?? ''}
+                    style={{
+                        marginRight: 4,
+                        color: /not.?ok|non.?ok|ko/i.test(event.extraStatus1Text ?? '')
+                            ? '#cf1322'
+                            : '#389e0d'
+                    }}
+                >
+                    {/not.?ok|non.?ok|ko/i.test(event.extraStatus1Text ?? '') ? '✖' : '✔'}
+                </span>
+            )}
             {event.title}
         </div>
     </div>
@@ -252,10 +274,14 @@ const FilePreview: FC<{ file: DocumentAttachment }> = ({ file }) => {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const MyCalendar: PageComponent = () => {
-    const { configs } = useAppState();
+    const { configs, permissions } = useAppState();
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    // fail closed: menu gating alone doesn't stop a direct URL hit — never fetch without READ.
+    const canRead = getModesFromPermissions(permissions, 'wm_appointments-schedule').includes(
+        ModeEnum.Read
+    );
     const locale = router?.locale?.split('-')[0] || 'en';
     dayjs.locale(locale);
 
@@ -405,6 +431,8 @@ const MyCalendar: PageComponent = () => {
                             appointmentDateEnd
                             status
                             appointmentType
+                            extraStatus1
+                            extraStatus1Text
                             location {
                                 id
                             }
@@ -466,6 +494,8 @@ const MyCalendar: PageComponent = () => {
             status: String(a.status) as AppointmentStatus,
             appointmentTypeCode: a.appointmentType != null ? String(a.appointmentType) : undefined,
             id: String(a.id),
+            extraStatus1: a.extraStatus1 ?? null,
+            extraStatus1Text: a.extraStatus1Text ?? null,
             appointmentLines: a.appointmentLines.map((al: any) => ({
                 id: al.id,
                 loadId: al.load?.id,
@@ -490,10 +520,12 @@ const MyCalendar: PageComponent = () => {
 
     // ── Effects ────────────────────────────────────────────────────────────────
     useEffect(() => {
+        if (!canRead) return;
         getRamps();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [canRead]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
+        if (!canRead) return;
         const rangeStart = dayjs(currentDate)
             .startOf(currentView === 'week' ? 'week' : 'day')
             .toDate();
@@ -504,7 +536,7 @@ const MyCalendar: PageComponent = () => {
                       .endOf(currentView === 'week' ? 'week' : 'day')
                       .toDate();
         getAllApointments(rangeStart, rangeEnd);
-    }, [currentView, currentDate, refetch]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [currentView, currentDate, refetch, canRead]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ── Actions ────────────────────────────────────────────────────────────────
     const updateAppointmentStatus = async (id: string, status: string) => {
@@ -692,6 +724,10 @@ const MyCalendar: PageComponent = () => {
                       : [])
               ]
             : [];
+
+    if (!canRead) {
+        return <Result status="403" title={t('messages:access-denied')} />;
+    }
 
     return (
         <>

@@ -19,10 +19,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
 import { Alert, Layout, Form, Button, Space, Modal, Select, Slider, InputNumber } from 'antd';
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/fr';
 import 'dayjs/locale/de';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
@@ -46,7 +47,13 @@ import {
     setUTCDateTime,
     flatten,
     getReservedCarrierExclusionFilters,
-    findCodeByScopeAndValue
+    findCodeByScopeAndValue,
+    getAppointmentDirection,
+    getLoadTypeCodesForDirection,
+    getInboundLoadTypeCodes,
+    getOrderTypeCodesForDirection,
+    isAppointmentLinkEnabled,
+    isCarrierAppointmentUser
 } from '@helpers';
 
 const { Option } = Select;
@@ -179,11 +186,23 @@ const getBuildingTimeBoundaries = (buildingLocations: any[], dayName: DayName) =
 };
 
 const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
-    const { permissions, configs } = useAppState();
+    const { permissions, configs, parameters } = useAppState();
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
     const router = useRouter();
     const [form] = Form.useForm();
+
+    // carrier users get a restricted form (no dock, no recurrence, no appointment-line selects)
+    const isCarrier = isCarrierAppointmentUser(permissions);
+    // pallet types for the truck composition, admin-managed via parameter scope
+    // appointment_palette_type (so types can be added/removed without code changes)
+    const paletteParams = useMemo(
+        () =>
+            (parameters ?? [])
+                .filter((p: any) => p.scope === 'appointment_palette_type')
+                .map((p: any) => ({ code: String(p.code), translation: p.translation, value: p.value })),
+        [parameters]
+    );
 
     const [lookup, setLookup] = useState<{
         initialized: boolean;
@@ -210,6 +229,41 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
     const selectedDuration = Form.useWatch('appointmentDuration', form);
     const selectedRecurrenceType = Form.useWatch('recurrenceType', form);
     const selectedDateBegin = Form.useWatch('appointmentDateBegin', form);
+    const selectedAppointmentType = Form.useWatch('appointmentType', form);
+    const selectedStockOwnerId = Form.useWatch('stockOwnerId', form);
+
+    // in/out direction of the appointment drives which loads/deliveries/orders/POs are proposed
+    const direction = getAppointmentDirection(selectedAppointmentType, configs);
+    const isOutbound = direction === 'outbound';
+    const isInbound = direction === 'inbound';
+    // which entity types can be linked to an appointment (DB configs, scope "appointment")
+    const linkLoads = isAppointmentLinkEnabled(configs, 'loads');
+    const linkUnloads = isAppointmentLinkEnabled(configs, 'unloads');
+    const linkDeliveries = isAppointmentLinkEnabled(configs, 'deliveries');
+    const linkOrders = isAppointmentLinkEnabled(configs, 'orders');
+    const linkPurchaseOrders = isAppointmentLinkEnabled(configs, 'purchase_orders');
+
+    // AntD keeps values of hidden/unmounted fields; the entity selects are filtered by
+    // direction + carrier + stock owner, so changing any of those would otherwise leave stale
+    // IDs that get submitted as wrong-direction / wrong-carrier appointment lines. Clear them
+    // whenever one of those filters actually changes (skip the first establishment so a preload
+    // isn't clobbered).
+    const prevSelectionFiltersRef = useRef<string | undefined>(undefined);
+    useEffect(() => {
+        const key = `${direction ?? ''}|${selectedCarrierId ?? ''}|${selectedStockOwnerId ?? ''}`;
+        if (
+            prevSelectionFiltersRef.current !== undefined &&
+            prevSelectionFiltersRef.current !== key
+        ) {
+            form.setFieldsValue({
+                loads: undefined,
+                deliveries: undefined,
+                orders: undefined,
+                purchaseOrders: undefined
+            });
+        }
+        prevSelectionFiltersRef.current = key;
+    }, [direction, selectedCarrierId, selectedStockOwnerId, form]);
 
     const language = getLanguageCode(router);
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
@@ -223,13 +277,19 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
             configs.find((item: any) => item.scope === scope && item.value === val)?.code;
 
         return {
-            appointmentTypes: configs.filter((item: any) => item.scope === 'appointment_type'),
+            // "Visit" is a visitor-only appointment type handled through the visitor
+            // management screens; the truck appointment form only offers in/out types.
+            appointmentTypes: configs.filter(
+                (item: any) => item.scope === 'appointment_type' && !/visit/i.test(item.value)
+            ),
             appointmentStatusInCreation: parseInt(
                 findConfigCode('appointment_status', 'In Creation') || '0',
                 10
             ),
             loadStatusCreated: parseInt(findConfigCode('load_status', 'Created') || '0', 10),
+            loadStatusDispatched: parseInt(findConfigCode('load_status', 'Dispatched') || '0', 10),
             loadTypePreLoading: parseInt(findConfigCode('load_type', 'Pre-loading') || '0', 10),
+            loadTypeInbound: getInboundLoadTypeCodes(configs)[0],
             locationCategoryDock: findConfigCode('location_category', 'Dock'),
             // status is an Int -> parse the resolved code; keep undefined when absent so the
             // exclusion filter drops the status clause (only isVirtual is then applied).
@@ -239,6 +299,88 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
             })()
         };
     }, [configs]);
+
+    // advanced filters for the entity multi-selects, keyed by direction + carrier:
+    // loads restricted to the direction's types & below Dispatched; deliveries not shipped;
+    // orders restricted to the direction's order types; all narrowed by carrier when one is set.
+    const entityAdvancedFilters = useMemo(() => {
+        if (direction !== 'outbound' && direction !== 'inbound') return null;
+        const deliveryDispatched = parseInt(
+            findCodeByScopeAndValue(configs, 'delivery_status', 'Dispatched') ?? '0',
+            10
+        );
+        const carrierClause = selectedCarrierId
+            ? [{ filter: [{ searchType: 'EQUAL', field: { carrierId: selectedCarrierId } }] }]
+            : [];
+        const carrierShipClause = selectedCarrierId
+            ? [
+                  {
+                      filter: [
+                          {
+                              searchType: 'EQUAL',
+                              field: { carrierShippingMode_CarrierId: selectedCarrierId }
+                          }
+                      ]
+                  }
+              ]
+            : [];
+        // stock owner constraint applies to deliveries/orders/purchase orders (not loads)
+        const stockOwnerClause = selectedStockOwnerId
+            ? [{ filter: [{ searchType: 'EQUAL', field: { stockOwnerId: selectedStockOwnerId } }] }]
+            : [];
+        const loadTypeCodes = getLoadTypeCodesForDirection(direction, configs);
+        const orderTypeCodes = getOrderTypeCodesForDirection(direction, configs);
+        return {
+            loads: [
+                {
+                    filter: [
+                        {
+                            searchType: 'INFERIOR',
+                            field: { status: configsParamsCodes.loadStatusDispatched }
+                        }
+                    ]
+                },
+                // fail-closed: if the direction's load types can't be resolved (missing/mis-labeled
+                // load_type configs), filter on an impossible code so NO load is selectable rather
+                // than every non-dispatched load, which could link a wrong-direction load.
+                {
+                    filter: [
+                        {
+                            searchType: 'EQUAL',
+                            field: { type: loadTypeCodes.length ? loadTypeCodes : [-1] }
+                        }
+                    ]
+                },
+                ...carrierClause
+            ],
+            deliveries: [
+                { filter: [{ searchType: 'INFERIOR', field: { status: deliveryDispatched } }] },
+                ...carrierShipClause,
+                ...stockOwnerClause
+            ],
+            orders: [
+                // fail-closed: same rationale as loads — an unresolved order_type must select
+                // nothing rather than orders of any direction.
+                {
+                    filter: [
+                        {
+                            searchType: 'EQUAL',
+                            field: { orderType: orderTypeCodes.length ? orderTypeCodes : [-1] }
+                        }
+                    ]
+                },
+                ...carrierShipClause,
+                ...stockOwnerClause
+            ],
+            purchaseOrders: [...stockOwnerClause]
+        };
+    }, [
+        direction,
+        selectedCarrierId,
+        selectedStockOwnerId,
+        configs,
+        configsParamsCodes.loadStatusDispatched
+    ]);
 
     const buildings = useMemo(() => {
         const uniqueMap = new Map();
@@ -274,6 +416,28 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
         const authorizedIds = extras.authorized_carriers.split(',');
         return lookup.carriers.filter((carrier) => authorizedIds.includes(carrier.id));
     }, [lookup.locations, lookup.carriers, selectedLocationId]);
+
+    // keep the currently-selected carrier as an option even when it is filtered out (not
+    // authorized for the location, or reserved/closed), otherwise the Select renders the raw
+    // id instead of the carrier name in edit mode.
+    const carrierOptions = useMemo(() => {
+        if (!selectedCarrierId) return filteredCarriers;
+        if (filteredCarriers.some((c: any) => c.id === selectedCarrierId)) return filteredCarriers;
+        const fromAll = lookup.carriers.find((c: any) => c.id === selectedCarrierId);
+        const fallback = fromAll ?? {
+            id: selectedCarrierId,
+            name: props.initialProps?.initialData?.carrier?.name ?? selectedCarrierId
+        };
+        return [fallback, ...filteredCarriers];
+    }, [filteredCarriers, lookup.carriers, selectedCarrierId, props.initialProps]);
+
+    // when a single carrier is available and none is selected yet, pick it automatically
+    useEffect(() => {
+        if (!lookup.initialized) return;
+        if (!selectedCarrierId && filteredCarriers.length === 1) {
+            form.setFieldsValue({ carrierId: filteredCarriers[0].id });
+        }
+    }, [lookup.initialized, filteredCarriers, selectedCarrierId, form]);
 
     const initialPropsError = props.initialProps?.error;
     const initialDataId = props.initialProps?.initialData?.id;
@@ -378,6 +542,30 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                         recurrenceType: 'none',
                         recurrenceCount: 1
                     });
+
+                    // preload the truck composition (pallet counts + instructions) from content JSON
+                    const rawContent = initialData.content;
+                    const content =
+                        typeof rawContent === 'string'
+                            ? (() => {
+                                  try {
+                                      return JSON.parse(rawContent);
+                                  } catch {
+                                      return null;
+                                  }
+                              })()
+                            : rawContent;
+                    if (content) {
+                        const compPatch: Record<string, any> = {};
+                        if (content.palettes) {
+                            compPatch.composition = Object.entries(content.palettes).map(
+                                ([code, n]) => ({ paletteType: String(code), quantity: n })
+                            );
+                        }
+                        if (content.instructions)
+                            compPatch.compositionInstructions = content.instructions;
+                        form.setFieldsValue(compPatch);
+                    }
                 }
 
                 setLookup({
@@ -629,66 +817,130 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 'locationId',
                 'carrierId',
                 'loads',
+                'deliveries',
+                'orders',
+                'purchaseOrders',
                 'stockOwnerId',
                 'driverName',
                 'driverPhoneNumber',
                 'driverEmail',
                 'truckLicensePlate',
                 'trailerLicensePlate',
-                'contactComment'
+                'contactComment',
+                'reference1',
+                'reference2'
             ]);
 
             const sanitizedFormValues: Record<string, any> = Object.fromEntries(
                 Object.entries(rawFormValues).map(([key, val]) => [key, val === '' ? null : val])
             );
 
-            const { loads: selectedLoadsData, ...payloadBase } = sanitizedFormValues;
+            const {
+                loads: selectedLoadsData,
+                deliveries: selectedDeliveriesData,
+                orders: selectedOrdersData,
+                purchaseOrders: selectedPurchaseOrdersData,
+                ...payloadBase
+            } = sanitizedFormValues;
             const appointmentTypeInt = payloadBase.appointmentType
                 ? parseInt(payloadBase.appointmentType, 10)
                 : null;
+            const submitDirection = getAppointmentDirection(payloadBase.appointmentType, configs);
 
-            const handleLinesAndLoads = async (appointmentId: string, appointmentName: string) => {
-                const createLineMutation = gql`
-                    mutation cLine($input: CreateAppointmentLineInput!) {
-                        createAppointmentLine(input: $input) {
+            // truck composition (pallets per type + free instructions) stored in the content JSON.
+            // the editor is a Form.List of {paletteType, quantity} rows; last row wins on duplicates.
+            const palettes: Record<string, number> = {};
+            const compositionRows = form.getFieldValue('composition') ?? [];
+            compositionRows.forEach((row: any) => {
+                if (row && row.paletteType != null && row.quantity != null && row.quantity !== '') {
+                    palettes[String(row.paletteType)] = Number(row.quantity);
+                }
+            });
+            const compositionInstructions = form.getFieldValue('compositionInstructions') || null;
+            const compositionContent =
+                Object.keys(palettes).length > 0 || compositionInstructions
+                    ? { palettes, instructions: compositionInstructions }
+                    : undefined;
+
+            const toIdArray = (v: any) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
+            // one appointmentLine input per selected item, using the matching foreign key
+            const selectionInputs = (appointmentId: string) => [
+                ...toIdArray(selectedLoadsData).map((id: string) => ({
+                    appointmentId,
+                    loadId: id
+                })),
+                ...toIdArray(selectedDeliveriesData).map((id: string) => ({
+                    appointmentId,
+                    deliveryId: id
+                })),
+                ...toIdArray(selectedOrdersData).map((id: string) => ({
+                    appointmentId,
+                    orderId: id
+                })),
+                ...toIdArray(selectedPurchaseOrdersData).map((id: string) => ({
+                    appointmentId,
+                    purchaseOrderId: id
+                }))
+            ];
+            const hasExplicitSelection = selectionInputs('x').length > 0;
+
+            const createLineMutation = gql`
+                mutation cLine($input: CreateAppointmentLineInput!) {
+                    createAppointmentLine(input: $input) {
+                        id
+                    }
+                }
+            `;
+
+            const createLinesForSelection = async (appointmentId: string) => {
+                for (const input of selectionInputs(appointmentId)) {
+                    await graphqlRequestClient.request(createLineMutation, {
+                        input: { ...input, stockOwnerId: payloadBase.stockOwnerId ?? undefined }
+                    });
+                }
+            };
+
+            // default load type follows the appointment direction (inbound -> Inbound load). It
+            // comes from a DB config (e.g. Inbound=300); when it isn't defined for this warehouse
+            // the callers below skip the default-load creation and don't report a false success.
+            const defaultLoadType =
+                submitDirection === 'inbound'
+                    ? configsParamsCodes.loadTypeInbound
+                    : configsParamsCodes.loadTypePreLoading;
+            const defaultLoadTypeValid =
+                defaultLoadType != null && !Number.isNaN(defaultLoadType);
+            const createDefaultLoad = async (appointmentId: string, appointmentName: string) => {
+                const createLoadMutation = gql`
+                    mutation cLoad($input: CreateLoadInput!) {
+                        createLoad(input: $input) {
                             id
                         }
                     }
                 `;
-                const loadsArray = Array.isArray(selectedLoadsData)
-                    ? selectedLoadsData
-                    : selectedLoadsData
-                      ? [selectedLoadsData]
-                      : [];
-
-                if (loadsArray.length > 0) {
-                    for (const loadId of loadsArray) {
-                        if (loadId)
-                            await graphqlRequestClient.request(createLineMutation, {
-                                input: { appointmentId, loadId }
-                            });
+                const loadResult = await graphqlRequestClient.request(createLoadMutation, {
+                    input: {
+                        name: appointmentName,
+                        status: configsParamsCodes.loadStatusCreated,
+                        type: defaultLoadType,
+                        carrierId: payloadBase.carrierId
                     }
-                } else {
-                    const createLoadMutation = gql`
-                        mutation cLoad($input: CreateLoadInput!) {
-                            createLoad(input: $input) {
-                                id
-                            }
-                        }
-                    `;
-                    const loadResult = await graphqlRequestClient.request(createLoadMutation, {
-                        input: {
-                            name: appointmentName,
-                            status: configsParamsCodes.loadStatusCreated,
-                            type: configsParamsCodes.loadTypePreLoading,
-                            carrierId: payloadBase.carrierId
-                        }
-                    });
-                    await graphqlRequestClient.request(createLineMutation, {
-                        input: { appointmentId, loadId: loadResult.createLoad.id }
-                    });
-                }
+                });
+                await graphqlRequestClient.request(createLineMutation, {
+                    input: { appointmentId, loadId: loadResult.createLoad.id }
+                });
             };
+
+            // ask the user (creation only, when nothing was selected) whether to create a default load
+            const askCreateDefaultLoad = () =>
+                new Promise<boolean>((resolve) => {
+                    Modal.confirm({
+                        title: t('messages:create-default-load-confirm'),
+                        okText: t('common:bool-yes'),
+                        cancelText: t('common:bool-no'),
+                        onOk: () => resolve(true),
+                        onCancel: () => resolve(false)
+                    });
+                });
 
             const createMutation = gql`
                 mutation cApt($input: CreateAppointmentInput!) {
@@ -724,7 +976,8 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                     ...payloadBase,
                     appointmentDateBegin: baseBeginDate,
                     appointmentDateEnd: endDate,
-                    appointmentType: appointmentTypeInt
+                    appointmentType: appointmentTypeInt,
+                    ...(compositionContent ? { content: compositionContent } : {})
                 };
                 let resultId = props.id;
 
@@ -740,6 +993,11 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                         id: props.id,
                         input: inputPayload
                     });
+                    // on edit, add any newly selected associations (removal is done from the
+                    // appointment lines list on the detail page)
+                    if (hasExplicitSelection) {
+                        await createLinesForSelection(props.id);
+                    }
                     showSuccess(t('messages:success-updated'));
                 } else {
                     const result = await graphqlRequestClient.request(createMutation, {
@@ -749,11 +1007,32 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                         }
                     });
                     resultId = result.createAppointment.id;
-                    await handleLinesAndLoads(resultId!, result.createAppointment.name);
+                    if (hasExplicitSelection) {
+                        await createLinesForSelection(resultId!);
+                    } else if (!isCarrier && (await askCreateDefaultLoad())) {
+                        // never auto-create a load when a carrier creates the appointment
+                        if (defaultLoadTypeValid) {
+                            await createDefaultLoad(resultId!, result.createAppointment.name);
+                        } else {
+                            // the appointment itself was created; only the optional default load
+                            // couldn't be (load type not configured). Warn but still report success
+                            // below, so the user doesn't retry and create a duplicate.
+                            showError(t('messages:default-load-not-created'));
+                        }
+                    }
                     showSuccess(t('messages:success-created'));
                 }
                 router.push(props.routeAfterSuccess.replace(':id', resultId as string));
             } else {
+                // recurring creation: explicit associations are linked to the first occurrence
+                // only (a delivery/order can't belong to N appointments); when nothing is selected
+                // we ask once and create a default load for each occurrence.
+                const wantDefaultForRecurrence =
+                    hasExplicitSelection || isCarrier ? false : await askCreateDefaultLoad();
+                // if the user asked for default loads but the load type isn't configured, skip them
+                // for every occurrence and warn — the appointments themselves are still created
+                const defaultLoadSkipped = wantDefaultForRecurrence && !defaultLoadTypeValid;
+                if (defaultLoadSkipped) showError(t('messages:default-load-not-created'));
                 let lastCreatedId = '';
                 for (let i = 0; i < recurrenceCount; i++) {
                     const currentBegin = baseBeginDate.add(i, recurrenceType as any);
@@ -765,15 +1044,20 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                             appointmentDateBegin: currentBegin,
                             appointmentDateEnd: currentEnd,
                             appointmentType: appointmentTypeInt,
+                            ...(compositionContent ? { content: compositionContent } : {}),
                             status: configsParamsCodes.appointmentStatusInCreation
                         }
                     });
 
                     if (i === 0) lastCreatedId = result.createAppointment.id;
-                    await handleLinesAndLoads(
-                        result.createAppointment.id,
-                        result.createAppointment.name
-                    );
+                    if (hasExplicitSelection) {
+                        if (i === 0) await createLinesForSelection(result.createAppointment.id);
+                    } else if (wantDefaultForRecurrence && defaultLoadTypeValid) {
+                        await createDefaultLoad(
+                            result.createAppointment.id,
+                            result.createAppointment.name
+                        );
+                    }
                 }
                 showSuccess(t('messages:success-created'));
                 router.push(props.routeAfterSuccess.replace(':id', lastCreatedId));
@@ -840,7 +1124,9 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                             scrollToFirstError
                             onValuesChange={handleFormValuesChange}
                         >
-                            <StringInput item={{ name: 'name' }} />
+                            {/* carriers don't name appointments; omitting the field lets the
+                                backend auto-number it (create) and preserves the name (edit) */}
+                            {!isCarrier && <StringInput item={{ name: 'name' }} />}
                             <Form.Item
                                 label={t('d:appointmentType')}
                                 name="appointmentType"
@@ -868,7 +1154,7 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                                         name: t('d:carrier')
                                     })}
                                 >
-                                    {filteredCarriers.map((item: any, i: number) => (
+                                    {carrierOptions.map((item: any, i: number) => (
                                         <Option key={`${item.id}-${i}`} value={item.id}>
                                             {item.name}
                                         </Option>
@@ -920,7 +1206,7 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                                 disabled={!selectedBuildingId}
                             />
 
-                            {!props.id && (
+                            {!props.id && !isCarrier && (
                                 <>
                                     <Form.Item
                                         label={t('d:recurrenceType')}
@@ -957,39 +1243,98 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                                         )}
                                 </>
                             )}
-                            <Form.Item label={t('d:location')} name="locationId">
-                                <Select
-                                    allowClear
-                                    placeholder={t('messages:please-select-a', {
-                                        name: t('d:location')
-                                    })}
-                                    disabled={
-                                        !selectedBuildingId ||
-                                        !selectedDuration ||
-                                        !selectedDateBegin
-                                    }
-                                >
-                                    {lookup.filteredLocations.map((item: any, i: number) => (
-                                        <Option key={`${item.id}-${i}`} value={item.id}>
-                                            {item.name}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                            {selectedCarrierId && (
-                                <AutoComplete
-                                    item={
-                                        {
-                                            name: 'loads',
-                                            optionTable: {
-                                                table: 'Load',
-                                                fieldToDisplay: 'name',
-                                                filtersToApply: { carrierId: selectedCarrierId }
+                            {!isCarrier && (
+                                <Form.Item label={t('d:location')} name="locationId">
+                                    <Select
+                                        allowClear
+                                        placeholder={t('messages:please-select-a', {
+                                            name: t('d:location')
+                                        })}
+                                        disabled={
+                                            !selectedBuildingId ||
+                                            !selectedDuration ||
+                                            !selectedDateBegin
+                                        }
+                                    >
+                                        {lookup.filteredLocations.map((item: any, i: number) => (
+                                            <Option key={`${item.id}-${i}`} value={item.id}>
+                                                {item.name}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                            )}
+                            {!isCarrier && (isOutbound || isInbound) && entityAdvancedFilters && (
+                                <>
+                                    {((isOutbound && linkLoads) || (isInbound && linkUnloads)) && (
+                                        <AutoComplete
+                                            item={
+                                                {
+                                                    name: 'loads',
+                                                    displayName: t('common:loads'),
+                                                    optionTable: {
+                                                        table: 'Load',
+                                                        fieldToDisplay: 'name'
+                                                    }
+                                                } as any
                                             }
-                                        } as any
-                                    }
-                                    key={`load-autocomplete-${selectedCarrierId}`}
-                                />
+                                            advancedFilters={entityAdvancedFilters.loads}
+                                            isMultipleSelect
+                                            key={`loads-${direction}-${selectedCarrierId ?? 'any'}`}
+                                        />
+                                    )}
+                                    {isOutbound && linkDeliveries && (
+                                        <AutoComplete
+                                            item={
+                                                {
+                                                    name: 'deliveries',
+                                                    displayName: t('common:deliveries'),
+                                                    optionTable: {
+                                                        table: 'Delivery',
+                                                        fieldToDisplay: 'name'
+                                                    }
+                                                } as any
+                                            }
+                                            advancedFilters={entityAdvancedFilters.deliveries}
+                                            isMultipleSelect
+                                            key={`deliveries-${selectedCarrierId ?? 'any'}`}
+                                        />
+                                    )}
+                                    {isInbound && linkPurchaseOrders && (
+                                        <AutoComplete
+                                            item={
+                                                {
+                                                    name: 'purchaseOrders',
+                                                    displayName: t('common:purchaseOrders'),
+                                                    optionTable: {
+                                                        table: 'PurchaseOrder',
+                                                        fieldToDisplay: 'name'
+                                                    }
+                                                } as any
+                                            }
+                                            advancedFilters={entityAdvancedFilters.purchaseOrders}
+                                            isMultipleSelect
+                                            key={`purchaseOrders-${selectedCarrierId ?? 'any'}`}
+                                        />
+                                    )}
+                                    {linkOrders && (
+                                        <AutoComplete
+                                            item={
+                                                {
+                                                    name: 'orders',
+                                                    displayName: t('common:orders'),
+                                                    optionTable: {
+                                                        table: 'Order',
+                                                        fieldToDisplay: 'name'
+                                                    }
+                                                } as any
+                                            }
+                                            advancedFilters={entityAdvancedFilters.orders}
+                                            isMultipleSelect
+                                            key={`orders-${direction}-${selectedCarrierId ?? 'any'}`}
+                                        />
+                                    )}
+                                </>
                             )}
                             <Form.Item label={t('d:stockOwner')} name="stockOwnerId">
                                 <Select
@@ -1011,6 +1356,95 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                             <StringInput item={{ name: 'truckLicensePlate' }} />
                             <StringInput item={{ name: 'trailerLicensePlate' }} />
                             <TextAreaInput item={{ name: 'contactComment' }} />
+
+                            {/* optional free references */}
+                            <StringInput item={{ name: 'reference1' }} />
+                            <StringInput item={{ name: 'reference2' }} />
+
+                            {/* truck composition: add-as-many rows of (pallet type + quantity),
+                                like the arguments/extras editor, so types stay admin-managed */}
+                            {paletteParams.length > 0 && (
+                                <>
+                                    <div style={{ fontWeight: 600, margin: '8px 0' }}>
+                                        {t('common:truck-composition')}
+                                    </div>
+                                    <Form.List name="composition">
+                                        {(fields, { add, remove }) => (
+                                            <>
+                                                {fields.map(({ key, name, ...restField }) => (
+                                                    <Space
+                                                        key={key}
+                                                        style={{ display: 'flex', marginBottom: 8 }}
+                                                        align="baseline"
+                                                    >
+                                                        <Form.Item
+                                                            {...restField}
+                                                            name={[name, 'paletteType']}
+                                                            rules={[
+                                                                {
+                                                                    required: true,
+                                                                    message: t(
+                                                                        'messages:error-message-empty-input'
+                                                                    )
+                                                                }
+                                                            ]}
+                                                        >
+                                                            <Select
+                                                                style={{ minWidth: 200 }}
+                                                                placeholder={t('common:pallet-type')}
+                                                            >
+                                                                {paletteParams.map((p: any) => (
+                                                                    <Option
+                                                                        key={p.code}
+                                                                        value={p.code}
+                                                                    >
+                                                                        {p.translation?.[
+                                                                            router.locale ?? ''
+                                                                        ] ?? p.value}
+                                                                    </Option>
+                                                                ))}
+                                                            </Select>
+                                                        </Form.Item>
+                                                        <Form.Item
+                                                            {...restField}
+                                                            name={[name, 'quantity']}
+                                                            rules={[
+                                                                {
+                                                                    required: true,
+                                                                    message: t(
+                                                                        'messages:error-message-empty-input'
+                                                                    )
+                                                                }
+                                                            ]}
+                                                        >
+                                                            <InputNumber
+                                                                min={0}
+                                                                placeholder={t('common:quantity')}
+                                                            />
+                                                        </Form.Item>
+                                                        <MinusCircleOutlined
+                                                            onClick={() => remove(name)}
+                                                        />
+                                                    </Space>
+                                                ))}
+                                                <Form.Item>
+                                                    <Button
+                                                        type="dashed"
+                                                        onClick={() => add()}
+                                                        block
+                                                        icon={<PlusOutlined />}
+                                                    >
+                                                        {t('actions:add2', {
+                                                            name: t('common:pallet-type')
+                                                        })}
+                                                    </Button>
+                                                </Form.Item>
+                                            </>
+                                        )}
+                                    </Form.List>
+                                    <TextAreaInput item={{ name: 'compositionInstructions' }} />
+                                </>
+                            )}
                         </Form>
 
                         <div style={{ textAlign: 'center' }}>
