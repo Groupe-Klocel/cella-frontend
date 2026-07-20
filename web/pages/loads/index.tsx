@@ -32,7 +32,10 @@ import { useAppState } from 'context/AppContext';
 import 'moment/min/locales';
 import moment from 'moment';
 import { ModeEnum, useListParametersForAScopeQuery } from 'generated/graphql';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import AssignToAppointmentModal from 'modules/Appointments/AssignToAppointmentModal';
+import { useAssignSelection } from 'modules/Preload/useAssignSelection';
+import { isAppointmentLinkEnabled, classifyLoadType } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
 import { LoadModelV2 as model } from '@helpers';
@@ -47,7 +50,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 const LoadsPage: PageComponent = () => {
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
-    const { permissions } = useAppState();
+    const { permissions, configs: dbConfigs } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = itemRoutes[itemRoutes.length - 1].path;
@@ -59,6 +62,62 @@ const LoadsPage: PageComponent = () => {
     const [referenceToPrint, setReferenceToPrint] = useState<string>();
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
     const [defaultLoadDocuments, setDefaultLoadDocuments] = useState<any>();
+    const [tableData, setTableData] = useState<any[]>([]);
+    const [assignApptOpen, setAssignApptOpen] = useState(false);
+
+    // selection across pages; a load can be linked to an appointment only while not dispatched;
+    // loads carry a direct carrierId so buttons are disabled on mixed carriers.
+    const {
+        selectedRowKeys,
+        rowSelection,
+        eligibleIds,
+        commonCarrierId,
+        hasMixedCarrier,
+        commonDirection,
+        hasMixedDirection,
+        reset: resetSelection
+    } = useAssignSelection({
+        tableData,
+        isEligible: (row) => row?.status < configs.LOAD_STATUS_DISPATCHED,
+        carrierOf: (row) => row?.carrierId ?? null,
+        // loads carry a direction (outbound / inbound); keep a bulk appointment assignment
+        // within a single direction so we never link an inbound load to an outbound appointment
+        directionOf: (row) => classifyLoadType(row?.type, dbConfigs) ?? null,
+        // assign-to-appointment is the only bulk action here → block selecting ineligible rows
+        disableIneligibleCheckbox: true
+    });
+    const hasSelected = selectedRowKeys.length > 0;
+    // require a single, known direction: block a mixed selection AND one whose direction can't
+    // be classified (commonDirection undefined), so the modal is never opened ungated
+    const canAssign =
+        eligibleIds.length > 0 && !hasMixedCarrier && !hasMixedDirection && commonDirection != null;
+    // gate by the SELECTED loads' direction: outbound → appointment_with_loads, inbound →
+    // appointment_with_unloads. Before a selection sets a common direction, show the button if
+    // either link type is enabled (it stays disabled until canAssign resolves a single direction).
+    const apptLinkEnabled =
+        commonDirection === 'inbound'
+            ? isAppointmentLinkEnabled(dbConfigs, 'unloads')
+            : commonDirection === 'outbound'
+              ? isAppointmentLinkEnabled(dbConfigs, 'loads')
+              : isAppointmentLinkEnabled(dbConfigs, 'loads') ||
+                isAppointmentLinkEnabled(dbConfigs, 'unloads');
+    const assignApptActionButtons: ActionButtons = {
+        actionsComponent:
+            modes.length > 0 && modes.includes(ModeEnum.Update) && apptLinkEnabled ? (
+                <span style={{ marginLeft: 16 }}>
+                    <Button onClick={() => setAssignApptOpen(true)} disabled={!canAssign}>
+                        {t('actions:assign-to-appointment')}
+                    </Button>
+                    <span style={{ marginLeft: 16 }}>
+                        {hasSelected
+                            ? `${t('messages:selected-items-number', {
+                                  number: selectedRowKeys.length
+                              })}`
+                            : ''}
+                    </span>
+                </span>
+            ) : null
+    };
 
     const fetchDocumentsList = async (record: any) => {
         const ruleVariables = {
@@ -197,6 +256,10 @@ const LoadsPage: PageComponent = () => {
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 refetch={triggerRefresh}
+                setData={setTableData}
+                checkbox={true}
+                actionButtons={assignApptActionButtons}
+                rowSelection={rowSelection}
                 actionColumns={[
                     {
                         title: 'actions:actions',
@@ -285,6 +348,18 @@ const LoadsPage: PageComponent = () => {
                     }
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
+            />
+            <AssignToAppointmentModal
+                open={assignApptOpen}
+                onClose={() => setAssignApptOpen(false)}
+                entityIds={eligibleIds}
+                fkField="loadId"
+                direction={commonDirection}
+                carrierId={commonCarrierId}
+                onDone={() => {
+                    resetSelection();
+                    setTriggerRefresh((prev) => !prev);
+                }}
             />
             <SinglePrintDocumentSetModal
                 showModal={{
