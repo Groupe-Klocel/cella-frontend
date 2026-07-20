@@ -18,7 +18,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppHead, LinkButton, SinglePrintModal } from '@components';
-import { META_DEFAULTS, getModesFromPermissions, showError, showSuccess } from '@helpers';
+import {
+    META_DEFAULTS,
+    getModesFromPermissions,
+    getOrderDirection,
+    isAppointmentLinkEnabled,
+    isPreloadLinkEnabled,
+    showError,
+    showSuccess
+} from '@helpers';
+import AssignLoadModal from 'modules/Preload/AssignLoadModal';
+import AssignToAppointmentModal from 'modules/Appointments/AssignToAppointmentModal';
+import { AppointmentLinesSection } from 'modules/Appointments/AppointmentLinesSection';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
@@ -40,16 +51,54 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const CustomerOrderPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions } = useAppState();
+    const { permissions, configs: dbConfigs } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const [dataPayment, setDataPayment] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
-    const { id } = router.query;
+    // [id] is a single dynamic segment; normalize defensively (Next can type it as string[])
+    const id = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
+    // order ↔ appointment gate + carrier (via the shipping mode; order has no direct carrierId)
+    const apptLinkEnabled = isAppointmentLinkEnabled(dbConfigs, 'orders');
+    const preloadLinkEnabled = isPreloadLinkEnabled(dbConfigs, 'orders');
+    const orderCarrierId = data?.carrierShippingMode_carrierId;
+    const deAssignLoad = () => {
+        Modal.confirm({
+            title: t('messages:remove-assignment-confirm'),
+            okText: t('messages:confirm'),
+            cancelText: t('messages:cancel'),
+            onOk: async () => {
+                if (!id) {
+                    showError(t('messages:error-removing-assignment'));
+                    return;
+                }
+                try {
+                    await graphqlRequestClient.request(
+                        gql`
+                            mutation u($id: String!, $input: UpdateOrderInput!) {
+                                updateOrder(id: $id, input: $input) {
+                                    id
+                                    preAssignedLoadId
+                                }
+                            }
+                        `,
+                        { id, input: { preAssignedLoadId: null } }
+                    );
+                    showSuccess(t('messages:success-removed-assignment'));
+                    setTriggerRefresh((p) => !p);
+                } catch (e) {
+                    console.error('Error removing load assignment:', e);
+                    showError(t('messages:error-removing-assignment'));
+                }
+            }
+        });
+    };
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [assignLoadOpen, setAssignLoadOpen] = useState(false);
+    const [assignApptOpen, setAssignApptOpen] = useState(false);
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [documentToPrint, setDocumentToPrint] = useState<string>();
@@ -387,6 +436,38 @@ const CustomerOrderPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
+                {/* ASSIGN / DE-ASSIGN LOAD — only for order types with a load direction, not finished */}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                getOrderDirection(data?.orderType, dbConfigs) &&
+                data?.status !== configs.ORDER_STATUS_CLOSED &&
+                data?.status !== configs.ORDER_STATUS_CANCELED ? (
+                    data?.preAssignedLoadId ? (
+                        <Button danger onClick={deAssignLoad}>
+                            {t('actions:deassign-load')}
+                        </Button>
+                    ) : preloadLinkEnabled ? (
+                        <Button onClick={() => setAssignLoadOpen(true)}>
+                            {t('actions:assign-to-load')}
+                        </Button>
+                    ) : (
+                        <></>
+                    )
+                ) : (
+                    <></>
+                )}
+                {modes.length > 0 &&
+                modes.includes(ModeEnum.Update) &&
+                apptLinkEnabled &&
+                getOrderDirection(data?.orderType, dbConfigs) &&
+                data?.status !== configs.ORDER_STATUS_CLOSED &&
+                data?.status !== configs.ORDER_STATUS_CANCELED ? (
+                    <Button onClick={() => setAssignApptOpen(true)}>
+                        {t('actions:assign-to-appointment')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Read) &&
                 data?.status < configs.ORDER_STATUS_CLOSED ? (
@@ -552,18 +633,27 @@ const CustomerOrderPage: PageComponent = () => {
             <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={
-                    <CustomerOrderDetailsExtra
-                        orderId={id}
-                        orderName={data?.name}
-                        stockOwnerId={data?.stockOwnerId}
-                        stockOwnerName={data?.stockOwner_name}
-                        thirdPartyId={data?.thirdPartyId}
-                        priceType={data?.priceType}
-                        status={data?.status}
-                        fixedPrice={data?.fixedPrice}
-                        setInvoiceAddress={setInvoiceAddress}
-                        refetchPaymentLine={refetchPaymentLine}
-                    />
+                    <>
+                        <CustomerOrderDetailsExtra
+                            orderId={id}
+                            orderName={data?.name}
+                            stockOwnerId={data?.stockOwnerId}
+                            stockOwnerName={data?.stockOwner_name}
+                            thirdPartyId={data?.thirdPartyId}
+                            priceType={data?.priceType}
+                            status={data?.status}
+                            fixedPrice={data?.fixedPrice}
+                            setInvoiceAddress={setInvoiceAddress}
+                            refetchPaymentLine={refetchPaymentLine}
+                        />
+                        {apptLinkEnabled && id && (
+                            <AppointmentLinesSection
+                                fkField="orderId"
+                                entityId={id as string}
+                                canModify={modes.includes(ModeEnum.Update)}
+                            />
+                        )}
+                    </>
                 }
                 headerData={headerData}
                 id={id!}
@@ -579,6 +669,24 @@ const CustomerOrderPage: PageComponent = () => {
                 }}
                 setRefetch={setRefetchPaymentLine}
                 orderId={id as string}
+            />
+            <AssignLoadModal
+                open={assignLoadOpen}
+                onClose={() => setAssignLoadOpen(false)}
+                entityIds={id ? [id as string] : []}
+                direction={getOrderDirection(data?.orderType, dbConfigs) ?? 'outbound'}
+                carrierId={orderCarrierId}
+                update={{ mutation: 'updateOrders', inputType: 'UpdateOrderInput' }}
+                onDone={() => setTriggerRefresh((prev) => !prev)}
+            />
+            <AssignToAppointmentModal
+                open={assignApptOpen}
+                onClose={() => setAssignApptOpen(false)}
+                entityIds={id ? [id as string] : []}
+                fkField="orderId"
+                direction={getOrderDirection(data?.orderType, dbConfigs) ?? 'outbound'}
+                carrierId={orderCarrierId}
+                onDone={() => setTriggerRefresh((prev) => !prev)}
             />
         </>
     );

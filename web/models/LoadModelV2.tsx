@@ -172,7 +172,7 @@ export const LoadModelV2: ModelType = {
             isEditDisabled: true
         },
         type: {
-            isListRequested: false,
+            isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,

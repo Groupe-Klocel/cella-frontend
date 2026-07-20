@@ -28,6 +28,7 @@ import {
     getModesFromPermissions,
     getTruckTypeCodes,
     getVisitTypeCode,
+    isCarrierAppointmentUser,
     pathParams,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
@@ -58,6 +59,8 @@ const AppointmentsPages: PageComponent = () => {
     const { permissions, configs } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
+    // carrier users can only advance an appointment up to "Submitted" and cannot cancel/delete
+    const isCarrier = isCarrierAppointmentUser(permissions);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
@@ -315,6 +318,14 @@ const AppointmentsPages: PageComponent = () => {
                                                     appointmentStatuses.appointmentStatusCancelled
                                             )
                                             .map((nextStatusCode: number) => {
+                                                // a carrier can only advance up to "Submitted"
+                                                if (
+                                                    isCarrier &&
+                                                    nextStatusCode !==
+                                                        appointmentStatuses.appointmentStatusSubmitted
+                                                ) {
+                                                    return null;
+                                                }
                                                 const nextStatusConfig =
                                                     getConfigByCode(nextStatusCode);
                                                 const IconComp = nextStatusConfig
@@ -350,7 +361,8 @@ const AppointmentsPages: PageComponent = () => {
                                 ) : (
                                     <></>
                                 )}
-                                {modes.length > 0 &&
+                                {!isCarrier &&
+                                modes.length > 0 &&
                                 modes.includes(ModeEnum.Update) &&
                                 model.isSoftDeletable &&
                                 record.status != null &&
@@ -386,7 +398,8 @@ const AppointmentsPages: PageComponent = () => {
                                 ) : (
                                     <></>
                                 )}
-                                {modes.length > 0 &&
+                                {!isCarrier &&
+                                modes.length > 0 &&
                                 modes.includes(ModeEnum.Delete) &&
                                 model.isDeletable &&
                                 record.status <= appointmentStatuses.appointmentStatusInCreation ? (

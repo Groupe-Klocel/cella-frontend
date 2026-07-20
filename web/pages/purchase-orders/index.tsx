@@ -25,21 +25,79 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { PurchaseOrderModelV2 as model } from '@helpers';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { purchaseOrdersRoutes as itemRoutes } from 'modules/PurchaseOrders/Static/purchaseOrdersRoutes';
 import { PurchaseOrderProgressBar } from 'modules/PurchaseOrders/Elements/PurchaseOrderProgressBar';
-type PageComponent = FC & { layout: typeof MainLayout };
+import AssignLoadModal from 'modules/Preload/AssignLoadModal';
+import AssignToAppointmentModal from 'modules/Appointments/AssignToAppointmentModal';
+import { useAssignSelection } from 'modules/Preload/useAssignSelection';
+import { isAppointmentLinkEnabled, isPreloadLinkEnabled } from '@helpers';
 import configs from '../../../common/configs.json';
+type PageComponent = FC & { layout: typeof MainLayout };
 
 const PurchaseOrderPages: PageComponent = () => {
-    const { permissions } = useAppState();
+    const { permissions, configs: dbConfigs } = useAppState();
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const [tableData, setTableData] = useState<any[]>([]);
+    const [refetch, setRefetch] = useState<boolean>(false);
+    const [assignLoadOpen, setAssignLoadOpen] = useState(false);
+    const [assignApptOpen, setAssignApptOpen] = useState(false);
+
+    // selection across pages; a PO can receive a load/appointment only while not finished.
+    // Purchase orders have no carrier, so no carrier-uniformity constraint applies.
+    const {
+        selectedRowKeys,
+        rowSelection,
+        eligibleIds,
+        reset: resetSelection
+    } = useAssignSelection({
+        tableData,
+        isEligible: (row) =>
+            row?.status !== configs.PURCHASE_ORDER_STATUS_CLOSED &&
+            row?.status !== configs.PURCHASE_ORDER_STATUS_CANCELED,
+        // assign-to-load / assign-to-appointment are the only bulk actions here → block
+        // selecting ineligible (closed / canceled) rows
+        disableIneligibleCheckbox: true
+    });
+    const hasSelected = selectedRowKeys.length > 0;
+    const canAssign = eligibleIds.length > 0;
+    const apptLinkEnabled = isAppointmentLinkEnabled(dbConfigs, 'purchase_orders');
+    const preloadLinkEnabled = isPreloadLinkEnabled(dbConfigs, 'purchase_orders');
+
+    const actionButtons: ActionButtons = {
+        actionsComponent:
+            modes.length > 0 && modes.includes(ModeEnum.Update) ? (
+                <>
+                    <span className="selected-items-span" style={{ marginLeft: 16 }}>
+                        {hasSelected
+                            ? `${t('messages:selected-items-number', {
+                                  number: selectedRowKeys.length
+                              })}`
+                            : ''}
+                    </span>
+                    {preloadLinkEnabled && (
+                        <span style={{ marginLeft: 16 }}>
+                            <Button onClick={() => setAssignLoadOpen(true)} disabled={!canAssign}>
+                                {t('actions:assign-to-load')}
+                            </Button>
+                        </span>
+                    )}
+                    {apptLinkEnabled && (
+                        <span style={{ marginLeft: 16 }}>
+                            <Button onClick={() => setAssignApptOpen(true)} disabled={!canAssign}>
+                                {t('actions:assign-to-appointment')}
+                            </Button>
+                        </span>
+                    )}
+                </>
+            ) : null
+    };
 
     const headerData: HeaderData = {
         title: t('common:purchaseOrders'),
@@ -75,6 +133,8 @@ const PurchaseOrderPages: PageComponent = () => {
                 dataModel={model}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                setData={setTableData}
+                refetch={refetch}
                 extraColumns={[
                     {
                         title: 'd:progress',
@@ -150,6 +210,31 @@ const PurchaseOrderPages: PageComponent = () => {
                     }
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
+                checkbox={true}
+                actionButtons={actionButtons}
+                rowSelection={rowSelection}
+            />
+            <AssignLoadModal
+                open={assignLoadOpen}
+                onClose={() => setAssignLoadOpen(false)}
+                entityIds={eligibleIds}
+                direction="inbound"
+                update={{ mutation: 'updatePurchaseOrders', inputType: 'UpdatePurchaseOrderInput' }}
+                onDone={() => {
+                    resetSelection();
+                    setRefetch((prev) => !prev);
+                }}
+            />
+            <AssignToAppointmentModal
+                open={assignApptOpen}
+                onClose={() => setAssignApptOpen(false)}
+                entityIds={eligibleIds}
+                fkField="purchaseOrderId"
+                direction="inbound"
+                onDone={() => {
+                    resetSelection();
+                    setRefetch((prev) => !prev);
+                }}
             />
         </>
     );

@@ -24,7 +24,7 @@ import {
     pathParams,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
-import { Badge, Space, Table, Tabs, Tag } from 'antd';
+import { Badge, Result, Space, Table, Tabs, Tag } from 'antd';
 import { EyeTwoTone } from '@ant-design/icons';
 import { gql } from 'graphql-request';
 import MainLayout from 'components/layouts/MainLayout';
@@ -49,7 +49,9 @@ const GateValidationDashboard: PageComponent = () => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const { permissions, configs } = useAppState();
-    const modes = getModesFromPermissions(permissions, 'wm_appointments');
+    const modes = getModesFromPermissions(permissions, 'wm_appointments-gate-validation');
+    // fail closed: menu gating alone doesn't stop a direct URL hit — never fetch without READ.
+    const canRead = modes.includes(ModeEnum.Read);
 
     const [entries, setEntries] = useState<GateEntry[]>([]);
     const [activeTab, setActiveTab] = useState('pending');
@@ -71,7 +73,7 @@ const GateValidationDashboard: PageComponent = () => {
     }, [configs]);
 
     const refresh = useCallback(async () => {
-        if (!codes) return;
+        if (!codes || !canRead) return;
         try {
             const res = await graphqlRequestClient.request(
                 gql`
@@ -96,15 +98,15 @@ const GateValidationDashboard: PageComponent = () => {
         } catch (e) {
             // keep previous data on transient errors
         }
-    }, [graphqlRequestClient, codes]);
+    }, [graphqlRequestClient, codes, canRead]);
 
     // Auto-refresh while the dashboard is open.
     useEffect(() => {
-        if (!codes) return;
+        if (!codes || !canRead) return;
         refresh();
         const id = setInterval(refresh, REFRESH_MS);
         return () => clearInterval(id);
-    }, [codes, refresh]);
+    }, [codes, canRead, refresh]);
 
     const { pending, approved, refused } = useMemo(() => {
         const isToday = (iso?: string) => iso && dayjs(iso).isSame(dayjs(), 'day');
@@ -190,6 +192,16 @@ const GateValidationDashboard: PageComponent = () => {
         { key: 'approved', label: `${t('common:tab-approved')} (${approved.length})` },
         { key: 'refused', label: `${t('common:tab-refused')} (${refused.length})` }
     ];
+
+    if (!canRead) {
+        return (
+            <>
+                <AppHead title={headerData.title} />
+                <HeaderContent title={headerData.title} routes={headerData.routes} />
+                <Result status="403" title={t('messages:access-denied')} />
+            </>
+        );
+    }
 
     return (
         <>
