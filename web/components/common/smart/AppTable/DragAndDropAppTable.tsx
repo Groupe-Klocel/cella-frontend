@@ -23,7 +23,7 @@ import {
     CheckCircleOutlined,
     CloseSquareOutlined
 } from '@ant-design/icons';
-import { TableFilter, WrapperStickyActions, PageTableContentWrapper } from '@components';
+import { AppLink, TableFilter, WrapperStickyActions, PageTableContentWrapper } from '@components';
 import {
     showWarning,
     getKeys,
@@ -35,7 +35,7 @@ import {
     formatUTCLocaleDate,
     isStringDate
 } from '@helpers';
-import { Space, Button, Table, Typography } from 'antd';
+import { Space, Button, Table } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { isString } from 'lodash';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -46,7 +46,6 @@ import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 
 const { Column } = Table;
-const { Link } = Typography;
 
 export interface IDragAndDropAppTableProps {
     // Refactory to strong type
@@ -250,11 +249,10 @@ const DragAndDropAppTable: FC<IDragAndDropAppTableProps> = ({
         //handle case where the suffix is at the end of a chain of characters
         const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
         const link = `${linkObject.link.replace(`/${suffix}`, '')}/${record[recordKey!]}`;
-        const completeLink = `${process.env.NEXT_PUBLIC_WMS_URL}/${
-            router.locale !== 'en-US' ? router.locale + '/' : ''
-        }${link}`;
+        // relative href: client-side navigation, next/link prefixes the locale itself
+        const completeLink = `/${link}`;
         if (linkObject) {
-            return <Link href={completeLink}>{text}</Link>;
+            return <AppLink href={completeLink}>{text}</AppLink>;
         }
         return text;
     };

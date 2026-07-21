@@ -42,15 +42,13 @@ type AppLayoutProps = {
 };
 
 const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) => {
-    const { userSettings, user, permissions, translations, configs, parameters } = useAppState();
+    const { userSettings, user, permissions } = useAppState();
     const { t } = useTranslation();
     const router = useRouter();
     const dispatchUser = useAppDispatch();
-    const [userSettingsLoading, setUserSettingsLoading] = useState<boolean>(false);
-    const [getUserSettingsQuery, setGetUserSettingsQuery] = useState<boolean>(false);
-    const [getTranslationSettingsQuery, setGetTranslationSettingsQuery] = useState<boolean>(false);
-    const [getConfigSettingsQuery, setGetConfigSettingsQuery] = useState<boolean>(false);
-    const [getParameterSettingsQuery, setGetParameterSettingsQuery] = useState<boolean>(false);
+    // true once the app bootstrap data (user settings, translations, configs, parameters)
+    // has been fetched at least once for the logged-in user
+    const [appDataLoaded, setAppDataLoaded] = useState<boolean>(false);
 
     useEffect(() => {
         const scrollableContainer = document.querySelector('.app-content-scroll');
@@ -60,27 +58,30 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [router.asPath]);
 
     useEffect(() => {
-        if (
-            router &&
-            permissions &&
-            authorizationList.filter((item) => item.route === router.pathname).length > 0 &&
-            authorizationList
-                .filter((item) => item.route === router.pathname)
-                .map((item) => {
-                    return permissions?.some(
-                        (permission) =>
-                            permission.table === item.permission && permission.mode === item.mode
-                    );
-                })
-                .filter((item) => item === true).length === 0
-        ) {
+        // Permissions arrive asynchronously (GetMyInfo dispatched by ProtectRoute/LoginForm):
+        // never reject while they are not loaded yet — an undefined or transiently empty list
+        // means "still booting", not "no access".
+        if (!permissions || permissions.length === 0) {
+            return;
+        }
+        const routeRules = authorizationList.filter((item) => item.route === router.pathname);
+        if (routeRules.length === 0) {
+            return;
+        }
+        const isAllowed = routeRules.some((item) =>
+            permissions.some(
+                (permission) => permission.table === item.permission && permission.mode === item.mode
+            )
+        );
+        if (!isAllowed) {
             console.warn(
-                `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`
+                `User does not have permission for ${router.pathname} (${t('errors:APP-000200')})`,
+                { routeRules, permissions }
             );
             showError(t('errors:APP-000200'));
             router.replace('/');
         }
-    }, [router, permissions]);
+    }, [router.pathname, permissions]);
 
     const token = cookie.get('token');
     const requestHeader = {
@@ -122,10 +123,6 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
 
         try {
             let queryInfo: any = await graphqlRequestClient.request(query, variables);
-
-            if (queryInfo.warehouseWorkerSettings.results.length > 0) {
-                setGetUserSettingsQuery(true);
-            }
 
             const containsTestCode = queryInfo.warehouseWorkerSettings.results.some(
                 (item: any) => item.code === 'globalParameters'
@@ -178,7 +175,6 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         } catch (error) {
             console.log('error', error);
             showError('Error while fetching translations');
-            setGetTranslationSettingsQuery(true);
         }
     }, [dispatchUser, user]);
 
@@ -208,7 +204,6 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         } catch (error) {
             console.log('error', error);
             showError('Error while fetching configs');
-            setGetConfigSettingsQuery(true);
         }
     }, [dispatchUser, user]);
 
@@ -238,40 +233,25 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         } catch (error) {
             console.log('error', error);
             showError('Error while fetching parameters');
-            setGetParameterSettingsQuery(true);
         }
     }, [dispatchUser, user]);
 
     useEffect(() => {
         if (user && user?.id && router.pathname !== '/login') {
-            getUserSettings();
-            getTranslations();
-            getConfigs();
-            getParameters();
-        } else {
-            if (router.pathname === '/login') {
-                setUserSettingsLoading(false);
-                setGetUserSettingsQuery(false);
-            }
+            // Each getter dispatches into AppContext and handles its own errors, so a failed
+            // fetch never rejects here and never blocks the app. The flag is not reset on
+            // navigation: the data refreshes in the background, only the first load gates
+            // the rendering.
+            Promise.allSettled([
+                getUserSettings(),
+                getTranslations(),
+                getConfigs(),
+                getParameters()
+            ]).then(() => setAppDataLoaded(true));
+        } else if (router.pathname === '/login') {
+            setAppDataLoaded(false);
         }
     }, [user, router.pathname]);
-
-    useEffect(() => {
-        if (
-            (getTranslationSettingsQuery || translations?.length > 0) &&
-            (getConfigSettingsQuery || configs?.length > 0) &&
-            (getParameterSettingsQuery || parameters?.length > 0)
-        ) {
-            if (
-                (getUserSettingsQuery && userSettings.length >= 1) ||
-                (!getUserSettingsQuery && userSettings.length == 1)
-            ) {
-                setUserSettingsLoading(true);
-            }
-        } else {
-            setUserSettingsLoading(false);
-        }
-    }, [user, translations, configs, parameters, getUserSettingsQuery, userSettings]);
 
     useEffect(() => {
         if (lang) {
@@ -280,7 +260,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     }, [lang]);
 
     if (
-        userSettingsLoading === false &&
+        !appDataLoaded &&
         router.pathname !== '/login' &&
         router.pathname !== '/reset-password' &&
         user?.id != null
