@@ -28,7 +28,8 @@ import {
     WrapperStickyActions,
     PageTableContentWrapper,
     DrawerItems,
-    ContentSpin
+    ContentSpin,
+    AppLink
 } from '@components';
 import {
     showWarning,
@@ -41,7 +42,7 @@ import {
     formatUTCLocaleDate,
     isStringDate
 } from '@helpers';
-import { Space, Button, Table, Typography, Empty } from 'antd';
+import { Space, Button, Table, Empty } from 'antd';
 import { useDrawerDispatch } from 'context/DrawerContext';
 import { debounce, isString, set } from 'lodash';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -53,7 +54,6 @@ import { useAuth } from 'context/AuthContext';
 import React from 'react';
 
 const { Column } = Table;
-const { Link } = Typography;
 
 export interface IAppTableV2Props {
     // Refactory to strong type
@@ -252,11 +252,10 @@ const AppTableV2: FC<IAppTableV2Props> = ({
         //handle case where the suffix is at the end of a chain of characters
         const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
         const link = `${linkObject.link.replace(`/${suffix}`, '')}/${record[recordKey!]}`;
-        const completeLink = `${process.env.NEXT_PUBLIC_WMS_URL}/${
-            router.locale !== 'en-US' ? router.locale + '/' : ''
-        }${link}`;
+        // relative href: client-side navigation, next/link prefixes the locale itself
+        const completeLink = `/${link}`;
         if (linkObject) {
-            return <Link href={completeLink}>{text}</Link>;
+            return <AppLink href={completeLink}>{text}</AppLink>;
         }
         return text;
     };

@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { ContentSpin, DetailsList, HeaderContent } from '@components';
+import { AppLink, ContentSpin, DetailsList, HeaderContent } from '@components';
 import { Alert, Button, Layout, Space, Typography } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useState } from 'react';
@@ -45,7 +45,6 @@ import { gql } from 'graphql-request';
 import { useAppDispatch } from 'context/AppContext';
 import { ReloadOutlined } from '@ant-design/icons';
 
-const { Link } = Typography;
 
 const StyledPageContent = styled(Layout.Content)`
     padding: 15px 40px 15px 15px;
@@ -259,11 +258,10 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
                     const link = `${linkObject?.link?.replace(`/${suffix}`, '')}/${
                         flattenedData[recordKey!]
                     }`;
-                    const completeLink = `${process.env.NEXT_PUBLIC_WMS_URL}/${
-                        router.locale !== 'en-US' ? router.locale + '/' : ''
-                    }${link}`;
+                    // relative href: client-side navigation, next/link prefixes the locale itself
+                    const completeLink = `/${link}`;
                     flattenedData[linkObject.name] = (
-                        <Link href={completeLink}>{flattenedData[linkObject.name]}</Link>
+                        <AppLink href={completeLink}>{flattenedData[linkObject.name]}</AppLink>
                     );
                 });
             }
