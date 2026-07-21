@@ -208,7 +208,8 @@ const SideMenu: FC = () => {
             'wm_return-codes',
             'wm_rules',
             'wm_third-parties',
-            'wm_carriers'
+            'wm_carriers',
+            'wm_custom-objects'
         ].some((perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)) && {
             key: 'configuration',
             icon: <SettingOutlined />,
@@ -427,6 +428,13 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'configuration-carriers',
                           label: <Link href="/carriers">{t('carriers')}</Link>
+                      }
+                    : null,
+                // CUSTOM OBJECTS
+                getModesFromPermissions(permissions, 'wm_custom-objects').includes(ModeEnum.Read)
+                    ? {
+                          key: 'configuration-custom-objects',
+                          label: <Link href="/custom-objects">{t('custom-objects')}</Link>
                       }
                     : null
             ].filter(Boolean)

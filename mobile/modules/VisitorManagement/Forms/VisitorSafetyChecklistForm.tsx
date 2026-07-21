@@ -18,64 +18,43 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-// DESCRIPTION: visitor-entry step 40 - safety documents to read and accept, one
-// set per destination zone. The document images come from the
-// `VISITOR_INFOS_DOCUMENTS` business rule (input: kiosk language + zone), which
-// is executed once per zone. Each zone gets one mandatory acceptance checkbox.
+// DESCRIPTION: visitor-entry step 40 - safety documents to read and accept, one set per destination
+// zone. The `VISITOR_INFOS_DOCUMENTS` business rule (input: kiosk language + allowedZones) is
+// executed once per zone and now returns a flat list of custom-object NAMES; we resolve each name to
+// the `documentAttached` of the matching custom object (category "Truck and visitors documents") and
+// display it (image or PDF). Each zone gets one mandatory acceptance checkbox.
 
 import { WrapperForm, StyledForm, ContentSpin } from '@components';
 import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Alert, Checkbox, Divider, Form, Image, Space, Typography } from 'antd';
+import { Alert, Checkbox, Divider, Form, Space, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import { DocumentViewer, fetchCustomObjectDocuments, parseDocumentNames } from '@CommonRadio';
 import { Visit, VisitorRegistrationData, getZoneLabel, parseAllowedZones } from '../types';
 
 const { Title } = Typography;
 
 const DOCUMENT_RULE = 'VISITOR_INFOS_DOCUMENTS';
 
-// URLs/data-URIs pass through; base64 image content -> data-URI (like the
-// appointments schedule page). MIME inferred from the base64 header.
-const toImageSrc = (src: string): string => {
-    if (!src) return src;
-    if (/^(https?:|data:|blob:)/i.test(src)) return src;
-    const mime = src.startsWith('iVBOR')
-        ? 'image/png'
-        : src.startsWith('R0lGOD')
-          ? 'image/gif'
-          : 'image/jpeg';
-    return `data:${mime};base64,${src}`;
-};
-
-interface DocumentGroup {
-    code: string;
-    images: string[];
-}
-
 interface ZoneDocuments {
     zone: string;
-    groups: DocumentGroup[];
+    // documentAttached data URIs, resolved from the custom-object names returned by the rule
+    documents: string[];
+    // number of names the rule returned for this zone (to detect resolution failures)
+    expectedCount: number;
+    // true when the rule call itself failed for this zone
+    error: boolean;
 }
 
-// executeRule may return the groups array directly, or an object keyed by
-// output name with a `.value` (cf. document_list.value).
-const parseRuleResult = (exec: any): DocumentGroup[] => {
-    let raw: any = Array.isArray(exec)
-        ? exec
-        : (exec?.document_list?.value ?? exec?.documents?.value ?? exec?.value);
-    if (raw == null && exec && typeof exec === 'object') {
-        const first: any = Object.values(exec)[0];
-        raw = first && typeof first === 'object' && 'value' in first ? first.value : first;
-    }
-    // Each element is a group of image references -> normalise to data-URIs.
-    return (Array.isArray(raw) ? raw : []).map((imgs: any, i: number) => ({
-        code: `group${i}`,
-        images: (Array.isArray(imgs) ? imgs : [imgs]).map(toImageSrc)
-    }));
-};
+// Intermediate per-zone rule result (names only), before the shared documents fetch resolves them.
+interface ZoneNames {
+    zone: string;
+    names: string[];
+    error: boolean;
+}
 
 export interface IVisitorSafetyChecklistFormProps {
     processName: string;
@@ -114,7 +93,9 @@ export const VisitorSafetyChecklistForm = ({
     const [loading, setLoading] = useState(true);
     const [checked, setChecked] = useState<Record<string, boolean>>({});
 
-    // Resolve the documents from the business rule, once per zone.
+    // Resolve the document names from the business rule (once per zone — the output can differ per
+    // zone), then fetch the documents ONCE for the union of names so a document shared by several
+    // zones is not re-downloaded (payloads can be large), and map them back per zone.
     useEffect(() => {
         let active = true;
         Promise.all(
@@ -126,21 +107,49 @@ export const VisitorSafetyChecklistForm = ({
                                 executeRule(ruleName: "${DOCUMENT_RULE}", context: $context)
                             }
                         `,
-                        { context: { language, zone } }
+                        // allowedZones is the new rule input: documents can differ per allowed zone
+                        { context: { language, allowedZones: zone } }
                     )
-                    .then((res: any) => ({ zone, groups: parseRuleResult(res?.executeRule) }))
-                    // a zone without a configured document set must not block
-                    // the whole checklist: treat it as "no documents"
-                    .catch(() => ({ zone, groups: [] as DocumentGroup[] }))
+                    .then((res: any) => ({
+                        zone,
+                        names: parseDocumentNames(res?.executeRule),
+                        error: false
+                    }))
+                    // the rule call itself failed for this zone -> flag it so the step blocks
+                    // rather than silently treating the zone as "no documents configured"
+                    .catch(() => ({ zone, names: [] as string[], error: true }))
             )
         )
-            .then((docs: ZoneDocuments[]) => {
+            .then(async (perZone: ZoneNames[]) => {
+                // De-duplicate names across every zone -> a single documents fetch for the union.
+                const nameSet = new Set<string>();
+                perZone.forEach((z) => z.names.forEach((n) => nameSet.add(n)));
+                let byName = new Map<string, string>();
+                let fetchFailed = false;
+                try {
+                    const docs = await fetchCustomObjectDocuments(
+                        graphqlRequestClient,
+                        state.parameters,
+                        Array.from(nameSet)
+                    );
+                    byName = new Map(docs.map((d) => [d.name, d.documentAttached]));
+                } catch {
+                    // the shared documents fetch failed -> block every zone that expected documents
+                    fetchFailed = true;
+                }
+                // Map each zone's names back to the shared documents, preserving order.
+                const resolved: ZoneDocuments[] = perZone.map((z) => ({
+                    zone: z.zone,
+                    documents: z.names.map((n) => byName.get(n)).filter((d): d is string => !!d),
+                    expectedCount: z.names.length,
+                    error: z.error || (fetchFailed && z.names.length > 0)
+                }));
                 if (!active) return;
-                setZoneDocs(docs);
+                setZoneDocs(resolved);
                 // Re-entry: documents were already accepted -> pre-tick them.
                 if (alreadyAccepted) {
                     const all: Record<string, boolean> = {};
-                    docs.forEach((d) => (all[d.zone] = true));
+                    resolved.forEach((d) => (all[d.zone] = true));
                     setChecked(all);
                 }
             })
@@ -153,17 +162,23 @@ export const VisitorSafetyChecklistForm = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Only zones that actually have documents require an acceptance: when no
-    // document set is configured, the step must not block the check-in.
-    const zonesWithDocs = zoneDocs.filter((d) => d.groups.some((g) => g.images.length > 0));
+    // Zones with resolved documents require an acceptance.
+    const zonesWithDocs = zoneDocs.filter((d) => d.documents.length > 0);
+    // Zones where documents were expected (or the rule call failed) but not all resolved: block
+    // with an error so a mandatory safety document is never silently skipped.
+    const zonesFailed = zoneDocs.filter((d) => d.error || d.expectedCount > d.documents.length);
     const acceptedCount = zonesWithDocs.filter((d) => checked[d.zone]).length;
-    const complete = acceptedCount === zonesWithDocs.length;
+    const complete = zonesFailed.length === 0 && acceptedCount === zonesWithDocs.length;
 
     const toggle = (zone: string) => setChecked((prev) => ({ ...prev, [zone]: !prev[zone] }));
 
     const onFinish = () => {
         if (!complete) {
-            showError(t('common:must-confirm-all'));
+            showError(
+                zonesFailed.length > 0
+                    ? t('common:safety-documents-load-error')
+                    : t('common:must-confirm-all')
+            );
             return;
         }
         dispatch({
@@ -173,7 +188,7 @@ export const VisitorSafetyChecklistForm = ({
             object: {
                 previousStep: storedObject.currentStep,
                 // Store only metadata (zones + language + acceptance) — NOT the
-                // document images. The web re-fetches them from the rule.
+                // documents. The web re-fetches them from the rule + custom objects.
                 data: { zones, language, accepted: true }
             },
             customFields: [{ key: 'currentStep', value: 50 }]
@@ -207,26 +222,7 @@ export const VisitorSafetyChecklistForm = ({
                                 {t('common:zone')}:{' '}
                                 {getZoneLabel(d.zone, state.parameters, language)}
                             </Title>
-                            <Image.PreviewGroup>
-                                {d.groups.map((g) =>
-                                    g.images.map((img, idx) => (
-                                        <div
-                                            key={`${g.code}-${idx}`}
-                                            style={{
-                                                width: '100%',
-                                                textAlign: 'center',
-                                                marginBottom: 8
-                                            }}
-                                        >
-                                            <Image
-                                                src={img}
-                                                width="80%"
-                                                style={{ borderRadius: 4 }}
-                                            />
-                                        </div>
-                                    ))
-                                )}
-                            </Image.PreviewGroup>
+                            <DocumentViewer documents={d.documents} />
                             <Checkbox
                                 checked={!!checked[d.zone]}
                                 onChange={() => toggle(d.zone)}
@@ -238,9 +234,27 @@ export const VisitorSafetyChecklistForm = ({
                             </Checkbox>
                         </div>
                     ))}
+                    {zonesFailed.map((d) => (
+                        <Alert
+                            key={`failed-${d.zone}`}
+                            type="error"
+                            showIcon
+                            message={`${t('common:zone')}: ${getZoneLabel(
+                                d.zone,
+                                state.parameters,
+                                language
+                            )} — ${t('common:safety-documents-load-error')}`}
+                        />
+                    ))}
                 </Space>
                 <Divider />
-                {zonesWithDocs.length === 0 ? (
+                {zonesFailed.length > 0 ? (
+                    <Alert
+                        type="error"
+                        showIcon
+                        message={t('common:safety-documents-load-error')}
+                    />
+                ) : zonesWithDocs.length === 0 ? (
                     <Alert type="info" showIcon message={t('common:no-safety-documents')} />
                 ) : (
                     <Alert

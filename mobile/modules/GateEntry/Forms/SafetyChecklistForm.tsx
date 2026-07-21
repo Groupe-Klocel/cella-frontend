@@ -18,39 +18,23 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-// DESCRIPTION: gate-entry step 40 - documents to read and accept. The document
-// images come from the `TRUCK_DRIVER_INFOS_DOCUMENTS` business rule (input: the
-// kiosk language). Each group of images gets one "I have read and accept ..."
-// checkbox underneath; all groups are mandatory.
+// DESCRIPTION: gate-entry step 40 - documents to read and accept. The
+// `TRUCK_DRIVER_INFOS_DOCUMENTS` business rule (input: the kiosk language) now returns a flat list
+// of custom-object NAMES; we resolve each name to the `documentAttached` of the matching custom
+// object (category "Truck and visitors documents") and display it (image or PDF). A single
+// "I have read and accept ..." checkbox gates the step.
 
 import { WrapperForm, StyledForm, ContentSpin } from '@components';
 import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Alert, Checkbox, Divider, Form, Image, Space } from 'antd';
+import { Alert, Checkbox, Divider, Form } from 'antd';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import { DocumentViewer, fetchCustomObjectDocuments, parseDocumentNames } from '@CommonRadio';
 
 const DOCUMENT_RULE = 'TRUCK_DRIVER_INFOS_DOCUMENTS';
-
-// URLs/data-URIs pass through; base64 image content -> data-URI (like the
-// appointments schedule page). MIME inferred from the base64 header.
-const toImageSrc = (src: string): string => {
-    if (!src) return src;
-    if (/^(https?:|data:|blob:)/i.test(src)) return src;
-    const mime = src.startsWith('iVBOR')
-        ? 'image/png'
-        : src.startsWith('R0lGOD')
-          ? 'image/gif'
-          : 'image/jpeg';
-    return `data:${mime};base64,${src}`;
-};
-
-interface DocumentGroup {
-    code: string;
-    images: string[];
-}
 
 export interface ISafetyChecklistFormProps {
     processName: string;
@@ -76,11 +60,14 @@ export const SafetyChecklistForm = ({
     const alreadyAccepted = appointment?.extras?.safetyChecklist?.accepted === true;
 
     const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
-    const [groups, setGroups] = useState<DocumentGroup[]>([]);
+    // documentAttached data URIs, resolved from the custom-object names returned by the rule
+    const [documents, setDocuments] = useState<string[]>([]);
+    // number of document names the rule returned; used to detect resolution failures
+    const [expectedCount, setExpectedCount] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [checked, setChecked] = useState<Record<string, boolean>>({});
+    const [accepted, setAccepted] = useState(false);
 
-    // Resolve the documents from the business rule for the chosen language.
+    // Resolve the document names from the business rule, then fetch each custom object's document.
     useEffect(() => {
         let active = true;
         graphqlRequestClient
@@ -92,35 +79,18 @@ export const SafetyChecklistForm = ({
                 `,
                 { context: { language } }
             )
-            .then((res: any) => {
-                if (!active) return;
-                // executeRule may return the groups array directly, or an object
-                // keyed by output name with a `.value` (cf. document_list.value).
-                const exec = res?.executeRule;
-                let raw: any = Array.isArray(exec)
-                    ? exec
-                    : (exec?.document_list?.value ?? exec?.documents?.value ?? exec?.value);
-                if (raw == null && exec && typeof exec === 'object') {
-                    const first: any = Object.values(exec)[0];
-                    raw =
-                        first && typeof first === 'object' && 'value' in first
-                            ? first.value
-                            : first;
-                }
-                // Each element is a group of image references -> normalise to data-URIs.
-                const parsed: DocumentGroup[] = (Array.isArray(raw) ? raw : []).map(
-                    (imgs: any, i: number) => ({
-                        code: `group${i}`,
-                        images: (Array.isArray(imgs) ? imgs : [imgs]).map(toImageSrc)
-                    })
+            .then(async (res: any) => {
+                const names = parseDocumentNames(res?.executeRule);
+                const docs = await fetchCustomObjectDocuments(
+                    graphqlRequestClient,
+                    state.parameters,
+                    names
                 );
-                setGroups(parsed);
-                // Re-entry: documents were already accepted -> pre-tick them.
-                if (alreadyAccepted) {
-                    const all: Record<string, boolean> = {};
-                    parsed.forEach((g) => (all[g.code] = true));
-                    setChecked(all);
-                }
+                if (!active) return;
+                setExpectedCount(names.length);
+                setDocuments(docs.map((d) => d.documentAttached));
+                // Re-entry: documents were already accepted -> pre-tick.
+                if (alreadyAccepted) setAccepted(true);
             })
             .catch(() => {
                 if (active) showError(t('common:generic-error'));
@@ -134,14 +104,19 @@ export const SafetyChecklistForm = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const acceptedCount = groups.filter((g) => checked[g.code]).length;
-    const complete = groups.length > 0 && acceptedCount === groups.length;
-
-    const toggle = (code: string) => setChecked((prev) => ({ ...prev, [code]: !prev[code] }));
+    // Distinguish "no documents configured" (rule returned no names -> may proceed) from
+    // "documents expected but not all resolved" (missing category/param, name typo, missing
+    // documentAttached) -> block with an error so a mandatory safety document is never skipped.
+    const missingDocuments = expectedCount > documents.length;
+    const complete = !missingDocuments && (expectedCount === 0 || accepted);
 
     const onFinish = () => {
         if (!complete) {
-            showError(t('common:must-confirm-all'));
+            showError(
+                missingDocuments
+                    ? t('common:safety-documents-load-error')
+                    : t('common:must-confirm-all')
+            );
             return;
         }
         dispatch({
@@ -151,7 +126,7 @@ export const SafetyChecklistForm = ({
             object: {
                 previousStep: storedObject.currentStep,
                 // Store only metadata (rule + language + acceptance) — NOT the
-                // document images. The web re-fetches them from the rule.
+                // documents. The web re-fetches them from the rule + custom objects.
                 data: {
                     documentRule: DOCUMENT_RULE,
                     language,
@@ -175,55 +150,44 @@ export const SafetyChecklistForm = ({
                 style={{ marginBottom: 12 }}
             />
             <StyledForm name="gate-checklist" form={form} onFinish={onFinish}>
-                <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                    {groups.map((g) => (
-                        <div
-                            key={g.code}
-                            style={{
-                                border: '1px solid #f0f0f0',
-                                borderRadius: 5,
-                                padding: 12
-                            }}
+                {documents.length > 0 ? (
+                    <div
+                        style={{
+                            border: '1px solid #f0f0f0',
+                            borderRadius: 5,
+                            padding: 12
+                        }}
+                    >
+                        <DocumentViewer documents={documents} />
+                        <Checkbox
+                            checked={accepted}
+                            onChange={() => setAccepted((prev) => !prev)}
+                            style={{ display: 'flex', alignItems: 'flex-start', marginTop: 10 }}
                         >
-                            <Image.PreviewGroup>
-                                {g.images.map((img, idx) => (
-                                    <div
-                                        key={idx}
-                                        style={{
-                                            width: '100%',
-                                            textAlign: 'center',
-                                            marginBottom: 8
-                                        }}
-                                    >
-                                        <Image src={img} width="80%" style={{ borderRadius: 4 }} />
-                                    </div>
-                                ))}
-                            </Image.PreviewGroup>
-                            <Checkbox
-                                checked={!!checked[g.code]}
-                                onChange={() => toggle(g.code)}
-                                style={{ display: 'flex', alignItems: 'flex-start', marginTop: 10 }}
-                            >
-                                <span style={{ fontSize: 15, lineHeight: 1.4 }}>
-                                    {t('common:read-and-accept-docs')}
-                                </span>
-                            </Checkbox>
-                        </div>
-                    ))}
-                </Space>
+                            <span style={{ fontSize: 15, lineHeight: 1.4 }}>
+                                {t('common:read-and-accept-docs')}
+                            </span>
+                        </Checkbox>
+                    </div>
+                ) : null}
                 <Divider />
-                <Alert
-                    type={complete ? 'success' : 'warning'}
-                    showIcon
-                    message={
-                        complete
-                            ? t('common:all-confirmed')
-                            : t('common:count-confirmed', {
-                                  y: acceptedCount,
-                                  total: groups.length
-                              })
-                    }
-                />
+                {missingDocuments ? (
+                    <Alert
+                        type="error"
+                        showIcon
+                        message={t('common:safety-documents-load-error')}
+                    />
+                ) : documents.length === 0 ? (
+                    <Alert type="info" showIcon message={t('common:no-safety-documents')} />
+                ) : (
+                    <Alert
+                        type={complete ? 'success' : 'warning'}
+                        showIcon
+                        message={
+                            complete ? t('common:all-confirmed') : t('common:must-confirm-all')
+                        }
+                    />
+                )}
             </StyledForm>
         </WrapperForm>
     );
