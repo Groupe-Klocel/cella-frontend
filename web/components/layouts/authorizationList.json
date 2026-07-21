@@ -970,6 +970,41 @@
         "mode": "read"
     },
     {
+        "route": "/custom-objects/line/[id]",
+        "permission": "wm_custom-objects",
+        "mode": "read"
+    },
+    {
+        "route": "/custom-objects/line/add",
+        "permission": "wm_custom-objects",
+        "mode": "create"
+    },
+    {
+        "route": "/custom-objects/line/edit/[id]",
+        "permission": "wm_custom-objects",
+        "mode": "update"
+    },
+    {
+        "route": "/custom-objects/[id]",
+        "permission": "wm_custom-objects",
+        "mode": "read"
+    },
+    {
+        "route": "/custom-objects/add",
+        "permission": "wm_custom-objects",
+        "mode": "create"
+    },
+    {
+        "route": "/custom-objects/edit/[id]",
+        "permission": "wm_custom-objects",
+        "mode": "update"
+    },
+    {
+        "route": "/custom-objects",
+        "permission": "wm_custom-objects",
+        "mode": "read"
+    },
+    {
         "route": "/manual-recubing",
         "permission": "wm_manual-recubing",
         "mode": "read"
