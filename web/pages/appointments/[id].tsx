@@ -425,9 +425,13 @@ const AppointmentPage: PageComponent = () => {
                                                 ruleResult?.executeRule?.document_list?.value
                                             );
                                             setDocumentAttachmentsData(
-                                                attachmentsResult?.documentAttachments?.results ?? []
+                                                attachmentsResult?.documentAttachments?.results ??
+                                                    []
                                             );
-                                            setIdToPrint(loadId);
+                                            // the appointment document must be generated from the
+                                            // appointment id as its context (not the load id); the
+                                            // load is only used to gather its document attachments
+                                            setIdToPrint(id as string);
                                             setShowSinglePrintModal(true);
                                         } else {
                                             showError(t('messages:no-load-to-print'));
