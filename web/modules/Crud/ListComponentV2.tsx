@@ -34,7 +34,8 @@ import {
     DrawerItems,
     PageTableContentWrapper,
     WrapperStickyActions,
-    StyledTooltip
+    StyledTooltip,
+    AppLink
 } from '@components';
 import { useExportData } from './listComponentSubModule/export';
 import { useListRequests } from './listComponentSubModule/requests';
@@ -49,7 +50,6 @@ import {
     Tag,
     Spin,
     Table,
-    Typography,
     Input
 } from 'antd';
 import { isNumeric, useTranslationWithFallback as useTranslation } from '@helpers';
@@ -188,7 +188,6 @@ interface DataType {
 }
 
 const { Column } = Table;
-const { Link } = Typography;
 
 const ListComponent = (props: IListProps) => {
     const { permissions } = useAppState();
@@ -839,21 +838,20 @@ const ListComponent = (props: IListProps) => {
             //handle case where the suffix is at the end of a chain of characters
             const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
             const link = `${linkObject.link.replace(`/${suffix}`, '')}/${record[recordKey!]}`;
-            const completeLink = `${process.env.NEXT_PUBLIC_WMS_URL}/${
-                router.locale !== 'en-US' ? router.locale + '/' : ''
-            }${link}`;
+            // relative href: client-side navigation, next/link prefixes the locale itself
+            const completeLink = `/${link}`;
 
             // Return link with or without highlight tag
             if (shouldHighlight) {
                 return (
-                    <Link href={completeLink}>
+                    <AppLink href={completeLink}>
                         <StyledTooltip title={tooltipText}>
                             <Tag color="red">{text}</Tag>
                         </StyledTooltip>
-                    </Link>
+                    </AppLink>
                 );
             } else {
-                return <Link href={completeLink}>{text}</Link>;
+                return <AppLink href={completeLink}>{text}</AppLink>;
             }
         }
 

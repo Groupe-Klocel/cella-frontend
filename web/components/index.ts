@@ -19,6 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 export * from './common/dumb/AppContent/AppContent';
 export * from './common/dumb/Buttons/LinkButton';
+export * from './common/dumb/Links/AppLink';
 export * from './common/dumb/Forms/Forms';
 export * from './common/dumb/GlobalBreadcrumb/GlobalBreadcrumb';
 export * from './common/dumb/Logo/Logo';
