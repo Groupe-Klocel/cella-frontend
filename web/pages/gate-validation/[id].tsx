@@ -26,9 +26,13 @@ import {
     PageTableContentWrapper
 } from '@components';
 import {
+    fetchCustomObjectDocuments,
     getModesFromPermissions,
+    isPdfDocument,
+    parseDocumentNames,
     showError,
     showSuccess,
+    toDocumentSrc,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
@@ -60,19 +64,6 @@ type PageComponent = FC & { layout: typeof MainLayout };
 const rootPath = '/gate-validation';
 const DOCUMENT_RULE = 'TRUCK_DRIVER_INFOS_DOCUMENTS';
 
-// URLs/data-URIs pass through; base64 image content -> data-URI (like the
-// appointments schedule page). MIME inferred from the base64 header.
-const resolveImage = (src: string): string => {
-    if (!src) return src;
-    if (/^(https?:|data:|blob:)/i.test(src)) return src;
-    const mime = src.startsWith('iVBOR')
-        ? 'image/png'
-        : src.startsWith('R0lGOD')
-          ? 'image/gif'
-          : 'image/jpeg';
-    return `data:${mime};base64,${src}`;
-};
-
 const UPDATE_MUTATION = gql`
     mutation updateGateAppointment($id: String!, $input: UpdateAppointmentInput!) {
         updateAppointment(id: $id, input: $input) {
@@ -92,7 +83,7 @@ const GateValidationDetail: PageComponent = () => {
     const tz =
         (Array.isArray(timezoneQuery) ? timezoneQuery[0] : timezoneQuery) || dayjs.tz.guess();
     const { graphqlRequestClient } = useAuth();
-    const { permissions, configs } = useAppState();
+    const { permissions, configs, parameters } = useAppState();
     const modes = getModesFromPermissions(permissions, 'wm_appointments-gate-validation');
     // fail closed: menu gating alone doesn't stop a direct URL hit — never fetch without READ.
     const canRead = modes.includes(ModeEnum.Read);
@@ -126,7 +117,8 @@ const GateValidationDetail: PageComponent = () => {
     // Dock category code (location_category = "Dock"), used to list re-assignable docks.
     const dockCategory = useMemo(() => {
         const c = configs?.find(
-            (x: any) => x.scope === 'location_category' && /dock|quai|rampe|ramp/i.test(x.value ?? '')
+            (x: any) =>
+                x.scope === 'location_category' && /dock|quai|rampe|ramp/i.test(x.value ?? '')
         )?.code;
         return c != null ? parseInt(c, 10) : undefined;
     }, [configs]);
@@ -202,6 +194,8 @@ const GateValidationDetail: PageComponent = () => {
     const documentsAccepted = checklistMeta?.accepted === true;
     const [docGroups, setDocGroups] = useState<string[][]>([]);
 
+    // The rule returns custom-object NAMES; resolve them to the documentAttached of the
+    // matching "Truck and visitors documents" custom objects (same contract as the kiosk).
     useEffect(() => {
         let active = true;
         // The rule expects locales like fr-FR / en-US (lang lowercase, region
@@ -220,24 +214,15 @@ const GateValidationDetail: PageComponent = () => {
                 `,
                 { context: { language } }
             )
-            .then((res: any) => {
-                if (!active) return;
-                const exec = res?.executeRule;
-                let raw: any = Array.isArray(exec)
-                    ? exec
-                    : (exec?.document_list?.value ?? exec?.documents?.value ?? exec?.value);
-                if (raw == null && exec && typeof exec === 'object') {
-                    const first: any = Object.values(exec)[0];
-                    raw =
-                        first && typeof first === 'object' && 'value' in first
-                            ? first.value
-                            : first;
-                }
-                setDocGroups(
-                    (Array.isArray(raw) ? raw : []).map((imgs: any) =>
-                        (Array.isArray(imgs) ? imgs : [imgs]).map(resolveImage)
-                    )
+            .then(async (res: any) => {
+                const names = parseDocumentNames(res?.executeRule);
+                const docs = await fetchCustomObjectDocuments(
+                    graphqlRequestClient,
+                    parameters,
+                    names
                 );
+                if (!active) return;
+                setDocGroups(docs.length > 0 ? [docs.map((d) => d.documentAttached)] : []);
             })
             .catch(() => undefined);
         return () => {
@@ -456,14 +441,29 @@ const GateValidationDetail: PageComponent = () => {
                                 {docGroups.map((images, i) => (
                                     <Image.PreviewGroup key={i}>
                                         <Space wrap size="small">
-                                            {images.map((img, idx) => (
-                                                <Image
-                                                    key={idx}
-                                                    src={img}
-                                                    width={120}
-                                                    style={{ borderRadius: 4 }}
-                                                />
-                                            ))}
+                                            {images.map((img, idx) => {
+                                                const src = toDocumentSrc(img);
+                                                return isPdfDocument(src) ? (
+                                                    <iframe
+                                                        key={idx}
+                                                        src={src}
+                                                        title={`document-${i}-${idx}`}
+                                                        style={{
+                                                            width: 320,
+                                                            height: 240,
+                                                            border: '1px solid #f0f0f0',
+                                                            borderRadius: 4
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Image
+                                                        key={idx}
+                                                        src={src}
+                                                        width={120}
+                                                        style={{ borderRadius: 4 }}
+                                                    />
+                                                );
+                                            })}
                                         </Space>
                                     </Image.PreviewGroup>
                                 ))}
@@ -507,8 +507,7 @@ const GateValidationDetail: PageComponent = () => {
             >
                 <div style={{ marginBottom: 8 }}>
                     <div style={{ marginBottom: 4 }}>
-                        <strong>{t('common:planned-dock')}:</strong>{' '}
-                        {entry?.locationName ?? '-'}
+                        <strong>{t('common:planned-dock')}:</strong> {entry?.locationName ?? '-'}
                     </div>
                     <Select
                         allowClear

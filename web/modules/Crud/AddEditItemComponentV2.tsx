@@ -142,7 +142,7 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
     const [changedFormValues, setChangedFormValues] = useState<any>();
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [form] = Form.useForm();
-    const [imageData, setImageData] = useState<string | null>(null);
+    const [imageData, setImageData] = useState<{ [field: string]: string } | null>(null);
     const [dataInitialized, setDataInitialized] = useState<boolean>(false);
 
     // #region extract data from modelV2
@@ -273,8 +273,8 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
                 ) {
                     tmp_details[key] = dayjs(setUTCDateTime(tmp_details[key]));
                 }
-                if (key === 'logo') {
-                    setImageData(tmp_details[key]);
+                if (props.dataModel.fieldsInfo[key]?.addEditFormat === 'File') {
+                    setImageData((prev) => ({ ...prev, [key]: tmp_details[key] }));
                 }
             });
 

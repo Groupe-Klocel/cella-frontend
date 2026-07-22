@@ -35,7 +35,7 @@ export interface IAddDocumentsModalProps {
         showAddDocumentModal: boolean;
         setShowAddDocumentModal: (value: boolean) => void;
     };
-    objectType: 'Load' | 'Delivery' | 'PurchaseOrder' | 'Appointment';
+    objectType: 'Load' | 'Delivery' | 'PurchaseOrder' | 'Appointment' | 'ThirdParty';
     objectData: any;
     refetch: () => void;
 }
