@@ -18,15 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-import { LinkButton } from '@components';
+import { LinkButton, SinglePrintDocumentSetModal } from '@components';
 import {
     DeleteOutlined,
     DownloadOutlined,
     EditTwoTone,
     EyeTwoTone,
-    LockTwoTone
+    LockTwoTone,
+    PrinterOutlined
 } from '@ant-design/icons';
 import {
+    findCodeByScopeAndValue,
     getModesFromPermissions,
     pathParamsFromDictionary,
     showError,
@@ -34,6 +36,8 @@ import {
     StatusHistoryDetailExtraModelV2,
     isCarrierAppointmentUser
 } from '@helpers';
+import 'moment/min/locales';
+import moment from 'moment';
 import { DocumentAttachmentModelV2 } from 'models/DocumentAttachmentModelV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Descriptions, Divider, Modal, Space } from 'antd';
@@ -56,6 +60,7 @@ export interface IItemDetailsProps {
     carrierId?: string | any;
     status?: string | any;
     content?: any;
+    printLanguage?: string | any;
     setDocumentAttachmentsData?: any;
 }
 
@@ -67,6 +72,7 @@ const AppointmentDetailsExtra = ({
     carrierId,
     status,
     content,
+    printLanguage,
     setDocumentAttachmentsData
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
@@ -84,6 +90,191 @@ const AppointmentDetailsExtra = ({
         newOrder: null as number | null
     });
     const [appointmentLinedata, setAppointmentLineData] = useState<any[]>([]);
+    const loadModes = getModesFromPermissions(permissions, Table.Load);
+    const [showLinePrintModal, setShowLinePrintModal] = useState(false);
+    const [linePrintLoadId, setLinePrintLoadId] = useState<string>();
+    const [linePrintReference, setLinePrintReference] = useState<string>();
+    const [lineLoadDocuments, setLineLoadDocuments] = useState<any>();
+    const [lineDocumentAttachments, setLineDocumentAttachments] = useState<any>();
+    // "print all loads" flow: one shared selection pop-up (union of the loads' document lists),
+    // then one generateDocuments call per load so each keeps its own reference and attachments
+    const [showPrintAllLoadsModal, setShowPrintAllLoadsModal] = useState(false);
+    const [allLoadsDocuments, setAllLoadsDocuments] = useState<any>();
+    const [allLoadsAttachments, setAllLoadsAttachments] = useState<any>();
+    const [multiplePrintTargets, setMultiplePrintTargets] = useState<any[]>([]);
+
+    //retrieve client's date for printing
+    const local = moment();
+    local.locale();
+    const dateLocal = local.format('l') + ', ' + local.format('LT');
+    const statusDispatched = parseInt(
+        findCodeByScopeAndValue(configs, 'delivery_status', 'Dispatched')
+    );
+
+    // the line row only carries loadId/load_name: resolve the load's extras first, then run
+    // the DOCUMENT_LIST rule with the same context as the loads list print (loads/index.tsx)
+    const fetchLoadDocumentsList = async (loadId: string) => {
+        const loadQuery = gql`
+            query loads($filters: LoadSearchFilters) {
+                loads(filters: $filters, page: 1, itemsPerPage: 1) {
+                    results {
+                        id
+                        name
+                        extras
+                    }
+                }
+            }
+        `;
+        const documentAttachmentsQuery = gql`
+            query documentAttachments($filters: DocumentAttachmentSearchFilters) {
+                documentAttachments(filters: $filters) {
+                    results {
+                        id
+                        name
+                        description
+                    }
+                }
+            }
+        `;
+        const ruleQuery = gql`
+            query executeRule($context: JSON!) {
+                executeRule(ruleName: "DOCUMENT_LIST", context: $context)
+            }
+        `;
+        const [loadResult, documentAttachmentsResult] = await Promise.all([
+            graphqlRequestClient.request(loadQuery, { filters: { id: [loadId] } }),
+            graphqlRequestClient.request(documentAttachmentsQuery, {
+                filters: { objectId: loadId }
+            })
+        ]);
+        const extras = loadResult?.loads?.results?.[0]?.extras;
+        const ruleResult = await graphqlRequestClient.request(ruleQuery, {
+            context: {
+                object_name: 'load',
+                stock_owner: extras?.stockOwnerName ?? undefined,
+                shipping_type: extras?.shippingType ?? undefined,
+                carrier: extras?.carrierName ?? undefined,
+                delivery_po_type: extras?.deliveryType ?? undefined,
+                delivery_customer_code: extras?.thirdPartyCode,
+                dangerous: extras?.dangereux ?? undefined
+            }
+        });
+        setLineLoadDocuments(ruleResult?.executeRule?.document_list?.value);
+        setLineDocumentAttachments(documentAttachmentsResult?.documentAttachments?.results ?? []);
+    };
+
+    const printAllLoads = async () => {
+        try {
+            // the lines are already loaded by the list component below (setData)
+            const loadIds: string[] = Array.from(
+                new Set<string>(
+                    (appointmentLinedata ?? []).map((l: any) => l.loadId).filter(Boolean)
+                )
+            );
+            if (loadIds.length === 0) {
+                showError(t('messages:no-load-to-print'));
+                return;
+            }
+            const loadsRes = await graphqlRequestClient.request(
+                gql`
+                    query loads($filters: LoadSearchFilters, $itemsPerPage: Int!) {
+                        loads(filters: $filters, page: 1, itemsPerPage: $itemsPerPage) {
+                            results {
+                                id
+                                name
+                                extras
+                            }
+                        }
+                    }
+                `,
+                { filters: { id: loadIds }, itemsPerPage: loadIds.length }
+            );
+            const loads = loadsRes?.loads?.results ?? [];
+            // per load (failure-tolerant): its DOCUMENT_LIST rule result + its attachments
+            const perLoad = await Promise.all(
+                loads.map(async (load: any) => {
+                    try {
+                        const [ruleResult, attachmentsResult] = await Promise.all([
+                            graphqlRequestClient.request(
+                                gql`
+                                    query executeRule($context: JSON!) {
+                                        executeRule(ruleName: "DOCUMENT_LIST", context: $context)
+                                    }
+                                `,
+                                {
+                                    context: {
+                                        object_name: 'load',
+                                        stock_owner: load.extras?.stockOwnerName ?? undefined,
+                                        shipping_type: load.extras?.shippingType ?? undefined,
+                                        carrier: load.extras?.carrierName ?? undefined,
+                                        delivery_po_type: load.extras?.deliveryType ?? undefined,
+                                        delivery_customer_code: load.extras?.thirdPartyCode,
+                                        dangerous: load.extras?.dangereux ?? undefined
+                                    }
+                                }
+                            ),
+                            graphqlRequestClient.request(
+                                gql`
+                                    query documentAttachments(
+                                        $filters: DocumentAttachmentSearchFilters
+                                    ) {
+                                        documentAttachments(filters: $filters) {
+                                            results {
+                                                id
+                                                name
+                                                description
+                                            }
+                                        }
+                                    }
+                                `,
+                                { filters: { objectId: load.id } }
+                            )
+                        ]);
+                        return {
+                            load,
+                            docList: ruleResult?.executeRule?.document_list?.value ?? [],
+                            attachments:
+                                attachmentsResult?.documentAttachments?.results ?? []
+                        };
+                    } catch (e) {
+                        console.error(e);
+                        return { load, docList: [], attachments: [] };
+                    }
+                })
+            );
+            // union of the documents lists, deduped by name
+            const unionDocs = Object.values(
+                Object.fromEntries(
+                    perLoad.flatMap((p: any) => p.docList).map((d: any) => [d.name, d])
+                )
+            );
+            // attachments are load-specific: concatenate, disambiguate the label with the load name
+            const unionAttachments = perLoad.flatMap((p: any) =>
+                p.attachments.map((a: any) => ({
+                    ...a,
+                    name: `${a.name ?? a.description} (${p.load.name})`
+                }))
+            );
+            if (unionDocs.length === 0 && unionAttachments.length === 0) {
+                showError(t('messages:error-print-data'));
+                return;
+            }
+            setMultiplePrintTargets(
+                perLoad.map((p: any) => ({
+                    context: { id: p.load.id, date: dateLocal, statusDispatched },
+                    reference: p.load.name,
+                    documentNames: p.docList.map((d: any) => d.name),
+                    attachmentIds: p.attachments.map((a: any) => a.id)
+                }))
+            );
+            setAllLoadsDocuments(unionDocs);
+            setAllLoadsAttachments(unionAttachments);
+            setShowPrintAllLoadsModal(true);
+        } catch (e) {
+            console.error(e);
+            showError(t('messages:error-fetching-data'));
+        }
+    };
 
     const configsParamsCodes = useMemo(() => {
         const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => {
@@ -134,23 +325,38 @@ const AppointmentDetailsExtra = ({
     const appointmentLineHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:appointment-lines') }),
         routes: [],
-        actionsComponent:
-            !isCarrier &&
-            appointmentLineModes.length > 0 &&
-            appointmentLineModes.includes(ModeEnum.Create) &&
-            status < configsParamsCodes.appointmentStatusConfirmed ? (
-                <LinkButton
-                    title={t('actions:add2', { name: t('common:appointment-line') })}
-                    path={pathParamsFromDictionary('/appointments/line/add', {
-                        appointmentId: appointmentId,
-                        appointmentName: appointmentName,
-                        appointmentType: appointmentType,
-                        stockOwnerId: stockOwnerId,
-                        carrierId: carrierId
-                    })}
-                    type="primary"
-                />
-            ) : null
+        actionsComponent: (
+            <Space>
+                {!isCarrier &&
+                appointmentLineModes.length > 0 &&
+                appointmentLineModes.includes(ModeEnum.Create) &&
+                status < configsParamsCodes.appointmentStatusConfirmed ? (
+                    <LinkButton
+                        title={t('actions:add2', { name: t('common:appointment-line') })}
+                        path={pathParamsFromDictionary('/appointments/line/add', {
+                            appointmentId: appointmentId,
+                            appointmentName: appointmentName,
+                            appointmentType: appointmentType,
+                            stockOwnerId: stockOwnerId,
+                            carrierId: carrierId
+                        })}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
+                {!isCarrier &&
+                loadModes.length > 0 &&
+                loadModes.includes(ModeEnum.Update) &&
+                status >= configsParamsCodes.appointmentStatusConfirmed ? (
+                    <Button type="primary" onClick={printAllLoads}>
+                        {t('actions:print-load-documents')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
+            </Space>
+        )
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -308,7 +514,11 @@ const AppointmentDetailsExtra = ({
                             {
                                 title: 'actions:actions',
                                 key: 'actions',
-                                render: (value: any, record: { id: string }, index: number) => (
+                                render: (
+                                    value: any,
+                                    record: { id: string; loadId?: string; load_name?: string },
+                                    index: number
+                                ) => (
                                     <Space>
                                         {isCarrier ||
                                         appointmentLineModes.length == 0 ||
@@ -383,6 +593,33 @@ const AppointmentDetailsExtra = ({
                                         ) : (
                                             <></>
                                         )}
+                                        {record.loadId &&
+                                        !isCarrier &&
+                                        loadModes.length > 0 &&
+                                        loadModes.includes(ModeEnum.Update) ? (
+                                            <Button
+                                                icon={<PrinterOutlined />}
+                                                onClick={async () => {
+                                                    setShowLinePrintModal(true);
+                                                    setLinePrintLoadId(record.loadId);
+                                                    setLinePrintReference(record.load_name);
+                                                    setLineLoadDocuments(undefined);
+                                                    setLineDocumentAttachments(undefined);
+                                                    try {
+                                                        await fetchLoadDocumentsList(
+                                                            record.loadId!
+                                                        );
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                        showError(
+                                                            t('messages:error-fetching-data')
+                                                        );
+                                                    }
+                                                }}
+                                            />
+                                        ) : (
+                                            <></>
+                                        )}
                                     </Space>
                                 )
                             }
@@ -444,6 +681,33 @@ const AppointmentDetailsExtra = ({
             ) : (
                 <></>
             )}
+            <SinglePrintDocumentSetModal
+                showModal={{
+                    showSinglePrintModal: showLinePrintModal,
+                    setShowSinglePrintModal: setShowLinePrintModal
+                }}
+                dataToPrint={{
+                    id: linePrintLoadId,
+                    date: dateLocal,
+                    statusDispatched
+                }}
+                allDocumentName={lineLoadDocuments}
+                setAllDocumentName={setLineLoadDocuments}
+                documentReference={linePrintReference}
+                customLanguage={printLanguage ?? undefined}
+                documentAttachmentsData={lineDocumentAttachments}
+            />
+            <SinglePrintDocumentSetModal
+                showModal={{
+                    showSinglePrintModal: showPrintAllLoadsModal,
+                    setShowSinglePrintModal: setShowPrintAllLoadsModal
+                }}
+                multipleDataToPrint={multiplePrintTargets}
+                allDocumentName={allLoadsDocuments}
+                setAllDocumentName={setAllLoadsDocuments}
+                customLanguage={printLanguage ?? undefined}
+                documentAttachmentsData={allLoadsAttachments}
+            />
             {appointmentId && (
                 <AddDocumentsModal
                     showModal={{

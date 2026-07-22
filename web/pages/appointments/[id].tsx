@@ -557,6 +557,7 @@ const AppointmentPage: PageComponent = () => {
                         carrierId={data?.carrierId}
                         status={data?.status}
                         content={contentData}
+                        printLanguage={data?.printLanguage ?? undefined}
                         setDocumentAttachmentsData={setDocumentAttachmentsData}
                     />
                 }
