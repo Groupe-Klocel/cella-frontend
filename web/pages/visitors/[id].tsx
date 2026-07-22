@@ -164,7 +164,7 @@ const VisitorPage: PageComponent = () => {
         <>
             <AppHead title={headerData.title} />
             <ItemDetailComponent
-                extraDataComponent={<VisitorDetailsExtra visitId={id} extras={data?.extras} />}
+                extraDataComponent={<VisitorDetailsExtra visitId={id} data={data} />}
                 headerData={headerData}
                 id={id!}
                 dataModel={model}

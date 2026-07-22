@@ -26,12 +26,16 @@ import {
     PageTableContentWrapper
 } from '@components';
 import {
+    fetchCustomObjectDocuments,
     getModesFromPermissions,
     getVisitStatusCodes,
     getVisitZones,
     getVisitZoneLabel,
+    isPdfDocument,
+    parseDocumentNames,
     showError,
     showSuccess,
+    toDocumentSrc,
     useTranslationWithFallback as useTranslation,
     VISITOR_DOCUMENT_RULE
 } from '@helpers';
@@ -69,17 +73,6 @@ dayjs.extend(timezone);
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const rootPath = '/visitors/check-in';
-
-const resolveImage = (src: string): string => {
-    if (!src) return src;
-    if (/^(https?:|data:|blob:)/i.test(src)) return src;
-    const mime = src.startsWith('iVBOR')
-        ? 'image/png'
-        : src.startsWith('R0lGOD')
-          ? 'image/gif'
-          : 'image/jpeg';
-    return `data:${mime};base64,${src}`;
-};
 
 const UPDATE_MUTATION = gql`
     mutation updateVisitorCheckIn($id: String!, $input: UpdateAppointmentInput!) {
@@ -151,6 +144,9 @@ const VisitorCheckInDetail: PageComponent = () => {
         []
     );
 
+    // The rule returns custom-object NAMES (one call per zone — the output can differ per zone);
+    // resolve them ONCE for the union of names via the "Truck and visitors documents" custom
+    // objects, then map the documents back per zone (same contract as the kiosk checklist step).
     useEffect(() => {
         if (!entry) return;
         let active = true;
@@ -173,29 +169,34 @@ const VisitorCheckInDetail: PageComponent = () => {
                                 executeRule(ruleName: "${VISITOR_DOCUMENT_RULE}", context: $context)
                             }
                         `,
-                        { context: { language: ruleLanguage, zone } }
+                        { context: { language: ruleLanguage, allowedZones: zone } }
                     )
-                    .then((res: any) => {
-                        const exec = res?.executeRule;
-                        let raw: any = Array.isArray(exec)
-                            ? exec
-                            : (exec?.document_list?.value ?? exec?.documents?.value ?? exec?.value);
-                        if (raw == null && exec && typeof exec === 'object') {
-                            const first: any = Object.values(exec)[0];
-                            raw =
-                                first && typeof first === 'object' && 'value' in first
-                                    ? first.value
-                                    : first;
-                        }
-                        const images = (Array.isArray(raw) ? raw : [])
-                            .flat()
-                            .map((img: any) => resolveImage(img));
-                        return { zone, images };
-                    })
-                    .catch(() => ({ zone, images: [] as string[] }))
+                    .then((res: any) => ({ zone, names: parseDocumentNames(res?.executeRule) }))
+                    .catch(() => ({ zone, names: [] as string[] }))
             )
-        ).then((groups) => {
-            if (active) setDocGroupsByZone(groups);
+        ).then(async (perZone) => {
+            const nameSet = new Set<string>();
+            perZone.forEach((z) => z.names.forEach((n: string) => nameSet.add(n)));
+            let byName = new Map<string, string>();
+            try {
+                const docs = await fetchCustomObjectDocuments(
+                    graphqlRequestClient,
+                    parameters,
+                    Array.from(nameSet)
+                );
+                byName = new Map(docs.map((d) => [d.name, d.documentAttached]));
+            } catch {
+                // resolution failed -> show the zones without documents rather than crash
+            }
+            if (!active) return;
+            setDocGroupsByZone(
+                perZone.map((z) => ({
+                    zone: z.zone,
+                    images: z.names
+                        .map((n: string) => byName.get(n))
+                        .filter((d: string | undefined): d is string => !!d)
+                }))
+            );
         });
         return () => {
             active = false;
@@ -444,14 +445,29 @@ const VisitorCheckInDetail: PageComponent = () => {
                                 </Tag>
                                 <Image.PreviewGroup>
                                     <Space wrap size="small">
-                                        {group.images.map((img, idx) => (
-                                            <Image
-                                                key={idx}
-                                                src={img}
-                                                width={120}
-                                                style={{ borderRadius: 4 }}
-                                            />
-                                        ))}
+                                        {group.images.map((img, idx) => {
+                                            const src = toDocumentSrc(img);
+                                            return isPdfDocument(src) ? (
+                                                <iframe
+                                                    key={idx}
+                                                    src={src}
+                                                    title={`${group.zone}-document-${idx}`}
+                                                    style={{
+                                                        width: 320,
+                                                        height: 240,
+                                                        border: '1px solid #f0f0f0',
+                                                        borderRadius: 4
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Image
+                                                    key={idx}
+                                                    src={src}
+                                                    width={120}
+                                                    style={{ borderRadius: 4 }}
+                                                />
+                                            );
+                                        })}
                                     </Space>
                                 </Image.PreviewGroup>
                             </div>
