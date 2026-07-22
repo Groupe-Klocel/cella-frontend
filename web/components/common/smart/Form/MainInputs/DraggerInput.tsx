@@ -25,6 +25,7 @@ import { FC, useEffect, useState } from 'react';
 export interface IDraggerInputProps {
     setValues: any;
     editValue?: string;
+    name?: string;
 }
 
 const DraggerInput: FC<IDraggerInputProps> = (props) => {
@@ -92,7 +93,7 @@ const DraggerInput: FC<IDraggerInputProps> = (props) => {
         reader.onload = (e) => {
             const base64String: string = e.target?.result as string;
             setPreviewSrc(base64String);
-            props.setValues({ logo: base64String });
+            props.setValues({ [props.name ?? 'logo']: base64String });
         };
         reader.readAsDataURL(file);
         return false;

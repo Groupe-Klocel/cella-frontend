@@ -48,7 +48,7 @@ export interface IFormGroupProps {
     inputs: Array<FilterFieldType>;
     setValues?: any;
     dataModel?: any;
-    imageData?: string;
+    imageData?: { [field: string]: string };
     extraRule?: Array<any>;
     stringCodeScopes?: any;
     setFormInfos?: any;
@@ -180,7 +180,8 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                             >
                                 <DraggerInput
                                     setValues={props.setValues}
-                                    editValue={props.imageData ?? undefined}
+                                    editValue={props.imageData?.[item.name] ?? undefined}
+                                    name={item.name}
                                 />
                             </Form.Item>
                         );
