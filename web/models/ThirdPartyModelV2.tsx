@@ -484,6 +484,26 @@ export const ThirdPartyModelV2: ModelType = {
             config: null,
             param: null
         },
+        documentAttached: {
+            isListRequested: false,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"logo", "position":1}',
+            link: null,
+            addEditFormat: 'File',
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'secondary-logo',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         extraStatus1: {
             isListRequested: true,
             isDefaultHiddenList: false,

@@ -30,7 +30,7 @@ import { gql } from 'graphql-request';
 
 export interface IDocumentAttachedListComponentProps {
     objectId: string;
-    objectName: 'Delivery' | 'Load' | 'PurchaseOrder';
+    objectName: 'Delivery' | 'Load' | 'PurchaseOrder' | 'ThirdParty';
     objectData: { id: string; name: string };
     canModify: boolean;
     setData?: (data: any) => void;
