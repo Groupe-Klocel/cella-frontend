@@ -34,6 +34,7 @@ import {
 } from '@helpers';
 import { AppointmentModelV2 as model } from '@helpers';
 import { appointmentsRoutes as itemRoutes } from 'modules/Appointments/Static/appointmentsRoutes';
+import { NoShowReasonModal } from 'modules/Appointments/Elements/NoShowReasonModal';
 import { gql } from 'graphql-request';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { AppHead, LinkButton } from '@components';
@@ -66,6 +67,10 @@ const AppointmentsPages: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const [configsAppointment, setConfigAppointments] = useState<any>([]);
+    // pending no-show transition awaiting its reason (see NoShowReasonModal)
+    const [noShowInfo, setNoShowInfo] = useState<{ ids: [string]; currentStatus: number } | null>(
+        null
+    );
     const { graphqlRequestClient } = useAuth();
 
     // visits (type Visit) never appear in the truck appointment list: when the
@@ -240,12 +245,18 @@ const AppointmentsPages: PageComponent = () => {
         ].includes(status);
     }
 
-    const switchNextStatus = async (ids: [string], currentStatus: number, nextStatus?: number) => {
+    const switchNextStatus = async (
+        ids: [string],
+        currentStatus: number,
+        nextStatus?: number,
+        extraInput?: Record<string, any>
+    ) => {
         const newStatus = nextStatus ?? getValidNextStatuses(currentStatus)[0] ?? currentStatus;
         const updateVariables = {
             ids,
             input: {
-                status: newStatus
+                status: newStatus,
+                ...(extraInput ?? {})
             }
         };
 
@@ -266,6 +277,11 @@ const AppointmentsPages: PageComponent = () => {
 
     const confirmSwitchStatus = (ids: [string], currentStatus: number, nextStatus: number) => {
         const buttonActionCode = getButtonActionCode(nextStatus);
+        // no-show requires a reason (like a refusal): go through the reason
+        // modal instead of a plain confirm
+        if (nextStatus === appointmentStatuses.appointmentStatusNoShow) {
+            return () => setNoShowInfo({ ids, currentStatus });
+        }
         return () => {
             Modal.confirm({
                 title: t(`messages:${buttonActionCode}`),
@@ -284,6 +300,23 @@ const AppointmentsPages: PageComponent = () => {
     return (
         <>
             <AppHead title={headerData.title} />
+            <NoShowReasonModal
+                open={noShowInfo !== null}
+                t={t}
+                onCancel={() => setNoShowInfo(null)}
+                onConfirm={async (reason) => {
+                    if (noShowInfo) {
+                        await switchNextStatus(
+                            noShowInfo.ids,
+                            noShowInfo.currentStatus,
+                            appointmentStatuses.appointmentStatusNoShow,
+                            // stored in the same field as a cancellation/refusal reason
+                            { denyReason: reason }
+                        );
+                    }
+                    setNoShowInfo(null);
+                }}
+            />
             <ListComponent
                 searchCriteria={truckSearchCriteria}
                 headerData={headerData}
