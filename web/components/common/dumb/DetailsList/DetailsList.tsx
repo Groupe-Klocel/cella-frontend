@@ -94,12 +94,14 @@ const DetailsList: FC<IDetailsListProps> = ({
                             ) : (
                                 formatUTCLocaleDate(details[key], router.locale)
                             )
-                        ) : key === 'logo' ? (
+                        ) : isString(details[key]) && details[key].startsWith('data:image') ? (
                             <img
-                                src={details.logo}
-                                alt="logo_image"
+                                src={details[key]}
+                                alt={`${key}_image`}
                                 style={{ maxWidth: '5%', height: 'auto' }}
                             />
+                        ) : isString(details[key]) && details[key].startsWith('data:') ? (
+                            ' '
                         ) : (
                             details[key]
                         )}
