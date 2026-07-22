@@ -1580,16 +1580,6 @@
         "mode": "update"
     },
     {
-        "route": "/third-parties/document/[id]",
-        "permission": "wm_third-parties",
-        "mode": "read"
-    },
-    {
-        "route": "/third-parties/document/add",
-        "permission": "wm_third-parties",
-        "mode": "create"
-    },
-    {
         "route": "/third-parties/edit/[id]",
         "permission": "wm_third-parties",
         "mode": "update"

@@ -128,7 +128,6 @@ import { StatusHistoryModelV2 as _StatusHistoryModelV2 } from '../../models/Stat
 import { StockOwnerModelV2 as _StockOwnerModelV2 } from '../../models/StockOwnerModelV2';
 import { ThirdPartyAddressContactModelV2 as _ThirdPartyAddressContactModelV2 } from '../../models/ThirdPartyAddressContactModelV2';
 import { ThirdPartyAddressModelV2 as _ThirdPartyAddressModelV2 } from '../../models/ThirdPartyAddressModelV2';
-import { ThirdPartyDocumentModelV2 as _ThirdPartyDocumentModelV2 } from '../../models/ThirdPartyDocumentModelV2';
 import { ThirdPartyModelV2 as _ThirdPartyModelV2 } from '../../models/ThirdPartyModelV2';
 import { TranslationModelV2 as _TranslationModelV2 } from '../../models/TranslationModelV2';
 import { VisitorModelV2 as _VisitorModelV2 } from '../../models/VisitorModelV2';
@@ -426,10 +425,6 @@ export const ThirdPartyAddressContactModelV2 = injectedModel(
 export const ThirdPartyAddressModelV2 = injectedModel(
     _ThirdPartyAddressModelV2,
     'ThirdPartyAddressSpeModel'
-);
-export const ThirdPartyDocumentModelV2 = injectedModel(
-    _ThirdPartyDocumentModelV2,
-    'ThirdPartyDocumentSpeModel'
 );
 export const ThirdPartyModelV2 = injectedModel(_ThirdPartyModelV2, 'ThirdPartySpeModel');
 export const TranslationModelV2 = injectedModel(_TranslationModelV2, 'TranslationSpeModel');
