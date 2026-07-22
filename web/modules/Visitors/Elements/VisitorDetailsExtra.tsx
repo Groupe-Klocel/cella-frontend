@@ -31,20 +31,27 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 
 export interface IVisitorDetailsExtraProps {
     visitId?: string | string[];
-    extras?: any;
+    data?: any;
 }
 
 const VisitorDetailsExtra: FC<IVisitorDetailsExtraProps> = ({
     visitId,
-    extras
+    data
 }: IVisitorDetailsExtraProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const { parameters } = useAppState();
     const language = router.locale ?? 'en-US';
 
-    const safetyChecklist = extras?.safetyChecklist;
-    const signature = extras?.visitorSignature;
+    // The generic detail component flattens the record before setData, so the
+    // extras JSON arrives as extras_safetyChecklist_* / extras_visitorSignature
+    // keys (arrays are collapsed to a single value by flatten()).
+    const accepted = data?.extras_safetyChecklist_accepted === true;
+    const acceptanceLanguage = data?.extras_safetyChecklist_language;
+    const acceptedAt = data?.extras_safetyChecklist_acceptedAt;
+    const rawZones = data?.extras_safetyChecklist_zones;
+    const zones: string[] = Array.isArray(rawZones) ? rawZones : rawZones ? [rawZones] : [];
+    const signature = data?.extras_visitorSignature;
 
     const statusHistoryHeaderData: HeaderData = {
         title: `${t('common:status-history')}`,
@@ -58,23 +65,21 @@ const VisitorDetailsExtra: FC<IVisitorDetailsExtraProps> = ({
             <Card type="inner" title={t('common:safety-instructions')}>
                 <Descriptions column={2} size="small">
                     <Descriptions.Item label={t('d:instructions-accepted')}>
-                        {safetyChecklist?.accepted === true ? (
+                        {accepted ? (
                             <Tag color="green">{t('common:yes')}</Tag>
                         ) : (
                             <Tag color="red">{t('common:no')}</Tag>
                         )}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('d:acceptance-language')}>
-                        {safetyChecklist?.language ?? '-'}
+                        {acceptanceLanguage ?? '-'}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('d:acceptance-date')}>
-                        {safetyChecklist?.acceptedAt
-                            ? formatUTCLocaleDateTime(safetyChecklist.acceptedAt, router.locale)
-                            : '-'}
+                        {acceptedAt ? formatUTCLocaleDateTime(acceptedAt, router.locale) : '-'}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('d:allowed-zones')}>
-                        {Array.isArray(safetyChecklist?.zones)
-                            ? safetyChecklist.zones
+                        {zones.length > 0
+                            ? zones
                                   .map((zone: string) =>
                                       getVisitZoneLabel(parameters, zone, language)
                                   )
