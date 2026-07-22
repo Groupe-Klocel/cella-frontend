@@ -31,14 +31,24 @@ import Text from 'antd/lib/typography/Text';
 
 const { Option } = Select;
 
+export interface IPrintTarget {
+    context: any;
+    reference?: string;
+    documentNames: string[];
+    attachmentIds: string[];
+}
+
 export interface ISinglePrintDocumentSetModalProps {
-    dataToPrint: any;
+    dataToPrint?: any;
     showModal: any;
     allDocumentName: string[];
     documentReference?: string | any;
     customLanguage?: string;
     documentAttachmentsData?: any;
     setAllDocumentName?: any;
+    // when set, the user's selection is printed once per target (one generateDocuments
+    // call each, so every target keeps its own reference and attachments)
+    multipleDataToPrint?: IPrintTarget[];
 }
 
 const SinglePrintDocumentSetModal = ({
@@ -48,7 +58,8 @@ const SinglePrintDocumentSetModal = ({
     documentReference,
     customLanguage,
     documentAttachmentsData,
-    setAllDocumentName
+    setAllDocumentName,
+    multipleDataToPrint
 }: ISinglePrintDocumentSetModalProps) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
@@ -109,8 +120,9 @@ const SinglePrintDocumentSetModal = ({
         recipients: string,
         reference: string,
         documents: any,
-        documentAttachments: any
-    ) => {
+        documentAttachments: any,
+        silent = false
+    ): Promise<boolean> => {
         const documentMutation = gql`
             mutation generateDocuments(
                 $documents: [DocumentsInput!]!
@@ -166,14 +178,22 @@ const SinglePrintDocumentSetModal = ({
         );
 
         if (documentResult.generateDocuments.__typename !== 'RenderedDocuments') {
-            showError(t('messages:error-print-data'));
+            if (!silent) {
+                showError(t('messages:error-print-data'));
+            }
             console.error('Error details:', documentResult.generateDocuments);
+            return false;
         } else {
-            printer || recipients
-                ? showSuccess(t('messages:success-print-data'))
-                : documentResult.generateDocuments.results.map((result: any) => {
-                      window.open(result.url, '_blank');
-                  });
+            if (printer || recipients) {
+                if (!silent) {
+                    showSuccess(t('messages:success-print-data'));
+                }
+            } else {
+                documentResult.generateDocuments.results.map((result: any) => {
+                    window.open(result.url, '_blank');
+                });
+            }
+            return true;
         }
     };
 
@@ -201,18 +221,63 @@ const SinglePrintDocumentSetModal = ({
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);
-                printData(
-                    dataToPrint,
-                    formData.printer,
-                    formData.recipients,
-                    documentReference,
-                    formData.documents.filter((attachmentId: any) =>
-                        allDocumentName?.some((doc: any) => doc.name === attachmentId)
-                    ),
-                    formData.documents.filter((attachmentId: any) =>
-                        documentAttachmentsData?.some((doc: any) => doc.id === attachmentId)
-                    )
+                const selectedDocNames = formData.documents.filter((attachmentId: any) =>
+                    allDocumentName?.some((doc: any) => doc.name === attachmentId)
                 );
+                const selectedAttachmentIds = formData.documents.filter((attachmentId: any) =>
+                    documentAttachmentsData?.some((doc: any) => doc.id === attachmentId)
+                );
+                if (multipleDataToPrint && multipleDataToPrint.length > 0) {
+                    (async () => {
+                        const failed: string[] = [];
+                        let printedSomething = false;
+                        for (const target of multipleDataToPrint) {
+                            // only send each target the part of the selection it can render:
+                            // an unknown document name fails the target's whole call
+                            const documents = selectedDocNames.filter((name: string) =>
+                                target.documentNames.includes(name)
+                            );
+                            const attachments = selectedAttachmentIds.filter((id: string) =>
+                                target.attachmentIds.includes(id)
+                            );
+                            if (documents.length === 0 && attachments.length === 0) {
+                                continue;
+                            }
+                            const ok = await printData(
+                                target.context,
+                                formData.printer,
+                                formData.recipients,
+                                target.reference ?? '',
+                                documents,
+                                attachments,
+                                true
+                            );
+                            if (ok) {
+                                printedSomething = true;
+                            } else {
+                                failed.push(target.reference ?? '');
+                            }
+                        }
+                        if (failed.length > 0) {
+                            showError(
+                                `${t('messages:error-print-data')} (${failed.join(', ')})`
+                            );
+                        } else if (!printedSomething) {
+                            showError(t('messages:error-print-data'));
+                        } else if (formData.printer || formData.recipients) {
+                            showSuccess(t('messages:success-print-data'));
+                        }
+                    })();
+                } else {
+                    printData(
+                        dataToPrint,
+                        formData.printer,
+                        formData.recipients,
+                        documentReference,
+                        selectedDocNames,
+                        selectedAttachmentIds
+                    );
+                }
             })
             .catch((err) => {
                 showError(t('messages:error-print-data'));

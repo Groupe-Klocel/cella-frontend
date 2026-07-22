@@ -38,6 +38,7 @@ import { appointmentsRoutes as itemRoutes } from 'modules/Appointments/Static/ap
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { AppointmentDetailsExtra } from 'modules/Appointments/Elements/AppointmentDetailsExtra';
+import { NoShowReasonModal } from 'modules/Appointments/Elements/NoShowReasonModal';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 const AppointmentPage: PageComponent = () => {
@@ -54,6 +55,7 @@ const AppointmentPage: PageComponent = () => {
     const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
+    const [noShowModalOpen, setNoShowModalOpen] = useState(false);
     const [idToPrint, setIdToPrint] = useState<string>();
     const [configsAppointment, setConfigAppointments] = useState<any>([]);
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
@@ -201,7 +203,12 @@ const AppointmentPage: PageComponent = () => {
         return validNextStatuses.length > 0 ? validNextStatuses[0] : status;
     }
 
-    const switchNextStatus = async (id: string, currentStatus: number, nextStatus?: number) => {
+    const switchNextStatus = async (
+        id: string,
+        currentStatus: number,
+        nextStatus?: number,
+        extraInput?: Record<string, any>
+    ) => {
         const newStatus = nextStatus ?? getNextStatus(currentStatus);
         const updateVariables = {
             id: id,
@@ -211,7 +218,8 @@ const AppointmentPage: PageComponent = () => {
                 ...(newStatus === appointmentStatuses.appointmentStatusConfirmed &&
                 extraStatusNotOkCode != null
                     ? { extraStatus1: extraStatusNotOkCode }
-                    : {})
+                    : {}),
+                ...(extraInput ?? {})
             }
         };
 
@@ -330,7 +338,16 @@ const AppointmentPage: PageComponent = () => {
                                     <Button
                                         key={nextStatusConfig?.id}
                                         onClick={() =>
-                                            switchNextStatus(data.id, data.status, nextStatusCode)
+                                            // no-show requires a reason (like a refusal): go
+                                            // through the reason modal instead of a direct switch
+                                            nextStatusCode ===
+                                            appointmentStatuses.appointmentStatusNoShow
+                                                ? setNoShowModalOpen(true)
+                                                : switchNextStatus(
+                                                      data.id,
+                                                      data.status,
+                                                      nextStatusCode
+                                                  )
                                         }
                                         style={{
                                             borderColor: nextStatusConfig?.extras?.color,
@@ -526,6 +543,21 @@ const AppointmentPage: PageComponent = () => {
                     ) : (
                         <></>
                     )}
+                    <NoShowReasonModal
+                        open={noShowModalOpen}
+                        t={t}
+                        onCancel={() => setNoShowModalOpen(false)}
+                        onConfirm={async (reason) => {
+                            setNoShowModalOpen(false);
+                            await switchNextStatus(
+                                data.id,
+                                data.status,
+                                appointmentStatuses.appointmentStatusNoShow,
+                                // stored in the same field as a cancellation/refusal reason
+                                { denyReason: reason }
+                            );
+                        }}
+                    />
                     <SinglePrintDocumentSetModal
                         showModal={{
                             showSinglePrintModal,
@@ -557,6 +589,7 @@ const AppointmentPage: PageComponent = () => {
                         carrierId={data?.carrierId}
                         status={data?.status}
                         content={contentData}
+                        printLanguage={data?.printLanguage ?? undefined}
                         setDocumentAttachmentsData={setDocumentAttachmentsData}
                     />
                 }
