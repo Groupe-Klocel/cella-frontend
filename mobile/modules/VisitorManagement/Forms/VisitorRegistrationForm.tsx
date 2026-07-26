@@ -52,7 +52,7 @@ export const VisitorRegistrationForm = ({
 
     const visit: Visit | null = storedObject['step20']?.data?.visit ?? null;
     const isWalkIn: boolean = storedObject['step20']?.data?.isWalkIn ?? false;
-    const language = storedObject['step10']?.data?.lang ?? router.locale ?? 'en-US';
+    const language = (storedObject['step10']?.data?.lang ?? router.locale ?? 'en-US').split('-')[0]; // "en-US" -> "en"
 
     const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
 
@@ -81,17 +81,6 @@ export const VisitorRegistrationForm = ({
     };
 
     const required = { required: true, message: t('common:required') };
-
-    // Walk-in rule: at least one of email / phone number must be provided.
-    const atLeastOneContact = ({ getFieldValue }: any) => ({
-        validator() {
-            if (!isWalkIn) return Promise.resolve();
-            if (getFieldValue('email')?.trim() || getFieldValue('phoneNumber')?.trim()) {
-                return Promise.resolve();
-            }
-            return Promise.reject(new Error(t('common:email-or-phone-required')));
-        }
-    });
 
     return (
         <WrapperForm>
@@ -125,11 +114,7 @@ export const VisitorRegistrationForm = ({
                 <StyledFormItem
                     label={t('common:email')}
                     name="email"
-                    dependencies={['phoneNumber']}
-                    rules={[
-                        { type: 'email', message: t('common:invalid-email') },
-                        atLeastOneContact
-                    ]}
+                    rules={[{ type: 'email', message: t('common:invalid-email') }]}
                 >
                     <Input placeholder={t('common:email-ph')} allowClear />
                 </StyledFormItem>
@@ -137,11 +122,7 @@ export const VisitorRegistrationForm = ({
                 <StyledFormItem
                     label={t('common:phone')}
                     name="phoneNumber"
-                    dependencies={['email']}
-                    rules={[
-                        { pattern: PHONE_RE, message: t('common:invalid-phone') },
-                        atLeastOneContact
-                    ]}
+                    rules={[{ pattern: PHONE_RE, message: t('common:invalid-phone') }]}
                 >
                     <Input placeholder={t('common:phone-ph')} allowClear />
                 </StyledFormItem>

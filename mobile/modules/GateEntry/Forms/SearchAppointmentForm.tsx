@@ -45,8 +45,19 @@ export const SearchAppointmentForm = ({
     const { graphqlRequestClient } = useAuth();
     const state = useAppState();
     const dispatch = useAppDispatch();
-    const { configs } = state;
+    const { configs, parameters } = state;
     const storedObject = state[processName] || {};
+
+    // Parameter appointment/disabled_plate_scan = 1 removes the plate search:
+    // the driver can only be found by QR code or appointment number.
+    const plateScanDisabled =
+        parseInt(
+            (parameters ?? []).find(
+                (p: any) =>
+                    p.scope === 'appointment' && p.code?.toLowerCase() === 'disabled_plate_scan'
+            )?.value ?? '0',
+            10
+        ) === 1;
 
     const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState<string | undefined>();
@@ -76,15 +87,18 @@ export const SearchAppointmentForm = ({
 
     const onFinish = async (values: any) => {
         const name = values.refNumber?.trim() || undefined;
-        const plate = values.truckLicensePlate?.trim() || undefined;
+        const plate = plateScanDisabled ? undefined : values.truckLicensePlate?.trim() || undefined;
         if (!name && !plate) return;
 
         setNotFound(false);
 
         // Search by appointment number (= name) first, then by truck plate.
         const query = gql`
-            query searchAppointmentForGate($filters: AppointmentSearchFilters) {
-                appointments(filters: $filters) {
+            query searchAppointmentForGate(
+                $filters: AppointmentSearchFilters
+                $advancedFilters: [AppointmentAdvancedSearchFilters!]
+            ) {
+                appointments(filters: $filters, advancedFilters: $advancedFilters) {
                     results {
                         id
                         name
@@ -98,13 +112,13 @@ export const SearchAppointmentForm = ({
                         driverPhoneNumber
                         driverEmail
                         entityName
+                        entityAccountingCode
                         reference1
                         safetyChecklistTemplate
                         denyReason
                         appointmentDateBegin
                         appointmentDateEnd
                         extraText1
-                        extraNumber1
                         extras
                         location {
                             name
@@ -113,14 +127,39 @@ export const SearchAppointmentForm = ({
                 }
             }
         `;
-        const attempts = [name ? { name } : null, plate ? { truckLicensePlate: plate } : null].filter(
-            Boolean
-        ) as any[];
+        // the plate lookup matches case-insensitively (ILIKE) and only CONFIRMED appointments,
+        // so past or cancelled appointments with the same plate are never picked up
+        const attempts = [
+            name ? { filters: { name } } : null,
+            plate
+                ? {
+                      advancedFilters: [
+                          {
+                              filter: [
+                                  { searchType: 'ILIKE', field: { truckLicensePlate: plate } }
+                              ]
+                          },
+                          ...(Number.isFinite(confirmedStatus)
+                              ? [
+                                    {
+                                        filter: [
+                                            {
+                                                searchType: 'EQUAL',
+                                                field: { status: confirmedStatus }
+                                            }
+                                        ]
+                                    }
+                                ]
+                              : [])
+                      ]
+                  }
+                : null
+        ].filter(Boolean) as any[];
 
         try {
             let appointment: any = null;
-            for (const filters of attempts) {
-                const res = await graphqlRequestClient.request(query, { filters });
+            for (const variables of attempts) {
+                const res = await graphqlRequestClient.request(query, variables);
                 const results: any[] = res?.appointments?.results ?? [];
                 if (results.length > 0) {
                     appointment = { ...results[0], locationName: results[0].location?.name ?? null };
@@ -177,9 +216,11 @@ export const SearchAppointmentForm = ({
                     <Input placeholder={t('common:ref-number-ph')} allowClear />
                 </StyledFormItem>
 
-                <StyledFormItem label={t('common:truck-plate')} name="truckLicensePlate">
-                    <Input placeholder={t('common:truck-plate-ph')} allowClear />
-                </StyledFormItem>
+                {!plateScanDisabled && (
+                    <StyledFormItem label={t('common:truck-plate')} name="truckLicensePlate">
+                        <Input placeholder={t('common:truck-plate-ph')} allowClear />
+                    </StyledFormItem>
+                )}
             </StyledForm>
         </WrapperForm>
     );
