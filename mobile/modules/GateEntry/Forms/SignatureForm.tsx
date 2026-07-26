@@ -89,8 +89,8 @@ export const SignatureForm = ({
                 /inbound|décharg|unload|entr/i
             );
 
-            // seal -> extraText1, weight -> extraNumber1, signature + checklist +
-            // gate check-in marker -> extras.
+            // container -> extraText1, supplier -> entityAccountingCode,
+            // signature + checklist + gate check-in marker -> extras.
             const extras = {
                 ...(appointment?.extras ?? {}),
                 gateCheckIn: { at: new Date().toISOString(), pending: true },
@@ -104,11 +104,11 @@ export const SignatureForm = ({
             const input: Record<string, any> = {
                 driverName: registration.driverName,
                 entityName: registration.companyName || null,
+                entityAccountingCode: registration.supplier,
                 driverPhoneNumber: registration.driverPhoneNumber,
                 truckLicensePlate: registration.truckLicensePlate,
                 trailerLicensePlate: registration.trailerLicensePlate || null,
-                extraText1: registration.sealNumber || null,
-                extraNumber1: registration.estimatedWeight ?? null,
+                extraText1: registration.containerNumber || null,
                 // Clear any previous refusal so a reset->restart begins clean.
                 denyReason: null,
                 extras
