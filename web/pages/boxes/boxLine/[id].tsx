@@ -191,7 +191,9 @@ const BoxLinePage: PageComponent = () => {
         <>
             <AppHead title={headerData.title} />
             <ItemDetailComponent
-                extraDataComponent={<BoxLineDetailsExtra contentId={data?.handlingUnitContentId} />}
+                extraDataComponent={
+                    <BoxLineDetailsExtra boxLineId={id} contentId={data?.handlingUnitContentId} />
+                }
                 id={id!}
                 headerData={headerData}
                 dataModel={model}

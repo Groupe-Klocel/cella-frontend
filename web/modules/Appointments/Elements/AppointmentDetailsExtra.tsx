@@ -309,17 +309,28 @@ const AppointmentDetailsExtra = ({
                   })()
                 : content;
         if (!raw) return null;
-        const paletteLabel = (code: string) => {
+        const paramLabel = (scope: string, code: string) => {
             const p = (parameters ?? []).find(
-                (x: any) => x.scope === 'appointment_palette_type' && String(x.code) === String(code)
+                (x: any) => x.scope === scope && String(x.code) === String(code)
             );
             return p?.translation?.[router.locale ?? ''] ?? p?.value ?? code;
         };
         const rows = Object.entries(raw.palettes ?? {})
             .filter(([, n]) => n != null)
-            .map(([code, n]) => ({ label: paletteLabel(code), value: n as number }));
-        if (rows.length === 0 && !raw.instructions) return null;
-        return { rows, instructions: raw.instructions as string | undefined };
+            .map(([code, n]) => ({
+                label: paramLabel('appointment_palette_type', code),
+                value: n as number
+            }));
+        // carrier special requirements (customs, dangerous goods, …) stored as parameter codes
+        const specialRequirements = (
+            Array.isArray(raw.specialRequirements) ? raw.specialRequirements : []
+        ).map((code: any) => paramLabel('appointment_special_requirement', String(code)));
+        if (rows.length === 0 && !raw.instructions && specialRequirements.length === 0) return null;
+        return {
+            rows,
+            instructions: raw.instructions as string | undefined,
+            specialRequirements
+        };
     }, [content, parameters, router.locale]);
 
     const appointmentLineHeaderData: HeaderData = {
@@ -466,6 +477,11 @@ const AppointmentDetailsExtra = ({
                                 {r.value}
                             </Descriptions.Item>
                         ))}
+                        {composition.specialRequirements.length > 0 && (
+                            <Descriptions.Item label={t('d:specialRequirements')} span={2}>
+                                {composition.specialRequirements.join(', ')}
+                            </Descriptions.Item>
+                        )}
                         {composition.instructions && (
                             <Descriptions.Item
                                 label={t('common:composition-instructions')}

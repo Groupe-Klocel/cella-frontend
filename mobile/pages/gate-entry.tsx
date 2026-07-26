@@ -191,7 +191,6 @@ const GateEntry: PageComponent = () => {
     if (appointment && currentStep >= 30 && currentStep < 70) {
         if (appointment.appointmentTypeText)
             headerDisplay[t('common:type')] = appointment.appointmentTypeText;
-        if (appointment.locationName) headerDisplay[t('common:dock')] = appointment.locationName;
     }
     //#endregion
 

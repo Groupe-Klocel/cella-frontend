@@ -136,6 +136,42 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [refetch, setRefetch] = useState(false);
 
+    // entity ids already linked to this appointment, keyed by appointmentLine FK — used to
+    // exclude them from the proposed list and refuse assigning the same entity twice
+    const [linkedIdsByFk, setLinkedIdsByFk] = useState<Record<string, string[]>>({});
+    useEffect(() => {
+        if (!props.appointmentId) return;
+        const fetchLinkedIds = async () => {
+            try {
+                const res = await graphqlRequestClient.request(
+                    gql`
+                        query existingLines($filters: AppointmentLineSearchFilters) {
+                            appointmentLines(filters: $filters, itemsPerPage: 1000) {
+                                results {
+                                    loadId
+                                    deliveryId
+                                    orderId
+                                    purchaseOrderId
+                                }
+                            }
+                        }
+                    `,
+                    { filters: { appointmentId: props.appointmentId } }
+                );
+                const byFk: Record<string, string[]> = {};
+                (res?.appointmentLines?.results ?? []).forEach((line: any) => {
+                    ['loadId', 'deliveryId', 'orderId', 'purchaseOrderId'].forEach((fk) => {
+                        if (line[fk]) (byFk[fk] = byFk[fk] ?? []).push(line[fk]);
+                    });
+                });
+                setLinkedIdsByFk(byFk);
+            } catch (error) {
+                console.error('Error fetching existing appointment lines:', error);
+            }
+        };
+        fetchLinkedIds();
+    }, [props.appointmentId, refetch, graphqlRequestClient]);
+
     // filters for the active entity type: loads by direction type + carrier; deliveries not
     // shipped; orders by direction order-type; deliveries/orders/POs by carrier (via shipping
     // mode) & stock owner when present. Loads have no stock owner.
@@ -158,6 +194,11 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
         const stockOwnerClause = props.stockOwnerId
             ? [{ filter: [{ searchType: 'EQUAL', field: { stockOwnerId: props.stockOwnerId } }] }]
             : [];
+        // never propose an entity already linked to this appointment (no duplicate lines)
+        const linkedIds = activeType ? linkedIdsByFk[entityDefs[activeType].fk] ?? [] : [];
+        const excludeLinkedClause = linkedIds.length
+            ? [{ filter: [{ searchType: 'DIFFERENT', field: { id: linkedIds } }] }]
+            : [];
         if (activeType === 'loads') {
             const dispatched = parseInt(
                 findCodeByScopeAndValue(configs, 'load_status', 'Dispatched') ?? '0',
@@ -173,7 +214,8 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                         { searchType: 'EQUAL', field: { type: typeCodes.length ? typeCodes : [-1] } }
                     ]
                 },
-                ...carrierClause
+                ...carrierClause,
+                ...excludeLinkedClause
             ];
         }
         if (activeType === 'deliveries') {
@@ -184,7 +226,8 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
             return [
                 { filter: [{ searchType: 'INFERIOR', field: { status: dispatched } }] },
                 ...carrierShipClause,
-                ...stockOwnerClause
+                ...stockOwnerClause,
+                ...excludeLinkedClause
             ];
         }
         if (activeType === 'orders') {
@@ -201,12 +244,21 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                     ]
                 },
                 ...carrierShipClause,
-                ...stockOwnerClause
+                ...stockOwnerClause,
+                ...excludeLinkedClause
             ];
         }
         // purchaseOrders: no carrier
-        return [...stockOwnerClause];
-    }, [activeType, direction, configs, props.carrierId, props.stockOwnerId]);
+        return [...stockOwnerClause, ...excludeLinkedClause];
+    }, [
+        activeType,
+        direction,
+        configs,
+        props.carrierId,
+        props.stockOwnerId,
+        linkedIdsByFk,
+        entityDefs
+    ]);
 
     const activeDef = activeType ? entityDefs[activeType] : undefined;
 
@@ -268,6 +320,15 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
             showError(t('messages:please-select-at-least-one-element'));
             return;
         }
+        // safety net (the list already excludes them): never assign the same entity twice
+        // to the same appointment
+        const linkedIds = new Set(linkedIdsByFk[activeDef.fk] ?? []);
+        const idsToAssign = selectedRowKeys.filter((id) => !linkedIds.has(id));
+        if (idsToAssign.length === 0) {
+            showError(t('messages:already-assigned-to-appointment'));
+            setShowConfirmModal(false);
+            return;
+        }
         setIsAssignLoading(true);
         try {
             const mutation = gql`
@@ -278,7 +339,7 @@ const AddAppointmentLine = (props: ISingleItemProps) => {
                 }
             `;
             await Promise.all(
-                selectedRowKeys.map((entityId: string) =>
+                idsToAssign.map((entityId: string) =>
                     graphqlRequestClient.request(mutation, {
                         input: {
                             appointmentId: props.appointmentId,
