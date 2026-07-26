@@ -29,17 +29,18 @@ export interface GateEntry {
     name?: string | null;
     status: number;
     statusText?: string | null;
+    appointmentType?: number | null;
     appointmentTypeText?: string | null;
     truckLicensePlate?: string | null;
     trailerLicensePlate?: string | null;
     driverName?: string | null;
     driverPhoneNumber?: string | null;
     entityName?: string | null;
+    entityAccountingCode?: string | null;
     denyReason?: string | null;
     appointmentDateBegin?: string | null;
     appointmentDateEnd?: string | null;
     extraText1?: string | null;
-    extraNumber1?: number | null;
     locationName?: string | null;
     locationId?: string | null;
     extras?: any;
@@ -49,9 +50,10 @@ export type GateDecision = 'pending' | 'approved' | 'refused';
 
 // Selection set shared by the dashboard list and the detail screen.
 export const GATE_ENTRY_FIELDS = `
-    id name status statusText appointmentTypeText
-    truckLicensePlate trailerLicensePlate driverName driverPhoneNumber entityName denyReason
-    appointmentDateBegin appointmentDateEnd extraText1 extraNumber1 extras
+    id name status statusText appointmentType appointmentTypeText
+    truckLicensePlate trailerLicensePlate driverName driverPhoneNumber entityName
+    entityAccountingCode denyReason
+    appointmentDateBegin appointmentDateEnd extraText1 extras
     locationId location { name }
 `;
 

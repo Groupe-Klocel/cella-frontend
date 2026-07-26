@@ -54,6 +54,7 @@ import {
     ScheduleSidePanel,
     ScheduleStatusConfig,
     ScheduleStatusLegend,
+    ScheduleToolbar,
     buildScheduleStatusConfig,
     parseUtcToLocalDate,
     useCalendarMessages
@@ -349,6 +350,7 @@ const VisitorsSchedulePage: PageComponent = () => {
                             view={currentView}
                             messages={calendarMessages}
                             components={{
+                                toolbar: (tp: any) => <ScheduleToolbar {...tp} picker="week" />,
                                 event: ({ event }: { event: VisitEvent }) => (
                                     <EventCard event={event} />
                                 ),
