@@ -32,6 +32,7 @@ export interface GateAppointment {
     driverPhoneNumber?: string | null;
     driverEmail?: string | null;
     entityName?: string | null;
+    entityAccountingCode?: string | null;
     reference1?: string | null;
     reference2?: string | null;
     reference3?: string | null;
@@ -40,7 +41,6 @@ export interface GateAppointment {
     appointmentDateBegin?: string | null;
     appointmentDateEnd?: string | null;
     extraText1?: string | null;
-    extraNumber1?: number | null;
     locationName?: string | null;
     extras?: Record<string, any> | null;
 }
@@ -49,11 +49,13 @@ export interface GateAppointment {
 export interface RegistrationData {
     driverName: string;
     companyName: string;
+    // supplier of the goods (stored in appointment.entityAccountingCode);
+    // mandatory, except for outbound appointments where the field doesn't exist
+    supplier?: string;
     driverPhoneNumber: string;
     truckLicensePlate: string;
     trailerLicensePlate?: string;
-    sealNumber?: string;
-    estimatedWeight?: number;
+    containerNumber?: string;
     // Ad-hoc entry only: chosen carrier + slot duration (minutes).
     carrierId?: string;
     durationMinutes?: number;

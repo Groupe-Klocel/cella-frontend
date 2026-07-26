@@ -99,6 +99,33 @@ const AssignToAppointmentModal: FC<IAssignToAppointmentModalProps> = ({
         }
         setIsLoading(true);
         try {
+            // never assign the same entity twice to the same appointment: skip entities the
+            // chosen appointment already has a line for
+            const existingRes = await graphqlRequestClient.request(
+                gql`
+                    query existingLines($filters: AppointmentLineSearchFilters) {
+                        appointmentLines(filters: $filters, itemsPerPage: 1000) {
+                            results {
+                                loadId
+                                deliveryId
+                                orderId
+                                purchaseOrderId
+                            }
+                        }
+                    }
+                `,
+                { filters: { appointmentId: selectedAppointment.toString() } }
+            );
+            const alreadyLinked = new Set(
+                (existingRes?.appointmentLines?.results ?? [])
+                    .map((line: any) => line[fkField])
+                    .filter(Boolean)
+            );
+            const idsToAssign = entityIds.filter((id) => !alreadyLinked.has(id));
+            if (idsToAssign.length === 0) {
+                showError(t('messages:already-assigned-to-appointment'));
+                return;
+            }
             const mutation = gql`
                 mutation cLine($input: CreateAppointmentLineInput!) {
                     createAppointmentLine(input: $input) {
@@ -109,7 +136,7 @@ const AssignToAppointmentModal: FC<IAssignToAppointmentModalProps> = ({
             // Only appointmentId is required on CreateAppointmentLineInput (schema-confirmed);
             // stockOwnerId is optional. This bulk flow links entities that may span several stock
             // owners, so we don't force a single one — the line is tied to its entity via [fkField].
-            for (const entityId of entityIds) {
+            for (const entityId of idsToAssign) {
                 await graphqlRequestClient.request(mutation, {
                     input: { appointmentId: selectedAppointment.toString(), [fkField]: entityId }
                 });

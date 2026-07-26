@@ -29,7 +29,7 @@ import {
     findCodeByScopeAndValue,
     getReservedCarrierExclusionFilters
 } from '@helpers';
-import { Form, Input, InputNumber, Select } from 'antd';
+import { Form, Input, Select } from 'antd';
 import { gql } from 'graphql-request';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -67,6 +67,23 @@ export const RegistrationForm = ({
 
     const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [carriers, setCarriers] = useState<Array<{ id: string; name: string }>>([]);
+
+    // The supplier only applies to incoming goods: hide it when the found appointment is
+    // outbound. Same classification as web loadDirection.ts — "unloading" contains "loading",
+    // so test the inbound matcher; anything that is neither a visit nor inbound is outbound.
+    // Ad-hoc entries (no appointment) are created with the inbound type, so they keep it.
+    const isOutbound = useMemo(() => {
+        const item = (state.configs ?? []).find(
+            (c: any) =>
+                c.scope === 'appointment_type' &&
+                String(c.code) === String(appointment?.appointmentType)
+        );
+        return (
+            !!item &&
+            !/visit/i.test(item.value ?? '') &&
+            !/unload|décharg|entlad|réception|reception/i.test(item.value ?? '')
+        );
+    }, [state.configs, appointment?.appointmentType]);
 
     // Backend advancedFilters excluding reserved carriers (virtual / closed) from the ad-hoc
     // selection. The closed status code is resolved from AppState configs (scope
@@ -107,14 +124,11 @@ export const RegistrationForm = ({
         const registration: RegistrationData = {
             driverName: values.driverName.trim(),
             companyName: values.companyName.trim(),
+            supplier: isOutbound ? undefined : values.supplier?.trim(),
             driverPhoneNumber: values.driverPhoneNumber.trim(),
             truckLicensePlate: values.truckLicensePlate.trim(),
             trailerLicensePlate: values.trailerLicensePlate?.trim() || undefined,
-            sealNumber: values.sealNumber?.trim() || undefined,
-            estimatedWeight:
-                values.estimatedWeight !== undefined && values.estimatedWeight !== null
-                    ? Number(values.estimatedWeight)
-                    : undefined,
+            containerNumber: values.containerNumber?.trim() || undefined,
             carrierId: isAdHoc ? values.carrierId : undefined,
             durationMinutes: isAdHoc ? values.durationMinutes : undefined
         };
@@ -141,11 +155,11 @@ export const RegistrationForm = ({
                 initialValues={{
                     driverName: appointment?.driverName ?? undefined,
                     companyName: appointment?.entityName ?? undefined,
+                    supplier: appointment?.entityAccountingCode ?? undefined,
                     driverPhoneNumber: appointment?.driverPhoneNumber ?? undefined,
                     truckLicensePlate: appointment?.truckLicensePlate ?? undefined,
                     trailerLicensePlate: appointment?.trailerLicensePlate ?? undefined,
-                    sealNumber: appointment?.extraText1 ?? undefined,
-                    estimatedWeight: appointment?.extraNumber1 ?? undefined,
+                    containerNumber: appointment?.extraText1 ?? undefined,
                     durationMinutes: isAdHoc ? 60 : undefined
                 }}
             >
@@ -164,6 +178,18 @@ export const RegistrationForm = ({
                 >
                     <Input placeholder={t('common:company-name')} allowClear />
                 </StyledFormItem>
+
+                {/* supplier of the goods (e.g. Girteka delivers goods from Barcelona for
+                    Coty), stored in appointment.entityAccountingCode — incoming goods only */}
+                {!isOutbound && (
+                    <StyledFormItem
+                        label={t('common:supplierName')}
+                        name="supplier"
+                        rules={[required]}
+                    >
+                        <Input placeholder={t('common:supplierName-ph')} allowClear />
+                    </StyledFormItem>
+                )}
 
                 {isAdHoc && (
                     <>
@@ -222,16 +248,8 @@ export const RegistrationForm = ({
                     <Input placeholder={t('common:trailer-ph')} allowClear />
                 </StyledFormItem>
 
-                <StyledFormItem label={t('common:seal')} name="sealNumber">
-                    <Input placeholder={t('common:seal-ph')} allowClear />
-                </StyledFormItem>
-
-                <StyledFormItem label={t('common:weight')} name="estimatedWeight">
-                    <InputNumber
-                        min={0}
-                        placeholder={t('common:weight-ph')}
-                        style={{ width: '100%' }}
-                    />
+                <StyledFormItem label={t('common:container-number')} name="containerNumber">
+                    <Input placeholder={t('common:container-number-ph')} allowClear />
                 </StyledFormItem>
             </StyledForm>
         </WrapperForm>
