@@ -23,7 +23,8 @@ import {
     getModesFromPermissions,
     showError,
     showSuccess,
-    isCarrierAppointmentUser
+    isCarrierAppointmentUser,
+    getAppointmentDirection
 } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useMemo, useState } from 'react';
@@ -43,7 +44,7 @@ import { NoShowReasonModal } from 'modules/Appointments/Elements/NoShowReasonMod
 type PageComponent = FC & { layout: typeof MainLayout };
 const AppointmentPage: PageComponent = () => {
     const router = useRouter();
-    const { parameters, permissions } = useAppState();
+    const { configs, parameters, permissions } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -83,6 +84,22 @@ const AppointmentPage: PageComponent = () => {
     }, [configsAppointment]);
 
     const isCarrier = isCarrierAppointmentUser(permissions);
+
+    // the supplier (entityAccountingCode) only applies to incoming goods: hide it from the
+    // detail when the appointment is outbound (the query fields stay unchanged)
+    const detailModel = useMemo(() => {
+        if (getAppointmentDirection(data?.appointmentType, configs) !== 'outbound') return model;
+        return {
+            ...model,
+            fieldsInfo: {
+                ...model.fieldsInfo,
+                entityAccountingCode: {
+                    ...model.fieldsInfo.entityAccountingCode,
+                    isExcludedFromDetail: true
+                }
+            }
+        };
+    }, [data?.appointmentType, configs]);
 
     // "docs & references" validation status, backed by parameter scope appointment_extra_status1.
     // On confirmation it is forced to "Not OK"; a (non-carrier) user flips it to "OK" once they've
@@ -595,7 +612,7 @@ const AppointmentPage: PageComponent = () => {
                 }
                 headerData={headerData}
                 id={id!}
-                dataModel={model}
+                dataModel={detailModel}
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}

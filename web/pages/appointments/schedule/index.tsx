@@ -47,6 +47,7 @@ import {
     ScheduleSidePanel,
     ScheduleStatusConfig,
     ScheduleStatusEntry,
+    ScheduleToolbar,
     buildScheduleStatusConfig,
     parseUtcToLocalDate,
     useCalendarMessages
@@ -654,7 +655,7 @@ const MyCalendar: PageComponent = () => {
                 )
               : events.filter((e) => e.resourceId === selectedRampId)
     )
-        .filter((e) => statusConfig[e.status]?.value !== 'In Creation')
+        .filter((e) => statusConfig[e.status]?.value !== 'Cancelled')
         .filter(
             (e) =>
                 visitTypeCode === undefined ||
@@ -804,11 +805,12 @@ const MyCalendar: PageComponent = () => {
                             onSelectSlot={handleSelectSlot}
                             onSelectEvent={handleSelectEvent}
                             views={['day', 'week', 'agenda']}
-                            defaultDate={new Date()}
+                            date={currentDate}
                             view={currentView}
                             messages={calendarMessages}
                             slotPropGetter={slotPropGetter}
                             components={{
+                                toolbar: (tp: any) => <ScheduleToolbar {...tp} picker="date" />,
                                 event: ({ event }: { event: CalendarEvent }) => (
                                     <EventCard event={event} typeConfig={typeConfig} />
                                 ),
@@ -866,7 +868,7 @@ const MyCalendar: PageComponent = () => {
                         {statusFlow
                             .filter(
                                 (code) =>
-                                    statusConfig[code] && statusConfig[code].value !== 'In Creation'
+                                    statusConfig[code] && statusConfig[code].value !== 'Cancelled'
                             )
                             .map((code) => {
                                 const cfg = statusConfig[code];

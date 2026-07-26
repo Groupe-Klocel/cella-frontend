@@ -91,6 +91,7 @@ const LocationExtrasListComponent = ({ locationId, locationName }: ILocationExtr
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
     const [dockType, setDockType] = useState<string | undefined>();
+    const [automaticAssignment, setAutomaticAssignment] = useState<boolean | undefined>();
     const [authorizedCarriers, setAuthorizedCarriers] = useState<string | undefined>();
     const [operatingSchedules, setOperatingSchedules] = useState<any | undefined>();
     const [authorizedTruckTypes, setAuthorizedTruckTypes] = useState<string | undefined>();
@@ -99,6 +100,7 @@ const LocationExtrasListComponent = ({ locationId, locationName }: ILocationExtr
         if (!locationId) return;
         setLoading(true);
         setDockType(undefined);
+        setAutomaticAssignment(undefined);
         setAuthorizedCarriers(undefined);
         setOperatingSchedules(undefined);
         setAuthorizedTruckTypes(undefined);
@@ -115,6 +117,7 @@ const LocationExtrasListComponent = ({ locationId, locationName }: ILocationExtr
             .then((data: any) => {
                 const extras = data?.location?.extras ?? {};
                 setDockType(extras['dock_type']);
+                setAutomaticAssignment(extras['automatic_assignment']);
                 setAuthorizedCarriers(extras['authorized_carriers']);
                 try {
                     const raw = extras['operating_schedules'];
@@ -300,6 +303,7 @@ const LocationExtrasListComponent = ({ locationId, locationName }: ILocationExtr
 
     const hasExtras =
         dockType !== undefined ||
+        automaticAssignment !== undefined ||
         authorizedCarriers !== undefined ||
         operatingSchedules !== undefined ||
         authorizedTruckTypes !== undefined;
@@ -337,6 +341,9 @@ const LocationExtrasListComponent = ({ locationId, locationName }: ILocationExtr
                 <Descriptions bordered column={1} size="small" style={{ marginTop: 16 }}>
                     <Descriptions.Item label={t('d:dock_type')}>
                         {renderDockTypeLabel(dockType)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label={t('d:automatic_assignment')}>
+                        {automaticAssignment ? t('common:bool-yes') : t('common:bool-no')}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('d:authorized_carriers')}>
                         {renderCarriers(authorizedCarriers)}

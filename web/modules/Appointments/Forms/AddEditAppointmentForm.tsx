@@ -53,7 +53,8 @@ import {
     getInboundLoadTypeCodes,
     getOrderTypeCodesForDirection,
     isAppointmentLinkEnabled,
-    isCarrierAppointmentUser
+    isCarrierAppointmentUser,
+    isAppointmentNameEntryBlocked
 } from '@helpers';
 
 const { Option } = Select;
@@ -194,13 +195,33 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
 
     // carrier users get a restricted form (no dock, no recurrence, no appointment-line selects)
     const isCarrier = isCarrierAppointmentUser(permissions);
+    // restrictive flag: no manual appointment name at creation (backend auto-numbers it)
+    const nameEntryBlocked = isAppointmentNameEntryBlocked(permissions);
     // pallet types for the truck composition, admin-managed via parameter scope
     // appointment_palette_type (so types can be added/removed without code changes)
     const paletteParams = useMemo(
         () =>
             (parameters ?? [])
                 .filter((p: any) => p.scope === 'appointment_palette_type')
-                .map((p: any) => ({ code: String(p.code), translation: p.translation, value: p.value })),
+                .map((p: any) => ({
+                    code: String(p.code),
+                    translation: p.translation,
+                    value: p.value
+                })),
+        [parameters]
+    );
+    // carrier special requirements (customs, dangerous goods, returnable packaging, …),
+    // admin-managed via parameter scope appointment_special_requirement and stored in the
+    // content JSON next to the truck composition
+    const specialRequirementParams = useMemo(
+        () =>
+            (parameters ?? [])
+                .filter((p: any) => p.scope === 'appointment_special_requirement')
+                .map((p: any) => ({
+                    code: String(p.code),
+                    translation: p.translation,
+                    value: p.value
+                })),
         [parameters]
     );
 
@@ -564,6 +585,8 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                         }
                         if (content.instructions)
                             compPatch.compositionInstructions = content.instructions;
+                        if (Array.isArray(content.specialRequirements))
+                            compPatch.specialRequirements = content.specialRequirements.map(String);
                         form.setFieldsValue(compPatch);
                     }
                 }
@@ -646,6 +669,7 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                     event: {
                         input: {
                             appointment_id: props.id,
+                            appointment_type: selectedAppointmentType,
                             building_id: selectedBuildingId,
                             carrier_id: selectedCarrierId,
                             appointment_date_begin: dayjs(selectedDateBegin),
@@ -688,6 +712,7 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
         selectedCarrierId,
         selectedDateBegin,
         selectedDuration,
+        selectedAppointmentType,
         lookup.initialized
     ]);
 
@@ -821,6 +846,7 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 'orders',
                 'purchaseOrders',
                 'stockOwnerId',
+                'entityAccountingCode',
                 'driverName',
                 'driverPhoneNumber',
                 'driverEmail',
@@ -846,6 +872,9 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 ? parseInt(payloadBase.appointmentType, 10)
                 : null;
             const submitDirection = getAppointmentDirection(payloadBase.appointmentType, configs);
+            // the supplier only applies to incoming goods; AntD preserves values of unmounted
+            // fields, so explicitly drop it when the appointment is outbound
+            if (submitDirection === 'outbound') payloadBase.entityAccountingCode = null;
 
             // truck composition (pallets per type + free instructions) stored in the content JSON.
             // the editor is a Form.List of {paletteType, quantity} rows; last row wins on duplicates.
@@ -857,9 +886,19 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 }
             });
             const compositionInstructions = form.getFieldValue('compositionInstructions') || null;
+            const specialRequirements: string[] = (
+                form.getFieldValue('specialRequirements') ?? []
+            ).map(String);
             const compositionContent =
-                Object.keys(palettes).length > 0 || compositionInstructions
-                    ? { palettes, instructions: compositionInstructions }
+                Object.keys(palettes).length > 0 ||
+                compositionInstructions ||
+                specialRequirements.length > 0
+                    ? {
+                          palettes,
+                          instructions: compositionInstructions,
+                          specialRequirements:
+                              specialRequirements.length > 0 ? specialRequirements : undefined
+                      }
                     : undefined;
 
             const toIdArray = (v: any) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
@@ -907,9 +946,15 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 submitDirection === 'inbound'
                     ? configsParamsCodes.loadTypeInbound
                     : configsParamsCodes.loadTypePreLoading;
-            const defaultLoadTypeValid =
-                defaultLoadType != null && !Number.isNaN(defaultLoadType);
-            const createDefaultLoad = async (appointmentId: string, appointmentName: string) => {
+            const defaultLoadTypeValid = defaultLoadType != null && !Number.isNaN(defaultLoadType);
+            // an inbound appointment's default load is an unload: don't propose it at all when
+            // appointment/unload links are disabled by config (appointment_with_unloads = 0)
+            const defaultLoadProposalEnabled = submitDirection !== 'inbound' || linkUnloads;
+            const createDefaultLoad = async (
+                appointmentId: string,
+                appointmentName: string,
+                appointmentDateBegin: dayjs.Dayjs
+            ) => {
                 const createLoadMutation = gql`
                     mutation cLoad($input: CreateLoadInput!) {
                         createLoad(input: $input) {
@@ -922,7 +967,8 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                         name: appointmentName,
                         status: configsParamsCodes.loadStatusCreated,
                         type: defaultLoadType,
-                        carrierId: payloadBase.carrierId
+                        carrierId: payloadBase.carrierId,
+                        loadExpectedDepartureDate: appointmentDateBegin
                     }
                 });
                 await graphqlRequestClient.request(createLineMutation, {
@@ -1009,10 +1055,18 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                     resultId = result.createAppointment.id;
                     if (hasExplicitSelection) {
                         await createLinesForSelection(resultId!);
-                    } else if (!isCarrier && (await askCreateDefaultLoad())) {
+                    } else if (
+                        !isCarrier &&
+                        defaultLoadProposalEnabled &&
+                        (await askCreateDefaultLoad())
+                    ) {
                         // never auto-create a load when a carrier creates the appointment
                         if (defaultLoadTypeValid) {
-                            await createDefaultLoad(resultId!, result.createAppointment.name);
+                            await createDefaultLoad(
+                                resultId!,
+                                result.createAppointment.name,
+                                baseBeginDate
+                            );
                         } else {
                             // the appointment itself was created; only the optional default load
                             // couldn't be (load type not configured). Warn but still report success
@@ -1028,7 +1082,9 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 // only (a delivery/order can't belong to N appointments); when nothing is selected
                 // we ask once and create a default load for each occurrence.
                 const wantDefaultForRecurrence =
-                    hasExplicitSelection || isCarrier ? false : await askCreateDefaultLoad();
+                    hasExplicitSelection || isCarrier || !defaultLoadProposalEnabled
+                        ? false
+                        : await askCreateDefaultLoad();
                 // if the user asked for default loads but the load type isn't configured, skip them
                 // for every occurrence and warn — the appointments themselves are still created
                 const defaultLoadSkipped = wantDefaultForRecurrence && !defaultLoadTypeValid;
@@ -1055,7 +1111,8 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                     } else if (wantDefaultForRecurrence && defaultLoadTypeValid) {
                         await createDefaultLoad(
                             result.createAppointment.id,
-                            result.createAppointment.name
+                            result.createAppointment.name,
+                            currentBegin
                         );
                     }
                 }
@@ -1125,8 +1182,12 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                             onValuesChange={handleFormValuesChange}
                         >
                             {/* carriers don't name appointments; omitting the field lets the
-                                backend auto-number it (create) and preserves the name (edit) */}
-                            {!isCarrier && <StringInput item={{ name: 'name' }} />}
+                                backend auto-number it (create) and preserves the name (edit).
+                                The wm_appointments-no-name-entry flag blocks manual naming the
+                                same way: field hidden at creation, read-only on edit */}
+                            {!isCarrier && (!nameEntryBlocked || props.id) && (
+                                <StringInput item={{ name: 'name', disabled: nameEntryBlocked }} />
+                            )}
                             <Form.Item
                                 label={t('d:appointmentType')}
                                 name="appointmentType"
@@ -1350,6 +1411,23 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                                     ))}
                                 </Select>
                             </Form.Item>
+                            {/* supplier of the goods (e.g. Girteka delivers goods from Barcelona
+                                for Coty), stored in entityAccountingCode — incoming goods only,
+                                so the field doesn't exist on outbound appointments */}
+                            {!isOutbound && (
+                                <StringInput
+                                    item={{
+                                        name: 'entityAccountingCode',
+                                        displayName: t('d:supplierName'),
+                                        rules: [
+                                            {
+                                                required: true,
+                                                message: t('messages:error-message-empty-input')
+                                            }
+                                        ]
+                                    }}
+                                />
+                            )}
                             <StringInput item={{ name: 'driverName' }} />
                             <StringInput item={{ name: 'driverPhoneNumber' }} />
                             <StringInput item={{ name: 'driverEmail' }} />
@@ -1360,6 +1438,33 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                             {/* optional free references */}
                             <StringInput item={{ name: 'reference1' }} />
                             <StringInput item={{ name: 'reference2' }} />
+
+                            {/* carrier special requirements (customs, dangerous goods, returnable
+                                packaging, …): multi-select over parameter scope
+                                appointment_special_requirement, stored in the content JSON next
+                                to the truck composition */}
+                            {specialRequirementParams.length > 0 && (
+                                <Form.Item
+                                    label={t('d:specialRequirements')}
+                                    name="specialRequirements"
+                                >
+                                    <Select
+                                        mode="multiple"
+                                        allowClear
+                                        placeholder={t('messages:please-select-a', {
+                                            name: t('d:specialRequirements')
+                                        })}
+                                    >
+                                        {specialRequirementParams.map((p: any) => (
+                                            <Option key={p.code} value={p.code}>
+                                                {p.translation?.[
+                                                    (router.locale || 'en-US').split('-')[0]
+                                                ] ?? p.value}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                            )}
 
                             {/* truck composition: add-as-many rows of (pallet type + quantity),
                                 like the arguments/extras editor, so types stay admin-managed */}
@@ -1391,7 +1496,9 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                                                         >
                                                             <Select
                                                                 style={{ minWidth: 200 }}
-                                                                placeholder={t('common:pallet-type')}
+                                                                placeholder={t(
+                                                                    'common:pallet-type'
+                                                                )}
                                                             >
                                                                 {paletteParams.map((p: any) => (
                                                                     <Option
@@ -1399,7 +1506,10 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                                                                         value={p.code}
                                                                     >
                                                                         {p.translation?.[
-                                                                            router.locale ?? ''
+                                                                            (
+                                                                                router.locale ||
+                                                                                'en-US'
+                                                                            ).split('-')[0]
                                                                         ] ?? p.value}
                                                                     </Option>
                                                                 ))}

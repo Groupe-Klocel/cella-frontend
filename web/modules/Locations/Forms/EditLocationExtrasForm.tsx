@@ -136,6 +136,9 @@ export const EditLocationExtrasForm: FC<EditLocationExtrasFormProps> = ({
                     form.setFieldValue('dock_type', extras['dock_type']);
                 }
 
+                // automatic_assignment
+                form.setFieldValue('automatic_assignment', extras['automatic_assignment'] === true);
+
                 // authorized_carriers: * = empty selection, else split to array
                 if (extras['authorized_carriers'] && extras['authorized_carriers'] !== '*') {
                     form.setFieldValue(
@@ -268,6 +271,8 @@ export const EditLocationExtrasForm: FC<EditLocationExtrasFormProps> = ({
                     extras['dock_type'] = values.dock_type;
                 }
 
+                extras['automatic_assignment'] = !!values.automatic_assignment;
+
                 // dayjs.tz.guess() automatically identifies the local IANA timezone string
                 // (e.g., 'Europe/Paris', 'America/New_York') based on the browser env.
                 extras['timezone'] = dayjs.tz.guess();
@@ -350,6 +355,16 @@ export const EditLocationExtrasForm: FC<EditLocationExtrasFormProps> = ({
                             </Option>
                         ))}
                     </Select>
+                </Form.Item>
+
+                {/* AUTOMATIC ASSIGNMENT */}
+                <Form.Item
+                    name="automatic_assignment"
+                    label={t('d:automatic_assignment')}
+                    valuePropName="checked"
+                    initialValue={false}
+                >
+                    <Switch />
                 </Form.Item>
 
                 <Divider />

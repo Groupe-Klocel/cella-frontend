@@ -26,6 +26,7 @@ import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { HandlingUnitContentFeatureModelV2 } from '@helpers';
+import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { useState } from 'react';
 
 export interface IItemDetailsProps {
@@ -34,10 +35,14 @@ export interface IItemDetailsProps {
     boxLineName?: string | any;
 }
 
-const BoxLineDetailsExtra = ({ contentId, boxLineName }: IItemDetailsProps) => {
+const BoxLineDetailsExtra = ({ boxLineId, contentId, boxLineName }: IItemDetailsProps) => {
     const { t } = useTranslation();
 
     const { permissions } = useAppState();
+    const huContentOutboundModes = getModesFromPermissions(
+        permissions,
+        Table.HandlingUnitContentOutbound
+    );
     const HandlingUnitContentFeatureModes = getModesFromPermissions(
         permissions,
         Table.HandlingUnitContentFeature
@@ -53,8 +58,33 @@ const BoxLineDetailsExtra = ({ contentId, boxLineName }: IItemDetailsProps) => {
         actionsComponent: null
     };
 
+    // header RELATED to StatusHistory
+    const statusHistoryHeaderData: HeaderData = {
+        title: `${t('common:status-history')}`,
+        routes: [],
+        actionsComponent: null
+    };
+
     return (
         <>
+            {boxLineId &&
+            huContentOutboundModes.length > 0 &&
+            huContentOutboundModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <ListComponent
+                        searchCriteria={{ objectId: boxLineId }}
+                        dataModel={StatusHistoryDetailExtraModelV2}
+                        headerData={statusHistoryHeaderData}
+                        searchable={false}
+                        triggerDelete={undefined}
+                        triggerSoftDelete={undefined}
+                        columnFilter={false}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
             {HandlingUnitContentFeatureModes.length > 0 &&
             HandlingUnitContentFeatureModes.includes(ModeEnum.Read) ? (
                 <>

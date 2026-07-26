@@ -27,3 +27,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 export const isCarrierAppointmentUser = (permissions: any): boolean =>
     !!permissions?.some((p: any) => p.table === 'wm_appointments-carrier');
+
+// `wm_appointments-no-name-entry` is a restrictive sentinel flag (same pattern): users carrying
+// it cannot type an appointment name at creation — the field is hidden and the backend
+// auto-numbers the appointment (the behavior carriers always get). On edit the name is shown
+// but locked.
+export const isAppointmentNameEntryBlocked = (permissions: any): boolean =>
+    !!permissions?.some((p: any) => p.table === 'wm_appointments-no-name-entry');
