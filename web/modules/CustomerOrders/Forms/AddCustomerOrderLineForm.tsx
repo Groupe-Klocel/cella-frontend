@@ -201,7 +201,10 @@ export const AddCustomerOrderLineForm = (props: ISingleItemProps) => {
                         setArticleCubingType(cubingType!);
                     }
                     if (status != configs.ARTICLE_STATUS_CLOSED) {
-                        newIdOpts.push({ value: name!, id: id! });
+                        newIdOpts.push({
+                            value: name! + (description ? ' - ' + description : ''),
+                            id: id!
+                        });
                     }
                 }
             );
