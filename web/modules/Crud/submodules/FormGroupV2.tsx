@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import 'dayjs/locale/en';
 import 'dayjs/locale/de';
+import 'dayjs/locale/es';
 import localeDataPlugin from 'dayjs/plugin/localeData';
 import localizedFormatPlugin from 'dayjs/plugin/localizedFormat';
 import { useTranslationWithFallback as useTranslation } from '@helpers';

@@ -30,6 +30,7 @@ import dayjs from 'dayjs';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'moment/locale/fr'; // French
+import 'moment/locale/es'; // Spanish
 import { gql } from 'graphql-request';
 
 export interface IAddItemFormProps {
