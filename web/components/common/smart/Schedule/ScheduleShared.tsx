@@ -23,8 +23,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 // configs, calendar i18n messages, the inline side panel shell and the
 // status color legend.
 
-import { FC, ReactNode, useMemo } from 'react';
-import { Button, Space, Typography } from 'antd';
+import { FC, ReactNode, useMemo, useState } from 'react';
+import { Button, DatePicker, Space, Typography } from 'antd';
 import {
     AimOutlined,
     CalendarOutlined,
@@ -112,6 +112,103 @@ export const useCalendarMessages = () => {
             noEventsInRange: t('messages:no events in range')
         }),
         [t]
+    );
+};
+
+export interface IScheduleToolbarProps {
+    // react-big-calendar ToolbarProps (typed loosely to avoid depending on its generics)
+    date: Date;
+    view: string;
+    views: string[];
+    label: string;
+    localizer: { messages: Record<string, string> };
+    onNavigate: (action: string, newDate?: Date) => void;
+    onView: (view: string) => void;
+    // day picker for the truck schedule, week picker for the visitor schedule
+    picker?: 'date' | 'week';
+}
+
+// Drop-in replacement for the default react-big-calendar toolbar: same three
+// sections (navigate / label / views), but the date label opens a picker so
+// the user can jump straight to a day or week.
+export const ScheduleToolbar: FC<IScheduleToolbarProps> = ({
+    date,
+    view,
+    views,
+    label,
+    localizer: { messages },
+    onNavigate,
+    onView,
+    picker = 'date'
+}) => {
+    const [pickerOpen, setPickerOpen] = useState(false);
+    return (
+        <div className="rbc-toolbar">
+            <span className="rbc-btn-group">
+                <button type="button" onClick={() => onNavigate('TODAY')}>
+                    {messages.today}
+                </button>
+                <button type="button" onClick={() => onNavigate('PREV')}>
+                    {messages.previous}
+                </button>
+                <button type="button" onClick={() => onNavigate('NEXT')}>
+                    {messages.next}
+                </button>
+            </span>
+            <span
+                className="rbc-toolbar-label"
+                style={{ position: 'relative', cursor: 'pointer' }}
+                onClick={() => setPickerOpen(true)}
+            >
+                <CalendarOutlined style={{ marginRight: 6 }} />
+                {label}
+                {/* invisible zero-size input: only the popup calendar is shown,
+                    anchored under the label */}
+                <DatePicker
+                    picker={picker}
+                    open={pickerOpen}
+                    value={dayjs(date)}
+                    onOpenChange={setPickerOpen}
+                    onChange={(d) => {
+                        if (d) {
+                            onNavigate(
+                                'DATE',
+                                (picker === 'week' ? d.startOf('week') : d).toDate()
+                            );
+                        }
+                        setPickerOpen(false);
+                    }}
+                    allowClear={false}
+                    inputReadOnly
+                    tabIndex={-1}
+                    suffixIcon={null}
+                    style={{
+                        position: 'absolute',
+                        left: '50%',
+                        bottom: 0,
+                        width: 0,
+                        height: 0,
+                        padding: 0,
+                        margin: 0,
+                        border: 'none',
+                        visibility: 'hidden',
+                        pointerEvents: 'none'
+                    }}
+                />
+            </span>
+            <span className="rbc-btn-group">
+                {views.map((name) => (
+                    <button
+                        type="button"
+                        key={name}
+                        className={view === name ? 'rbc-active' : ''}
+                        onClick={() => onView(name)}
+                    >
+                        {messages[name] ?? name}
+                    </button>
+                ))}
+            </span>
+        </div>
     );
 };
 

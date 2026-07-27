@@ -31,6 +31,10 @@ const isoLangs: Array<LanguageType> = [
     {
         name: 'Deutsch',
         code: 'de-DE'
+    },
+    {
+        name: 'Español',
+        code: 'es-ES'
     }
 ];
 

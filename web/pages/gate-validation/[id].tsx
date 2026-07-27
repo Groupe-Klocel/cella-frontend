@@ -27,6 +27,7 @@ import {
 } from '@components';
 import {
     fetchCustomObjectDocuments,
+    getAppointmentDirection,
     getModesFromPermissions,
     isPdfDocument,
     parseDocumentNames,
@@ -379,12 +380,16 @@ const GateValidationDetail: PageComponent = () => {
                         <Descriptions.Item label={t('common:trailer')}>
                             {entry?.trailerLicensePlate ?? '-'}
                         </Descriptions.Item>
-                        <Descriptions.Item label={t('common:seal')}>
+                        <Descriptions.Item label={t('common:container-number')}>
                             {entry?.extraText1 ?? '-'}
                         </Descriptions.Item>
-                        <Descriptions.Item label={t('common:weight')}>
-                            {entry?.extraNumber1 ?? '-'}
-                        </Descriptions.Item>
+                        {/* the supplier only applies to incoming goods */}
+                        {getAppointmentDirection(entry?.appointmentType, configs) !==
+                            'outbound' && (
+                            <Descriptions.Item label={t('common:supplierName')}>
+                                {entry?.entityAccountingCode ?? '-'}
+                            </Descriptions.Item>
+                        )}
                     </Descriptions>
                 </Card>
 
