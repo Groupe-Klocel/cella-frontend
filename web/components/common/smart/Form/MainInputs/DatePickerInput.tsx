@@ -24,11 +24,13 @@ import { useRouter } from 'next/router';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import de_DE from 'antd/lib/date-picker/locale/de_DE';
+import es_ES from 'antd/lib/date-picker/locale/es_ES';
 import { getLanguageCode, useTranslationWithFallback as useTranslation } from '@helpers';
 import { FormOptionType } from '../../../../../models/ModelsV2';
 import { FC, useMemo } from 'react';
 import 'dayjs/locale/fr';
 import 'dayjs/locale/de';
+import 'dayjs/locale/es';
 
 export interface IDraggerDatePickerInputProps {
     item: {
@@ -54,6 +56,8 @@ const getLocaleDatePicker = (locale: string) => {
             return fr_FR;
         case 'de':
             return de_DE;
+        case 'es':
+            return es_ES;
         default:
             return en_US;
     }

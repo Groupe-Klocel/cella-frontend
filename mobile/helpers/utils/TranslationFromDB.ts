@@ -32,7 +32,8 @@ const mapLocaleToDbLanguage = (locale: string): string => {
     const localeMap: { [key: string]: string } = {
         'en-US': 'en-US',
         'fr-FR': 'fr-FR',
-        'de-DE': 'de-DE'
+        'de-DE': 'de-DE',
+        'es-ES': 'es-ES'
     };
     return localeMap[locale] || locale;
 };

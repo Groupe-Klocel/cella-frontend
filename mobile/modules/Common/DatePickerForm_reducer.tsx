@@ -28,6 +28,7 @@ import { useRouter } from 'next/router';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'dayjs/locale/fr';
+import 'dayjs/locale/es';
 import dayjs from 'dayjs';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
