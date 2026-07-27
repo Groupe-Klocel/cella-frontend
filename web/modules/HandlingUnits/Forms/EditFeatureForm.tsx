@@ -45,6 +45,7 @@ import { useAuth } from 'context/AuthContext';
 import fr_FR from 'antd/lib/date-picker/locale/fr_FR';
 import en_US from 'antd/lib/date-picker/locale/en_US';
 import 'moment/locale/fr';
+import 'moment/locale/es';
 
 export interface IEditItemFormProps {
     id: string;
