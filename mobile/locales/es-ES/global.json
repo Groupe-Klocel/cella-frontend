@@ -1,0 +1,16 @@
+{
+    "welcome": "¡Bienvenido!",
+    "username": "Nombre de usuario",
+    "password": "Contraseña",
+    "login": "Iniciar sesión",
+    "error-message-empty-input": "El campo no debe estar vacío",
+    "login-success": "Ahora está conectado",
+    "please-reset-password": "Por favor, restablezca su contraseña",
+    "SSO-000001": "No se ha encontrado ningún usuario correspondiente a este correo electrónico",
+    "SSO-000002": "Se requiere el inicio de sesión mediante SSO",
+    "SSO-000003": "El campo 'sso_metadata' es obligatorio.",
+    "SSO-000004": "El campo 'sso_front_secret' falta o no es válido.",
+    "SSO-000005": "El token SSO no es válido o ha expirado. Por favor, vuelva a iniciar sesión.",
+    "SSO-000006": "No se puede verificar el token SSO. Por favor, póngase en contacto con el administrador.",
+    "PASSWORD-000140": "Cuenta bloqueada tras demasiados intentos de inicio de sesión fallidos"
+}
