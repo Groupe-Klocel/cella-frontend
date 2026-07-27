@@ -21,6 +21,7 @@ import { Form } from 'antd';
 import moment from 'moment';
 import 'dayjs/locale/fr';
 import 'dayjs/locale/en';
+import 'dayjs/locale/es';
 import { FC } from 'react';
 import { FormDataType } from '../../../models/ModelsV2';
 import { useRouter } from 'next/router';

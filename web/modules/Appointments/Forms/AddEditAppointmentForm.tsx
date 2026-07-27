@@ -23,6 +23,7 @@ import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/fr';
 import 'dayjs/locale/de';
+import 'dayjs/locale/es';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { gql } from 'graphql-request';

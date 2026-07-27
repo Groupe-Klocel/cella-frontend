@@ -8,6 +8,7 @@ import weekOfYear from 'dayjs/plugin/weekOfYear';
 import('dayjs/locale/en');
 import('dayjs/locale/fr');
 import('dayjs/locale/de');
+import('dayjs/locale/es');
 
 dayjs.extend(localeData);
 dayjs.extend(localizedFormat);
