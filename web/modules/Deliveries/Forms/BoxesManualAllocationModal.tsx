@@ -145,7 +145,7 @@ const BoxesManualAllocationModal = ({
 
         const variables = {
             id: selectedRowKeys,
-            itemsPerPage: 999
+            itemsPerPage: 999999
         };
 
         const boxes = await graphqlRequestClient.request(query, variables);
