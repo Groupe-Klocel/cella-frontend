@@ -44,6 +44,7 @@ import { gql } from 'graphql-request';
 interface IOption {
     value: string;
     id: string;
+    name?: string;
 }
 const { Option } = Select;
 
@@ -64,6 +65,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
     const [aIdOptions, setAIdOptions] = useState<Array<IOption>>([]);
     const [aId, setAId] = useState<string>();
     const [articleName, setArticleName] = useState<string>('');
+    const [selectedArticleName, setSelectedArticleName] = useState<string | undefined>(undefined);
     const articleData = useArticleIds({ name: `${articleName}%` }, 1, 100, null);
     const [lIdOptions, setLIdOptions] = useState<Array<IOption>>([]);
     const [lId, setLId] = useState<string>();
@@ -132,12 +134,16 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
     useEffect(() => {
         if (articleData.data) {
             const newIdOpts: Array<IOption> = [];
-            articleData.data.articles?.results.forEach(({ id, name, stockOwnerId }) => {
+            articleData.data.articles?.results.forEach(({ id, name, description, stockOwnerId }) => {
                 if (form.getFieldsValue(true).articleId === id) {
                     setArticleName(name!);
                     setAId(id!);
                 }
-                newIdOpts.push({ value: name!, id: id! });
+                newIdOpts.push({
+                    value: name! + (description ? ' - ' + description : ''),
+                    id: id!,
+                    name: name!
+                });
             });
             setAIdOptions(newIdOpts);
         }
@@ -147,6 +153,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
         if (!data?.length) {
             setArticleName('');
             setAId('');
+            setSelectedArticleName(undefined);
         } else {
             setArticleName(data);
         }
@@ -186,6 +193,10 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
             .then(() => {
                 checkUndefinedValues(form);
                 const formData = form.getFieldsValue(true);
+                // the field displays 'name - description': send the raw article name to the API
+                if (selectedArticleName) {
+                    formData.articleName = selectedArticleName;
+                }
                 setIsLoading(true);
                 const fetchData = async () => {
                     const res = await fetch(`/api/handling-unit-contents/`, {
@@ -404,6 +415,7 @@ export const EditHandlingUnitContentForm = ({ details }: EditEquipmentFormProps)
                                 onSelect={(value, option) => {
                                     setAId(option.id);
                                     setArticleName(value);
+                                    setSelectedArticleName(option.name);
                                 }}
                                 allowClear
                                 onChange={onChangeArticle}

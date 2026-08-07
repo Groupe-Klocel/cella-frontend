@@ -27,8 +27,6 @@ import {
     applyRfActionButtonsConfig,
     buildHeaderDisplay,
     getModesFromPermissions,
-    showError,
-    showSuccess,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
@@ -49,6 +47,7 @@ import { QuantityChecks } from 'modules/Preparation/Pack/ChecksAndRecords/Quanti
 import { ReviewHuModelWeightForm } from 'modules/Preparation/Pack/Forms/ReviewHuModelWeightForm';
 import { ReviewHuModelWeightChecks } from 'modules/Preparation/Pack/ChecksAndRecords/ReviewHuModelWeightChecks';
 import { AutoValidatePackForm } from 'modules/Preparation/Pack/Forms/AutoValidatePack';
+import { AutoDeclareMissingQuantityForm } from 'modules/Preparation/Pack/Forms/AutoDeclareMissingQuantity';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
@@ -145,7 +144,8 @@ const Pack: PageComponent = () => {
     // 40 -> scan article (optional from rules named "force_checking_in_pack")
     // 50 -> scan quantity (optional from rules named "force_checking_in_pack")
     // 60 -> ReviewHuModelWeightForm
-    // 70 -> autovalidate
+    // 70 -> autovalidate (RF_pack_validate), or auto declare missing when the finish
+    //       position/box button was pressed (declare_missing_quantity_post_picking)
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
@@ -207,15 +207,25 @@ const Pack: PageComponent = () => {
             0
         ) ?? 0;
 
+    // "Finish position" pressed without position scan nor in-progress box: the whole round is
+    // declared missing by the auto-declare step (70) directly, without packaging review.
+    const isWholeRoundFinish = Boolean(
+        storedObject['step40']?.data?.isFinishPosition &&
+            !round?.equipment?.checkPosition &&
+            !inProgressHuo
+    );
+
     // this to check if we need to display step 60 (ReviewHuModelWeightForm) or if we can directly go to autovalidate (step 70) after quantity entering (step 50)
     const isBoxReviewNeeded =
-        (storedObject['step40']?.data?.isBoxForcedClosed ||
+        (storedObject['step40']?.data?.isFinishPosition ||
+            storedObject['step40']?.data?.isBoxForcedClosed ||
             (!hasOtherIncompleteHucos && !isCurrentHucoIncomplete) ||
             (!isToControl && isToControl !== null && storedObject['step30']?.data) ||
             (isToControl &&
                 typeof storedObject['step50']?.data !== 'object' &&
                 storedObject['step50']?.data)) &&
-        !storedObject['step60']?.data;
+        !storedObject['step60']?.data &&
+        !isWholeRoundFinish;
     //#endregion
 
     //#region RadioInfosHeader settings
@@ -525,12 +535,19 @@ const Pack: PageComponent = () => {
         }
     }, [triggerEnforcedControl]);
 
-    // "Finish position": declare as missing the remaining quantity of every non-prepared HUCO,
-    // then go back to scan the next round/position. With position scan the missing quantities are
-    // declared on the box at the scanned position; without position scan they are declared on the
-    // in-progress box if any ("finish box" mode), otherwise on every unpacked box of the round.
+    // "Finish position"/"Finish box": declare as missing the remaining quantity of every
+    // non-prepared HUCO, through the dedicated auto-declare step (70,
+    // AutoDeclareMissingQuantityForm) - the finish-path counterpart of AutoValidatePackForm.
+    // With position scan the missing quantities are declared on the box at the scanned position;
+    // without position scan on the in-progress box if any ("finish box" mode), otherwise on every
+    // unpacked box of the round. The single-box variants first go through the packaging
+    // selection/weight step (60), whose values the function uses to close the box; the
+    // whole-round variant (nothing packed, so no packaging to select) triggers the auto-declare
+    // step right away. The step then drives the navigation: back to the position scan while
+    // other positions of the round still hold quantities to prepare, to the round scan otherwise.
     const positionHuo = storedObject?.step30?.data?.currentHuos?.[0];
     const isFinishBoxMode = !round?.equipment?.checkPosition && Boolean(inProgressHuo);
+    const finishTargetsSingleBox = Boolean(round?.equipment?.checkPosition) || isFinishBoxMode;
     const finishPositionHuos = (
         round?.equipment?.checkPosition
             ? positionHuo
@@ -561,128 +578,33 @@ const Pack: PageComponent = () => {
             ),
             okText: t('messages:confirm'),
             cancelText: t('messages:cancel'),
-            onOk: async () => {
-                setFinishPositionLoading(true);
-                const equipmentHuoPalletId = round?.handlingUnitOutbounds?.find(
-                    (huo: any) => huo.handlingUnit?.type === equipmentHuType
-                )?.id;
-                const query = gql`
-                    mutation executeFunction($functionName: String!, $event: JSON!) {
-                        executeFunction(functionName: $functionName, event: $event) {
-                            status
-                            output
-                        }
+            onOk: () => {
+                // Arm the finish path: flag step 40 and mark the quantity step as passed. The
+                // single-box variants carry the targeted box and go through the packaging/weight
+                // review step (60) first; the whole-round variant triggers the auto-declare step
+                // (70) directly. Nothing is sent to the backend at this stage: the declaration is
+                // run by AutoDeclareMissingQuantityForm.
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: 'step40',
+                    object: {
+                        ...storedObject['step40'],
+                        data: finishTargetsSingleBox
+                            ? { currentHuo: finishPositionHuos[0], isFinishPosition: true }
+                            : { isFinishPosition: true }
                     }
-                `;
-                let processedHuosCount = 0;
-                let lastOutput: any = null;
-                let hasError = false;
-                try {
-                    for (const huo of finishPositionHuos) {
-                        const variables = {
-                            functionName: 'declare_missing_quantity_post_picking',
-                            event: {
-                                input: {
-                                    handlingUnitOutboundId: huo.id,
-                                    round: { id: round?.id },
-                                    equipmentHUOPalletId: equipmentHuoPalletId,
-                                    missingLocationName: configsParamsCodes.missingLocationName
-                                }
-                            }
-                        };
-                        const result = await graphqlRequestClient.request(query, variables);
-                        if (result.executeFunction.status === 'ERROR') {
-                            showError(result.executeFunction.output);
-                            hasError = true;
-                            break;
-                        }
-                        if (
-                            result.executeFunction.status === 'OK' &&
-                            result.executeFunction.output.status === 'KO'
-                        ) {
-                            showError(t(`errors:${result.executeFunction.output.output.code}`));
-                            console.log('Backend_message', result.executeFunction.output.output);
-                            hasError = true;
-                            break;
-                        }
-                        processedHuosCount += 1;
-                        lastOutput = result.executeFunction.output.output;
+                });
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: 'step50',
+                    object: {
+                        ...storedObject['step50'],
+                        data: 'allQuantites'
                     }
-                    if (!hasError) {
-                        showSuccess(
-                            t(
-                                isFinishBoxMode
-                                    ? 'messages:box-finished-successfully'
-                                    : 'messages:position-finished-successfully'
-                            )
-                        );
-                        if (lastOutput?.isRoundClosed) {
-                            showSuccess(t('messages:pack-round-finished'));
-                        }
-                    }
-                } catch (error) {
-                    showError(t('messages:error-executing-function'));
-                    console.log('executeFunctionError', error);
-                } finally {
-                    if (processedHuosCount > 0) {
-                        // In "finish box" mode, if the round still has other boxes with quantities
-                        // left to pack, skip re-scanning the round/equipment and jump straight back
-                        // to the article scan: keep the round loaded (minus the just-finished box)
-                        // and let the position step auto-select the remaining boxes. Only the
-                        // in-progress box was touched, so the other boxes' locally-held remaining
-                        // quantities stay accurate without a refetch.
-                        const finishedHuoIds = new Set(finishPositionHuos.map((huo: any) => huo.id));
-                        const remainingHuos = (destinationHuos ?? []).filter(
-                            (huo: any) =>
-                                !finishedHuoIds.has(huo.id) && getHuoRemainingQuantity(huo) > 0
-                        );
-
-                        if (
-                            !hasError &&
-                            !lastOutput?.isRoundClosed &&
-                            isFinishBoxMode &&
-                            remainingHuos.length > 0
-                        ) {
-                            // Keep the round/equipment loaded (clearing the finished in-progress box)
-                            // so the position step auto-selects the remaining boxes and the flow lands
-                            // back on the article scan. isToControl stays true (non-position packing).
-                            dispatch({
-                                type: 'UPDATE_BY_PROCESS',
-                                processName,
-                                object: {
-                                    currentStep: 20,
-                                    step10: storedObject['step10'],
-                                    step20: {
-                                        ...storedObject['step20'],
-                                        data: {
-                                            ...storedObject['step20']?.data,
-                                            inProgressHuo: undefined,
-                                            round: {
-                                                ...round,
-                                                handlingUnitOutbounds:
-                                                    round?.handlingUnitOutbounds?.filter(
-                                                        (huo: any) => !finishedHuoIds.has(huo.id)
-                                                    )
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        } else {
-                            // Round finished or nothing left to pack here: back to a fresh
-                            // round/equipment/position scan (keep the printer). Also covers partial
-                            // failures so the screen reflects what was actually declared.
-                            dispatch({
-                                type: 'UPDATE_BY_PROCESS',
-                                processName,
-                                object: { currentStep: 20, step10: storedObject['step10'] }
-                            });
-                            setIsToControl(null);
-                        }
-                        form.resetFields();
-                    }
-                    setFinishPositionLoading(false);
-                }
+                });
+                form.resetFields();
             }
         });
     };
@@ -901,9 +823,13 @@ const Pack: PageComponent = () => {
                     ) : (
                         <></>
                     )}
+                    {/* Never auto-validate in the finish position/box path: there the box is
+                    closed by declare_missing_quantity_post_picking itself (auto-declare step
+                    below), not by RF_pack_validate. */}
                     {((!isBoxReviewNeeded && storedObject['step50']?.data) ||
                         storedObject['step60']?.data) &&
-                    !storedObject['step70']?.data ? (
+                    !storedObject['step70']?.data &&
+                    !storedObject['step40']?.data?.isFinishPosition ? (
                         <AutoValidatePackForm
                             processName={processName}
                             stepNumber={70}
@@ -914,6 +840,24 @@ const Pack: PageComponent = () => {
                             }}
                             controlManagement={{ isToControl, setIsToControl }}
                         ></AutoValidatePackForm>
+                    ) : (
+                        <></>
+                    )}
+                    {/* Finish position/box path: once the packaging/weight review is validated
+                    (or directly for the whole-round variant), the auto-declare step runs
+                    declare_missing_quantity_post_picking and drives the next navigation. */}
+                    {storedObject['step40']?.data?.isFinishPosition &&
+                    (storedObject['step60']?.data || isWholeRoundFinish) &&
+                    !storedObject['step70']?.data ? (
+                        <AutoDeclareMissingQuantityForm
+                            processName={processName}
+                            stepNumber={70}
+                            declareLoading={{
+                                isDeclareLoading: finishPositionLoading,
+                                setIsDeclareLoading: setFinishPositionLoading
+                            }}
+                            controlManagement={{ isToControl, setIsToControl }}
+                        ></AutoDeclareMissingQuantityForm>
                     ) : (
                         <></>
                     )}

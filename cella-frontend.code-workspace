@@ -19,6 +19,7 @@
   ],
   "settings": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "workbench.experimental.modernUI": false,
     "editor.formatOnSave": true,
     "workbench.colorCustomizations": {
       "titleBar.activeBackground": "#f9c834",

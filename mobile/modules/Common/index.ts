@@ -52,5 +52,8 @@ export * from './Locations/Forms/SelectLocationByLevelForm_reducer';
 export * from './StockStatus/Forms/SelectStockStatusForm_reducer';
 export * from './HandlingUnits/PagesContainer/ScanHandlingUnit_reducer';
 export * from './Articles/PagesContainer/ScanArticle_reducer';
+export * from './Articles/PagesContainer/ScanArticleOrFeature_reducer';
+export * from './Articles/Forms/SelectArticleByStockOwner_reducer';
 export * from './Contents/Forms/SelectContentForArticleForm_reducer';
+export * from './Contents/Forms/SelectContentForFeatureForm_reducer';
 export * from './QuantityStockStatus/PagesContainer/SelectStockStatusAndQuantityForm_reducer';
