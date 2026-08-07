@@ -27,13 +27,14 @@ export interface IScanLocationReducerProps {
     processName: string;
     stepNumber: number;
     label: string;
-    buttons: { [label: string]: any };
+    buttons?: { [label: string]: any };
     showEmptyLocations?: any;
     showSimilarLocations?: any;
     checkComponent: any;
     headerContent?: any;
     initValue?: string;
     defaultValue?: any;
+    formToUse?: any;
 }
 
 export const ScanLocation_reducer = ({
@@ -46,7 +47,8 @@ export const ScanLocation_reducer = ({
     checkComponent,
     headerContent,
     initValue,
-    defaultValue
+    defaultValue,
+    formToUse
 }: IScanLocationReducerProps) => {
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -121,6 +123,7 @@ export const ScanLocation_reducer = ({
                     headerContent={headerContent}
                     initValue={initValue}
                     isSelected={true}
+                    formToUse={formToUse}
                 ></ScanForm_reducer>
                 {checkComponent(dataToCheck)}
             </>

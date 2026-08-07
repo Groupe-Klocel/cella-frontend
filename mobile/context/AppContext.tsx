@@ -54,6 +54,8 @@ interface State {
     pack: Record<string, any>;
     gateEntry: Record<string, any>;
     visitorEntry: Record<string, any>;
+    contentMvt: Record<string, any>;
+    contentMvtReception: Record<string, any>;
     [key: string]: any;
 }
 
@@ -199,7 +201,9 @@ const initialState: State = {
     pack: {},
     gateEntry: {},
     visitorEntry: {},
-    equipmentPositionRelease: {}
+    equipmentPositionRelease: {},
+    contentMvt: {},
+    contentMvtReception: {}
 };
 
 function reducer(state: State, action: Action): State {
@@ -270,7 +274,7 @@ function reducer(state: State, action: Action): State {
                 [action.processName]: {
                     ...state[action.processName],
                     [action.stepName]:
-                        action.object ?? state[action.processName][action.stepName] ?? {}
+                        action.object ?? state[action.processName]?.[action.stepName] ?? {}
                 }
             };
             if (action?.customFields) {
@@ -301,7 +305,9 @@ function reducer(state: State, action: Action): State {
                     pack: {},
                     gateEntry: {},
                     visitorEntry: {},
-                    equipmentPositionRelease: {}
+                    equipmentPositionRelease: {},
+                    contentMvt: {},
+                    contentMvtReception: {}
                 };
             }
             return newState;
