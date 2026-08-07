@@ -127,12 +127,15 @@ export const EditPurchaseOrderLineForm: FC<EditPurchaseOrderLineFormProps> = ({
     useEffect(() => {
         if (articleData.data) {
             const newIdOpts: Array<IOption> = [];
-            articleData.data.articles?.results.forEach(({ id, name }) => {
+            articleData.data.articles?.results.forEach(({ id, name, description }) => {
                 if (form.getFieldsValue(true).articleId === id) {
                     setArticleName(name!);
                     setAId(id!);
                 }
-                newIdOpts.push({ value: name!, id: id! });
+                newIdOpts.push({
+                    value: name! + (description ? ' - ' + description : ''),
+                    id: id!
+                });
             });
             setAIdOptions(newIdOpts);
         }
