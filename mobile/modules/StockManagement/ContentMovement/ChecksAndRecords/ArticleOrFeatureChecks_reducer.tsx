@@ -62,7 +62,7 @@ export const ArticleOrFeatureChecks_reducer = ({
         `;
 
         const variables = {
-            functionName: 'K_RF_scanArticleOrFeature',
+            functionName: 'RF_scan_article_or_feature',
             event: {
                 input: { scannedItem }
             }
