@@ -159,7 +159,7 @@ const DeliveriesManualAllocationModal = ({
 
         const variables = {
             id: selectedRowKeys,
-            itemsPerPage: 999
+            itemsPerPage: 999999
         };
 
         const deliveries = await graphqlRequestClient.request(query, variables);
