@@ -386,8 +386,9 @@ const ContentMvmt: PageComponent = () => {
             key: 'empty-locations',
             label: t('common:locations-empty_abbr'),
             visibleOnSteps: [60],
-            permissionsToSeeTheButton: !showSimilarLocations && !showEmptyLocations,
+            permissionsToSeeTheButton: showSimilarLocations && !showEmptyLocations,
             onClick: () => {
+                setShowSimilarLocations(false);
                 setShowEmptyLocations(true);
             },
             position: 'bottom'
@@ -484,6 +485,7 @@ const ContentMvmt: PageComponent = () => {
                     currentStep={storedObject.currentStep}
                 >
                     {showSimilarLocations &&
+                    !showEmptyLocations &&
                     storedObject['step35']?.data?.chosenArticleLuBarcode?.articleId ? (
                         <SimilarLocationsV2
                             articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
@@ -497,6 +499,7 @@ const ContentMvmt: PageComponent = () => {
                         <></>
                     )}
                     {showEmptyLocations &&
+                    !showSimilarLocations &&
                     storedObject['step35']?.data?.chosenArticleLuBarcode?.articleId ? (
                         <SimilarLocationsV2
                             isEmptyLocations={true}
