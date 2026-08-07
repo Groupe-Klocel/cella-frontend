@@ -33,11 +33,12 @@ import { useAppDispatch, useAppState } from 'context/AppContext';
 export interface ISelectLocationByLevelReducerProps {
     processName: string;
     stepNumber: number;
-    buttons: { [label: string]: any };
+    buttons?: { [label: string]: any };
     locations: Array<any>;
     roundsCheck?: boolean;
     isOriginLocation?: boolean;
     originLocationId?: any;
+    formToUse?: any;
 }
 
 export const SelectLocationByLevelForm_reducer = ({
@@ -47,7 +48,8 @@ export const SelectLocationByLevelForm_reducer = ({
     locations,
     roundsCheck,
     isOriginLocation,
-    originLocationId
+    originLocationId,
+    formToUse
 }: ISelectLocationByLevelReducerProps) => {
     const { t } = useTranslation();
     const state = useAppState();
@@ -60,7 +62,7 @@ export const SelectLocationByLevelForm_reducer = ({
     const [levelsChoices, setLevelsChoices] = useState<Array<any>>();
 
     //camera scanner section
-    const [form] = Form.useForm();
+    const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [camData, setCamData] = useState();
     const [popModal, setPopModal] = useState(0);
 

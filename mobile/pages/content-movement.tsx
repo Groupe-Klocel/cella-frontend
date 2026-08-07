@@ -19,51 +19,55 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
+    ButtonManagementType,
+    HeaderManagementType,
+    applyRfActionButtonsConfig,
+    buildHeaderDisplay,
+    getLastStepWithPreviousStep,
     getStockOwnerIdFromArticleLuBarcode,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
-import { LsIsSecured } from '@helpers';
-import { Space } from 'antd';
+import { Form, Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import {
     SimilarLocationsV2,
-    SelectLocationByLevelForm,
-    SelectArticleByStockOwnerForm,
-    SelectContentForArticleForm,
-    ScanLocation,
-    EnterQuantity,
-    ScanArticleOrFeature,
-    ScanHandlingUnit
+    ScanLocation_reducer,
+    SelectLocationByLevelForm_reducer,
+    EnterQuantity_reducer,
+    ScanArticleOrFeature_reducer,
+    SelectArticleByStockOwnerForm_reducer,
+    SelectContentForArticleForm_reducer,
+    SelectContentForFeatureForm_reducer
 } from '@CommonRadio';
-import { LocationChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/LocationChecks';
-import { ArticleOrFeatureChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/ArticleOrFeatureChecks';
-import { QuantityChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/QuantityChecks';
-import { HandlingUnitOriginChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitOriginChecks';
-import { HandlingUnitFinalChecks } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitFinalChecks';
-import { ValidateQuantityMoveForm } from 'modules/StockManagement/Forms/ValidateQuantityMove';
-import { SelectContentForFeatureForm } from 'modules/Common/Contents/Forms/SelectContentForFeatureForm';
+import { ScanHandlingUnit_reducer } from 'modules/StockManagement/ContentMovement/PagesContainer/ScanHandlingUnit_reducer';
+import { LocationChecks_reducer } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/LocationChecks_reducer';
+import { ArticleOrFeatureChecks_reducer } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/ArticleOrFeatureChecks_reducer';
+import { QuantityChecks_reducer } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/QuantityChecks_reducer';
+import { HandlingUnitOriginChecks_reducer } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitOriginChecks_reducer';
+import { HandlingUnitFinalChecks_reducer } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitFinalChecks_reducer';
+import { ValidateQuantityMoveForm_reducer } from 'modules/StockManagement/ContentMovement/Forms/ValidateQuantityMove_reducer';
+import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const ContentMvmt: PageComponent = () => {
+    //#region Common variables
     const { t } = useTranslation();
-    const storage = LsIsSecured();
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
-    const [triggerRender, setTriggerRender] = useState<boolean>(true);
-    const [originDisplay, setOriginDisplay] = useState<any>({});
-    const [finalDisplay, setFinalDisplay] = useState<any>({});
+    const { parameters } = useAppState();
     const [headerContent, setHeaderContent] = useState<boolean>(false);
-    const [displayed, setDisplayed] = useState<any>({});
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
-    const [isRoundToBeChecked, setIsRoundToBeChecked] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [form] = Form.useForm();
 
     const { originLocation: enforcedOriginLocation } = router.query;
 
@@ -73,7 +77,9 @@ const ContentMvmt: PageComponent = () => {
             ? 'contentMvtReception'
             : 'contentMvt';
 
-    const storedObject = JSON.parse(storage.get(processName) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
 
     //step10: scan Location (origin)
     //step15: select Location by level (origin)
@@ -89,41 +95,40 @@ const ContentMvmt: PageComponent = () => {
 
     console.log(`${processName}`, storedObject);
 
-    //initialize workflow on step 0
-    if (Object.keys(storedObject).length === 0) {
-        storedObject['step10'] = { previousStep: 0 };
-        storedObject['currentStep'] = 10;
-        storage.set(processName, JSON.stringify(storedObject));
-    }
+    //initialize workflow on step 10
+    useEffect(() => {
+        if (!storedObject.currentStep) {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: 'step10',
+                object: { previousStep: 0 },
+                customFields: [{ key: 'currentStep', value: 10 }]
+            });
+        }
+    }, [storedObject, processName]);
+    //#endregion
 
-    //origin parameters handling
-    const getParameters = async (): Promise<{ [key: string]: any } | undefined> => {
-        const query = gql`
-            query parameters($filters: ParameterSearchFilters) {
-                parameters(filters: $filters) {
-                    count
-                    itemsPerPage
-                    totalPages
-                    results {
-                        id
-                        scope
-                        code
-                        value
-                    }
-                }
-            }
-        `;
-
-        const variables = {
-            filters: {
-                scope: ['inbound', 'radio'],
-                code: ['DEFAULT_RECEPTION_LOCATION', 'MOVEMENT_CHECK_ROUND']
-            }
+    //#region Configs and parameters
+    const configsParamsCodes = useMemo(() => {
+        const findValueByCode = (code: string) => {
+            return parameters.find(
+                (item: any) =>
+                    ['inbound', 'radio'].includes(item.scope) &&
+                    item.code?.toUpperCase() === code.toUpperCase()
+            )?.value;
         };
-        const parametersResults = await graphqlRequestClient.request(query, variables);
-        return parametersResults;
-    };
 
+        return {
+            defaultReceptionLocationName: findValueByCode('DEFAULT_RECEPTION_LOCATION'),
+            movementRoundChecks: findValueByCode('MOVEMENT_CHECK_ROUND')
+        };
+    }, [parameters]);
+
+    const isRoundToBeChecked = configsParamsCodes.movementRoundChecks === '1';
+    //#endregion
+
+    //#region origin location handling (enforced reception flow)
     const getLocations = async (name: string): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
             query locations($filters: LocationSearchFilters) {
@@ -170,161 +175,258 @@ const ContentMvmt: PageComponent = () => {
     const [defaultReceptionLocation, setDefaultReceptionLocation] = useState<any>(null);
     useEffect(() => {
         async function fetchData() {
-            const parametersResults = await getParameters();
-            if (parametersResults) {
-                const parameters = parametersResults.parameters.results;
-                const defaultReceptionLocation = parameters.find(
-                    (param: any) => param.code === 'DEFAULT_RECEPTION_LOCATION'
-                ).value;
-                const movementRoundChecks = parameters.find(
-                    (param: any) => param.code === 'MOVEMENT_CHECK_ROUND'
-                ).value;
-                if (defaultReceptionLocation && enforcedOriginLocation) {
-                    const locations = await getLocations(defaultReceptionLocation);
-                    setDefaultReceptionLocation(locations?.locations.results[0]);
-                }
-                if (movementRoundChecks) {
-                    setIsRoundToBeChecked(movementRoundChecks === '1' ? true : false);
-                }
+            if (enforcedOriginLocation && configsParamsCodes.defaultReceptionLocationName) {
+                const locations = await getLocations(
+                    configsParamsCodes.defaultReceptionLocationName
+                );
+                setDefaultReceptionLocation(locations?.locations.results[0]);
             }
         }
         fetchData();
-    }, []);
+    }, [enforcedOriginLocation, configsParamsCodes.defaultReceptionLocationName]);
+    //#endregion
 
-    //function to retrieve information to display in RadioInfosHeader before step 50
+    //#region extract data for the header
+    const originLocationsList = storedObject['step10']?.data?.locations;
+    const chosenOriginLocation = storedObject['step15']?.data?.chosenLocation;
+    const originHu = storedObject['step20']?.data?.handlingUnit;
+    const articleLuBarcodesList = storedObject['step30']?.data?.articleLuBarcodes;
+    const feature = storedObject['step30']?.data?.feature;
+    const chosenArticleLuBarcode = storedObject['step35']?.data?.chosenArticleLuBarcode;
+    const chosenContent = storedObject['step40']?.data?.chosenContent;
+    const movingQuantity = storedObject['step50']?.data?.movingQuantity;
+    const finalLocationsList = storedObject['step60']?.data?.locations;
+    const chosenFinalLocation = storedObject['step65']?.data?.chosenLocation;
+    const finalHu = storedObject['step70']?.data?.finalHandlingUnit;
+
+    // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
+    const stockOwnerName =
+        chosenArticleLuBarcode?.stockOwner?.name ??
+        chosenArticleLuBarcode?.articleLu?.stockOwner?.name ??
+        chosenArticleLuBarcode?.article?.stockOwner?.name ??
+        undefined;
+    const article = chosenArticleLuBarcode
+        ? (chosenArticleLuBarcode.article ?? chosenArticleLuBarcode)
+        : undefined;
+
+    //switch RadioInfosHeader from origin to final display along the workflow
     useEffect(() => {
-        let object: { [k: string]: any } = {};
         if (storedObject?.currentStep <= 50) {
             setHeaderContent(false);
         }
-        if (
-            storedObject['step10']?.data?.locations &&
-            storedObject['step10']?.data?.locations?.length > 1
-        ) {
-            const locationsList = storedObject['step10']?.data?.locations;
-            object[t('common:location-origin_abbr')] = locationsList[0].barcode;
-        }
-        if (storedObject['step15']?.data?.chosenLocation) {
-            const location = storedObject['step15']?.data?.chosenLocation;
-            object[t('common:location-origin_abbr')] = location.name;
-        }
-        if (
-            storedObject['step15']?.data?.chosenLocation.huManagement &&
-            storedObject['step20']?.data?.handlingUnit
-        ) {
-            const originalHu = storedObject['step20']?.data?.handlingUnit;
-            object[t('common:handling-unit-origin_abbr')] = originalHu.name;
-        }
-        if (
-            storedObject['step30']?.data?.articleLuBarcodes &&
-            storedObject['step30']?.data?.articleLuBarcodes.length > 1
-        ) {
-            const articleLuBarcodesList = storedObject['step30']?.data.articleLuBarcodes;
-            object[t('common:article-barcode')] = articleLuBarcodesList[0].barcode.name;
-        }
-        if (storedObject['step35']?.data?.chosenArticleLuBarcode) {
-            const articleLuBarcode = storedObject['step35']?.data.chosenArticleLuBarcode;
-            // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
-            const stockOwnerName =
-                articleLuBarcode?.stockOwner?.name ??
-                articleLuBarcode?.articleLu?.stockOwner?.name ??
-                articleLuBarcode?.article?.stockOwner?.name ??
-                undefined;
-            const article = articleLuBarcode.article ? articleLuBarcode.article : articleLuBarcode;
-            stockOwnerName
-                ? (object[t('common:article')] = article.name + ' (' + stockOwnerName + ')')
-                : (object[t('common:article')] = article.name);
-            object[t('common:supplier-article-code')] = article?.genericArticleComment;
-            object[t('common:article-description')] = article.description;
-            if (storedObject['step30']?.data?.feature) {
-                const serialNumber = storedObject['step30']?.data.feature.value;
-                object[t('common:serial-number')] = serialNumber;
-            }
-        }
-        if (storedObject['step40']?.data?.chosenContent) {
-            const chosenContent = storedObject['step40']?.data.chosenContent;
-            object[t('common:stock-status')] = chosenContent.stockStatusText;
-            object[t('common:stock-owner')] = chosenContent.stockOwner.name;
-        }
-        if (storedObject['step50']?.data?.movingQuantity) {
-            const movingQuantity = storedObject['step50']?.data?.movingQuantity;
-            object[t('common:quantity')] = movingQuantity;
-        }
-        setOriginDisplay(object);
-    }, [triggerRender]);
-
-    //function to retrieve information to display in RadioInfosHeader after step 50
-    useEffect(() => {
-        const finalObject: { [k: string]: any } = {};
-        if (storedObject?.currentStep === 90) {
-            const originLocation = storedObject['step15']?.data?.chosenLocation;
-            finalObject[t('common:location-origin_abbr')] = originLocation.name;
-            setHeaderContent(true);
-        }
-        if (storedObject['step20']?.data?.handlingUnit) {
-            const originalHu = storedObject['step20']?.data?.handlingUnit;
-            finalObject[t('common:handling-unit-origin_abbr')] = originalHu.name;
-        }
-        if (
-            storedObject['step35']?.data?.chosenArticleLuBarcode &&
-            storedObject['step50']?.data?.movingQuantity
-        ) {
-            const articleLuBarcode = storedObject['step35']?.data?.chosenArticleLuBarcode;
-            const movingQuantity = storedObject['step50']?.data?.movingQuantity;
-            // same priority as getStockOwnerIdFromArticleLuBarcode: barcode > articleLu > article
-            const stockOwnerName =
-                articleLuBarcode?.stockOwner?.name ??
-                articleLuBarcode?.articleLu?.stockOwner?.name ??
-                articleLuBarcode?.article?.stockOwner?.name ??
-                undefined;
-            const article = articleLuBarcode.article ? articleLuBarcode.article : articleLuBarcode;
-            stockOwnerName
-                ? (finalObject[t('common:article')] =
-                      movingQuantity + ' x ' + article.name + ' (' + stockOwnerName + ')')
-                : (finalObject[t('common:movement_abbr')] = movingQuantity + ' x ' + article.name);
-            finalObject[t('common:article-description')] = article.description;
-        }
-        if (
-            storedObject['step60']?.data?.locations &&
-            storedObject['step60']?.data?.locations?.length > 1
-        ) {
-            const locationsList = storedObject['step60']?.data?.locations;
-            finalObject[t('common:location-final_abbr')] = locationsList[0].barcode;
-        }
         if (storedObject['step65']?.data?.chosenLocation) {
-            const location = storedObject['step65']?.data?.chosenLocation;
-            finalObject[t('common:location-final_abbr')] = location.name;
             setHeaderContent(true);
         }
-        if (storedObject['step70']?.data?.finalHandlingUnit) {
-            const finalHu = storedObject['step70']?.data?.finalHandlingUnit;
-            finalObject[t('common:handling-unit-final_abbr')] = finalHu.name;
+    }, [storedObject]);
+    //#endregion
+
+    //#region RadioInfosHeader settings
+    // Declarative header configuration (mirrors buttonManagement). Order = display order:
+    // rows sharing a label override the previous one when both are visible.
+    const headerManagement: HeaderManagementType = [
+        // origin display (until the final location is engaged)
+        {
+            label: t('common:location-origin_abbr'),
+            value: originLocationsList?.[0]?.barcode,
+            visible: !headerContent && originLocationsList?.length > 1
+        },
+        {
+            label: t('common:location-origin_abbr'),
+            value: chosenOriginLocation?.name,
+            visible: !headerContent && !!chosenOriginLocation
+        },
+        {
+            label: t('common:handling-unit-origin_abbr'),
+            value: originHu?.name,
+            visible: !headerContent && !!(chosenOriginLocation?.huManagement && originHu)
+        },
+        {
+            label: t('common:article-barcode'),
+            value: articleLuBarcodesList?.[0]?.barcode?.name,
+            visible: !headerContent && articleLuBarcodesList?.length > 1
+        },
+        {
+            label: t('common:article'),
+            value: stockOwnerName ? article?.name + ' (' + stockOwnerName + ')' : article?.name,
+            visible: !headerContent && !!chosenArticleLuBarcode
+        },
+        {
+            label: t('common:supplier-article-code'),
+            value: article?.genericArticleComment,
+            visible: !headerContent && !!chosenArticleLuBarcode
+        },
+        {
+            label: t('common:article-description'),
+            value: article?.description,
+            visible: !headerContent && !!chosenArticleLuBarcode
+        },
+        {
+            label: t('common:serial-number'),
+            value: feature?.value,
+            visible: !headerContent && !!(chosenArticleLuBarcode && feature)
+        },
+        {
+            label: t('common:stock-status'),
+            value: chosenContent?.stockStatusText,
+            visible: !headerContent && !!chosenContent
+        },
+        {
+            label: t('common:stock-owner'),
+            value: chosenContent?.stockOwner?.name,
+            visible: !headerContent && !!chosenContent
+        },
+        {
+            label: t('common:quantity'),
+            value: movingQuantity,
+            visible: !headerContent && !!movingQuantity
+        },
+        // final display (once the final location is engaged)
+        {
+            label: t('common:handling-unit-origin_abbr'),
+            value: originHu?.name,
+            visible: headerContent && !!originHu
+        },
+        {
+            label: t('common:article'),
+            value: movingQuantity + ' x ' + article?.name + ' (' + stockOwnerName + ')',
+            visible: headerContent && !!(chosenArticleLuBarcode && movingQuantity && stockOwnerName)
+        },
+        {
+            label: t('common:movement_abbr'),
+            value: movingQuantity + ' x ' + article?.name,
+            visible:
+                headerContent && !!(chosenArticleLuBarcode && movingQuantity && !stockOwnerName)
+        },
+        {
+            label: t('common:article-description'),
+            value: article?.description,
+            visible: headerContent && !!(chosenArticleLuBarcode && movingQuantity)
+        },
+        {
+            label: t('common:location-final_abbr'),
+            value: finalLocationsList?.[0]?.barcode,
+            visible: headerContent && finalLocationsList?.length > 1
+        },
+        {
+            label: t('common:location-final_abbr'),
+            value: chosenFinalLocation?.name,
+            visible: headerContent && !!chosenFinalLocation
+        },
+        {
+            label: t('common:handling-unit-final_abbr'),
+            value: finalHu?.name,
+            visible: headerContent && !!finalHu
         }
-        setFinalDisplay(finalObject);
-    }, [triggerRender]);
+    ];
 
-    useEffect(() => {
-        headerContent ? setDisplayed(finalDisplay) : setDisplayed(originDisplay);
-    }, [originDisplay, finalDisplay, headerContent]);
+    // Build the displayed object from the declarative configuration
+    const headerDisplay = buildHeaderDisplay(headerManagement);
+    //#endregion
 
+    //#region global buttons
     const onReset = () => {
-        storage.remove(processName);
+        dispatch({
+            type: 'DELETE_RF_PROCESS',
+            processName
+        });
         setHeaderContent(false);
         setShowSimilarLocations(false);
         setShowEmptyLocations(false);
-        setTriggerRender(!triggerRender);
+        form.resetFields();
     };
 
     const previousPage = () => {
+        dispatch({
+            type: 'DELETE_RF_PROCESS',
+            processName
+        });
         router.back();
-        storage.remove(processName);
         setHeaderContent(false);
         setShowSimilarLocations(false);
         setShowEmptyLocations(false);
+        form.resetFields();
     };
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const onBack = () => {
+        // steps recorded without previousStep (e.g. content selection) fall back to
+        // the last step of the workflow that holds one
+        const stepToReturn =
+            storedObject[`step${storedObject.currentStep}`]?.previousStep ??
+            getLastStepWithPreviousStep(storedObject, storedObject.currentStep);
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${stepToReturn}`
+        });
+        form.resetFields();
+    };
+    //#endregion
 
+    //#region module buttons
+    const buttonManagement: ButtonManagementType = [
+        {
+            key: 'submit',
+            label: t('actions:submit'),
+            visibleOnSteps: [10, 15, 20, 30, 35, 50, 60, 65, 70, 80],
+            onClick: () => form.submit(),
+            position: 'bottom'
+        },
+        {
+            key: 'locations',
+            label: t('common:locations_abbr'),
+            visibleOnSteps: [60],
+            permissionsToSeeTheButton: !showSimilarLocations && !showEmptyLocations,
+            onClick: () => {
+                setHeaderContent(true);
+                setShowSimilarLocations(true);
+            },
+            position: 'bottom'
+        },
+        {
+            key: 'empty-locations',
+            label: t('common:locations-empty_abbr'),
+            visibleOnSteps: [60],
+            permissionsToSeeTheButton: showSimilarLocations && !showEmptyLocations,
+            onClick: () => {
+                setShowSimilarLocations(false);
+                setShowEmptyLocations(true);
+            },
+            position: 'bottom'
+        },
+        {
+            key: 'back',
+            label: t('actions:back'),
+            visibleOnSteps: [15, 20, 30, 35, 40, 50, 60, 65, 70, 80],
+            permissionsToSeeTheButton: !(
+                storedObject.currentStep === 30 && enforcedOriginLocation === 'defaultReception'
+            ),
+            onClick: () => {
+                if (showSimilarLocations || showEmptyLocations) {
+                    setShowSimilarLocations(false);
+                    setShowEmptyLocations(false);
+                    if (!storedObject['step65']?.data?.chosenLocation) {
+                        setHeaderContent(false);
+                    }
+                } else {
+                    onBack();
+                }
+            },
+            position: 'bottom'
+        }
+    ];
+
+    // Apply configurable order/color to any button (matched by its `key`) from the
+    // 'RF_PREPARATION_ACTION_BUTTONS' parameter extras; keeps base behaviour when unset.
+    const orderedButtonManagement = applyRfActionButtonsConfig(buttonManagement, parameters);
+    //#endregion
+
+    //#region reset form on step change
+    useEffect(() => {
+        form.resetFields();
+    }, [storedObject.currentStep]);
+    //#endregion
+
+    //#region visual handling of automatically processed steps
     useEffect(() => {
         switch (storedObject.currentStep) {
             case 10:
@@ -345,7 +447,9 @@ const ContentMvmt: PageComponent = () => {
                 setIsLoading(false);
         }
     }, [storedObject]);
+    //#endregion
 
+    //#region RETURN
     return (
         <PageContentWrapper>
             <HeaderContent
@@ -365,231 +469,236 @@ const ContentMvmt: PageComponent = () => {
                     </Space>
                 }
             />
-            {Object.keys(originDisplay).length === 0 && Object.keys(finalDisplay).length === 0 ? (
+            {Object.keys(headerDisplay).length === 0 ? (
                 <></>
             ) : (
                 <RadioInfosHeader
                     input={{
-                        displayed: displayed
+                        displayed: headerDisplay
                     }}
                 ></RadioInfosHeader>
             )}
             {isLoading ? <UpperMobileSpinner></UpperMobileSpinner> : <></>}
             <div hidden={isLoading}>
-                {showSimilarLocations &&
-                storedObject['step35'].data.chosenArticleLuBarcode.articleId ? (
-                    <SimilarLocationsV2
-                        articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
-                        originalContentId={storedObject['step40'].data.chosenContent.id}
-                        stockOwnerId={storedObject['step40'].data.chosenContent.stockOwnerId}
-                        stockStatus={storedObject['step40'].data.chosenContent.stockStatus}
-                        handlingUnitCategory={storedObject['step20'].data.handlingUnit.category}
-                        processName={'contentMvt'}
-                    />
-                ) : (
-                    <></>
-                )}
-                {showEmptyLocations &&
-                storedObject['step35'].data.chosenArticleLuBarcode.articleId ? (
-                    <SimilarLocationsV2
-                        isEmptyLocations={true}
-                        articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
-                        processName={'contentMvt'}
-                        isEmptyWithHU={true}
-                    />
-                ) : (
-                    <></>
-                )}
-                {!storedObject['step10']?.data ? (
-                    <ScanLocation
-                        process={processName}
-                        stepNumber={10}
-                        label={t('common:location-origin')}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        buttons={{ submitButton: true, backButton: false }}
-                        checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
-                        defaultValue={enforcedOriginLocation ? defaultReceptionLocation : undefined}
-                    ></ScanLocation>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step10']?.data && !storedObject['step15']?.data ? (
-                    <SelectLocationByLevelForm
-                        process={processName}
-                        stepNumber={15}
-                        buttons={{ submitButton: true, backButton: true }}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        locations={storedObject['step10'].data.locations}
-                        roundsCheck={
-                            enforcedOriginLocation && enforcedOriginLocation === 'defaultReception'
-                                ? false
-                                : isRoundToBeChecked
-                        }
-                        isOriginLocation={true}
-                    ></SelectLocationByLevelForm>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step15']?.data && !storedObject['step20']?.data ? (
-                    <ScanHandlingUnit
-                        process={processName}
-                        stepNumber={20}
-                        label={t('common:handling-unit')}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        buttons={{ submitButton: true, backButton: true }}
-                        enforcedValue={
-                            !storedObject['step15']?.data?.chosenLocation.huManagement
-                                ? storedObject['step15']?.data?.chosenLocation.name
-                                : undefined
-                        }
-                        checkComponent={(data: any) => (
-                            <HandlingUnitOriginChecks
-                                dataToCheck={data}
-                                isEnforcedOriginLocation={!!enforcedOriginLocation}
-                            />
-                        )}
-                    ></ScanHandlingUnit>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step20']?.data && !storedObject['step30']?.data ? (
-                    <ScanArticleOrFeature
-                        process={processName}
-                        stepNumber={30}
-                        label={t('common:article')}
-                        buttons={{
-                            submitButton: true,
-                            backButton: enforcedOriginLocation !== 'defaultReception'
-                        }}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        checkComponent={(data: any) => (
-                            <ArticleOrFeatureChecks dataToCheck={data} />
-                        )}
-                    ></ScanArticleOrFeature>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step30']?.data && !storedObject['step35']?.data ? (
-                    <SelectArticleByStockOwnerForm
-                        process={processName}
-                        stepNumber={35}
-                        buttons={{ submitButton: true, backButton: true }}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        articleLuBarcodes={storedObject['step30'].data.articleLuBarcodes}
-                    ></SelectArticleByStockOwnerForm>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step35']?.data && !storedObject['step40']?.data ? (
-                    storedObject['step30'].data?.resType != 'serialNumber' ? (
-                        <SelectContentForArticleForm
-                            process={processName}
-                            stepNumber={40}
-                            buttons={{ backButton: true }}
-                            trigger={{ triggerRender, setTriggerRender }}
+                <RadioButtonWrapper
+                    buttonManagement={orderedButtonManagement}
+                    currentStep={storedObject.currentStep}
+                >
+                    {showSimilarLocations &&
+                    !showEmptyLocations &&
+                    storedObject['step35']?.data?.chosenArticleLuBarcode?.articleId ? (
+                        <SimilarLocationsV2
                             articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
-                            locationId={storedObject['step15'].data.chosenLocation.id}
-                            handlingUnitId={storedObject['step20'].data.handlingUnit.id}
-                            stockOwnerId={getStockOwnerIdFromArticleLuBarcode(
-                                storedObject['step35'].data.chosenArticleLuBarcode
-                            )}
-                        ></SelectContentForArticleForm>
+                            originalContentId={storedObject['step40'].data.chosenContent.id}
+                            stockOwnerId={storedObject['step40'].data.chosenContent.stockOwnerId}
+                            stockStatus={storedObject['step40'].data.chosenContent.stockStatus}
+                            handlingUnitCategory={storedObject['step20'].data.handlingUnit.category}
+                            processName={'contentMvt'}
+                        />
                     ) : (
-                        <SelectContentForFeatureForm
-                            process={processName}
-                            stepNumber={40}
-                            buttons={{ backButton: true }}
-                            trigger={{ triggerRender, setTriggerRender }}
+                        <></>
+                    )}
+                    {showEmptyLocations &&
+                    !showSimilarLocations &&
+                    storedObject['step35']?.data?.chosenArticleLuBarcode?.articleId ? (
+                        <SimilarLocationsV2
+                            isEmptyLocations={true}
                             articleId={storedObject['step35'].data.chosenArticleLuBarcode.articleId}
-                            locationId={storedObject['step15'].data.chosenLocation.id}
-                            uniqueId={storedObject['step30'].data.feature.value}
-                        ></SelectContentForFeatureForm>
-                    )
-                ) : (
-                    <></>
-                )}
-                {storedObject['step40']?.data && !storedObject['step50']?.data ? (
-                    <EnterQuantity
-                        process={processName}
-                        stepNumber={50}
-                        buttons={{ submitButton: true, backButton: true }}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        availableQuantity={storedObject['step40']?.data.chosenContent?.quantity}
-                        defaultValue={
-                            storedObject['step30'].data.resType === 'serialNumber' ? 1 : undefined
-                        }
-                        checkComponent={(data: any) => <QuantityChecks dataToCheck={data} />}
-                    ></EnterQuantity>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step50']?.data && !storedObject['step60']?.data ? (
-                    <ScanLocation
-                        process={processName}
-                        stepNumber={60}
-                        label={t('common:location-final')}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        buttons={{
-                            submitButton: true,
-                            backButton: true,
-                            locationButton: true,
-                            emptyButton: true
-                        }}
-                        showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
-                        showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
-                        headerContent={{ headerContent, setHeaderContent }}
-                        checkComponent={(data: any) => <LocationChecks dataToCheck={data} />}
-                    ></ScanLocation>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step60']?.data && !storedObject['step65']?.data ? (
-                    <SelectLocationByLevelForm
-                        process={processName}
-                        stepNumber={65}
-                        buttons={{ submitButton: true, backButton: true }}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        locations={storedObject['step60'].data.locations}
-                        originLocationId={storedObject['step15'].data.chosenLocation.id}
-                    ></SelectLocationByLevelForm>
-                ) : (
-                    <></>
-                )}
-                {storedObject['step65']?.data && !storedObject['step70']?.data ? (
-                    <ScanHandlingUnit
-                        process={processName}
-                        stepNumber={70}
-                        label={t('common:handling-unit')}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        buttons={{ submitButton: true, backButton: true }}
-                        enforcedValue={
-                            !storedObject['step65']?.data?.chosenLocation.huManagement
-                                ? storedObject['step65']?.data?.chosenLocation.name
-                                : undefined
-                        }
-                        checkComponent={(data: any) => (
-                            <HandlingUnitFinalChecks dataToCheck={data} />
-                        )}
-                    ></ScanHandlingUnit>
-                ) : (
-                    <></>
-                )}
-
-                {storedObject['step70']?.data ? (
-                    <ValidateQuantityMoveForm
-                        process={processName}
-                        stepNumber={80}
-                        buttons={{ submitButton: true, backButton: true }}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        headerContent={{ setHeaderContent }}
-                    ></ValidateQuantityMoveForm>
-                ) : (
-                    <></>
-                )}
+                            processName={'contentMvt'}
+                            isEmptyWithHU={true}
+                        />
+                    ) : (
+                        <></>
+                    )}
+                    {!storedObject['step10']?.data ? (
+                        <ScanLocation_reducer
+                            processName={processName}
+                            stepNumber={10}
+                            label={t('common:location-origin')}
+                            checkComponent={(data: any) => (
+                                <LocationChecks_reducer dataToCheck={data} />
+                            )}
+                            defaultValue={
+                                enforcedOriginLocation ? defaultReceptionLocation : undefined
+                            }
+                            formToUse={form}
+                        ></ScanLocation_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step10']?.data && !storedObject['step15']?.data ? (
+                        <SelectLocationByLevelForm_reducer
+                            processName={processName}
+                            stepNumber={15}
+                            locations={storedObject['step10'].data.locations}
+                            roundsCheck={
+                                enforcedOriginLocation &&
+                                enforcedOriginLocation === 'defaultReception'
+                                    ? false
+                                    : isRoundToBeChecked
+                            }
+                            isOriginLocation={true}
+                            formToUse={form}
+                        ></SelectLocationByLevelForm_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step15']?.data && !storedObject['step20']?.data ? (
+                        <ScanHandlingUnit_reducer
+                            processName={processName}
+                            stepNumber={20}
+                            label={t('common:handling-unit')}
+                            enforcedValue={
+                                !storedObject['step15']?.data?.chosenLocation.huManagement
+                                    ? storedObject['step15']?.data?.chosenLocation.name
+                                    : undefined
+                            }
+                            checkComponent={(data: any) => (
+                                <HandlingUnitOriginChecks_reducer
+                                    dataToCheck={data}
+                                    isEnforcedOriginLocation={!!enforcedOriginLocation}
+                                />
+                            )}
+                            formToUse={form}
+                        ></ScanHandlingUnit_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step20']?.data && !storedObject['step30']?.data ? (
+                        <ScanArticleOrFeature_reducer
+                            processName={processName}
+                            stepNumber={30}
+                            label={t('common:article')}
+                            checkComponent={(data: any) => (
+                                <ArticleOrFeatureChecks_reducer dataToCheck={data} />
+                            )}
+                            formToUse={form}
+                        ></ScanArticleOrFeature_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step30']?.data && !storedObject['step35']?.data ? (
+                        <SelectArticleByStockOwnerForm_reducer
+                            processName={processName}
+                            stepNumber={35}
+                            articleLuBarcodes={storedObject['step30'].data.articleLuBarcodes}
+                            formToUse={form}
+                        ></SelectArticleByStockOwnerForm_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step35']?.data && !storedObject['step40']?.data ? (
+                        storedObject['step30'].data?.resType != 'serialNumber' ? (
+                            <SelectContentForArticleForm_reducer
+                                processName={processName}
+                                stepNumber={40}
+                                buttons={{}}
+                                articleId={
+                                    storedObject['step35'].data.chosenArticleLuBarcode.articleId
+                                }
+                                locationId={storedObject['step15'].data.chosenLocation.id}
+                                handlingUnitId={storedObject['step20'].data.handlingUnit.id}
+                                stockOwnerId={getStockOwnerIdFromArticleLuBarcode(
+                                    storedObject['step35'].data.chosenArticleLuBarcode
+                                )}
+                            ></SelectContentForArticleForm_reducer>
+                        ) : (
+                            <SelectContentForFeatureForm_reducer
+                                processName={processName}
+                                stepNumber={40}
+                                buttons={{}}
+                                articleId={
+                                    storedObject['step35'].data.chosenArticleLuBarcode.articleId
+                                }
+                                locationId={storedObject['step15'].data.chosenLocation.id}
+                                uniqueId={storedObject['step30'].data.feature.value}
+                            ></SelectContentForFeatureForm_reducer>
+                        )
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step40']?.data && !storedObject['step50']?.data ? (
+                        <EnterQuantity_reducer
+                            processName={processName}
+                            stepNumber={50}
+                            requiredMaxQuantity={
+                                storedObject['step40']?.data.chosenContent?.quantity
+                            }
+                            defaultValue={
+                                storedObject['step30'].data.resType === 'serialNumber'
+                                    ? 1
+                                    : undefined
+                            }
+                            checkComponent={(data: any) => (
+                                <QuantityChecks_reducer dataToCheck={data} />
+                            )}
+                            formToUse={form}
+                        ></EnterQuantity_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step50']?.data && !storedObject['step60']?.data ? (
+                        <ScanLocation_reducer
+                            processName={processName}
+                            stepNumber={60}
+                            label={t('common:location-final')}
+                            showEmptyLocations={{ showEmptyLocations, setShowEmptyLocations }}
+                            showSimilarLocations={{ showSimilarLocations, setShowSimilarLocations }}
+                            headerContent={{ headerContent, setHeaderContent }}
+                            checkComponent={(data: any) => (
+                                <LocationChecks_reducer dataToCheck={data} />
+                            )}
+                            formToUse={form}
+                        ></ScanLocation_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step60']?.data && !storedObject['step65']?.data ? (
+                        <SelectLocationByLevelForm_reducer
+                            processName={processName}
+                            stepNumber={65}
+                            locations={storedObject['step60'].data.locations}
+                            originLocationId={storedObject['step15'].data.chosenLocation.id}
+                            formToUse={form}
+                        ></SelectLocationByLevelForm_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step65']?.data && !storedObject['step70']?.data ? (
+                        <ScanHandlingUnit_reducer
+                            processName={processName}
+                            stepNumber={70}
+                            label={t('common:handling-unit')}
+                            enforcedValue={
+                                !storedObject['step65']?.data?.chosenLocation.huManagement
+                                    ? storedObject['step65']?.data?.chosenLocation.name
+                                    : undefined
+                            }
+                            checkComponent={(data: any) => (
+                                <HandlingUnitFinalChecks_reducer dataToCheck={data} />
+                            )}
+                            formToUse={form}
+                        ></ScanHandlingUnit_reducer>
+                    ) : (
+                        <></>
+                    )}
+                    {storedObject['step70']?.data ? (
+                        <ValidateQuantityMoveForm_reducer
+                            processName={processName}
+                            stepNumber={80}
+                            buttons={{}}
+                            headerContent={{ setHeaderContent }}
+                            formToUse={form}
+                        ></ValidateQuantityMoveForm_reducer>
+                    ) : (
+                        <></>
+                    )}
+                </RadioButtonWrapper>
             </div>
         </PageContentWrapper>
     );
 };
+//#endregion
 
 ContentMvmt.layout = MainLayout;
 
