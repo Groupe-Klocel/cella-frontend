@@ -1,0 +1,16 @@
+{
+    "welcome": "Добре дошли!",
+    "username": "Потребителско име",
+    "password": "Парола",
+    "login": "Вход",
+    "error-message-empty-input": "Полето не може да е празно",
+    "login-success": "Влязохте успешно",
+    "please-reset-password": "Моля, сменете паролата си",
+    "SSO-000001": "No user found matching this email address",
+    "SSO-000002": "SSO login is required",
+    "SSO-000003": "The 'sso_metadata' field is required.",
+    "SSO-000004": "The 'sso_front_secret' field is missing or invalid.",
+    "SSO-000005": "The SSO token is invalid or has expired. Please log in again.",
+    "SSO-000006": "Unable to verify the SSO token. Please contact the administrator.",
+    "PASSWORD-000140": "Account locked after too many failed login attempts"
+}

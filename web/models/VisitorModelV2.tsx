@@ -177,7 +177,10 @@ export const VisitorModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: 'visitor-email',
-            isMandatory: true,
+            // optional: a visitor can be pre-registered without an email address. The email
+            // *format* rule stays (see pages/visitors/{add,edit}) and only fires on a non-empty
+            // value, so a blank field passes while a malformed one is still rejected.
+            isMandatory: false,
             minRule: null,
             maxRule: null,
             config: null,

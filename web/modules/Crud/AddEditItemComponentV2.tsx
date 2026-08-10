@@ -23,10 +23,13 @@ import utc from 'dayjs/plugin/utc';
 
 dayjs.extend(utc);
 
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { FormDataType, ModelType } from 'models/ModelsV2';
 import {
+    applyFieldRulesToModel,
+    FieldRuleScreen,
+    useFieldRules,
     getModesFromPermissions,
     isNumeric,
     pascalToSnakeUpper,
@@ -81,9 +84,13 @@ export interface IAddItemFormProps {
     // when true, the `scope` field is pre-filled through `extraData` and hidden from the form
     // (config/param screens that were previously handled by AddConfigParamComponent)
     comeFromFiltered?: boolean;
+    // Extra discriminants for the entity's <TABLE>_FIELD_RULES rule, merged as-is into the rule
+    // context. The generic context (screen, model, user, record_status) is built by useFieldRules;
+    // this is how a page adds its own (a direction, a carrier, …) without any plumbing here.
+    fieldRulesContext?: Record<string, any>;
 }
 
-const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
+const AddEditItemComponentInner: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
     const { permissions, configs } = useAppState();
     const { t } = useTranslation();
     const router = useRouter();
@@ -597,6 +604,40 @@ const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) =
             </StyledPageContent>
         </>
     );
+};
+
+AddEditItemComponentInner.displayName = 'AddEditItemComponentInner';
+
+/**
+ * Applies the entity's <TABLE>_FIELD_RULES rule (visibility / mandatory / read-only, configured in
+ * /rules) before the form is built, then renders the form itself unchanged.
+ *
+ * It has to be a wrapper rather than a hook inside the form: the field list is a `useState`
+ * initializer, so it never re-derives from `dataModel`, and the rules therefore have to be known at
+ * the inner component's very first render. Mounting the inner only once the rules have resolved is
+ * also what keeps a configured field from flashing in before it is hidden.
+ *
+ * For an entity with no rule — every entity, until someone configures one — `useFieldRules` returns
+ * synchronously with `isLoading` false and `applyFieldRulesToModel` hands back the very same model
+ * object, so this costs one function call and changes nothing.
+ */
+const AddEditItemComponent: FC<IAddItemFormProps> = (props: IAddItemFormProps) => {
+    const screen: FieldRuleScreen = props.id ? 'edit' : 'add';
+    const { rules, isLoading } = useFieldRules(props.dataModel, screen, {
+        // known on edit only: the page has already fetched the record server-side
+        recordStatus: props.initialProps?.initialData?.status,
+        extraContext: props.fieldRulesContext
+    });
+    const dataModel = useMemo(
+        () => applyFieldRulesToModel(props.dataModel, rules, screen),
+        [props.dataModel, rules, screen]
+    );
+
+    if (isLoading) {
+        return <ContentSpin />;
+    }
+
+    return <AddEditItemComponentInner {...props} dataModel={dataModel} />;
 };
 
 AddEditItemComponent.displayName = 'AddEditItemComponent';

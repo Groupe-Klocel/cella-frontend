@@ -27,7 +27,10 @@ import {
 } from '@components';
 import { FC, useEffect, useMemo, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import {
+    resolveAppointmentStatusCodes,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
 import { Form, Space } from 'antd';
 import { UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
@@ -72,19 +75,10 @@ const GateEntry: PageComponent = () => {
     const [timedOut, setTimedOut] = useState(false);
 
     const currentStep: number = storedObject.currentStep ?? 10;
-    // ON_SITE status code from the configs reducer (no extra request).
-    const onSiteStatus = useMemo(
-        () =>
-            parseInt(
-                (configs ?? []).find(
-                    (c: any) =>
-                        c.scope === 'appointment_status' &&
-                        /on.?site|sur.?site|vor.?ort/i.test(c.value ?? '')
-                )?.code,
-                10
-            ),
-        [configs]
-    );
+    // Status codes from the configs reducer (no extra request). Resolved through the shared
+    // helper: a bare /on.?site/i test would also match the "waiting area" status, and the kiosk
+    // would tell a driver parked in the yard to drive to a dock.
+    const statusCodes = useMemo(() => resolveAppointmentStatusCodes(configs ?? []), [configs]);
 
     // The kiosk relies on the connected user; redirect to login if none.
     useEffect(() => {
@@ -145,6 +139,8 @@ const GateEntry: PageComponent = () => {
                             appointment(id: $id) {
                                 status
                                 denyReason
+                                pagerNumber
+                                extras
                                 location {
                                     name
                                 }
@@ -164,7 +160,27 @@ const GateEntry: PageComponent = () => {
                     });
                     clearInterval(id);
                 };
-                if (onSiteStatus && res.status === onSiteStatus) {
+                // Order matters: the documents-pending outcome ALSO sets denyReason, so it has to
+                // be tested before the bare denyReason branch or a recoverable driver would be
+                // told he was turned away.
+                if (
+                    statusCodes.documentsPending != null &&
+                    res.status === statusCodes.documentsPending
+                ) {
+                    advance({ decision: 'documents', denyReason: res.denyReason ?? null });
+                } else if (
+                    statusCodes.onSiteWaiting != null &&
+                    res.status === statusCodes.onSiteWaiting
+                ) {
+                    // Parked in the yard. Give the driver a definite instruction (and the pager
+                    // number) instead of leaving the kiosk spinning until the 15-minute timeout —
+                    // which would also keep the kiosk out of service for the next driver.
+                    advance({
+                        decision: 'waiting',
+                        // column first, `extras` only for appointments written before it existed
+                        pagerNumber: res.pagerNumber ?? res.extras?.gateCheckIn?.pagerNumber ?? null
+                    });
+                } else if (statusCodes.onSite != null && res.status === statusCodes.onSite) {
                     advance({
                         decision: 'approved',
                         dockName:
@@ -182,7 +198,7 @@ const GateEntry: PageComponent = () => {
 
         return () => clearInterval(id);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentStep, appointmentId, onSiteStatus]);
+    }, [currentStep, appointmentId, statusCodes]);
     //#endregion
 
     //#region RadioInfosHeader recap (found appointment)

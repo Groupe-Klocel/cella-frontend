@@ -47,6 +47,14 @@ export type VisitStatusCodes = {
 // visit_status is the visitor referential (same codes as appointment_status,
 // visitor wording); appointment_status regexes are the fallback when the
 // visit_status scope has not been parameterized yet on the warehouse.
+//
+// The `checkedIn` fallback is anchored to the exact "on site" values rather than the loose
+// /on.?site/i it used to be: the appointment referential now also carries a waiting-area status,
+// and a loose pattern could resolve a visitor check-in to it. This fallback only runs on
+// warehouses that never created the visit_status rows, which is exactly where it would go
+// unnoticed.
+const ON_SITE_EXACT = /^\s*(on.?site|sur.?site|vor.?ort)\s*$/i;
+
 const visitStatusMatchers: Array<{
     key: keyof VisitStatusCodes;
     visit: RegExp;
@@ -54,7 +62,7 @@ const visitStatusMatchers: Array<{
 }> = [
     { key: 'toBeChecked', visit: /to.?be.?checked/i, appointment: /submit/i },
     { key: 'preRegistered', visit: /pre.?register/i, appointment: /confirm/i },
-    { key: 'checkedIn', visit: /checked.?in/i, appointment: /on.?site|sur.?site|vor.?ort/i },
+    { key: 'checkedIn', visit: /checked.?in/i, appointment: ON_SITE_EXACT },
     { key: 'checkedOut', visit: /checked.?out/i, appointment: /complet/i },
     { key: 'cancelled', visit: /cancel|annul|stornier/i, appointment: /cancel|annul|stornier/i }
 ];

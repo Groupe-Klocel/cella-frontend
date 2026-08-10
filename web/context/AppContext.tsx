@@ -54,6 +54,11 @@ type State = {
         id: string;
         system: boolean;
     }>;
+    // Names of the existing `<TABLE>_FIELD_RULES` rules, listed once at boot so the generic CRUD
+    // components skip `executeRule` entirely for the entities that have no rule.
+    // `null` = the list could not be read (no access to RULE), `undefined` = not loaded yet; both
+    // mean "unknown", and the caller then tries once per entity (see helpers/utils/fieldRules.ts).
+    fieldRuleNames?: Array<string> | null;
     interval?: number;
     logoutTimeout?: number;
 };
@@ -73,7 +78,8 @@ const initialState: State = {
     tempTheme: undefined,
     translations: [],
     configs: undefined,
-    parameters: undefined
+    parameters: undefined,
+    fieldRuleNames: undefined
 };
 
 type Action = any;
@@ -140,6 +146,11 @@ function reducer(state: State, action: Action) {
             return {
                 ...state,
                 parameters: action.parameters
+            };
+        case 'SET_FIELD_RULE_NAMES':
+            return {
+                ...state,
+                fieldRuleNames: action.fieldRuleNames ?? null
             };
         case 'SET_INTERVAL':
             return { ...state, interval: action.interval ?? null };
