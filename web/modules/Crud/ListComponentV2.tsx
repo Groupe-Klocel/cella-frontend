@@ -149,6 +149,15 @@ export interface IListProps {
     excelImport?: {
         functionName: string;
         titleLabel?: any;
+        // Max size of the selected file, in Mo. Defaults to the hook's own default.
+        maxFileSizeMo?: number;
+        // Run the function in the background instead of waiting for its result.
+        // Needed as soon as the file can hold enough rows to exceed the HTTP timeout.
+        longRunningTask?: boolean;
+        // Name of the CELLA notification raised when a long running task completes.
+        notificationName?: string;
+        // Extra keys merged into event.input (e.g. { dry_run: true }).
+        extraInput?: Record<string, any>;
     };
 }
 
@@ -1213,6 +1222,10 @@ const ListComponent = (props: IListProps) => {
     const { displayImportModal } = useImportData({
         functionName: props.excelImport?.functionName || '',
         titleLabel: props.excelImport?.titleLabel,
+        maxFileSizeMo: props.excelImport?.maxFileSizeMo,
+        longRunningTask: props.excelImport?.longRunningTask,
+        notificationName: props.excelImport?.notificationName,
+        extraInput: props.excelImport?.extraInput,
         onCancel: () => setIsExcelImportModalOpen(false),
         onSuccess: () => {
             setIsExcelImportModalOpen(false);
