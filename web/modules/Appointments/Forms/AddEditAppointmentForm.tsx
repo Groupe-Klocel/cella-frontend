@@ -55,7 +55,15 @@ import {
     getOrderTypeCodesForDirection,
     isAppointmentLinkEnabled,
     isCarrierAppointmentUser,
-    isAppointmentNameEntryBlocked
+    isAppointmentNameEntryBlocked,
+    appointmentPalletCount,
+    fetchAppointmentFieldRules,
+    isAppointmentFieldVisible,
+    appointmentFieldRulesFor,
+    EMPTY_APPOINTMENT_FIELD_RULES,
+    AppointmentFieldRules,
+    fetchInboundMaxPalettesPerDay,
+    fetchInboundPalletsUsedForDay
 } from '@helpers';
 
 const { Option } = Select;
@@ -80,6 +88,23 @@ type DayName = (typeof DAYS_MAP)[DayNumber];
 
 const ALL_HOURS_IN_DAY = Array.from({ length: 24 }, (_, i) => i);
 const ALL_MINUTES_IN_HOUR = Array.from({ length: 60 }, (_, i) => i);
+
+// Data fields whose visibility and requiredness are configurable through APPOINTMENT_FIELD_RULES,
+// and which therefore have to be nulled on submit when hidden (AntD keeps the values of unmounted
+// fields). Deliberately excludes the structural fields — appointmentType, the date/duration, the
+// building, the dock, the carrier and the entity selects — because the form's own opening-hours,
+// overlap, default-load and direction machinery is built on them.
+const SANITIZABLE_FIELDS = [
+    'entityAccountingCode',
+    'driverName',
+    'driverPhoneNumber',
+    'driverEmail',
+    'truckLicensePlate',
+    'trailerLicensePlate',
+    'contactComment',
+    'reference1',
+    'reference2'
+] as const;
 
 export interface IAddEditItemFormProps {
     headerComponent: any;
@@ -251,6 +276,21 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
     const selectedDuration = Form.useWatch('appointmentDuration', form);
     const selectedRecurrenceType = Form.useWatch('recurrenceType', form);
     const selectedDateBegin = Form.useWatch('appointmentDateBegin', form);
+    const watchedComposition = Form.useWatch('composition', form);
+    // Advisory only. Tells a carrier the day is full BEFORE they fill fifteen fields; the binding
+    // check runs at submit. Rendered only when the warehouse configured INBOUND_MAX_CAPACITY.
+    const [capacityHint, setCapacityHint] = useState<{
+        day: string;
+        used: number;
+        requested: number;
+        max: number;
+    } | null>(null);
+    // Which data fields to show / require, from the APPOINTMENT_FIELD_RULES rule. Unconfigured =>
+    // EMPTY, and every call site passes the behaviour the form has always had as its code default,
+    // so nothing changes until an admin writes a rule row.
+    const [fieldRules, setFieldRules] = useState<AppointmentFieldRules>(
+        EMPTY_APPOINTMENT_FIELD_RULES
+    );
     const selectedAppointmentType = Form.useWatch('appointmentType', form);
     const selectedStockOwnerId = Form.useWatch('stockOwnerId', form);
 
@@ -586,6 +626,8 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                         }
                         if (content.instructions)
                             compPatch.compositionInstructions = content.instructions;
+                        if (content.palettePlaces !== undefined && content.palettePlaces !== null)
+                            compPatch.palettePlaces = content.palettePlaces;
                         if (Array.isArray(content.specialRequirements))
                             compPatch.specialRequirements = content.specialRequirements.map(String);
                         form.setFieldsValue(compPatch);
@@ -825,6 +867,84 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
         };
     };
 
+    useEffect(() => {
+        let active = true;
+        if (direction !== 'inbound' || !selectedDateBegin) {
+            setCapacityHint(null);
+            return;
+        }
+        const day = dayjs(selectedDateBegin);
+        const requested = (watchedComposition ?? []).reduce(
+            (sum: number, row: any) => sum + (Number(row?.quantity) > 0 ? Number(row.quantity) : 0),
+            0
+        );
+        const timer = setTimeout(async () => {
+            const max = await fetchInboundMaxPalettesPerDay(graphqlRequestClient, day);
+            if (!active || max == null) {
+                if (active) setCapacityHint(null);
+                return;
+            }
+            try {
+                const usage = await fetchInboundPalletsUsedForDay(
+                    graphqlRequestClient,
+                    configs,
+                    day,
+                    props.id
+                );
+                if (active)
+                    setCapacityHint({
+                        day: day.format('YYYY-MM-DD'),
+                        used: usage.used,
+                        requested,
+                        max
+                    });
+            } catch (e) {
+                if (active) setCapacityHint(null);
+            }
+        }, 300);
+        return () => {
+            active = false;
+            clearTimeout(timer);
+        };
+    }, [direction, selectedDateBegin, watchedComposition, configs, graphqlRequestClient, props.id]);
+
+    useEffect(() => {
+        let active = true;
+        fetchAppointmentFieldRules(graphqlRequestClient, {
+            screen: 'appointment_form',
+            direction,
+            appointmentType: selectedAppointmentType ?? null,
+            // by NAME, matching the convention the DOCUMENT_LIST rule already uses for `carrier`.
+            // Without this the in-param is declared but never populated, so a carrier-specific row
+            // could never match and the "narrow it later without a release" promise would be empty.
+            carrierName: lookup.carriers.find((c: any) => c.id === selectedCarrierId)?.name ?? null,
+            userRole: isCarrier ? 'carrier' : 'internal'
+        }).then((rules) => {
+            if (active) setFieldRules(rules);
+        });
+        return () => {
+            active = false;
+        };
+    }, [
+        graphqlRequestClient,
+        direction,
+        selectedAppointmentType,
+        selectedCarrierId,
+        lookup.carriers,
+        isCarrier
+    ]);
+
+    // `showField(name, codeDefault)` / `fieldRule(name, codeRequired, extra?)` -- the second
+    // argument is always what the hard-coded form did, so an unconfigured warehouse is unchanged.
+    const showField = (field: string, codeDefault = true) =>
+        isAppointmentFieldVisible(fieldRules, field, codeDefault);
+    const fieldRule = (field: string, codeRequired: boolean, extra?: any[]) =>
+        appointmentFieldRulesFor(fieldRules, field, {
+            codeRequired,
+            requiredMessage: t('messages:error-message-empty-input'),
+            extra
+        });
+
     const executeValidationAndSave = async () => {
         try {
             setUnsavedChanges(false);
@@ -873,9 +993,17 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 ? parseInt(payloadBase.appointmentType, 10)
                 : null;
             const submitDirection = getAppointmentDirection(payloadBase.appointmentType, configs);
-            // the supplier only applies to incoming goods; AntD preserves values of unmounted
-            // fields, so explicitly drop it when the appointment is outbound
-            if (submitDirection === 'outbound') payloadBase.entityAccountingCode = null;
+            // AntD keeps the values of unmounted fields, so anything hidden must be explicitly
+            // dropped or a stale value gets submitted (type a trailer plate, switch to a direction
+            // that hides it, and the plate would still be saved). Note this resolves visibility
+            // against the SUBMIT direction, which can differ from the one rendered.
+            const submitHidesSupplier = submitDirection === 'outbound';
+            if (!showField('entityAccountingCode', !submitHidesSupplier))
+                payloadBase.entityAccountingCode = null;
+            SANITIZABLE_FIELDS.forEach((field) => {
+                if (field !== 'entityAccountingCode' && !showField(field))
+                    payloadBase[field] = null;
+            });
 
             // truck composition (pallets per type + free instructions) stored in the content JSON.
             // the editor is a Form.List of {paletteType, quantity} rows; last row wins on duplicates.
@@ -887,16 +1015,26 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 }
             });
             const compositionInstructions = form.getFieldValue('compositionInstructions') || null;
+            // number of pallet places the truck occupies, alongside the per-type breakdown
+            const rawPalettePlaces = form.getFieldValue('palettePlaces');
+            const palettePlaces =
+                rawPalettePlaces === undefined ||
+                rawPalettePlaces === null ||
+                rawPalettePlaces === ''
+                    ? undefined
+                    : Number(rawPalettePlaces);
             const specialRequirements: string[] = (
                 form.getFieldValue('specialRequirements') ?? []
             ).map(String);
             const compositionContent =
                 Object.keys(palettes).length > 0 ||
                 compositionInstructions ||
+                palettePlaces !== undefined ||
                 specialRequirements.length > 0
                     ? {
                           palettes,
                           instructions: compositionInstructions,
+                          palettePlaces,
                           specialRequirements:
                               specialRequirements.length > 0 ? specialRequirements : undefined
                       }
@@ -998,6 +1136,52 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 }
             `;
 
+            // Daily inbound pallet cap (INBOUND_MAX_CAPACITY). Authoritative check: the advisory
+            // indicator under the date picker is stale by construction, this one runs immediately
+            // before the create/update.
+            //
+            // Carriers are refused; internal planners are warned and may override, because forcing
+            // a slot is part of their job. Fail-open on a missing/erroring rule -- most warehouses
+            // never configure this, and blocking them all would be far worse than not capping.
+            const requestedPallets = appointmentPalletCount(compositionContent);
+            const assertDayCapacity = async (day: dayjs.Dayjs): Promise<boolean> => {
+                if (submitDirection !== 'inbound') return true;
+                const max = await fetchInboundMaxPalettesPerDay(graphqlRequestClient, day);
+                if (max == null) return true;
+                let usage;
+                try {
+                    usage = await fetchInboundPalletsUsedForDay(
+                        graphqlRequestClient,
+                        configs,
+                        day,
+                        props.id
+                    );
+                } catch (e) {
+                    return true;
+                }
+                if (usage.used + requestedPallets <= max) return true;
+                const message = t('messages:inbound-capacity-reached', {
+                    day: day.format('YYYY-MM-DD'),
+                    used: usage.used,
+                    requested: requestedPallets,
+                    max
+                });
+                if (isCarrier) {
+                    showError(message);
+                    return false;
+                }
+                return await new Promise<boolean>((resolve) => {
+                    Modal.confirm({
+                        title: t('messages:inbound-capacity-override'),
+                        content: message,
+                        okText: t('messages:confirm'),
+                        cancelText: t('messages:cancel'),
+                        onOk: () => resolve(true),
+                        onCancel: () => resolve(false)
+                    });
+                });
+            };
+
             if (props.id || recurrenceType === 'none') {
                 const endDate = baseBeginDate.add(duration, 'minute');
                 const chosenLoc = lookup.locations.find((l) => l.id === values.locationId);
@@ -1015,6 +1199,11 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                         ))
                 ) {
                     showError(t('messages:time-slot-overlapping'));
+                    setFormSubmitting(false);
+                    return;
+                }
+
+                if (!(await assertDayCapacity(baseBeginDate))) {
                     setFormSubmitting(false);
                     return;
                 }
@@ -1090,6 +1279,15 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                 // for every occurrence and warn — the appointments themselves are still created
                 const defaultLoadSkipped = wantDefaultForRecurrence && !defaultLoadTypeValid;
                 if (defaultLoadSkipped) showError(t('messages:default-load-not-created'));
+                // Validate every occurrence up front: a half-created recurring series is worse
+                // than none. With day/week/month steps no two occurrences share a day, so the
+                // requested pallets do not need to accumulate per day.
+                for (let i = 0; i < recurrenceCount; i++) {
+                    if (!(await assertDayCapacity(baseBeginDate.add(i, recurrenceType as any)))) {
+                        setFormSubmitting(false);
+                        return;
+                    }
+                }
                 let lastCreatedId = '';
                 for (let i = 0; i < recurrenceCount; i++) {
                     const currentBegin = baseBeginDate.add(i, recurrenceType as any);
@@ -1268,6 +1466,28 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                                 disabled={!selectedBuildingId}
                             />
 
+                            {capacityHint && (
+                                <Alert
+                                    style={{ marginBottom: 16 }}
+                                    showIcon
+                                    type={
+                                        capacityHint.used + capacityHint.requested >
+                                        capacityHint.max
+                                            ? 'error'
+                                            : capacityHint.used + capacityHint.requested >=
+                                                capacityHint.max * 0.8
+                                              ? 'warning'
+                                              : 'info'
+                                    }
+                                    message={t('messages:inbound-capacity-hint', {
+                                        day: capacityHint.day,
+                                        used: capacityHint.used,
+                                        requested: capacityHint.requested,
+                                        max: capacityHint.max
+                                    })}
+                                />
+                            )}
+
                             {!props.id && !isCarrier && (
                                 <>
                                     <Form.Item
@@ -1415,30 +1635,86 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                             {/* supplier of the goods (e.g. Girteka delivers goods from Barcelona
                                 for Coty), stored in entityAccountingCode — incoming goods only,
                                 so the field doesn't exist on outbound appointments */}
-                            {!isOutbound && (
+                            {showField('entityAccountingCode', !isOutbound) && (
                                 <StringInput
                                     item={{
                                         name: 'entityAccountingCode',
                                         displayName: t('d:supplierName'),
-                                        rules: [
-                                            {
-                                                required: true,
-                                                message: t('messages:error-message-empty-input')
-                                            }
-                                        ]
+                                        rules: fieldRule('entityAccountingCode', true)
                                     }}
                                 />
                             )}
-                            <StringInput item={{ name: 'driverName' }} />
-                            <StringInput item={{ name: 'driverPhoneNumber' }} />
-                            <StringInput item={{ name: 'driverEmail' }} />
-                            <StringInput item={{ name: 'truckLicensePlate' }} />
-                            <StringInput item={{ name: 'trailerLicensePlate' }} />
-                            <TextAreaInput item={{ name: 'contactComment' }} />
+                            {showField('driverName') && (
+                                <StringInput
+                                    item={{
+                                        name: 'driverName',
+                                        rules: fieldRule('driverName', false)
+                                    }}
+                                />
+                            )}
+                            {showField('driverPhoneNumber') && (
+                                <StringInput
+                                    item={{
+                                        name: 'driverPhoneNumber',
+                                        rules: fieldRule('driverPhoneNumber', false)
+                                    }}
+                                />
+                            )}
+                            {showField('driverEmail') && (
+                                <StringInput
+                                    item={{
+                                        name: 'driverEmail',
+                                        rules: fieldRule('driverEmail', false, [
+                                            {
+                                                type: 'email',
+                                                message: t('messages:error-wrong-email-format')
+                                            }
+                                        ])
+                                    }}
+                                />
+                            )}
+                            {showField('truckLicensePlate') && (
+                                <StringInput
+                                    item={{
+                                        name: 'truckLicensePlate',
+                                        rules: fieldRule('truckLicensePlate', false)
+                                    }}
+                                />
+                            )}
+                            {showField('trailerLicensePlate') && (
+                                <StringInput
+                                    item={{
+                                        name: 'trailerLicensePlate',
+                                        rules: fieldRule('trailerLicensePlate', false)
+                                    }}
+                                />
+                            )}
+                            {showField('contactComment') && (
+                                <TextAreaInput
+                                    item={{
+                                        name: 'contactComment',
+                                        rules: fieldRule('contactComment', false)
+                                    }}
+                                />
+                            )}
 
                             {/* optional free references */}
-                            <StringInput item={{ name: 'reference1' }} />
-                            <StringInput item={{ name: 'reference2' }} />
+                            {showField('reference1') && (
+                                <StringInput
+                                    item={{
+                                        name: 'reference1',
+                                        rules: fieldRule('reference1', false)
+                                    }}
+                                />
+                            )}
+                            {showField('reference2') && (
+                                <StringInput
+                                    item={{
+                                        name: 'reference2',
+                                        rules: fieldRule('reference2', false)
+                                    }}
+                                />
+                            )}
 
                             {/* carrier special requirements (customs, dangerous goods, returnable
                                 packaging, …): multi-select over parameter scope
@@ -1553,6 +1829,20 @@ const AddEditAppointmentForm: FC<IAddEditItemFormProps> = (props) => {
                                             </>
                                         )}
                                     </Form.List>
+                                    {/* Total pallet places the truck occupies. Independent of the
+                                        per-type breakdown above: a carrier may know the footprint
+                                        without itemising it. */}
+                                    <Form.Item
+                                        label={t('common:pallet-places')}
+                                        name="palettePlaces"
+                                    >
+                                        <InputNumber
+                                            min={0}
+                                            precision={0}
+                                            style={{ width: 200 }}
+                                            placeholder={t('common:pallet-places')}
+                                        />
+                                    </Form.Item>
                                     <TextAreaInput item={{ name: 'compositionInstructions' }} />
                                 </>
                             )}

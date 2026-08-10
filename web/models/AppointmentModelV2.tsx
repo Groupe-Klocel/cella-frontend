@@ -571,6 +571,50 @@ export const AppointmentModelV2: ModelType = {
             config: null,
             param: null
         },
+        // Pager handed to a driver parked in the waiting area. A real column since the backend
+        // added it, so it is searchable/exportable here rather than buried in `extras`.
+        pagerNumber: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"logistics", "position":1}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        // Hours already driven, declared by the driver at the outbound kiosk. Read-only here: the
+        // declaration is evidence, so it is captured at the gate and never retyped in the office.
+        driverDrivingTime: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'Number',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"logistics", "position":1}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         trailerLicensePlate: {
             isListRequested: true,
             isDefaultHiddenList: true,

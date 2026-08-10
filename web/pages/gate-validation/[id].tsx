@@ -26,18 +26,32 @@ import {
     PageTableContentWrapper
 } from '@components';
 import {
+    buildGateQueueReturnInput,
     fetchCustomObjectDocuments,
     getAppointmentDirection,
     getModesFromPermissions,
     isPdfDocument,
     parseDocumentNames,
+    resolveAppointmentStatusCodes,
     showError,
     showSuccess,
     toDocumentSrc,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
-import { Button, Card, Descriptions, Image, Input, Modal, Result, Select, Space, Tag } from 'antd';
+import {
+    Alert,
+    Button,
+    Card,
+    Descriptions,
+    Image,
+    Input,
+    Modal,
+    Result,
+    Select,
+    Space,
+    Tag
+} from 'antd';
 import { gql } from 'graphql-request';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -56,6 +70,7 @@ import {
 } from 'modules/GateValidation/types';
 import { TimingTag } from 'modules/GateValidation/Elements/TimingTag';
 import { RejectModal, RefuseAction } from 'modules/GateValidation/Elements/RejectModal';
+import { WaitingModal } from 'modules/GateValidation/Elements/WaitingModal';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -94,26 +109,21 @@ const GateValidationDetail: PageComponent = () => {
     const [submitting, setSubmitting] = useState(false);
     const [approveOpen, setApproveOpen] = useState(false);
     const [rejectOpen, setRejectOpen] = useState(false);
+    const [waitingOpen, setWaitingOpen] = useState(false);
     const [comment, setComment] = useState('');
     // dock (Location of category "Dock") the agent can re-assign when validating access
     const [docks, setDocks] = useState<Array<{ id: string; name: string }>>([]);
     const [selectedDock, setSelectedDock] = useState<string | undefined>();
 
-    // CONFIRMED / ON_SITE codes from the configs reducer (no extra request).
-    const codes = useMemo<GateStatusCodes | null>(() => {
-        if (!configs || configs.length === 0) return null;
-        const find = (re: RegExp) =>
-            parseInt(
-                configs.find((c: any) => c.scope === 'appointment_status' && re.test(c.value ?? ''))
-                    ?.code,
-                10
-            );
-        return {
-            confirmed: find(/confirm/i),
-            onSite: find(/on.?site|sur.?site|vor.?ort/i),
-            cancelled: find(/cancel|annul|stornier/i)
-        };
-    }, [configs]);
+    // Status codes from the configs reducer (no extra request), through the shared resolver so
+    // "On Site" and the waiting/documents statuses can never be confused for one another.
+    const codes = useMemo<GateStatusCodes | null>(
+        () =>
+            !configs || configs.length === 0
+                ? null
+                : (resolveAppointmentStatusCodes(configs) as GateStatusCodes),
+        [configs]
+    );
 
     // Dock category code (location_category = "Dock"), used to list re-assignable docks.
     const dockCategory = useMemo(() => {
@@ -233,11 +243,34 @@ const GateValidationDetail: PageComponent = () => {
 
     const signature: string | undefined = entry?.extras?.gateSignature ?? undefined;
 
-    // Merge the gate marker into the appointment's existing extras.
-    const mergeGate = (patch: Record<string, any>) => ({
-        ...(entry?.extras ?? {}),
-        gateCheckIn: { ...(entry?.extras?.gateCheckIn ?? {}), pending: false, ...patch }
-    });
+    // `extras` is a single JSON blob rewritten by read-modify-write from three different clients
+    // (this screen, the kiosk, the appointment detail). This page can sit open for minutes while
+    // the driver restarts the kiosk flow, so merging against the copy loaded at mount would
+    // clobber the signature and the safety-checklist acceptance. Re-read it immediately before
+    // each write and merge against the fresh value; fall back to the loaded copy if the re-read
+    // fails, which is still better than dropping the keys entirely.
+    const mergeGate = async (patch: Record<string, any>) => {
+        let current = entry?.extras ?? {};
+        try {
+            const res: any = await graphqlRequestClient.request(
+                gql`
+                    query gateEntryExtras($id: String!) {
+                        appointment(id: $id) {
+                            extras
+                        }
+                    }
+                `,
+                { id: entry?.id }
+            );
+            current = res?.appointment?.extras ?? current ?? {};
+        } catch (e) {
+            console.warn('gate-validation: could not re-read extras, merging against local copy');
+        }
+        return {
+            ...(current ?? {}),
+            gateCheckIn: { ...(current?.gateCheckIn ?? {}), pending: false, ...patch }
+        };
+    };
 
     const onApprove = async () => {
         if (!entry || !codes) return;
@@ -253,7 +286,7 @@ const GateValidationDetail: PageComponent = () => {
                     status: codes.onSite,
                     // allow the agent to re-assign the truck to another dock at validation time
                     ...(selectedDock ? { locationId: selectedDock } : {}),
-                    extras: mergeGate({
+                    extras: await mergeGate({
                         decision: 'approved',
                         decidedAt: dayjs().toISOString(),
                         agentComment: comment || null
@@ -271,13 +304,61 @@ const GateValidationDetail: PageComponent = () => {
         }
     };
 
-    // Refusal with two outcomes:
-    //  - 'cancel' -> appointment set to CANCELLED (dead, driver turned away)
-    //  - 'reset'  -> kept CONFIRMED so the driver can redo the radio process
-    // Both set denyReason so the waiting iPad shows the refusal + reason.
+    // Send the truck to the waiting area instead of a dock. It keeps its slot and stays in the
+    // guard's queue (the dashboard filters on this status too) so entry can be granted later.
+    // No dock is assigned here and no denyReason is written: this is not a refusal.
+    const onWaiting = async (pagerNumber: string | undefined, agentComment: string | undefined) => {
+        if (!entry || !codes) return;
+        if (!Number.isFinite(codes.onSiteWaiting)) {
+            showError(t('common:generic-error'));
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await graphqlRequestClient.request(UPDATE_MUTATION, {
+                id: entry.id,
+                input: {
+                    status: codes.onSiteWaiting,
+                    // `pagerNumber` is a real Appointment column, so it goes in the input rather
+                    // than into `extras`: it is filterable, exportable and visible through the
+                    // generic list/detail stack, which a key buried in a JSON blob is not.
+                    // Explicit null clears a pager left over from a previous waiting round.
+                    pagerNumber: pagerNumber ?? null,
+                    extras: await mergeGate({
+                        decision: 'waiting',
+                        decidedAt: dayjs().toISOString(),
+                        waitingSince: dayjs().toISOString(),
+                        agentComment: agentComment ?? null
+                    })
+                }
+            });
+            showSuccess(t('common:waiting-done'));
+            router.push(rootPath);
+        } catch (e) {
+            showError(t('common:generic-error'));
+            console.error(e);
+        } finally {
+            setSubmitting(false);
+            setWaitingOpen(false);
+        }
+    };
+
+    // Refusal with three outcomes:
+    //  - 'cancel'    -> appointment set to CANCELLED (dead, driver turned away)
+    //  - 'reset'     -> kept CONFIRMED so the driver can redo the radio process
+    //  - 'documents' -> held at DOCUMENTS PENDING; the carrier (or an internal user) attaches the
+    //                   missing paperwork and returns it to the gate queue. Recoverable, so its
+    //                   status code sits just after Confirmed and stays below the Completed
+    //                   cutoff that governs document add/remove.
+    // All three set denyReason so the waiting iPad shows the outcome + reason.
     const onRefuse = async (reason: string, message: string | undefined, action: RefuseAction) => {
         if (!entry || !codes) return;
-        const newStatus = action === 'cancel' ? codes.cancelled : codes.confirmed;
+        const newStatus =
+            action === 'cancel'
+                ? codes.cancelled
+                : action === 'documents'
+                  ? codes.documentsPending
+                  : codes.confirmed;
         if (!Number.isFinite(newStatus)) {
             showError(t('common:generic-error'));
             return;
@@ -289,15 +370,24 @@ const GateValidationDetail: PageComponent = () => {
                 input: {
                     status: newStatus,
                     denyReason: message ? `${reason} — ${message}` : reason,
-                    extras: mergeGate({
-                        decision: 'refused',
+                    extras: await mergeGate({
+                        decision: action === 'documents' ? 'awaiting-documents' : 'refused',
                         decidedAt: dayjs().toISOString(),
                         refusalMessage: message || null,
-                        refuseAction: action
+                        refuseAction: action,
+                        ...(action === 'documents'
+                            ? { documentsRequestedAt: dayjs().toISOString() }
+                            : {})
                     })
                 }
             });
-            showSuccess(action === 'cancel' ? t('common:cancelled-done') : t('common:reset-done'));
+            showSuccess(
+                action === 'cancel'
+                    ? t('common:cancelled-done')
+                    : action === 'documents'
+                      ? t('common:documents-requested-done')
+                      : t('common:reset-done')
+            );
             router.push(rootPath);
         } catch (e) {
             showError(t('common:generic-error'));
@@ -307,24 +397,90 @@ const GateValidationDetail: PageComponent = () => {
         }
     };
 
+    // Documents attached -> back into the gate queue at CONFIRMED.
+    // `denyReason` MUST be cleared: `classifyGateEntry` and the kiosk both read it as "refused",
+    // so a lingering value would keep the recovered appointment looking turned away. The old text
+    // is stashed in extras so the history is not lost.
+    const onReturnToQueue = async () => {
+        if (!entry || !codes) return;
+        if (!Number.isFinite(codes.confirmed)) {
+            showError(t('common:generic-error'));
+            return;
+        }
+        setSubmitting(true);
+        try {
+            // The shared helper, rather than mergeGate + a local `previousDenyReason`: it re-reads
+            // `denyReason` from the server alongside `extras`, where the page snapshot could be
+            // minutes stale — the guard may have re-refused with a different reason since mount,
+            // and stashing the old text would put a wrong reason in the history. It is also the
+            // same code the appointment detail page and the planning agenda run, so the three
+            // screens cannot drift on what "return to the gate queue" means.
+            await graphqlRequestClient.request(UPDATE_MUTATION, {
+                id: entry.id,
+                input: {
+                    status: codes.confirmed,
+                    ...(await buildGateQueueReturnInput(graphqlRequestClient, entry.id))
+                }
+            });
+            showSuccess(t('common:returned-to-queue-done'));
+            router.push(rootPath);
+        } catch (e) {
+            showError(t('common:generic-error'));
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const title = entry?.driverName
         ? t('common:review-of', { name: entry.driverName })
         : t('common:validation-title');
 
-    const actions =
-        decision === 'pending' && modes.includes(ModeEnum.Update) ? (
-            <Space>
-                <Button type="primary" loading={submitting} onClick={() => setApproveOpen(true)}>
-                    {t('common:approve')}
+    // Read the column, falling back to the old `extras` location so appointments written before
+    // `pagerNumber` existed still show their pager instead of silently losing it.
+    const pagerNumber: string | undefined =
+        entry?.pagerNumber ?? entry?.extras?.gateCheckIn?.pagerNumber ?? undefined;
+    const canUpdate = modes.includes(ModeEnum.Update);
+    // Hide a write action outright when its status row is missing on this warehouse, rather than
+    // letting the click send `status: undefined` (JSON.stringify(NaN) is null).
+    const canSendToWaiting = Number.isFinite(codes?.onSiteWaiting);
+
+    const actions = !canUpdate ? (
+        <LinkButton title={t('common:back-to-dashboard')} path={rootPath} />
+    ) : decision === 'pending' ? (
+        <Space>
+            <Button type="primary" loading={submitting} onClick={() => setApproveOpen(true)}>
+                {t('common:approve')}
+            </Button>
+            {canSendToWaiting && (
+                <Button loading={submitting} onClick={() => setWaitingOpen(true)}>
+                    {t('actions:mark-waiting-appointment')}
                 </Button>
-                <Button danger onClick={() => setRejectOpen(true)}>
-                    {t('common:refuse')}
-                </Button>
-                <LinkButton title={t('common:edit')} path={`/appointments/edit/${id}`} />
-            </Space>
-        ) : (
+            )}
+            <Button danger onClick={() => setRejectOpen(true)}>
+                {t('common:refuse')}
+            </Button>
+            <LinkButton title={t('common:edit')} path={`/appointments/edit/${id}`} />
+        </Space>
+    ) : decision === 'waiting' ? (
+        // The truck is parked with a pager: the guard comes back here to clear it for a dock.
+        <Space>
+            <Button type="primary" loading={submitting} onClick={() => setApproveOpen(true)}>
+                {t('common:grant-entry')}
+            </Button>
+            <Button danger onClick={() => setRejectOpen(true)}>
+                {t('common:refuse')}
+            </Button>
+        </Space>
+    ) : decision === 'awaiting-documents' ? (
+        <Space>
+            <Button type="primary" loading={submitting} onClick={onReturnToQueue}>
+                {t('actions:return-to-gate-queue')}
+            </Button>
             <LinkButton title={t('common:back-to-dashboard')} path={rootPath} />
-        );
+        </Space>
+    ) : (
+        <LinkButton title={t('common:back-to-dashboard')} path={rootPath} />
+    );
 
     if (!canRead) {
         return (
@@ -363,6 +519,40 @@ const GateValidationDetail: PageComponent = () => {
                     </Tag>
                 )}
 
+                {/* Parked truck: the pager is what the guard calls the driver back on, so it is
+                    the most important thing on the screen while the appointment is waiting. */}
+                {decision === 'waiting' && (
+                    <Alert
+                        type="info"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                        message={t('common:on-site-waiting')}
+                        description={
+                            pagerNumber ? (
+                                <span>
+                                    {t('common:pager-number')}:{' '}
+                                    <strong style={{ fontSize: 24, fontFamily: 'monospace' }}>
+                                        {pagerNumber}
+                                    </strong>
+                                </span>
+                            ) : (
+                                t('common:parked-no-pager')
+                            )
+                        }
+                    />
+                )}
+
+                {/* Blocked on paperwork: show what is missing, for both the guard and the carrier. */}
+                {decision === 'awaiting-documents' && (
+                    <Alert
+                        type="warning"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                        message={t('common:documents-required-title')}
+                        description={entry?.denyReason ?? t('common:documents-required-msg')}
+                    />
+                )}
+
                 <Card size="small" title={t('common:section-driver')} style={{ marginBottom: 16 }}>
                     <Descriptions column={2} bordered size="small">
                         <Descriptions.Item label={t('common:driver-name')}>
@@ -390,6 +580,26 @@ const GateValidationDetail: PageComponent = () => {
                                 {entry?.entityAccountingCode ?? '-'}
                             </Descriptions.Item>
                         )}
+                        {/* Outbound driver declarations, captured at the kiosk. The guard decides
+                            with them in view -- a driving time close to the legal limit, or a
+                            missing direct-transport confirmation, is exactly what should stop an
+                            approval, so they belong on this card rather than only in the audit. */}
+                        {getAppointmentDirection(entry?.appointmentType, configs) ===
+                            'outbound' && (
+                            <Descriptions.Item label={t('common:driver-driving-time')}>
+                                {entry?.driverDrivingTime ?? '-'}
+                            </Descriptions.Item>
+                        )}
+                        {getAppointmentDirection(entry?.appointmentType, configs) === 'outbound' &&
+                            entry?.extras?.directTransport && (
+                                <Descriptions.Item label={t('common:direct-transport')}>
+                                    {entry.extras.directTransport.confirmed ? (
+                                        <Tag color="green">{t('common:yes')}</Tag>
+                                    ) : (
+                                        <Tag color="red">{t('common:no')}</Tag>
+                                    )}
+                                </Descriptions.Item>
+                            )}
                     </Descriptions>
                 </Card>
 
@@ -510,6 +720,23 @@ const GateValidationDetail: PageComponent = () => {
                 okText={t('common:approve')}
                 cancelText={t('common:cancel')}
             >
+                {/* This is the moment the guard reclaims the physical pager from the driver, so
+                    the number belongs here, prominently, not just on the page behind the modal. */}
+                {pagerNumber && (
+                    <Alert
+                        type="warning"
+                        showIcon
+                        style={{ marginBottom: 12 }}
+                        message={
+                            <span>
+                                {t('common:pager-number')}:{' '}
+                                <strong style={{ fontSize: 24, fontFamily: 'monospace' }}>
+                                    {pagerNumber}
+                                </strong>
+                            </span>
+                        }
+                    />
+                )}
                 <div style={{ marginBottom: 8 }}>
                     <div style={{ marginBottom: 4 }}>
                         <strong>{t('common:planned-dock')}:</strong> {entry?.locationName ?? '-'}
@@ -539,6 +766,14 @@ const GateValidationDetail: PageComponent = () => {
                 t={t}
                 onCancel={() => setRejectOpen(false)}
                 onConfirm={onRefuse}
+            />
+
+            <WaitingModal
+                open={waitingOpen}
+                confirmLoading={submitting}
+                t={t}
+                onCancel={() => setWaitingOpen(false)}
+                onConfirm={onWaiting}
             />
         </>
     );

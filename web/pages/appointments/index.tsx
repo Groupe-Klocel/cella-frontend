@@ -30,6 +30,7 @@ import {
     getVisitTypeCode,
     isCarrierAppointmentUser,
     pathParams,
+    resolveAppointmentStatusCodes,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { AppointmentModelV2 as model } from '@helpers';
@@ -43,10 +44,12 @@ import {
     CalendarOutlined,
     CarOutlined,
     CheckCircleOutlined,
+    ClockCircleOutlined,
     DeleteOutlined,
     DislikeOutlined,
     EyeTwoTone,
     FileAddOutlined,
+    FileExclamationOutlined,
     QuestionCircleOutlined,
     SendOutlined,
     StopOutlined,
@@ -61,6 +64,10 @@ const AppointmentsPages: PageComponent = () => {
     const { t } = useTranslation();
     const modes = getModesFromPermissions(permissions, model.tableName);
     // carrier users can only advance an appointment up to "Submitted" and cannot cancel/delete
+    // Resolved from AppContext configs through the shared helper. Used ONLY for the newer
+    // statuses: the existing switch arms keep using the PascalCase map so this stays additive.
+    const statusCodes = useMemo(() => resolveAppointmentStatusCodes(configs), [configs]);
+
     const isCarrier = isCarrierAppointmentUser(permissions);
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
@@ -92,7 +99,9 @@ const AppointmentsPages: PageComponent = () => {
         TrophyOutlined,
         DislikeOutlined,
         QuestionCircleOutlined,
-        StopOutlined
+        StopOutlined,
+        ClockCircleOutlined,
+        FileExclamationOutlined
     };
 
     const getConfigsByScope = async (scope: string) => {
@@ -182,31 +191,47 @@ const AppointmentsPages: PageComponent = () => {
     };
 
     function getValidNextStatuses(currentStatus: number): number[] {
+        // `.filter(Number.isFinite)` at every return: a status the warehouse has not created
+        // resolves to undefined, which used to render a button with action code 'to-be-defined'
+        // that sent `status: undefined`.
         switch (currentStatus) {
             case appointmentStatuses.appointmentStatusInCreation:
                 return [
                     appointmentStatuses.appointmentStatusSubmitted,
                     appointmentStatuses.appointmentStatusCancelled
-                ];
+                ].filter(Number.isFinite);
             case appointmentStatuses.appointmentStatusSubmitted:
                 return [
                     appointmentStatuses.appointmentStatusConfirmed,
                     appointmentStatuses.appointmentStatusCancelled
-                ];
+                ].filter(Number.isFinite);
             case appointmentStatuses.appointmentStatusConfirmed:
+                return [
+                    appointmentStatuses.appointmentStatusOnSite,
+                    statusCodes.onSiteWaiting,
+                    appointmentStatuses.appointmentStatusNoShow,
+                    appointmentStatuses.appointmentStatusCancelled
+                ].filter(Number.isFinite) as number[];
+            // Parked in the yard: the guard can still clear it for a dock, mark a no-show or cancel.
+            case statusCodes.onSiteWaiting:
                 return [
                     appointmentStatuses.appointmentStatusOnSite,
                     appointmentStatuses.appointmentStatusNoShow,
                     appointmentStatuses.appointmentStatusCancelled
-                ];
+                ].filter(Number.isFinite);
+            // Blocked on paperwork: the only way forward is back into the gate queue. Deliberately
+            // recoverable — the deny itself is a gate action that requires a reason, so it is only
+            // ever set from the gate screen, never from a bare list button.
+            case statusCodes.documentsPending:
+                return [appointmentStatuses.appointmentStatusConfirmed].filter(Number.isFinite);
             case appointmentStatuses.appointmentStatusOnSite:
-                return [appointmentStatuses.appointmentStatusArrivedAtDock];
+                return [appointmentStatuses.appointmentStatusArrivedAtDock].filter(Number.isFinite);
             case appointmentStatuses.appointmentStatusArrivedAtDock:
                 return [appointmentStatuses.appointmentStatusLoadingStarted];
             case appointmentStatuses.appointmentStatusLoadingStarted:
                 return [appointmentStatuses.appointmentStatusLoadingFinished];
             case appointmentStatuses.appointmentStatusLoadingFinished:
-                return [appointmentStatuses.appointmentStatusCompleted];
+                return [appointmentStatuses.appointmentStatusCompleted].filter(Number.isFinite);
             default:
                 return [];
         }
@@ -232,6 +257,10 @@ const AppointmentsPages: PageComponent = () => {
                 return 'cancel';
             case appointmentStatuses.appointmentStatusNoShow:
                 return 'mark-no-show-appointment';
+            case statusCodes.onSiteWaiting:
+                return 'mark-waiting-appointment';
+            case statusCodes.documentsPending:
+                return 'return-to-gate-queue';
             default:
                 return 'to-be-defined';
         }
