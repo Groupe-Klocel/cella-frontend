@@ -53,6 +53,7 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         pick,
         pack,
         gateEntry,
+        visitorEntry,
         equipmentPositionRelease
     } = useAppState();
     const router = useRouter();
@@ -314,6 +315,9 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                         code
                         value
                         system
+                        # extras carries statusRole / color / icon; the kiosk resolves the
+                        # appointment statuses from statusRole (see helpers/utils/appointmentStatuses)
+                        extras
                     }
                 }
             }
@@ -392,11 +396,43 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         }
     }, [user, translations, configs, parameters, getUserSettingsQuery, userSettings]);
 
+    // The language the driver/visitor picked at kiosk step 10, if they have picked one yet.
+    // Read outside the effect so it can be a dependency: the `gateEntry` / `visitorEntry` objects
+    // get a new identity on every step dispatch, this derived string does not.
+    const kioskChosenLang: string | undefined =
+        gateEntry?.step10?.data?.lang ?? visitorEntry?.step10?.data?.lang;
+
     useEffect(() => {
-        if (lang) {
+        // The kiosks let the driver/visitor pick their own language for the duration of the flow
+        // (gate-entry / visitor-entry step 10). The operator's saved `globalParametersMobile.lang`
+        // resolves asynchronously, so without this guard a late user-settings fetch would yank the
+        // locale back mid-flow and the driver would suddenly be reading someone else's language.
+        // `router.asPath` carries NO locale prefix — Next.js exposes that separately as
+        // `router.locale` — so this tests the bare path and matches on every locale.
+        // Do not "fix" this to strip a prefix or to use `router.pathname`: measured on a running
+        // kiosk, including after the client-side `router.push(..., { locale })` that the language
+        // picker performs. What misleads is that the `routeChangeComplete` EVENT ARGUMENT does
+        // carry the prefix while `asPath` does not, so route-change logs look like the opposite:
+        //   browser URL /pl-PL/gate-entry -> event arg '/pl-PL/gate-entry', asPath '/gate-entry'
+        const isKioskRoute = /^\/(gate-entry|visitor-entry)(\/|$|\?)/.test(router.asPath);
+        // What must be protected is the driver's CHOICE, not the kiosk route as a whole. Skipping
+        // the push on the route left the welcome screen — the language picker itself — stuck in the
+        // default locale (en-US), because a wall-mounted tablet is opened straight at /gate-entry
+        // and never passes through a screen that applies the operator's language. So a warehouse
+        // running in German greeted every driver in English. Until step 10 stores a language, the
+        // operator's own is the right default; from the moment it does, nothing may override it.
+        // Depends on the route too, not just `lang`: the driver's choice must be undone when the
+        // operator navigates OFF the kiosk, and `lang` does not change at that moment. Keyed on
+        // `lang` alone, the whole app stayed in the driver's language for the rest of the session.
+        // The `router.locale !== lang` guard is what stops that extra dependency from re-pushing
+        // the same locale on every navigation.
+        if (lang && !(isKioskRoute && kioskChosenLang) && router.locale !== lang) {
             router.push(router.asPath, router.asPath, { locale: lang });
         }
-    }, [lang]);
+        // `kioskChosenLang` is the derived string, NOT the `gateEntry` / `visitorEntry` objects:
+        // those get a new identity on every step dispatch, which would re-run this on each screen
+        // of the flow.
+    }, [lang, router.asPath, router.locale, kioskChosenLang]);
 
     if (
         userSettingsLoading === false &&

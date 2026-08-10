@@ -23,7 +23,7 @@ import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import { PageWithMainLayoutType } from 'helpers/types/pageWithLayout';
-import { cookie, showError } from '@helpers';
+import { cookie, showError, FIELD_RULES_SUFFIX } from '@helpers';
 import { gql, GraphQLClient } from 'graphql-request';
 import { ScreenSpin } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -70,7 +70,8 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         }
         const isAllowed = routeRules.some((item) =>
             permissions.some(
-                (permission) => permission.table === item.permission && permission.mode === item.mode
+                (permission) =>
+                    permission.table === item.permission && permission.mode === item.mode
             )
         );
         if (!isAllowed) {
@@ -236,6 +237,47 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
         }
     }, [dispatchUser, user]);
 
+    // Which entities have a `<TABLE>_FIELD_RULES` rule (see helpers/utils/fieldRules.ts). Only the
+    // names: the rows themselves are evaluated by the backend, per screen and per context. Knowing
+    // the list up front is what keeps the feature free for the entities nobody configured — without
+    // it, every detail/add/edit screen would fire an executeRule that can only fail.
+    //
+    // Failure is expected and must stay silent: a warehouse worker without read access to RULE gets
+    // no field rules, not an error toast on every login. `null` tells the consumers "unknown", and
+    // they fall back to trying once per entity.
+    //
+    // Unbounded page size, like the other boot fetches, and it has to be: the query has no `orderBy`
+    // and rows come back ordered by a random nanoid, so a bounded page would return an ARBITRARY
+    // subset rather than a prefix. A `*_FIELD_RULES` rule left out of it would make the feature
+    // silently inert for that entity, with no error and possibly differently on each load. Only
+    // `name` is selected, so a large page costs next to nothing.
+    const getFieldRuleNames = useCallback(async () => {
+        const query = gql`
+            query {
+                rules(filters: {}, itemsPerPage: 999999999) {
+                    count
+                    results {
+                        name
+                    }
+                }
+            }
+        `;
+        try {
+            const queryInfo: any = await graphqlRequestClient.request(query);
+            dispatchUser({
+                type: 'SET_FIELD_RULE_NAMES',
+                fieldRuleNames: (queryInfo?.rules?.results ?? [])
+                    .map((rule: any) => rule?.name)
+                    .filter(
+                        (name: any) => typeof name === 'string' && name.endsWith(FIELD_RULES_SUFFIX)
+                    )
+            });
+        } catch (error) {
+            console.info('field rules unavailable, falling back to the model defaults', error);
+            dispatchUser({ type: 'SET_FIELD_RULE_NAMES', fieldRuleNames: null });
+        }
+    }, [dispatchUser, user]);
+
     useEffect(() => {
         if (user && user?.id && router.pathname !== '/login') {
             // Each getter dispatches into AppContext and handles its own errors, so a failed
@@ -246,7 +288,8 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
                 getUserSettings(),
                 getTranslations(),
                 getConfigs(),
-                getParameters()
+                getParameters(),
+                getFieldRuleNames()
             ]).then(() => setAppDataLoaded(true));
         } else if (router.pathname === '/login') {
             setAppDataLoaded(false);

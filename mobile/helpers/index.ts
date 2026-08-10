@@ -24,5 +24,7 @@ export * from './utils/utils';
 export * from './utils/TranslationFromDB';
 export * from './utils/passwordValidation';
 export * from './utils/rfActionButtons';
+export * from './utils/appointmentStatuses';
+export * from './utils/appointmentFieldRules';
 export * from './configs/env';
 export * from './configs/misc';

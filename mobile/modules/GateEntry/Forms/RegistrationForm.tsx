@@ -23,13 +23,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 // Ad-hoc entries also pick a carrier and a slot duration (begin = arrival time,
 // end = begin + duration), mirroring web appointments/add.
 
-import { WrapperForm, StyledForm, StyledFormItem } from '@components';
+import { WrapperForm, StyledForm, StyledFormItem, ContentSpin } from '@components';
 import {
     useTranslationWithFallback as useTranslation,
     findCodeByScopeAndValue,
-    getReservedCarrierExclusionFilters
+    getReservedCarrierExclusionFilters,
+    fetchAppointmentFieldRules,
+    isAppointmentFieldVisible,
+    isAppointmentFieldRequired,
+    appointmentFieldRulesFor,
+    EMPTY_APPOINTMENT_FIELD_RULES,
+    AppointmentFieldRules
 } from '@helpers';
-import { Form, Input, Select } from 'antd';
+import { Checkbox, Form, Input, InputNumber, Select } from 'antd';
 import { gql } from 'graphql-request';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -67,6 +73,10 @@ export const RegistrationForm = ({
 
     const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     const [carriers, setCarriers] = useState<Array<{ id: string; name: string }>>([]);
+    // Which fields to show / require, from the APPOINTMENT_FIELD_RULES rule. The form is gated on
+    // the fetch: a driver watching inputs appear and disappear under their finger is worse than a
+    // moment of spinner, and step 40 already spins.
+    const [fieldRules, setFieldRules] = useState<AppointmentFieldRules | null>(null);
 
     // The supplier only applies to incoming goods: hide it when the found appointment is
     // outbound. Same classification as web loadDirection.ts — "unloading" contains "loading",
@@ -120,15 +130,52 @@ export const RegistrationForm = ({
         };
     }, [isAdHoc, graphqlRequestClient, carrierExclusionFilters]);
 
+    useEffect(() => {
+        let active = true;
+        fetchAppointmentFieldRules(graphqlRequestClient, {
+            screen: 'gate_entry',
+            direction: isOutbound ? 'outbound' : 'inbound',
+            appointmentType: appointment?.appointmentType ?? null
+        })
+            .then((rules) => {
+                if (active) setFieldRules(rules);
+            })
+            .catch(() => {
+                if (active) setFieldRules(EMPTY_APPOINTMENT_FIELD_RULES);
+            });
+        return () => {
+            active = false;
+        };
+    }, [graphqlRequestClient, isOutbound, appointment?.appointmentType]);
+
+    const rules = fieldRules ?? EMPTY_APPOINTMENT_FIELD_RULES;
+    // `supplier` keeps its coded default (incoming goods only); everything else defaults to the
+    // visibility the form has always had, so an unconfigured warehouse sees no change.
+    const show = (field: string, codeDefault = true) =>
+        isAppointmentFieldVisible(rules, field, codeDefault);
+    const fieldRule = (field: string, codeRequired: boolean, extra?: any[]) =>
+        appointmentFieldRulesFor(rules, field, {
+            codeRequired,
+            requiredMessage: t('common:required'),
+            extra
+        });
+
     const onFinish = (values: any) => {
+        // Optional chaining throughout: any of these can now be configured hidden, in which case
+        // AntD never registers the field and `values.x` is undefined.
         const registration: RegistrationData = {
-            driverName: values.driverName.trim(),
-            companyName: values.companyName.trim(),
+            driverName: values.driverName?.trim(),
+            companyName: values.companyName?.trim(),
             supplier: isOutbound ? undefined : values.supplier?.trim(),
-            driverPhoneNumber: values.driverPhoneNumber.trim(),
-            truckLicensePlate: values.truckLicensePlate.trim(),
+            driverPhoneNumber: values.driverPhoneNumber?.trim(),
+            truckLicensePlate: values.truckLicensePlate?.trim(),
             trailerLicensePlate: values.trailerLicensePlate?.trim() || undefined,
             containerNumber: values.containerNumber?.trim() || undefined,
+            // outbound-only driver declarations; undefined on inbound so nothing is written
+            driverDrivingTime: isOutbound ? (values.driverDrivingTime ?? undefined) : undefined,
+            directTransportConfirmed: isOutbound
+                ? values.directTransportConfirmed === true
+                : undefined,
             carrierId: isAdHoc ? values.carrierId : undefined,
             durationMinutes: isAdHoc ? values.durationMinutes : undefined
         };
@@ -141,7 +188,17 @@ export const RegistrationForm = ({
         });
     };
 
+    // still used by the ad-hoc-only carrier/duration fields, which are structural: without
+    // them the walk-in appointment cannot be created at all, so they are not configurable.
     const required = { required: true, message: t('common:required') };
+
+    // Hold the form until the field rules have resolved, as the comment on `fieldRules` promises.
+    // Rendering with the coded defaults first and applying the rule afterwards would make inputs
+    // appear and disappear under the driver's finger — and could drop what they had already typed
+    // into a field the rule then hides. The fetch also sets state on failure, so this cannot hang.
+    if (fieldRules === null) {
+        return <ContentSpin />;
+    }
 
     return (
         <WrapperForm>
@@ -163,29 +220,33 @@ export const RegistrationForm = ({
                     durationMinutes: isAdHoc ? 60 : undefined
                 }}
             >
-                <StyledFormItem
-                    label={t('common:driver-name')}
-                    name="driverName"
-                    rules={[required]}
-                >
-                    <Input placeholder={t('common:driver-name-ph')} allowClear />
-                </StyledFormItem>
+                {show('driverName') && (
+                    <StyledFormItem
+                        label={t('common:driver-name')}
+                        name="driverName"
+                        rules={fieldRule('driverName', true)}
+                    >
+                        <Input placeholder={t('common:driver-name-ph')} allowClear />
+                    </StyledFormItem>
+                )}
 
-                <StyledFormItem
-                    label={t('common:company-name')}
-                    name="companyName"
-                    rules={[required]}
-                >
-                    <Input placeholder={t('common:company-name')} allowClear />
-                </StyledFormItem>
+                {show('companyName') && (
+                    <StyledFormItem
+                        label={t('common:company-name')}
+                        name="companyName"
+                        rules={fieldRule('companyName', true)}
+                    >
+                        <Input placeholder={t('common:company-name')} allowClear />
+                    </StyledFormItem>
+                )}
 
                 {/* supplier of the goods (e.g. Girteka delivers goods from Barcelona for
                     Coty), stored in appointment.entityAccountingCode — incoming goods only */}
-                {!isOutbound && (
+                {show('supplier', !isOutbound) && (
                     <StyledFormItem
                         label={t('common:supplierName')}
                         name="supplier"
-                        rules={[required]}
+                        rules={fieldRule('supplier', true)}
                     >
                         <Input placeholder={t('common:supplierName-ph')} allowClear />
                     </StyledFormItem>
@@ -228,29 +289,91 @@ export const RegistrationForm = ({
                     </>
                 )}
 
-                <StyledFormItem
-                    label={t('common:phone')}
-                    name="driverPhoneNumber"
-                    rules={[required, { pattern: PHONE_RE, message: t('common:invalid-phone') }]}
-                >
-                    <Input placeholder={t('common:phone-ph')} allowClear />
-                </StyledFormItem>
+                {show('driverPhoneNumber') && (
+                    <StyledFormItem
+                        label={t('common:phone')}
+                        name="driverPhoneNumber"
+                        rules={fieldRule('driverPhoneNumber', true, [
+                            { pattern: PHONE_RE, message: t('common:invalid-phone') }
+                        ])}
+                    >
+                        <Input placeholder={t('common:phone-ph')} allowClear />
+                    </StyledFormItem>
+                )}
 
-                <StyledFormItem
-                    label={t('common:truck-plate')}
-                    name="truckLicensePlate"
-                    rules={[required, { pattern: PLATE_RE, message: t('common:invalid-plate') }]}
-                >
-                    <Input placeholder={t('common:truck-plate-ph')} allowClear />
-                </StyledFormItem>
+                {show('truckLicensePlate') && (
+                    <StyledFormItem
+                        label={t('common:truck-plate')}
+                        name="truckLicensePlate"
+                        rules={fieldRule('truckLicensePlate', true, [
+                            { pattern: PLATE_RE, message: t('common:invalid-plate') }
+                        ])}
+                    >
+                        <Input placeholder={t('common:truck-plate-ph')} allowClear />
+                    </StyledFormItem>
+                )}
 
-                <StyledFormItem label={t('common:trailer')} name="trailerLicensePlate">
-                    <Input placeholder={t('common:trailer-ph')} allowClear />
-                </StyledFormItem>
+                {show('trailerLicensePlate') && (
+                    <StyledFormItem
+                        label={t('common:trailer')}
+                        name="trailerLicensePlate"
+                        rules={fieldRule('trailerLicensePlate', false)}
+                    >
+                        <Input placeholder={t('common:trailer-ph')} allowClear />
+                    </StyledFormItem>
+                )}
 
-                <StyledFormItem label={t('common:container-number')} name="containerNumber">
-                    <Input placeholder={t('common:container-number-ph')} allowClear />
-                </StyledFormItem>
+                {show('containerNumber') && (
+                    <StyledFormItem
+                        label={t('common:container-number')}
+                        name="containerNumber"
+                        rules={fieldRule('containerNumber', false)}
+                    >
+                        <Input placeholder={t('common:container-number-ph')} allowClear />
+                    </StyledFormItem>
+                )}
+
+                {/* Outbound only: the driver declares how long they have been driving, and
+                    confirms the goods go straight to their destination. Both are regulatory
+                    declarations made by the driver about the trip they are about to start, so
+                    they have no meaning on an inbound arrival — the trip is already over. */}
+                {isOutbound && show('driverDrivingTime') && (
+                    <StyledFormItem
+                        label={t('common:driver-driving-time')}
+                        name="driverDrivingTime"
+                        rules={fieldRule('driverDrivingTime', true)}
+                    >
+                        <InputNumber
+                            min={0}
+                            max={24}
+                            step={0.5}
+                            style={{ width: '100%' }}
+                            placeholder={t('common:driver-driving-time-ph')}
+                        />
+                    </StyledFormItem>
+                )}
+                {isOutbound && show('directTransportConfirmed') && (
+                    <StyledFormItem
+                        name="directTransportConfirmed"
+                        valuePropName="checked"
+                        rules={[
+                            // A declaration is worthless unless it is actually ticked, so this is
+                            // not a plain `required` (which a `false` checkbox satisfies).
+                            {
+                                validator: (_: any, v: boolean) =>
+                                    isAppointmentFieldRequired(
+                                        rules,
+                                        'directTransportConfirmed',
+                                        true
+                                    ) && !v
+                                        ? Promise.reject(new Error(t('common:must-confirm-direct')))
+                                        : Promise.resolve()
+                            }
+                        ]}
+                    >
+                        <Checkbox>{t('common:direct-transport-confirm')}</Checkbox>
+                    </StyledFormItem>
+                )}
             </StyledForm>
         </WrapperForm>
     );

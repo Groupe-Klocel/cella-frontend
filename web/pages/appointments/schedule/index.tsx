@@ -40,6 +40,10 @@ import { ReloadOutlined, FileOutlined, EyeOutlined, DownloadOutlined } from '@an
 import {
     getModesFromPermissions,
     getVisitTypeCode,
+    fetchInboundMaxPalettesPerDay,
+    fetchInboundPalletsUsedForDay,
+    resolveAppointmentStatusCodes,
+    buildGateQueueReturnInput,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
@@ -147,12 +151,21 @@ const getMimeType = (filename: string, fileCategory: string): string => {
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
+// "The next step" is derived from the numeric code order, so any status that sits outside the
+// linear progression (waiting area, blocked on paperwork) has to be skipped: their codes fall
+// between Confirmed and On Site, and without this the advance button on a confirmed appointment
+// would offer to deny it.
 const getNextStatus = (
     statusFlow: AppointmentStatus[],
-    status: AppointmentStatus
+    status: AppointmentStatus,
+    statusConfig?: StatusConfig
 ): AppointmentStatus | null => {
     const idx = statusFlow.indexOf(status);
-    return idx === -1 || idx === statusFlow.length - 1 ? null : statusFlow[idx + 1];
+    if (idx === -1) return null;
+    for (let i = idx + 1; i < statusFlow.length; i++) {
+        if (!statusConfig?.[statusFlow[i]]?.offFlow) return statusFlow[i];
+    }
+    return null;
 };
 
 const isTerminalStatus = (statusConfig: StatusConfig, status: AppointmentStatus): boolean =>
@@ -164,12 +177,21 @@ const getDisplayFlow = (
     currentStatus: AppointmentStatus
 ): AppointmentStatus[] => {
     const standardFlow = statusFlow.filter(
-        (s) => !['Refused', 'No Show', 'Cancelled'].includes(statusConfig[s]?.value ?? '')
+        (s) =>
+            !['Refused', 'No Show', 'Cancelled'].includes(statusConfig[s]?.value ?? '') &&
+            !statusConfig[s]?.offFlow
     );
     const currentValue = statusConfig[currentStatus]?.value ?? '';
+    // NOTE the slice indices below assume the first three rail entries are In Creation / Submitted
+    // / Confirmed. That still holds because every off-flow status code sorts after Confirmed — do
+    // not introduce a status numbered below it without revisiting this.
     if (currentValue === 'No Show') return [...standardFlow.slice(0, 3), currentStatus];
     if (currentValue === 'Refused')
         return [...standardFlow.slice(0, 2), currentStatus, ...standardFlow.slice(2)];
+    // An off-flow status is shown in its natural numeric position rather than at a hard-coded
+    // index, so the Steps rail reads Confirmed -> On site (waiting) -> On Site.
+    if (statusConfig[currentStatus]?.offFlow)
+        return [...standardFlow, currentStatus].sort((a, b) => Number(a) - Number(b));
     return standardFlow;
 };
 
@@ -322,12 +344,52 @@ const MyCalendar: PageComponent = () => {
                 {} as Record<string, string>
             );
 
+        // `?.` matters: a warehouse without a location_category row valued exactly "Dock" used to
+        // crash the whole page here rather than degrade.
         const locationCategoryDocksConfig = (configs as any[]).find(
             (c) => c.scope === 'location_category' && c.value === 'Dock'
-        ).code;
+        )?.code;
 
         return { statusConfig, statusFlow, typeConfig, locationCategoryDocksConfig };
     }, [configs, locale]);
+
+    // ── Inbound daily capacity (INBOUND_MAX_CAPACITY rule) ─────────────────────
+    // Reference figure for the day in view. Rendered only when the warehouse actually configured
+    // the rule; most never will, and an empty state would just be noise.
+    //
+    // Deliberately NOT derived from `events`: that query is capped at itemsPerPage and drops
+    // visit/cancelled rows client-side, so reusing it would under-count exactly when the day is
+    // busy enough to matter. The dedicated helper carries its own `truncated` flag.
+    const [capacity, setCapacity] = useState<{
+        used: number;
+        max: number;
+        truncated: boolean;
+    } | null>(null);
+    useEffect(() => {
+        if (!canRead) return;
+        let active = true;
+        const day = dayjs(currentDate);
+        (async () => {
+            const max = await fetchInboundMaxPalettesPerDay(graphqlRequestClient, day);
+            if (!active || max == null) {
+                if (active) setCapacity(null);
+                return;
+            }
+            try {
+                const usage = await fetchInboundPalletsUsedForDay(
+                    graphqlRequestClient,
+                    configs as any[],
+                    day
+                );
+                if (active) setCapacity({ used: usage.used, max, truncated: usage.truncated });
+            } catch (e) {
+                if (active) setCapacity(null);
+            }
+        })();
+        return () => {
+            active = false;
+        };
+    }, [graphqlRequestClient, configs, currentDate, canRead, refetch]);
 
     // Visit-type appointments are shown on the visitors schedule, not here.
     // When the Visit config does not exist, visitTypeCode is undefined and no filtering occurs.
@@ -541,7 +603,11 @@ const MyCalendar: PageComponent = () => {
     }, [currentView, currentDate, refetch, canRead]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ── Actions ────────────────────────────────────────────────────────────────
-    const updateAppointmentStatus = async (id: string, status: string) => {
+    const updateAppointmentStatus = async (
+        id: string,
+        status: string,
+        extraInput?: Record<string, any>
+    ) => {
         await graphqlRequestClient.request(
             gql`
                 mutation updateAppointment($id: String!, $input: UpdateAppointmentInput!) {
@@ -551,14 +617,14 @@ const MyCalendar: PageComponent = () => {
                     }
                 }
             `,
-            { id, input: { status: Number(status) } }
+            { id, input: { status: Number(status), ...(extraInput ?? {}) } }
         );
         setRefetch((prev) => !prev);
     };
 
     const handleAdvanceStatus = async () => {
         if (!selectedEvent?.id) return;
-        const nextStatus = getNextStatus(statusFlow, selectedEvent.status);
+        const nextStatus = getNextStatus(statusFlow, selectedEvent.status, statusConfig);
         if (!nextStatus) return;
         await updateAppointmentStatus(selectedEvent.id, nextStatus);
     };
@@ -635,8 +701,15 @@ const MyCalendar: PageComponent = () => {
             : `max(${MIN_COL_PX}px, calc((90vw - ${GUTTER_VW}vw) / ${Math.max(1, visibleRamps.length)}))`;
 
     const cancelledCode = statusFlow.find((s) => statusConfig[s]?.value === 'Cancelled');
+    const confirmedCode = statusFlow.find((s) => statusConfig[s]?.value === 'Confirmed');
+    // resolved by role rather than by value so a renamed row still works
+    const documentsPendingCode = String(
+        resolveAppointmentStatusCodes(configs as any[]).documentsPending ?? ''
+    );
     const refusedCode = statusFlow.find((s) => statusConfig[s]?.value === 'Refused');
-    const next = selectedEvent ? getNextStatus(statusFlow, selectedEvent.status) : null;
+    const next = selectedEvent
+        ? getNextStatus(statusFlow, selectedEvent.status, statusConfig)
+        : null;
     const isSubmitted = selectedEvent
         ? statusConfig[selectedEvent.status]?.value === 'Submitted'
         : false;
@@ -664,67 +737,125 @@ const MyCalendar: PageComponent = () => {
                 Number(e.appointmentTypeCode) !== visitTypeCode
         );
 
+    // Blocked on paperwork: the only move is BACKWARD, into the gate queue. `next` would point at
+    // On Site here (numeric order), which would wave the truck through without the documents.
+    const isDocumentsPending = !!(
+        selectedEvent &&
+        documentsPendingCode &&
+        selectedEvent.status === documentsPendingCode
+    );
+
     const actionButtons: ActionButton[] =
         selectedEvent && !isTerminalStatus(statusConfig, selectedEvent.status)
-            ? [
-                  ...(isSubmitted
-                      ? [
-                            {
-                                key: 'confirm',
-                                label: t('actions:confirm'),
-                                buttonType: 'primary' as const,
-                                onClick: handleAdvanceStatus
-                            },
-                            ...(refusedCode
-                                ? [
-                                      {
-                                          key: 'refuse',
-                                          label: t('actions:refuse'),
-                                          buttonType: 'default' as const,
-                                          danger: true,
-                                          confirm: t('messages:refuse this appointment?'),
-                                          onClick: async () => {
-                                              if (selectedEvent.id) {
-                                                  await updateAppointmentStatus(
-                                                      selectedEvent.id,
-                                                      refusedCode
-                                                  );
-                                              }
-                                          }
-                                      }
-                                  ]
-                                : [])
-                        ]
-                      : next
-                        ? [
-                              {
-                                  key: 'advance',
-                                  label: `${t('actions:advance-to')} « ${statusConfig[next]?.label} »`,
-                                  buttonType: 'primary' as const,
-                                  onClick: handleAdvanceStatus
-                              }
-                          ]
-                        : []),
-                  ...(cancelledCode
-                      ? [
-                            {
-                                key: 'cancel',
-                                label: t('actions:cancel'),
-                                buttonType: 'default' as const,
-                                danger: true,
-                                confirm: t('messages:cancel this appointment?'),
-                                onClick: async () => {
-                                    if (selectedEvent.id) {
-                                        await updateAppointmentStatus(
-                                            selectedEvent.id,
-                                            cancelledCode
-                                        );
+            ? isDocumentsPending
+                ? [
+                      ...(confirmedCode
+                          ? [
+                                {
+                                    key: 'return-to-gate',
+                                    label: t('actions:return-to-gate-queue'),
+                                    buttonType: 'primary' as const,
+                                    confirm: t('messages:return-to-gate-queue'),
+                                    onClick: async () => {
+                                        if (selectedEvent.id) {
+                                            // Status alone is not enough: `classifyGateEntry` and
+                                            // the kiosk both read a non-null `denyReason` as
+                                            // "refused", so the truck would come back Confirmed
+                                            // yet still look denied to the guard and the driver.
+                                            // Shared with the detail page so the two screens
+                                            // cannot drift apart.
+                                            await updateAppointmentStatus(
+                                                selectedEvent.id,
+                                                confirmedCode,
+                                                await buildGateQueueReturnInput(
+                                                    graphqlRequestClient,
+                                                    selectedEvent.id
+                                                )
+                                            );
+                                        }
                                     }
                                 }
-                            }
-                        ]
-                      : [])
-              ]
+                            ]
+                          : []),
+                      ...(cancelledCode
+                          ? [
+                                {
+                                    key: 'cancel',
+                                    label: t('actions:cancel'),
+                                    buttonType: 'default' as const,
+                                    danger: true,
+                                    confirm: t('messages:cancel this appointment?'),
+                                    onClick: async () => {
+                                        if (selectedEvent.id) {
+                                            await updateAppointmentStatus(
+                                                selectedEvent.id,
+                                                cancelledCode
+                                            );
+                                        }
+                                    }
+                                }
+                            ]
+                          : [])
+                  ]
+                : [
+                      ...(isSubmitted
+                          ? [
+                                {
+                                    key: 'confirm',
+                                    label: t('actions:confirm'),
+                                    buttonType: 'primary' as const,
+                                    onClick: handleAdvanceStatus
+                                },
+                                ...(refusedCode
+                                    ? [
+                                          {
+                                              key: 'refuse',
+                                              label: t('actions:refuse'),
+                                              buttonType: 'default' as const,
+                                              danger: true,
+                                              confirm: t('messages:refuse this appointment?'),
+                                              onClick: async () => {
+                                                  if (selectedEvent.id) {
+                                                      await updateAppointmentStatus(
+                                                          selectedEvent.id,
+                                                          refusedCode
+                                                      );
+                                                  }
+                                              }
+                                          }
+                                      ]
+                                    : [])
+                            ]
+                          : next
+                            ? [
+                                  {
+                                      key: 'advance',
+                                      label: `${t('actions:advance-to')} « ${statusConfig[next]?.label} »`,
+                                      buttonType: 'primary' as const,
+                                      onClick: handleAdvanceStatus
+                                  }
+                              ]
+                            : []),
+                      ...(cancelledCode
+                          ? [
+                                {
+                                    key: 'cancel',
+                                    label: t('actions:cancel'),
+                                    buttonType: 'default' as const,
+                                    danger: true,
+                                    confirm: t('messages:cancel this appointment?'),
+                                    onClick: async () => {
+                                        if (selectedEvent.id) {
+                                            await updateAppointmentStatus(
+                                                selectedEvent.id,
+                                                cancelledCode
+                                            );
+                                        }
+                                    }
+                                }
+                            ]
+                          : [])
+                  ]
             : [];
 
     if (!canRead) {
@@ -785,6 +916,28 @@ const MyCalendar: PageComponent = () => {
                                 />
                             </>
                         )}
+                        {capacity && (
+                            <Tooltip
+                                title={
+                                    capacity.truncated
+                                        ? t('messages:inbound-capacity-partial')
+                                        : t('common:inbound-capacity')
+                                }
+                            >
+                                <Tag
+                                    color={
+                                        capacity.used >= capacity.max
+                                            ? 'red'
+                                            : capacity.used >= capacity.max * 0.8
+                                              ? 'orange'
+                                              : 'default'
+                                    }
+                                >
+                                    {t('common:inbound-capacity')}: {capacity.used} / {capacity.max}
+                                    {capacity.truncated ? ' +' : ''}
+                                </Tag>
+                            </Tooltip>
+                        )}
                         <div style={{ marginLeft: 'auto' }}>
                             <Tooltip title={t('actions:reload')}>
                                 <Button
@@ -812,6 +965,14 @@ const MyCalendar: PageComponent = () => {
                             slotPropGetter={slotPropGetter}
                             components={{
                                 toolbar: (tp: any) => <ScheduleToolbar {...tp} picker="date" />,
+                                // Dock name in a fixed-height header cell (see globals.css): the
+                                // label is clamped to two lines, so keep the full name in a title
+                                // tooltip for docks whose name does not fit.
+                                resourceHeader: ({ label }: any) => (
+                                    <span className="rbc-header-label" title={String(label ?? '')}>
+                                        {label}
+                                    </span>
+                                ),
                                 event: ({ event }: { event: CalendarEvent }) => (
                                     <EventCard event={event} typeConfig={typeConfig} />
                                 ),

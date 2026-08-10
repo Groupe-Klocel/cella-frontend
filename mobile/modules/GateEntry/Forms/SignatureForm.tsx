@@ -23,7 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 // waiting screen.
 
 import { WrapperForm, NavButton } from '@components';
-import { showError , useTranslationWithFallback as useTranslation } from '@helpers';
+import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
 import { Space, Typography } from 'antd';
 import { UndoOutlined } from '@ant-design/icons';
 import { useEffect, useRef } from 'react';
@@ -78,9 +78,8 @@ export const SignatureForm = ({
             // Status / type codes from the configs reducer (no extra request).
             const findCode = (scope: string, re: RegExp) =>
                 parseInt(
-                    (configs ?? []).find(
-                        (c: any) => c.scope === scope && re.test(c.value ?? '')
-                    )?.code,
+                    (configs ?? []).find((c: any) => c.scope === scope && re.test(c.value ?? ''))
+                        ?.code,
                     10
                 );
             const confirmedStatus = findCode('appointment_status', /confirm/i);
@@ -99,16 +98,33 @@ export const SignatureForm = ({
                     language: documentLanguage,
                     accepted: true
                 },
-                gateSignature: signature
+                gateSignature: signature,
+                // Outbound driver declaration. No column exists for it, so it lives in `extras`
+                // next to the safety-checklist acceptance — same nature: something the driver
+                // asserted at the gate, kept as evidence.
+                ...(registration.directTransportConfirmed !== undefined
+                    ? {
+                          directTransport: {
+                              confirmed: registration.directTransportConfirmed,
+                              at: new Date().toISOString()
+                          }
+                      }
+                    : {})
             };
             const input: Record<string, any> = {
                 driverName: registration.driverName,
+                // `|| null` on everything APPOINTMENT_FIELD_RULES may hide: a hidden field is
+                // never registered by AntD, so it arrives undefined and would be dropped from the
+                // mutation entirely. Sending an explicit null instead also CLEARS a stale value on
+                // the existing appointment, which matters on the reset->restart path.
                 entityName: registration.companyName || null,
-                entityAccountingCode: registration.supplier,
-                driverPhoneNumber: registration.driverPhoneNumber,
-                truckLicensePlate: registration.truckLicensePlate,
+                entityAccountingCode: registration.supplier ?? null,
+                driverPhoneNumber: registration.driverPhoneNumber || null,
+                truckLicensePlate: registration.truckLicensePlate || null,
                 trailerLicensePlate: registration.trailerLicensePlate || null,
                 extraText1: registration.containerNumber || null,
+                // real column (Float, hours); undefined on inbound so the key is simply absent
+                driverDrivingTime: registration.driverDrivingTime ?? null,
                 // Clear any previous refusal so a reset->restart begins clean.
                 denyReason: null,
                 extras
@@ -118,7 +134,9 @@ export const SignatureForm = ({
             if (isAdHoc) {
                 // Ad-hoc: arrival now -> begin = now, end = now + chosen duration.
                 const begin = new Date();
-                const end = new Date(begin.getTime() + (registration.durationMinutes ?? 60) * 60000);
+                const end = new Date(
+                    begin.getTime() + (registration.durationMinutes ?? 60) * 60000
+                );
                 const res = await graphqlRequestClient.request(
                     gql`
                         mutation createAdHocGateAppointment($input: CreateAppointmentInput!) {
@@ -187,7 +205,10 @@ export const SignatureForm = ({
             <Text style={{ display: 'block', fontSize: 16, marginBottom: 8, textAlign: 'center' }}>
                 {t('common:signature-msg')}
             </Text>
-            <SignaturePad ref={padRef} initialDataUrl={appointment?.extras?.gateSignature ?? null} />
+            <SignaturePad
+                ref={padRef}
+                initialDataUrl={appointment?.extras?.gateSignature ?? null}
+            />
             <Space style={{ marginTop: 12 }}>
                 <NavButton icon={<UndoOutlined />} onClick={() => padRef.current?.clear()}>
                     {t('common:clear')}

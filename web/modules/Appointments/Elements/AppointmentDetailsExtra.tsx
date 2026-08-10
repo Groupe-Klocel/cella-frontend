@@ -60,6 +60,11 @@ export interface IItemDetailsProps {
     carrierId?: string | any;
     status?: string | any;
     content?: any;
+    // appointment.extras.gateCheckIn, fetched raw by the page (the generic detail hook
+    // flattens JSON). Carries the guard's decision, the arrival time and the pager number.
+    gateCheckIn?: any;
+    // Real Appointment column. `gateCheckIn.pagerNumber` is only the pre-column fallback.
+    pagerNumber?: string | null;
     printLanguage?: string | any;
     setDocumentAttachmentsData?: any;
 }
@@ -72,6 +77,8 @@ const AppointmentDetailsExtra = ({
     carrierId,
     status,
     content,
+    gateCheckIn,
+    pagerNumber,
     printLanguage,
     setDocumentAttachmentsData
 }: IItemDetailsProps) => {
@@ -233,8 +240,7 @@ const AppointmentDetailsExtra = ({
                         return {
                             load,
                             docList: ruleResult?.executeRule?.document_list?.value ?? [],
-                            attachments:
-                                attachmentsResult?.documentAttachments?.results ?? []
+                            attachments: attachmentsResult?.documentAttachments?.results ?? []
                         };
                     } catch (e) {
                         console.error(e);
@@ -329,6 +335,7 @@ const AppointmentDetailsExtra = ({
         return {
             rows,
             instructions: raw.instructions as string | undefined,
+            palettePlaces: raw.palettePlaces as number | undefined,
             specialRequirements
         };
     }, [content, parameters, router.locale]);
@@ -468,6 +475,38 @@ const AppointmentDetailsExtra = ({
 
     return (
         <>
+            {/* Gate check-in: what the security guard recorded at the barrier. The pager number is
+                here because the guard needs to read it back when calling the driver to a dock. */}
+            {gateCheckIn && (
+                <>
+                    <Divider orientation="left">{t('common:section-gate')}</Divider>
+                    <Descriptions column={2} size="small" bordered>
+                        {gateCheckIn.at && (
+                            <Descriptions.Item label={t('common:arrival-time')}>
+                                {moment(gateCheckIn.at).format('YYYY-MM-DD HH:mm')}
+                            </Descriptions.Item>
+                        )}
+                        {(pagerNumber ?? gateCheckIn.pagerNumber) && (
+                            <Descriptions.Item label={t('common:pager-number')}>
+                                <strong style={{ fontFamily: 'monospace', fontSize: 16 }}>
+                                    {pagerNumber ?? gateCheckIn.pagerNumber}
+                                </strong>
+                            </Descriptions.Item>
+                        )}
+                        {gateCheckIn.agentComment && (
+                            <Descriptions.Item label={t('common:comment')} span={2}>
+                                {gateCheckIn.agentComment}
+                            </Descriptions.Item>
+                        )}
+                        {gateCheckIn.refusalMessage && (
+                            <Descriptions.Item label={t('common:refused-title')} span={2}>
+                                {gateCheckIn.refusalMessage}
+                            </Descriptions.Item>
+                        )}
+                    </Descriptions>
+                </>
+            )}
+
             {composition && (
                 <>
                     <Divider orientation="left">{t('common:truck-composition')}</Divider>
@@ -477,6 +516,12 @@ const AppointmentDetailsExtra = ({
                                 {r.value}
                             </Descriptions.Item>
                         ))}
+                        {composition.palettePlaces !== undefined &&
+                            composition.palettePlaces !== null && (
+                                <Descriptions.Item label={t('common:pallet-places')}>
+                                    {composition.palettePlaces}
+                                </Descriptions.Item>
+                            )}
                         {composition.specialRequirements.length > 0 && (
                             <Descriptions.Item label={t('d:specialRequirements')} span={2}>
                                 {composition.specialRequirements.join(', ')}

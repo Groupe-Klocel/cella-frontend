@@ -27,7 +27,8 @@ interface TranslationResponse {
     // Add other properties if needed based on your use case
 }
 
-// Helper function to map frontend locale codes to database language codes
+// Helper function to map frontend locale codes to database language codes.
+// The identity fallback means a newly supported locale needs no entry here.
 const mapLocaleToDbLanguage = (locale: string): string => {
     const localeMap: { [key: string]: string } = {
         'en-US': 'en-US',
@@ -38,6 +39,15 @@ const mapLocaleToDbLanguage = (locale: string): string => {
     return localeMap[locale] || locale;
 };
 
+// Locale used when the active one has no row for a key. The truck-entry kiosk offers thirteen
+// languages while most DB translations exist in four, so without this a Polish driver would see
+// raw keys like `common:menu` all over the screen. Falling back to English is strictly better than
+// showing the key, and it degrades per key rather than per screen.
+//
+// NOTE this is the one intentional divergence from web/helpers/utils/TranslationFromDB.ts, which
+// the two files otherwise mirror: the wide language list is a mobile-only concern.
+const FALLBACK_DB_LANGUAGE = 'en-US';
+
 export function useTranslationWithFallback(keyInfo?: string): TranslationResponse {
     const { t, lang } = useTranslation();
 
@@ -46,27 +56,25 @@ export function useTranslationWithFallback(keyInfo?: string): TranslationRespons
     const dbLanguage = mapLocaleToDbLanguage(lang);
 
     const translationFiltered = (key: any) => {
-        if (key.split(':').length === 1) {
-            return (
-                translations.find(
-                    (translation: any) =>
-                        translation.language === dbLanguage &&
-                        translation.category === keyInfo &&
-                        translation.code === key
-                )?.value ?? key
-            );
-        } else if (key.split(':').length === 2) {
-            return (
-                translations.find(
-                    (translation: any) =>
-                        translation.language === dbLanguage &&
-                        translation.category === key.split(':')[0] &&
-                        translation.code === key.split(':')[1]
-                )?.value ?? key
-            );
-        } else {
-            return key;
-        }
+        const parts = key.split(':');
+        const category = parts.length === 1 ? keyInfo : parts[0];
+        const code = parts.length === 1 ? key : parts[1];
+        if (parts.length > 2) return key;
+
+        const lookup = (language: string) =>
+            translations.find(
+                (translation: any) =>
+                    translation.language === language &&
+                    translation.category === category &&
+                    translation.code === code
+            )?.value;
+
+        // active locale -> default locale -> the key itself
+        return (
+            lookup(dbLanguage) ??
+            (dbLanguage === FALLBACK_DB_LANGUAGE ? undefined : lookup(FALLBACK_DB_LANGUAGE)) ??
+            key
+        );
     };
 
     return {
