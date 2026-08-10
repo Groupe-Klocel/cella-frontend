@@ -19,8 +19,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
 // DESCRIPTION: refusal modal - predefined reason (+ free text when "other") and
-// an optional message. The agent then chooses to either cancel the appointment
-// or reset it so the driver can restart the radio (kiosk) process.
+// an optional message. The agent then chooses to either cancel the appointment,
+// reset it so the driver can restart the radio (kiosk) process, or hold it for
+// missing paperwork so the carrier can attach the documents and come back.
 
 import { Button, Form, Input, Modal, Select } from 'antd';
 import { FC } from 'react';
@@ -33,7 +34,11 @@ const REASON_CODES = [
     'other'
 ];
 
-export type RefuseAction = 'cancel' | 'reset';
+export type RefuseAction = 'cancel' | 'reset' | 'documents';
+
+// The reason pre-selected by the "awaiting documents" outcome. That outcome asks only for an
+// optional comment, so it must not be blocked by the (required) reason dropdown.
+const DOCUMENTS_REASON_CODE = 'documents-missing';
 
 export interface IRejectModalProps {
     open: boolean;
@@ -54,6 +59,25 @@ export const RejectModal: FC<IRejectModalProps> = ({
     const reasonCode = Form.useWatch('reasonCode', form);
 
     const confirm = (action: RefuseAction) => {
+        // The "awaiting documents" outcome carries its own reason and only asks for an optional
+        // comment, so it skips the required-reason validation instead of forcing the guard
+        // through the dropdown.
+        if (action === 'documents') {
+            const values = form.getFieldsValue(true);
+            // Skipping validateFields means "other" may be selected with an empty free-text
+            // reason, so never trust `otherReason` here: fall back to the documents reason rather
+            // than handing onConfirm an undefined label that would end up in denyReason.
+            const otherReason = values.otherReason?.trim();
+            const reasonLabel =
+                values.reasonCode === 'other' && otherReason
+                    ? otherReason
+                    : t(
+                          `common:reason-${values.reasonCode === 'other' || !values.reasonCode ? DOCUMENTS_REASON_CODE : values.reasonCode}`
+                      );
+            onConfirm(reasonLabel, values.message, action);
+            form.resetFields();
+            return;
+        }
         form.validateFields().then((values) => {
             const reasonLabel =
                 values.reasonCode === 'other'
@@ -77,6 +101,14 @@ export const RejectModal: FC<IRejectModalProps> = ({
             footer={[
                 <Button key="reset" onClick={() => confirm('reset')} loading={confirmLoading}>
                     {t('actions:reset')}
+                </Button>,
+                <Button
+                    key="await-documents"
+                    type={reasonCode === DOCUMENTS_REASON_CODE ? 'primary' : 'default'}
+                    onClick={() => confirm('documents')}
+                    loading={confirmLoading}
+                >
+                    {t('common:refuse-await-documents')}
                 </Button>,
                 <Button
                     key="cancel-rdv"

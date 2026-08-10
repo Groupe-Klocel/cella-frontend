@@ -231,6 +231,46 @@ height: calc(100vh - 110px);
 }
 
 /* Column widths — set --rbc-col-width and --rbc-gutter on the calendar container */
+
+/* RESOURCE (day) VIEW — why the dock headers used to drift out of their columns.
+   react-big-calendar renders ONE .rbc-time-header-content PER RESOURCE, each with `flex: 1 0 0%`.
+   So on a window wide enough that the fixed columns no longer overflow, the leftover space of
+   .rbc-time-header got shared out among those strips, while the body's .rbc-day-slot columns stayed
+   pinned to --rbc-col-width and never grew. The header pitch then exceeded the grid pitch and the
+   error ACCUMULATED left to right: at 2400px the strips were 138px against 129px slots, i.e. 9px per
+   dock and ~144px by the last one. Below ~1750px it was invisible only because the columns overflow
+   there, leaving no free space to distribute.
+
+   Fix: size a header strip and a grid column from the SAME declaration, so the two rows can never
+   disagree. --rbc-col-width becomes the MINIMUM — both rows may grow past it, but always by the same
+   amount, because each is N equal-basis items after the same 50px gutter inside two boxes of
+   identical width. That also finally delivers what the day view was written to do ("few docks
+   stretch to fill the table, many docks keep the minimum and scroll"): the header was the only row
+   actually doing it. Scoped to .rbc-time-view-resources because the week view has a SINGLE
+   header-content holding all seven day cells, whose growth must stay untouched. */
+.rbc-time-view-resources .rbc-time-header-content,
+.rbc-time-view-resources .rbc-time-content > .rbc-day-slot {
+    flex: 1 0 var(--rbc-col-width) !important;
+    width: var(--rbc-col-width) !important;
+    min-width: var(--rbc-col-width) !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+}
+.rbc-time-view-resources .rbc-time-header-content {
+    /* RBC pulls every strip after the first back by 1px so adjacent separator borders collapse. That
+       also makes the header pitch 1px SMALLER than the grid pitch — another -1px per dock, -14px by
+       the last one. The grid draws its own separators with no such overlap, so drop it and let
+       border-box absorb the border instead. */
+    margin-left: 0 !important;
+}
+/* The row and its cell take their width from the strip rather than repeating the column calc, so
+   the strip's separator border can never push the label out of its column. Declared after the
+   generic .rbc-header sizing block below, which is equally specific and would otherwise win. */
+.rbc-time-view-resources .rbc-time-header-content > .rbc-row {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
 .rbc-time-header-content .rbc-row-resource .rbc-header,
 .rbc-time-header-content .rbc-header {
     flex: 0 0 var(--rbc-col-width) !important;
@@ -245,6 +285,40 @@ height: calc(100vh - 110px);
     word-break: break-word;
     line-height: 1.2;
     text-align: center;
+
+    /* FIXED height, not content height. These cells are flex children of .rbc-row-resource but
+       they do not stretch to the tallest sibling, so a dock name long enough to wrap (e.g.
+       "W-RAMPE-01 ohne Termin") made its own cell ~38px while the single-line neighbours stayed
+       ~23px: the header's bottom edge went ragged and the column separators stopped lining up.
+       Pinning the height also stops a three-line name from pushing the whole time grid down.
+       38px = two lines at 12px/1.2 plus the vertical padding. */
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Resource view: the cell fills its (already column-wide) strip instead of being re-pinned to
+   --rbc-col-width, which would make it 1px wider than the strip's content box and overhang the
+   next column. Must come after the block above to win the specificity tie. */
+.rbc-time-view-resources .rbc-time-header-content .rbc-header {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+/* The label is clamped to the two lines the cell can show, with the full name kept in a title
+   tooltip (see the resourceHeader component on the schedule pages). Without the clamp a very long
+   name would simply be cut mid-line with no indication anything is missing. */
+.rbc-time-header-content .rbc-header .rbc-header-label {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    width: 100%;
 }
 .rbc-time-content > .rbc-day-slot {
     flex: 0 0 var(--rbc-col-width) !important;
@@ -265,19 +339,11 @@ height: calc(100vh - 110px);
     font-size: 11px;
 }
 
-/* Mobile breakpoint: max 3 columns visible */
+/* Mobile breakpoint: max 3 columns visible.
+   Overriding the variable rather than the two widths keeps ONE source of truth for the column
+   pitch, so the header strips (which are now sized from it too) cannot disagree with the grid. */
 @media (max-width: 768px) {
-    .rbc-time-header-content .rbc-row-resource .rbc-header,
-    .rbc-time-header-content .rbc-header {
-        flex: 0 0 calc((100vw - 50px) / 3) !important;
-        width: calc((100vw - 50px) / 3) !important;
-        min-width: calc((100vw - 50px) / 3) !important;
-        max-width: calc((100vw - 50px) / 3) !important;
-    }
-    .rbc-time-content > .rbc-day-slot {
-        flex: 0 0 calc((100vw - 50px) / 3) !important;
-        width: calc((100vw - 50px) / 3) !important;
-        min-width: calc((100vw - 50px) / 3) !important;
-        max-width: calc((100vw - 50px) / 3) !important;
+    .rbc-time-view {
+        --rbc-col-width: calc((100vw - 50px) / 3) !important;
     }
 }

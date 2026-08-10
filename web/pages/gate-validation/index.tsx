@@ -22,6 +22,7 @@ import { AppHead, HeaderContent, LinkButton, PageTableContentWrapper } from '@co
 import {
     getModesFromPermissions,
     pathParams,
+    resolveAppointmentStatusCodes,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { Badge, Result, Space, Table, Tabs, Tag } from 'antd';
@@ -56,21 +57,15 @@ const GateValidationDashboard: PageComponent = () => {
     const [entries, setEntries] = useState<GateEntry[]>([]);
     const [activeTab, setActiveTab] = useState('pending');
 
-    // CONFIRMED / ON_SITE codes from the configs reducer (no extra request).
-    const codes = useMemo<GateStatusCodes | null>(() => {
-        if (!configs || configs.length === 0) return null;
-        const find = (re: RegExp) =>
-            parseInt(
-                configs.find((c: any) => c.scope === 'appointment_status' && re.test(c.value ?? ''))
-                    ?.code,
-                10
-            );
-        return {
-            confirmed: find(/confirm/i),
-            onSite: find(/on.?site|sur.?site|vor.?ort/i),
-            cancelled: find(/cancel|annul|stornier/i)
-        };
-    }, [configs]);
+    // Status codes from the configs reducer (no extra request), through the shared resolver so
+    // "On Site" and the waiting/documents statuses can never be confused for one another.
+    const codes = useMemo<GateStatusCodes | null>(
+        () =>
+            !configs || configs.length === 0
+                ? null
+                : (resolveAppointmentStatusCodes(configs) as GateStatusCodes),
+        [configs]
+    );
 
     const refresh = useCallback(async () => {
         if (!codes || !canRead) return;
@@ -85,7 +80,16 @@ const GateValidationDashboard: PageComponent = () => {
                 `,
                 {
                     filters: {
-                        status: [codes.confirmed, codes.onSite, codes.cancelled].filter(Boolean)
+                        // The waiting / documents-pending statuses MUST be here: without them a
+                        // truck vanishes from the dashboard the instant the guard parks it, and
+                        // full entry could never be granted afterwards.
+                        status: [
+                            codes.confirmed,
+                            codes.documentsPending,
+                            codes.onSiteWaiting,
+                            codes.onSite,
+                            codes.cancelled
+                        ].filter(Number.isFinite)
                     }
                 }
             );
@@ -108,10 +112,12 @@ const GateValidationDashboard: PageComponent = () => {
         return () => clearInterval(id);
     }, [codes, canRead, refresh]);
 
-    const { pending, approved, refused } = useMemo(() => {
+    const { pending, waiting, awaitingDocuments, approved, refused } = useMemo(() => {
         const isToday = (iso?: string) => iso && dayjs(iso).isSame(dayjs(), 'day');
         const buckets = {
             pending: [] as GateEntry[],
+            waiting: [] as GateEntry[],
+            awaitingDocuments: [] as GateEntry[],
             approved: [] as GateEntry[],
             refused: [] as GateEntry[]
         };
@@ -120,14 +126,17 @@ const GateValidationDashboard: PageComponent = () => {
             const decision = classifyGateEntry(e, codes);
             const decidedAt = e.extras?.gateCheckIn?.decidedAt;
             if (decision === 'pending') buckets.pending.push(e);
+            // waiting / awaiting-documents are LIVE queues, deliberately not filtered to today:
+            // a truck can wait past midnight, and paperwork routinely takes more than a day. The
+            // approved / refused tabs stay day-scoped -- those are read-only logs.
+            else if (decision === 'waiting') buckets.waiting.push(e);
+            else if (decision === 'awaiting-documents') buckets.awaitingDocuments.push(e);
             else if (decision === 'approved' && isToday(decidedAt)) buckets.approved.push(e);
             else if (decision === 'refused' && isToday(decidedAt)) buckets.refused.push(e);
         });
         const byArrival = (a: GateEntry, b: GateEntry) =>
             (b.extras?.gateCheckIn?.at ?? '').localeCompare(a.extras?.gateCheckIn?.at ?? '');
-        buckets.pending.sort(byArrival);
-        buckets.approved.sort(byArrival);
-        buckets.refused.sort(byArrival);
+        Object.values(buckets).forEach((bucket) => bucket.sort(byArrival));
         return buckets;
     }, [entries, codes]);
 
@@ -151,6 +160,11 @@ const GateValidationDashboard: PageComponent = () => {
             const decision = codes ? classifyGateEntry(record, codes) : 'pending';
             const map: Record<string, { color: string; label: string }> = {
                 pending: { color: 'orange', label: t('common:status-pending') },
+                waiting: { color: 'gold', label: t('common:status-waiting') },
+                'awaiting-documents': {
+                    color: 'volcano',
+                    label: t('common:status-awaiting-documents')
+                },
                 approved: { color: 'green', label: t('common:status-approved') },
                 refused: { color: 'red', label: t('common:status-refused') }
             };
@@ -170,10 +184,31 @@ const GateValidationDashboard: PageComponent = () => {
             ) : null
     };
 
-    const columns = [...baseColumns, statusColumn, actionColumn];
+    // The pager is what the guard shouts on the radio to call a parked driver back, so it earns a
+    // column of its own on the waiting queue.
+    const pagerColumn = {
+        title: t('common:pager-number'),
+        key: 'pager',
+        // column first, `extras` only as a fallback for appointments written before it existed
+        render: (record: GateEntry) =>
+            record.pagerNumber ?? record.extras?.gateCheckIn?.pagerNumber ?? '-'
+    };
 
-    const dataForTab =
-        activeTab === 'pending' ? pending : activeTab === 'approved' ? approved : refused;
+    const columns = [
+        ...baseColumns,
+        ...(activeTab === 'waiting' ? [pagerColumn] : []),
+        statusColumn,
+        actionColumn
+    ];
+
+    const dataByTab: Record<string, GateEntry[]> = {
+        pending,
+        waiting,
+        documents: awaitingDocuments,
+        approved,
+        refused
+    };
+    const dataForTab = dataByTab[activeTab] ?? pending;
 
     const headerData = {
         title: t('common:validation-title'),
@@ -186,6 +221,22 @@ const GateValidationDashboard: PageComponent = () => {
             label: (
                 <Badge count={pending.length} offset={[12, -2]} size="small">
                     {t('common:tab-pending')}
+                </Badge>
+            )
+        },
+        {
+            key: 'waiting',
+            label: (
+                <Badge count={waiting.length} offset={[12, -2]} size="small">
+                    {t('common:tab-waiting')}
+                </Badge>
+            )
+        },
+        {
+            key: 'documents',
+            label: (
+                <Badge count={awaitingDocuments.length} offset={[12, -2]} size="small">
+                    {t('common:tab-documents')}
                 </Badge>
             )
         },
