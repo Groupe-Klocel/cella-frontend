@@ -18,108 +18,143 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { showSuccess, useTranslationWithFallback as useTranslation } from '@helpers';
 import { showError } from '@helpers';
 import { ExportFormat } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
-import { Button, Form, Modal, Upload } from 'antd';
+import { Button, Modal, Upload } from 'antd';
 import { UploadProps } from 'antd/lib';
 import { gql } from 'graphql-request';
-import { StyledForm, WrapperForm } from '@components';
 import { UploadOutlined } from '@ant-design/icons';
+
+// Default cap on the selected file. The SAP "open orders" export is a few MB, and
+// the base64 payload sent to the API is ~1.33x the file size.
+const DEFAULT_MAX_FILE_SIZE_MO = 20;
 
 interface UseImportDataProps {
     functionName: string;
     titleLabel?: any;
     onCancel: () => void;
     onSuccess: () => void;
+    // Max size of the selected file, in Mo (default: DEFAULT_MAX_FILE_SIZE_MO).
+    maxFileSizeMo?: number;
+    // Run the function in the background and return immediately. Mandatory for big
+    // files: a synchronous executeFunction would hit the HTTP timeout.
+    longRunningTask?: boolean;
+    // Name of the CELLA notification raised when a long running task completes.
+    notificationName?: string;
+    // Extra keys merged into event.input (e.g. { dry_run: true }).
+    extraInput?: Record<string, any>;
 }
 
 export const useImportData = ({
     functionName,
     titleLabel,
     onCancel,
-    onSuccess
+    onSuccess,
+    maxFileSizeMo = DEFAULT_MAX_FILE_SIZE_MO,
+    longRunningTask = false,
+    notificationName,
+    extraInput
 }: UseImportDataProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
-    const [form] = Form.useForm();
-    const [resetForm, setResetForm] = useState<boolean>(false);
-
-    let base64String: string | undefined = undefined;
-    let loadedFile: any = undefined;
+    const [resetUpload, setResetUpload] = useState<boolean>(false);
+    // Refs, not plain variables: the file is read asynchronously by the FileReader
+    // and consumed later by the modal's onOk, i.e. across renders.
+    const base64StringRef = useRef<string | undefined>(undefined);
+    const loadedFileRef = useRef<any>(undefined);
 
     useEffect(() => {
-        if (resetForm) {
-            form.resetFields();
-            setResetForm(false);
+        if (resetUpload) {
+            base64StringRef.current = undefined;
+            loadedFileRef.current = undefined;
+            setResetUpload(false);
         }
-    }, [resetForm]);
+    }, [resetUpload]);
 
     const props: UploadProps = {
         onChange({ file }) {
-            if (file.status === 'done') {
-                loadedFile = file;
+            if (file.status !== 'removed') {
+                loadedFileRef.current = file;
             }
         },
         onRemove() {
-            loadedFile = undefined;
+            loadedFileRef.current = undefined;
+            base64StringRef.current = undefined;
         },
         defaultFileList: [],
         name: 'file',
         accept: '.xlsx',
         maxCount: 1,
-        showUploadList: true
+        showUploadList: true,
+        // The file is never POSTed by antd: it is read locally and sent as base64
+        // inside the executeFunction event.
+        beforeUpload: () => false
     };
 
     const handleBeforeUpload = (file: File) => {
-        const maxSize = 1024 * 1024;
+        const maxSize = maxFileSizeMo * 1024 * 1024;
         const isXlsx =
             file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         if (!isXlsx) {
             showError(`${t('messages:xlsx-file-format-error')}`);
-            return;
+            return Upload.LIST_IGNORE;
         }
         if (file.size > maxSize) {
-            showError(
-                `${t('messages:xlsx-file-size-error', { size: Math.round(maxSize / 1000000) })}`
-            );
-            return;
+            showError(`${t('messages:xlsx-file-size-error', { size: maxFileSizeMo })}`);
+            return Upload.LIST_IGNORE;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
             const BS64 = e.target?.result as string;
             const base64Splited = BS64.split(',');
-            base64String = base64Splited[1];
+            base64StringRef.current = base64Splited[1];
         };
         reader.readAsDataURL(file);
-        return;
+
+        loadedFileRef.current = file;
+        return false;
     };
 
     const handleYes = async () => {
         await handleUpload();
-        setResetForm(true);
+        setResetUpload(true);
         onSuccess();
     };
 
     const handleNo = async () => {
-        setResetForm(true);
+        setResetUpload(true);
         onCancel();
     };
 
     const handleUpload = async () => {
-        if (!functionName || !base64String || !loadedFile) {
+        if (!functionName || !base64StringRef.current || !loadedFileRef.current) {
             showError(t('messages:error-uploading-file'));
-            setResetForm(true);
+            setResetUpload(true);
             onSuccess();
             return;
         }
 
         const query = gql`
-            mutation executeFunction($functionName: String!, $event: JSON!) {
-                executeFunction(functionName: $functionName, event: $event) {
+            mutation executeFunction(
+                $functionName: String!
+                $event: JSON!
+                $longRunningTask: Boolean
+                $notification: Boolean
+                $notificationType: String
+                $notificationName: String
+            ) {
+                executeFunction(
+                    functionName: $functionName
+                    event: $event
+                    longRunningTask: $longRunningTask
+                    notification: $notification
+                    notificationType: $notificationType
+                    notificationName: $notificationName
+                ) {
                     status
                     output
                 }
@@ -129,29 +164,42 @@ export const useImportData = ({
             functionName: functionName,
             event: {
                 input: {
-                    file: base64String,
-                    format: ExportFormat.Xlsx
+                    file: base64StringRef.current,
+                    format: ExportFormat.Xlsx,
+                    ...extraInput
                 }
-            }
+            },
+            longRunningTask,
+            notification: longRunningTask,
+            notificationType: longRunningTask ? 'NOTIF' : undefined,
+            notificationName: longRunningTask ? (notificationName ?? functionName) : undefined
         };
 
         try {
             const result = await graphqlRequestClient.request(query, variables);
             if (result.executeFunction.status === 'ERROR') {
                 showError(result.executeFunction.output);
-            } else if (
-                result.executeFunction.status === 'OK' &&
-                result.executeFunction.output.status === 'KO'
-            ) {
-                showError(t(`errors:${result.executeFunction.output.output.code}`));
-                console.log('Backend_message', result.executeFunction.output.output);
+            } else if (longRunningTask) {
+                // Nothing to report yet: the function runs in the background and the
+                // user is notified once it is over.
+                showSuccess(t('messages:import-launched-in-background'));
+            } else if (result.executeFunction.output?.status === 'KO') {
+                const backendOutput = result.executeFunction.output.output;
+                showError(
+                    backendOutput?.code
+                        ? t(`errors:${backendOutput.code}`)
+                        : `${backendOutput?.message ?? t('messages:xlsx-file-import-error')}`
+                );
+                console.log('Backend_message', backendOutput);
             } else {
                 showSuccess(t('messages:success-imported'));
+                console.log('Backend_message', result.executeFunction.output?.output);
             }
         } catch (error) {
             showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
         } finally {
-            setResetForm(true);
+            setResetUpload(true);
             onSuccess();
         }
     };
@@ -160,30 +208,18 @@ export const useImportData = ({
         Modal.confirm({
             title: titleLabel ? titleLabel : t('common:excel-imports'),
             content: (
-                <WrapperForm>
-                    <StyledForm
-                        layout="vertical"
-                        autoComplete="off"
-                        scrollToFirstError
-                        size="small"
-                        form={form}
+                <Upload {...props} beforeUpload={handleBeforeUpload}>
+                    <Button
+                        icon={<UploadOutlined />}
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}
                     >
-                        <Form.Item>
-                            <Upload {...props} beforeUpload={handleBeforeUpload}>
-                                <Button
-                                    icon={<UploadOutlined />}
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}
-                                >
-                                    {t('common:select-file')}
-                                </Button>
-                            </Upload>
-                        </Form.Item>
-                    </StyledForm>
-                </WrapperForm>
+                        {t('common:select-file')}
+                    </Button>
+                </Upload>
             ),
             onOk: handleYes,
             onCancel: handleNo,
