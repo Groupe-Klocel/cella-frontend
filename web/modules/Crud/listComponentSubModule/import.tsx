@@ -63,12 +63,14 @@ export const useImportData = ({
     const [resetUpload, setResetUpload] = useState<boolean>(false);
     // Refs, not plain variables: the file is read asynchronously by the FileReader
     // and consumed later by the modal's onOk, i.e. across renders.
-    const base64StringRef = useRef<string | undefined>(undefined);
+    // The base64 payload is held as a *promise* so that clicking OK right after
+    // picking the file waits for the read instead of sending an empty payload.
+    const base64PromiseRef = useRef<Promise<string | undefined> | undefined>(undefined);
     const loadedFileRef = useRef<any>(undefined);
 
     useEffect(() => {
         if (resetUpload) {
-            base64StringRef.current = undefined;
+            base64PromiseRef.current = undefined;
             loadedFileRef.current = undefined;
             setResetUpload(false);
         }
@@ -82,7 +84,7 @@ export const useImportData = ({
         },
         onRemove() {
             loadedFileRef.current = undefined;
-            base64StringRef.current = undefined;
+            base64PromiseRef.current = undefined;
         },
         defaultFileList: [],
         name: 'file',
@@ -107,19 +109,24 @@ export const useImportData = ({
             return Upload.LIST_IGNORE;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const BS64 = e.target?.result as string;
-            const base64Splited = BS64.split(',');
-            base64StringRef.current = base64Splited[1];
-        };
-        reader.readAsDataURL(file);
+        base64PromiseRef.current = new Promise<string | undefined>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const BS64 = e.target?.result as string;
+                resolve(BS64 ? BS64.split(',')[1] : undefined);
+            };
+            reader.onerror = () => resolve(undefined);
+            reader.readAsDataURL(file);
+        });
 
         loadedFileRef.current = file;
         return false;
     };
 
     const handleYes = async () => {
+        // handleUpload throws when there is nothing to send: the rejection keeps
+        // Modal.confirm open so the user does not lose their selection. onSuccess is
+        // called here only, never inside handleUpload, to avoid a double reload.
         await handleUpload();
         setResetUpload(true);
         onSuccess();
@@ -131,11 +138,16 @@ export const useImportData = ({
     };
 
     const handleUpload = async () => {
-        if (!functionName || !base64StringRef.current || !loadedFileRef.current) {
+        if (!functionName || !loadedFileRef.current || !base64PromiseRef.current) {
             showError(t('messages:error-uploading-file'));
-            setResetUpload(true);
-            onSuccess();
-            return;
+            throw new Error('useImportData: no file selected');
+        }
+
+        // Wait for the FileReader instead of racing it.
+        const base64String = await base64PromiseRef.current;
+        if (!base64String) {
+            showError(t('messages:error-uploading-file'));
+            throw new Error('useImportData: file could not be read');
         }
 
         const query = gql`
@@ -164,7 +176,7 @@ export const useImportData = ({
             functionName: functionName,
             event: {
                 input: {
-                    file: base64StringRef.current,
+                    file: base64String,
                     format: ExportFormat.Xlsx,
                     ...extraInput
                 }
@@ -179,11 +191,10 @@ export const useImportData = ({
             const result = await graphqlRequestClient.request(query, variables);
             if (result.executeFunction.status === 'ERROR') {
                 showError(result.executeFunction.output);
-            } else if (longRunningTask) {
-                // Nothing to report yet: the function runs in the background and the
-                // user is notified once it is over.
-                showSuccess(t('messages:import-launched-in-background'));
             } else if (result.executeFunction.output?.status === 'KO') {
+                // Checked BEFORE the longRunningTask branch: should the backend ever
+                // answer synchronously with a KO payload, the error must surface
+                // instead of being masked by an "import launched" success.
                 const backendOutput = result.executeFunction.output.output;
                 showError(
                     backendOutput?.code
@@ -191,6 +202,10 @@ export const useImportData = ({
                         : `${backendOutput?.message ?? t('messages:xlsx-file-import-error')}`
                 );
                 console.log('Backend_message', backendOutput);
+            } else if (longRunningTask) {
+                // Nothing to report yet: the function runs in the background and the
+                // user is notified once it is over.
+                showSuccess(t('messages:import-launched-in-background'));
             } else {
                 showSuccess(t('messages:success-imported'));
                 console.log('Backend_message', result.executeFunction.output?.output);
@@ -198,9 +213,6 @@ export const useImportData = ({
         } catch (error) {
             showError(t('messages:error-executing-function'));
             console.log('executeFunctionError', error);
-        } finally {
-            setResetUpload(true);
-            onSuccess();
         }
     };
 
