@@ -91,10 +91,16 @@ const resolveStatus = (configs: any[], primary: RegExp, fallback: RegExp): numbe
     findCode(configs, 'appointment_status', primary) ??
     findCode(configs, 'appointment_status', fallback);
 
+// The `checkedIn` fallback is anchored to the exact "on site" values rather than a loose
+// /on.?site/i: the appointment referential now also carries a waiting-area status, and a loose
+// pattern could resolve a visitor check-in to it. This fallback only runs on warehouses that never
+// created the visit_status rows, which is exactly where it would go unnoticed.
+const ON_SITE_EXACT = /^\s*(on.?site|sur.?site|vor.?ort)\s*$/i;
+
 export const resolveVisitStatusCodes = (configs: any[]): VisitStatusCodes => ({
     toBeChecked: resolveStatus(configs, /to.?be.?checked/i, /submit/i),
     preRegistered: resolveStatus(configs, /pre.?register/i, /confirm/i),
-    checkedIn: resolveStatus(configs, /checked.?in/i, /on.?site|sur.?site|vor.?ort/i),
+    checkedIn: resolveStatus(configs, /checked.?in/i, ON_SITE_EXACT),
     checkedOut: resolveStatus(configs, /checked.?out/i, /complet/i),
     cancelled: resolveStatus(configs, /cancel|annul|stornier/i, /cancel|annul|stornier/i)
 });

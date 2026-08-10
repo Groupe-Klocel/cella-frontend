@@ -47,15 +47,27 @@ export interface GateAppointment {
 
 // Data captured by the registration form (step 30).
 export interface RegistrationData {
+    // The only field APPOINTMENT_FIELD_RULES may not hide (see PROTECTED_APPOINTMENT_FIELDS), so
+    // the only one guaranteed present.
     driverName: string;
-    companyName: string;
+    // Everything below is OPTIONAL because a warehouse can configure the field hidden through
+    // APPOINTMENT_FIELD_RULES, in which case AntD never registers it and the value is undefined.
+    // Declaring them as required `string` was a lie the compiler could not catch — the form hands
+    // back `values: any`, so `values.x?.trim()` type-checks against `string` regardless.
+    companyName?: string;
     // supplier of the goods (stored in appointment.entityAccountingCode);
-    // mandatory, except for outbound appointments where the field doesn't exist
+    // mandatory by default, except for outbound appointments where the field doesn't exist
     supplier?: string;
-    driverPhoneNumber: string;
-    truckLicensePlate: string;
+    driverPhoneNumber?: string;
+    truckLicensePlate?: string;
     trailerLicensePlate?: string;
     containerNumber?: string;
+    // Outbound only — declared by the driver at the gate before the trip starts.
+    // Hours behind the wheel (the backend column is a Float).
+    driverDrivingTime?: number;
+    // Driver's confirmation that the goods go straight to their destination with no intermediate
+    // unloading. Stored in `extras` because there is no column for it yet.
+    directTransportConfirmed?: boolean;
     // Ad-hoc entry only: chosen carrier + slot duration (minutes).
     carrierId?: string;
     durationMinutes?: number;
