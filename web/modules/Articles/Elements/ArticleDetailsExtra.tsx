@@ -27,6 +27,7 @@ import {
     LockTwoTone
 } from '@ant-design/icons';
 import { pathParams, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
+import { DocumentAttachedListComponent } from 'components/common/DocumentAttachedListComponent';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space, Typography } from 'antd';
 import { useState } from 'react';
@@ -144,6 +145,23 @@ const ArticleDetailsExtra = ({
 
     return (
         <>
+            {/* Documents attached to the article itself — a certificate of conformity, a safety
+                data sheet, a spec sheet. Same component and same storage as deliveries, loads,
+                purchase orders and third parties, so the upload/download/remove behaviour is
+                identical everywhere and there is nothing article-specific to maintain. */}
+            {articleModes.length > 0 && articleModes.includes(ModeEnum.Read) ? (
+                <>
+                    <Divider />
+                    <DocumentAttachedListComponent
+                        objectId={articleId}
+                        objectName="Article"
+                        objectData={{ id: articleId, name: articleName }}
+                        canModify={articleModes.includes(ModeEnum.Update)}
+                    />
+                </>
+            ) : (
+                <></>
+            )}
             {articleModes.length > 0 &&
             articleModes.includes(ModeEnum.Read) &&
             isTranslationsDisplayed ? (

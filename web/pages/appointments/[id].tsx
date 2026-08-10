@@ -24,7 +24,10 @@ import {
     showError,
     showSuccess,
     isCarrierAppointmentUser,
-    getAppointmentDirection
+    getAppointmentDirection,
+    resolveAppointmentStatusCodes,
+    buildGateQueueReturnInput,
+    buildExtrasPatchInput
 } from '@helpers';
 import { useRouter } from 'next/router';
 import { FC, useEffect, useMemo, useState } from 'react';
@@ -32,7 +35,7 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { AppointmentModelV2 as model } from '@helpers';
-import { Button, Modal, Select, Space } from 'antd';
+import { Button, Input, Modal, Select, Space } from 'antd';
 import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponentV2';
 import { ModeEnum } from 'generated/graphql';
 import { appointmentsRoutes as itemRoutes } from 'modules/Appointments/Static/appointmentsRoutes';
@@ -57,6 +60,8 @@ const AppointmentPage: PageComponent = () => {
     const { graphqlRequestClient } = useAuth();
     const [showSinglePrintModal, setShowSinglePrintModal] = useState(false);
     const [noShowModalOpen, setNoShowModalOpen] = useState(false);
+    const [rescheduleOpen, setRescheduleOpen] = useState(false);
+    const [rescheduleReason, setRescheduleReason] = useState('');
     const [idToPrint, setIdToPrint] = useState<string>();
     const [configsAppointment, setConfigAppointments] = useState<any>([]);
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
@@ -66,6 +71,11 @@ const AppointmentPage: PageComponent = () => {
     // the generic detail hook flattens the record, which destroys the `content` JSON object
     // (it becomes content_palettes_XX / content_instructions). Fetch it raw for the composition.
     const [contentData, setContentData] = useState<any>();
+    // undefined = not loaded yet (never write extras in that state, it would wipe the
+    // driver's signature and safety-checklist acceptance); null = loaded and empty.
+    const [extrasData, setExtrasData] = useState<any>();
+    // Real column now, no longer a key inside `extras`.
+    const [pagerNumber, setPagerNumber] = useState<string | null>(null);
 
     const appointmentStatuses = useMemo(() => {
         const statusMap: Record<string, number> = {};
@@ -82,6 +92,10 @@ const AppointmentPage: PageComponent = () => {
         }
         return statusMap;
     }, [configsAppointment]);
+
+    // Resolved from AppContext configs through the shared helper. Used ONLY for the newer
+    // statuses: the existing switch arms keep using the PascalCase map so this stays additive.
+    const statusCodes = useMemo(() => resolveAppointmentStatusCodes(configs), [configs]);
 
     const isCarrier = isCarrierAppointmentUser(permissions);
 
@@ -163,10 +177,22 @@ const AppointmentPage: PageComponent = () => {
             case appointmentStatuses.appointmentStatusConfirmed:
                 return [
                     appointmentStatuses.appointmentStatusOnSite,
+                    statusCodes.onSiteWaiting,
                     appointmentStatuses.appointmentStatusNoShow
-                ];
+                ].filter(Number.isFinite) as number[];
+            // Parked in the yard: the guard can still clear it for a dock or mark a no-show.
+            case statusCodes.onSiteWaiting:
+                return [
+                    appointmentStatuses.appointmentStatusOnSite,
+                    appointmentStatuses.appointmentStatusNoShow
+                ].filter(Number.isFinite);
+            // Blocked on paperwork: the only way forward is back into the gate queue once the
+            // documents are attached. The deny itself needs a reason, so it is only ever set from
+            // the gate screen, never from a bare status button.
+            case statusCodes.documentsPending:
+                return [appointmentStatuses.appointmentStatusConfirmed].filter(Number.isFinite);
             case appointmentStatuses.appointmentStatusOnSite:
-                return [appointmentStatuses.appointmentStatusArrivedAtDock];
+                return [appointmentStatuses.appointmentStatusArrivedAtDock].filter(Number.isFinite);
             case appointmentStatuses.appointmentStatusArrivedAtDock:
                 return [appointmentStatuses.appointmentStatusLoadingStarted];
             case appointmentStatuses.appointmentStatusLoadingStarted:
@@ -202,6 +228,10 @@ const AppointmentPage: PageComponent = () => {
                 return 'cancel';
             case appointmentStatuses.appointmentStatusNoShow:
                 return 'mark-no-show-appointment';
+            case statusCodes.onSiteWaiting:
+                return 'mark-waiting-appointment';
+            case statusCodes.documentsPending:
+                return 'return-to-gate-queue';
             default:
                 return 'to-be-defined';
         }
@@ -227,6 +257,20 @@ const AppointmentPage: PageComponent = () => {
         extraInput?: Record<string, any>
     ) => {
         const newStatus = nextStatus ?? getNextStatus(currentStatus);
+        // Coming back from "documents pending": clear denyReason and the gate decision, otherwise
+        // classifyGateEntry and the kiosk both keep reading the appointment as refused. The old
+        // text is stashed in extras so the history survives.
+        const isDocumentsRecovery =
+            statusCodes.documentsPending != null &&
+            currentStatus === statusCodes.documentsPending &&
+            newStatus === appointmentStatuses.appointmentStatusConfirmed;
+        // Re-read `extras` from the API instead of using `extrasData`: it comes from a separate
+        // side-query, so the button can be clicked while it is still undefined — spreading `{}`
+        // would then wipe the driver's gate signature and safety checklist. It also protects
+        // against the kiosk having rewritten `extras` while this page sat open.
+        const documentsRecoveryInput = isDocumentsRecovery
+            ? await buildGateQueueReturnInput(graphqlRequestClient, id)
+            : {};
         const updateVariables = {
             id: id,
             input: {
@@ -236,6 +280,7 @@ const AppointmentPage: PageComponent = () => {
                 extraStatusNotOkCode != null
                     ? { extraStatus1: extraStatusNotOkCode }
                     : {}),
+                ...documentsRecoveryInput,
                 ...(extraInput ?? {})
             }
         };
@@ -255,6 +300,48 @@ const AppointmentPage: PageComponent = () => {
             setTriggerRefresh(!triggerRefresh);
         }
         return result;
+    };
+
+    // A carrier asking for a confirmed slot to be moved. This is a BACKWARD transition, so it is
+    // deliberately not part of getValidNextStatuses -- adding Submitted to Confirmed's list there
+    // would hand every internal planner a stray "Submit" button on confirmed appointments.
+    //
+    // The reason is stored in extras, never in denyReason: that field is read as "refused" by the
+    // gate dashboard and by the kiosk, so a reschedule reason there would make the appointment
+    // look turned away. extraStatus1 goes back to "Not OK" so the internal team has to re-check
+    // the references before re-confirming, mirroring what happens on the way in.
+    const requestReschedule = async () => {
+        if (!data?.id) return;
+        const submitted = appointmentStatuses.appointmentStatusSubmitted;
+        if (!Number.isFinite(submitted)) {
+            showError(t('messages:error-update-data'));
+            return;
+        }
+        try {
+            // Re-read `extras` instead of using the `extrasData` snapshot: it is a whole-object
+            // replace, and the kiosk rewrites it while this page sits open, so a snapshot taken at
+            // load would clobber a signature or checklist written since.
+            const extrasInput = await buildExtrasPatchInput(graphqlRequestClient, data.id, {
+                rescheduleRequest: {
+                    at: new Date().toISOString(),
+                    reason: rescheduleReason.trim() || null
+                }
+            });
+            // Abort rather than move the status without the request. Here the payload IS the
+            // point: the internal team needs the reason to know why the slot came back. Sending
+            // the appointment to Submitted while dropping it would look like success and lose it.
+            if (!extrasInput) {
+                showError(t('messages:error-update-data'));
+                return;
+            }
+            await switchNextStatus(data.id, data.status, submitted, extrasInput);
+            showSuccess(t('messages:reschedule-requested'));
+        } catch (e) {
+            showError(t('messages:error-update-data'));
+        } finally {
+            setRescheduleOpen(false);
+            setRescheduleReason('');
+        }
     };
 
     const updateExtraStatus = async (extraStatus1: number) => {
@@ -296,12 +383,21 @@ const AppointmentPage: PageComponent = () => {
                 query appointment($id: String!) {
                     appointment(id: $id) {
                         content
+                        extras
+                        pagerNumber
                     }
                 }
             `;
             try {
                 const result = await graphqlRequestClient.request(query, { id });
                 setContentData(result?.appointment?.content ?? undefined);
+                // `extras` rides along on the same raw query for the same reason `content` does:
+                // the generic detail hook flattens JSON (content_palettes_XX), which would turn
+                // this into extras_gateCheckIn_pagerNumber and drag the base64 gate signature
+                // into the generic Descriptions. It is also the object every extras write must
+                // merge against, so it must be the fresh server copy, not a flattened view.
+                setExtrasData(result?.appointment?.extras ?? null);
+                setPagerNumber(result?.appointment?.pagerNumber ?? null);
             } catch (e) {
                 console.error(e);
             }
@@ -340,20 +436,40 @@ const AppointmentPage: PageComponent = () => {
                     getValidNextStatuses(data?.status).length > 0 ? (
                         <Space>
                             {getValidNextStatuses(data?.status).map((nextStatusCode: number) => {
+                                // Pushing a documents-blocked appointment back into the gate queue
+                                // is the one transition a carrier owns beyond "Submitted": they are
+                                // the party that supplies the missing paperwork.
+                                const isDocumentsReturn =
+                                    statusCodes.documentsPending != null &&
+                                    data?.status === statusCodes.documentsPending &&
+                                    nextStatusCode ===
+                                        appointmentStatuses.appointmentStatusConfirmed;
                                 // a carrier can only advance up to "Submitted" (review/confirm is
                                 // done by the internal team)
                                 if (
                                     isCarrier &&
                                     nextStatusCode !==
-                                        appointmentStatuses.appointmentStatusSubmitted
+                                        appointmentStatuses.appointmentStatusSubmitted &&
+                                    !isDocumentsReturn
                                 ) {
                                     return null;
                                 }
+                                // Returning to the queue without attaching anything would just
+                                // bounce off the guard again, so require at least one document.
+                                const documentsMissing =
+                                    isDocumentsReturn &&
+                                    !((documentAttachmentsData?.length ?? 0) > 0);
                                 const nextStatusConfig = getConfigByCode(nextStatusCode);
                                 const buttonActionCode = getButtonActionCode(nextStatusCode);
                                 return (
                                     <Button
                                         key={nextStatusConfig?.id}
+                                        disabled={documentsMissing}
+                                        title={
+                                            documentsMissing
+                                                ? t('messages:documents-required-before-return')
+                                                : undefined
+                                        }
                                         onClick={() =>
                                             // no-show requires a reason (like a refusal): go
                                             // through the reason modal instead of a direct switch
@@ -376,6 +492,18 @@ const AppointmentPage: PageComponent = () => {
                                 );
                             })}
                         </Space>
+                    ) : (
+                        <></>
+                    )}
+                    {/* Carrier asking to move a confirmed slot: status goes back to Submitted so
+                        the carrier regains edit rights and the internal team re-confirms. */}
+                    {isCarrier &&
+                    modes.includes(ModeEnum.Update) &&
+                    statusCodes.confirmed != null &&
+                    data?.status === statusCodes.confirmed ? (
+                        <Button onClick={() => setRescheduleOpen(true)}>
+                            {t('actions:request-reschedule')}
+                        </Button>
                     ) : (
                         <></>
                     )}
@@ -560,6 +688,27 @@ const AppointmentPage: PageComponent = () => {
                     ) : (
                         <></>
                     )}
+                    <Modal
+                        open={rescheduleOpen}
+                        title={t('actions:request-reschedule')}
+                        okText={t('messages:confirm')}
+                        cancelText={t('messages:cancel')}
+                        onOk={requestReschedule}
+                        onCancel={() => {
+                            setRescheduleOpen(false);
+                            setRescheduleReason('');
+                        }}
+                    >
+                        <div style={{ marginBottom: 8 }}>
+                            {t('messages:request-reschedule-confirm')}
+                        </div>
+                        <Input.TextArea
+                            rows={3}
+                            placeholder={t('common:reschedule-reason')}
+                            value={rescheduleReason}
+                            onChange={(e) => setRescheduleReason(e.target.value)}
+                        />
+                    </Modal>
                     <NoShowReasonModal
                         open={noShowModalOpen}
                         t={t}
@@ -606,6 +755,8 @@ const AppointmentPage: PageComponent = () => {
                         carrierId={data?.carrierId}
                         status={data?.status}
                         content={contentData}
+                        gateCheckIn={extrasData?.gateCheckIn}
+                        pagerNumber={pagerNumber}
                         printLanguage={data?.printLanguage ?? undefined}
                         setDocumentAttachmentsData={setDocumentAttachmentsData}
                     />

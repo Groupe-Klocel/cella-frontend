@@ -30,9 +30,11 @@ import {
     CalendarOutlined,
     CarOutlined,
     CheckCircleOutlined,
+    ClockCircleOutlined,
     CloseOutlined,
     DislikeOutlined,
     FileAddOutlined,
+    FileExclamationOutlined,
     QuestionCircleOutlined,
     SendOutlined,
     StopOutlined,
@@ -41,7 +43,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { isOffFlowAppointmentStatus, useTranslationWithFallback as useTranslation } from '@helpers';
 
 dayjs.extend(utc);
 
@@ -51,6 +53,10 @@ export type ScheduleStatusEntry = {
     icon: ReactNode;
     color: string;
     bgColor: string;
+    // true for statuses that sit outside the linear progression (waiting area, blocked on
+    // paperwork). The schedule derives "the next step" from the numeric code order, so these
+    // must be skipped or the advance button would offer to deny a confirmed appointment.
+    offFlow?: boolean;
 };
 
 export type ScheduleStatusConfig = Record<string, ScheduleStatusEntry>;
@@ -66,7 +72,9 @@ export const SCHEDULE_ICON_MAP: Record<string, ReactNode> = {
     TrophyOutlined: <TrophyOutlined />,
     DislikeOutlined: <DislikeOutlined />,
     QuestionCircleOutlined: <QuestionCircleOutlined />,
-    StopOutlined: <StopOutlined />
+    StopOutlined: <StopOutlined />,
+    ClockCircleOutlined: <ClockCircleOutlined />,
+    FileExclamationOutlined: <FileExclamationOutlined />
 };
 
 // code → { label, value, icon, color } from a list of DB config rows
@@ -83,7 +91,14 @@ export const buildScheduleStatusConfig = (
                 value: c.value as string,
                 icon: SCHEDULE_ICON_MAP[c.extras?.icon] ?? <QuestionCircleOutlined />,
                 color: c.extras?.color ?? '#8c8c8c',
-                bgColor: c.extras?.color ?? '#8c8c8c'
+                bgColor: c.extras?.color ?? '#8c8c8c',
+                // statuses outside the linear progression (waiting area, blocked on
+                // paperwork): the schedule must not offer them as "the next step". Resolved
+                // through the shared helper, which accepts EITHER `extras.offFlow` or a known
+                // `extras.statusRole` — a warehouse that creates the row with only the role
+                // (the marker the status resolver treats as authoritative) would otherwise get
+                // the wrong "next step" offered here.
+                offFlow: isOffFlowAppointmentStatus(c)
             };
             return acc;
         }, {} as ScheduleStatusConfig);
