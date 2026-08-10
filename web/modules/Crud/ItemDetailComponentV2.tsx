@@ -20,9 +20,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppLink, ContentSpin, DetailsList, HeaderContent } from '@components';
 import { Alert, Button, Layout, Space, Typography } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import {
+    applyFieldRulesToModel,
     flatten,
     getLanguageCode,
     getModesFromPermissions,
@@ -31,6 +32,7 @@ import {
     showSuccess,
     useDelete,
     useDetail,
+    useFieldRules,
     useSoftDelete,
     useUpdate
 } from '@helpers';
@@ -44,7 +46,6 @@ import { useAiContextStore } from 'context/CellaBotContext';
 import { gql } from 'graphql-request';
 import { useAppDispatch } from 'context/AppContext';
 import { ReloadOutlined } from '@ant-design/icons';
-
 
 const StyledPageContent = styled(Layout.Content)`
     padding: 15px 40px 15px 15px;
@@ -81,6 +82,10 @@ export interface ISingleItemProps {
     isCreateAMovement?: boolean;
     dataToCreateMovement?: any;
     setSuccessDeleteResult?: any;
+    // Extra discriminants for the entity's <TABLE>_FIELD_RULES rule, merged as-is into the rule
+    // context. The generic context (screen, model, user) is built by useFieldRules; this is how a
+    // page adds its own (a direction, a carrier, …) without any plumbing here.
+    fieldRulesContext?: Record<string, any>;
 }
 
 const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
@@ -105,13 +110,29 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
         });
     }, [props.id, props.dataModel.tableName, patchAiContext]);
 
+    // Fields the entity's <TABLE>_FIELD_RULES rule hides on the detail view (configured in /rules).
+    // No wrapper component is needed here, unlike the add/edit form: everything below is derived on
+    // every render, so a late-arriving rule simply re-derives.
+    const { rules: fieldRules, isLoading: fieldRulesLoading } = useFieldRules(
+        props.dataModel,
+        'detail',
+        { extraContext: props.fieldRulesContext }
+    );
+    const ruledModel = useMemo(
+        () => applyFieldRulesToModel(props.dataModel, fieldRules, 'detail'),
+        [props.dataModel, fieldRules]
+    );
+
     // #region extract data from modelV2
+    // NB: `detailFields` stays on the ORIGINAL model. It is the body of the detail query and the
+    // return-field list of the cancel/reopen mutations — hiding a field must not change what is
+    // fetched. Only `excludedDetailFields`, a post-fetch display filter, reads the ruled model.
     const detailFields = Object.keys(props.dataModel.fieldsInfo).filter(
         (key) => props.dataModel.fieldsInfo[key].isDetailRequested
     );
 
-    const excludedDetailFields = Object.keys(props.dataModel.fieldsInfo)
-        .filter((key) => props.dataModel.fieldsInfo[key].isExcludedFromDetail)
+    const excludedDetailFields = Object.keys(ruledModel.fieldsInfo)
+        .filter((key) => ruledModel.fieldsInfo[key].isExcludedFromDetail)
         .map((obj) => {
             if (obj.includes('{')) {
                 obj = obj.replaceAll('{', '_').replaceAll('}', '');
@@ -286,7 +307,10 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
             // Update parsed data
             setDetailData(flattenedData);
         }
-    }, [detail.data]);
+        // `excludedDetailFields` is in the deps as a joined string (a fresh array on every render
+        // would loop): the field rules resolve asynchronously, so a rule landing after the record
+        // would otherwise never be applied.
+    }, [detail.data, excludedDetailFields.join(',')]);
 
     useEffect(() => {
         if (detail.error && modes.includes(ModeEnum.Read)) {
@@ -555,7 +579,14 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
                         )}
 
                         <StyledPageContent>
-                            {!isLoading && !detail?.isLoading ? (
+                            {/* fieldRulesLoading keeps a configured field from flashing in before it
+                                is hidden. It is false from the first render for an entity the boot
+                                registry says has no rule — but note it does gate EVERY detail screen
+                                for a user whose registry could not be read (`fieldRuleNames: null`
+                                means unknown, so the hook tries once per entity). That costs nothing
+                                in practice: the rule call runs in parallel with the record fetch,
+                                which is the slower of the two, and its outcome is then cached. */}
+                            {!isLoading && !detail?.isLoading && !fieldRulesLoading ? (
                                 detailData ? (
                                     <>
                                         <WrapperStickyActions>
