@@ -19,7 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 const cancelHuoDeliveryStatus = {
     delivery: [10, 60, 1400],
-    HUO: [60, 400, 455, 515, 1300, 1400]
+    // 58 = Estimation error, 490 = Waiting label
+    HUO: [58, 60, 400, 455, 490, 515, 1300, 1400]
 };
 
 export { cancelHuoDeliveryStatus };
