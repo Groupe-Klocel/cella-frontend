@@ -131,43 +131,40 @@ export const AutoValidatePackForm = ({
                     showSuccess(t('messages:updated-Huco-successfully'));
                     console.log(validateFullBoxResult.executeFunction.output.output, 'output');
 
+                    const storedObject: any = {};
                     const { currentRound, equipmentHu, destinationHuo, isPackValidated } =
                         validateFullBoxResult.executeFunction.output.output;
-                    setIsToControl(null);
-                    if (!isPackValidated && destinationHuo) {
-                        // The current box is not finished: keep the round/equipment and the
-                        // in-progress box loaded so packing continues on it.
+                    if (isPackValidated) {
+                        storedObject['currentStep'] = 20;
+                        storedObject['step10'] = step10;
                         dispatch({
                             type: 'UPDATE_BY_PROCESS',
                             processName: processName,
-                            object: {
-                                currentStep: 20,
-                                step10,
-                                step20: {
-                                    ...step20,
-                                    data: {
-                                        ...step20?.data,
-                                        round: currentRound,
-                                        equipmentHu: equipmentHu,
-                                        inProgressHuo: destinationHuo,
-                                        position: currentRound?.equipment?.checkPosition
-                                            ? destinationHuo?.roundPosition
-                                            : null
-                                    }
-                                }
-                            }
+                            object: storedObject
                         });
+                        setIsToControl(null);
+                        showSuccess(t('messages:pack-round-finished'));
                     } else {
-                        // Box finished (round closed or not): return to a fresh
-                        // round/equipment/position scan (step 20), keeping only the printer.
+                        storedObject['currentStep'] = 20;
+                        storedObject['step10'] = step10;
+                        storedObject['step20'] = {
+                            ...step20,
+                            data: {
+                                ...step20?.data,
+                                round: currentRound,
+                                equipmentHu: equipmentHu,
+                                inProgressHuo: destinationHuo ?? undefined,
+                                position: currentRound?.equipment?.checkPosition
+                                    ? destinationHuo?.roundPosition
+                                    : null
+                            }
+                        };
+                        setIsToControl(null);
                         dispatch({
                             type: 'UPDATE_BY_PROCESS',
                             processName: processName,
-                            object: { currentStep: 20, step10 }
+                            object: storedObject
                         });
-                        if (isPackValidated) {
-                            showSuccess(t('messages:pack-round-finished'));
-                        }
                     }
                 }
                 setIsAutoValidateLoading(false);
