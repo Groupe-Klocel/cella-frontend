@@ -48,6 +48,7 @@ import { ReviewHuModelWeightForm } from 'modules/Preparation/Pack/Forms/ReviewHu
 import { ReviewHuModelWeightChecks } from 'modules/Preparation/Pack/ChecksAndRecords/ReviewHuModelWeightChecks';
 import { AutoValidatePackForm } from 'modules/Preparation/Pack/Forms/AutoValidatePack';
 import { AutoDeclareMissingQuantityForm } from 'modules/Preparation/Pack/Forms/AutoDeclareMissingQuantity';
+import { AutoCloseBoxForm } from 'modules/Preparation/Pack/Forms/AutoCloseBox';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
@@ -88,6 +89,12 @@ const Pack: PageComponent = () => {
             'Packing with control in progress'
         );
 
+        const waitingLabelHuoStatus = findCodeByScope(
+            configs,
+            'handling_unit_outbound_status',
+            'Waiting Label'
+        );
+
         const defaultQuantityValue = findValueByScopeAndCode(
             parameters,
             'outbound',
@@ -125,6 +132,7 @@ const Pack: PageComponent = () => {
             autoValidate1Quantity,
             equipmentHuType,
             packingWithControlInprogressHuoStatus,
+            waitingLabelHuoStatus,
             missingLocationName
         };
     }, [parameters, configs]);
@@ -137,6 +145,7 @@ const Pack: PageComponent = () => {
     const packingWithControlInprogressHuoStatus = parseInt(
         configsParamsCodes.packingWithControlInprogressHuoStatus
     );
+    const waitingLabelHuoStatus = parseInt(configsParamsCodes.waitingLabelHuoStatus);
 
     // 10 -> scan printer
     // 20 -> scan round/equipment/position
@@ -144,8 +153,9 @@ const Pack: PageComponent = () => {
     // 40 -> scan article (optional from rules named "force_checking_in_pack")
     // 50 -> scan quantity (optional from rules named "force_checking_in_pack")
     // 60 -> ReviewHuModelWeightForm
-    // 70 -> autovalidate (RF_pack_validate), or auto declare missing when the finish
-    //       position/box button was pressed (declare_missing_quantity_post_picking)
+    // 70 -> autovalidate (RF_pack_validate), auto declare missing when the finish position/box
+    //       button was pressed (declare_missing_quantity_post_picking), or auto close
+    //       (RF_pack_close_box) when resuming the waiting-label boxes of the round
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
@@ -165,6 +175,31 @@ const Pack: PageComponent = () => {
     //box currently in progress of packing if any
     const inProgressHuo = storedObject?.step20?.data?.inProgressHuo;
 
+    // total quantity remaining to prepare on a box (sum of its non-prepared HUCO remainders)
+    const getHuoRemainingQuantity = (huo: any) =>
+        huo?.handlingUnitContentOutbounds?.reduce(
+            (total: number, huco: any) =>
+                total +
+                Math.max(huco.quantityToBePicked - huco.pickedQuantity - huco.missingQuantity, 0),
+            0
+        ) ?? 0;
+
+    // Waiting-label resume mode: boxes already packed whose label is still to be printed (HUO
+    // status 'Waiting Label'). They can only be resumed once the round holds nothing left to
+    // pack: while any box still has quantities to prepare or is being packed, the flow stays the
+    // normal one and those boxes must be finished first. In this mode the article/quantity steps
+    // are skipped (the box is complete by design) and the closure is run by AutoCloseBoxForm
+    // instead of AutoValidatePackForm.
+    const waitingLabelHuos = destinationHuos?.filter(
+        (huo: any) => huo.status === waitingLabelHuoStatus
+    );
+    const hasHuosToPack = destinationHuos?.some(
+        (huo: any) => huo.status !== waitingLabelHuoStatus && getHuoRemainingQuantity(huo) > 0
+    );
+    const isWaitingLabelHandling = Boolean(
+        round && !inProgressHuo && !hasHuosToPack && waitingLabelHuos?.length > 0
+    );
+
     // Check if box closure is allowed
     const isBoxClosureAllowed = useMemo(() => {
         return (
@@ -175,10 +210,11 @@ const Pack: PageComponent = () => {
         );
     }, [inProgressHuo]);
 
-    //selected box (in progress or new one)
-    const currentHuo = round?.equipment?.checkPosition
-        ? storedObject?.step30?.data?.currentHuos?.[0]
-        : storedObject?.step40?.data?.currentHuo;
+    //selected box (in progress, new one, or waiting-label box being resumed)
+    const currentHuo =
+        isWaitingLabelHandling || round?.equipment?.checkPosition
+            ? storedObject?.step30?.data?.currentHuos?.[0]
+            : storedObject?.step40?.data?.currentHuo;
     const currentHuco = storedObject?.step40?.data?.currentHuco;
 
     const hasOtherIncompleteHucos = storedObject[
@@ -197,15 +233,6 @@ const Pack: PageComponent = () => {
           currentHuco.quantityToBePicked
         : true;
     const proposedHuos = storedObject['step30']?.data?.currentHuos;
-
-    // total quantity remaining to prepare on a box (sum of its non-prepared HUCO remainders)
-    const getHuoRemainingQuantity = (huo: any) =>
-        huo?.handlingUnitContentOutbounds?.reduce(
-            (total: number, huco: any) =>
-                total +
-                Math.max(huco.quantityToBePicked - huco.pickedQuantity - huco.missingQuantity, 0),
-            0
-        ) ?? 0;
 
     // "Finish position" pressed without position scan nor in-progress box: the whole round is
     // declared missing by the auto-declare step (70) directly, without packaging review.
@@ -242,6 +269,19 @@ const Pack: PageComponent = () => {
         { label: t('common:round'), value: round?.name, visible: !!round },
         { label: t('common:equipment'), value: equipmentHu?.name, visible: !!equipmentHu },
         {
+            // waiting-label resume mode: number of boxes still waiting for their label
+            label: t('common:waiting-label-boxes'),
+            value: waitingLabelHuos?.length,
+            visible: isWaitingLabelHandling,
+            highlight: true
+        },
+        {
+            // waiting-label resume mode: box being closed
+            label: t('common:huo-in-progress'),
+            value: currentHuo?.name,
+            visible: !!(isWaitingLabelHandling && currentHuo)
+        },
+        {
             label: t('common:pack_position'),
             value: step30Position,
             visible: !!(step30Position && round?.equipment?.checkPosition)
@@ -266,13 +306,15 @@ const Pack: PageComponent = () => {
             visible: !!(inProgressHuo && !round?.equipment?.checkPosition)
         },
         {
-            // remaining quantity to prepare on the proposed box
+            // remaining quantity to prepare on the proposed box (irrelevant on a resumed
+            // waiting-label box, complete by design)
             label: t('common:quantity'),
             value: getHuoRemainingQuantity(storedObject['step30']?.data?.currentHuos?.[0]),
             visible:
                 storedObject['step30']?.data?.currentHuos?.length > 0 &&
                 !isToControl &&
-                isToControl !== null,
+                isToControl !== null &&
+                !isWaitingLabelHandling,
             highlight: true
         },
         {
@@ -321,7 +363,11 @@ const Pack: PageComponent = () => {
             const ruleResult = await graphqlRequestClient.request(ruleQuery, ruleVariables);
             return ruleResult.executeRule['% control'].value;
         };
-        if (inProgressHuo) {
+        if (isWaitingLabelHandling) {
+            // Resumed boxes are already packed (and controlled when required): no control, the
+            // article/quantity steps are skipped and the flow goes straight to the review step.
+            setIsToControl(false);
+        } else if (inProgressHuo) {
             setIsToControl(true);
         } else if (round) {
             if (round.equipment?.checkPosition) {
@@ -650,7 +696,9 @@ const Pack: PageComponent = () => {
             key: 'enforce-control',
             label: t('actions:enforce-control'),
             visibleOnSteps: [60],
-            permissionsToSeeTheButton: !isToControl && isToControl !== null ? true : false,
+            // no control enforcement on a resumed waiting-label box: it is already packed
+            permissionsToSeeTheButton:
+                !isToControl && isToControl !== null && !isWaitingLabelHandling ? true : false,
             onClick: () => {
                 setTriggerEnforcedControl(true);
             },
@@ -742,16 +790,23 @@ const Pack: PageComponent = () => {
                             checkComponent={(data: any) => (
                                 <PositionChecks
                                     dataToCheck={data}
-                                    handlingUnitOutboundInfos={destinationHuos}
+                                    handlingUnitOutboundInfos={
+                                        isWaitingLabelHandling ? waitingLabelHuos : destinationHuos
+                                    }
+                                    allowPackedBoxes={isWaitingLabelHandling}
                                 />
                             )}
                             enforcedValue={step20Position ?? undefined}
                             defaultValue={
-                                inProgressHuo
-                                    ? [inProgressHuo]
-                                    : !round?.equipment?.checkPosition
-                                      ? destinationHuos
-                                      : undefined
+                                isWaitingLabelHandling
+                                    ? !round?.equipment?.checkPosition
+                                        ? [waitingLabelHuos[0]]
+                                        : undefined
+                                    : inProgressHuo
+                                      ? [inProgressHuo]
+                                      : !round?.equipment?.checkPosition
+                                        ? destinationHuos
+                                        : undefined
                             }
                             formToUse={form}
                         ></ScanPosition>
@@ -825,11 +880,14 @@ const Pack: PageComponent = () => {
                     )}
                     {/* Never auto-validate in the finish position/box path: there the box is
                     closed by declare_missing_quantity_post_picking itself (auto-declare step
-                    below), not by RF_pack_validate. */}
+                    below), not by RF_pack_validate. Same in the waiting-label resume path,
+                    where the box is closed by the box-closing function (auto-close step
+                    below). */}
                     {((!isBoxReviewNeeded && storedObject['step50']?.data) ||
                         storedObject['step60']?.data) &&
                     !storedObject['step70']?.data &&
-                    !storedObject['step40']?.data?.isFinishPosition ? (
+                    !storedObject['step40']?.data?.isFinishPosition &&
+                    !isWaitingLabelHandling ? (
                         <AutoValidatePackForm
                             processName={processName}
                             stepNumber={70}
@@ -840,6 +898,25 @@ const Pack: PageComponent = () => {
                             }}
                             controlManagement={{ isToControl, setIsToControl }}
                         ></AutoValidatePackForm>
+                    ) : (
+                        <></>
+                    )}
+                    {/* Waiting-label resume path: once the packaging/weight review is validated,
+                    the box is closed (label printing, round status update, equipment HU deletion
+                    when emptied) by the backend box-closing function instead of
+                    RF_pack_validate. */}
+                    {isWaitingLabelHandling &&
+                    storedObject['step60']?.data &&
+                    !storedObject['step70']?.data ? (
+                        <AutoCloseBoxForm
+                            processName={processName}
+                            stepNumber={70}
+                            closeLoading={{
+                                isCloseLoading: isLoading,
+                                setIsCloseLoading: setIsLoading
+                            }}
+                            controlManagement={{ isToControl, setIsToControl }}
+                        ></AutoCloseBoxForm>
                     ) : (
                         <></>
                     )}

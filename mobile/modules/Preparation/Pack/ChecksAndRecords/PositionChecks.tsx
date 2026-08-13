@@ -26,11 +26,15 @@ import { useEffect } from 'react';
 export interface IPositionChecksProps {
     dataToCheck: any;
     handlingUnitOutboundInfos: any;
+    // waiting-label resume mode: the scanned box is complete by design (already packed,
+    // label still to be printed), so the completeness check must not reject it
+    allowPackedBoxes?: boolean;
 }
 
 export const PositionChecks = ({
     dataToCheck,
-    handlingUnitOutboundInfos
+    handlingUnitOutboundInfos,
+    allowPackedBoxes
 }: IPositionChecksProps) => {
     const { t } = useTranslation();
 
@@ -90,7 +94,7 @@ export const PositionChecks = ({
                         setResetForm(true);
                         setScannedInfo(undefined);
                     }
-                } else if (allLinesCompleted) {
+                } else if (allLinesCompleted && !allowPackedBoxes) {
                     showError(t('messages:box-already-packed'));
                     setResetForm(true);
                     setScannedInfo(undefined);
