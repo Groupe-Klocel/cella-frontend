@@ -276,6 +276,12 @@ export const EditDeliveryAddressForm: FC<EditDeliveryAddressFormProps> = ({
                 >
                     <Input />
                 </Form.Item>
+                <Form.Item
+                    label={t('d:entityDeliveryPointNumber')}
+                    name="entityDeliveryPointNumber"
+                >
+                    <Input />
+                </Form.Item>
                 <Form.Item label={t('d:reference1')} name="reference1">
                     <Input />
                 </Form.Item>
