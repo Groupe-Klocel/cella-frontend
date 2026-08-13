@@ -73,13 +73,6 @@ export const AutoCloseBoxForm = ({
 
     const { step10, step20, step30, step60 } = storedObject;
 
-    const equipmentHuType = parseInt(
-        findCodeByScopeAndValue(parameters, 'handling_unit_type', 'EQUIPMENT')
-    );
-    const waitingLabelHuoStatus = parseInt(
-        findCodeByScopeAndValue(configs, 'handling_unit_outbound_status', 'Waiting Label')
-    );
-
     const printer = step10?.data?.printers?.code;
     const round = step20?.data?.round;
     const equipmentHuId = step20?.data?.equipmentHu?.id;
@@ -128,49 +121,11 @@ export const AutoCloseBoxForm = ({
                     onBack();
                 } else {
                     showSuccess(t('messages:box-closed-successfully'));
-                    // Waiting-label boxes still to resume on the round: stay on it and go back
-                    // to the box selection (position scan or auto-proposal); otherwise the round
-                    // is done, back to a fresh round scan (keep the printer).
-                    const remainingHuos = (round?.handlingUnitOutbounds ?? []).filter(
-                        (huo: any) =>
-                            huo.id !== destinationHuo?.id &&
-                            huo.handlingUnit?.type !== equipmentHuType &&
-                            huo.status === waitingLabelHuoStatus
-                    );
-                    if (remainingHuos.length > 0) {
-                        dispatch({
-                            type: 'UPDATE_BY_PROCESS',
-                            processName,
-                            object: {
-                                currentStep: 20,
-                                step10: storedObject['step10'],
-                                step20: {
-                                    ...storedObject['step20'],
-                                    data: {
-                                        ...step20?.data,
-                                        // Clear the scanned position so the position step asks
-                                        // for a fresh scan instead of re-enforcing the old one.
-                                        position: undefined,
-                                        inProgressHuo: undefined,
-                                        round: {
-                                            ...round,
-                                            handlingUnitOutbounds:
-                                                round?.handlingUnitOutbounds?.filter(
-                                                    (huo: any) => huo.id !== destinationHuo?.id
-                                                )
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        showSuccess(t('messages:pack-round-finished'));
-                        dispatch({
-                            type: 'UPDATE_BY_PROCESS',
-                            processName,
-                            object: { currentStep: 20, step10: storedObject['step10'] }
-                        });
-                    }
+                    dispatch({
+                        type: 'UPDATE_BY_PROCESS',
+                        processName,
+                        object: { currentStep: 20, step10: storedObject['step10'] }
+                    });
                     setIsToControl(null);
                 }
                 setIsCloseLoading(false);
