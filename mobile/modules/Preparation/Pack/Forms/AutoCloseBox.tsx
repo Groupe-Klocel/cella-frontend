@@ -1,0 +1,197 @@
+/**
+CELLA Frontend
+Website and Mobile templates that can be used to communicate
+with CELLA WMS APIs.
+Copyright (C) 2023 KLOCEL <contact@klocel.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+**/
+
+import { WrapperForm, ContentSpin } from '@components';
+import {
+    findCodeByScopeAndValue,
+    getLastStepWithPreviousStep,
+    showError,
+    showSuccess,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
+import { useEffect } from 'react';
+import { useAuth } from 'context/AuthContext';
+import { gql } from 'graphql-request';
+import { useAppDispatch, useAppState } from 'context/AppContext';
+
+export interface IAutoCloseBoxProps {
+    processName: string;
+    stepNumber: number;
+    closeLoading: { [label: string]: any };
+    controlManagement: { [label: string]: any };
+}
+
+// Terminal step of the waiting-label resume path: called in place of AutoValidatePackForm when
+// the round only holds already-packed boxes whose label is still to be printed (HUO status
+// 'Waiting Label'). On mount it runs the backend box-closing function (label printing, round
+// status update, deletion of the equipment HU when emptied) on the box selected at the position
+// step, passing the packaging/weight reviewed at step 60 (same input names as RF_pack_validate),
+// then drives the post-closure navigation: back to the box selection while the round still holds
+// waiting-label boxes, back to a fresh round scan otherwise.
+export const AutoCloseBoxForm = ({
+    processName,
+    stepNumber,
+    closeLoading: { isCloseLoading, setIsCloseLoading },
+    controlManagement: { setIsToControl }
+}: IAutoCloseBoxProps) => {
+    const { t } = useTranslation();
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
+    const { graphqlRequestClient } = useAuth();
+    const { parameters, configs } = useAppState();
+
+    //Pre-requisite: initialize current step
+    useEffect(() => {
+        if (storedObject.currentStep < stepNumber) {
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName: processName,
+                stepName: `step${stepNumber}`,
+                object: { previousStep: storedObject.currentStep },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
+        }
+    }, []);
+
+    const { step10, step20, step30, step60 } = storedObject;
+
+    const equipmentHuType = parseInt(
+        findCodeByScopeAndValue(parameters, 'handling_unit_type', 'EQUIPMENT')
+    );
+    const waitingLabelHuoStatus = parseInt(
+        findCodeByScopeAndValue(configs, 'handling_unit_outbound_status', 'Waiting Label')
+    );
+
+    const printer = step10?.data?.printers?.code;
+    const round = step20?.data?.round;
+    const equipmentHuId = step20?.data?.equipmentHu?.id;
+    const destinationHuo = step30?.data?.currentHuos?.[0];
+    const huModelId = step60?.data?.handlingUnitModel?.id;
+    const finalWeight = step60?.data?.finalWeight;
+
+    useEffect(() => {
+        const onFinish = async () => {
+            setIsCloseLoading(true);
+            const query = gql`
+                mutation executeFunction($functionName: String!, $event: JSON!) {
+                    executeFunction(functionName: $functionName, event: $event) {
+                        status
+                        output
+                    }
+                }
+            `;
+
+            const variables = {
+                // box-closing function implemented backend side (functions repository); the
+                // input mirrors RF_pack_validate's field names
+                functionName: 'RF_pack_close_box',
+                event: {
+                    input: {
+                        printer,
+                        currentRoundId: round?.id,
+                        equipmentHuId,
+                        destinationHuoId: destinationHuo?.id,
+                        huModelId,
+                        finalWeight
+                    }
+                }
+            };
+            try {
+                const closeBoxResult = await graphqlRequestClient.request(query, variables);
+                if (closeBoxResult.executeFunction.status === 'ERROR') {
+                    showError(closeBoxResult.executeFunction.output);
+                    onBack();
+                } else if (
+                    closeBoxResult.executeFunction.status === 'OK' &&
+                    closeBoxResult.executeFunction.output.status === 'KO'
+                ) {
+                    showError(t(`errors:${closeBoxResult.executeFunction.output.output.code}`));
+                    console.log('Backend_message', closeBoxResult.executeFunction.output.output);
+                    onBack();
+                } else {
+                    showSuccess(t('messages:box-closed-successfully'));
+                    // Waiting-label boxes still to resume on the round: stay on it and go back
+                    // to the box selection (position scan or auto-proposal); otherwise the round
+                    // is done, back to a fresh round scan (keep the printer).
+                    const remainingHuos = (round?.handlingUnitOutbounds ?? []).filter(
+                        (huo: any) =>
+                            huo.id !== destinationHuo?.id &&
+                            huo.handlingUnit?.type !== equipmentHuType &&
+                            huo.status === waitingLabelHuoStatus
+                    );
+                    if (remainingHuos.length > 0) {
+                        dispatch({
+                            type: 'UPDATE_BY_PROCESS',
+                            processName,
+                            object: {
+                                currentStep: 20,
+                                step10: storedObject['step10'],
+                                step20: {
+                                    ...storedObject['step20'],
+                                    data: {
+                                        ...step20?.data,
+                                        // Clear the scanned position so the position step asks
+                                        // for a fresh scan instead of re-enforcing the old one.
+                                        position: undefined,
+                                        inProgressHuo: undefined,
+                                        round: {
+                                            ...round,
+                                            handlingUnitOutbounds:
+                                                round?.handlingUnitOutbounds?.filter(
+                                                    (huo: any) => huo.id !== destinationHuo?.id
+                                                )
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        showSuccess(t('messages:pack-round-finished'));
+                        dispatch({
+                            type: 'UPDATE_BY_PROCESS',
+                            processName,
+                            object: { currentStep: 20, step10: storedObject['step10'] }
+                        });
+                    }
+                    setIsToControl(null);
+                }
+                setIsCloseLoading(false);
+            } catch (error) {
+                showError(t('messages:error-executing-function'));
+                console.log('executeFunctionError', error);
+                onBack();
+                setIsCloseLoading(false);
+            }
+        };
+        onFinish();
+    }, []);
+
+    // handle back to previous step settings (re-opens the packaging/weight review)
+    const onBack = () => {
+        dispatch({
+            type: 'ON_BACK',
+            processName: processName,
+            stepToReturn: `step${getLastStepWithPreviousStep(storedObject)}`
+        });
+    };
+
+    return <WrapperForm>{isCloseLoading ? <ContentSpin /> : <></>}</WrapperForm>;
+};
