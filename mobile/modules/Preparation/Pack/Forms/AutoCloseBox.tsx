@@ -20,7 +20,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, ContentSpin } from '@components';
 import {
-    findCodeByScopeAndValue,
     getLastStepWithPreviousStep,
     showError,
     showSuccess,
@@ -43,8 +42,9 @@ export interface IAutoCloseBoxProps {
 // 'Waiting Label'). On mount it runs the backend box-closing function (label printing, round
 // status update, deletion of the equipment HU when emptied) on the box selected at the position
 // step, passing the packaging/weight reviewed at step 60 (same input names as RF_pack_validate),
-// then drives the post-closure navigation: back to the box selection while the round still holds
-// waiting-label boxes, back to a fresh round scan otherwise.
+// then returns to the round/equipment/position scan (step 20, printer kept) — never to the
+// position scan: step 20 accepts the next box's position directly, and a fresh scan re-evaluates
+// the round (waiting-label boxes left or not) from up-to-date data.
 export const AutoCloseBoxForm = ({
     processName,
     stepNumber,
@@ -56,7 +56,6 @@ export const AutoCloseBoxForm = ({
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
     const { graphqlRequestClient } = useAuth();
-    const { parameters, configs } = useAppState();
 
     //Pre-requisite: initialize current step
     useEffect(() => {
