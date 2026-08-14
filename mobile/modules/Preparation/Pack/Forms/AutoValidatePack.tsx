@@ -144,6 +144,20 @@ export const AutoValidatePackForm = ({
                         });
                         setIsToControl(null);
                         showSuccess(t('messages:pack-round-finished'));
+                    } else if (currentRound?.equipment?.checkPosition && !destinationHuo) {
+                        // Box fully validated on a position-checked equipment: never land back
+                        // on the position scan (step 30) — return to the round/equipment/
+                        // position scan (step 20, printer kept) instead. It accepts the next
+                        // position directly, and a fresh scan re-evaluates the round (e.g.
+                        // waiting-label resume mode) from up-to-date data.
+                        storedObject['currentStep'] = 20;
+                        storedObject['step10'] = step10;
+                        setIsToControl(null);
+                        dispatch({
+                            type: 'UPDATE_BY_PROCESS',
+                            processName: processName,
+                            object: storedObject
+                        });
                     } else {
                         storedObject['currentStep'] = 20;
                         storedObject['step10'] = step10;
