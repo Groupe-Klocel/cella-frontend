@@ -70,7 +70,7 @@ export const ExcelImportForm = () => {
         }
     };
     const handleBeforeUpload = (file: File) => {
-        const maxSize = 1024 * 1024;
+        const maxSize = 5 * 1024 * 1024;
         const isXlsx =
             file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         if (!isXlsx) {
