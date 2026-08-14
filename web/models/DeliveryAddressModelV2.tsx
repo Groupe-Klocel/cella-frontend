@@ -521,6 +521,26 @@ export const DeliveryAddressModelV2: ModelType = {
             config: null,
             param: null
         },
+        entityDeliveryPointNumber: {
+            isListRequested: true,
+            isDefaultHiddenList: true,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: 'String',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         reference1: {
             isListRequested: true,
             isDefaultHiddenList: false,
