@@ -186,49 +186,11 @@ export const AutoDeclareMissingQuantityForm = ({
             // Post-declaration navigation. Dispatched right before the loading flip so the step
             // unmounts in the same commit and never re-triggers.
             if (!hasError && processedHuosCount > 0) {
-                // With position scan, stay on the loaded round as long as other positions still
-                // hold quantities to prepare: drop the finished box and go back to the position
-                // scan step for the next position. Otherwise back to the round scan step.
-                const remainingHuos = checkPosition
-                    ? (destinationHuos ?? []).filter(
-                          (huo: any) =>
-                              !declaredHuoIds.has(huo.id) && getHuoRemainingQuantity(huo) > 0
-                      )
-                    : [];
-                if (remainingHuos.length > 0) {
-                    dispatch({
-                        type: 'UPDATE_BY_PROCESS',
-                        processName,
-                        object: {
-                            currentStep: 20,
-                            step10: storedObject['step10'],
-                            step20: {
-                                ...storedObject['step20'],
-                                data: {
-                                    ...storedObject['step20']?.data,
-                                    // Clear the scanned position and the in-progress box so the
-                                    // position step asks for a fresh scan instead of
-                                    // auto-selecting.
-                                    position: undefined,
-                                    inProgressHuo: undefined,
-                                    round: {
-                                        ...round,
-                                        handlingUnitOutbounds: round?.handlingUnitOutbounds?.filter(
-                                            (huo: any) => !declaredHuoIds.has(huo.id)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } else {
-                    // Back to a fresh round/equipment/position scan (keep the printer).
-                    dispatch({
-                        type: 'UPDATE_BY_PROCESS',
-                        processName,
-                        object: { currentStep: 20, step10: storedObject['step10'] }
-                    });
-                }
+                dispatch({
+                    type: 'UPDATE_BY_PROCESS',
+                    processName,
+                    object: { currentStep: 20, step10: storedObject['step10'] }
+                });
                 setIsToControl(null);
             } else if (finishTargetsSingleBox) {
                 // Re-open the packaging/weight review step (60) so the operator can retry or go
