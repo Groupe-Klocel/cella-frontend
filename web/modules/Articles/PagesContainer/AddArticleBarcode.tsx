@@ -23,6 +23,7 @@ import styled from 'styled-components';
 import { Alert, Form, Layout } from 'antd';
 import { useRouter } from 'next/router';
 import { articlesRoutes } from '../Static/articlesRoutes';
+import { safeReturnPath } from '../Static/articleLusRoutes';
 import { AddArticleBarcodeForm } from '../Forms/AddArticleBarcodeForm';
 import { ModeEnum, Table } from 'generated/graphql';
 import { useAppState } from 'context/AppContext';
@@ -37,6 +38,10 @@ export interface ISingleItemProps {
     articleName: string | any;
     stockOwnerId: string | any;
     stockOwnerName: string | any;
+    // filled in when the barcode is added from a packaging detail
+    articleLuId?: string;
+    articleLuName?: string;
+    returnPath?: string;
 }
 
 const AddArticleBarcode = (props: ISingleItemProps) => {
@@ -48,7 +53,18 @@ const AddArticleBarcode = (props: ISingleItemProps) => {
         {
             breadcrumbName: `${props.articleName}`,
             path: '/articles/' + props.articleId
-        }
+        },
+        // when coming from a packaging, keep it in the trail. The name can be missing from
+        // the query string while the id is there, and a crumb labelled "undefined" helps nobody -
+        // fall back to the id.
+        ...(props.articleLuId
+            ? [
+                  {
+                      breadcrumbName: `${props.articleLuName ?? props.articleLuId}`,
+                      path: '/articles/lu/' + props.articleLuId
+                  }
+              ]
+            : [])
     ];
     const breadsCrumb = [
         ...articleDetailBreadCrumb,
@@ -77,7 +93,14 @@ const AddArticleBarcode = (props: ISingleItemProps) => {
                         <HeaderContent
                             title={t('add2', { name: t('common:barcode') })}
                             routes={breadsCrumb}
-                            onBack={() => router.push('/articles/' + props?.articleId)}
+                            onBack={() =>
+                                router.push(
+                                    safeReturnPath(
+                                        props?.returnPath,
+                                        '/articles/' + props?.articleId
+                                    )
+                                )
+                            }
                         />
                         <StyledPageContent>
                             <AddArticleBarcodeForm
@@ -85,6 +108,8 @@ const AddArticleBarcode = (props: ISingleItemProps) => {
                                 articleName={props.articleName}
                                 stockOwnerId={props.stockOwnerId}
                                 stockOwnerName={props.stockOwnerName}
+                                articleLuId={props.articleLuId}
+                                returnPath={props.returnPath}
                             />
                         </StyledPageContent>
                     </>

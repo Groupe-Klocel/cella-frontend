@@ -203,6 +203,26 @@ export const ArticleModelV2: ModelType = {
             config: null,
             param: null
         },
+        'articleLus{preparationMode}': {
+            isListRequested: false,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: 'Dropdown',
+            isDetailRequested: false,
+            isExcludedFromDetail: true,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: 'preparationMode',
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: 'preparation_mode'
+        },
         masterBarcode: {
             isListRequested: true,
             isDefaultHiddenList: false,

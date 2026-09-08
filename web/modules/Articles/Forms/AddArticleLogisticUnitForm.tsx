@@ -23,6 +23,7 @@ import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
+import AutoComplete from '../../../components/common/smart/Form/MainInputs/AutoCompleteInput';
 import {
     useCreateArticleLuMutation,
     CreateArticleLuMutationVariables,
@@ -39,7 +40,6 @@ import {
     getRulesWithNoSpacesValidator,
     useLogisticUnits,
     useArticleLus,
-    useLocations,
     usePatternIds
 } from '@helpers';
 
@@ -128,14 +128,12 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
     const [articleLuRotations, setArticleLuRotations] = useState<any>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
     const logisticUnitModelData = useLogisticUnits({}, 1, 100, null);
-    const locationData = useLocations({}, 1, 100, null);
     const patternData = usePatternIds({}, 1, 100, null);
     const articleLuData = useArticleLus({}, 1, 100, null);
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
     const [disableReplenish, setDisableReplenish] = useState<boolean>(true);
     const [sortTypes, setSortTypes] = useState<Array<FormOptionType>>();
     const [pickingTypes, setPickingTypes] = useState<Array<FormOptionType>>();
-    const [locations, setLocations] = useState<Array<FormOptionType>>();
     const [patterns, setPatterns] = useState<Array<FormOptionType>>();
 
     // Retrieve Preparation Modes list
@@ -243,21 +241,6 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
             }
         }
     }, [pickingTypesList.data]);
-
-    // Retrieve locations list
-    useEffect(() => {
-        if (locationData.data) {
-            const newIdOpts: Array<FormOptionType> = [];
-            locationData.data.locations?.results.forEach(({ id, name, status, category }) => {
-                if (
-                    status != configs.LOCATION_STATUS_DISABLED &&
-                    category === configs.LOCATION_CATEGORY_PICKING
-                )
-                    newIdOpts.push({ text: name!, key: id! });
-            });
-            setLocations(newIdOpts);
-        }
-    }, [locationData.data]);
 
     // Retrieve patterns list
     useEffect(() => {
@@ -594,20 +577,42 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
                     </Col>
                     {isPickingLocationDisplay && (
                         <Col xs={8} xl={12}>
-                            <Form.Item label={pickingLocation} name="pickingLocationId">
-                                <Select
-                                    allowClear
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:pickingLocation')
-                                    })}`}
-                                >
-                                    {locations?.map((location: any) => (
-                                        <Option key={location.key} value={location.key}>
-                                            {location.text}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                            {/* the picking location is picked through the shared autocomplete.
+                            It used to be a plain Select fed by useLocations({}, 1, 100) - the 100
+                            most recently created locations of the whole warehouse - then filtered
+                            client-side on category/status. On a site with 26k picking locations
+                            that list came back empty, and there was no way to search. */}
+                            <AutoComplete
+                                key="pickingLocationId"
+                                item={
+                                    {
+                                        name: 'pickingLocationId',
+                                        displayName: pickingLocation,
+                                        initialValue: undefined,
+                                        optionTable: {
+                                            table: 'Location',
+                                            fieldToDisplay: 'name',
+                                            // narrowing happens on the API side, not on a page of
+                                            // 100 rows fetched blindly
+                                            filtersToApply: {
+                                                category: configs.LOCATION_CATEGORY_PICKING
+                                            },
+                                            advancedFilters: [
+                                                {
+                                                    filter: [
+                                                        {
+                                                            searchType: 'DIFFERENT',
+                                                            field: {
+                                                                status: configs.LOCATION_STATUS_DISABLED
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    } as any
+                                }
+                            />
                         </Col>
                     )}
                 </Row>

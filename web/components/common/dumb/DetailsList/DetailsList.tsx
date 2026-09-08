@@ -102,6 +102,10 @@ const DetailsList: FC<IDetailsListProps> = ({
                             />
                         ) : isString(details[key]) && details[key].startsWith('data:') ? (
                             ' '
+                        ) : isString(details[key]) && /^https?:\/\//.test(details[key]) ? (
+                            <a href={details[key]} target="_blank" rel="noopener noreferrer">
+                                {details[key]}
+                            </a>
                         ) : (
                             details[key]
                         )}

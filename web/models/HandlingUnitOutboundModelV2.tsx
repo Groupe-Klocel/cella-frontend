@@ -306,6 +306,48 @@ export const HandlingUnitOutboundModelV2: ModelType = {
             config: null,
             param: null
         },
+        carrierTracking: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
+        // rendered as a clickable link opening a new tab (http(s) strings are
+        // auto-linked by ListComponentV2 / DetailsList)
+        carrierTrackingUrl: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         preparationMode: {
             isListRequested: true,
             isDefaultHiddenList: false,

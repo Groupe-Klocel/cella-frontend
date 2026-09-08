@@ -78,6 +78,9 @@ const DatePickerInput: FC<IDraggerDatePickerInputProps> = ({
 
     const mergedShowTime = useMemo(() => {
         const baseDefault = { defaultValue: dayjs('00:00:00', 'HH:mm:ss') };
+        // `showTime === false` means "no time at all". Any other falsy value keeps the
+        // historical behaviour (a truthy default object, hence a time always shown).
+        if (showTime === false) return undefined;
         if (!showTime) return baseDefault;
         return typeof showTime === 'object' ? { ...baseDefault, ...showTime } : showTime;
     }, [showTime]);
