@@ -29,6 +29,9 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 // Metadata columns that change on every update and would only add noise to a diff view.
+// `layout` is here for a different reason: it is the cartography document of a building or a
+// block (up to tens of kilobytes of coordinates), unreadable as a diff and meaningful only on
+// the /cartography screen.
 const INTERNAL_KEYS = [
     'id',
     'created',
@@ -36,7 +39,8 @@ const INTERNAL_KEYS = [
     'modified',
     'modifiedBy',
     'lastTransactionId',
-    'extras'
+    'extras',
+    'layout'
 ];
 
 // `flatten()` recurses every array element into the SAME key (no index), so only the last element
@@ -90,10 +94,19 @@ const RecordHistoryDiffComponent = ({ sequenceId }: IRecordHistoryDiffProps) => 
 
     // Sort the keys so the diff rows are in a stable, deterministic order regardless of the
     // before/after object key insertion order.
+    // `flatten` joins nested keys with `_`, so a JSON column arrives as `extras_dock_type` /
+    // `layout_cells_A_C1_x`, never as the bare column name: excluding the exact key only ever
+    // caught the column when it was NULL. Match the prefix too, or the whole document leaks into
+    // the diff one leaf per row (a block layout is thousands of them).
     const keys = Array.from(new Set([...Object.keys(beforeFlat), ...Object.keys(afterFlat)]))
         .filter(
             (key) =>
-                !INTERNAL_KEYS.some((internal) => key === internal || key.endsWith('_' + internal))
+                !INTERNAL_KEYS.some(
+                    (internal) =>
+                        key === internal ||
+                        key.endsWith('_' + internal) ||
+                        key.startsWith(internal + '_')
+                )
         )
         .sort();
 
