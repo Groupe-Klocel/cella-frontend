@@ -116,7 +116,9 @@ const AddEditItemComponentInner: FC<IAddItemFormProps> = (props: IAddItemFormPro
                 optionTable: fieldInfo.optionTable ?? undefined,
                 filterConfigParam: fieldInfo.filterConfigParam
                     ? JSON.parse(fieldInfo.filterConfigParam)
-                    : undefined
+                    : undefined,
+                // a date-only field is entered as a date, without a time
+                dateOnly: fieldInfo.dateOnly ?? undefined
             });
 
             // the `translation` field is edited as one input per language (en/fr/de) and

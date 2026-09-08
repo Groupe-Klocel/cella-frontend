@@ -173,6 +173,14 @@ const MovementToProcess: PageComponent = () => {
         }
 
         if (!isFullHuMoving) {
+            headerDisplay[t('d:supplierName')] = <span>{movement?.article?.supplierName}</span>;
+        }
+
+        if (!isFullHuMoving) {
+            headerDisplay[t('d:description')] = <span>{movement?.article?.description}</span>;
+        }
+
+        if (!isFullHuMoving) {
             const movingQuantity = storedObject['step60']?.data?.movingQuantity;
             const totalQuantity = movement?.quantity;
             const isPartialQuantity = movingQuantity && movingQuantity !== totalQuantity;

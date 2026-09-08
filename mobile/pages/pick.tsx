@@ -55,11 +55,16 @@ import { ScanPosition } from 'modules/Preparation/Pick/PagesContainer/ScanPositi
 import { UpperMobileSpinner } from 'components/common/dumb/Spinners/UpperMobileSpinner';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { SimilarLocationsV2 } from 'modules/Common/Locations/Elements/SimilarLocationsV2';
-import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { RadioButtonWrapper, useValidationButtonLock } from 'helpers/utils/radioButtonWrapper';
 import { ModeEnum } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
-import { handlePickProcessResult } from 'modules/Preparation/Pick/Elements/endOfProcessHandling';
+import {
+    handlePickProcessResult,
+    isRoundAdvisedAddressToPrepare,
+    roundAdvisedAddressCouple
+} from 'modules/Preparation/Pick/Elements/endOfProcessHandling';
+import { buildRoundSelectionSlice } from 'helpers/utils/pickValidationGuard';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -103,6 +108,9 @@ const Pick: PageComponent = () => {
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
+
+    // While a submit-triggered validation is in flight, every other button is blocked
+    const { blockingButtonKey, lockButtons } = useValidationButtonLock(storedObject);
 
     console.log(`${processName}`, storedObject);
     //#endregion
@@ -267,19 +275,44 @@ const Pick: PageComponent = () => {
     ///#endregion
 
     //#region extract data & checks
+    // Every read below has to survive a step10 that carries no proposed advised address: a
+    // missing (or `[undefined]`) list used to throw here and unmount the whole page - the black
+    // screen the operator sees instead of an error message.
     const proposedRoundAdvisedAddress =
-        storedObject?.step10?.data?.proposedRoundAdvisedAddresses[0] || [];
+        storedObject?.step10?.data?.proposedRoundAdvisedAddresses?.[0] || {};
     const isLocationDefined = !!proposedRoundAdvisedAddress.locationId;
-    const expectedArticle = proposedRoundAdvisedAddress?.roundLineDetail?.roundLine.article;
+    const expectedArticle = proposedRoundAdvisedAddress?.roundLineDetail?.roundLine?.article;
     const isPositionChecked = storedObject?.step10?.data?.round?.equipment?.checkPosition;
 
-    // Check if there are different locationIds available for action1Button
-    const hasMultipleLocationIds = (() => {
-        const proposedAddresses = storedObject['step10']?.data?.round?.roundAdvisedAddresses || [];
-        const locationIds = proposedAddresses.map((addr: any) => addr?.locationId);
-        const uniqueLocationIds = Array.from(new Set(locationIds));
-        return uniqueLocationIds.length > 1;
+    // The couple the operator is standing on, i.e. what "next" has to leave behind.
+    const currentRoundAdvisedAddressCouple = roundAdvisedAddressCouple(
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses?.[0]
+    );
+
+    // Every location/article couple still to prepare, the skip list deliberately left out of the
+    // count: skipping a line only defers it, it never prepares it, so a skipped line is still to
+    // prepare and has to be reachable again.
+    const roundAdvisedAddressCouplesLeftToPrepare = (() => {
+        const roundAdvisedAddresses =
+            storedObject['step10']?.data?.round?.roundAdvisedAddresses || [];
+        return new Set(
+            roundAdvisedAddresses
+                .filter(isRoundAdvisedAddressToPrepare)
+                .map((raa: any) => roundAdvisedAddressCouple(raa))
+        );
     })();
+
+    // The "next" button used to be rendered on "the round mixes several locationIds", which is
+    // the wrong unit: it hid the button when several articles shared one location, and when no
+    // location was known at all. It is now offered as long as one couple other than the one on
+    // screen is left to prepare - with or without an advised location - because at the end of the
+    // list "next" wraps back onto the first couple left instead of stopping, which is what spares
+    // the operator leaving the module and coming back to finish the lines he skipped.
+    // A round with nothing left to prepare gets no button: that is the end of the process, and
+    // closing the round stays the backend's call (isRoundClosed, read by endOfProcessHandling).
+    const canGoToNextRoundAdvisedAddress =
+        roundAdvisedAddressCouplesLeftToPrepare.size >
+        (roundAdvisedAddressCouplesLeftToPrepare.has(currentRoundAdvisedAddressCouple) ? 1 : 0);
 
     // function to add next location display in italics
     const addNextLocationDisplay = (currentLocationName: string) => {
@@ -287,21 +320,23 @@ const Pick: PageComponent = () => {
         const currentProposedAddresses =
             storedObject['step10']?.data?.proposedRoundAdvisedAddresses || [];
 
-        //Find next location
+        // Only addresses still to be picked (and not currently proposed) can be shown as next
+        const proposedIds = currentProposedAddresses.map((addr: any) => addr.id);
+        const remainingAddresses = allAddresses.filter(
+            (addr: any) => isRoundAdvisedAddressToPrepare(addr) && !proposedIds.includes(addr.id)
+        );
+
+        //Find next location among remaining ones (walking order, with wrap-around)
         let currentIndex = -1;
         if (currentProposedAddresses.length > 0) {
             const firstProposedId = currentProposedAddresses[0].id;
             currentIndex = allAddresses.findIndex((addr: any) => addr.id === firstProposedId);
         }
 
-        const nextIndex = currentIndex + currentProposedAddresses.length;
-        let nextLocationFull = '';
-
-        if (nextIndex < allAddresses.length) {
-            nextLocationFull = allAddresses[nextIndex]?.location?.name || '';
-        } else if (allAddresses.length > 0) {
-            nextLocationFull = allAddresses[0]?.location?.name || '';
-        }
+        const nextAddress =
+            remainingAddresses.find((addr: any) => allAddresses.indexOf(addr) > currentIndex) ||
+            remainingAddresses[0];
+        const nextLocationFull = nextAddress?.location?.name || '';
 
         let nextLocation = '';
         if (nextLocationFull) {
@@ -400,8 +435,8 @@ const Pick: PageComponent = () => {
     }
 
     const totalExpectedQuantity = hasRound
-        ? storedObject['step10']?.data?.proposedRoundAdvisedAddresses.reduce(
-              (total: number, current: any) => total + current.quantity,
+        ? (storedObject['step10']?.data?.proposedRoundAdvisedAddresses ?? []).reduce(
+              (total: number, current: any) => total + Number(current?.quantity ?? 0),
               0
           )
         : 0;
@@ -439,8 +474,8 @@ const Pick: PageComponent = () => {
             },
             {
                 label: t('common:pick_position'),
-                value: proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
-                    ?.handlingUnitOutbound?.roundPosition,
+                value: proposedRoundAdvisedAddress?.roundLineDetail
+                    ?.handlingUnitContentOutbounds?.[0]?.handlingUnitOutbound?.roundPosition,
                 visible: !!isPositionChecked
             },
             { label: locationLabel, value: locationValue, visible: true },
@@ -509,7 +544,7 @@ const Pick: PageComponent = () => {
     useEffect(() => {
         if (
             storedObject['step10']?.data &&
-            !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds[0]
+            !proposedRoundAdvisedAddress?.roundLineDetail?.handlingUnitContentOutbounds?.[0]
                 ?.handlingUnitOutbound?.carrierShippingMode?.toBePalletized &&
             !storedObject['step10']?.data?.round?.equipment?.forcePickingCheck
         ) {
@@ -636,26 +671,42 @@ const Pick: PageComponent = () => {
 
                 let remainingHUContentIds = updatedRound.roundAdvisedAddresses
                     .filter((raa: any) => {
+                        // same key as the skip list itself, see roundAdvisedAddressCouple
                         return !newStoredObject.ignoreHUContentIds.includes(
-                            raa.handlingUnitContentId
+                            roundAdvisedAddressCouple(raa)
                         );
                     })
-                    .filter((raa: any) => raa.quantity != 0);
+                    .filter(isRoundAdvisedAddressToPrepare);
                 if (remainingHUContentIds.length === 0) {
                     newStoredObject.ignoreHUContentIds = [];
                     remainingHUContentIds = updatedRound.roundAdvisedAddresses.filter(
-                        (raa: any) => raa.quantity != 0
+                        isRoundAdvisedAddressToPrepare
                     );
                 }
 
-                const roundAdvisedAddresses = updatedRound.roundAdvisedAddresses.filter(
-                    (raa: any) => raa.quantity != 0
-                );
+                if (remainingHUContentIds.length === 0) {
+                    // The round holds nothing left to prepare: proposing out of an empty list
+                    // leaves the operator on a blank pick screen. Land him on the round
+                    // selection instead - closing the round stays the backend's call.
+                    showError(t('messages:no-round-advised-address-left'));
+                    dispatch({
+                        type: 'UPDATE_BY_PROCESS',
+                        processName,
+                        object: buildRoundSelectionSlice(storedObject)
+                    });
+                    setIsHuClosureLoading(false);
+                    return;
+                }
+
                 const data = {
-                    proposedRoundAdvisedAddresses: roundAdvisedAddresses.filter(
+                    // Rebuilt on the couple, exactly like the skip list above: comparing raw
+                    // handlingUnitContentIds folded every line without picking stock onto the
+                    // same key, which put lines of different articles on one screen and made
+                    // the skip list useless in this branch.
+                    proposedRoundAdvisedAddresses: remainingHUContentIds.filter(
                         (raa: any) =>
-                            raa.handlingUnitContentId ==
-                            remainingHUContentIds[0].handlingUnitContentId
+                            roundAdvisedAddressCouple(raa) ===
+                            roundAdvisedAddressCouple(remainingHUContentIds[0])
                     ),
                     round: updatedRound,
                     pickAndPackType: updatedRound.equipment.checkPosition ? 'detail' : 'fullBox'
@@ -682,32 +733,45 @@ const Pick: PageComponent = () => {
         }
     }
 
-    const handlingUnitContentId =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.id;
     const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
 
     useEffect(() => {
         if (triggerNextRaa && storedObject['step20']) {
             setTriggerNextRaa(false);
-            let newIgnoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
-            let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+            let newIgnoreHUContentIds = [...ignoreHUContentIds, currentRoundAdvisedAddressCouple];
+            let remainingHUContentIds = (
+                storedObject[`step10`]?.data?.round?.roundAdvisedAddresses ?? []
+            )
                 .filter((raa: any) => {
-                    return !newIgnoreHUContentIds.includes(raa.handlingUnitContentId);
+                    return !newIgnoreHUContentIds.includes(roundAdvisedAddressCouple(raa));
                 })
-                .filter((raa: any) => raa.quantity != 0);
+                .filter(isRoundAdvisedAddressToPrepare);
             if (remainingHUContentIds.length === 0) {
+                // End of the list, and lines are still to prepare: emptying the skip list is what
+                // puts the skipped ones back in the game, so the walk wraps around onto the first
+                // couple left instead of stopping here. A line already prepared - or belonging to
+                // a cancelled box, which drives its remainder negative - is not to prepare and
+                // stays out of the cycle (isRoundAdvisedAddressToPrepare).
                 newIgnoreHUContentIds = [];
-                remainingHUContentIds = storedObject[
-                    `step10`
-                ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
+                remainingHUContentIds =
+                    storedObject[`step10`]?.data?.round?.roundAdvisedAddresses?.filter(
+                        isRoundAdvisedAddressToPrepare
+                    ) ?? [];
             }
-            const raaForHUC = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
-                .filter((raa: any) => raa.quantity != 0)
-                .filter(
-                    (raa: any) =>
-                        raa.handlingUnitContentId ===
-                        remainingHUContentIds[0]?.handlingUnitContentId
-                );
+            if (remainingHUContentIds.length === 0) {
+                // Nothing left to prepare anywhere: this is the end of the process, not a cycle.
+                // Say so and leave the screen as it is - proposing an advised address out of an
+                // empty list is what would turn "next" into a loop over nothing. Closing the
+                // round remains the backend's call (isRoundClosed, read by endOfProcessHandling),
+                // so the exit path is left exactly as it was.
+                showError(t('messages:no-round-advised-address-left'));
+                return;
+            }
+            const raaForHUC = remainingHUContentIds.filter(
+                (raa: any) =>
+                    roundAdvisedAddressCouple(raa) ===
+                    roundAdvisedAddressCouple(remainingHUContentIds[0])
+            );
 
             // Find next roundAdvisedAddress with different locationId
             const currentLocationId =
@@ -723,6 +787,17 @@ const Pick: PageComponent = () => {
                 ? [raaToUse]
                 : raaForHUC;
             setShowSimilarLocations(false);
+
+            // A "next" lands on another line, so the location step has to be judged on that line
+            // alone. tmpForceLocation still carried the verdict of the line left behind - a line
+            // without advised location forces the scan - and nothing lowered it again, so the
+            // operator kept being asked to scan a location the new line already carries. The
+            // FORCE_LOCATION_SCAN parameter stays authoritative: when it is on, the scan is
+            // still forced here as it is everywhere else in the flow, and only the "Change
+            // location" button reopens it on a line that carries one.
+            setTmpforceLocation(
+                newProposedRoundAdvisedAddresses[0]?.locationId ? forceLocationScan : true
+            );
             dispatch({
                 type: 'UPDATE_BY_STEP',
                 processName,
@@ -739,25 +814,40 @@ const Pick: PageComponent = () => {
         }
         if (triggerNextRaa && storedObject['step50']) {
             setTriggerNextRaa(false);
-            let newIgnoreHUContentIds = [...ignoreHUContentIds, handlingUnitContentId];
-            let remainingHUContentIds = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
+            let newIgnoreHUContentIds = [...ignoreHUContentIds, currentRoundAdvisedAddressCouple];
+            let remainingHUContentIds = (
+                storedObject[`step10`]?.data?.round?.roundAdvisedAddresses ?? []
+            )
                 .filter((raa: any) => {
-                    return !newIgnoreHUContentIds.includes(raa.handlingUnitContentId);
+                    return !newIgnoreHUContentIds.includes(roundAdvisedAddressCouple(raa));
                 })
-                .filter((raa: any) => raa.quantity != 0);
+                .filter(isRoundAdvisedAddressToPrepare);
             if (remainingHUContentIds.length === 0) {
+                // End of the list, and lines are still to prepare: emptying the skip list is what
+                // puts the skipped ones back in the game, so the walk wraps around onto the first
+                // couple left instead of stopping here. A line already prepared - or belonging to
+                // a cancelled box, which drives its remainder negative - is not to prepare and
+                // stays out of the cycle (isRoundAdvisedAddressToPrepare).
                 newIgnoreHUContentIds = [];
-                remainingHUContentIds = storedObject[
-                    `step10`
-                ]?.data?.round.roundAdvisedAddresses.filter((raa: any) => raa.quantity != 0);
+                remainingHUContentIds =
+                    storedObject[`step10`]?.data?.round?.roundAdvisedAddresses?.filter(
+                        isRoundAdvisedAddressToPrepare
+                    ) ?? [];
             }
-            const raaForHUC = storedObject[`step10`]?.data?.round.roundAdvisedAddresses
-                .filter((raa: any) => raa.quantity != 0)
-                .filter(
-                    (raa: any) =>
-                        raa.handlingUnitContentId ===
-                        remainingHUContentIds[0]?.handlingUnitContentId
-                );
+            if (remainingHUContentIds.length === 0) {
+                // Nothing left to prepare anywhere: this is the end of the process, not a cycle.
+                // Say so and leave the screen as it is - proposing an advised address out of an
+                // empty list is what would turn "next" into a loop over nothing. Closing the
+                // round remains the backend's call (isRoundClosed, read by endOfProcessHandling),
+                // so the exit path is left exactly as it was.
+                showError(t('messages:no-round-advised-address-left'));
+                return;
+            }
+            const raaForHUC = remainingHUContentIds.filter(
+                (raa: any) =>
+                    roundAdvisedAddressCouple(raa) ===
+                    roundAdvisedAddressCouple(remainingHUContentIds[0])
+            );
 
             // Find next roundAdvisedAddress with different locationId
             const currentLocationId =
@@ -772,6 +862,13 @@ const Pick: PageComponent = () => {
                 .checkPosition
                 ? [raaToUse]
                 : raaForHUC;
+
+            // Same as the step-20 block above: the location step is judged on the line just
+            // proposed, never on the one left behind, FORCE_LOCATION_SCAN staying authoritative.
+            const isLocationStepNeeded = newProposedRoundAdvisedAddresses[0]?.locationId
+                ? forceLocationScan
+                : true;
+            setTmpforceLocation(isLocationStepNeeded);
             dispatch({
                 type: 'UPDATE_BY_STEP',
                 processName,
@@ -785,6 +882,37 @@ const Pick: PageComponent = () => {
                 },
                 customFields: [{ key: 'ignoreHUContentIds', value: newIgnoreHUContentIds }]
             });
+
+            // Raising tmpForceLocation is not enough on this path: the location step is not
+            // mounted at the article scan, so nobody reads the flag, and steps 20/30/40 still
+            // hold the location of the line left behind - the operator would stay on the article
+            // scan with a location that is not the one of the line he is now on, and a line
+            // without advised location would leave him no screen to pick one from. Truncating the
+            // state back to the location step is what brings the scan screen up again; it also
+            // drops the stale location instead of carrying it over. Steps 10 and 15 are below the
+            // cut, so the round and the parent handling unit are kept.
+            //
+            // The truncation is only needed when the operator had progressed past step20 (it
+            // carries a resolved `.data`): ON_BACK does not stop at the step it is given, it steps
+            // out of it onto its own previousStep - fine when step20 is about to be unmounted and
+            // remounted anyway (its mount effect re-derives currentStep=20), but when the operator
+            // never left the location scan (two consecutive lines without an advised location),
+            // step20 is already mounted with no `.data`, nothing remounts it, and this dispatch
+            // regressed currentStep below 20 - hiding the step-20-only buttons (Loc., next) on a
+            // screen that still is the location scan.
+            if (isLocationStepNeeded) {
+                if (storedObject['step20']?.data) {
+                    dispatch({
+                        type: 'ON_BACK',
+                        processName,
+                        stepToReturn: `step20`
+                    });
+                }
+                // Nothing below this point may run: prefilling steps 30 and 40 from the new line
+                // is exactly what would skip the scan we have just asked for. This is the last
+                // block of the effect, so returning ends the handler.
+                return;
+            }
 
             // Transform raaToUse.handlingUnitContent to handlingUnit format
             const handlingUnitContent = raaToUse?.handlingUnitContent;
@@ -837,7 +965,7 @@ const Pick: PageComponent = () => {
         }
     }, [triggerNextRaa]);
 
-    const currentShippingPalletId = storedObject?.step10?.data?.round.extraText1 ?? undefined;
+    const currentShippingPalletId = storedObject?.step10?.data?.round?.extraText1 ?? undefined;
     useEffect(() => {
         if (triggerHuClose) {
             if (!currentShippingPalletId) {
@@ -921,10 +1049,9 @@ const Pick: PageComponent = () => {
     };
 
     const missingModal = () => {
-        const maxQuantity = storedObject['step10']?.data?.proposedRoundAdvisedAddresses.reduce(
-            (total: number, current: any) => total + current.quantity,
-            0
-        );
+        const maxQuantity = (
+            storedObject['step10']?.data?.proposedRoundAdvisedAddresses ?? []
+        ).reduce((total: number, current: any) => total + Number(current?.quantity ?? 0), 0);
         return (
             <Modal
                 title={t('common:missing-quantity')}
@@ -977,7 +1104,17 @@ const Pick: PageComponent = () => {
             key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [5, 10, 15, 20, 30, 40, 50, 60, 70, 75],
-            onClick: () => form.submit(),
+            onClick: () => {
+                form.validateFields()
+                    .then(() => {
+                        console.log('Form validated, submitting...');
+                        lockButtons('submit');
+                        form.submit();
+                    })
+                    .catch(() => {
+                        // client-side validation failed: antd shows the field errors, keep buttons active
+                    });
+            },
             position: 'bottom'
         },
         {
@@ -1029,7 +1166,7 @@ const Pick: PageComponent = () => {
             key: 'next',
             label: t('actions:next'),
             visibleOnSteps: [20, 50],
-            permissionsToSeeTheButton: hasMultipleLocationIds ? true : false,
+            permissionsToSeeTheButton: canGoToNextRoundAdvisedAddress,
             onClick: () => {
                 setTriggerNextRaa(true);
             },
@@ -1145,11 +1282,19 @@ const Pick: PageComponent = () => {
                 actionsRight={
                     <Space>
                         {storedObject.currentStep > (equipmentScanAtPreparation ? 5 : 10) ? (
-                            <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
+                            <NavButton
+                                icon={<UndoOutlined />}
+                                onClick={onReset}
+                                disabled={!!blockingButtonKey || isAutoValidateLoading}
+                            ></NavButton>
                         ) : (
                             <></>
                         )}
-                        <NavButton icon={<ArrowLeftOutlined />} onClick={previousPage}></NavButton>
+                        <NavButton
+                            icon={<ArrowLeftOutlined />}
+                            onClick={previousPage}
+                            disabled={!!blockingButtonKey || isAutoValidateLoading}
+                        ></NavButton>
                     </Space>
                 }
             />
@@ -1168,6 +1313,7 @@ const Pick: PageComponent = () => {
                 <RadioButtonWrapper
                     buttonManagement={orderedButtonManagement}
                     currentStep={storedObject.currentStep}
+                    blockingButtonKey={blockingButtonKey}
                 >
                     {showSimilarLocations && storedObject['step10']?.data ? (
                         <SimilarLocationsV2
@@ -1385,7 +1531,8 @@ const Pick: PageComponent = () => {
                                     dataToCheck={data}
                                     handlingUnitOutboundInfos={
                                         proposedRoundAdvisedAddress?.roundLineDetail
-                                            ?.handlingUnitContentOutbounds[0]?.handlingUnitOutbound
+                                            ?.handlingUnitContentOutbounds?.[0]
+                                            ?.handlingUnitOutbound
                                     }
                                 />
                             )}

@@ -19,6 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppLink, ContentSpin, DetailsList, HeaderContent } from '@components';
 import { Alert, Button, Layout, Space, Typography } from 'antd';
+import dayjs from 'dayjs';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
@@ -34,7 +35,8 @@ import {
     useDetail,
     useFieldRules,
     useSoftDelete,
-    useUpdate
+    useUpdate,
+    setUTCDateTime
 } from '@helpers';
 import { ModelType } from 'models/ModelsV2';
 import { useRouter } from 'next/router';
@@ -139,6 +141,10 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
             }
             return obj;
         });
+    // fields whose time part must never be displayed (`dateOnly` flag carried by the model)
+    const dateOnlyDetailFields = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].dateOnly)
+        .map((key) => key.replaceAll('{', '_').replaceAll('}', ''));
     const displayedLabels = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].displayName !== null)
         .reduce((obj: any, key) => {
@@ -256,6 +262,22 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
             let flattenedData = flatten(detailObj);
 
             if (props.setData) props.setData(flatten(detailObj));
+
+            // a field flagged `dateOnly` in the model (see the model fieldsInfo) carries a date
+            // whose time part is meaningless. Reducing the value to YYYY-MM-DD is enough: the
+            // shared - and deliberately untouched - DetailsList then takes its `isStringDate`
+            // branch and renders a plain date. The day MUST be the one the standard date+time
+            // rendering shows: the API returns naive datetimes that are displayed shifted by the
+            // browser offset (22:00 UTC already shows on the next day), so the day is derived from
+            // the very same `setUTCDateTime` pipeline instead of from the raw string. Done on the
+            // display copy only, so `props.setData` - used by the pages' extra components - still
+            // gets the raw value.
+            dateOnlyDetailFields.forEach((key) => {
+                const value = flattenedData[key];
+                if (typeof value === 'string' && !isNaN(new Date(value).getTime())) {
+                    flattenedData[key] = dayjs(setUTCDateTime(value)).format('YYYY-MM-DD');
+                }
+            });
             // detect if linkfields.name is part of flattenedData keys and replace it if yes
             const keys = Object.keys(flattenedData); // get all the keys in flattenedData
             const linksList: Array<any> = [];

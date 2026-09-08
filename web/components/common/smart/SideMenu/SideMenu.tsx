@@ -489,6 +489,16 @@ const SideMenu: FC = () => {
                           label: <Link href="/articles">{t('articles')}</Link>
                       }
                     : null,
+                // PACKAGINGS (article logistic units) - the /articles/lu management screen.
+                // Gated on the existing `wm_articles` screen permission: there is no
+                // `wm_article-lus` screen entity on the API side, and row-level actions are
+                // governed by the ARTICLE_LU table rights anyway.
+                getModesFromPermissions(permissions, 'wm_articles').includes(ModeEnum.Read)
+                    ? {
+                          key: 'articles-logistic-units',
+                          label: <Link href="/articles/lu">{t('logistic-units')}</Link>
+                      }
+                    : null,
                 // ARTICLE SETS
                 getModesFromPermissions(permissions, 'wm_article-sets').includes(ModeEnum.Read)
                     ? {

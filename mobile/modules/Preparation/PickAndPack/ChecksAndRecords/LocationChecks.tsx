@@ -22,6 +22,10 @@ import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import {
+    getExpectedArticleId,
+    isContentOfExpectedLine
+} from 'modules/Preparation/PickAndPack/Elements/expectedArticle';
 
 export interface ILocationChecksProps {
     dataToCheck: any;
@@ -44,15 +48,31 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
 
-    const handlingUnitContentArticleId =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.handlingUnitContent?.article
-            ?.id;
+    const proposedRoundAdvisedAddress =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses?.[0];
+
+    // Same article as the locations query that produced locationInfos (ScanLocation filters the
+    // contents on the delivery line): checking another reference here rejects a correct location.
+    const expectedArticleId = getExpectedArticleId(proposedRoundAdvisedAddress);
+
+    // What step30 requires of the location it is handed (isContentOfExpectedLine, shared with the
+    // quantity ScanLocation displays). This step used to stop at "the location holds the article",
+    // quantity and stock attributes left aside, so it validated a location step30 then refused
+    // with an ON_BACK to this very step - and, both steps being automatic when the round advises a
+    // location, the two bounced the operator back and forth forever on "unexpected scanned item".
+    const isExpectedContent = isContentOfExpectedLine(proposedRoundAdvisedAddress);
 
     // TYPED SAFE ALL
     useEffect(() => {
         if (scannedInfo && locationInfos) {
             if (locationInfos.locations?.count === 0) {
                 console.log('locationInfos', locationInfos);
+                dispatch({
+                    type: 'UPDATE_BY_STEP',
+                    processName,
+                    stepName: `step${stepNumber}`,
+                    customFields: [{ key: 'currentStep', value: stepNumber }]
+                });
                 showError(t('messages:no-location'));
                 setResetForm(true);
                 setScannedInfo(undefined);
@@ -78,21 +98,31 @@ export const LocationChecks = ({ dataToCheck }: ILocationChecksProps) => {
                         return { id, name, barcode, level, handlingUnits, category };
                     }
                 );
-                if (handlingUnitContentArticleId) {
-                    if (
-                        data['locations'].filter(
-                            (location: any) =>
-                                location.handlingUnits?.filter(
-                                    (hu: any) =>
-                                        hu.handlingUnitContents.filter(
-                                            (huc: any) =>
-                                                huc.article.id == handlingUnitContentArticleId
-                                        ).length > 0
-                                ).length > 0
-                        ).length === 0
-                    ) {
-                        console.log('No matching handling unit content', data);
-                        showError(t('messages:unexpected-scanned-item'));
+                if (expectedArticleId) {
+                    const contents = data['locations'].flatMap((location: any) =>
+                        (location.handlingUnits ?? []).flatMap(
+                            (hu: any) => hu.handlingUnitContents ?? []
+                        )
+                    );
+                    const holdsExpectedArticle = contents.some(
+                        (huc: any) => (huc.articleId ?? huc.article?.id) == expectedArticleId
+                    );
+                    // A location that does not carry the article at all is a wrong location; one
+                    // that carries it without anything left to pick (quantity fallen to 0, other
+                    // stock owner / status / reservation) is the right place with nothing in it.
+                    // Two distinct dead-ends, so two distinct messages - and in both cases the
+                    // operator stays on this step, where "Empl." offers the locations that do hold
+                    // the stock and "next" moves on to another line.
+                    if (!holdsExpectedArticle || !contents.some(isExpectedContent)) {
+                        console.log('No matching handling unit content', {
+                            expectedArticleId,
+                            ...data
+                        });
+                        showError(
+                            holdsExpectedArticle
+                                ? t('messages:no-huc-quantity-in-location')
+                                : t('messages:unexpected-scanned-item')
+                        );
                         setResetForm(true);
                         setScannedInfo(undefined);
                         return;
