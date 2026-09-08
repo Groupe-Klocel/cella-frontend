@@ -126,6 +126,7 @@ export const SelectEquipmentForm = ({
                                 id
                                 name
                             }
+                            expectedDeliveryDate
                         }
                     }
                 }
@@ -155,30 +156,42 @@ export const SelectEquipmentForm = ({
                 equipmentsListFromGQL,
                 equipmentsListVariables
             );
-            let equipmentsList: any[] = [];
+            // One entry per equipment: the number of rounds to prepare and, among them, the
+            // number due today or overdue (shown in red in the list).
+            const equipmentMap = new Map();
+            // The cut-off is the END of the current day: `expectedDeliveryDate` carries a time,
+            // so comparing it with `new Date()` would leave the rounds due later today out of the
+            // count - the day's rounds would only turn red once their hour had passed.
+            const endOfToday = new Date();
+            endOfToday.setHours(23, 59, 59, 999);
             equipmentsList_result?.rounds?.results.forEach((item: any) => {
-                if (
-                    item.equipment &&
-                    equipmentsList.filter((e) => e.id === item.equipmentId).length > 0
-                ) {
-                    equipmentsList.forEach((equipment) => {
-                        if (equipment.id === item.equipmentId) {
-                            equipment.count += 1;
-                        }
-                    });
-                    return;
+                if (item.equipment) {
+                    if (!equipmentMap.has(item.equipmentId)) {
+                        equipmentMap.set(item.equipmentId, {
+                            id: item.equipmentId,
+                            name: item.equipment.name,
+                            total: 0,
+                            overdue: 0
+                        });
+                    }
+                    const equipment = equipmentMap.get(item.equipmentId);
+                    equipment.total += 1;
+                    const deliveryDate = new Date(item.expectedDeliveryDate);
+                    if (deliveryDate <= endOfToday) {
+                        equipment.overdue += 1;
+                    }
                 }
-                equipmentsList.push({
-                    id: item.equipmentId,
-                    name: item.equipment.name,
-                    count: 1
-                });
             });
+            const sortedEquipments = Array.from(equipmentMap.values()).sort(
+                (a: any, b: any) => b.total - a.total
+            );
             setEquipments(
-                equipmentsList.map((item: any) => ({
+                sortedEquipments.map((item: any) => ({
                     key: item.id,
-                    text: item.name + ' (' + item.count + ')',
-                    value: item.id
+                    text: item.name,
+                    value: item.id,
+                    overdue: item.overdue,
+                    total: item.total
                 }))
             );
         };
@@ -237,15 +250,22 @@ export const SelectEquipmentForm = ({
                         style={{ height: '20px', marginBottom: '5px' }}
                         showSearch
                         filterOption={(inputValue, option) =>
-                            option!.props.children
+                            (option!.props.text ?? '')
                                 .toUpperCase()
                                 .indexOf(inputValue.toUpperCase()) !== -1
                         }
                         allowClear
                     >
                         {equipments?.map((option: any) => (
-                            <Select.Option key={option.key} value={option.key}>
-                                {option.text}
+                            <Select.Option key={option.key} value={option.key} text={option.text}>
+                                <span>
+                                    <span style={{ paddingRight: '.5rem' }}>{option.text} </span>(
+                                    {option.total}-
+                                    <span style={{ color: option.overdue > 0 ? 'red' : 'inherit' }}>
+                                        {option.overdue}
+                                    </span>
+                                    )
+                                </span>
                             </Select.Option>
                         ))}
                     </Select>

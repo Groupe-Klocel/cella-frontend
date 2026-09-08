@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+
 import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -26,6 +27,10 @@ import {
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import {
+    getExpectedArticleId,
+    pickableQuantityInLocations
+} from 'modules/Preparation/PickAndPack/Elements/expectedArticle';
 
 export interface IScanLocationProps {
     processName: string;
@@ -77,26 +82,60 @@ export const ScanLocation = ({
         };
         if (enforcedValue) {
             setScannedInfo(enforcedValue);
+            // The step is displayed even when the location is enforced, so it has to be the current
+            // one: the step-scoped action buttons (Empl., close shipping HU, next) and the back
+            // action are filtered on storedObject.currentStep.
+            objectUpdate.object = {
+                previousStep: getLastStepWithPreviousStep(storedObject, stepNumber)
+            };
+            objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         } else if (storedObject.currentStep < stepNumber || tmpForceLocation) {
             //check workflow direction and assign current step accordingly
+            // Mounting this step says nothing about the line the operator is now on, so it must
+            // not decide for it. Raising tmpForceLocation here latched the location scan on for
+            // the rest of the process - looking at neither the advised location nor
+            // FORCE_LOCATION_SCAN - and nothing lowered it again, so every later line was asked
+            // for a scan it already carried. That is the latch bb4e0c3 removed from the pages;
+            // it survived here because this container is the pick & pack's own copy. The verdict
+            // now comes only from the page, which re-derives it from the proposed line.
+            // Emptying ignoreHUContentIds is dropped with it: the skip list belongs to the
+            // "next" walk, which maintains it (and clears it when the list is exhausted), so
+            // wiping it on every remount of this step put already-skipped lines back on screen.
             objectUpdate.object = {
-                previousStep: getLastStepWithPreviousStep(storedObject)
+                previousStep: getLastStepWithPreviousStep(storedObject, stepNumber)
             };
-            objectUpdate.customFields = [
-                { key: 'currentStep', value: stepNumber },
-                { key: 'ignoreHUContentIds', value: [] }
-            ];
-            setTmpforceLocation(true);
+            objectUpdate.customFields = [{ key: 'currentStep', value: stepNumber }];
         }
         dispatch(objectUpdate);
     }, []);
 
-    const locationName =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location?.name;
+    // enforcedValue is read when this step mounts, and the "next" button changes the proposed
+    // line - hence its advised location - while the step stays mounted. Without this, the value
+    // enforced for the new line never reaches the checks and the operator is asked to scan a
+    // location he has just been given.
+    // An empty enforcedValue is a scan that has to happen - a line without advised location, or
+    // FORCE_LOCATION_SCAN / the "Change location" button - so scannedInfo has to be emptied with
+    // it. "next" empties it while this step stays mounted (the page raises tmpForceLocation and
+    // the render condition does not change, so there is no remount to reset the state), and a
+    // scannedInfo left over from the line just quit would be re-checked against the new one:
+    // LocationChecks only guards on scannedInfo being set, so a stale location that happens to
+    // hold the newly expected article would validate the step and skip the required scan.
+    useEffect(() => {
+        if (enforcedValue) {
+            setScannedInfo(enforcedValue);
+        } else {
+            setScannedInfo(undefined);
+        }
+    }, [enforcedValue]);
 
-    const PRAADeliveryLineInfos =
-        storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.roundLineDetail
-            ?.deliveryLine;
+    const proposedRoundAdvisedAddress =
+        storedObject['step10']?.data?.proposedRoundAdvisedAddresses?.[0];
+
+    const locationName = proposedRoundAdvisedAddress?.location?.name;
+
+    // Shared with LocationChecks (step20) and the level/HU checks: one article reference for the
+    // whole step, so what the query brings back is exactly what is accepted.
+    const expectedArticleId = getExpectedArticleId(proposedRoundAdvisedAddress);
 
     const getLocations = async (
         scannedInfo: any,
@@ -135,7 +174,7 @@ export const ScanLocation = ({
                                         {
                                             searchType: EQUAL
                                             fieldName: "articleId"
-                                            searchedValues: "${PRAADeliveryLineInfos?.articleId}"
+                                            searchedValues: "${expectedArticleId}"
                                         }
                                     ]
                                 }
@@ -194,27 +233,14 @@ export const ScanLocation = ({
             const result = await getLocations(scannedInfo, locationName);
             if (result) {
                 setLocationInfos(result);
-                const locations = result.locations?.results;
-                if (locations && locations.length > 0) {
-                    let totalQuantity = 0;
-                    locations.forEach((location: any) => {
-                        location.handlingUnits.forEach((hu: any) => {
-                            hu.handlingUnitContents.forEach((content: any) => {
-                                if (
-                                    PRAADeliveryLineInfos.stockOwnerId === content.stockOwnerId &&
-                                    PRAADeliveryLineInfos.stockStatus === content.stockStatus &&
-                                    PRAADeliveryLineInfos.articleId === content.articleId &&
-                                    PRAADeliveryLineInfos.reservation === content.reservation
-                                ) {
-                                    totalQuantity += content.quantity;
-                                }
-                            });
-                        });
-                    });
-                    setLocationQuantity(totalQuantity);
-                } else {
-                    setLocationQuantity(0);
-                }
+                // Same rule as the checks of steps 20/30 (isContentOfExpectedLine): the quantity
+                // shown next to the label is exactly the stock the flow is willing to pick here.
+                setLocationQuantity(
+                    pickableQuantityInLocations(
+                        result.locations?.results,
+                        proposedRoundAdvisedAddress
+                    )
+                );
             }
         }
         fetchData();
@@ -240,8 +266,14 @@ export const ScanLocation = ({
         isHuClosureLoading
     };
 
-    const newLabel =
-        label.split(')')[0] + ' / ' + t('common:quantity_abbr') + ': ' + locationQuantity + ')';
+    // The received label puts the advised location in parentheses ("Location (A1-2-3)"), and the
+    // counted quantity is appended inside them. When the advised address carries no location the
+    // label is a bare word ("Location"): there is no parenthesis to reopen, so the quantity opens
+    // its own instead of leaving a closing one orphaned ("Location / Qty: 0)").
+    const quantityInfo = t('common:quantity_abbr') + ': ' + locationQuantity;
+    const newLabel = label.includes(')')
+        ? label.split(')')[0] + ' / ' + quantityInfo + ')'
+        : label + ' (' + quantityInfo + ')';
 
     return (
         <>

@@ -32,7 +32,7 @@ import {
     showError,
     getEnvironmentLabel
 } from '@helpers';
-import { LogoutOutlined, MenuOutlined } from '@ant-design/icons';
+import { LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import Text from 'antd/lib/typography/Text';
 import { LanguageSelector } from 'components/common/smart/LanguageSelector/LanguageSelector';
@@ -193,6 +193,14 @@ const Header: FC = () => {
                         >
                             {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
                         </span>
+                    </StyledCol>
+                )}
+                {user?.username && (
+                    <StyledCol style={{ maxWidth: '120px' }}>
+                        <UserOutlined style={{ fontSize: '11px', marginRight: '3px' }} />
+                        <Text style={{ fontSize: '12px' }} ellipsis>
+                            {user.username}
+                        </Text>
                     </StyledCol>
                 )}
                 <StyledCol>

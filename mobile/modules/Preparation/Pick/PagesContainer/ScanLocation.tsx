@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+
 import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
@@ -86,6 +87,25 @@ export const ScanLocation = ({
         }
         dispatch(objectUpdate);
     }, []);
+
+    // enforcedValue is read when this step mounts, and the "next" button changes the proposed
+    // line - hence its advised location - while the step stays mounted. Without this, the value
+    // enforced for the new line never reaches the checks and the operator is asked to scan a
+    // location he has just been given.
+    // An empty enforcedValue is a scan that has to happen - a line without advised location, or
+    // FORCE_LOCATION_SCAN / the "Change location" button - so scannedInfo has to be emptied with
+    // it. "next" empties it while this step stays mounted (the page raises tmpForceLocation and
+    // the render condition does not change, so there is no remount to reset the state), and a
+    // scannedInfo left over from the line just quit would be re-checked against the new one:
+    // LocationChecks only guards on scannedInfo being set, so a stale location that happens to
+    // hold the newly expected article would validate the step and skip the required scan.
+    useEffect(() => {
+        if (enforcedValue) {
+            setScannedInfo(enforcedValue);
+        } else {
+            setScannedInfo(undefined);
+        }
+    }, [enforcedValue]);
 
     const locationName =
         storedObject['step10']?.data?.proposedRoundAdvisedAddresses[0]?.location?.name;

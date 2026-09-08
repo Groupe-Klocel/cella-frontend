@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useMemo, useState } from 'react';
-import { HeaderContent, RadioInfosHeader } from '@components';
+import { HeaderContent } from '@components';
 import {
     ButtonManagementType,
     HeaderManagementType,
@@ -51,7 +51,12 @@ import { AutoDeclareMissingQuantityForm } from 'modules/Preparation/Pack/Forms/A
 import { AutoCloseBoxForm } from 'modules/Preparation/Pack/Forms/AutoCloseBox';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
-import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { RadioButtonWrapper, useValidationButtonLock } from 'helpers/utils/radioButtonWrapper';
+import {
+    RadioHeadersCarousel,
+    RadioHeaderSlideType
+} from 'components/common/dumb/RadioHeaders/RadioHeadersCarousel';
+import { ArticlesToScanList } from 'modules/Preparation/Pack/Elements/ArticlesToScanList';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -66,6 +71,7 @@ const Pack: PageComponent = () => {
     const [closeBox, setCloseBox] = useState<boolean>(false);
     const [isToControl, setIsToControl] = useState<boolean | null>(null);
     const [triggerEnforcedControl, setTriggerEnforcedControl] = useState<boolean>(false);
+    const [activeHeaderSlideKey, setActiveHeaderSlideKey] = useState<string | undefined>(undefined);
 
     const configsParamsCodes = useMemo(() => {
         const findCodeByScope = (items: any[], scope: string, value: string) => {
@@ -160,6 +166,9 @@ const Pack: PageComponent = () => {
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
     const [form] = Form.useForm();
+
+    // While a submit-triggered validation is in flight, every other button is blocked
+    const { blockingButtonKey, lockButtons } = useValidationButtonLock(storedObject);
 
     console.log(`${processName}`, storedObject);
     //#endregion
@@ -348,6 +357,44 @@ const Pack: PageComponent = () => {
 
     // Build the displayed object from the declarative configuration
     const headerDisplay = buildHeaderDisplay(headerManagement);
+
+    // Extra header slides (mirrors buttonManagement): each slide declares the steps it shows on
+    // and its content; the header zone becomes a swipe/arrows carousel whenever one is visible.
+    // Here: while controlling a position, the stacked list of the articles to control, checked
+    // off as they are scanned. The quantities come from the box refreshed by the backend after
+    // each validation, plus the quantity entered at step 50 while it is still awaiting
+    // validation.
+    const controlHucos = round?.equipment?.checkPosition
+        ? storedObject?.step30?.data?.currentHuos?.[0]?.handlingUnitContentOutbounds
+        : undefined;
+    const pendingControlQuantity =
+        typeof storedObject['step50']?.data?.movingQuantity === 'number'
+            ? storedObject['step50'].data.movingQuantity
+            : undefined;
+    const headerCarouselSlides: RadioHeaderSlideType[] = [
+        {
+            key: 'articles-to-scan',
+            visibleOnSteps: [40, 50, 60],
+            visible: Boolean(isToControl && !isWaitingLabelHandling && controlHucos?.length),
+            content: (
+                <ArticlesToScanList
+                    hucos={controlHucos}
+                    currentHucoId={currentHuco?.id}
+                    pendingQuantity={pendingControlQuantity}
+                ></ArticlesToScanList>
+            )
+        }
+    ];
+
+    // Keep the operator on the header they chose across the validation loop of a same box
+    // (validate → step 20 with inProgressHuo → position rescan → article scan, during which the
+    // carousel unmounts); back to the default header once no box is being packed anymore (box
+    // closed, round finished or process reset).
+    useEffect(() => {
+        if (!inProgressHuo && !controlHucos?.length) {
+            setActiveHeaderSlideKey(undefined);
+        }
+    }, [inProgressHuo, controlHucos?.length]);
     //#endregion
 
     //#region control while packing
@@ -662,7 +709,16 @@ const Pack: PageComponent = () => {
             key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [10, 20, 30, 40, 50, 60, 70],
-            onClick: () => form.submit(),
+            onClick: () => {
+                form.validateFields()
+                    .then(() => {
+                        lockButtons('submit');
+                        form.submit();
+                    })
+                    .catch(() => {
+                        // client-side validation failed: antd shows the field errors, keep buttons active
+                    });
+            },
             position: 'bottom'
         },
         {
@@ -735,29 +791,36 @@ const Pack: PageComponent = () => {
                 actionsRight={
                     <Space>
                         {storedObject.currentStep > 10 ? (
-                            <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
+                            <NavButton
+                                icon={<UndoOutlined />}
+                                onClick={onReset}
+                                disabled={!!blockingButtonKey || isLoading || finishPositionLoading}
+                            ></NavButton>
                         ) : (
                             <></>
                         )}
-                        <NavButton icon={<ArrowLeftOutlined />} onClick={previousPage}></NavButton>
+                        <NavButton
+                            icon={<ArrowLeftOutlined />}
+                            onClick={previousPage}
+                            disabled={!!blockingButtonKey || isLoading || finishPositionLoading}
+                        ></NavButton>
                     </Space>
                 }
             />
-            {Object.keys(headerDisplay).length === 0 ? (
-                <></>
-            ) : (
-                <RadioInfosHeader
-                    input={{
-                        displayed: headerDisplay
-                    }}
-                ></RadioInfosHeader>
-            )}
+            <RadioHeadersCarousel
+                headerDisplay={headerDisplay}
+                currentStep={storedObject.currentStep}
+                slides={headerCarouselSlides}
+                activeSlideKey={activeHeaderSlideKey}
+                onActiveSlideChange={setActiveHeaderSlideKey}
+            ></RadioHeadersCarousel>
             {isLoading || finishPositionLoading ? (
                 <UpperMobileSpinner></UpperMobileSpinner>
             ) : (
                 <RadioButtonWrapper
                     buttonManagement={orderedButtonManagement}
                     currentStep={storedObject.currentStep}
+                    blockingButtonKey={blockingButtonKey}
                 >
                     {!storedObject['step10']?.data ? (
                         <SelectPrinter
@@ -867,6 +930,7 @@ const Pack: PageComponent = () => {
                             processName={processName}
                             stepNumber={60}
                             currentHuo={currentHuo}
+                            isToControl={isToControl}
                             checkComponent={(data: any) => (
                                 <ReviewHuModelWeightChecks
                                     dataToCheck={data}
