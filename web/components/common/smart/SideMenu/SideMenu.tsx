@@ -29,13 +29,14 @@ import {
     SlidersOutlined,
     TruckOutlined
 } from '@ant-design/icons';
-import { Menu } from 'antd';
+import { Menu, MenuProps } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import React, { FC } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { getModesFromPermissions } from '@helpers';
+import { getModesFromPermissions, resetBreadcrumbTrailOnNavigation } from '@helpers';
 import styled from 'styled-components';
 import { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 
@@ -56,6 +57,20 @@ const StyledMenu = styled(Menu)`
 const SideMenu: FC = () => {
     const { t } = useTranslation('menu');
     const { permissions } = useAppState();
+    const router = useRouter();
+
+    // A side-menu item starts a new breadcrumb trail on its destination page: the breadcrumb
+    // otherwise follows the path the user travelled (see helpers/utils/breadcrumbTrail.ts).
+    const onMenuItemClick: MenuProps['onClick'] = ({ domEvent }) => {
+        const target = domEvent.target as HTMLElement | null;
+        const anchor =
+            target?.closest?.('a') ?? (domEvent.currentTarget as HTMLElement)?.querySelector?.('a');
+        resetBreadcrumbTrailOnNavigation(
+            anchor?.getAttribute('href'),
+            router.asPath,
+            router.locales
+        );
+    };
 
     const bi_link = process.env.NEXT_PUBLIC_BI_URL || 'https://bi.cella.cloud';
 
@@ -961,7 +976,9 @@ const SideMenu: FC = () => {
         }
     ].filter(Boolean) as ItemType<MenuItemType>[];
 
-    return <StyledMenu mode="inline" className="menu" items={menuItems} />;
+    return (
+        <StyledMenu mode="inline" className="menu" items={menuItems} onClick={onMenuItemClick} />
+    );
 };
 
 SideMenu.displayName = 'SideMenu';
