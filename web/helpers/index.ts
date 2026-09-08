@@ -39,6 +39,7 @@ export * from './utils/appointmentCapacity';
 export * from './utils/fieldRules';
 export * from './utils/appointmentFieldRules';
 export * from './utils/appointmentGateQueue';
+export * from './utils/breadcrumbTrail';
 export * from './configs/misc';
 export * from './configs/cors-config';
 export * from './utils/passwordValidation';
