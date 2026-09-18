@@ -17,19 +17,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+import { DownOutlined } from '@ant-design/icons';
 import {
     BreadcrumbTrailItem,
     BreadcrumbType,
     isNumeric,
     previewBreadcrumbTrail,
-    registerBreadcrumbPage
+    recordRecentPageFromRoutes,
+    registerBreadcrumbPage,
+    useSideMenuEntries
 } from '@helpers';
 import { Breadcrumb } from 'antd';
+import { SideMenuAutoComplete } from 'components/common/smart/SideMenuAutoComplete/SideMenuAutoComplete';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, KeyboardEvent, useEffect, useMemo, useState } from 'react';
 import styled, { css } from 'styled-components';
 
 export interface IBreadcrumbProps {
@@ -62,6 +66,10 @@ let isHydrated = false;
  * went through, which these routes are merged into — see `helpers/utils/breadcrumbTrail.ts` for
  * the rules (append on navigation, truncate on a breadcrumb click, reset on a side-menu click).
  *
+ * The first item is usually a section label (Configuration, Stock management…) with no page of
+ * its own: clicking it opens a search box over every side-menu entry the user is allowed to open
+ * (`SideMenuAutoComplete`), a shortcut to the side menu.
+ *
  * Without `routes` (section headers inside forms, sub-lists embedded in a detail page) nothing is
  * rendered and the trail is left untouched.
  */
@@ -69,7 +77,9 @@ const GlobalBreadcrumb: FC<IBreadcrumbProps> = ({ routes }: IBreadcrumbProps) =>
     const { userSettings, tempTheme } = useAppState();
     const { t } = useTranslation();
     const router = useRouter();
+    const menuEntries = useSideMenuEntries();
     const [hydrated, setHydrated] = useState<boolean>(isHydrated);
+    const [isMenuPickerOpen, setIsMenuPickerOpen] = useState<boolean>(false);
 
     useEffect(() => {
         if (!hydrated) {
@@ -92,6 +102,8 @@ const GlobalBreadcrumb: FC<IBreadcrumbProps> = ({ routes }: IBreadcrumbProps) =>
     useEffect(() => {
         if (isPageBreadcrumb) {
             registerBreadcrumbPage(pageRoutes, router.asPath);
+            // the home page's "Recently visited" block (helpers/utils/recentPages.ts)
+            recordRecentPageFromRoutes(pageRoutes, router.asPath);
         }
     }, [isPageBreadcrumb, routesKey, router.asPath]);
 
@@ -103,14 +115,45 @@ const GlobalBreadcrumb: FC<IBreadcrumbProps> = ({ routes }: IBreadcrumbProps) =>
 
     const displayedItems: Array<BreadcrumbType & { pageHref?: string }> = trail ?? pageRoutes;
 
+    const openMenuPicker = () => setIsMenuPickerOpen(true);
+    const openMenuPickerFromKeyboard = (event: KeyboardEvent<HTMLAnchorElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openMenuPicker();
+        }
+    };
+
     const breadcrumbItems = displayedItems.map((item, index) => {
         const isLast = index === displayedItems.length - 1;
         // a previous page links back to the exact URL that was visited; the static path otherwise
         const href = (!isLast && item.pageHref) || item.path;
         const label = isNumeric(item.breadcrumbName) ? item.breadcrumbName : t(item.breadcrumbName);
-        return {
-            title: href ? <Link href={href}>{label}</Link> : label
-        };
+        if (href) {
+            return { title: <Link href={href}>{label}</Link> };
+        }
+        // first item without a page of its own → shortcut to the side menu (once it is published)
+        if (index === 0 && menuEntries.length > 0) {
+            return {
+                title: isMenuPickerOpen ? (
+                    <SideMenuAutoComplete
+                        placeholder={label}
+                        onClose={() => setIsMenuPickerOpen(false)}
+                    />
+                ) : (
+                    <a
+                        role="button"
+                        tabIndex={0}
+                        aria-haspopup="listbox"
+                        style={{ cursor: 'pointer' }}
+                        onClick={openMenuPicker}
+                        onKeyDown={openMenuPickerFromKeyboard}
+                    >
+                        {label} <DownOutlined style={{ fontSize: 10 }} />
+                    </a>
+                )
+            };
+        }
+        return { title: label };
     });
 
     const isDarkTheme = theme !== 'light';

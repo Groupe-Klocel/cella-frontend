@@ -33,10 +33,16 @@ import { Menu, MenuProps } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { getModesFromPermissions, resetBreadcrumbTrailOnNavigation } from '@helpers';
+import {
+    collectSideMenuSectionIcons,
+    flattenSideMenuItems,
+    getModesFromPermissions,
+    publishSideMenuEntries,
+    resetBreadcrumbTrailOnNavigation
+} from '@helpers';
 import styled from 'styled-components';
 import { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 
@@ -996,6 +1002,16 @@ const SideMenu: FC = () => {
             label: <Link href="/about">{t('about')}</Link>
         }
     ].filter(Boolean) as ItemType<MenuItemType>[];
+
+    // Share the navigable entries (already filtered by the user's permissions, labels translated)
+    // and the section icons with the breadcrumb's menu picker and the home page — see
+    // helpers/utils/sideMenuEntries.ts. Cheap: the store ignores a publication that changes nothing.
+    useEffect(() => {
+        publishSideMenuEntries(
+            flattenSideMenuItems(menuItems),
+            collectSideMenuSectionIcons(menuItems)
+        );
+    });
 
     return (
         <StyledMenu mode="inline" className="menu" items={menuItems} onClick={onMenuItemClick} />
