@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+import { useSyncExternalStore } from 'react';
 import { BreadcrumbType } from '../types/types';
 
 /**
@@ -55,6 +56,10 @@ import { BreadcrumbType } from '../types/types';
  *
  * Everything here is framework-free and pure except the small sessionStorage-backed store at the
  * bottom, so the merge rules can be reasoned about in isolation.
+ *
+ * The very last section keeps the **recently visited pages** shown on the home page: they are a
+ * by-product of the same registration (`GlobalBreadcrumb` records every page it displays a
+ * breadcrumb for), kept in localStorage and cleared on logout.
  */
 
 export type BreadcrumbTrailItem = BreadcrumbType & {
@@ -122,10 +127,11 @@ export const toBreadcrumbPathname = (
 
 const isTranslationKey = (name: string): boolean => TRANSLATION_KEY_PATTERN.test(name);
 
-const isPlaceholder = (item: BreadcrumbType): boolean =>
+export const isBreadcrumbPlaceholder = (item: BreadcrumbType): boolean =>
     typeof item?.breadcrumbName !== 'string' ||
     item.breadcrumbName.trim() === '' ||
     PLACEHOLDER_PATTERN.test(item.breadcrumbName);
+const isPlaceholder = isBreadcrumbPlaceholder;
 
 /**
  * Number of leading items that belong to the static part of a page's routes: the section labels
@@ -408,3 +414,127 @@ export const clearBreadcrumbTrail = (): void => {
         writeStoredTrail([]);
     }
 };
+
+// ---------------------------------------------------------------------------------------------
+// Recently visited pages — the "Recently visited" block of the home page.
+//
+// `GlobalBreadcrumb` records every page it displays a breadcrumb for (`recordRecentPageFromRoutes`):
+// the page's own item (a list page, a record…) with, as context, the list page it belongs to. The
+// list is kept in localStorage so it survives reloads, capped to the last few distinct pages, and
+// cleared on logout: warehouse workstations are shared.
+// ---------------------------------------------------------------------------------------------
+
+export type RecentPage = {
+    /** label of the page — a translation key (`menu:carriers`) or a record name, translate at render */
+    label: string;
+    /** label of the list page the page belongs to, when different from `label` */
+    meta?: string;
+    /** URL to go back to (`router.asPath`, query string included) */
+    href: string;
+    /** last visit, epoch ms */
+    at: number;
+};
+
+export const RECENT_PAGES_MAX_LENGTH = 8;
+
+const RECENT_PAGES_STORAGE_KEY = 'cella-recent-pages';
+
+// add / edit forms are steps of a task, not places worth coming back to
+const TRANSIENT_PATHNAME = /(^|\/)(add|edit)(\/|$)/;
+
+const NO_RECENT_PAGES: RecentPage[] = [];
+let memoryRecentPages: RecentPage[] | null = null;
+const recentPagesListeners = new Set<() => void>();
+
+const readStoredRecentPages = (): RecentPage[] => {
+    try {
+        const parsed = JSON.parse(window.localStorage.getItem(RECENT_PAGES_STORAGE_KEY) ?? '[]');
+        return Array.isArray(parsed)
+            ? parsed.filter(
+                  (item) => item && typeof item.label === 'string' && typeof item.href === 'string'
+              )
+            : [];
+    } catch {
+        return [];
+    }
+};
+
+const writeStoredRecentPages = (pages: RecentPage[]): void => {
+    try {
+        window.localStorage.setItem(RECENT_PAGES_STORAGE_KEY, JSON.stringify(pages));
+    } catch {
+        // storage unavailable: the in-memory list still serves the current page load
+    }
+};
+
+/** The recently visited pages, newest first (empty on the server). */
+export const getRecentPages = (): RecentPage[] => {
+    if (!isBrowser()) {
+        return NO_RECENT_PAGES;
+    }
+    if (memoryRecentPages === null) {
+        memoryRecentPages = readStoredRecentPages();
+    }
+    return memoryRecentPages;
+};
+
+const commitRecentPages = (pages: RecentPage[]): void => {
+    memoryRecentPages = pages;
+    writeStoredRecentPages(pages);
+    recentPagesListeners.forEach((listener) => listener());
+};
+
+/** Put a page at the top of the list (one entry per pathname, the newest label wins). */
+export const recordRecentPage = (page: Omit<RecentPage, 'at'>): void => {
+    if (!isBrowser()) {
+        return;
+    }
+    const pathname = toBreadcrumbPathname(page.href);
+    const others = getRecentPages().filter((item) => toBreadcrumbPathname(item.href) !== pathname);
+    commitRecentPages([{ ...page, at: Date.now() }, ...others].slice(0, RECENT_PAGES_MAX_LENGTH));
+};
+
+/**
+ * Record the page a breadcrumb is displayed for. Its own item is the last route; the list page it
+ * belongs to is the closest previous route with a path. Loading placeholders and add/edit forms
+ * are skipped — the page registers again once its record is loaded.
+ */
+export const recordRecentPageFromRoutes = (routes: BreadcrumbType[], asPath: string): void => {
+    const leaf = routes[routes.length - 1];
+    if (
+        !leaf ||
+        isBreadcrumbPlaceholder(leaf) ||
+        TRANSIENT_PATHNAME.test(toBreadcrumbPathname(asPath))
+    ) {
+        return;
+    }
+    const parent = [...routes.slice(0, -1)].reverse().find((item) => !!item.path);
+    recordRecentPage({
+        label: leaf.breadcrumbName,
+        meta:
+            parent && parent.breadcrumbName !== leaf.breadcrumbName
+                ? parent.breadcrumbName
+                : undefined,
+        href: asPath
+    });
+};
+
+/** Forget the list (logout). */
+export const clearRecentPages = (): void => {
+    if (!isBrowser()) {
+        return;
+    }
+    commitRecentPages([]);
+};
+
+const subscribeRecentPages = (listener: () => void): (() => void) => {
+    recentPagesListeners.add(listener);
+    return () => {
+        recentPagesListeners.delete(listener);
+    };
+};
+const getServerRecentPages = (): RecentPage[] => NO_RECENT_PAGES;
+
+/** The recently visited pages, newest first. */
+export const useRecentPages = (): RecentPage[] =>
+    useSyncExternalStore(subscribeRecentPages, getRecentPages, getServerRecentPages);
