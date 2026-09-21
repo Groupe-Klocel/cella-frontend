@@ -173,7 +173,9 @@ const MovementToProcess: PageComponent = () => {
         }
 
         if (!isFullHuMoving) {
-            headerDisplay[t('d:supplierName')] = <span>{movement?.article?.supplierName}</span>;
+            headerDisplay[t('common:supplier-article-code')] = (
+                <span>{movement?.article?.genericArticleComment}</span>
+            );
         }
 
         if (!isFullHuMoving) {
