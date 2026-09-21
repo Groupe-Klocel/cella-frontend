@@ -27,6 +27,7 @@ import {
     QuestionCircleOutlined,
     SettingOutlined,
     SlidersOutlined,
+    StarOutlined,
     TruckOutlined
 } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
@@ -41,7 +42,8 @@ import {
     flattenSideMenuItems,
     getModesFromPermissions,
     publishSideMenuEntries,
-    resetBreadcrumbTrailOnNavigation
+    resetBreadcrumbTrailOnNavigation,
+    useHomeFavourites
 } from '@helpers';
 import styled from 'styled-components';
 import { ItemType, MenuItemType } from 'antd/lib/menu/interface';
@@ -108,13 +110,8 @@ const SideMenu: FC = () => {
                     : null,
 
                 // ACCESS-MANAGEMENT
-                [
-                    'wm_roles',
-                    'wm_warehouse-workers',
-                    'wm_security',
-                    'wm_custom-permissions'
-                ].some((perm) =>
-                    getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+                ['wm_roles', 'wm_warehouse-workers', 'wm_security', 'wm_custom-permissions'].some(
+                    (perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
                 ) && {
                     key: 'administration-access-management',
                     label: t('access-management'),
@@ -1003,19 +1000,44 @@ const SideMenu: FC = () => {
         }
     ].filter(Boolean) as ItemType<MenuItemType>[];
 
+    const entries = flattenSideMenuItems(menuItems);
+
+    // FAVOURITES — the screens the user starred on the home page, as a first group (closed like
+    // the others). Resolved against the entries above, so a screen the user may no longer open is
+    // simply not listed. Not published below: the picker and the home page would show duplicates.
+    const { favourites } = useHomeFavourites();
+    const favouriteItems: ItemType<MenuItemType>[] = favourites.flatMap((href) => {
+        const entry = entries.find((item) => item.href === href);
+        return entry
+            ? [
+                  {
+                      key: `favourites-${entry.key}`,
+                      label: <Link href={entry.href}>{entry.title}</Link>
+                  }
+              ]
+            : [];
+    });
+    const items: ItemType<MenuItemType>[] =
+        favouriteItems.length > 0
+            ? [
+                  {
+                      key: 'favourites',
+                      icon: <StarOutlined />,
+                      label: t('common:favourites'),
+                      children: favouriteItems
+                  },
+                  ...menuItems
+              ]
+            : menuItems;
+
     // Share the navigable entries (already filtered by the user's permissions, labels translated)
     // and the section icons with the breadcrumb's menu picker and the home page — see
     // helpers/utils/sideMenuEntries.ts. Cheap: the store ignores a publication that changes nothing.
     useEffect(() => {
-        publishSideMenuEntries(
-            flattenSideMenuItems(menuItems),
-            collectSideMenuSectionIcons(menuItems)
-        );
+        publishSideMenuEntries(entries, collectSideMenuSectionIcons(menuItems));
     });
 
-    return (
-        <StyledMenu mode="inline" className="menu" items={menuItems} onClick={onMenuItemClick} />
-    );
+    return <StyledMenu mode="inline" className="menu" items={items} onClick={onMenuItemClick} />;
 };
 
 SideMenu.displayName = 'SideMenu';

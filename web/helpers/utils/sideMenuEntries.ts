@@ -125,7 +125,11 @@ export const collectSideMenuSectionIcons = (items: unknown): Record<string, Reac
 
 /** Accent- and case-insensitive comparison key. */
 export const normalizeForSearch = (value: string): string =>
-    value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+    value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 
 /** Does the entry (its label or one of its groups) contain what the user typed? */
 export const matchesSideMenuEntry = (entry: SideMenuEntry, input: string): boolean => {

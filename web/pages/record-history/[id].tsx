@@ -46,6 +46,8 @@ const RecordHistoryPage: PageComponent = () => {
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
+    // set by the list's "Include archives" button on its links: read production + archive
+    const withArchive = router.query.withArchive === 'true';
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [rollbackLoading, setRollbackLoading] = useState<boolean>(false);
@@ -206,9 +208,12 @@ const RecordHistoryPage: PageComponent = () => {
             <AppHead title={headerData.title} />
             <ItemDetailComponent
                 id={id!}
+                withArchive={withArchive}
                 headerData={headerData}
                 dataModel={model}
-                extraDataComponent={<RecordHistoryDetailsExtra sequenceId={id} />}
+                extraDataComponent={
+                    <RecordHistoryDetailsExtra sequenceId={id} withArchive={withArchive} />
+                }
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}

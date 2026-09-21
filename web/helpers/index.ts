@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 export * from './hooks/crudHooks';
 export * from './hooks/hooks';
 export * from './hooks/useFieldRules';
+export * from './hooks/useHomeFavourites';
 export * from './types/types';
 export * from './utils/cancelHuoDeliveryStatus';
 export * from './utils/constant';
