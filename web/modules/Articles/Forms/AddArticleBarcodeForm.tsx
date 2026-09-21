@@ -22,6 +22,11 @@ import { Button, Col, Input, Row, Form, Select, Checkbox } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from 'context/AuthContext';
+import {
+    useSimpleGetInProgressStockOwnersQuery,
+    SimpleGetInProgressStockOwnersQuery
+} from 'generated/graphql';
 import { showError, showSuccess, useArticleLus, getRulesWithNoSpacesValidator } from '@helpers';
 
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
@@ -46,6 +51,7 @@ export interface ISingleItemProps {
 
 export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
     const { t } = useTranslation('common');
+    const { graphqlRequestClient } = useAuth();
     const router = useRouter();
 
     // TEXTS TRANSLATION ( REFACTORING POSSIBLE / EXPORT / DON'T KNOW YET )
@@ -65,6 +71,20 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
     const [articleLus, setArticleLus] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [formValues, setFormValues] = useState<any>();
+    const [stockOwners, setStockOwners] = useState<any>();
+
+    // The stock owner is no longer inherited from the article and displayed read-only:
+    // it is picked by the user, and mandatory.
+    const stockOwnersList = useSimpleGetInProgressStockOwnersQuery<
+        Partial<SimpleGetInProgressStockOwnersQuery>,
+        Error
+    >(graphqlRequestClient);
+
+    useEffect(() => {
+        if (stockOwnersList) {
+            setStockOwners(stockOwnersList?.data?.stockOwners?.results);
+        }
+    }, [stockOwnersList.data]);
 
     // to render article_lu list and thus Lu related to selected article
     const articleLuData = useArticleLus({ articleId: props.articleId }, 1, 100, null);
@@ -79,7 +99,8 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
         form.validateFields()
             .then(() => {
                 const formData = form.getFieldsValue(true);
-                if (formData['stockOwnerId'] == '') formData['stockOwnerId'] = null;
+                // No empty -> null normalisation of stockOwnerId any more: the stock owner is
+                // mandatory, blanking it must be rejected by the form, not silently saved.
                 setIsLoading(true);
                 const fetchData = async () => {
                     const res = await fetch(`/api/barcodes/barcode_create/`, {
@@ -123,8 +144,8 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
         const tmp_details = {
             articleName: props.articleName,
             articleId: props.articleId,
+            // the stock owner coming from the URL is only the initial value, the user can change it
             stockOwnerId: props?.stockOwnerId,
-            stockOwnerName: props?.stockOwnerName,
             // pre-selected when coming from a packaging detail; the dropdown is already
             // restricted to this article's packagings, so the user can still change it
             ...(props?.articleLuId ? { articleLuId: props.articleLuId } : {})
@@ -154,8 +175,30 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
-                        <Form.Item name="stockOwnerName" label={stockOwner}>
-                            <Input disabled />
+                        <Form.Item
+                            label={stockOwner}
+                            name="stockOwnerId"
+                            rules={[{ required: true, message: errorMessageEmptyInput }]}
+                        >
+                            <Select
+                                showSearch
+                                placeholder={`${t('messages:please-select-a', {
+                                    name: t('d:stockOwner')
+                                })}`}
+                                // defensive: the option content is not always a string, and calling a
+                                // string method on it directly throws while the user is typing
+                                filterOption={(input, option) =>
+                                    String(option?.props?.children ?? '')
+                                        .toLowerCase()
+                                        .indexOf(input.toLowerCase()) >= 0
+                                }
+                            >
+                                {stockOwners?.map((stockOwnerItem: any) => (
+                                    <Option key={stockOwnerItem.id} value={stockOwnerItem.id}>
+                                        {stockOwnerItem.name}
+                                    </Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                     </Col>
                     <Col xs={8} xl={12}>
