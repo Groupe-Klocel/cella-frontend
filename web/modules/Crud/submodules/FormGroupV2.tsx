@@ -25,7 +25,7 @@ import 'dayjs/locale/de';
 import 'dayjs/locale/es';
 import localeDataPlugin from 'dayjs/plugin/localeData';
 import localizedFormatPlugin from 'dayjs/plugin/localizedFormat';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { setUTCDateTime, useTranslationWithFallback as useTranslation } from '@helpers';
 
 dayjs.extend(localeDataPlugin);
 // localizedFormat provides the L/LT format definitions for the base 'en'
@@ -77,8 +77,8 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
     dayjs.locale(locale);
 
     const localeData = dayjs.localeData();
-    const localeDateTimeFormat =
-        localeData.longDateFormat('L') + ' ' + localeData.longDateFormat('LT');
+    const localeDateFormat = localeData.longDateFormat('L');
+    const localeDateTimeFormat = localeDateFormat + ' ' + localeData.longDateFormat('LT');
 
     function ruleAttribution(rules: any, name: string) {
         const [isMandatory, minRule, maxRule] = Array.isArray(rules) ? rules : [];
@@ -158,11 +158,24 @@ const FormGroup: FC<IFormGroupProps> = (props: IFormGroupProps) => {
                             />
                         );
                     else if (item.type == FormDataType.Calendar) {
+                        // the day shown here must be the day shown in the list and in the
+                        // detail. Both derive it from the `setUTCDateTime` pipeline (the API
+                        // returns naive datetimes, rendered shifted by the browser offset), while
+                        // the form handed the raw string straight to `dayjs` - one day off for a
+                        // value stored late in the day. Reusing the same pipeline also makes an
+                        // untouched form submit back the very instant it read.
+                        const dateOnlyItem =
+                            item.dateOnly && typeof item.initialValue === 'string'
+                                ? { ...item, initialValue: setUTCDateTime(item.initialValue) }
+                                : item;
                         return (
                             <DatePickerInput
-                                item={item}
+                                item={dateOnlyItem}
                                 key={item.name + index}
-                                format={localeDateTimeFormat}
+                                // a date-only field is entered as a date, without a time -
+                                // otherwise the user would type a time shown nowhere else
+                                format={item.dateOnly ? localeDateFormat : localeDateTimeFormat}
+                                showTime={item.dateOnly ? false : undefined}
                             />
                         );
                     } else if (item.type == FormDataType.AutoComplete) {

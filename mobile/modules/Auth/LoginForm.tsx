@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Logo, StyledForm, WelcomeText, WrapperLogin } from '@components';
-import { cookie, META_DEFAULTS, showSuccess, showWarning } from '@helpers';
+import { cookie, LsIsSecured, META_DEFAULTS, showSuccess, showWarning } from '@helpers';
 import { Button, Form, Input } from 'antd';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
@@ -60,6 +60,11 @@ export const LoginForm = () => {
     const [form] = Form.useForm();
     useEffect(() => {
         if (isAuthenticated) {
+            // Fresh session: drop the RF process state a previous session left on this device.
+            // Both sides must be cleared: the secure-ls localStorage AND the in-memory context,
+            // otherwise AppLayout's debounced sync would write the old state right back.
+            LsIsSecured().removeAll();
+            dispatchUser({ type: 'DELETE_RF_PROCESS' });
             const token = cookie.get('token');
             if (token) {
                 try {

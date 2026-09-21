@@ -21,6 +21,7 @@ import { AppHead } from '@components';
 import { META_DEFAULTS } from '@helpers';
 import MainLayout from 'components/layouts/MainLayout';
 import { AddArticleBarcode } from 'modules/Articles/PagesContainer/AddArticleBarcode';
+import { singleQueryParam, toInternalPath } from 'modules/Articles/Static/articleLusRoutes';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -39,6 +40,14 @@ const AddBarcodePage: PageComponent = () => {
                 articleName={router.query.articleName}
                 stockOwnerId={router.query.stockOwnerId}
                 stockOwnerName={router.query.stockOwnerName}
+                // set when coming from a packaging detail (/articles/lu/[id]) so that the
+                // packaging is pre-selected and the user is sent back there, not to the article.
+                // returnPath is untrusted URL input and reaches router.push downstream: it is
+                // narrowed to an in-app path here, at the boundary, so what flows down is a plain
+                // string or nothing.
+                articleLuId={singleQueryParam(router.query.articleLuId)}
+                articleLuName={singleQueryParam(router.query.articleLuName)}
+                returnPath={toInternalPath(router.query.returnPath)}
             />
         </>
     );

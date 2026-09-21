@@ -270,7 +270,11 @@ export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
         // magic-filter predicate that arrived malformed): show it raw rather than "Invalid Date".
         if ((fieldDef?.type === 6 || fieldDef?.type === 7) && val) {
             const parsed = new Date(val);
-            return isNaN(parsed.getTime()) ? String(val) : parsed.toLocaleString();
+            if (isNaN(parsed.getTime())) return String(val);
+            // a date-only field never shows its time part in the tag
+            return fieldDef?.dateOnly
+                ? parsed.toLocaleDateString(filteredLanguage)
+                : parsed.toLocaleString(filteredLanguage);
         }
         // Check allSubOptions first
         const subOptionEntry = allSubOptions?.find((item: any) => item[fieldDef?.name]);
@@ -316,7 +320,11 @@ export const AdvancedFilterTags: FC<AdvancedFilterTagsProps> = ({
                       .map((date: any) => {
                           if (!date) return '*';
                           const parsed = new Date(date);
-                          return isNaN(parsed.getTime()) ? String(date) : parsed.toLocaleString();
+                          if (isNaN(parsed.getTime())) return String(date);
+                          // a date-only field never shows its time part in the tag
+                          return fieldDef?.dateOnly
+                              ? parsed.toLocaleDateString(filteredLanguage)
+                              : parsed.toLocaleString(filteredLanguage);
                       })
                       .join('->')
                 : rawValue.map((v) => resolveValue(v, fieldDef)).join(', ')

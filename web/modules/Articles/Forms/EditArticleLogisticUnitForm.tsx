@@ -26,7 +26,6 @@ import {
     showSuccess,
     useArticleLus,
     useHandlingUnitModels,
-    useLocations,
     usePatternIds
 } from '@helpers';
 import { Button, Col, Form, Input, InputNumber, Modal, Row, Select } from 'antd';
@@ -42,6 +41,9 @@ import {
 } from 'generated/graphql';
 import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useRouter } from 'next/router';
+import AutoComplete from '../../../components/common/smart/Form/MainInputs/AutoCompleteInput';
+import { askToReestimateDeliveries } from '../../../helpers/utils/reestimateDeliveries';
+import { useAppState } from 'context/AppContext';
 import { FC, useEffect, useState } from 'react';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
@@ -65,6 +67,9 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const { graphqlRequestClient } = useAuth();
+    // `configs` is already taken by the legacy JSON imported below; these are the DB rows, which is
+    // where the delivery_status codes actually live.
+    const { configs: dbConfigs } = useAppState();
     const router = useRouter();
     const filteredLanguage = getLanguageCode(router);
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
@@ -125,13 +130,11 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
     const [articleLuRotations, setArticleLuRotations] = useState<any>();
     const handlingUnitModelData = useHandlingUnitModels({}, 1, 100, null);
     const articleLuData = useArticleLus({}, 1, 100, null);
-    const locationData = useLocations({}, 1, 100, null);
     const patternData = usePatternIds({}, 1, 100, null);
     const [preparationMode, setModePreparation] = useState<Array<FormOptionType>>();
     const [disableReplenish, setDisableReplenish] = useState<boolean>(true);
     const [sortTypes, setSortTypes] = useState<Array<FormOptionType>>();
     const [pickingTypes, setPickingTypes] = useState<Array<FormOptionType>>();
-    const [locations, setLocations] = useState<Array<FormOptionType>>();
     const [patterns, setPatterns] = useState<Array<FormOptionType>>();
 
     // Retrieve Preparation Modes list
@@ -228,21 +231,6 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         }
     }, [pickingTypesList.data]);
 
-    // Retrieve locations list
-    useEffect(() => {
-        if (locationData.data) {
-            const newIdOpts: Array<FormOptionType> = [];
-            locationData.data.locations?.results.forEach(({ id, name, status, category }) => {
-                if (
-                    status != configs.LOCATION_STATUS_DISABLED &&
-                    category === configs.LOCATION_CATEGORY_PICKING
-                )
-                    newIdOpts.push({ text: name!, key: id! });
-            });
-            setLocations(newIdOpts);
-        }
-    }, [locationData.data]);
-
     // Retrieve patterns list
     useEffect(() => {
         if (patternData.data) {
@@ -277,6 +265,14 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
             ) => {
                 router.push(`/articles/lu/${data?.updateArticleLu?.id}`);
                 showSuccess(t('messages:success-updated'));
+                // changing a packaging invalidates the cubing of the deliveries already
+                // estimated for its article. Asked after the save lands, over the detail page.
+                askToReestimateDeliveries({
+                    graphqlRequestClient,
+                    configs: dbConfigs ?? [],
+                    t,
+                    articleIds: [details?.articleId]
+                });
             },
             onError: (err) => {
                 showError(t('messages:error-creating-data'));
@@ -362,6 +358,11 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
         } else {
             setDisableReplenish(true);
         }
+
+        // isPickingLocationDisplay was only ever set by the picking-type onChange, so editing
+        // a packaging already in "fixed picking" hid its picking location until the type was
+        // re-picked. Seed it from the record instead.
+        setIsPickingLocationDisplay(details?.pickingType == parameters.PICKING_TYPE_FIXED);
 
         form.setFieldsValue(tmp_details);
 
@@ -554,20 +555,42 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
                     </Col>
                     {isPickingLocationDisplay && (
                         <Col xs={8} xl={12}>
-                            <Form.Item label={pickingLocation} name="pickingLocationId">
-                                <Select
-                                    allowClear
-                                    placeholder={`${t('messages:please-select-a', {
-                                        name: t('d:pickingLocation')
-                                    })}`}
-                                >
-                                    {locations?.map((location: any) => (
-                                        <Option key={location.key} value={location.key}>
-                                            {location.text}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                            {/* the picking location is picked through the shared autocomplete.
+                            It used to be a plain Select fed by useLocations({}, 1, 100) - the 100
+                            most recently created locations of the whole warehouse - then filtered
+                            client-side on category/status. On a site with 26k picking locations
+                            that list came back empty, and there was no way to search. */}
+                            <AutoComplete
+                                key="pickingLocationId"
+                                item={
+                                    {
+                                        name: 'pickingLocationId',
+                                        displayName: pickingLocation,
+                                        initialValue: details?.pickingLocationId,
+                                        optionTable: {
+                                            table: 'Location',
+                                            fieldToDisplay: 'name',
+                                            // narrowing happens on the API side, not on a page of
+                                            // 100 rows fetched blindly
+                                            filtersToApply: {
+                                                category: configs.LOCATION_CATEGORY_PICKING
+                                            },
+                                            advancedFilters: [
+                                                {
+                                                    filter: [
+                                                        {
+                                                            searchType: 'DIFFERENT',
+                                                            field: {
+                                                                status: configs.LOCATION_STATUS_DISABLED
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    } as any
+                                }
+                            />
                         </Col>
                     )}
                 </Row>

@@ -146,7 +146,7 @@ const RoundPages: PageComponent = () => {
                 } else {
                     showWarning(t('messages:no-round-created'));
                 }
-                setRefetch(true);
+                setRefetch((prev) => !prev);
             }
             setIsRoundCalculationLoading(false);
         } catch (error) {
@@ -219,7 +219,8 @@ const RoundPages: PageComponent = () => {
                 console.log('Backend_message', launchRoundsResult.executeFunction.output.output);
             } else {
                 showSuccess(t('messages:success-round-start'));
-                setRefetch(true);
+                resetSelection();
+                setRefetch((prev) => !prev);
             }
             setStartRoundLoading(false);
         } catch (error) {
@@ -300,7 +301,7 @@ const RoundPages: PageComponent = () => {
     }, [selectedRows]);
 
     const rowSelection = {
-        selectedRows,
+        selectedRowKeys: selectedRows.map((row: any) => row.id),
         onChange: (keys: React.Key[], rows: any[]) => onSelectChange(rows),
         getCheckboxProps: (record: any) => ({
             name: record.name

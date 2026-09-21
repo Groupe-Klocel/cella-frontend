@@ -71,6 +71,8 @@ export type FilterFieldType = {
         filtersToApply?: { [key: string]: any };
     };
     isMultipleSearch?: boolean;
+    // field holding a date whose time part must never be shown nor entered
+    dateOnly?: boolean;
 };
 
 // Used for defining endpoints inside ModelType
@@ -133,6 +135,8 @@ export type FieldInfo = {
     isMultipleAddEdit?: boolean | null;
     filterConfigParam?: string;
     highlight?: any;
+    // the field carries a date only - no time in lists, details, filters and forms
+    dateOnly?: boolean;
 };
 
 export type FieldsInfo = {

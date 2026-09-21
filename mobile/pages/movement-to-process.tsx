@@ -173,6 +173,16 @@ const MovementToProcess: PageComponent = () => {
         }
 
         if (!isFullHuMoving) {
+            headerDisplay[t('common:supplier-article-code')] = (
+                <span>{movement?.article?.genericArticleComment}</span>
+            );
+        }
+
+        if (!isFullHuMoving) {
+            headerDisplay[t('d:description')] = <span>{movement?.article?.description}</span>;
+        }
+
+        if (!isFullHuMoving) {
             const movingQuantity = storedObject['step60']?.data?.movingQuantity;
             const totalQuantity = movement?.quantity;
             const isPartialQuantity = movingQuantity && movingQuantity !== totalQuantity;

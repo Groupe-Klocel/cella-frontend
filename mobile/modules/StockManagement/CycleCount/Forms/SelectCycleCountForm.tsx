@@ -23,14 +23,16 @@ import { WrapperForm, StyledForm, StyledFormItem, RadioButtons, ContentSpin } fr
 import {
     LsIsSecured,
     extractGivenConfigsParams,
+    findCodeByScopeAndValue,
     showError,
     showSuccess,
     getLanguageCode
 } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
+import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import configs from '../../../../../common/configs.json';
 import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
@@ -54,6 +56,7 @@ export const SelectCycleCountForm = ({
     buttons
 }: ISelectCycleCountProps) => {
     const { graphqlRequestClient } = useAuth();
+    const state = useAppState();
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -99,11 +102,18 @@ export const SelectCycleCountForm = ({
         min: 0,
         max: configs.CYCLE_COUNT_STATUS_VALIDATED
     });
+
+    const normalCycleCountModel = useMemo(() => {
+        const code = findCodeByScopeAndValue(state.configs, 'cycle_count_model', 'Normal');
+        return code !== undefined ? parseInt(code) : undefined;
+    }, [state.configs]);
+
     const cycleCountsList = useSimpleGetCycleCountsQuery<Partial<SimpleGetCycleCountsQuery>, Error>(
         graphqlRequestClient,
         {
             filters: {
-                status: configsToFilterOn
+                status: configsToFilterOn,
+                model: normalCycleCountModel
             },
             orderBy: null,
             page: 1,

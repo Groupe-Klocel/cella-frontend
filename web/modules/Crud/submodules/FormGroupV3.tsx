@@ -100,7 +100,14 @@ const FormGroupV3: FC<IGeneralSearchProps> = ({
                         item.type === FormDataType.Calendar ||
                         (item.type === FormDataType.CalendarRange && type === 'AdvancedFilters')
                     ) {
-                        return <DatePickerInput item={item} key={item.name} />;
+                        return (
+                            <DatePickerInput
+                                item={item}
+                                key={item.name}
+                                // a date-only field must not offer a time in the filters
+                                showTime={item.dateOnly ? false : undefined}
+                            />
+                        );
                     } else if (
                         item.type === FormDataType.CalendarRange &&
                         type !== 'AdvancedFilters'
