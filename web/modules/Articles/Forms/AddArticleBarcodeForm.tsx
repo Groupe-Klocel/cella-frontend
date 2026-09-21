@@ -25,6 +25,7 @@ import { useRouter } from 'next/router';
 import { showError, showSuccess, useArticleLus, getRulesWithNoSpacesValidator } from '@helpers';
 
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import { safeReturnPath } from '../Static/articleLusRoutes';
 
 interface IOption {
     value: string;
@@ -37,6 +38,10 @@ export interface ISingleItemProps {
     articleName: string | any;
     stockOwnerId: string | any;
     stockOwnerName: string | any;
+    // set when the barcode is added from a packaging detail - the packaging is pre-selected
+    // and the user goes back to it instead of landing on the article detail.
+    articleLuId?: string;
+    returnPath?: string;
 }
 
 export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
@@ -88,7 +93,9 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
                     });
 
                     if (res.ok) {
-                        router.push(`/articles/${props.articleId}`);
+                        router.push(
+                            safeReturnPath(props.returnPath, `/articles/${props.articleId}`)
+                        );
                         showSuccess(t('messages:success-created'));
                     }
                     if (!res.ok) {
@@ -117,7 +124,10 @@ export const AddArticleBarcodeForm = (props: ISingleItemProps) => {
             articleName: props.articleName,
             articleId: props.articleId,
             stockOwnerId: props?.stockOwnerId,
-            stockOwnerName: props?.stockOwnerName
+            stockOwnerName: props?.stockOwnerName,
+            // pre-selected when coming from a packaging detail; the dropdown is already
+            // restricted to this article's packagings, so the user can still change it
+            ...(props?.articleLuId ? { articleLuId: props.articleLuId } : {})
         };
         setFormValues(tmp_details);
         form.setFieldsValue(tmp_details);

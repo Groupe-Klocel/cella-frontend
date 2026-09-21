@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
 import { AppHead, LinkButton } from '@components';
 import {
+    findCodeByScopeAndValue,
     getModesFromPermissions,
     META_DEFAULTS,
     pathParams,
@@ -33,7 +34,7 @@ import { ModeEnum } from 'generated/graphql';
 import { DeliveryModelV2 as model } from '@helpers';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 import configs from '../../../common/configs.json';
 import { deliveriesRoutes as itemRoutes } from 'modules/Deliveries/Static/deliveriesRoutes';
 import { useAuth } from 'context/AuthContext';
@@ -61,10 +62,17 @@ const DeliveryPages: PageComponent = () => {
     const [assignLoadOpen, setAssignLoadOpen] = useState(false);
     const [assignApptOpen, setAssignApptOpen] = useState(false);
 
+    // cubing is only allowed while preparation has not started (< 'Started')
+    const startedDeliveryStatus = useMemo(
+        () => parseInt(findCodeByScopeAndValue(dbConfigs, 'delivery_status', 'Started')),
+        [dbConfigs]
+    );
+
     // selection accumulated across pages; a delivery can receive a load/appointment only
     // while it is not shipped (< Dispatched); its carrier comes from the shipping mode
     const {
         selectedRowKeys,
+        rowsInfo,
         rowSelection,
         eligibleIds,
         commonCarrierId,
@@ -159,6 +167,11 @@ const DeliveryPages: PageComponent = () => {
     };
 
     const hasSelected = selectedRowKeys.length > 0;
+    // a delivery already started (>= 'Started') cannot be cubed anymore
+    const canCubeAllDeliveries =
+        hasSelected &&
+        !isNaN(startedDeliveryStatus) &&
+        rowsInfo.every((row) => row.status !== undefined && row.status < startedDeliveryStatus);
     const actionButtons: ActionButtons = {
         actionsComponent:
             modes.length > 0 && modes.includes(ModeEnum.Update) ? (
@@ -174,7 +187,7 @@ const DeliveryPages: PageComponent = () => {
                         <Button
                             type="primary"
                             onClick={cubingDelivery}
-                            disabled={!hasSelected}
+                            disabled={!canCubeAllDeliveries}
                             loading={loading}
                         >
                             {t('actions:cubing')}
