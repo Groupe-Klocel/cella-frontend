@@ -28,21 +28,18 @@ import { AppHead, SideMenuAutoComplete } from '@components';
 import {
     isNumeric,
     resetBreadcrumbTrailOnNavigation,
-    showError,
     SideMenuEntry,
     SideMenuSection,
+    useHomeFavourites,
     useRecentPages,
     useSideMenuSections
 } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Avatar, Card, Col, Row, Space, Typography } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
-import { useAppDispatch, useAppState } from 'context/AppContext';
-import { useAuth } from 'context/AuthContext';
-import { gql } from 'graphql-request';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FC, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 
 const { Title, Text } = Typography;
@@ -324,96 +321,6 @@ const writeSelectedSection = (label: string | null): void => {
     }
 };
 
-// --------------------------------------------------------------------------------- favourites
-// Stored per user like the theme or the language: a `warehouseWorkerSetting` row with code
-// `homeFavourites` and `valueJson: { hrefs: string[] }`. AppLayout loads every setting of the user
-// into AppContext at boot, so reading is synchronous; toggling updates the context first
-// (optimistic) and then creates or updates the row.
-
-const HOME_FAVOURITES_CODE = 'homeFavourites';
-
-const CREATE_SETTING = gql`
-    mutation ($input: CreateWarehouseWorkerSettingInput!) {
-        createWarehouseWorkerSetting(input: $input) {
-            id
-            code
-            valueJson
-        }
-    }
-`;
-
-const UPDATE_SETTING = gql`
-    mutation ($id: String!, $input: UpdateWarehouseWorkerSettingInput!) {
-        updateWarehouseWorkerSetting(id: $id, input: $input) {
-            id
-            code
-            valueJson
-        }
-    }
-`;
-
-const useHomeFavourites = () => {
-    const { userSettings, user } = useAppState();
-    const dispatch = useAppDispatch();
-    const { graphqlRequestClient } = useAuth();
-    const { t } = useTranslation();
-
-    const settings: any[] = Array.isArray(userSettings) ? userSettings : [];
-    const setting = settings.find((item: any) => item?.code === HOME_FAVOURITES_CODE);
-    const favourites: string[] = Array.isArray(setting?.valueJson?.hrefs)
-        ? setting.valueJson.hrefs.filter((href: unknown) => typeof href === 'string')
-        : [];
-
-    const isFavourite = useCallback((href: string) => favourites.includes(href), [favourites]);
-
-    const toggleFavourite = useCallback(
-        async (href: string) => {
-            const next = favourites.includes(href)
-                ? favourites.filter((item) => item !== href)
-                : [...favourites, href];
-            const valueJson = { ...(setting?.valueJson ?? {}), hrefs: next };
-            const withValue = (id?: string) =>
-                setting
-                    ? settings.map((item: any) =>
-                          item.code === HOME_FAVOURITES_CODE
-                              ? { ...item, id: id ?? item.id, valueJson }
-                              : item
-                      )
-                    : [...settings, { id, code: HOME_FAVOURITES_CODE, valueJson }];
-
-            // optimistic: the star reacts immediately
-            dispatch({ type: 'SWITCH_USER_SETTINGS', userSettings: withValue() });
-            try {
-                if (setting?.id) {
-                    await graphqlRequestClient.request(UPDATE_SETTING, {
-                        id: setting.id,
-                        input: { valueJson }
-                    });
-                } else {
-                    const created: any = await graphqlRequestClient.request(CREATE_SETTING, {
-                        input: {
-                            code: HOME_FAVOURITES_CODE,
-                            warehouseWorkerId: user?.id,
-                            valueJson
-                        }
-                    });
-                    dispatch({
-                        type: 'SWITCH_USER_SETTINGS',
-                        userSettings: withValue(created?.createWarehouseWorkerSetting?.id)
-                    });
-                }
-            } catch (error) {
-                console.error('home favourites: could not save', error);
-                showError(t('messages:error-update-data'));
-                dispatch({ type: 'SWITCH_USER_SETTINGS', userSettings: settings });
-            }
-        },
-        [favourites, setting, settings, dispatch, graphqlRequestClient, user?.id, t]
-    );
-
-    return { favourites, isFavourite, toggleFavourite };
-};
-
 // ------------------------------------------------------------------------------------- pieces
 
 interface IScreenChipProps {
@@ -465,9 +372,17 @@ const SectionHeader: FC<{ section: HomeSection; size: number }> = ({ section, si
     const { t } = useTranslation();
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* antd centres a sized avatar's icon with its default line-height (32px): centre it
+                with flex so it sits in the middle whatever the size */}
             <Avatar
                 size={size}
-                style={{ backgroundColor: section.color, flex: '0 0 auto' }}
+                style={{
+                    backgroundColor: section.color,
+                    flex: '0 0 auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
                 icon={section.icon ?? <AppstoreOutlined />}
             />
             <div style={{ lineHeight: 1.2 }}>
@@ -719,7 +634,7 @@ const HomePage: PageComponent = () => {
             <AppHead title={t('common:cella')} />
             <div style={{ padding: '20px 28px 40px' }} data-testid="home-navigation">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
-                    <img alt="logo" src="/cella-logo.png" width={60} />
+                    <img alt="logo" src="/cella-logo.png" width={60} className="welcomeLogo" />
                     <Title level={4} style={{ margin: 0 }}>
                         {t('common:cella')}
                     </Title>

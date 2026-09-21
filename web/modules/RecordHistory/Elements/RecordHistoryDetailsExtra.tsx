@@ -30,9 +30,11 @@ import { RecordHistoryDiffComponent } from './RecordHistoryDiffComponent';
 export interface IItemDetailsProps {
     // From next/router: a string on the [id] route, but string[] | undefined in the general case.
     sequenceId?: string | string[];
+    /** read production + archive (the page got `?withArchive=true` from the list's button) */
+    withArchive?: boolean;
 }
 
-const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
+const RecordHistoryDetailsExtra = ({ sequenceId, withArchive }: IItemDetailsProps) => {
     const { t } = useTranslation();
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
@@ -61,10 +63,11 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
 
     return (
         <>
-            <RecordHistoryDiffComponent sequenceId={resolvedSequenceId} />
+            <RecordHistoryDiffComponent sequenceId={resolvedSequenceId} withArchive={withArchive} />
             <Divider />
             <ListComponent
                 searchCriteria={{ sequenceId: numericSequenceId }}
+                withArchive={withArchive}
                 headerData={headerDataBefore}
                 dataModel={modelBefore}
                 triggerDelete={{ idToDelete, setIdToDelete }}
@@ -75,6 +78,7 @@ const RecordHistoryDetailsExtra = ({ sequenceId }: IItemDetailsProps) => {
             <Divider />
             <ListComponent
                 searchCriteria={{ sequenceId: numericSequenceId }}
+                withArchive={withArchive}
                 headerData={headerDataAfter}
                 dataModel={modelAfter}
                 triggerDelete={{ idToDelete, setIdToDelete }}

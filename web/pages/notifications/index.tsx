@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { DeleteOutlined, EditTwoTone, EyeTwoTone, LockTwoTone } from '@ant-design/icons';
-import { AppHead, LinkButton } from '@components';
+import { AppHead, ArchiveToggle, LinkButton } from '@components';
 import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
@@ -40,10 +40,24 @@ const NotificationPages: PageComponent = () => {
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
+    // read production + archive; page state only, never saved
+    const [withArchive, setWithArchive] = useState<boolean>(false);
+    // the detail page reads the archive too when it is opened from an archive read
+    const detailPath = (id: string) => ({
+        pathname: `${rootPath}/[id]`,
+        query: withArchive ? { id, withArchive: 'true' } : { id }
+    });
+
     const headerData: HeaderData = {
         title: t('common:notifications'),
         routes: itemRoutes,
-        actionsComponent: null
+        actionsComponent: (
+            <ArchiveToggle
+                tableName={model.tableName}
+                active={withArchive}
+                onChange={setWithArchive}
+            />
+        )
     };
 
     const confirmAction = (id: string | undefined, setId: any, action: 'delete' | 'disable') => {
@@ -65,6 +79,7 @@ const NotificationPages: PageComponent = () => {
             <ListComponent
                 headerData={headerData}
                 dataModel={model}
+                withArchive={withArchive}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 actionColumns={[
@@ -76,7 +91,7 @@ const NotificationPages: PageComponent = () => {
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
                                         icon={<EyeTwoTone />}
-                                        path={pathParams(`${rootPath}/[id]`, record.id)}
+                                        path={detailPath(record.id)}
                                     />
                                 ) : (
                                     <></>
