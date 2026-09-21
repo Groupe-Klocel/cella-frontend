@@ -614,6 +614,28 @@ export const HandlingUnitOutboundModelV2: ModelType = {
             config: null,
             param: null
         },
+        // the equipment (e.g. sorter chute) position barcode scanned for the box,
+        // not user-editable so it is excluded from the add/edit form (addEditFormat: null)
+        equipmentPositionBarcode: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: null,
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null
+        },
         carrierBox: {
             isListRequested: false,
             isDefaultHiddenList: false,

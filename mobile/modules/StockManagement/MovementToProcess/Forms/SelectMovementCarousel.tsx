@@ -158,7 +158,7 @@ export const SelectMovementCarousel = ({
                         articleIdStr
                         articleNameStr
                         article {
-                            supplierName
+                            genericArticleComment
                             description
                         }
                         quantity
@@ -467,12 +467,12 @@ export const SelectMovementCarousel = ({
                                                 <Typography
                                                     style={{ color: 'grey', fontSize: '10px' }}
                                                 >
-                                                    {t('d:supplierName')}:
+                                                    {t('common:supplier-article-code')}:
                                                 </Typography>
                                             </Col>
                                             <Col span={16}>
                                                 <Typography style={{ fontSize: '10px' }}>
-                                                    {movement.article?.supplierName}
+                                                    {movement.article?.genericArticleComment}
                                                 </Typography>
                                             </Col>
                                         </Row>
