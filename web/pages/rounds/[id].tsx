@@ -74,6 +74,12 @@ const RoundPage: PageComponent = () => {
         configs.filter((c: any) => c.scope === 'round_status' && c.value === 'Started')[0]?.code
     );
 
+    // The Started code comes from the config table and can be missing: parseInt then yields NaN
+    // and `status >= NaN` is always false, which would silently remove the boxes labels button
+    // altogether. When the code cannot be resolved we display the button (the behaviour that
+    // existed before the lower threshold was added) rather than taking a feature away.
+    const hasUsableRoundsStatusStarted = Number.isFinite(roundsStatusStarted);
+
     //This specific request is to sort boxes according to raa order
     const getRoundWithSortedRaa = async () => {
         const query = gql`
@@ -269,16 +275,34 @@ const RoundPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                <Button
-                    type="primary"
-                    ghost
-                    onClick={() => {
-                        setShowNumberOfPrintsModal(true);
-                        setIdsToPrint(boxesList);
-                    }}
-                >
-                    {t('actions:print-boxes-labels')}
-                </Button>
+                {/* Print boxes labels: only once the round has actually been launched
+                    (from Started onwards). No upper bound on purpose: hiding the button on a
+                    terminated round would prevent reprinting labels. */}
+                {!hasUsableRoundsStatusStarted || Number(data?.status) >= roundsStatusStarted ? (
+                    <>
+                        <Button
+                            type="primary"
+                            ghost
+                            onClick={() => {
+                                setShowNumberOfPrintsModal(true);
+                                setIdsToPrint(boxesList);
+                            }}
+                        >
+                            {t('actions:print-boxes-labels')}
+                        </Button>
+                        <NumberOfPrintsModalV2
+                            showModal={{
+                                showNumberOfPrintsModal,
+                                setShowNumberOfPrintsModal
+                            }}
+                            dataToPrint={{ boxes: idsToPrint }}
+                            documentName="K_OutboundHandlingUnitLabel"
+                            documentReference={data?.name}
+                        />
+                    </>
+                ) : (
+                    <></>
+                )}
                 {String(
                     // parameters is undefined until loaded (or if the fetch errored):
                     // fail closed rather than crash the whole round page
@@ -295,15 +319,6 @@ const RoundPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                <NumberOfPrintsModalV2
-                    showModal={{
-                        showNumberOfPrintsModal,
-                        setShowNumberOfPrintsModal
-                    }}
-                    dataToPrint={{ boxes: idsToPrint }}
-                    documentName="K_OutboundHandlingUnitLabel"
-                    documentReference={data?.name}
-                />
             </Space>
         )
     };

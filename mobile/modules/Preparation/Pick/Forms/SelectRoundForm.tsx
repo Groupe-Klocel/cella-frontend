@@ -301,6 +301,7 @@ export const SelectRoundForm = ({
                         handlingUnit {
                             id
                             type
+                            name
                         }
                     }
                     roundAdvisedAddresses(

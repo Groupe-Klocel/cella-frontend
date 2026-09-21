@@ -140,6 +140,10 @@ export const ScanHandlingUnit = ({
                                 status
                                 name
                                 roundId
+                                round {
+                                    id
+                                    name
+                                }
                             }
                             handlingUnitContents(
                                     advancedFilters: {
