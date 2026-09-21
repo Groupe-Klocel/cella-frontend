@@ -35,6 +35,10 @@ query GetLoads(
             carrier {
                 name
             }
+            carrierShippingModeId
+            carrierShippingMode {
+                name
+            }
             weight
             numberHuLoaded
         }

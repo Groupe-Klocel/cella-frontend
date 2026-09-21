@@ -157,6 +157,10 @@ export const SelectMovementCarousel = ({
                         stockOwnerNameStr
                         articleIdStr
                         articleNameStr
+                        article {
+                            genericArticleComment
+                            description
+                        }
                         quantity
                         initialStatusText
                         initialReservation
@@ -455,6 +459,34 @@ export const SelectMovementCarousel = ({
                                             <Col span={16}>
                                                 <Typography style={{ fontSize: '10px' }}>
                                                     {movement.articleNameStr}
+                                                </Typography>
+                                            </Col>
+                                        </Row>
+                                        <Row>
+                                            <Col span={8}>
+                                                <Typography
+                                                    style={{ color: 'grey', fontSize: '10px' }}
+                                                >
+                                                    {t('common:supplier-article-code')}:
+                                                </Typography>
+                                            </Col>
+                                            <Col span={16}>
+                                                <Typography style={{ fontSize: '10px' }}>
+                                                    {movement.article?.genericArticleComment}
+                                                </Typography>
+                                            </Col>
+                                        </Row>
+                                        <Row>
+                                            <Col span={8}>
+                                                <Typography
+                                                    style={{ color: 'grey', fontSize: '10px' }}
+                                                >
+                                                    {t('d:description')}:
+                                                </Typography>
+                                            </Col>
+                                            <Col span={16}>
+                                                <Typography style={{ fontSize: '10px' }}>
+                                                    {movement.article?.description}
                                                 </Typography>
                                             </Col>
                                         </Row>

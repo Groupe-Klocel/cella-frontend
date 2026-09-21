@@ -58,8 +58,10 @@ export const SelectLoadForm = ({
 
     useEffect(() => {
         if (camData) {
-            if (loads?.some((option) => option.text === camData)) {
-                const roundToFind = loads?.find((option) => option.text === camData);
+            if (loads?.some((option) => option.name === camData || option.text === camData)) {
+                const roundToFind = loads?.find(
+                    (option) => option.name === camData || option.text === camData
+                );
                 form.setFieldsValue({ loads: roundToFind.key });
             } else {
                 showError(t('messages:unexpected-scanned-item'));
@@ -99,7 +101,13 @@ export const SelectLoadForm = ({
             const cData = loadsList?.data?.loads?.results;
             if (cData) {
                 cData.forEach((item) => {
-                    newTypeTexts.push({ key: item.id, text: item.name });
+                    //display "<load name> - <carrier shipping mode>", falling back on the carrier
+                    const suffix = item.carrierShippingMode?.name ?? item.carrier?.name;
+                    newTypeTexts.push({
+                        key: item.id,
+                        name: item.name,
+                        text: suffix ? `${item.name} - ${suffix}` : item.name
+                    });
                 });
                 setLoads(newTypeTexts);
             }

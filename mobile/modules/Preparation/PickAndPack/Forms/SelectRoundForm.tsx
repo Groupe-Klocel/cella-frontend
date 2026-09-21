@@ -30,6 +30,7 @@ import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
 import moment from 'moment';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import { roundAdvisedAddressCouple } from '../Elements/endOfProcessHandling';
 
 export interface ISelectRoundProps {
     processName: string;
@@ -191,6 +192,34 @@ export const SelectRoundForm = ({
     //SelectRound-2a: retrieve chosen level from select and set information
     const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
+
+        const updateRoundMutation = gql`
+            mutation updateRounds(
+                $ids: [String!]!
+                $input: UpdateRoundInput!
+                $advancedFilters: [RoundAdvancedSearchFilters!]
+            ) {
+                updateRounds(ids: $ids, input: $input, advancedFilters: $advancedFilters)
+            }
+        `;
+        const updateRoundVariables = {
+            ids: ['BULK'],
+            input: {
+                assignedUser: user.username
+            },
+            advancedFilters: [
+                {
+                    filter: [
+                        { searchType: 'EQUAL', field: { assignedUser: null } },
+                        { searchType: 'EQUAL', field: { assignedUser: user.username } }
+                    ]
+                },
+                { filter: [{ searchType: 'EQUAL', field: { id: values.rounds } }] }
+            ]
+        };
+
+        await graphqlRequestClient.request(updateRoundMutation, updateRoundVariables);
+
         const query = gql`
             query round($id: String!) {
                 round(id: $id) {
@@ -316,6 +345,7 @@ export const SelectRoundForm = ({
                                     name
                                     description
                                     genericArticleComment
+                                    masterBarcode
                                 }
                                 status
                                 statusText
@@ -353,32 +383,6 @@ export const SelectRoundForm = ({
             );
             return;
         }
-        if (!selectedRound?.round?.assignedUser) {
-            // if the round is not assigned, we assign it to the current user
-            const updateRoundMutation = gql`
-                mutation updateRound($id: String!, $input: UpdateRoundInput!) {
-                    updateRound(id: $id, input: $input) {
-                        id
-                        status
-                        assignedUser
-                    }
-                }
-            `;
-            const updateRoundVariables = {
-                id: selectedRound?.round?.id,
-                input: {
-                    assignedUser: user.username
-                }
-            };
-
-            const updateRoundResult = await graphqlRequestClient.request(
-                updateRoundMutation,
-                updateRoundVariables
-            );
-            selectedRound.round.assignedUser = updateRoundResult.updateRound.assignedUser;
-            console.log('updateRoundResult', updateRoundResult);
-        }
-
         data['round'] = selectedRound.round;
 
         const roundAdvisedAddresses = selectedRound?.round?.roundAdvisedAddresses?.filter(
@@ -386,10 +390,14 @@ export const SelectRoundForm = ({
         );
 
         if (roundAdvisedAddresses) {
-            //retrieve list of proposedRoundAdvisedAddresses for a given huc
+            // Group by the location/article couple, not the raw handlingUnitContentId: a line
+            // without picking stock has none, so a naive equality check would match every such
+            // line in the round (null == null) and bundle unrelated articles/quantities together -
+            // see roundAdvisedAddressCouple.
             const raaForHUC = roundAdvisedAddresses.filter(
                 (raa: any) =>
-                    raa.handlingUnitContentId == roundAdvisedAddresses[0].handlingUnitContentId
+                    roundAdvisedAddressCouple(raa) ===
+                    roundAdvisedAddressCouple(roundAdvisedAddresses[0])
             );
             // if checkPosition is true, it is detail, otherwise full box
             data['proposedRoundAdvisedAddresses'] = selectedRound.round.equipment.checkPosition
@@ -492,6 +500,7 @@ export const SelectRoundForm = ({
                     <Select
                         style={{ height: '20px', marginBottom: '5px' }}
                         showSearch
+                        autoFocus
                         filterOption={(inputValue, option) =>
                             option!.props.children
                                 .toUpperCase()

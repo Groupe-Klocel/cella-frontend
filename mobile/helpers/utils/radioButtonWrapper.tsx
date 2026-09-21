@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Button } from 'antd';
 import { WrapperButtons, StyledButton } from '@components';
 
@@ -34,12 +34,46 @@ interface RadioButtonWrapperProps {
     currentStep: number;
     buttonManagement: ButtonConfig[];
     children: ReactNode;
+    // While set, the button whose `key` matches shows a spinner and every other button is
+    // disabled: a validation triggered by that button is still running (see useValidationButtonLock)
+    blockingButtonKey?: string | null;
 }
+
+// Locks the RF action buttons while a validation triggered by one of them is in flight.
+// The lock is released when the process state changes (every successful validation dispatches),
+// when an error/warning toast fires (every failed validation shows one — see showMessage in
+// utils.ts, which emits the 'rf-show-message' event), or after 30s as a dead-man's switch
+// (e.g. a network failure that neither dispatches nor shows a toast).
+export const useValidationButtonLock = (storedObject: any) => {
+    const [blockingButtonKey, setBlockingButtonKey] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (blockingButtonKey) setBlockingButtonKey(null);
+    }, [storedObject]);
+
+    useEffect(() => {
+        const onMessage = (event: any) => {
+            const type = event?.detail?.type;
+            if (type === 'error' || type === 'warning') setBlockingButtonKey(null);
+        };
+        window.addEventListener('rf-show-message', onMessage);
+        return () => window.removeEventListener('rf-show-message', onMessage);
+    }, []);
+
+    useEffect(() => {
+        if (!blockingButtonKey) return;
+        const timer = setTimeout(() => setBlockingButtonKey(null), 30000);
+        return () => clearTimeout(timer);
+    }, [blockingButtonKey]);
+
+    return { blockingButtonKey, lockButtons: setBlockingButtonKey };
+};
 
 export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
     currentStep,
     buttonManagement,
-    children
+    children,
+    blockingButtonKey
 }) => {
     const topButtons = buttonManagement.filter(
         (button) =>
@@ -88,6 +122,21 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
         }
     `;
 
+    // The inline gradient hides antd's disabled look, so fade blocked buttons explicitly
+    const buttonStateProps = (button: ButtonConfig) => {
+        const isBlocking = !!blockingButtonKey && button.key === blockingButtonKey;
+        const isBlocked = !!blockingButtonKey && !isBlocking;
+        return {
+            disabled: isBlocked,
+            loading: isBlocking,
+            style: {
+                ...buttonStyle,
+                ...(button.style ?? {}),
+                ...(isBlocked ? { opacity: 0.45 } : {})
+            }
+        };
+    };
+
     return (
         <>
             <style>{activeButtonStyle}</style>
@@ -99,7 +148,7 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
                             icon={button.icon}
                             onClick={button.onClick}
                             className="custom-button"
-                            style={button.style ? { ...buttonStyle, ...button.style } : buttonStyle}
+                            {...buttonStateProps(button)}
                         >
                             {button.label}
                         </Button>
@@ -115,7 +164,7 @@ export const RadioButtonWrapper: React.FC<RadioButtonWrapperProps> = ({
                             icon={button.icon}
                             onClick={button.onClick}
                             className="custom-button"
-                            style={button.style ? { ...buttonStyle, ...button.style } : buttonStyle}
+                            {...buttonStateProps(button)}
                         >
                             {button.label}
                         </Button>
