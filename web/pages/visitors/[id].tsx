@@ -39,7 +39,11 @@ import { ModeEnum } from 'generated/graphql';
 import { visitorsRoutes as itemRoutes } from 'modules/Visitors/Static/visitorsRoutes';
 import { useAuth } from 'context/AuthContext';
 import { VisitorDetailsExtra } from 'modules/Visitors/Elements/VisitorDetailsExtra';
-import { checkOutVisit, cancelVisit } from 'modules/Visitors/Functions/visitorActions';
+import {
+    checkOutVisit,
+    cancelVisit,
+    isVisitWithinDateRange
+} from 'modules/Visitors/Functions/visitorActions';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -72,6 +76,11 @@ const VisitorPage: PageComponent = () => {
 
     const isPreCheckIn =
         data?.status === visitStatuses.toBeChecked || data?.status === visitStatuses.preRegistered;
+
+    // A visitor who has left can come back as long as the visit is still running (multi-day visit,
+    // or several passages in the same day): the check-in screen is offered again.
+    const canCheckInAgain =
+        data?.status === visitStatuses.checkedOut && isVisitWithinDateRange(data);
 
     const confirmCheckOut = () => {
         Modal.confirm({
@@ -127,7 +136,7 @@ const VisitorPage: PageComponent = () => {
                         type="primary"
                     />
                 ) : null}
-                {checkInModes.includes(ModeEnum.Read) && isPreCheckIn ? (
+                {checkInModes.includes(ModeEnum.Read) && (isPreCheckIn || canCheckInAgain) ? (
                     <LinkButton
                         icon={<LoginOutlined />}
                         tooltip={t('actions:visitor-check-in')}

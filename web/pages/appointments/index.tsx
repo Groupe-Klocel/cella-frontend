@@ -26,7 +26,6 @@ import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import {
     getModesFromPermissions,
-    getTruckTypeCodes,
     getVisitTypeCode,
     isCarrierAppointmentUser,
     pathParams,
@@ -80,12 +79,26 @@ const AppointmentsPages: PageComponent = () => {
     );
     const { graphqlRequestClient } = useAuth();
 
-    // visits (type Visit) never appear in the truck appointment list: when the
-    // Visit type is configured, the list is locked to the truck type codes
+    // visits (type Visit) never appear in the truck appointment list. The exclusion is a forced
+    // ADVANCED filter (type <> Visit), not a page-level `searchCriteria` on `appointmentType`: the
+    // list component lets a page criteria override the user's own value on the same key at every
+    // render, so locking the list to the truck type codes made the "Appointment type" column
+    // filter inoperative as soon as a Visit type existed. Advanced filters injected by the page
+    // are AND-ed with the user's filters, hidden from the tags and never cleared, and they leave
+    // `appointmentType` free for the user.
     const visitTypeCode = useMemo(() => getVisitTypeCode(configs), [configs]);
-    const truckSearchCriteria = useMemo(
-        () => (visitTypeCode !== undefined ? { appointmentType: getTruckTypeCodes(configs) } : {}),
-        [configs, visitTypeCode]
+    const excludeVisitsFilter = useMemo(
+        () =>
+            visitTypeCode !== undefined
+                ? [
+                      {
+                          filter: [
+                              { field: { appointmentType: visitTypeCode }, searchType: 'DIFFERENT' }
+                          ]
+                      }
+                  ]
+                : [],
+        [visitTypeCode]
     );
 
     const ICON_MAP: Record<string, ComponentType<any>> = {
@@ -347,7 +360,7 @@ const AppointmentsPages: PageComponent = () => {
                 }}
             />
             <ListComponent
-                searchCriteria={truckSearchCriteria}
+                advancedFilters={excludeVisitsFilter}
                 headerData={headerData}
                 dataModel={model}
                 actionButtons={actionButtons}
