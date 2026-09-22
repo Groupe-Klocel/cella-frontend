@@ -18,12 +18,18 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
+// Tablet sizing only. The two language buttons sit in a grid near the top of the
+// screen (like GateEntry/PagesContainer/SelectLanguage.tsx) and are taller, with bigger flags and
+// text, so they read from standing height at the reception desk. Behaviour is unchanged. The sizes
+// are classes styled by modules/Common/Kiosk/KioskSkin.tsx (kiosk-welcome-*, kiosk-lang-btn) so the
+// phone variant can shrink them.
+
 // DESCRIPTION: visitor-entry step 10 - the visitor chooses the kiosk language.
 // Only German and English are offered on the visitor tablet.
 
 import { WrapperForm } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { Space, Typography } from 'antd';
+import { Typography } from 'antd';
 import { useRouter } from 'next/router';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { GateButton } from '../../GateEntry/Elements/GateButton';
@@ -63,23 +69,44 @@ export const SelectVisitorLanguage = ({ processName, stepNumber }: ISelectVisito
     };
 
     return (
-        <WrapperForm style={{ textAlign: 'center', marginTop: '15%' }}>
-            <Title level={2}>{t('common:visitor-welcome-title')}</Title>
-            <Text type="secondary" style={{ fontSize: 18, display: 'block', marginBottom: 32 }}>
+        <WrapperForm style={{ textAlign: 'center', marginTop: 48 }}>
+            <Title level={1} className="kiosk-welcome-title">
+                {t('common:visitor-welcome-title')}
+            </Title>
+            <Text type="secondary" className="kiosk-welcome-subtitle">
                 {t('common:visitor-welcome-subtitle')}
             </Text>
-            <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: 360 }}>
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                    gap: 24,
+                    width: '100%',
+                    maxWidth: 680,
+                    margin: '0 auto'
+                }}
+            >
                 {LANGUAGES.map((l) => (
-                    <GateButton key={l.code} onClick={() => onSelect(l.code)}>
+                    <GateButton
+                        key={l.code}
+                        className="kiosk-lang-btn"
+                        onClick={() => onSelect(l.code)}
+                    >
                         <img
                             src={l.flag}
                             alt={l.label}
-                            style={{ width: 18, height: 'auto', verticalAlign: 'middle' }}
+                            style={{
+                                width: 40,
+                                height: 'auto',
+                                verticalAlign: 'middle',
+                                border: '1px solid rgba(0,0,0,0.15)',
+                                borderRadius: 3
+                            }}
                         />
-                        &nbsp;&nbsp;{l.label}
+                        &nbsp;&nbsp;&nbsp;{l.label}
                     </GateButton>
                 ))}
-            </Space>
+            </div>
         </WrapperForm>
     );
 };

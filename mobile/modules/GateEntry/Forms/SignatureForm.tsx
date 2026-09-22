@@ -18,15 +18,30 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
+// `safetyChecklist` now also carries `documents` (the identity of the documents the
+// driver was actually shown, fingerprinted at step 40) and `acceptedAt`. Both are ADDED next to the
+// existing keys — nothing written here before is removed or renamed, because `extras` is a
+// whole-object replace and several clients write it.
+// NOTE: `web/helpers/utils/appointmentGateQueue.ts` (readAppointmentExtras /
+// buildExtrasPatchInput, which re-read `extras` from the API before patching) has NO mobile
+// counterpart — it lives in the `web` workspace and mobile cannot import from it. It would not fit
+// the ad-hoc branch either, where the appointment does not exist yet. So the existing write
+// mechanism is kept as-is: spread of the step-20 `appointment.extras` snapshot.
+//
+// Tablet UI: The pad is taller (CSS in modules/Common/Kiosk/KioskSkin.tsx), the
+// requirement is shown as a tag that turns green once drawn, "Clear" is a full-size button, and the
+// drawn state is reported to the page (`onCanSubmitChange`) so its Validate button stays disabled
+// until then.
+
 // DESCRIPTION: gate-entry step 50 - digital signature. On validation the whole
 // registration is persisted onto the appointment and the driver moves to the
 // waiting screen.
 
-import { WrapperForm, NavButton } from '@components';
+import { WrapperForm } from '@components';
 import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Space, Typography } from 'antd';
-import { UndoOutlined } from '@ant-design/icons';
-import { useEffect, useRef } from 'react';
+import { Button, Tag, Typography } from 'antd';
+import { CheckCircleFilled, UndoOutlined } from '@ant-design/icons';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { gql } from 'graphql-request';
@@ -40,13 +55,16 @@ export interface ISignatureFormProps {
     stepNumber: number;
     submitTrigger: { triggerSubmit: boolean; setTriggerSubmit: (b: boolean) => void };
     loading: { isLoading: boolean; setIsLoading: (b: boolean) => void };
+    // Lets the page enable its "Validate" button only once something has been drawn.
+    onCanSubmitChange?: (canSubmit: boolean) => void;
 }
 
 export const SignatureForm = ({
     processName,
     stepNumber,
     submitTrigger: { triggerSubmit, setTriggerSubmit },
-    loading: { setIsLoading }
+    loading: { setIsLoading },
+    onCanSubmitChange
 }: ISignatureFormProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
@@ -55,6 +73,12 @@ export const SignatureForm = ({
     const { configs } = state;
     const storedObject = state[processName] || {};
     const padRef = useRef<SignaturePadHandle>(null);
+    // Mirrors the pad's drawn state for the tag here and the page's Validate button.
+    const [hasDrawn, setHasDrawn] = useState(false);
+    const onDrawnChange = (drawn: boolean) => {
+        setHasDrawn(drawn);
+        onCanSubmitChange?.(drawn);
+    };
 
     const appointment: GateAppointment | null = storedObject['step20']?.data?.appointment ?? null;
     const isAdHoc: boolean = storedObject['step20']?.data?.isAdHoc ?? false;
@@ -70,10 +94,14 @@ export const SignatureForm = ({
 
         setIsLoading(true);
         try {
-            // Document checklist metadata (rule + language). The images are NOT
-            // stored on the appointment; the web re-fetches them from the rule.
+            // Document checklist metadata (rule + language). The images are NOT stored on the
+            // appointment; only the IDENTITY of each document shown is, so the acceptance can
+            // be replayed later without re-running the rule.
             const documentRule = storedObject['step40']?.data?.documentRule ?? null;
             const documentLanguage = storedObject['step40']?.data?.language ?? null;
+            // Id / name / modified / size / fingerprint per document, snapshotted at step 40.
+            const acceptedDocuments = storedObject['step40']?.data?.documents ?? [];
+            const acceptedAt = new Date().toISOString();
 
             // Status / type codes from the configs reducer (no extra request).
             const findCode = (scope: string, re: RegExp) =>
@@ -96,7 +124,11 @@ export const SignatureForm = ({
                 safetyChecklist: {
                     template: documentRule ?? appointment?.safetyChecklistTemplate ?? null,
                     language: documentLanguage,
-                    accepted: true
+                    accepted: true,
+                    // What was signed, frozen. An empty array is written when the rule
+                    // returned no document, which is itself the information to keep.
+                    documents: acceptedDocuments,
+                    acceptedAt
                 },
                 gateSignature: signature,
                 // Outbound driver declaration. No column exists for it, so it lives in `extras`
@@ -202,18 +234,47 @@ export const SignatureForm = ({
 
     return (
         <WrapperForm>
-            <Text style={{ display: 'block', fontSize: 16, marginBottom: 8, textAlign: 'center' }}>
-                {t('common:signature-msg')}
-            </Text>
+            <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                <Text className="kiosk-sign-title">{t('common:signature-msg')}</Text>
+                <Tag
+                    color={hasDrawn ? 'success' : 'red'}
+                    icon={hasDrawn ? <CheckCircleFilled /> : undefined}
+                    style={{
+                        marginLeft: 12,
+                        fontSize: 14,
+                        lineHeight: '24px',
+                        fontWeight: 600,
+                        verticalAlign: 'middle'
+                    }}
+                >
+                    {hasDrawn ? null : t('common:mandatory')}
+                </Tag>
+            </div>
             <SignaturePad
                 ref={padRef}
                 initialDataUrl={appointment?.extras?.gateSignature ?? null}
+                onDrawnChange={onDrawnChange}
             />
-            <Space style={{ marginTop: 12 }}>
-                <NavButton icon={<UndoOutlined />} onClick={() => padRef.current?.clear()}>
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 16,
+                    marginTop: 14
+                }}
+            >
+                <Text type="secondary" className="kiosk-sign-hint">
+                    {t('common:signature-hint')}
+                </Text>
+                <Button
+                    icon={<UndoOutlined />}
+                    onClick={() => padRef.current?.clear()}
+                    style={{ fontSize: 18, paddingInline: 24 }}
+                >
                     {t('common:clear')}
-                </NavButton>
-            </Space>
+                </Button>
+            </div>
         </WrapperForm>
     );
 };

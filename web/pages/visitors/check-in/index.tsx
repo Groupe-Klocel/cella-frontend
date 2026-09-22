@@ -23,6 +23,7 @@ import {
     getModesFromPermissions,
     getVisitStatusCodes,
     getVisitTypeCode,
+    localDayUtcWindow,
     pathParams,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
@@ -61,11 +62,34 @@ const VisitorCheckInDashboard: PageComponent = () => {
 
     const refresh = useCallback(async () => {
         if (!ready) return;
+        // Closed visits (Checked out / Cancelled) are queried too - a visitor who already left can
+        // register again on the tablet for a new entry (multi-day visit, or several passages in the
+        // same day), and today's refusals feed the Refused tab - but they accumulate for the life of
+        // the warehouse, so this 3 s poll must not walk the whole visit history. Entries of
+        // `advancedFilters` are AND-ed, the predicates inside one entry are OR-ed, so the bound
+        // below reads: the visit is still open, OR it ends today or later, OR it begins today or
+        // later. An open visit is kept whatever its dates (a visitor showing up a day late must
+        // still reach the queue), a closed one only while it is ongoing or upcoming - which is
+        // exactly the window in which the kiosk lets it be re-entered (isVisitWithinDateRange).
+        // The second date term keeps the walk-ins, which carry no end date.
+        const isSet = (code: number | undefined): code is number => code !== undefined;
+        const openStatuses = [codes.toBeChecked, codes.preRegistered, codes.checkedIn].filter(
+            isSet
+        );
+        const closedStatuses = [codes.checkedOut, codes.cancelled].filter(isSet);
+        const todayStart = localDayUtcWindow(dayjs()).start;
         try {
             const res = await graphqlRequestClient.request(
                 gql`
-                    query listVisitorCheckIns($filters: AppointmentSearchFilters) {
-                        appointments(filters: $filters, itemsPerPage: 1000) {
+                    query listVisitorCheckIns(
+                        $filters: AppointmentSearchFilters
+                        $advancedFilters: [AppointmentAdvancedSearchFilters!]
+                    ) {
+                        appointments(
+                            filters: $filters
+                            advancedFilters: $advancedFilters
+                            itemsPerPage: 1000
+                        ) {
                             results { ${VISIT_ENTRY_FIELDS} }
                         }
                     }
@@ -73,13 +97,23 @@ const VisitorCheckInDashboard: PageComponent = () => {
                 {
                     filters: {
                         appointmentType: visitTypeCode,
-                        status: [
-                            codes.toBeChecked,
-                            codes.preRegistered,
-                            codes.checkedIn,
-                            codes.cancelled
-                        ].filter(Boolean)
-                    }
+                        status: [...openStatuses, ...closedStatuses]
+                    },
+                    advancedFilters: [
+                        {
+                            filter: [
+                                { field: { status: openStatuses }, searchType: 'EQUAL' },
+                                {
+                                    field: { appointmentDateEnd: todayStart },
+                                    searchType: 'SUPERIOR_OR_EQUAL'
+                                },
+                                {
+                                    field: { appointmentDateBegin: todayStart },
+                                    searchType: 'SUPERIOR_OR_EQUAL'
+                                }
+                            ]
+                        }
+                    ]
                 }
             );
             const results: any[] = res?.appointments?.results ?? [];

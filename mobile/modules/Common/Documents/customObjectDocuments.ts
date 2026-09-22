@@ -18,6 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
+// The resolver also reports `id` and `modified` for each custom object, and exposes
+// the helpers that turn a resolved document into the immutable identity persisted in
+// `appointment.extras.safetyChecklist.documents` at acceptance time. Without that snapshot the
+// review screens re-run the rule and therefore show the CURRENT documents, so editing a safety
+// document silently rewrites what every past signature appears to have accepted.
+
 // Shared helpers used by the truck-driver / visitor document steps. The document rules
 // (TRUCK_DRIVER_INFOS_DOCUMENTS / VISITOR_INFOS_DOCUMENTS) now output a flat list of custom-object
 // NAMES instead of base64 blobs. We resolve those names to the actual documents by reading the
@@ -55,7 +61,79 @@ export const parseDocumentNames = (exec: any): string[] => {
 export interface CustomObjectDocument {
     name: string;
     documentAttached: string;
+    // Identity of the custom object behind the document. Optional so a caller building this
+    // shape by hand (or an older cached payload) still type-checks.
+    id?: string;
+    // `modified` is the only version marker the custom object exposes, and it comes for free
+    // with the query — it is what tells a past acceptance apart from the current document.
+    modified?: string | null;
 }
+
+// The immutable identity of one document as actually presented to, and accepted by, the
+// signer. Persisted in extras.safetyChecklist.documents; never recomputed from the rule afterwards.
+export interface AcceptedDocument {
+    id?: string;
+    name: string;
+    modified?: string | null;
+    // length of the base64 payload as it was served
+    size: number;
+    // content fingerprint, ALWAYS prefixed by the algorithm that produced it
+    fingerprint: string;
+    // visitor flow only: the destination zone this document was resolved for
+    zone?: string;
+}
+
+// FNV-1a 32-bit, offset basis 0x811c9dc5 / prime 0x01000193, computed with Math.imul so the
+// multiply stays exact on 32 bits. Deliberately the textbook variant: the server side has to be
+// able to recompute it. base64 is ASCII, so iterating code units is equivalent to iterating bytes.
+const fnv1aHex = (input: string): string => {
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < input.length; i++) {
+        hash ^= input.charCodeAt(i) & 0xff;
+        hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+};
+
+const toHex = (buffer: ArrayBuffer): string =>
+    Array.from(new Uint8Array(buffer))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+
+// Fingerprint of a document payload, prefixed by its algorithm.
+// `crypto.subtle` only exists in a SECURE CONTEXT: a kiosk served over plain HTTP has no access to
+// it, hence the mandatory FNV-1a fallback. No npm dependency is added for this on purpose.
+export const fingerprintDocumentContent = async (base64: string): Promise<string> => {
+    const subtle: any = (globalThis as any)?.crypto?.subtle;
+    if (subtle?.digest && typeof TextEncoder !== 'undefined') {
+        try {
+            const digest: ArrayBuffer = await subtle.digest(
+                'SHA-256',
+                new TextEncoder().encode(base64)
+            );
+            return `sha256:${toHex(digest)}`;
+        } catch {
+            // insecure context / unsupported algorithm -> fall through to the fallback
+        }
+    }
+    return `fnv1a:${fnv1aHex(base64)}`;
+};
+
+// Snapshot a list of resolved documents into their persisted identity.
+export const toAcceptedDocuments = async (
+    documents: CustomObjectDocument[],
+    zone?: string
+): Promise<AcceptedDocument[]> =>
+    Promise.all(
+        (documents ?? []).map(async (d) => ({
+            ...(d.id !== undefined ? { id: d.id } : {}),
+            name: d.name,
+            modified: d.modified ?? null,
+            size: d.documentAttached?.length ?? 0,
+            fingerprint: await fingerprintDocumentContent(d.documentAttached ?? ''),
+            ...(zone !== undefined ? { zone } : {})
+        }))
+    );
 
 // Fetch the documentAttached of each named custom object in the truck/visitor documents category,
 // preserving the order given by the rule. Names without a match (or without a document) are dropped.
@@ -85,7 +163,9 @@ export const fetchCustomObjectDocuments = async (
         query customObjectsDocuments($filters: CustomObjectSearchFilters) {
             customObjects(filters: $filters, itemsPerPage: 1000) {
                 results {
+                    id
                     name
+                    modified
                     documentAttached
                 }
             }
@@ -94,9 +174,18 @@ export const fetchCustomObjectDocuments = async (
 
     const res: any = await graphqlRequestClient.request(query, { filters });
     const results: any[] = res?.customObjects?.results ?? [];
-    const byName = new Map<string, string>(results.map((r: any) => [r.name, r.documentAttached]));
+    // Keep the whole row, not just documentAttached, so id/modified survive the mapping.
+    const byName = new Map<string, any>(results.map((r: any) => [r.name, r]));
 
     return names
-        .map((name) => ({ name, documentAttached: byName.get(name) as string }))
+        .map((name) => {
+            const row: any = byName.get(name);
+            return {
+                id: row?.id,
+                name,
+                modified: row?.modified ?? null,
+                documentAttached: row?.documentAttached as string
+            };
+        })
         .filter((d) => !!d.documentAttached);
 };

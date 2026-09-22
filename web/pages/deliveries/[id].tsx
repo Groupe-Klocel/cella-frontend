@@ -351,7 +351,9 @@ const DeliveryPage: PageComponent = () => {
                     data?.status < configsParamsCodes.dispatchedDeliveryStatus ? (
                         <Space>
                             {
-                                // CUBING button
+                                // CUBING button - not on a delivery whose packing is produced by an
+                                // external system
+                                !data?.managedByExternalSystem &&
                                 data?.status <= configsParamsCodes.toBeEstimatedDeliveryStatus &&
                                 deliveryLines?.data?.deliveryLines &&
                                 deliveryLines?.data?.deliveryLines?.count > 0 ? (
@@ -367,6 +369,7 @@ const DeliveryPage: PageComponent = () => {
                             }
                             {
                                 // RECUBING button only if TO_BE_ESTIMATED < status <= ESTIMATED
+                                !data?.managedByExternalSystem &&
                                 data?.status > configsParamsCodes.toBeEstimatedDeliveryStatus &&
                                 data?.status <= configsParamsCodes.estimatedDeliveryStatus &&
                                 deliveryLines?.data?.deliveryLines &&

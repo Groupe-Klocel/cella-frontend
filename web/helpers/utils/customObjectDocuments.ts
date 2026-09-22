@@ -18,6 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
+// The resolver also reports `id` and `modified` for each custom object, so a document
+// can be identified by version and not only by name. The acceptance snapshot itself is built on the
+// kiosk side (mobile/modules/Common/Documents/customObjectDocuments.ts); this side only reads.
+
 // Shared helpers for the truck-driver / visitor safety document rules. The document rules
 // (TRUCK_DRIVER_INFOS_DOCUMENTS / VISITOR_INFOS_DOCUMENTS) output a flat list of custom-object
 // NAMES; we resolve those names to the actual documents by reading the `documentAttached` field
@@ -53,6 +57,11 @@ export const parseDocumentNames = (exec: any): string[] => {
 export interface CustomObjectDocument {
     name: string;
     documentAttached: string;
+    // Identity of the custom object behind the document. Optional so a caller building this
+    // shape by hand (or an older cached payload) still type-checks.
+    id?: string;
+    // `modified` is the only version marker the custom object exposes, and it is free to ask.
+    modified?: string | null;
 }
 
 // Fetch the documentAttached of each named custom object in the truck/visitor documents category,
@@ -83,7 +92,9 @@ export const fetchCustomObjectDocuments = async (
         query customObjectsDocuments($filters: CustomObjectSearchFilters) {
             customObjects(filters: $filters, itemsPerPage: 1000) {
                 results {
+                    id
                     name
+                    modified
                     documentAttached
                 }
             }
@@ -92,10 +103,19 @@ export const fetchCustomObjectDocuments = async (
 
     const res: any = await graphqlRequestClient.request(query, { filters });
     const results: any[] = res?.customObjects?.results ?? [];
-    const byName = new Map<string, string>(results.map((r: any) => [r.name, r.documentAttached]));
+    // Keep the whole row, not just documentAttached, so id/modified survive the mapping.
+    const byName = new Map<string, any>(results.map((r: any) => [r.name, r]));
 
     return names
-        .map((name) => ({ name, documentAttached: byName.get(name) as string }))
+        .map((name) => {
+            const row: any = byName.get(name);
+            return {
+                id: row?.id,
+                name,
+                modified: row?.modified ?? null,
+                documentAttached: row?.documentAttached as string
+            };
+        })
         .filter((d) => !!d.documentAttached);
 };
 
