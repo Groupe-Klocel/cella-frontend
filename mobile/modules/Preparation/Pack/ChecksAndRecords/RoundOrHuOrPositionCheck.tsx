@@ -70,15 +70,20 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
         const roundStatusPackingInProgress = parseInt(
             findCodeByScope(configs, 'round_status', 'Packing in progress')
         );
+        const cancelledHuoStatus = parseInt(
+            findCodeByScope(configs, 'handling_unit_outbound_status', 'Cancelled')
+        );
         return {
             equipmentHuType,
             packingWithControlInprogressHuoStatus,
             roundStatusToBePacked,
-            roundStatusPackingInProgress
+            roundStatusPackingInProgress,
+            cancelledHuoStatus
         };
     }, [parameters, configs]);
 
     const equipmentHuType = parseInt(configsParamsCodes.equipmentHuType);
+    const cancelledHuoStatus = configsParamsCodes.cancelledHuoStatus;
     const packingWithControlInprogressHuoStatus = parseInt(
         configsParamsCodes.packingWithControlInprogressHuoStatus
     );
@@ -135,7 +140,17 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
                     if (executeFunction.output?.output?.code === 'FAPI_000001') {
                         showError(t('errors:FAPI_000001'));
                     } else if (executeFunction.output?.output?.code === 'FAPI_000002') {
-                        showError(t('errors:FAPI_000002'));
+                        // The scan function names the refused element and its status in the
+                        // error variables (older versions do not: generic message then), so a
+                        // cancelled box is told apart from the other wrong-status cases and the
+                        // operator can set it aside at once.
+                        const refused = executeFunction.output?.output?.variables;
+                        const isCancelledBox =
+                            refused?.elementType === 'handlingUnitOutbound' &&
+                            refused?.status === cancelledHuoStatus;
+                        showError(
+                            t(isCancelledBox ? 'messages:box-cancelled' : 'errors:FAPI_000002')
+                        );
                     } else if (executeFunction.output?.output?.code === 'FAPI_000003') {
                         showError(t('errors:FAPI_000003'));
                     } else {
@@ -157,7 +172,20 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
     useEffect(() => {
         if (fetchResult) {
             const processResult = async () => {
+                // Scan of a cart position barcode: the scan function found the box through its
+                // equipmentPositionBarcode, so the scanned code is neither the box name nor its
+                // carrier box. Handling the box standing at a position must not take ownership
+                // of the round, nor be refused because another operator owns it: several
+                // stations label the boxes of a same round. This holds for every pack scan of
+                // such a barcode, whatever the packing mode: only the Sequence carts carry them,
+                // and their boxes are packed by Sequence before being labelled here.
+                const scannedPositionBarcode = Boolean(
+                    fetchResult?.huo &&
+                        scannedInfo !== fetchResult.huo.name &&
+                        scannedInfo !== fetchResult.huo.carrierBox
+                );
                 if (
+                    !scannedPositionBarcode &&
                     fetchResult?.round?.assignedUser &&
                     fetchResult.round.assignedUser !== user.username
                 ) {
@@ -198,7 +226,7 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
                     console.log('updateRoundResult', updateRoundResult);
                 };
 
-                if (!fetchResult?.round?.assignedUser) {
+                if (!scannedPositionBarcode && !fetchResult?.round?.assignedUser) {
                     await updateRoundIfNeeded();
                 }
 
