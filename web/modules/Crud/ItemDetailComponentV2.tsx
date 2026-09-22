@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { AppLink, ContentSpin, DetailsList, HeaderContent } from '@components';
 import { Alert, Button, Layout, Space, Typography } from 'antd';
 import dayjs from 'dayjs';
+import { toDataUrl } from 'modules/CustomObjects/Elements/DocumentPreview';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
@@ -145,6 +146,36 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
     const dateOnlyDetailFields = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].dateOnly)
         .map((key) => key.replaceAll('{', '_').replaceAll('}', ''));
+
+    // fields holding an attached document, displayed as a link (flag carried by the model)
+    const documentLinkDetailFields = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].documentLink)
+        .map((key) => key.replaceAll('{', '_').replaceAll('}', ''));
+
+    // Opens an attached document in a new tab. The value is a base64 data URI (or a bare base64 /
+    // URL, see toDataUrl); browsers refuse top-level navigations to data: URLs, so the payload is
+    // served through a short-lived blob URL.
+    const openAttachedDocument = (src: string) => {
+        try {
+            const dataUrl = toDataUrl(src);
+            if (!dataUrl.startsWith('data:')) {
+                window.open(dataUrl, '_blank', 'noopener');
+                return;
+            }
+            const header = dataUrl.substring(5, dataUrl.indexOf(','));
+            const mime = header.split(';')[0] || 'application/octet-stream';
+            const byteArray = Uint8Array.from(
+                window.atob(dataUrl.substring(dataUrl.indexOf(',') + 1)),
+                (char) => char.charCodeAt(0)
+            );
+            const url = URL.createObjectURL(new Blob([byteArray], { type: mime }));
+            window.open(url, '_blank');
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } catch (error) {
+            console.error('Error opening the attached document:', error);
+            showError(t('messages:error-downloading-document'));
+        }
+    };
     const displayedLabels = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].displayName !== null)
         .reduce((obj: any, key) => {
@@ -276,6 +307,20 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
                 const value = flattenedData[key];
                 if (typeof value === 'string' && !isNaN(new Date(value).getTime())) {
                     flattenedData[key] = dayjs(setUTCDateTime(value)).format('YYYY-MM-DD');
+                }
+            });
+            // A field flagged `documentLink` in the model holds an attached document (base64 data
+            // URI). The display copy gets a link opening it instead of the raw value, which the
+            // shared DetailsList would otherwise blank out; `props.setData` (used by the pages'
+            // extra components and print lists) still gets the raw value.
+            documentLinkDetailFields.forEach((key) => {
+                const value = flattenedData[key];
+                if (typeof value === 'string' && value) {
+                    flattenedData[key] = (
+                        <Typography.Link onClick={() => openAttachedDocument(value)}>
+                            {t('actions:view-document')}
+                        </Typography.Link>
+                    );
                 }
             });
             // detect if linkfields.name is part of flattenedData keys and replace it if yes
