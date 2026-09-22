@@ -137,6 +137,9 @@ export type FieldInfo = {
     highlight?: any;
     // the field carries a date only - no time in lists, details, filters and forms
     dateOnly?: boolean;
+    // the field holds an attached document (base64 data URI, bare base64 or URL): the detail
+    // shows a link opening it instead of the raw value
+    documentLink?: boolean;
 };
 
 export type FieldsInfo = {

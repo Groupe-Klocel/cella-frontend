@@ -32,11 +32,12 @@ import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
 import { LocationModelV2 as model } from '@helpers';
-import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
+import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { FC, useState } from 'react';
+import { FC, Key, useState } from 'react';
 import { locationsRoutes as itemRoutes } from 'modules/Locations/Static/locationsRoutes';
 import { PrintLocationsModalForm } from 'modules/Locations/Forms/PrintLocationsModalForm';
+import { EditLocationsRenderModal } from 'modules/Locations/Forms/EditLocationsModal';
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const LocationPages: PageComponent = () => {
@@ -50,6 +51,11 @@ const LocationPages: PageComponent = () => {
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
     const [showRangeLocationsModal, setShowRangeLocationsModal] = useState(false);
     const [referenceToPrint, setReferenceToPrint] = useState<string>();
+    // SPE: row selection + mass update of the selected locations (EditLocationsModal)
+    const [tableData, setTableData] = useState<any[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<any[]>([]);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [refetch, setRefetch] = useState<boolean>(false);
 
     const headerData: HeaderData = {
         title: t('common:locations'),
@@ -96,12 +102,77 @@ const LocationPages: PageComponent = () => {
         };
     };
 
+    // SPE: mass update. Selection is accumulated across server-paginated pages: keys of the
+    // pages the user has left are kept, only the keys belonging to the page currently displayed
+    // can be unselected (same mechanism as the articles and packagings lists).
+    const canMassUpdate = modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable;
+    const hasSelected = selectedRowKeys.length > 0;
+
+    const onSelectChange = (newSelectedRowKeys: any[]) => {
+        selectedRowKeys.forEach((key: string) => {
+            if (!newSelectedRowKeys.includes(key) && tableData.map((d) => d.id).includes(key)) {
+                setSelectedRowKeys((prevKeys: Key[]) => prevKeys.filter((k) => k !== key));
+            }
+        });
+        newSelectedRowKeys.forEach((value: string) => {
+            if (!selectedRowKeys?.includes(value)) {
+                setSelectedRowKeys((prevKeys: Key[]) => [...prevKeys, value]);
+            }
+        });
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange
+    };
+
+    const actionButtons: ActionButtons = {
+        actionsComponent: canMassUpdate ? (
+            <>
+                <span className="selected-span" style={{ marginLeft: 16 }}>
+                    {hasSelected
+                        ? `${t('messages:selected-items-number', {
+                              number: selectedRowKeys.length
+                          })}`
+                        : ''}
+                </span>
+                <span style={{ marginLeft: 16 }}>
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            setShowEditModal(true);
+                        }}
+                        disabled={!hasSelected}
+                    >
+                        {t('actions:edit')}
+                    </Button>
+                </span>
+                <EditLocationsRenderModal
+                    visible={showEditModal}
+                    rows={rowSelection}
+                    showhideModal={() => {
+                        setShowEditModal(!showEditModal);
+                    }}
+                    setRefetch={() => {
+                        setRefetch(!refetch);
+                    }}
+                    setSelectedRowKeys={setSelectedRowKeys}
+                />
+            </>
+        ) : null
+    };
+
     return (
         <>
             <AppHead title={headerData.title} />
             <ListComponent
                 headerData={headerData}
                 dataModel={model}
+                actionButtons={actionButtons}
+                rowSelection={rowSelection}
+                refetch={refetch}
+                setData={setTableData}
+                checkbox={canMassUpdate}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 actionColumns={[
