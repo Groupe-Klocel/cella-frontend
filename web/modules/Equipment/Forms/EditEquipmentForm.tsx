@@ -627,6 +627,20 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                     </Form.Item>
                 )}
 
+                {/* Sorting gauge: the max dimensions an item footprint must fit into for this
+                    equipment to accept it. Each one is optional - empty or 0 means that dimension
+                    is not taken into account. Kept outside the limit-type conditional above: a
+                    sorter's gauge does not depend on how its capacity is limited. */}
+                <Form.Item label={t('d:sorting-max-dimension1')} name="extraNumber1">
+                    <InputNumber min={0} />
+                </Form.Item>
+                <Form.Item label={t('d:sorting-max-dimension2')} name="extraNumber2">
+                    <InputNumber min={0} />
+                </Form.Item>
+                <Form.Item label={t('d:sorting-max-dimension3')} name="extraNumber3">
+                    <InputNumber min={0} />
+                </Form.Item>
+
                 <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
                     <Col xs={24} xl={12}>
                         <Form.Item name="checkPosition">

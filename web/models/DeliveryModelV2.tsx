@@ -759,6 +759,30 @@ export const DeliveryModelV2: ModelType = {
             config: null,
             param: null
         },
+        // Document attached to the delivery by the host system (base64 data URI, usually a PDF,
+        // printed as K_ExportDocument): shown in the detail as a link opening it (documentLink)
+        // and added to the printable documents list; not editable, not listed
+        documentAttached: {
+            isListRequested: false,
+            isDefaultHiddenList: false,
+            isExcludedFromList: true,
+            isSortable: false,
+            searchingFormat: null,
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"general", "position":0}',
+            link: null,
+            addEditFormat: null,
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            documentLink: true
+        },
         printDeliveryNote: {
             isListRequested: true,
             isDefaultHiddenList: true,
