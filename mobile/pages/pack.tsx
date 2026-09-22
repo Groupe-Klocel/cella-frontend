@@ -27,6 +27,7 @@ import {
     applyRfActionButtonsConfig,
     buildHeaderDisplay,
     getModesFromPermissions,
+    showError,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
 import { ModeEnum } from 'generated/graphql';
@@ -57,6 +58,7 @@ import {
     RadioHeaderSlideType
 } from 'components/common/dumb/RadioHeaders/RadioHeadersCarousel';
 import { ArticlesToScanList } from 'modules/Preparation/Pack/Elements/ArticlesToScanList';
+import { BoxArticlesList } from 'modules/Preparation/Pack/Elements/BoxArticlesList';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -101,6 +103,12 @@ const Pack: PageComponent = () => {
             'Waiting Label'
         );
 
+        const cancelledHuoStatus = findCodeByScope(
+            configs,
+            'handling_unit_outbound_status',
+            'Cancelled'
+        );
+
         const defaultQuantityValue = findValueByScopeAndCode(
             parameters,
             'outbound',
@@ -139,6 +147,7 @@ const Pack: PageComponent = () => {
             equipmentHuType,
             packingWithControlInprogressHuoStatus,
             waitingLabelHuoStatus,
+            cancelledHuoStatus,
             missingLocationName
         };
     }, [parameters, configs]);
@@ -152,6 +161,7 @@ const Pack: PageComponent = () => {
         configsParamsCodes.packingWithControlInprogressHuoStatus
     );
     const waitingLabelHuoStatus = parseInt(configsParamsCodes.waitingLabelHuoStatus);
+    const cancelledHuoStatus = parseInt(configsParamsCodes.cancelledHuoStatus);
 
     // 10 -> scan printer
     // 20 -> scan round/equipment/position
@@ -208,6 +218,27 @@ const Pack: PageComponent = () => {
     const isWaitingLabelHandling = Boolean(
         round && !inProgressHuo && !hasHuosToPack && waitingLabelHuos?.length > 0
     );
+    // Box designated by the step 20 scan when a position barcode, a box name or a carrier box was
+    // scanned: the scan function returns it as `huo` (nothing when a round or an equipment was
+    // scanned). In waiting-label mode this box is the one to resume and label, never another one:
+    // on carts without position check (every box at roundPosition 1) the first waiting-label box
+    // of the round is generally NOT the box standing at the scanned position, so its label would
+    // be printed and stuck on the wrong parcel.
+    const scannedHuo = storedObject?.step20?.data?.huo;
+    const scannedWaitingLabelHuo = scannedHuo
+        ? waitingLabelHuos?.find((huo: any) => huo.id === scannedHuo.id)
+        : undefined;
+    // Box preselected for step 30 in waiting-label mode without position check: the scanned box,
+    // or the first waiting-label box when the round itself was scanned. A scanned box that no
+    // longer waits for its label gets no preselection (refused by the guard below), and the
+    // position returned by the scan function is not enforced either: it is the roundPosition,
+    // 1 for every box of such carts, with which PositionChecks would preselect the first waiting
+    // box.
+    const waitingLabelDefaultHuos = scannedHuo
+        ? scannedWaitingLabelHuo
+            ? [scannedWaitingLabelHuo]
+            : undefined
+        : [waitingLabelHuos?.[0]];
 
     // Check if box closure is allowed
     const isBoxClosureAllowed = useMemo(() => {
@@ -268,6 +299,29 @@ const Pack: PageComponent = () => {
     const inProgressHuco = inProgressHuo?.handlingUnitContentOutbounds?.[0];
     const movingQuantity = storedObject['step50']?.data?.movingQuantity;
 
+    // Box validated without article-by-article control: box reached through its cart position
+    // barcode, resumed waiting-label box, or control rule answering no control. Nothing is
+    // scanned before the packaging/weight step (60), so the operator has no view of what the
+    // parcel holds: its articles are listed in an extra header slide (below) and its total
+    // expected quantity is shown in the standard header.
+    const validatedBoxHucos =
+        isToControl === false ? currentHuo?.handlingUnitContentOutbounds : undefined;
+    const validatedBoxExpectedQuantity = validatedBoxHucos?.length
+        ? validatedBoxHucos.reduce(
+              (total: number, huco: any) => total + (huco.quantityToBePicked ?? 0),
+              0
+          )
+        : undefined;
+    // Both are shown from the packaging/weight step (60) until the box is closed (70) only: the
+    // control flag is already false while the position step (30) is still active.
+    const isBoxValidationStep = [60, 70].includes(storedObject.currentStep);
+
+    // Quantity to pick for the proposed box (position mode, before control)
+    const showStep30Quantity =
+        storedObject['step30']?.data?.currentHuos?.length > 0 &&
+        !isToControl &&
+        isToControl !== null;
+
     // Declarative header configuration (mirrors buttonManagement). Order = display order.
     const headerManagement: HeaderManagementType = [
         {
@@ -277,13 +331,6 @@ const Pack: PageComponent = () => {
         },
         { label: t('common:round'), value: round?.name, visible: !!round },
         { label: t('common:equipment'), value: equipmentHu?.name, visible: !!equipmentHu },
-        {
-            // waiting-label resume mode: number of boxes still waiting for their label
-            label: t('common:waiting-label-boxes'),
-            value: waitingLabelHuos?.length,
-            visible: isWaitingLabelHandling,
-            highlight: true
-        },
         {
             // waiting-label resume mode: box being closed
             label: t('common:huo-in-progress'),
@@ -315,15 +362,23 @@ const Pack: PageComponent = () => {
             visible: !!(inProgressHuo && !round?.equipment?.checkPosition)
         },
         {
+            // box validated without control: total quantity expected in the box. Not shown while
+            // the "quantity" row below already displays the quantity to pack of the proposed
+            // box (position mode), which is the same figure on a box not started yet.
+            label: t('common:expected-quantity_abbr'),
+            value: validatedBoxExpectedQuantity,
+            visible:
+                validatedBoxExpectedQuantity !== undefined &&
+                isBoxValidationStep &&
+                !(showStep30Quantity && !isWaitingLabelHandling),
+            highlight: true
+        },
+        {
             // remaining quantity to prepare on the proposed box (irrelevant on a resumed
             // waiting-label box, complete by design)
             label: t('common:quantity'),
             value: getHuoRemainingQuantity(storedObject['step30']?.data?.currentHuos?.[0]),
-            visible:
-                storedObject['step30']?.data?.currentHuos?.length > 0 &&
-                !isToControl &&
-                isToControl !== null &&
-                !isWaitingLabelHandling,
+            visible: showStep30Quantity && !isWaitingLabelHandling,
             highlight: true
         },
         {
@@ -383,6 +438,14 @@ const Pack: PageComponent = () => {
                     pendingQuantity={pendingControlQuantity}
                 ></ArticlesToScanList>
             )
+        },
+        {
+            // box validated without control: every article of the box with its expected
+            // quantity, from the packaging/weight step until the box is closed (step 70)
+            key: 'box-articles',
+            visibleOnSteps: [60, 70],
+            visible: Boolean(validatedBoxHucos?.length),
+            content: <BoxArticlesList hucos={validatedBoxHucos}></BoxArticlesList>
         }
     ];
 
@@ -391,15 +454,20 @@ const Pack: PageComponent = () => {
     // carousel unmounts); back to the default header once no box is being packed anymore (box
     // closed, round finished or process reset).
     useEffect(() => {
-        if (!inProgressHuo && !controlHucos?.length) {
+        if (!inProgressHuo && !controlHucos?.length && !validatedBoxHucos?.length) {
             setActiveHeaderSlideKey(undefined);
         }
-    }, [inProgressHuo, controlHucos?.length]);
+    }, [inProgressHuo, controlHucos?.length, validatedBoxHucos?.length]);
     //#endregion
 
     //#region control while packing
     // retrieve rule to apply
     useEffect(() => {
+        // Guard against a stale async result: when the deps change (back navigation or a new
+        // position scanned) or the component unmounts, an in-flight CONTROL_WHILE_PACKING lookup
+        // from the previous box must not call setIsToControl and overwrite the current box's
+        // decision. The cleanup flips this flag so a late Promise.all resolution is ignored.
+        let cancelled = false;
         const fetchRuleResult = async (ruleInputs: any) => {
             const ruleVariables = { context: ruleInputs };
             const ruleQuery = gql`
@@ -448,6 +516,10 @@ const Pack: PageComponent = () => {
                     );
 
                     Promise.all(promises).then((results) => {
+                        // A result from a box the operator has already left must not win the race.
+                        if (cancelled) {
+                            return;
+                        }
                         const maxValue = Math.max(...results);
                         const randomInt = Math.floor(Math.random() * 100) + 1;
                         // const randomInt = 60; // For testing purposes, set a fixed value
@@ -460,6 +532,9 @@ const Pack: PageComponent = () => {
                 setIsToControl(true);
             }
         }
+        return () => {
+            cancelled = true;
+        };
     }, [round, step30Position]);
 
     //if control needed : add currentHUO status update to controlIncourse in the following useEffect
@@ -524,11 +599,20 @@ const Pack: PageComponent = () => {
     };
 
     const onBack = () => {
+        const backTarget = Number(storedObject[`step${storedObject.currentStep}`]?.previousStep);
         dispatch({
             type: 'ON_BACK',
             processName,
             stepToReturn: `step${storedObject[`step${storedObject.currentStep}`].previousStep}`
         });
+        // Only when going back to the position/box scan (target step <= 30) is a different box
+        // about to be chosen, so the per-box control decision must be recomputed: clear it as
+        // onReset/previousPage already do. Backing within the same box (quantity or packaging
+        // review back to article/quantity) must keep isToControl, otherwise the article/quantity
+        // render guards turn false and the page goes blank.
+        if (backTarget <= 30) {
+            setIsToControl(null);
+        }
         form.resetFields();
     };
     //#endregion
@@ -777,6 +861,44 @@ const Pack: PageComponent = () => {
     const orderedButtonManagement = applyRfActionButtonsConfig(buttonManagement, parameters);
     //#endregion
 
+    //#region waiting-label mode: only the scanned box may be labelled
+    // The scanned box is already labelled (or not packed yet, or cancelled) while other boxes of
+    // the round still wait for their label, or another box got preselected for the closure:
+    // refuse instead of silently labelling another box, and go back to the scan step. A
+    // cancelled box gets its own message, the other cases the generic wrong-status one. The
+    // shared form is cleared of the rejected barcode, the control flag goes back to its initial
+    // state (as after every closed box) so the next scanned round gets a fresh control decision,
+    // and currentStep is reset to the printer step (kept) so the remounted scan step records it
+    // as its previous step and Back leaves the scan.
+    useEffect(() => {
+        if (!isWaitingLabelHandling || round?.equipment?.checkPosition || !scannedHuo) {
+            return;
+        }
+        if (!scannedWaitingLabelHuo || (positionHuo && positionHuo.id !== scannedHuo.id)) {
+            showError(
+                t(
+                    scannedHuo.status === cancelledHuoStatus
+                        ? 'messages:box-cancelled'
+                        : 'errors:FAPI_000002'
+                )
+            );
+            form.resetFields();
+            setIsToControl(null);
+            dispatch({
+                type: 'UPDATE_BY_PROCESS',
+                processName,
+                object: { currentStep: 10, step10: storedObject['step10'] }
+            });
+        }
+    }, [
+        isWaitingLabelHandling,
+        round?.equipment?.checkPosition,
+        scannedHuo?.id,
+        scannedWaitingLabelHuo?.id,
+        positionHuo?.id
+    ]);
+    //#endregion
+
     //#region reset form on step change
     useEffect(() => {
         form.resetFields();
@@ -859,11 +981,17 @@ const Pack: PageComponent = () => {
                                     allowPackedBoxes={isWaitingLabelHandling}
                                 />
                             )}
-                            enforcedValue={step20Position ?? undefined}
+                            enforcedValue={
+                                isWaitingLabelHandling &&
+                                !round?.equipment?.checkPosition &&
+                                scannedHuo
+                                    ? undefined
+                                    : (step20Position ?? undefined)
+                            }
                             defaultValue={
                                 isWaitingLabelHandling
                                     ? !round?.equipment?.checkPosition
-                                        ? [waitingLabelHuos[0]]
+                                        ? waitingLabelDefaultHuos
                                         : undefined
                                     : inProgressHuo
                                       ? [inProgressHuo]
