@@ -35,7 +35,10 @@ import { BreadcrumbType } from '../types/types';
  *  - clicking an item of the breadcrumb (or coming back to a page already in the trail with the
  *    browser history) TRUNCATES the trail back to that page;
  *  - clicking an item of the side menu RESETS the trail: the destination page shows its own static
- *    routes again (`SideMenu` calls `resetBreadcrumbTrailOnNavigation`).
+ *    routes again (`SideMenu` calls `resetBreadcrumbTrailOnNavigation`);
+ *  - the header's back arrow follows the trail too (`getBreadcrumbBackHref`, used by
+ *    `HeaderContent`): back to the page the user actually came from, the page's own back route
+ *    only when nothing precedes it in the trail.
  *
  * Merge rules, given the trail so far and the routes of the page being displayed:
  *  1. if the page is already in the trail (same pathname, or the static `path` of an item points to
@@ -374,6 +377,29 @@ export const previewBreadcrumbTrail = (
     asPath: string
 ): BreadcrumbTrailItem[] =>
     computeBreadcrumbTrail({ trail: getBreadcrumbTrail(), pendingReset }, routes, asPath).trail;
+
+/**
+ * Where the header's back arrow leads from the page at `asPath`: the closest item before the
+ * page's own items that stands for a page — the URL that was actually visited when there is one
+ * (the delivery line an article was opened from, the carrier a shipping mode belongs to), the
+ * static list page otherwise. `null` when nothing precedes the page in the trail (first page of
+ * the session, URL typed in the address bar): the page's own back route then applies.
+ */
+export const getBreadcrumbBackHref = (routes: BreadcrumbType[], asPath: string): string | null => {
+    const trail = previewBreadcrumbTrail(routes, asPath);
+    const pathname = toBreadcrumbPathname(asPath);
+    let end = trail.length;
+    while (end > 0 && trail[end - 1].contributor === pathname) {
+        end -= 1;
+    }
+    for (let index = end - 1; index >= 0; index -= 1) {
+        const href = trail[index].pageHref ?? trail[index].path;
+        if (typeof href === 'string' && href !== '') {
+            return href;
+        }
+    }
+    return null;
+};
 
 /** Register the routes of the page at `asPath` and return the trail to display. */
 export const registerBreadcrumbPage = (
