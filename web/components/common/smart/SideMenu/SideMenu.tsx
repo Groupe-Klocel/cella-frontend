@@ -207,6 +207,7 @@ const SideMenu: FC = () => {
             'wm_buildings',
             'wm_blocks',
             'wm_locations',
+            'wm_cartography',
             'wm_patterns',
             'wm_pattern-paths',
             'wm_conversions',
@@ -238,6 +239,7 @@ const SideMenu: FC = () => {
                     'wm_buildings',
                     'wm_blocks',
                     'wm_locations',
+                    'wm_cartography',
                     'wm_patterns',
                     'wm_pattern-paths'
                 ].some((perm) =>
@@ -281,6 +283,15 @@ const SideMenu: FC = () => {
                             ? {
                                   key: 'configuration-cartography-pattern-paths',
                                   label: <Link href="/pattern-paths">{t('pattern-paths')}</Link>
+                              }
+                            : null,
+                        // CARTOGRAPHY EDITOR
+                        getModesFromPermissions(permissions, 'wm_cartography').includes(
+                            ModeEnum.Read
+                        )
+                            ? {
+                                  key: 'configuration-cartography-editor',
+                                  label: <Link href="/cartography">{t('cartography-editor')}</Link>
                               }
                             : null
                     ].filter(Boolean)
