@@ -41,6 +41,8 @@ const NotificationPage: PageComponent = () => {
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
     const { id } = router.query;
+    // set by the list's "Include archives" button on its links: read production + archive
+    const withArchive = router.query.withArchive === 'true';
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
 
@@ -113,6 +115,7 @@ const NotificationPage: PageComponent = () => {
             <AppHead title={headerData.title} />
             <NotificationDetailComponent
                 id={id!}
+                withArchive={withArchive}
                 headerData={headerData}
                 dataModel={model}
                 setData={setData}

@@ -50,6 +50,8 @@ export * from './common/smart/Modals/SinglePrintModal';
 export * from './common/smart/Modals/SinglePrintDocumentSetModal';
 export * from './common/smart/Page/Page';
 export * from './common/smart/SideMenu/SideMenu';
+export * from './common/smart/ArchiveToggle/ArchiveToggle';
+export * from './common/smart/SideMenuAutoComplete/SideMenuAutoComplete';
 export * from './common/smart/Schedule/ScheduleShared';
 export * from './common/smart/Modals/CrontabModalV2';
 export * from './common/smart/DragAndDrop/DraggableItem';
