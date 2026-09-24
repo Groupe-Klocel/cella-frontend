@@ -81,6 +81,7 @@ export const ScanPalletBox = ({
                             preparationMode
                             preparationModeText
                             theoriticalWeight
+                            finalWeight
                             carrier {
                                 id
                                 name
