@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import {
+    clearBreadcrumbTrail,
+    clearRecentPages,
     cookie,
     decodeJWT,
     OnlyChildrenType,
@@ -274,6 +276,9 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
         cookie.remove('token');
         cookie.remove('user');
         cookie.remove('permissions');
+        // the breadcrumb trail and the recently visited pages are this user's navigation history
+        clearBreadcrumbTrail();
+        clearRecentPages();
         // Remove Bearer JWT token from header
         setHeader('NOP');
         if (session) {

@@ -56,9 +56,11 @@ const normalizeArrays = (value: any): any => {
 export interface IRecordHistoryDiffProps {
     // `next/router` query params can be string | string[] | undefined; normalized below.
     sequenceId?: string | string[];
+    /** read the record from production + archive (explicit request of the user only) */
+    withArchive?: boolean;
 }
 
-const RecordHistoryDiffComponent = ({ sequenceId }: IRecordHistoryDiffProps) => {
+const RecordHistoryDiffComponent = ({ sequenceId, withArchive }: IRecordHistoryDiffProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const language = getLanguageCode(router);
@@ -72,12 +74,13 @@ const RecordHistoryDiffComponent = ({ sequenceId }: IRecordHistoryDiffProps) => 
         resolvedSequenceId,
         'recordHistory',
         ['operationType', 'objectBefore', 'objectAfter'],
-        language
+        language,
+        { withArchive }
     );
 
     useEffect(() => {
         if (resolvedSequenceId) reload();
-    }, [resolvedSequenceId, language]);
+    }, [resolvedSequenceId, language, withArchive]);
 
     const record = detail?.data?.recordHistory;
     if (!record) return <></>;

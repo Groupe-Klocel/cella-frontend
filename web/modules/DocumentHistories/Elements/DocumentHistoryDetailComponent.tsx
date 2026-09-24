@@ -39,7 +39,6 @@ import { ModeEnum } from 'generated/graphql';
 import { useAppState } from 'context/AppContext';
 import { GroupItemDetailList } from '../../Crud/submodules/GroupItemDetailList';
 
-
 const StyledPageContent = styled(Layout.Content)`
     margin: 15px 30px;
     padding: 20px;
@@ -61,6 +60,8 @@ export interface ISingleItemProps {
     extraDataComponent?: any;
     setData?: any;
     headerData?: HeaderData;
+    /** read the record from production + archive (explicit request of the user only) */
+    withArchive?: boolean;
 }
 
 const DocumentHistoryDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
@@ -118,7 +119,8 @@ const DocumentHistoryDetailComponent: FC<ISingleItemProps> = (props: ISingleItem
         props.id,
         props.dataModel.endpoints.detail,
         detailFields,
-        filteredLanguage
+        filteredLanguage,
+        { withArchive: props.withArchive }
     );
 
     const tmp_titles = Object.keys(props.dataModel.fieldsInfo)
@@ -179,10 +181,10 @@ const DocumentHistoryDetailComponent: FC<ISingleItemProps> = (props: ISingleItem
 
     useEffect(() => {
         reloadData();
-    }, [router.locale]);
+    }, [router.locale, props.withArchive]);
 
     useEffect(() => {
-        if (detail?.data[props.dataModel.endpoints.detail]) {
+        if (detail?.data?.[props.dataModel.endpoints.detail]) {
             let flattenedData = flatten(detail.data[props.dataModel.endpoints.detail]);
 
             if (props.setData)

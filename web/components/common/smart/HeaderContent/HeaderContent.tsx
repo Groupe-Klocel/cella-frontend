@@ -18,9 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { GlobalBreadcrumb } from '@components';
-import { BreadcrumbType } from '@helpers';
+import { BreadcrumbType, getBreadcrumbBackHref } from '@helpers';
 // import { PageHeader } from 'antd';
 import CustomPageHeader from 'components/common/dumb/PageHeader/CustomPageHeader';
+import { useRouter } from 'next/router';
 import { FC, ReactNode } from 'react';
 
 export interface IHeaderContentProps {
@@ -42,11 +43,26 @@ const HeaderContent: FC<IHeaderContentProps> = ({
     onBack,
     tags
 }: IHeaderContentProps) => {
+    const router = useRouter();
+    // the back arrow follows the breadcrumb trail: back to the page the user actually came from
+    // (the delivery line an article was opened from…); the page's own `onBack` applies when the
+    // trail holds nothing before the page. Resolved at click time, once the trail is registered.
+    const handleBack = onBack
+        ? () => {
+              const href =
+                  routes && routes.length > 0 ? getBreadcrumbBackHref(routes, router.asPath) : null;
+              if (href) {
+                  router.push(href);
+              } else {
+                  onBack();
+              }
+          }
+        : undefined;
     return (
         <CustomPageHeader
             title={title}
             breadcrumb={<GlobalBreadcrumb routes={routes} />}
-            onBack={onBack}
+            onBack={handleBack}
             subTitle={actionsLeft}
             extra={actionsRight}
             tags={tags}

@@ -124,6 +124,8 @@ export interface IListProps {
     itemperpage?: number;
     advancedFilters?: any;
     functions?: any;
+    /** read production + the warehouse's archive (see `useList`); page state only, never saved */
+    withArchive?: boolean;
     //from here : props used for drag and/or drop handling
     items?: any;
     addRow?: (item: any, index: number) => void;
@@ -1293,7 +1295,8 @@ const ListComponent = (props: IListProps) => {
         filteredLanguage,
         defaultModelSort,
         resolvedAdvancedFilters,
-        functions
+        functions,
+        props.withArchive ?? false
     );
 
     useEffect(() => {
@@ -1319,7 +1322,8 @@ const ListComponent = (props: IListProps) => {
         JSON.stringify(resolvedAdvancedFilters),
         JSON.stringify(sort),
         pagination.current,
-        pagination.itemsPerPage
+        pagination.itemsPerPage,
+        props.withArchive
     ]);
 
     // #endregion

@@ -34,6 +34,16 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
  * @param sort sorting information dictionary {field:string,ascending:boolean}
  * @returns { data, isLoading, reload } where isLoading and result are state variable and reload is method to call for reloading list.
  */
+export type DetailHookOptions = {
+    /**
+     * Read the record from production + the warehouse's archive (`withArchive: true`). The archive
+     * is a dormant database: only pass `true` on an explicit request of the user — the history
+     * screens propagate their "Include archives" button through `?withArchive=true` on the links to
+     * their detail pages. Never set it to look up a missing record "just in case".
+     */
+    withArchive?: boolean;
+};
+
 const useList = (
     resolverName: string,
     queryName: string,
@@ -45,7 +55,11 @@ const useList = (
     language?: string,
     defaultModelSort?: any,
     advancedFilters?: any,
-    functions?: any
+    functions?: any,
+    // `withArchive: true` merges the warehouse's archive tables into the read (pagination and sort
+    // included). The API refuses, with an explicit error, filters on a relation, `allFields`,
+    // `functions` and sorts on `*_username` or `a__b` paths in that mode.
+    withArchive?: boolean
 ) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
@@ -66,6 +80,7 @@ const useList = (
                 ${isAdvancedFilters ? 'advancedFilters: $advancedFilters' : ''}
                 orderBy: $orderBy
                 ${functions ? 'functions: $functions' : ''}
+                ${withArchive ? 'withArchive: true' : ''}
                 page: $page
                 itemsPerPage: $itemsPerPage
                 language: $language
@@ -124,12 +139,18 @@ const useList = (
  * @returns { {isLoading, result, mutate}, reload } where isLoading and result are state variable and mutate is method to call for fetching detail.
  */
 
-const useDetail = (id: string, queryName: string, fields: Array<string>, language?: string) => {
+const useDetail = (
+    id: string,
+    queryName: string,
+    fields: Array<string>,
+    language?: string,
+    options?: DetailHookOptions
+) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
     const query = gql`query ${queryName}($id: String!, $language: String = "en") {
-        ${queryName}(id: $id, language: $language) {
+        ${queryName}(id: $id, language: $language${options?.withArchive ? ', withArchive: true' : ''}) {
             ${fields.join('\n')}
         }
     }`;
@@ -182,13 +203,14 @@ const useRecordHistoryDetail = (
     sequenceId: string,
     queryName: string,
     fields: Array<string>,
-    language?: string
+    language?: string,
+    options?: DetailHookOptions
 ) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
     const query = gql`query ${queryName}($id: Int!, $language: String = "en") {
-        ${queryName}(id: $id, language: $language) {
+        ${queryName}(id: $id, language: $language${options?.withArchive ? ', withArchive: true' : ''}) {
             ${fields.join('\n')}
         }
     }`;
@@ -237,13 +259,14 @@ const useItemWithNumericIdDetail = (
     id: string,
     queryName: string,
     fields: Array<string>,
-    language?: string
+    language?: string,
+    options?: DetailHookOptions
 ) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
 
     const query = gql`query ${queryName}($id: Int!, $language: String = "en") {
-        ${queryName}(id: $id, language: $language) {
+        ${queryName}(id: $id, language: $language${options?.withArchive ? ', withArchive: true' : ''}) {
             ${fields.join('\n')}
         }
     }`;
