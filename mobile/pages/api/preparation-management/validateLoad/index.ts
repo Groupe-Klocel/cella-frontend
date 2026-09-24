@@ -104,11 +104,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         // Update Load: numberHuLoaded/weight are incremented atomically server-side
         // (advancedInput) instead of being computed from the client's local count,
         // which can be stale if another operator is loading the same load concurrently.
-        const boxWeight = Number(box.theoriticalWeight);
+        // The box weight is its finalWeight (weighed) when filled, else its theoriticalWeight.
+        const boxWeightField = box.finalWeight != null ? 'finalWeight' : 'theoriticalWeight';
+        const boxWeight = Number(box[boxWeightField]);
         if (!Number.isFinite(boxWeight) || boxWeight < 0) {
-            throw new Error(
-                `Invalid theoriticalWeight for box ${box.id}: ${box.theoriticalWeight}`
-            );
+            throw new Error(`Invalid ${boxWeightField} for box ${box.id}: ${box[boxWeightField]}`);
         }
 
         const updatedLoadMutation = gql`
