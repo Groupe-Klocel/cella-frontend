@@ -57,6 +57,7 @@ const HomePage: PageComponent = () => {
             'mobile_round-picking',
             'mobile_round-packing',
             'mobile_pick-and-pack',
+            'mobile_manual-repacking',
             'mobile_box-cheking',
             'mobile_box-preparation',
             'mobile_palletization',
