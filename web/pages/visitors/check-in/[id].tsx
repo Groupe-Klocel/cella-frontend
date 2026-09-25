@@ -66,6 +66,7 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { classifyVisitEntry, VisitEntry, VISIT_ENTRY_FIELDS } from 'modules/Visitors/types';
 import { VisitorRejectModal } from 'modules/Visitors/Elements/VisitorRejectModal';
 import { visitorCheckInRoutes } from 'modules/Visitors/Static/visitorsRoutes';
+import { normalizeZones } from 'modules/Visitors/Functions/visitorActions';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -123,7 +124,7 @@ const VisitorCheckInDetail: PageComponent = () => {
             .then((res: any) => {
                 const visit = res?.appointment ?? null;
                 setEntry(visit);
-                setGrantedZones(Array.isArray(visit?.allowedZones) ? visit.allowedZones : []);
+                setGrantedZones(normalizeZones(visit?.allowedZones));
                 setEscortRequired(visit?.escortRequired ?? false);
             })
             .finally(() => setLoading(false));
@@ -157,9 +158,7 @@ const VisitorCheckInDetail: PageComponent = () => {
             : lng.toLowerCase();
         const zones: string[] = acceptedZones.length
             ? acceptedZones
-            : Array.isArray(entry.allowedZones)
-              ? entry.allowedZones
-              : [];
+            : normalizeZones(entry.allowedZones);
         Promise.all(
             zones.map((zone) =>
                 graphqlRequestClient
@@ -231,6 +230,10 @@ const VisitorCheckInDetail: PageComponent = () => {
                     allowedZones: grantedZones,
                     escortRequired,
                     extraText1: now,
+                    // a visitor coming back after a check-out starts a new passage: the previous
+                    // exit was archived in extras.visitPassages at check-out time, extraText2 must
+                    // not keep showing an exit date while the visitor is on site again
+                    extraText2: null,
                     extras: mergeVisitorCheckIn({
                         decision: 'approved',
                         decidedAt: now,
@@ -385,7 +388,7 @@ const VisitorCheckInDetail: PageComponent = () => {
                                     }))}
                                 />
                             ) : (
-                                (entry?.allowedZones ?? [])
+                                normalizeZones(entry?.allowedZones)
                                     .map((zone: string) =>
                                         getVisitZoneLabel(parameters, zone, language)
                                     )

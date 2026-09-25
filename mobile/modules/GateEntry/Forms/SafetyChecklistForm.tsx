@@ -18,6 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
+// On top of the acceptance flag, the step now hands the NEXT step the identity of the
+// documents it actually displayed (id / name / modified / size / fingerprint), so the signature can
+// be replayed later without re-running the rule. The mandatory checkbox is unchanged in behaviour.
+// Tablet UI: The progress alert sits ABOVE the documents so it stays in view, the
+// card turns green once accepted, and the acceptance row is a large tap target carrying a Required
+// tag until it is ticked (classes styled by modules/Common/Kiosk/KioskSkin.tsx).
+
 // DESCRIPTION: gate-entry step 40 - documents to read and accept. The
 // `TRUCK_DRIVER_INFOS_DOCUMENTS` business rule (input: the kiosk language) now returns a flat list
 // of custom-object NAMES; we resolve each name to the `documentAttached` of the matching custom
@@ -26,13 +33,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, ContentSpin } from '@components';
 import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Alert, Checkbox, Divider, Form } from 'antd';
+import { Alert, Checkbox, Form, Tag } from 'antd';
+import { CheckCircleFilled } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { DocumentViewer, fetchCustomObjectDocuments, parseDocumentNames } from '@CommonRadio';
+import {
+    AcceptedDocument,
+    DocumentViewer,
+    fetchCustomObjectDocuments,
+    parseDocumentNames,
+    toAcceptedDocuments
+} from '@CommonRadio';
 
 const DOCUMENT_RULE = 'TRUCK_DRIVER_INFOS_DOCUMENTS';
 
@@ -62,6 +76,8 @@ export const SafetyChecklistForm = ({
     const [form] = formToUse === undefined || formToUse === null ? Form.useForm() : [formToUse];
     // documentAttached data URIs, resolved from the custom-object names returned by the rule
     const [documents, setDocuments] = useState<string[]>([]);
+    // Identity + fingerprint of those same documents, in the same order, to be persisted
+    const [acceptedDocuments, setAcceptedDocuments] = useState<AcceptedDocument[]>([]);
     // number of document names the rule returned; used to detect resolution failures
     const [expectedCount, setExpectedCount] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -86,9 +102,12 @@ export const SafetyChecklistForm = ({
                     state.parameters,
                     names
                 );
+                // Fingerprint the payloads as served, before anything can change upstream.
+                const snapshot = await toAcceptedDocuments(docs);
                 if (!active) return;
                 setExpectedCount(names.length);
                 setDocuments(docs.map((d) => d.documentAttached));
+                setAcceptedDocuments(snapshot);
                 // Re-entry: documents were already accepted -> pre-tick.
                 if (alreadyAccepted) setAccepted(true);
             })
@@ -125,12 +144,15 @@ export const SafetyChecklistForm = ({
             stepName: `step${stepNumber}`,
             object: {
                 previousStep: storedObject.currentStep,
-                // Store only metadata (rule + language + acceptance) — NOT the
-                // documents. The web re-fetches them from the rule + custom objects.
+                // Store metadata (rule + language + acceptance) and the IDENTITY of the documents
+                // shown — NOT their payloads. The identity is what makes the acceptance
+                // auditable; without it the review screen has to re-run the rule and would show
+                // today's documents instead of the ones that were signed.
                 data: {
                     documentRule: DOCUMENT_RULE,
                     language,
-                    accepted: true
+                    accepted: true,
+                    documents: acceptedDocuments
                 }
             },
             customFields: [{ key: 'currentStep', value: 50 }]
@@ -141,53 +163,68 @@ export const SafetyChecklistForm = ({
         return <ContentSpin />;
     }
 
+    // Status line, kept ABOVE the documents so it stays in view while the PDFs scroll.
+    const statusAlert = missingDocuments ? (
+        <Alert type="error" showIcon message={t('common:safety-documents-load-error')} />
+    ) : documents.length === 0 ? (
+        <Alert type="info" showIcon message={t('common:no-safety-documents')} />
+    ) : (
+        <Alert
+            type={complete ? 'success' : 'warning'}
+            showIcon
+            message={t('common:documents-msg')}
+            description={complete ? t('common:all-confirmed') : t('common:must-confirm-all')}
+        />
+    );
+
     return (
         <WrapperForm>
-            <Alert
-                type="info"
-                showIcon
-                message={t('common:documents-msg')}
-                style={{ marginBottom: 12 }}
-            />
+            <div style={{ marginBottom: 16 }}>{statusAlert}</div>
             <StyledForm name="gate-checklist" form={form} onFinish={onFinish}>
                 {documents.length > 0 ? (
                     <div
+                        className={`kiosk-zone-card${accepted ? ' is-accepted' : ''}`}
                         style={{
-                            border: '1px solid #f0f0f0',
-                            borderRadius: 5,
-                            padding: 12
+                            border: `2px solid ${accepted ? '#52c41a' : '#e0e0e0'}`,
+                            background: accepted ? '#f6ffed' : '#ffffff'
                         }}
                     >
                         <DocumentViewer documents={documents} />
+                        {/* The whole row is the tap target (antd Checkbox renders a label). */}
                         <Checkbox
                             checked={accepted}
                             onChange={() => setAccepted((prev) => !prev)}
-                            style={{ display: 'flex', alignItems: 'flex-start', marginTop: 10 }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                width: '100%',
+                                marginTop: 16,
+                                padding: '14px 18px',
+                                borderRadius: 10,
+                                background: accepted ? '#d9f7be' : '#fafafa'
+                            }}
                         >
-                            <span style={{ fontSize: 15, lineHeight: 1.4 }}>
+                            <span className="kiosk-accept-label">
                                 {t('common:read-and-accept-docs')}
+                                {accepted ? (
+                                    <CheckCircleFilled style={{ color: '#52c41a', fontSize: 24 }} />
+                                ) : (
+                                    <Tag
+                                        color="red"
+                                        style={{
+                                            fontSize: 13,
+                                            fontWeight: 600,
+                                            lineHeight: '22px',
+                                            margin: 0
+                                        }}
+                                    >
+                                        {t('common:mandatory')}
+                                    </Tag>
+                                )}
                             </span>
                         </Checkbox>
                     </div>
                 ) : null}
-                <Divider />
-                {missingDocuments ? (
-                    <Alert
-                        type="error"
-                        showIcon
-                        message={t('common:safety-documents-load-error')}
-                    />
-                ) : documents.length === 0 ? (
-                    <Alert type="info" showIcon message={t('common:no-safety-documents')} />
-                ) : (
-                    <Alert
-                        type={complete ? 'success' : 'warning'}
-                        showIcon
-                        message={
-                            complete ? t('common:all-confirmed') : t('common:must-confirm-all')
-                        }
-                    />
-                )}
             </StyledForm>
         </WrapperForm>
     );

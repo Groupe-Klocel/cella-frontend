@@ -62,6 +62,7 @@ import {
 } from '@components';
 import { ModeEnum } from 'generated/graphql';
 import { visitorsScheduleRoutes } from 'modules/Visitors/Static/visitorsRoutes';
+import { normalizeZones } from 'modules/Visitors/Functions/visitorActions';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 
@@ -92,25 +93,6 @@ type VisitEvent = {
 };
 
 type PageComponent = FC & { layout: typeof MainLayout };
-
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-const normalizeZones = (raw: any): string[] => {
-    if (Array.isArray(raw)) return raw.map((z) => String(z));
-    if (typeof raw === 'string' && raw.trim() !== '') {
-        try {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return parsed.map((z) => String(z));
-        } catch {
-            // not JSON: treat as comma-separated
-        }
-        return raw
-            .split(',')
-            .map((z) => z.trim())
-            .filter((z) => z !== '');
-    }
-    return [];
-};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -218,20 +200,29 @@ const VisitorsSchedulePage: PageComponent = () => {
             {
                 filters: { appointmentType: visitCode },
                 orderBy: [{ field: 'appointmentDateBegin', ascending: true }],
+                // Every visit that OVERLAPS the displayed range, not only those STARTING in it:
+                // a visit spanning several days was invisible on every day but its first one.
+                // Entries of `advancedFilters` are AND-ed, the filters inside one entry are OR-ed,
+                // so this reads: begin <= rangeEnd AND (end >= rangeStart OR begin >= rangeStart)
+                // - the second term of the OR keeps the visits with no end date (walk-ins).
                 advancedFilters: [
                     {
                         filter: [
                             {
-                                field: { appointmentDateBegin: startDate },
-                                searchType: 'SUPERIOR_OR_EQUAL'
+                                field: { appointmentDateBegin: endDate },
+                                searchType: 'INFERIOR_OR_EQUAL'
                             }
                         ]
                     },
                     {
                         filter: [
                             {
-                                field: { appointmentDateBegin: endDate },
-                                searchType: 'INFERIOR_OR_EQUAL'
+                                field: { appointmentDateEnd: startDate },
+                                searchType: 'SUPERIOR_OR_EQUAL'
+                            },
+                            {
+                                field: { appointmentDateBegin: startDate },
+                                searchType: 'SUPERIOR_OR_EQUAL'
                             }
                         ]
                     }
@@ -241,23 +232,31 @@ const VisitorsSchedulePage: PageComponent = () => {
             }
         );
 
-        const formattedVisits: VisitEvent[] = appointments.results.map((a: any) => ({
-            id: String(a.id),
-            title: a.driverName
-                ? `${a.driverName}${a.entityName ? ` – ${a.entityName}` : ''}`
-                : a.name,
-            start: parseUtcToLocalDate(a.appointmentDateBegin),
-            end: parseUtcToLocalDate(a.appointmentDateEnd),
-            status: String(a.status) as VisitStatus,
-            name: a.name,
-            driverName: a.driverName ?? undefined,
-            entityName: a.entityName ?? undefined,
-            contactName: a.contactName ?? undefined,
-            comment: a.comment ?? undefined,
-            allowedZones: normalizeZones(a.allowedZones),
-            escortRequired: a.escortRequired ?? undefined,
-            extras: a.extras
-        }));
+        const formattedVisits: VisitEvent[] = appointments.results.map((a: any) => {
+            const start = parseUtcToLocalDate(a.appointmentDateBegin);
+            // A visit with no end date (walk-in registered at the kiosk) used to produce an
+            // Invalid Date, which react-big-calendar drops silently: give it a one-hour slot.
+            const end = a.appointmentDateEnd
+                ? parseUtcToLocalDate(a.appointmentDateEnd)
+                : dayjs(start).add(1, 'hour').toDate();
+            return {
+                id: String(a.id),
+                title: a.driverName
+                    ? `${a.driverName}${a.entityName ? ` – ${a.entityName}` : ''}`
+                    : a.name,
+                start,
+                end,
+                status: String(a.status) as VisitStatus,
+                name: a.name,
+                driverName: a.driverName ?? undefined,
+                entityName: a.entityName ?? undefined,
+                contactName: a.contactName ?? undefined,
+                comment: a.comment ?? undefined,
+                allowedZones: normalizeZones(a.allowedZones),
+                escortRequired: a.escortRequired ?? undefined,
+                extras: a.extras
+            };
+        });
 
         setEvents(formattedVisits);
         setSelectedEvent((prev) =>
@@ -338,6 +337,9 @@ const VisitorsSchedulePage: PageComponent = () => {
                             endAccessor="end"
                             min={DAY_START}
                             max={DAY_END}
+                            // without this a visit spanning several days is moved to the all-day
+                            // row, which globals.css hides: it is drawn on each of its days instead
+                            showMultiDayTimes
                             style={{ height: 900 }}
                             onSelectEvent={handleSelectEvent}
                             views={['week', 'agenda']}
@@ -425,7 +427,9 @@ const VisitorsSchedulePage: PageComponent = () => {
                                 </Descriptions.Item>
                                 <Descriptions.Item label={t('common:schedule')}>
                                     {dayjs(selectedEvent.start).format('DD/MM/YYYY HH:mm')} -{' '}
-                                    {dayjs(selectedEvent.end).format('HH:mm')}
+                                    {dayjs(selectedEvent.end).isSame(selectedEvent.start, 'day')
+                                        ? dayjs(selectedEvent.end).format('HH:mm')
+                                        : dayjs(selectedEvent.end).format('DD/MM/YYYY HH:mm')}
                                 </Descriptions.Item>
                                 <Descriptions.Item label={t('d:allowedZones')}>
                                     {selectedEvent.allowedZones.length > 0

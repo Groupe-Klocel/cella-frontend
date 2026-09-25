@@ -40,7 +40,7 @@ import { useRouter } from 'next/router';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { VisitEntry, VISIT_ENTRY_FIELDS } from 'modules/Visitors/types';
 import { visitorCheckOutRoutes } from 'modules/Visitors/Static/visitorsRoutes';
-import { checkOutVisit } from 'modules/Visitors/Functions/visitorActions';
+import { checkOutVisit, normalizeZones } from 'modules/Visitors/Functions/visitorActions';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -138,7 +138,7 @@ const VisitorCheckOutPage: PageComponent = () => {
             title: t('d:allowed-zones'),
             key: 'zones',
             render: (record: VisitEntry) =>
-                (record.allowedZones ?? [])
+                normalizeZones(record.allowedZones)
                     .map((zone: string) => getVisitZoneLabel(parameters, zone, language))
                     .join(', ')
         },

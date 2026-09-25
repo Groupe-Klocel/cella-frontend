@@ -17,28 +17,31 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
+
+// DESCRIPTION: article detail reached from /article-get (router.push(`/article/${aId}`)). Without
+// this page the form submission of article-get.tsx lands on a 404, and SingleArticle stays unused.
+
 import { AppHead } from '@components';
 import { META_DEFAULTS } from '@helpers';
 import { SingleArticle } from 'modules/Articles/PagesContainer/SingleArticle';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
-import MainLayout from '../../components/layouts/MainLayout';
+import MainLayout from 'components/layouts/MainLayout';
 
-
-type PageComponent = FC & { layout: typeof MainLayout }
+type PageComponent = FC & { layout: typeof MainLayout };
 
 const ArticlePage: PageComponent = () => {
-	const router = useRouter()
-	const { aid } = router.query
+    const router = useRouter();
+    const { aid } = router.query;
 
-	return (
-		<>
-			<AppHead title={META_DEFAULTS.title} />
-			<SingleArticle router={router} aId={aid!} />
-		</>
-	)
-}
+    return (
+        <>
+            <AppHead title={META_DEFAULTS.title} />
+            <SingleArticle router={router} aId={aid!} />
+        </>
+    );
+};
 
-ArticlePage.layout = MainLayout
+ArticlePage.layout = MainLayout;
 
-export default ArticlePage
+export default ArticlePage;
