@@ -26,15 +26,22 @@ import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
 import router from 'next/router';
-import { useCallback, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSession, signIn, getProviders } from 'next-auth/react';
 
 export interface ILoginFormProps {}
 
+type SsoProvider = NonNullable<Awaited<ReturnType<typeof getProviders>>>[string];
+
 export const LoginForm = () => {
     const { t } = useTranslation('global');
-    const { login, graphqlRequestClient, isAuthenticated, ssoLogin, ssoConfig } = useAuth();
+    const { login, graphqlRequestClient, isAuthenticated, ssoLogin } = useAuth();
     const { data: session, status } = useSession();
+    const [ssoProvider, setSsoProvider] = useState<SsoProvider | null>(null);
+
+    useEffect(() => {
+        getProviders().then((providers) => setSsoProvider(providers?.oidc ?? null));
+    }, []);
     // TEXTS TRANSLATION
 
     const welcome = t('welcome');
@@ -207,23 +214,16 @@ export const LoginForm = () => {
                     >
                         {loginButton}
                     </Button>
-                    {ssoConfig &&
-                        ssoConfig.warehouseSsoConfiguration.type &&
-                        ssoConfig.warehouseSsoConfiguration.authUrl &&
-                        ssoConfig.warehouseSsoConfiguration.clientId &&
-                        ssoConfig.warehouseSsoConfiguration.clientSecret &&
-                        ssoConfig.warehouseSsoConfiguration.redirectUri &&
-                        ssoConfig.warehouseSsoConfiguration.tokenUrl &&
-                        ssoConfig.warehouseSsoConfiguration.scope && (
-                            <Button
-                                type="default"
-                                onClick={() => signIn('oidc')}
-                                block
-                                style={{ height: '50px', fontSize: '16px', marginTop: '10px' }}
-                            >
-                                SSO
-                            </Button>
-                        )}
+                    {ssoProvider && (
+                        <Button
+                            type="default"
+                            onClick={() => signIn('oidc')}
+                            block
+                            style={{ height: '50px', fontSize: '16px', marginTop: '10px' }}
+                        >
+                            SSO
+                        </Button>
+                    )}
                 </Form.Item>
             </StyledForm>
         </WrapperLogin>
