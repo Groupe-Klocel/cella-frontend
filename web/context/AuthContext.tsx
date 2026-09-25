@@ -57,7 +57,6 @@ interface IAuthContext {
     logout: Function;
     graphqlRequestClient: any;
     ssoLogin: any;
-    ssoConfig: any;
 }
 
 // refactoring need to typesafe https://react-typescript-cheatsheet.netlify.app/docs/basic/getting-started/context/
@@ -74,9 +73,8 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
     const [graphqlRequestClient, setGraphqlRequestClient] = useState(graphqlClient);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(!!user);
-    const [ssoConfig, setSsoConfig] = useState<any>(null);
 
-    // Get SSO configuration and get access token from cookies , decode it and set user
+    // Get access token from cookies, decode it and set user
     useEffect(() => {
         async function loadUserFromCookie() {
             const token = cookie.get('token');
@@ -92,15 +90,6 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
             setLoading(false);
         }
         loadUserFromCookie();
-        async function ssoConfiguration() {
-            try {
-                const result = await ssoConfigurationQuery();
-                setSsoConfig(result);
-            } catch (error) {
-                console.log('Error or no SSO configuration :', error);
-            }
-        }
-        ssoConfiguration();
     }, []);
 
     const loginMutation = useWarehouseLoginMutation<Error>(graphqlRequestClient, {
@@ -126,40 +115,6 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
             showError(t(error.response.errors[0].extensions.code));
         }
     });
-
-    const ssoConfigurationQuery = async () => {
-        let result;
-        try {
-            const warehouseSsoConfiguration = gql`
-                query ($warehouseId: ID!, $envSecret: String!) {
-                    warehouseSsoConfiguration(warehouseId: $warehouseId, secret: $envSecret) {
-                        type
-                        authUrl
-                        clientId
-                        clientSecret
-                        redirectUri
-                        tokenUrl
-                        disconnectUrl
-                        scope
-                    }
-                }
-            `;
-
-            const warehouseSsoConfigurationValue = {
-                warehouseId: process.env.NEXT_PUBLIC_WAREHOUSE_ID,
-                envSecret: process.env.NEXT_PUBLIC_SSO_SECRET
-            };
-            if (process.env.NEXT_PUBLIC_SSO_SECRET) {
-                result = await graphqlRequestClient.request(
-                    warehouseSsoConfiguration,
-                    warehouseSsoConfigurationValue
-                );
-            }
-        } catch (error: any) {
-            showError(t(error.response.errors[0].extensions.code));
-        }
-        return result;
-    };
 
     //IKI 20230227 : not used
     const resetMutation = useResetPasswordMutation<Error>(graphqlRequestClient, {
@@ -204,7 +159,6 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
     });
 
     const ssoLogin = async ({ token }: { token: string }) => {
-        console.log('init sso login')
         const warehouseSsoLogin = gql`
             mutation ($token: String!, $warehouseId: ID!) {
                 warehouseSsoLogin(token: $token, warehouseId: $warehouseId) {
@@ -219,8 +173,6 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
         try {
             const result: { warehouseSsoLogin?: { accessToken?: string } } =
                 await graphqlRequestClient.request(warehouseSsoLogin, warehouseSsoLoginValues);
-
-            console.log('SSO login result = ', result);
 
             if (result?.warehouseSsoLogin?.accessToken) {
                 const token = result.warehouseSsoLogin.accessToken;
@@ -286,8 +238,8 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
         }
         setIsAuthenticated(false);
         setUser(null);
-        if (session && ssoConfig.warehouseSsoConfiguration.disconnectUrl) {
-            window.location.href = ssoConfig.warehouseSsoConfiguration.disconnectUrl;
+        if (session?.disconnectUrl) {
+            window.location.href = session.disconnectUrl;
         }
         router.push('/login');
         //router.reload();
@@ -337,8 +289,7 @@ export const AuthProvider: FC<OnlyChildrenType> = ({ children }: OnlyChildrenTyp
                 forgotPassword,
                 //IKI 20230227 : not used
                 resetPassword,
-                ssoLogin,
-                ssoConfig
+                ssoLogin
             }}
         >
             {children}
