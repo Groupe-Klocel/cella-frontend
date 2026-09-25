@@ -19,79 +19,105 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { LsIsSecured } from '@helpers';
-import { Space } from 'antd';
+import {
+    applyRfActionButtonsConfig,
+    buildHeaderDisplay,
+    useTranslationWithFallback as useTranslation,
+    ButtonManagementType,
+    HeaderManagementType
+} from '@helpers';
+import { Form, Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { SelectLoadForm } from 'modules/Common/Loads/PagesContainer/SelectLoadForm';
 import { HandlingUnitOutboundChecks } from 'modules/Preparation/Load/ChecksAndRecords/HandlingUnitOutboundChecks';
 import { ScanPalletBox } from 'modules/Common/Loads/PagesContainer/ScanPalletBox';
-import { ValidateLoadForm } from 'modules/Preparation/Load/Forms/ValidateLoad';
 import { CheckFinalStepLoadForm } from 'modules/Preparation/Load/Forms/CheckFinalStepLoad';
+import { useAppDispatch, useAppState } from 'context/AppContext';
+import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
 const LoadsPage: PageComponent = () => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
     const router = useRouter();
-    const [triggerRender, setTriggerRender] = useState<boolean>(true);
-    const [originDisplay, setOriginDisplay] = useState<any>({});
-    const [finalDisplay, setFinalDisplay] = useState<any>({});
-    const [headerContent, setHeaderContent] = useState<boolean>(false);
-    const [displayed, setDisplayed] = useState<any>({});
-    const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
-    //define workflow parameters
-    const workflow = {
-        processName: 'load',
-        expectedSteps: [10, 20, 25, 30]
-    };
-    const storedObject = JSON.parse(storage.get(workflow.processName) || '{}');
-    console.log(storedObject);
-    //initialize workflow on step 0
-    if (Object.keys(storedObject).length === 0) {
-        storedObject[`step${workflow.expectedSteps[0]}`] = { previousStep: 0 };
-        storedObject['currentStep'] = workflow.expectedSteps[0];
-        storage.set(workflow.processName, JSON.stringify(storedObject));
-    }
-    //function to retrieve information to display in RadioInfosHeader
-    useEffect(() => {
-        const object: { [k: string]: any } = {};
-        if (storedObject[`step${workflow.expectedSteps[0]}`]?.data?.load) {
-            const load = storedObject[`step${workflow.expectedSteps[0]}`]?.data?.load;
-            object[t('common:load-number')] = load.name;
-            object[t('common:carrier')] = load.carrier.name;
-            object[t('common:quantity-HU-scanned')] = load.numberHuLoaded;
-        }
-        if (storedObject[`step${workflow.expectedSteps[1]}`]?.data?.handlingUnitOutbound) {
-            const handlingUnitOutbound =
-                storedObject[`step${workflow.expectedSteps[1]}`]?.data?.handlingUnitOutbound;
-            object[t('common:support-box')] = handlingUnitOutbound.name;
-        }
-        setOriginDisplay(object);
-        setFinalDisplay(object);
-    }, [triggerRender]);
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const { parameters } = state;
+    const [form] = Form.useForm();
 
-    useEffect(() => {
-        headerContent ? setDisplayed(finalDisplay) : setDisplayed(originDisplay);
-    }, [originDisplay, finalDisplay, headerContent]);
+    const processName = 'load';
+    // 10 -> SelectLoadForm
+    // 20 -> ScanPalletBox
+    // 30 -> CheckFinalStepLoadForm (auto-validate)
+    const storedObject = state[processName] || {};
 
+    console.log(`${processName}`, storedObject);
+
+    //#region header
+    const load = storedObject['step10']?.data?.load;
+    const handlingUnitOutbound = storedObject['step20']?.data?.handlingUnitOutbound;
+    const headerManagement: HeaderManagementType = [
+        { label: t('common:load-number'), value: load?.name, visible: !!load },
+        { label: t('common:carrier'), value: load?.carrier?.name, visible: !!load },
+        { label: t('common:quantity-HU-scanned'), value: load?.numberHuLoaded, visible: !!load },
+        {
+            label: t('common:support-box'),
+            value: handlingUnitOutbound?.name,
+            visible: !!handlingUnitOutbound
+        }
+    ];
+    const headerDisplay = buildHeaderDisplay(headerManagement);
+    //#endregion
+
+    //#region global buttons
     const onReset = () => {
-        storage.remove(workflow.processName);
-        setHeaderContent(false);
-        setShowEmptyLocations(false);
-        setTriggerRender(!triggerRender);
+        dispatch({ type: 'DELETE_RF_PROCESS', processName });
+        form.resetFields();
     };
 
     const previousPage = () => {
+        dispatch({ type: 'DELETE_RF_PROCESS', processName });
         router.back();
-        storage.remove(workflow.processName);
-        setHeaderContent(false);
-        setShowEmptyLocations(false);
     };
+
+    const onBack = () => {
+        dispatch({
+            type: 'ON_BACK',
+            processName,
+            stepToReturn: `step${storedObject[`step${storedObject.currentStep}`]?.previousStep}`
+        });
+        form.resetFields();
+    };
+    //#endregion
+
+    //#region module buttons
+    const buttonManagement: ButtonManagementType = [
+        {
+            key: 'submit',
+            label: t('actions:submit'),
+            visibleOnSteps: [10, 20],
+            onClick: () => form.submit(),
+            position: 'bottom'
+        },
+        {
+            key: 'back',
+            label: t('actions:back'),
+            visibleOnSteps: [20],
+            onClick: () => onBack(),
+            position: 'bottom'
+        }
+    ];
+    const orderedButtonManagement = applyRfActionButtonsConfig(buttonManagement, parameters);
+    //#endregion
+
+    //#region reset form on step change
+    useEffect(() => {
+        form.resetFields();
+    }, [storedObject.currentStep]);
+    //#endregion
 
     return (
         <PageContentWrapper>
@@ -99,7 +125,7 @@ const LoadsPage: PageComponent = () => {
                 title={t('common:load')}
                 actionsRight={
                     <Space>
-                        {storedObject.currentStep > workflow.expectedSteps[0] ? (
+                        {storedObject.currentStep > 10 ? (
                             <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
                         ) : (
                             <></>
@@ -108,75 +134,53 @@ const LoadsPage: PageComponent = () => {
                     </Space>
                 }
             />
-            {Object.keys(originDisplay).length === 0 && Object.keys(finalDisplay).length === 0 ? (
+            {Object.keys(headerDisplay).length === 0 ? (
                 <></>
             ) : (
-                <RadioInfosHeader
-                    input={{
-                        displayed: displayed
-                    }}
-                ></RadioInfosHeader>
+                <RadioInfosHeader input={{ displayed: headerDisplay }}></RadioInfosHeader>
             )}
-            {!storedObject[`step${workflow.expectedSteps[0]}`]?.data ? (
-                // Step 1 : Scan and Check Load
-                <SelectLoadForm
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[0]}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: false }}
-                ></SelectLoadForm>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[0]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[1]}`]?.data ? (
-                // Step 2 : Scan and Check Support/Box
-                <ScanPalletBox
-                    process={workflow.processName}
-                    stepNumber={workflow.expectedSteps[1]}
-                    label={t('common:support-box')}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ submitButton: true, backButton: true }}
-                    checkComponent={(data: any) => (
-                        <HandlingUnitOutboundChecks dataToCheck={data} />
-                    )}
-                ></ScanPalletBox>
-            ) : (
-                <></>
-            )}
-            {storedObject[`step${workflow.expectedSteps[1]}`]?.data &&
-            !storedObject[`step${workflow.expectedSteps[3]}`]?.data ? (
-                storedObject[`step${workflow.expectedSteps[1]}`]?.nextStep === 30 ? (
+            <RadioButtonWrapper
+                buttonManagement={orderedButtonManagement}
+                currentStep={storedObject.currentStep}
+            >
+                {!storedObject['step10']?.data ? (
+                    // Step 1 : Scan and Check Load
+                    <SelectLoadForm
+                        processName={processName}
+                        stepNumber={10}
+                        formToUse={form}
+                    ></SelectLoadForm>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step10']?.data && !storedObject['step20']?.data ? (
+                    // Step 2 : Scan and Check Support/Box
+                    <ScanPalletBox
+                        processName={processName}
+                        stepNumber={20}
+                        label={t('common:support-box')}
+                        formToUse={form}
+                        checkComponent={(data: any) => (
+                            <HandlingUnitOutboundChecks dataToCheck={data} />
+                        )}
+                    ></ScanPalletBox>
+                ) : (
+                    <></>
+                )}
+                {storedObject['step20']?.data &&
+                !storedObject['step30']?.data &&
+                storedObject['step20']?.nextStep === 30 ? (
+                    // Step 3 : automatic final validation
                     <CheckFinalStepLoadForm
-                        process={workflow.processName}
-                        stepNumber={workflow.expectedSteps[3]}
-                        trigger={{ triggerRender, setTriggerRender }}
-                        box={
-                            storedObject[`step${workflow.expectedSteps[1]}`].data
-                                ?.handlingUnitOutbound
-                        }
-                        load={storedObject[`step${workflow.expectedSteps[0]}`].data.load}
-                        headerContent={{ setHeaderContent }}
+                        processName={processName}
+                        stepNumber={30}
+                        box={storedObject['step20'].data?.handlingUnitOutbound}
+                        load={storedObject['step10'].data.load}
                     ></CheckFinalStepLoadForm>
                 ) : (
-                    // ---------------- For manual validation ---------------- //
-                    // <ValidateLoadForm
-                    //     process={workflow.processName}
-                    //     stepNumber={workflow.expectedSteps[3]}
-                    //     buttons={{ submitButton: true, backButton: true }}
-                    //     trigger={{ triggerRender, setTriggerRender }}
-                    //     headerContent={{ setHeaderContent }}
-                    // ></ValidateLoadForm>
-                    (() => {
-                        storedObject.currentStep = workflow.expectedSteps[1];
-                        storage.set(workflow.processName, JSON.stringify(storedObject));
-                        setTriggerRender(!triggerRender);
-                        return null;
-                    })()
-                )
-            ) : (
-                <></>
-            )}
+                    <></>
+                )}
+            </RadioButtonWrapper>
         </PageContentWrapper>
     );
 };

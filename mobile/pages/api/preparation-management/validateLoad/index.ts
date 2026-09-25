@@ -101,32 +101,48 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         );
         console.log('Result of box Status', resultBoxResponse);
 
-        // Update Load
+        // Update Load: numberHuLoaded/weight are incremented atomically server-side
+        // (advancedInput) instead of being computed from the client's local count,
+        // which can be stale if another operator is loading the same load concurrently.
+        // The box weight is its finalWeight (weighed) when filled, else its theoriticalWeight.
+        const boxWeightField = box.finalWeight != null ? 'finalWeight' : 'theoriticalWeight';
+        const boxWeight = Number(box[boxWeightField]);
+        if (!Number.isFinite(boxWeight) || boxWeight < 0) {
+            throw new Error(`Invalid ${boxWeightField} for box ${box.id}: ${box[boxWeightField]}`);
+        }
+
         const updatedLoadMutation = gql`
-            mutation updateLoad($id: String!, $input: UpdateLoadInput!) {
-                updateLoad(id: $id, input: $input) {
+            mutation updateLoad($id: String!, $input: UpdateLoadInput!, $advancedInput: JSON) {
+                updateLoad(id: $id, input: $input, advancedInput: $advancedInput) {
                     id
                     status
+                    numberHuLoaded
+                    weight
                 }
             }
         `;
         const dataForLoad = {
             status: configs.LOAD_STATUS_LOAD_IN_PROGRESS,
-            numberHuLoaded: load.numberHuLoaded + 1,
-            weight: load.weight + box.theoriticalWeight,
             lastTransactionId
         };
         const updatedLoadVariables = {
             id: load.id,
-            input: dataForLoad
+            input: dataForLoad,
+            advancedInput: {
+                numberHuLoaded: 'numberHuLoaded+1',
+                weight: `weight+${boxWeight}`
+            }
         };
 
-        const resultLoadResponse = await graphqlRequestClient.request(
+        const resultLoadResponse: GraphQLResponseType = await graphqlRequestClient.request(
             updatedLoadMutation,
             updatedLoadVariables,
             requestHeader
         );
         console.log('Result of Load Status', resultLoadResponse);
+        if (!resultLoadResponse?.updateLoad) {
+            throw new Error(`updateLoad mutation returned no data for load ${load.id}`);
+        }
 
         // Create Load Line
         const createLoadLineMutation = gql`
@@ -155,7 +171,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         //merge results
         res.status(200).json({
             response: {
-                updatedBox: resultBoxResponse.handlingUnitOutbound,
+                updatedBox: resultBoxResponse.updateHandlingUnitOutbound,
+                updatedLoad: resultLoadResponse.updateLoad,
                 lastTransactionId
             }
         });

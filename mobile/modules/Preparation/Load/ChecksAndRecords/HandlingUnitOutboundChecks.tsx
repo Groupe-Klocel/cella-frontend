@@ -18,12 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured, showSuccess } from '@helpers';
+import { showError, showSuccess } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import parameters from '../../../../../common/parameters.json';
 import { Modal } from 'antd';
 import configs from '../../../../../common/configs.json';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IHandlingUnitOutboundChecksProps {
     dataToCheck: any;
@@ -31,18 +32,18 @@ export interface IHandlingUnitOutboundChecksProps {
 
 export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboundChecksProps) => {
     const { t } = useTranslation();
-    const storage = LsIsSecured();
+    const state = useAppState();
+    const dispatch = useAppDispatch();
 
     const {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitOutboundInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     } = dataToCheck;
 
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const storedObject = state[processName] || {};
 
     useEffect(() => {
         if (scannedInfo && handlingUnitOutboundInfos) {
@@ -96,26 +97,38 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                                     }
                                 );
 
-                                if (res.ok) {
+                                const { response } = res.ok
+                                    ? await res.json()
+                                    : { response: undefined };
+                                if (res.ok && response?.updatedLoad) {
                                     showSuccess(t('messages:unload-success'));
-                                    storedObject.step10.data.load.numberHuLoaded =
-                                        storedObject.step10.data.load.numberHuLoaded - 1;
-                                    storedObject.step10.data.load.weight =
-                                        storedObject.step10.data.load.weight -
-                                        box.theoriticalWeight;
-                                    storage.set(process, JSON.stringify(storedObject));
+                                    dispatch({
+                                        type: 'UPDATE_BY_STEP',
+                                        processName,
+                                        stepName: 'step10',
+                                        object: {
+                                            ...storedObject.step10,
+                                            data: {
+                                                ...storedObject.step10.data,
+                                                load: {
+                                                    ...storedObject.step10.data.load,
+                                                    numberHuLoaded:
+                                                        response.updatedLoad.numberHuLoaded,
+                                                    weight: response.updatedLoad.weight,
+                                                    status: response.updatedLoad.status
+                                                }
+                                            }
+                                        }
+                                    });
                                     setResetForm(true);
                                     setScannedInfo(null);
-                                    setTriggerRender(!triggerRender);
                                 } else {
                                     showError(t('messages:load-failed'));
                                 }
                             };
                             const onBack = () => {
-                                storage.set(process, JSON.stringify(storedObject));
                                 setResetForm(true);
                                 setScannedInfo(null);
-                                setTriggerRender(!triggerRender);
                             };
                             Modal.confirm({
                                 title: (
@@ -152,17 +165,22 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                                     setResetForm(true);
                                     setScannedInfo(undefined);
                                 } else {
-                                    // Save in local storage
+                                    // Save handling unit outbound and move to the final check step
                                     const data: { [label: string]: any } = {};
                                     data['handlingUnitOutbound'] =
                                         handlingUnitOutboundInfos?.handlingUnitOutbounds?.results[0];
                                     const nextStep = 30;
-                                    setTriggerRender(!triggerRender);
-                                    storedObject[`step${stepNumber}`] = {
-                                        ...storedObject[`step${stepNumber}`],
-                                        data,
-                                        nextStep
-                                    };
+                                    dispatch({
+                                        type: 'UPDATE_BY_STEP',
+                                        processName,
+                                        stepName: `step${stepNumber}`,
+                                        object: {
+                                            ...storedObject[`step${stepNumber}`],
+                                            data,
+                                            nextStep
+                                        },
+                                        customFields: [{ key: 'currentStep', value: stepNumber }]
+                                    });
                                 }
                             } else {
                                 if (
@@ -187,12 +205,6 @@ export const HandlingUnitOutboundChecks = ({ dataToCheck }: IHandlingUnitOutboun
                 setResetForm(true);
                 setScannedInfo(undefined);
             }
-        }
-        if (
-            storedObject[`step${stepNumber}`] &&
-            Object.keys(storedObject[`step${stepNumber}`]).length != 0
-        ) {
-            storage.set(process, JSON.stringify(storedObject));
         }
     }, [handlingUnitOutboundInfos]);
 
