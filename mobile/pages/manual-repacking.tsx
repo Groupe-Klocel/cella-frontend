@@ -22,7 +22,6 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
-    ButtonManagementType,
     HeaderManagementType,
     applyRfActionButtonsConfig,
     buildHeaderDisplay,
@@ -53,7 +52,8 @@ import { BoxToConsolidateChecks } from 'modules/Preparation/ManualRepacking/Chec
 import { ReviewHuModelWeightChecks } from 'modules/Preparation/ManualRepacking/ChecksAndRecords/ReviewHuModelWeightChecks';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
-import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { ButtonConfig, RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { useRfButtonLock } from 'helpers/utils/rfButtonLock';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -64,6 +64,8 @@ const ManualRepacking: PageComponent = () => {
     const router = useRouter();
     const { parameters } = useAppState();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    // Locked while an action button runs or a step validates itself (helpers/utils/rfButtonLock.ts)
+    const { isLocked } = useRfButtonLock();
     const [finishBoxLoading, setFinishBoxLoading] = useState<boolean>(false);
     const [nextAction, setNextAction] = useState<'anotherBox' | 'finishPacking' | null>(null);
 
@@ -337,12 +339,14 @@ const ManualRepacking: PageComponent = () => {
     //#endregion
 
     //#region module buttons
-    const buttonManagement: ButtonManagementType = [
+    const buttonManagement: ButtonConfig[] = [
         {
             key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [10, 20, 40, 50, 70, 80, 90],
-            onClick: () => form.submit(),
+            // hold: the step behind may call the API without rendering a spinner
+            onClick: () => form.validateFields().then(() => form.submit()),
+            lock: true,
             position: 'bottom'
         },
         {
@@ -423,11 +427,19 @@ const ManualRepacking: PageComponent = () => {
                 actionsRight={
                     <Space>
                         {storedObject.currentStep > 10 ? (
-                            <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
+                            <NavButton
+                                icon={<UndoOutlined />}
+                                onClick={onReset}
+                                disabled={isLocked}
+                            ></NavButton>
                         ) : (
                             <></>
                         )}
-                        <NavButton icon={<ArrowLeftOutlined />} onClick={previousPage}></NavButton>
+                        <NavButton
+                            icon={<ArrowLeftOutlined />}
+                            onClick={previousPage}
+                            disabled={isLocked}
+                        ></NavButton>
                     </Space>
                 }
             />
