@@ -25,7 +25,6 @@ import {
     applyRfActionButtonsConfig,
     buildHeaderDisplay,
     useTranslationWithFallback as useTranslation,
-    ButtonManagementType,
     HeaderManagementType
 } from '@helpers';
 import { Form, Space } from 'antd';
@@ -36,7 +35,8 @@ import { HandlingUnitOutboundChecks } from 'modules/Preparation/Load/ChecksAndRe
 import { ScanPalletBox } from 'modules/Common/Loads/PagesContainer/ScanPalletBox';
 import { CheckFinalStepLoadForm } from 'modules/Preparation/Load/Forms/CheckFinalStepLoad';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { ButtonConfig, RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { useRfButtonLock } from 'helpers/utils/rfButtonLock';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -94,12 +94,16 @@ const LoadsPage: PageComponent = () => {
     //#endregion
 
     //#region module buttons
-    const buttonManagement: ButtonManagementType = [
+    // Locked while an action button runs or a step validates itself (helpers/utils/rfButtonLock.ts)
+    const { isLocked } = useRfButtonLock();
+    const buttonManagement: ButtonConfig[] = [
         {
             key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [10, 20],
-            onClick: () => form.submit(),
+            // hold: the step behind may call the API without rendering a spinner
+            onClick: () => form.validateFields().then(() => form.submit()),
+            lock: true,
             position: 'bottom'
         },
         {
@@ -126,11 +130,19 @@ const LoadsPage: PageComponent = () => {
                 actionsRight={
                     <Space>
                         {storedObject.currentStep > 10 ? (
-                            <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
+                            <NavButton
+                                icon={<UndoOutlined />}
+                                onClick={onReset}
+                                disabled={isLocked}
+                            ></NavButton>
                         ) : (
                             <></>
                         )}
-                        <NavButton icon={<ArrowLeftOutlined />} onClick={previousPage}></NavButton>
+                        <NavButton
+                            icon={<ArrowLeftOutlined />}
+                            onClick={previousPage}
+                            disabled={isLocked}
+                        ></NavButton>
                     </Space>
                 }
             />
