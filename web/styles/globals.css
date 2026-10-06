@@ -138,6 +138,124 @@ input::-webkit-input-placeholder {
     }
 }
 
+/* ─── Page header (components/common/dumb/PageHeader/CustomPageHeader) ───────
+   Title block and action buttons on one wrapping flex row. The actions keep to the right of the
+   title on a desktop (margin-left: auto, dropping under it right-aligned when both do not fit);
+   under 768px they take a full-width row and the buttons wrap. `.ant-space` is matched as a
+   descendant on purpose: the pages hand their buttons over as a Space that the generic
+   components nest in another Space, and every level has to be allowed to wrap. */
+.custom-header-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px 16px;
+    margin: 16px 0;
+}
+.custom-header-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+}
+.custom-header-title h4.ant-typography {
+    overflow-wrap: anywhere;
+}
+.custom-header-extra {
+    flex: 0 0 auto;
+    margin-left: auto;
+    max-width: 100%;
+}
+.custom-header-extra .ant-space {
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+@media (max-width: 767px) {
+    /* `div.` outranks the theme stylesheets' `.custom-header` padding (web/public/*-theme.css) */
+    div.custom-header {
+        padding: 8px 12px 12px 12px;
+    }
+    .custom-header-main {
+        margin: 12px 0 8px;
+    }
+    .custom-header-extra {
+        flex-basis: 100%;
+        margin-left: 0;
+    }
+
+    /* ─── Page content wrappers ──────────────────────────────────────────────
+       Some ninety hand-written add/edit/detail containers are a `styled(Layout.Content)` with
+       30px side margins (`margin: 0 30px 50px 30px` or `margin: 15px 30px`), on top of their
+       own padding. On a phone that is 60px lost per screen before any field is drawn; the
+       inner padding is enough of a gutter. `main.` outranks the styled-components class. */
+    .app-content-scroll main.ant-layout-content {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* ─── List search bar (modules/Crud/ListComponentV2) ─────────────────────
+       antd switches a Form.Item to its vertical layout under 576px (label and control both
+       `flex: 0 0 100%`) but keeps an INLINE form's rows on one line, which pushed the search
+       input past the right edge of the screen. The bar takes the whole row instead: label,
+       input filling the remaining width, filter buttons. */
+    .list-search-bar {
+        width: 100%;
+    }
+    .list-search-bar > .ant-space-item:first-child {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .list-search-bar .ant-form-inline,
+    .list-search-bar .ant-form-inline .ant-form-item {
+        width: 100%;
+    }
+    .list-search-bar .ant-form-inline .ant-form-item {
+        margin-inline-end: 0;
+    }
+    /* six classes: the lists sit inside a non-inline antd Form whose small-screen rules reach
+       this inline form's label and control through a five-class selector */
+    .list-search-bar .ant-form-inline .ant-form-item .ant-row.ant-form-item-row {
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+    .list-search-bar
+        .ant-form-inline
+        .ant-form-item
+        .ant-form-item-row
+        > .ant-col.ant-form-item-label {
+        flex: 0 0 auto;
+        padding: 0 8px 0 0;
+        white-space: nowrap;
+    }
+    .list-search-bar
+        .ant-form-inline
+        .ant-form-item
+        .ant-form-item-row
+        > .ant-col.ant-form-item-control {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    /* ─── Detail screens (components/common/dumb/DetailsList) ───────────────
+       One label/value pair per row here (the component drops to column={1} under md). The label
+       keeps a stable share of the width and the cells lose some padding, so values wrap by word
+       rather than by letter. Selectors repeat antd's own path to outrank its bordered styles. */
+    .details-list.ant-descriptions-bordered
+        > .ant-descriptions-view
+        .ant-descriptions-row
+        > .ant-descriptions-item-label {
+        width: 40%;
+        min-width: 110px;
+        padding: 8px 10px;
+    }
+    .details-list.ant-descriptions-bordered
+        > .ant-descriptions-view
+        .ant-descriptions-row
+        > .ant-descriptions-item-content {
+        padding: 8px 10px;
+        overflow-wrap: anywhere;
+    }
+}
+
 /* .ant-modal-body {
 height: calc(100vh - 110px);
 } */
