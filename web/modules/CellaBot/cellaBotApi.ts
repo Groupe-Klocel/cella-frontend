@@ -36,6 +36,32 @@ export const AI_AVAILABILITY_QUERY = gql`
                 documentName
                 description
             }
+            documentAnalysis {
+                enabled
+                maxFiles
+                maxBytesTotal
+                defaultKind
+                allowedSources
+                supportedMediaTypes
+                kinds {
+                    slug
+                    description
+                }
+            }
+        }
+    }
+`;
+
+// The same query without `documentAnalysis`, for a backend that predates document analysis: the
+// field is then unknown and the whole query fails validation, which would hide every AI entry point.
+const LEGACY_AI_AVAILABILITY_QUERY = gql`
+    query AiAvailability {
+        aiAvailability {
+            enabled
+            exposedDocuments {
+                documentName
+                description
+            }
         }
     }
 `;
@@ -43,6 +69,23 @@ export const AI_AVAILABILITY_QUERY = gql`
 // What THIS front can render: the backend only teaches/offers the matching features (an older
 // front that doesn't declare them keeps the plain pre-existing chat behavior).
 export const CELLABOT_CAPABILITIES = ['entityLinks', 'proposedActions', 'charts'];
+
+const AI_CHAT_RESULT_FIELDS = `
+    message
+    steps
+    conversationId
+    proposedActions
+    charts
+    documents {
+        filename
+        base64
+        url
+    }
+    toolCalls {
+        tool
+        arguments
+    }
+`;
 
 export const AI_CHAT_MUTATION = gql`
     mutation AiChat(
@@ -59,20 +102,33 @@ export const AI_CHAT_MUTATION = gql`
             conversationId: $conversationId
             capabilities: $capabilities
         ) {
-            message
-            steps
-            conversationId
-            proposedActions
-            charts
-            documents {
-                filename
-                base64
-                url
-            }
-            toolCalls {
-                tool
-                arguments
-            }
+            ${AI_CHAT_RESULT_FIELDS}
+        }
+    }
+`;
+
+// Variant used when files are attached. Kept separate (like the iOS app) so the plain chat keeps
+// working against a backend without `documents` / `usage`: only a turn that needs them asks for them.
+// `kind` (the extraction recipe) only exists on the SSE route, so this fallback uses the default one.
+export const AI_CHAT_WITH_DOCUMENTS_MUTATION = gql`
+    mutation AiChat(
+        $prompt: String!
+        $history: [JSON!]
+        $context: JSON
+        $conversationId: String
+        $capabilities: [String!]
+        $documents: [AiDocumentInput!]
+    ) {
+        aiChat(
+            prompt: $prompt
+            history: $history
+            context: $context
+            conversationId: $conversationId
+            capabilities: $capabilities
+            documents: $documents
+        ) {
+            ${AI_CHAT_RESULT_FIELDS}
+            usage
         }
     }
 `;
@@ -92,6 +148,21 @@ export interface AiProposedActions {
     summary: string;
     operations: Array<{ document: string; variables?: any }>;
     count: number;
+}
+
+// Token cost of one turn (every LLM call of the turn, cached prompt tokens included).
+export interface AiUsage {
+    inputTokens?: number | null;
+    outputTokens?: number | null;
+    cacheReadTokens?: number | null;
+    cacheWriteTokens?: number | null;
+    totalTokens?: number | null;
+}
+
+// A file attached to a turn: always sent inline (the API has no upload step).
+export interface AiDocumentInput {
+    filename: string;
+    base64: string;
 }
 
 // A proposed operation is executable only if it is a GraphQL *mutation* with object (or absent)
@@ -140,6 +211,7 @@ export interface AiChatResult {
     conversationId?: string | null;
     proposedActions?: AiProposedActions | null;
     charts?: Array<any> | null;
+    usage?: AiUsage | null;
 }
 
 export interface AiChatHistoryEntry {
@@ -153,6 +225,9 @@ export interface AiChatVariables {
     context?: AiUiContext;
     conversationId?: string | null;
     capabilities?: string[];
+    documents?: Array<AiDocumentInput>;
+    // Extraction recipe for the attached documents (SSE route only); omitted = warehouse default.
+    kind?: string | null;
 }
 
 export interface AiExposedDocument {
@@ -160,10 +235,27 @@ export interface AiExposedDocument {
     description?: string | null;
 }
 
-interface AiAvailabilityResponse {
+export interface AiDocumentKind {
+    slug: string;
+    description?: string | null;
+}
+
+// Per-warehouse document analysis settings: whether the paperclip is offered and its limits.
+export interface AiDocumentAnalysisAvailability {
+    enabled?: boolean | null;
+    maxFiles?: number | null;
+    maxBytesTotal?: number | null;
+    defaultKind?: string | null;
+    allowedSources?: Array<string> | null;
+    supportedMediaTypes?: Array<string> | null;
+    kinds?: Array<AiDocumentKind> | null;
+}
+
+export interface AiAvailabilityResponse {
     aiAvailability?: {
         enabled?: boolean | null;
         exposedDocuments?: Array<AiExposedDocument> | null;
+        documentAnalysis?: AiDocumentAnalysisAvailability | null;
     } | null;
 }
 
@@ -208,9 +300,9 @@ export const CONVERSATION_MESSAGES_QUERY = gql`
     }
 `;
 
-// Conversation management (list / delete). The resolver row-scopes ai_conversation to the current
-// worker, so this only ever returns/deletes the caller's own conversations (admins/integrators see
-// all — the audit use case). The `username` filter is belt-and-suspenders on top of that scoping.
+// Conversation management (list / rename / delete). The resolver row-scopes ai_conversation to the
+// current worker, so this only ever returns/changes the caller's own conversations. The `username`
+// filter is belt-and-suspenders on top of that scoping.
 export const CONVERSATIONS_LIST_QUERY = gql`
     query CellaBotConversations($f: AiConversationSearchFilters, $itemsPerPage: Int) {
         aiConversations(
@@ -232,6 +324,18 @@ export const DELETE_CONVERSATION_MUTATION = gql`
         deleteAiConversation(id: $id)
     }
 `;
+
+export const RENAME_CONVERSATION_MUTATION = gql`
+    mutation CellaBotRenameConversation($id: String!, $input: UpdateAiConversationInput!) {
+        updateAiConversation(id: $id, input: $input) {
+            id
+            title
+        }
+    }
+`;
+
+// The backend titles a new conversation with the first 120 characters of its first prompt.
+export const CONVERSATION_TITLE_MAX_LENGTH = 120;
 
 export interface AiConversationSummary {
     id: string;
@@ -269,6 +373,15 @@ export const deleteConversation = async (graphqlRequestClient: any, id: string):
     await graphqlRequestClient.request(DELETE_CONVERSATION_MUTATION, { id });
 };
 
+/** Rename a conversation (ownership is enforced server-side). */
+export const renameConversation = async (
+    graphqlRequestClient: any,
+    id: string,
+    title: string
+): Promise<void> => {
+    await graphqlRequestClient.request(RENAME_CONVERSATION_MUTATION, { id, input: { title } });
+};
+
 /** Fetch the user's latest persisted conversation, or null (best-effort, errors swallowed). */
 export const fetchLastConversation = async (
     graphqlRequestClient: any,
@@ -290,11 +403,28 @@ export const fetchLastConversation = async (
     }
 };
 
+// GraphQL validation error raised when a selected field does not exist on the server's schema.
+const isUnknownFieldError = (error: any): boolean =>
+    (error?.response?.errors ?? []).some((e: any) =>
+        /Cannot query field/i.test(String(e?.message ?? ''))
+    );
+
+const fetchAiAvailability = async (graphqlRequestClient: any): Promise<AiAvailabilityResponse> => {
+    try {
+        return await graphqlRequestClient.request(AI_AVAILABILITY_QUERY);
+    } catch (error) {
+        if (isUnknownFieldError(error)) {
+            return graphqlRequestClient.request(LEGACY_AI_AVAILABILITY_QUERY);
+        }
+        throw error;
+    }
+};
+
 // Lightweight availability check — only fires once the user is authenticated.
 export const useAiAvailability = (graphqlRequestClient: any, enabled: boolean) =>
     useQuery<AiAvailabilityResponse>({
         queryKey: ['aiAvailability'],
-        queryFn: () => graphqlRequestClient.request(AI_AVAILABILITY_QUERY),
+        queryFn: () => fetchAiAvailability(graphqlRequestClient),
         enabled,
         staleTime: 5 * 60 * 1000,
         retry: false
@@ -308,21 +438,103 @@ export const useAiChat = (
     }
 ) =>
     useMutation<AiChatResponse, any, AiChatVariables>({
-        mutationFn: (variables: AiChatVariables) =>
-            graphqlRequestClient.request(AI_CHAT_MUTATION, variables),
+        mutationFn: ({ kind, documents, ...variables }: AiChatVariables) =>
+            documents && documents.length > 0
+                ? graphqlRequestClient.request(AI_CHAT_WITH_DOCUMENTS_MUTATION, {
+                      ...variables,
+                      documents
+                  })
+                : graphqlRequestClient.request(AI_CHAT_MUTATION, variables),
         onSuccess: options?.onSuccess,
         onError: options?.onError
     });
 
-// ---------------------------------------------------------------- step-progress streaming (SSE)
+// ------------------------------------------------------------------------------ errors
+
+// Why a chat turn failed. Carried on the Error as `cellaBotKind` (a discriminant rather than Error
+// subclasses: the project compiles to ES5, where `instanceof` on an Error subclass is unreliable).
+// - rejected:   the stream route refused the turn before opening (403/422/429) with a safe message
+//               (AI disabled, no wm_cellabot, invalid attachment, daily token budget reached);
+// - notStarted: the stream could not be opened for another reason — the mutation fallback is safe;
+// - aborted:    the user stopped the turn;
+// - server:     an `error` event after the stream opened (safe wording from the backend);
+// - incomplete: the stream ended without its `final` event.
+export type AiChatErrorKind = 'rejected' | 'notStarted' | 'aborted' | 'server' | 'incomplete';
+
+export const aiChatError = (kind: AiChatErrorKind, message: string, status?: number) =>
+    Object.assign(new Error(message), { cellaBotKind: kind, status });
+
+export const aiChatErrorKind = (error: any): AiChatErrorKind | undefined => error?.cellaBotKind;
+
+/** Replace `{{name}}` placeholders in a (translated) template. */
+export const interpolate = (template: string, values: Record<string, string | number>): string =>
+    template.replace(/{{\s*(\w+)\s*}}/g, (match, name) =>
+        values[name] !== undefined ? String(values[name]) : match
+    );
+
+// Coded API errors whose wording comes from the `errors:<code>` DB translations: AI disabled for the
+// warehouse, AI provider failure, daily token budget used up, missing wm_cellabot permission.
+const TRANSLATED_ERROR_CODES = ['AI-000100', 'AI-000110', 'AI-000130', 'APP-000200'];
+
+/**
+ * The message to show for a failed chat turn: the translated wording of a known API error code,
+ * else the server's own (safe) message, else a generic one.
+ */
+export const aiErrorMessage = (error: any, tt: (key: string, def: string) => string): string => {
+    const generic = tt('common:cellabot-error', 'Sorry, something went wrong. Please try again.');
+    switch (aiChatErrorKind(error)) {
+        case 'rejected':
+            return error.status === 429
+                ? tt('errors:AI-000130', error.message || generic)
+                : error.message || generic;
+        case 'server':
+            return error.message || generic;
+        case 'incomplete':
+            return tt(
+                'common:cellabot-incomplete',
+                'The answer was interrupted. Please try again.'
+            );
+        default:
+            break;
+    }
+    const graphqlError = error?.response?.errors?.[0];
+    const code = graphqlError?.extensions?.code;
+    if (typeof code === 'string' && TRANSLATED_ERROR_CODES.includes(code)) {
+        return tt(`errors:${code}`, graphqlError?.message || generic);
+    }
+    // Other coded errors (AI-000120 invalid input: e.g. which attachment was refused) carry a
+    // specific, safe message: show it as is.
+    return code && graphqlError?.message ? graphqlError.message : generic;
+};
+
+// ---------------------------------------------------------------- streaming (SSE)
+
+export interface AiStreamDocumentInfo {
+    filename?: string | null;
+    mediaType?: string | null;
+    bytes?: number | null;
+    pages?: number | null;
+}
 
 export interface AiChatStreamEvent {
-    type: 'step' | 'tool' | 'final' | 'error';
+    type: 'step' | 'tool' | 'documents' | 'delta' | 'final' | 'error';
     step?: number;
     tool?: string;
     arguments?: any;
     result?: any;
     message?: string;
+    text?: string;
+    documents?: Array<AiStreamDocumentInfo>;
+}
+
+export interface AiChatStreamHandlers {
+    // Progress of the turn: a completion round (`step`), a tool about to run (`tool`), the attached
+    // documents being read (`documents`).
+    onProgress?: (event: AiChatStreamEvent) => void;
+    // A piece of the answer as the model writes it (token streaming).
+    onDelta?: (text: string) => void;
+    // The first event was received (see streamAiChat).
+    onStarted?: () => void;
 }
 
 // The SSE endpoint lives on the same API host as the GraphQL endpoint.
@@ -330,41 +542,69 @@ const streamEndpoint = () =>
     (process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? '').replace(/\/graphql\/?$/, '') +
     '/ai/chat/stream';
 
+// Statuses the stream route answers itself, before opening, with a `{"error": "..."}` body.
+const REJECTED_STATUSES = [403, 422, 429];
+
 /**
- * Streaming variant of the aiChat mutation: POSTs to /ai/chat/stream and reports each progress
- * event ("step"/"tool") through `onProgress`, resolving with the final AiChatResult.
+ * Streaming variant of the aiChat mutation: POSTs to /ai/chat/stream with token streaming on and
+ * reports progress and answer deltas through `handlers`, resolving with the final AiChatResult.
  *
  * `onStarted` fires on the FIRST received event: past that point the agent may already have run
  * tools (including mutations), so callers must NOT fall back to the non-streaming mutation — a
- * retry could re-execute writes. Fallback is only safe when the stream failed to start.
+ * retry could re-execute writes. Fallback is only safe for a `notStarted` error.
+ *
+ * Aborting `signal` closes the connection; the backend then stops the agent loop (and does not save
+ * the turn). The promise rejects with an `aborted` error.
  */
 export const streamAiChat = async (
     variables: AiChatVariables,
-    onProgress: (event: AiChatStreamEvent) => void,
-    onStarted?: () => void
+    handlers: AiChatStreamHandlers = {},
+    signal?: AbortSignal
 ): Promise<AiChatResult> => {
     const token = cookie.get('token');
     if (!token) {
-        throw new Error('Not authenticated');
+        throw aiChatError('notStarted', 'Not authenticated');
     }
     // Mirror the fake-data headers AuthContext puts on the GraphQL client, so streaming behaves the
     // same as the aiChat mutation in NEXT_PUBLIC_FAKE_DATA_ON environments (else the SSE endpoint can
     // diverge / fail there).
     const headers: Record<string, string> = {
         'content-type': 'application/json',
+        accept: 'text/event-stream',
         authorization: `Bearer ${token}`
     };
     if (IS_FAKE) {
         headers['X-API-fake'] = 'fake';
         if (IS_SAME_SEED) headers['X-API-seed'] = 'same';
     }
-    const response = await fetch(streamEndpoint(), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(variables)
-    });
+
+    let response: Response;
+    try {
+        response = await fetch(streamEndpoint(), {
+            method: 'POST',
+            headers,
+            // Token streaming is opt-in: `delta` events carry the answer as it is produced.
+            body: JSON.stringify({ ...variables, streamTokens: true }),
+            signal
+        });
+    } catch (error: any) {
+        if (signal?.aborted) throw aiChatError('aborted', 'Stopped');
+        throw aiChatError('notStarted', String(error?.message ?? error));
+    }
     if (!response.ok || !response.body) {
-        throw new Error(`AI stream failed (${response.status})`);
+        if (REJECTED_STATUSES.includes(response.status)) {
+            // The backend's own refusal: re-sending through the mutation would fail the same way
+            // (and upload the attachments twice), so surface its message instead.
+            let message = '';
+            try {
+                const body = await response.json();
+                message = typeof body?.error === 'string' ? body.error : '';
+            } catch (e) {
+                /* not JSON: keep the generic message */
+            }
+            throw aiChatError('rejected', message, response.status);
+        }
+        throw aiChatError('notStarted', `AI stream failed (${response.status})`, response.status);
     }
 
     const reader = response.body.getReader();
@@ -376,26 +616,34 @@ export const streamAiChat = async (
     const handleEvent = (event: AiChatStreamEvent) => {
         if (!started) {
             started = true;
-            onStarted?.();
+            handlers.onStarted?.();
         }
-        if (event.type === 'error') {
-            throw new Error(event.message || 'AI stream error');
-        }
-        if (event.type === 'final' && event.result) {
-            final = {
-                message: event.result.message,
-                steps: event.result.steps,
-                documents: event.result.documents ?? [],
+        switch (event.type) {
+            case 'error':
+                throw aiChatError('server', event.message || '');
+            case 'delta':
+                if (event.text) handlers.onDelta?.(event.text);
+                return;
+            case 'final': {
+                const result = event.result;
+                if (!result) return;
                 // The raw agent result uses snake_case (unlike the camelCased GraphQL payload); the
                 // stream endpoint injects conversationId camelCased, but accept both to be safe.
-                toolCalls: event.result.tool_calls ?? [],
-                conversationId: event.result.conversationId ?? event.result.conversation_id ?? null,
-                proposedActions: event.result.proposed_actions ?? null,
-                charts: event.result.charts ?? []
-            };
-            return;
+                final = {
+                    message: result.message,
+                    steps: result.steps,
+                    documents: result.documents ?? [],
+                    toolCalls: result.tool_calls ?? result.toolCalls ?? [],
+                    conversationId: result.conversationId ?? result.conversation_id ?? null,
+                    proposedActions: result.proposed_actions ?? result.proposedActions ?? null,
+                    charts: result.charts ?? [],
+                    usage: result.usage ?? null
+                };
+                return;
+            }
+            default:
+                handlers.onProgress?.(event);
         }
-        onProgress(event);
     };
 
     // Parse one SSE frame ("data: <json>") and dispatch it. Space after 'data:' is optional per spec.
@@ -433,9 +681,21 @@ export const streamAiChat = async (
             drainFrame(buffer);
         }
         if (!final) {
-            throw new Error('AI stream ended without a final event');
+            // Closed without a single event: the agent never reported starting, so the turn is
+            // still safe to re-send through the mutation.
+            throw started
+                ? aiChatError('incomplete', 'AI stream ended without a final event')
+                : aiChatError('notStarted', 'AI stream closed without any event');
         }
         return final;
+    } catch (error: any) {
+        // reader.read() rejects once the signal aborts: report it as a stop, not as a failure.
+        if (signal?.aborted) throw aiChatError('aborted', 'Stopped');
+        if (aiChatErrorKind(error)) throw error;
+        // A transport failure mid-stream: never a `notStarted` (no fallback once events arrived).
+        throw started
+            ? aiChatError('incomplete', String(error?.message ?? error))
+            : aiChatError('notStarted', String(error?.message ?? error));
     } finally {
         // Release the SSE connection even when we throw (server `error` event, or no `final` event)
         // so a broken stream never leaks an open reader.

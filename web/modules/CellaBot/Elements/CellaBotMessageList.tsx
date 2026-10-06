@@ -32,6 +32,13 @@ const Scroller = styled.div`
     flex-direction: column;
 `;
 
+const Disclaimer = styled.div`
+    margin-top: 8px;
+    font-size: 12px;
+    /* ~7:1 on white: readable 12px text (WCAG AA asks 4.5:1). */
+    color: rgba(0, 0, 0, 0.65);
+`;
+
 const CellaBotMessageList = ({
     messages,
     onProposalDecision
@@ -56,10 +63,20 @@ const CellaBotMessageList = ({
             <Scroller style={{ justifyContent: 'center' }}>
                 <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description={tt(
-                        'common:cellabot-empty',
-                        'Ask CellaBot about what you are viewing.'
-                    )}
+                    description={
+                        <>
+                            {tt(
+                                'common:cellabot-empty',
+                                'Ask CellaBot about what you are viewing.'
+                            )}
+                            <Disclaimer>
+                                {tt(
+                                    'common:cellabot-disclaimer',
+                                    'CellaBot can make mistakes. Check important information before acting.'
+                                )}
+                            </Disclaimer>
+                        </>
+                    }
                 />
             </Scroller>
         );
