@@ -185,8 +185,8 @@ const showMessage = (
     duration = 3
 ) => {
     const key = `show-message-${messageKeyCounter++}`;
-    // Notify listeners (e.g. useValidationButtonLock in radioButtonWrapper.tsx) that a
-    // feedback toast fired: on error/warning it marks the end of an in-flight validation
+    // Notify listeners (the RF button lock, helpers/utils/rfButtonLock.ts) that a feedback
+    // toast fired: on error/warning it marks the end of an in-flight validation
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('rf-show-message', { detail: { type } }));
     }

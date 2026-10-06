@@ -22,7 +22,6 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { HeaderContent } from '@components';
 import {
-    ButtonManagementType,
     HeaderManagementType,
     applyRfActionButtonsConfig,
     buildHeaderDisplay,
@@ -52,7 +51,8 @@ import { AutoDeclareMissingQuantityForm } from 'modules/Preparation/Pack/Forms/A
 import { AutoCloseBoxForm } from 'modules/Preparation/Pack/Forms/AutoCloseBox';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
-import { RadioButtonWrapper, useValidationButtonLock } from 'helpers/utils/radioButtonWrapper';
+import { ButtonConfig, RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { useRfButtonLock } from 'helpers/utils/rfButtonLock';
 import {
     RadioHeadersCarousel,
     RadioHeaderSlideType
@@ -177,8 +177,8 @@ const Pack: PageComponent = () => {
     const storedObject = state[processName] || {};
     const [form] = Form.useForm();
 
-    // While a submit-triggered validation is in flight, every other button is blocked
-    const { blockingButtonKey, lockButtons } = useValidationButtonLock(storedObject);
+    // Locked while an action button runs or a step validates itself (helpers/utils/rfButtonLock.ts)
+    const { isLocked } = useRfButtonLock();
 
     console.log(`${processName}`, storedObject);
     //#endregion
@@ -788,21 +788,14 @@ const Pack: PageComponent = () => {
     //#endregion
 
     //#region module buttons
-    const buttonManagement: ButtonManagementType = [
+    const buttonManagement: ButtonConfig[] = [
         {
             key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [10, 20, 30, 40, 50, 60, 70],
-            onClick: () => {
-                form.validateFields()
-                    .then(() => {
-                        lockButtons('submit');
-                        form.submit();
-                    })
-                    .catch(() => {
-                        // client-side validation failed: antd shows the field errors, keep buttons active
-                    });
-            },
+            // hold: the step behind may call the API without rendering a spinner (round selection)
+            onClick: () => form.validateFields().then(() => form.submit()),
+            lock: true,
             position: 'bottom'
         },
         {
@@ -916,7 +909,7 @@ const Pack: PageComponent = () => {
                             <NavButton
                                 icon={<UndoOutlined />}
                                 onClick={onReset}
-                                disabled={!!blockingButtonKey || isLoading || finishPositionLoading}
+                                disabled={isLocked || isLoading || finishPositionLoading}
                             ></NavButton>
                         ) : (
                             <></>
@@ -924,7 +917,7 @@ const Pack: PageComponent = () => {
                         <NavButton
                             icon={<ArrowLeftOutlined />}
                             onClick={previousPage}
-                            disabled={!!blockingButtonKey || isLoading || finishPositionLoading}
+                            disabled={isLocked || isLoading || finishPositionLoading}
                         ></NavButton>
                     </Space>
                 }
@@ -942,7 +935,6 @@ const Pack: PageComponent = () => {
                 <RadioButtonWrapper
                     buttonManagement={orderedButtonManagement}
                     currentStep={storedObject.currentStep}
-                    blockingButtonKey={blockingButtonKey}
                 >
                     {!storedObject['step10']?.data ? (
                         <SelectPrinter
