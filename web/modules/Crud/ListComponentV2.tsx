@@ -78,6 +78,7 @@ import { useAiContextStore } from 'context/CellaBotContext';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { FormGroupV3 } from './submodules/FormGroupV3';
+import { ListValuesCell } from './submodules/ListValuesCell';
 import { AdvancedFilters, AdvancedFilterTags } from './listComponentSubModule/AdvancedFilters';
 import MagicFilterButton from './listComponentSubModule/MagicFilter';
 import { useImportData } from './listComponentSubModule/import';
@@ -196,6 +197,7 @@ const ListComponent = (props: IListProps) => {
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const router = useRouter();
+
     const { graphqlRequestClient } = useAuth();
     const filteredLanguage = getLanguageCode(router);
     const state = useAppState();
@@ -1007,6 +1009,82 @@ const ListComponent = (props: IListProps) => {
         return text;
     };
 
+    // formats one scalar cell value (boolean, URL, date, plain text)
+    const renderScalar = (text: any, dataIndex: string) =>
+        text === true ? (
+            <CheckCircleOutlined style={{ color: 'green' }} />
+        ) : text === false ? (
+            <CloseSquareOutlined style={{ color: 'red' }} />
+        ) : isString(text) && /^https?:\/\//.test(text) ? (
+            <a href={text} target="_blank" rel="noopener noreferrer">
+                {text}
+            </a>
+        ) : isString(text) &&
+          isDateOnlyField(dataIndex) &&
+          (isStringDateTime(text) || isStringDate(text)) ? (
+            // date-only field, drop the time part
+            formatDateOnly(text)
+        ) : isString(text) && isStringDateTime(text) ? (
+            formatUTCLocaleDateTime(text, router.locale)
+        ) : isString(text) && isStringDate(text) ? (
+            formatUTCLocaleDate(text, router.locale)
+        ) : (
+            text
+        );
+
+    // a list inside a list (array of arrays): the labels of the parent elements, read on a
+    // sibling column of the first list level (`articleLus_name` for
+    // `articleLus_articleLuBarcodes_barcode_name`), so the full list can be grouped
+    const parentLabelsFor = (record: any, dataIndex: string, values: any[]) => {
+        if (!values.some(Array.isArray)) return undefined;
+        const segments = dataIndex.split('_');
+        for (let i = 1; i < segments.length; i++) {
+            const prefix = segments.slice(0, i).join('_');
+            const labels = ['name', 'code', 'entityName', 'username', 'description']
+                .map((field) => record[`${prefix}_${field}`])
+                .find((value) => Array.isArray(value) && value.length === values.length);
+            if (labels) return labels;
+        }
+        return undefined;
+    };
+
+    // the FieldInfo behind a column (`stockOwner{name}` for the `stockOwner_name` column)
+    const fieldInfoOf = (dataIndex: string) =>
+        props.dataModel.fieldsInfo[
+            Object.keys(props.dataModel.fieldsInfo).find(
+                (key) => key.replace(/{/g, '_').replace(/}/g, '') === dataIndex
+            ) ?? ''
+        ];
+
+    // a cell holding several values (a to-many relation or a JSON array, kept as a list by
+    // flatten(item, { arraysAsLists: true }) below) renders through ListValuesCell: the first
+    // value(s) and a "+N" tag opening the full list. When the column carries a link, every value
+    // links to its own record through the id array aligned on the values
+    const renderListValues = (values: any[], column: any, record: any) => {
+        const linkObject = linkFields.find((item: any) => item.name === column.dataIndex);
+        let hrefFor: ((index: number) => string | undefined) | undefined;
+        if (linkObject?.link && !props.disableRowLinks) {
+            const suffix = linkObject.link.substring(linkObject.link.lastIndexOf('/') + 1);
+            const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
+            const ids = recordKey ? record[recordKey] : undefined;
+            const base = linkObject.link.replace(`/${suffix}`, '');
+            hrefFor = (index: number) => {
+                const id = Array.isArray(ids) ? ids[index] : ids;
+                return id ? `/${base}/${id}` : undefined;
+            };
+        }
+        return (
+            <ListValuesCell
+                values={values}
+                visibleCount={fieldInfoOf(column.dataIndex)?.listVisibleCount}
+                title={typeof column.title === 'string' ? t(column.title) : undefined}
+                renderValue={(value) => renderScalar(value, column.dataIndex)}
+                hrefFor={hrefFor}
+                groupLabels={parentLabelsFor(record, column.dataIndex, values)}
+            />
+        );
+    };
+
     const columnWithLinks = allColumns?.map((e: any) => {
         // if the column is in linkFields.name too, do the following
         const linkObject = linkFields.find((item: any) => item.name === e.dataIndex);
@@ -1014,32 +1092,18 @@ const ListComponent = (props: IListProps) => {
         return linkObject
             ? {
                   ...e,
-                  render: (text: any, record: any) => renderLink(text, record, e.dataIndex),
+                  render: (text: any, record: any) =>
+                      Array.isArray(text)
+                          ? renderListValues(text, e, record)
+                          : renderLink(text, record, e.dataIndex),
                   dataIndex: e.dataIndex
               }
             : {
                   ...e,
-                  render: (text: any) =>
-                      text === true ? (
-                          <CheckCircleOutlined style={{ color: 'green' }} />
-                      ) : text === false ? (
-                          <CloseSquareOutlined style={{ color: 'red' }} />
-                      ) : isString(text) && /^https?:\/\//.test(text) ? (
-                          <a href={text} target="_blank" rel="noopener noreferrer">
-                              {text}
-                          </a>
-                      ) : isString(text) &&
-                        isDateOnlyField(e.dataIndex) &&
-                        (isStringDateTime(text) || isStringDate(text)) ? (
-                          // date-only field, drop the time part
-                          formatDateOnly(text)
-                      ) : isString(text) && isStringDateTime(text) ? (
-                          formatUTCLocaleDateTime(text, router.locale)
-                      ) : isString(text) && isStringDate(text) ? (
-                          formatUTCLocaleDate(text, router.locale)
-                      ) : (
-                          text
-                      )
+                  render: (text: any, record: any) =>
+                      Array.isArray(text)
+                          ? renderListValues(text, e, record)
+                          : renderScalar(text, e.dataIndex)
               };
     });
 
@@ -1777,7 +1841,8 @@ const ListComponent = (props: IListProps) => {
                     default:
                         if (listData['results'].length > 0) {
                             listData['results'] = listData['results'].map((item: any) => {
-                                const flatItem = flatten(item);
+                                // arrays stay arrays so a multi-value cell can show every value
+                                const flatItem = flatten(item, { arraysAsLists: true });
                                 Object.keys(flatItem).map((key: string) => {
                                     if (key.startsWith('functionSum')) {
                                         const newKey = key.split('_');
