@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Spin } from 'antd';
 import { FC } from 'react';
 import styled from 'styled-components';
+import { useRfBusyWhileMounted } from 'helpers/utils/rfButtonLock';
 
 const StyledSpinWrapper = styled.div`
     display: flex;
@@ -29,6 +30,8 @@ const StyledSpinWrapper = styled.div`
 `;
 
 const UpperMobileSpinner: FC = () => {
+    // An RF step showing this spinner is working: the action buttons stay locked meanwhile
+    useRfBusyWhileMounted();
     return (
         <StyledSpinWrapper>
             <Spin />

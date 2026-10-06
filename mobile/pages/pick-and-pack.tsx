@@ -28,7 +28,6 @@ import {
     useTranslationWithFallback as useTranslation,
     showError,
     showSuccess,
-    ButtonManagementType,
     HeaderManagementType
 } from '@helpers';
 import { Form, InputNumber, Modal, Space } from 'antd';
@@ -55,7 +54,8 @@ import { ScanFinalHandlingUnitOutbound } from 'modules/Preparation/PickAndPack/P
 import { SelectHuModelForm } from 'modules/Preparation/PickAndPack/Forms/SelectHuModelForm';
 import { UpperMobileSpinner } from 'components/common/dumb/Spinners/UpperMobileSpinner';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { RadioButtonWrapper, useValidationButtonLock } from 'helpers/utils/radioButtonWrapper';
+import { ButtonConfig, RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { useRfButtonLock } from 'helpers/utils/rfButtonLock';
 import { ModeEnum } from 'generated/graphql';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
@@ -110,8 +110,8 @@ const PickAndPack: PageComponent = () => {
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
 
-    // While a submit-triggered validation is in flight, every other button is blocked
-    const { blockingButtonKey, lockButtons } = useValidationButtonLock(storedObject);
+    // Locked while an action button runs or a step validates itself (helpers/utils/rfButtonLock.ts)
+    const { isLocked } = useRfButtonLock();
 
     console.log(`${processName}`, storedObject);
     //#endregion
@@ -948,21 +948,14 @@ const PickAndPack: PageComponent = () => {
     //#endregion
 
     //#region module buttons
-    const buttonManagement: ButtonManagementType = [
+    const buttonManagement: ButtonConfig[] = [
         {
             key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [5, 10, 15, 20, 30, 40, 50, 60, 70, 75, 80],
-            onClick: () => {
-                form.validateFields()
-                    .then(() => {
-                        lockButtons('submit');
-                        form.submit();
-                    })
-                    .catch(() => {
-                        // client-side validation failed: antd shows the field errors, keep buttons active
-                    });
-            },
+            // hold: the step behind may call the API without rendering a spinner (round selection)
+            onClick: () => form.validateFields().then(() => form.submit()),
+            lock: true,
             position: 'bottom'
         },
         {
@@ -970,7 +963,9 @@ const PickAndPack: PageComponent = () => {
             label: t('actions:close-shipping-hu'),
             visibleOnSteps: [20],
             permissionsToSeeTheButton: isHuInProgress,
+            // hold: closeHUO calls the API without rendering a spinner
             onClick: () => setTriggerHuClose(true),
+            lock: true,
             position: 'bottom'
         },
         {
@@ -984,6 +979,7 @@ const PickAndPack: PageComponent = () => {
             onClick: () => {
                 setVisible(true);
             },
+            lock: false, // opens the missing-quantity modal
             position: 'top',
             style: {
                 background: 'radial-gradient(circle, #ff8a1ce8 5%, #f4a261 100%)'
@@ -998,6 +994,7 @@ const PickAndPack: PageComponent = () => {
             onClick: () => {
                 setShowSimilarLocations(true);
             },
+            lock: false, // display toggle
             position: 'bottom'
         },
         {
@@ -1059,7 +1056,7 @@ const PickAndPack: PageComponent = () => {
                             <NavButton
                                 icon={<UndoOutlined />}
                                 onClick={onReset}
-                                disabled={!!blockingButtonKey || isAutoValidateLoading}
+                                disabled={isLocked || isAutoValidateLoading}
                             ></NavButton>
                         ) : (
                             <></>
@@ -1067,7 +1064,7 @@ const PickAndPack: PageComponent = () => {
                         <NavButton
                             icon={<ArrowLeftOutlined />}
                             onClick={previousPage}
-                            disabled={!!blockingButtonKey || isAutoValidateLoading}
+                            disabled={isLocked || isAutoValidateLoading}
                         ></NavButton>
                     </Space>
                 }
@@ -1087,7 +1084,6 @@ const PickAndPack: PageComponent = () => {
                 <RadioButtonWrapper
                     buttonManagement={orderedButtonManagement}
                     currentStep={storedObject.currentStep}
-                    blockingButtonKey={blockingButtonKey}
                 >
                     {showSimilarLocations && storedObject['step10']?.data ? (
                         <SimilarLocationsV2
