@@ -34,7 +34,8 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
         processName,
         stepNumber,
         enteredInfo: { enteredInfo, setEnteredInfo },
-        stockMaxQuantity
+        stockMaxQuantity,
+        checkRemainingQuantity
     } = dataToCheck;
 
     const state = useAppState();
@@ -70,6 +71,13 @@ export const QuantityChecks = ({ dataToCheck }: IQuantityChecksProps) => {
     // TYPED SAFE ALL
     useEffect(() => {
         if (enteredInfo) {
+            // The "is the location empty?" question (and the advised inventory it may create)
+            // is driven by the *_CHECK_REMAINING_QUANTITY parameter: off, the quantity goes
+            // straight through whatever is left on the location.
+            if (!checkRemainingQuantity) {
+                proceedToNextStep();
+                return;
+            }
             const remainingQuantity = stockMaxQuantity - enteredInfo;
 
             if (remainingQuantity <= 0) {
