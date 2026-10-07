@@ -176,8 +176,16 @@ export const SelectEquipmentForm = ({
                     }
                     const equipment = equipmentMap.get(item.equipmentId);
                     equipment.total += 1;
-                    const deliveryDate = new Date(item.expectedDeliveryDate);
-                    if (deliveryDate <= endOfToday) {
+                    // no expected date = nothing to compare: new Date(null) would be 1970 and
+                    // count the round as overdue
+                    const deliveryDate = item.expectedDeliveryDate
+                        ? new Date(item.expectedDeliveryDate)
+                        : undefined;
+                    if (
+                        deliveryDate &&
+                        !isNaN(deliveryDate.getTime()) &&
+                        deliveryDate <= endOfToday
+                    ) {
                         equipment.overdue += 1;
                     }
                 }
