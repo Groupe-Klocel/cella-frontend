@@ -26,10 +26,14 @@ import { CSSProperties, FC, ReactNode } from 'react';
  * array holds several values for one record, which `flatten(item, { arraysAsLists: true })`
  * hands over as an array (an array of arrays for a list inside a list).
  *
+ * The values are shown distinct and in natural order (digits compared as numbers, so
+ * REC0000051 comes before REC0000132), whatever order and repetitions the API returned.
+ *
  * A single value renders like any other cell. From two values on, the cell shows the first
  * value(s) as tags and a "+N" tag; hovering or clicking "+N" opens a popover listing every value
  * under the column title. A nested list is counted by its leaves, and the popover groups them
- * under the label of each parent element.
+ * under the label of each parent element (same label, same group), each group distinct and
+ * sorted as well.
  */
 export interface IListValuesCellProps {
     values: any[];
@@ -62,6 +66,29 @@ const isEmptyValue = (value: any) => value === null || value === undefined || va
 const flattenDeep = (list: any[]): any[] =>
     list.flatMap((value) => (Array.isArray(value) ? flattenDeep(value) : [value]));
 
+type Entry = { value: any; index: number };
+type Group = { label: any; values: Entry[] };
+
+const valueKey = (value: any) =>
+    typeof value === 'object' ? JSON.stringify(value) : String(value);
+
+// natural, case-insensitive order of two displayed values
+const compareValues = (a: any, b: any) =>
+    String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
+
+// the distinct values in natural order, each keeping the index of its first occurrence
+const distinctSorted = (list: Entry[]) => {
+    const seen = new Set<string>();
+    return list
+        .filter((entry) => {
+            const key = valueKey(entry.value);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        })
+        .sort((a, b) => compareValues(a.value, b.value));
+};
+
 const ListValuesCell: FC<IListValuesCellProps> = ({
     values,
     visibleCount = 1,
@@ -77,9 +104,11 @@ const ListValuesCell: FC<IListValuesCellProps> = ({
 
     // the values to show, each with its index in `values` so a link can find its id; null,
     // undefined and '' elements (a relation row without a name) carry nothing to show
-    const entries = (nested ? flattenDeep(raw) : raw)
-        .map((value, index) => ({ value, index }))
-        .filter((entry) => !isEmptyValue(entry.value));
+    const entries = distinctSorted(
+        (nested ? flattenDeep(raw) : raw)
+            .map((value, index) => ({ value, index }))
+            .filter((entry) => !isEmptyValue(entry.value))
+    );
 
     if (entries.length === 0) return null;
 
@@ -90,22 +119,31 @@ const ListValuesCell: FC<IListValuesCellProps> = ({
               ? JSON.stringify(value)
               : String(value);
 
-    const content = (entry: { value: any; index: number }) => {
+    const content = (entry: Entry) => {
         const node = format(entry.value, entry.index);
         const href = !nested && hrefFor ? hrefFor(entry.index) : undefined;
         return href ? <AppLink href={href}>{node}</AppLink> : node;
     };
 
-    // the popover: one value per line, grouped under each parent element for a nested list
-    const groups = nested
-        ? raw
-              .map((sub, index) => ({
-                  label: groupLabels?.[index] ?? index + 1,
-                  values: flattenDeep(Array.isArray(sub) ? sub : [sub]).filter(
-                      (value) => !isEmptyValue(value)
-                  )
-              }))
-              .filter((group) => group.values.length > 0)
+    // the popover: one value per line; a nested list is grouped under the label of its parent
+    // elements (two parents with the same label share a group), groups in label order
+    const groups: Group[] = nested
+        ? Array.from(
+              raw
+                  .reduce<Map<string, Group>>((byLabel, sub, index) => {
+                      const label = groupLabels?.[index] ?? index + 1;
+                      const leaves = flattenDeep(Array.isArray(sub) ? sub : [sub])
+                          .filter((value) => !isEmptyValue(value))
+                          .map((value) => ({ value, index }));
+                      if (leaves.length === 0) return byLabel;
+                      const group = byLabel.get(String(label)) ?? { label, values: [] };
+                      group.values.push(...leaves);
+                      return byLabel.set(String(label), group);
+                  }, new Map())
+                  .values()
+          )
+              .map((group) => ({ ...group, values: distinctSorted(group.values) }))
+              .sort((a, b) => compareValues(a.label, b.label))
         : [{ label: undefined, values: entries }];
 
     const fullList = (
@@ -129,24 +167,21 @@ const ListValuesCell: FC<IListValuesCellProps> = ({
                             {String(group.label)} ({group.values.length})
                         </div>
                     )}
-                    {group.values.map((item: any, index: number) => {
-                        const entry = nested ? { value: item, index } : item;
-                        return (
-                            <div
-                                key={index}
-                                style={{
-                                    padding: '2px 0',
-                                    paddingLeft: group.label !== undefined ? 10 : 0,
-                                    borderTop:
-                                        index === 0 || group.label !== undefined
-                                            ? undefined
-                                            : `1px solid ${token.colorSplit}`
-                                }}
-                            >
-                                {content(entry)}
-                            </div>
-                        );
-                    })}
+                    {group.values.map((entry, index) => (
+                        <div
+                            key={index}
+                            style={{
+                                padding: '2px 0',
+                                paddingLeft: group.label !== undefined ? 10 : 0,
+                                borderTop:
+                                    index === 0 || group.label !== undefined
+                                        ? undefined
+                                        : `1px solid ${token.colorSplit}`
+                            }}
+                        >
+                            {content(entry)}
+                        </div>
+                    ))}
                 </div>
             ))}
         </div>
