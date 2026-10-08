@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { RobotOutlined, SendOutlined } from '@ant-design/icons';
+import { RobotOutlined, SendOutlined, StopOutlined } from '@ant-design/icons';
 import {
     getModesFromPermissions,
     IS_CELLABOT_ENABLED,
@@ -33,11 +33,20 @@ import { ModeEnum } from 'generated/graphql';
 import Markdown from 'markdown-to-jsx';
 import { useRouter } from 'next/router';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+import {
+    chatErrorKind,
+    chatErrorMessage,
+    MobileChatResult,
+    MobileChatStreamEvent,
+    MobileChatVariables,
+    streamMobileChat
+} from './cellaBotStream';
 
-// Read-only Q&A assistant for RF operators: same aiChat mutation as the web CellaBot but with
-// readOnly: true (mutating tools are hard-disabled backend-side) and a small step budget. Big
-// touch targets, Markdown-rendered answers. Voice input deliberately deferred.
+// Read-only Q&A assistant for RF operators: same chat as the web CellaBot (streamed through
+// /ai/chat/stream, the aiChat mutation as fallback) but with readOnly: true (mutating tools are
+// hard-disabled backend-side) and no capabilities (no charts, proposals or links). Big touch
+// targets, the answer shown as it is written, Markdown-rendered. Voice input deliberately deferred.
 
 // Cella brand palette (mirrors web/styles/theme.ts): yellow surface, dark on-yellow content. Used to
 // recolor antd primaries (the FAB, the send button, spinners) away from the default antd blue.
@@ -79,7 +88,11 @@ interface MobileChatMessage {
     role: 'user' | 'assistant';
     content: string;
     pending?: boolean;
+    // On a pending bubble: `content` holds the answer being streamed (else: a progress label).
+    streaming?: boolean;
     error?: boolean;
+    // A local information line (e.g. "answer stopped"): shown, but never sent back as history.
+    notice?: boolean;
 }
 
 const Body = styled.div`
@@ -94,9 +107,40 @@ const Scroller = styled.div`
     padding: 10px 8px;
 `;
 
-const Bubble = styled.div<{ $role: 'user' | 'assistant'; $error?: boolean }>`
-    background: ${(p) => (p.$role === 'user' ? '#f9c834' : p.$error ? '#fff1f0' : '#f5f5f5')};
-    color: ${(p) => (p.$error ? '#cf1322' : 'rgba(0, 0, 0, 0.88)')};
+const blink = keyframes`
+    to {
+        visibility: hidden;
+    }
+`;
+
+// The answer while it is being streamed, with a blinking caret after its last block. markdown-to-jsx
+// wraps several blocks in a <div>: the caret then goes after that wrapper's last block.
+const StreamingText = styled.div`
+    > :not(div):last-child::after,
+    > div:last-child > :last-child::after {
+        content: '';
+        display: inline-block;
+        width: 7px;
+        height: 1em;
+        margin-left: 2px;
+        vertical-align: text-bottom;
+        background: ${CELLA_YELLOW};
+        animation: ${blink} 1s steps(2, start) infinite;
+    }
+`;
+
+const Bubble = styled.div<{ $role: 'user' | 'assistant'; $error?: boolean; $notice?: boolean }>`
+    background: ${(p) =>
+        p.$role === 'user'
+            ? '#f9c834'
+            : p.$error
+              ? '#fff1f0'
+              : p.$notice
+                ? 'transparent'
+                : '#f5f5f5'};
+    color: ${(p) =>
+        p.$error ? '#cf1322' : p.$notice ? 'rgba(0, 0, 0, 0.55)' : 'rgba(0, 0, 0, 0.88)'};
+    border: ${(p) => (p.$notice ? '1px dashed rgba(0, 0, 0, 0.15)' : 'none')};
     border-radius: 10px;
     padding: 10px 12px;
     margin: 0 0 10px ${(p) => (p.$role === 'user' ? 'auto' : '0')};
@@ -171,6 +215,16 @@ const SafeMarkdownLink = ({
 // so the model can't trigger an external image request (tracking/privacy) from the chat.
 const BlockedImage = ({ alt }: { alt?: string }) => <>{alt ?? ''}</>;
 
+// The LLM answers in Markdown (user text stays literal): raw HTML is disabled and links go through
+// a scheme allowlist.
+const MARKDOWN_OPTIONS = {
+    disableParsingRawHTML: true,
+    overrides: {
+        a: { component: SafeMarkdownLink },
+        img: { component: BlockedImage }
+    }
+};
+
 const CellaBotMobile = () => {
     const { t } = useTranslation();
     const tt = (key: string, def: string) => {
@@ -178,7 +232,7 @@ const CellaBotMobile = () => {
         return v && v !== key ? v : def;
     };
     const router = useRouter();
-    const { isAuthenticated, graphqlRequestClient } = useAuth();
+    const { isAuthenticated, graphqlRequestClient, user } = useAuth();
     const { permissions } = useAppState();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Array<MobileChatMessage>>([]);
@@ -188,11 +242,42 @@ const CellaBotMobile = () => {
     const [conversationId, setConversationId] = useState<string | null>(null);
     const [text, setText] = useState('');
     const [isSending, setIsSending] = useState(false);
+    // The running turn: aborting it closes the stream (the backend then stops the agent loop). Each
+    // callback checks it is still the current turn, so a stopped turn never writes into the chat.
+    const turnRef = useRef<AbortController | null>(null);
+    // Stop is offered only while the turn streams: the mutation fallback cannot be cancelled.
+    const [canStop, setCanStop] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // The assistant stays mounted across logout / login (it only renders nothing meanwhile): on any
+    // change of session, abort the running turn (it carries the previous operator's token) and start
+    // from a blank chat, so one operator's conversation never shows up in the next one's session.
+    const sessionKey = isAuthenticated
+        ? String(user?.username ?? user?.user_id ?? user?.id ?? '')
+        : '';
+    useEffect(() => {
+        turnRef.current?.abort();
+        turnRef.current = null;
+        setCanStop(false);
+        setIsSending(false);
+        setMessages([]);
+        setConversationId(null);
+        setText('');
+        setIsOpen(false);
+    }, [sessionKey]);
+
+    // Never leave a stream open behind an unmounted assistant.
+    useEffect(
+        () => () => {
+            turnRef.current?.abort();
+            turnRef.current = null;
+        },
+        []
+    );
 
     const hasCellabotRead = getModesFromPermissions(
         permissions,
@@ -210,11 +295,84 @@ const CellaBotMobile = () => {
     if (!IS_CELLABOT_ENABLED || !isAuthenticated || !hasCellabotRead) return <></>;
     if (availability.data?.aiAvailability?.enabled !== true) return <></>;
 
-    const handleSend = async () => {
+    // Human label of a progress event, shown in the pending bubble until the answer streams in.
+    const progressLabel = (event: MobileChatStreamEvent): string => {
+        if (event.type === 'documents') {
+            return tt('common:cellabot-step-documents', 'Reading the documents…');
+        }
+        if (event.type === 'tool') {
+            switch (event.tool) {
+                case 'run_query':
+                case 'export_data':
+                    return tt('common:cellabot-step-query', 'Querying data…');
+                case 'analyze_document':
+                    return tt('common:cellabot-step-analyze-document', 'Reading a document…');
+                case 'describe_model':
+                case 'list_configs':
+                case 'list_operations':
+                    return tt('common:cellabot-step-model', 'Exploring the data model…');
+                case 'get_documentation':
+                case 'list_documentation':
+                    return tt('common:cellabot-step-documentation', 'Reading the documentation…');
+                default:
+                    return tt('common:cellabot-step-analyze', 'Analyzing…');
+            }
+        }
+        const thinking = tt('common:cellabot-thinking', 'Thinking…');
+        return event.step && event.step > 1 ? `${thinking} (${event.step})` : thinking;
+    };
+
+    const updatePending = (update: (m: MobileChatMessage) => MobileChatMessage) =>
+        setMessages((prev) => prev.map((m) => (m.pending ? update(m) : m)));
+
+    const finishTurn = () => {
+        turnRef.current = null;
+        setCanStop(false);
+        setIsSending(false);
+    };
+
+    const applyResult = (result?: MobileChatResult | null) => {
+        finishTurn();
+        // Keep the same conversation for the next turn (the server returns the id it used/created).
+        if (result?.conversationId) {
+            setConversationId(result.conversationId);
+        }
+        setMessages((prev) => [
+            ...prev.filter((m) => !m.pending),
+            { role: 'assistant', content: result?.message ?? '' }
+        ]);
+    };
+
+    const applyError = (error: any) => {
+        finishTurn();
+        console.error('CellaBot mobile error:', error);
+        const message = chatErrorMessage(error, tt);
+        updatePending(() => ({ role: 'assistant', content: message, error: true }));
+        showError(message);
+    };
+
+    // Stop: close the stream and keep what was already written, marked as interrupted. The backend
+    // notices the disconnect at the agent's next event (a tool already running still completes) and
+    // does not save a turn stopped before its end, so the bubble is a local notice (not sent as
+    // history).
+    const handleStop = () => {
+        const turn = turnRef.current;
+        if (!turn) return;
+        finishTurn();
+        turn.abort();
+        const stopped = `*${tt('common:cellabot-stopped', 'Answer stopped.')}*`;
+        updatePending((m) => ({
+            role: 'assistant',
+            content: m.streaming && m.content ? `${m.content}\n\n${stopped}` : stopped,
+            notice: true
+        }));
+    };
+
+    const handleSend = () => {
         const prompt = text.trim();
-        if (!prompt || isSending) return;
+        if (!prompt || turnRef.current) return;
         const history = messages
-            .filter((m) => !m.pending && !m.error)
+            .filter((m) => !m.pending && !m.error && !m.notice)
             .map((m) => ({ role: m.role, content: m.content }));
         setMessages((prev) => [
             ...prev,
@@ -223,41 +381,70 @@ const CellaBotMobile = () => {
         ]);
         setText('');
         setIsSending(true);
-        try {
-            const response = await graphqlRequestClient.request(AI_CHAT_MUTATION, {
-                prompt,
-                history,
-                context: {
-                    surface: 'mobile-rf',
-                    url: router.asPath,
-                    view: router.pathname.split('/').filter(Boolean)[0],
-                    locale: router.locale
+
+        const turn = new AbortController();
+        turnRef.current = turn;
+        setCanStop(true);
+        const isCurrent = () => turnRef.current === turn;
+        const variables: MobileChatVariables = {
+            prompt,
+            history,
+            context: {
+                surface: 'mobile-rf',
+                url: router.asPath,
+                view: router.pathname.split('/').filter(Boolean)[0],
+                locale: router.locale
+            },
+            readOnly: true,
+            conversationId
+        };
+        // Streamed (progress + the answer as it is written); the mutation is only a fallback for a
+        // stream that never started — past its first event the turn must not be sent twice.
+        let streamStarted = false;
+        streamMobileChat(
+            variables,
+            {
+                onStarted: () => {
+                    streamStarted = true;
                 },
-                readOnly: true,
-                conversationId
-            });
-            // Keep the same conversation for the next turn (the server returns the id it used/created).
-            if (response?.aiChat?.conversationId) {
-                setConversationId(response.aiChat.conversationId);
-            }
-            setMessages((prev) => [
-                ...prev.filter((m) => !m.pending),
-                { role: 'assistant', content: response?.aiChat?.message ?? '' }
-            ]);
-        } catch (error) {
-            console.error('CellaBot mobile error:', error);
-            setMessages((prev) => [
-                ...prev.filter((m) => !m.pending),
-                {
-                    role: 'assistant',
-                    content: tt('common:cellabot-error', 'Sorry, something went wrong.'),
-                    error: true
+                // A new step or tool replaces the text streamed so far (text before a tool call is
+                // the model thinking aloud; the answer comes in the last step).
+                onProgress: (event) => {
+                    if (!isCurrent()) return;
+                    const label = progressLabel(event);
+                    updatePending((m) => ({ ...m, content: label, streaming: false }));
+                },
+                onDelta: (delta) => {
+                    if (!isCurrent()) return;
+                    updatePending((m) => ({
+                        ...m,
+                        content: (m.streaming ? m.content : '') + delta,
+                        streaming: true
+                    }));
                 }
-            ]);
-            showError(tt('common:cellabot-error', 'Sorry, something went wrong.'));
-        } finally {
-            setIsSending(false);
-        }
+            },
+            turn.signal
+        )
+            .then((result) => {
+                if (isCurrent()) applyResult(result);
+            })
+            .catch((error) => {
+                if (!isCurrent() || chatErrorKind(error) === 'aborted') return;
+                if (chatErrorKind(error) === 'notStarted' && !streamStarted) {
+                    // Not cancellable: no Stop while it runs, sending stays blocked until it ends.
+                    setCanStop(false);
+                    graphqlRequestClient
+                        .request(AI_CHAT_MUTATION, variables)
+                        .then((response: any) => {
+                            if (isCurrent()) applyResult(response?.aiChat);
+                        })
+                        .catch((mutationError: any) => {
+                            if (isCurrent()) applyError(mutationError);
+                        });
+                    return;
+                }
+                applyError(error);
+            });
     };
 
     return (
@@ -300,21 +487,27 @@ const CellaBotMobile = () => {
                             </Bubble>
                         )}
                         {messages.map((message, idx) => (
-                            <Bubble key={idx} $role={message.role} $error={message.error}>
-                                {message.pending ? (
-                                    <Spin size="small" />
+                            <Bubble
+                                key={idx}
+                                $role={message.role}
+                                $error={message.error}
+                                $notice={message.notice}
+                            >
+                                {message.pending && message.streaming ? (
+                                    <StreamingText>
+                                        <Markdown options={MARKDOWN_OPTIONS}>
+                                            {message.content}
+                                        </Markdown>
+                                    </StreamingText>
+                                ) : message.pending ? (
+                                    <>
+                                        <Spin size="small" />
+                                        {message.content ? (
+                                            <span style={{ marginLeft: 8 }}>{message.content}</span>
+                                        ) : null}
+                                    </>
                                 ) : message.role === 'assistant' && !message.error ? (
-                                    // The LLM answers in Markdown; render it (user text stays literal).
-                                    // Raw HTML is disabled and links go through a scheme allowlist.
-                                    <Markdown
-                                        options={{
-                                            disableParsingRawHTML: true,
-                                            overrides: {
-                                                a: { component: SafeMarkdownLink },
-                                                img: { component: BlockedImage }
-                                            }
-                                        }}
-                                    >
+                                    <Markdown options={MARKDOWN_OPTIONS}>
                                         {message.content || ''}
                                     </Markdown>
                                 ) : (
@@ -337,16 +530,28 @@ const CellaBotMobile = () => {
                             autoSize={{ minRows: 1, maxRows: 3 }}
                             placeholder={tt('common:cellabot-placeholder', 'Ask CellaBot…')}
                         />
-                        <Button
-                            type="primary"
-                            size="large"
-                            icon={<SendOutlined />}
-                            loading={isSending}
-                            onClick={handleSend}
-                            // Pin the brand color explicitly: the Drawer renders in a portal where the
-                            // nested ConfigProvider theme can lag on first paint, briefly showing antd blue.
-                            style={{ backgroundColor: CELLA_YELLOW, color: CELLA_ON_YELLOW }}
-                        />
+                        {isSending && canStop ? (
+                            <Button
+                                size="large"
+                                icon={<StopOutlined />}
+                                aria-label={tt('common:cellabot-stop', 'Stop')}
+                                onClick={handleStop}
+                            />
+                        ) : (
+                            <Button
+                                type="primary"
+                                size="large"
+                                icon={<SendOutlined />}
+                                aria-label={tt('common:cellabot-send', 'Send')}
+                                // Busy during the (non-cancellable) mutation fallback.
+                                loading={isSending}
+                                onClick={handleSend}
+                                // Pin the brand color explicitly: the Drawer renders in a portal where
+                                // the nested ConfigProvider theme can lag on first paint, briefly
+                                // showing antd blue.
+                                style={{ backgroundColor: CELLA_YELLOW, color: CELLA_ON_YELLOW }}
+                            />
+                        )}
                     </Composer>
                 </Body>
             </Drawer>

@@ -32,27 +32,37 @@ import {
 import { Button, ConfigProvider, Drawer, FloatButton, Space, Tooltip } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
-import { AiChatMessage, useAiContextStore, useCellaBotChat } from 'context/CellaBotContext';
+import {
+    AiChatMessage,
+    chatHistory,
+    useAiContextStore,
+    useCellaBotChat
+} from 'context/CellaBotContext';
 import { ModeEnum } from 'generated/graphql';
 import styled from 'styled-components';
 import { useEffect, useRef, useState } from 'react';
 import {
-    AiChatHistoryEntry,
+    aiChatErrorKind,
     AiChatResult,
     AiChatStreamEvent,
+    AiChatVariables,
     AiConversationSummary,
+    aiErrorMessage,
     CELLABOT_CAPABILITIES,
+    CONVERSATION_TITLE_MAX_LENGTH,
     deleteConversation,
     executableProposalOperations,
     fetchConversationMessages,
     fetchConversations,
     fetchLastConversation,
+    interpolate,
+    renameConversation,
     streamAiChat,
     useAiAvailability,
     useAiChat
 } from '../cellaBotApi';
 import { CELLA_ON_YELLOW, CELLA_YELLOW } from '../cellaBotColors';
-import CellaBotComposer from './CellaBotComposer';
+import CellaBotComposer, { CellaBotComposerPayload } from './CellaBotComposer';
 import CellaBotConversationList from './CellaBotConversationList';
 import CellaBotMessageList from './CellaBotMessageList';
 import CellaBotSuggestions from './CellaBotSuggestions';
@@ -79,6 +89,8 @@ const CellaBotWidget = () => {
         return v && v !== key ? v : def;
     };
     const { isAuthenticated, graphqlRequestClient, user } = useAuth();
+    // The identity CellaBotContext keys the chat on.
+    const userKey = user?.username ?? user?.id ?? null;
     const { permissions } = useAppState();
     const { aiContext } = useAiContextStore();
     const {
@@ -118,6 +130,12 @@ const CellaBotWidget = () => {
     const chat = useAiChat(graphqlRequestClient);
 
     const [isSending, setIsSending] = useState(false);
+    // The running chat turn, if any: aborting it closes the stream (the backend then stops the agent
+    // loop). Every callback of a turn checks it is still the current one, so a stopped or superseded
+    // turn (new conversation, another conversation loaded, user switch) never writes into the chat.
+    const turnRef = useRef<AbortController | null>(null);
+    // Mirrors `turnRef` for rendering: the composer offers Stop only while a turn can be stopped.
+    const [canStop, setCanStop] = useState(false);
     // Conversation-history panel (list of the user's saved conversations, shown in place of the chat).
     const [showHistory, setShowHistory] = useState(false);
     const [conversations, setConversations] = useState<Array<AiConversationSummary>>([]);
@@ -136,6 +154,44 @@ const CellaBotWidget = () => {
     // between two rapid click events, so a double-click could execute the mutations twice. This ref
     // flips immediately (before any await); a resolved proposal is terminal, so it is never released.
     const proposalLocksRef = useRef<Set<number>>(new Set());
+    // Conversations whose rename is in flight: one rename at a time per conversation, so two writes
+    // can never commit out of order (the ref is the synchronous guard, the state drives the UI).
+    const renamingRef = useRef<Set<string>>(new Set());
+    const [renamingIds, setRenamingIds] = useState<Array<string>>([]);
+    // A saved conversation being loaded: sending waits for it, otherwise the new turn would target
+    // the previous conversation and its answer would land in the loaded one. The counter discards a
+    // load superseded by another one, a new conversation or a user change.
+    const loadRequestRef = useRef(0);
+    const [loadingConversation, setLoadingConversation] = useState(false);
+    // Where the chat stands, read after an await (a deletion must act on the conversation open when
+    // it completes, not the one open when it started): the open conversation and the one loading.
+    // The widget updates `conversationIdRef` synchronously wherever it changes the conversation (a
+    // later await in the same batch must already see it); the effect follows the changes made by the
+    // provider (user switch, restored conversation).
+    const conversationIdRef = useRef<string | null>(conversationId);
+    const loadingIdRef = useRef<string | null>(null);
+    useEffect(() => {
+        conversationIdRef.current = conversationId;
+    }, [conversationId]);
+
+    // Point the chat at a conversation (null = a fresh one on the next turn), ref included.
+    const setOpenConversation = (id: string | null) => {
+        conversationIdRef.current = id;
+        setConversationId(id);
+    };
+
+    // Empty the chat and start a fresh conversation on the next turn.
+    const resetChat = () => {
+        conversationIdRef.current = null;
+        clearMessages();
+    };
+    // Ordering of conversation-list refreshes and renames: a list read before a rename was saved
+    // must not bring the old title back. `listSeqRef` stamps both; `titleOverridesRef` keeps each
+    // rename's title with the stamp of its completion (Infinity while pending) until a list read
+    // after that completion confirms it.
+    const listSeqRef = useRef(0);
+    const latestRefreshRef = useRef(0);
+    const titleOverridesRef = useRef<Record<string, { title: string; settled: number }>>({});
     useEffect(() => {
         const username = user?.username;
         if (!isOpen || !username || messages.length > 0 || conversationId) return;
@@ -172,8 +228,52 @@ const CellaBotWidget = () => {
         if (messages.length === 0) proposalLocksRef.current.clear();
     }, [messages.length]);
 
+    // Abort the running chat turn, if any, and settle its pending bubble: replaced by
+    // `pendingReplacement` (Stop), else dropped — so no spinner outlives its turn, whatever the
+    // caller does next. Without a chat turn this is a no-op: the busy state may then belong to a
+    // proposal whose mutations are still running, and only that loop may release it.
+    const abortTurn = (pendingReplacement?: (m: AiChatMessage) => AiChatMessage) => {
+        const turn = turnRef.current;
+        if (!turn) return;
+        turnRef.current = null;
+        setCanStop(false);
+        turn.abort();
+        setIsSending(false);
+        setMessages((prev) =>
+            pendingReplacement
+                ? prev.map((m) => (m.pending ? pendingReplacement(m) : m))
+                : prev.filter((m) => !m.pending)
+        );
+    };
+
+    // A turn must never outlive its user (the provider purges the chat on a user switch) nor the
+    // widget itself.
+    useEffect(
+        () => () => {
+            abortTurn();
+            cancelConversationLoad();
+            // Drop any list refresh still in flight, with the renames it would reconcile.
+            latestRefreshRef.current = listSeqRef.current += 1;
+            titleOverridesRef.current = {};
+            setHistoryLoading(false);
+            setConversations([]);
+        },
+        [userKey]
+    );
+
     // Human label for a streamed progress event, shown in the pending bubble.
     const progressLabel = (event: AiChatStreamEvent): string => {
+        if (event.type === 'documents') {
+            const documents = event.documents ?? [];
+            return documents.length === 1 && documents[0]?.filename
+                ? interpolate(tt('common:cellabot-step-reading-one', 'Reading {{name}}…'), {
+                      name: documents[0].filename
+                  })
+                : interpolate(
+                      tt('common:cellabot-step-reading-many', 'Reading {{count}} documents…'),
+                      { count: documents.length }
+                  );
+        }
         if (event.type === 'tool') {
             switch (event.tool) {
                 case 'run_query':
@@ -186,6 +286,19 @@ const CellaBotWidget = () => {
                     return tt('common:cellabot-step-document', 'Generating a document…');
                 case 'execute_function':
                     return tt('common:cellabot-step-function', 'Running a function…');
+                case 'analyze_document':
+                    return tt('common:cellabot-step-analyze-document', 'Reading a document…');
+                case 'render_chart':
+                    return tt('common:cellabot-step-chart', 'Building a chart…');
+                case 'propose_actions':
+                    return tt('common:cellabot-step-proposal', 'Preparing the changes to confirm…');
+                case 'describe_model':
+                case 'list_configs':
+                case 'list_operations':
+                    return tt('common:cellabot-step-model', 'Exploring the data model…');
+                case 'get_documentation':
+                case 'list_documentation':
+                    return tt('common:cellabot-step-documentation', 'Reading the documentation…');
                 default:
                     return tt('common:cellabot-step-analyze', 'Analyzing…');
             }
@@ -195,9 +308,11 @@ const CellaBotWidget = () => {
     };
 
     const applyResult = (result?: AiChatResult | null) => {
+        turnRef.current = null;
+        setCanStop(false);
         setIsSending(false);
         if (result?.conversationId) {
-            setConversationId(result.conversationId);
+            setOpenConversation(result.conversationId);
         }
         setMessages((prev) => [
             ...prev.filter((m) => !m.pending),
@@ -207,7 +322,8 @@ const CellaBotWidget = () => {
                 toolCalls: result?.toolCalls ?? [],
                 documents: result?.documents ?? [],
                 proposedActions: result?.proposedActions ?? null,
-                charts: result?.charts ?? []
+                charts: result?.charts ?? [],
+                usage: result?.usage ?? null
             }
         ]);
     };
@@ -278,14 +394,28 @@ const CellaBotWidget = () => {
     const refreshConversations = async () => {
         const username = user?.username;
         if (!username) return;
+        const startedAt = (listSeqRef.current += 1);
+        latestRefreshRef.current = startedAt;
         setHistoryLoading(true);
         try {
-            setConversations(await fetchConversations(graphqlRequestClient, username));
+            const rows = await fetchConversations(graphqlRequestClient, username);
+            if (latestRefreshRef.current !== startedAt) return;
+            setConversations(
+                rows.map((row) => {
+                    const override = titleOverridesRef.current[row.id];
+                    if (!override) return row;
+                    // Read before this rename was saved: keep the renamed title.
+                    if (override.settled > startedAt) return { ...row, title: override.title };
+                    delete titleOverridesRef.current[row.id];
+                    return row;
+                })
+            );
         } catch (error) {
+            if (latestRefreshRef.current !== startedAt) return;
             setConversations([]);
             showError(tt('common:cellabot-history-error', 'Could not load your conversations.'));
         } finally {
-            setHistoryLoading(false);
+            if (latestRefreshRef.current === startedAt) setHistoryLoading(false);
         }
     };
 
@@ -294,18 +424,32 @@ const CellaBotWidget = () => {
         refreshConversations();
     };
 
+    // Forget a saved conversation still loading: its result will be discarded.
+    const cancelConversationLoad = () => {
+        loadRequestRef.current += 1;
+        loadingIdRef.current = null;
+        setLoadingConversation(false);
+    };
+
     // "New conversation": drop the current chat/conversationId so the next turn starts a fresh
     // persisted one, and leave the history view.
     const startNewConversation = () => {
+        abortTurn();
+        cancelConversationLoad();
         setShowHistory(false);
-        clearMessages();
+        resetChat();
     };
 
     // Continue a saved conversation: load its messages into the chat and target it for the next turn.
     const loadConversation = async (id: string) => {
+        abortTurn();
         setShowHistory(false);
+        const request = (loadRequestRef.current += 1);
+        loadingIdRef.current = id;
+        setLoadingConversation(true);
         try {
             const rows = await fetchConversationMessages(graphqlRequestClient, id);
+            if (request !== loadRequestRef.current) return;
             setMessages(
                 rows.map((m: any) => ({
                     role: m.role === 'user' ? 'user' : 'assistant',
@@ -314,9 +458,41 @@ const CellaBotWidget = () => {
                     documents: m.documents ?? []
                 }))
             );
-            setConversationId(id);
+            setOpenConversation(id);
         } catch (error) {
+            if (request !== loadRequestRef.current) return;
             showError(tt('common:cellabot-history-error', 'Could not load your conversations.'));
+        } finally {
+            if (request === loadRequestRef.current) {
+                loadingIdRef.current = null;
+                setLoadingConversation(false);
+            }
+        }
+    };
+
+    // Optimistic rename: the list shows the new title at once and reverts if the API refuses it. A
+    // conversation's rename button stays disabled until its request settles.
+    const handleRenameConversation = async (id: string, title: string) => {
+        const nextTitle = title.trim().slice(0, CONVERSATION_TITLE_MAX_LENGTH);
+        const previousTitle = conversations.find((c) => c.id === id)?.title ?? null;
+        if (!nextTitle || nextTitle === previousTitle || renamingRef.current.has(id)) return;
+        renamingRef.current.add(id);
+        setRenamingIds(Array.from(renamingRef.current));
+        const setTitle = (value: string | null) =>
+            setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title: value } : c)));
+        setTitle(nextTitle);
+        titleOverridesRef.current[id] = { title: nextTitle, settled: Number.POSITIVE_INFINITY };
+        try {
+            await renameConversation(graphqlRequestClient, id, nextTitle);
+            const override = titleOverridesRef.current[id];
+            if (override) override.settled = listSeqRef.current += 1;
+        } catch (error) {
+            delete titleOverridesRef.current[id];
+            setTitle(previousTitle);
+            showError(tt('common:cellabot-rename-error', 'Could not rename the conversation.'));
+        } finally {
+            renamingRef.current.delete(id);
+            setRenamingIds(Array.from(renamingRef.current));
         }
     };
 
@@ -324,74 +500,160 @@ const CellaBotWidget = () => {
         try {
             await deleteConversation(graphqlRequestClient, id);
             setConversations((prev) => prev.filter((c) => c.id !== id));
-            // If the open chat was this conversation, reset to a fresh one.
-            if (id === conversationId) clearMessages();
+            delete titleOverridesRef.current[id];
+            // Reset the chat only if it still shows (or is opening) the deleted conversation: the
+            // user may have opened another one while the deletion ran.
+            if (loadingIdRef.current === id) {
+                cancelConversationLoad();
+                resetChat();
+            } else if (conversationIdRef.current === id) {
+                // Cleared even while another conversation loads: that load is left running and
+                // installs its conversation if it succeeds, but if it fails the chat must not stay
+                // on the deleted one (the next turn would target it).
+                abortTurn();
+                resetChat();
+            }
         } catch (error) {
             showError(tt('common:cellabot-delete-error', 'Could not delete the conversation.'));
         }
     };
 
-    const applyError = () => {
+    const applyError = (error?: any) => {
+        turnRef.current = null;
+        setCanStop(false);
         setIsSending(false);
+        const message = aiErrorMessage(error, tt);
         setMessages((prev) =>
-            prev.map((m) =>
-                m.pending
-                    ? {
-                          role: 'assistant',
-                          content: tt(
-                              'common:cellabot-error',
-                              'Sorry, something went wrong. Please try again.'
-                          ),
-                          error: true
-                      }
-                    : m
-            )
+            prev.map((m) => (m.pending ? { role: 'assistant', content: message, error: true } : m))
         );
-        showError(tt('common:cellabot-error', 'Sorry, something went wrong.'));
+        showError(message);
     };
 
-    const handleSend = (text: string) => {
-        // History = the completed conversation so far ({ role, content } only).
-        const history: Array<AiChatHistoryEntry> = messages
-            .filter((m) => !m.pending && !m.error)
-            .map((m) => ({ role: m.role, content: m.content }));
+    // Stop button: close the stream and keep what was already written, marked as interrupted. The
+    // backend notices the disconnect at the agent's next event: nothing further starts (a tool already
+    // running still completes) and a turn stopped before its end is not saved, so the bubble is a
+    // local notice (not sent back as history).
+    const handleStop = () => {
+        const stopped = `*${tt('common:cellabot-stopped', 'Answer stopped.')}*`;
+        abortTurn((m) => ({
+            role: 'assistant',
+            content: m.streaming && m.content ? `${m.content}\n\n${stopped}` : stopped,
+            notice: true
+        }));
+    };
 
-        const userMessage: AiChatMessage = { role: 'user', content: text };
-        const pendingMessage: AiChatMessage = { role: 'assistant', content: '', pending: true };
+    const handleSend = ({ text, attachments, kind }: CellaBotComposerPayload) => {
+        // Every entry point (composer, suggestion chips) honors the busy state, proposals included.
+        if (turnRef.current || loadingConversation || isSending || chat.isPending) return;
+        // A file-only turn still needs a prompt: send (and show) the default analysis request.
+        const prompt =
+            text ||
+            (attachments.length > 0
+                ? tt(
+                      'common:cellabot-attachment-default-prompt',
+                      'Analyze the attached document(s) and summarize their content.'
+                  )
+                : '');
+        if (!prompt) return;
+
+        // History = the completed conversation so far ({ role, content } only).
+        const history = chatHistory(messages);
+        const userMessage: AiChatMessage = {
+            role: 'user',
+            content: prompt,
+            ...(attachments.length > 0 && {
+                attachments: attachments.map(({ filename, size, mediaType }) => ({
+                    filename,
+                    size,
+                    mediaType
+                }))
+            })
+        };
+        const pendingMessage: AiChatMessage = {
+            role: 'assistant',
+            content:
+                attachments.length > 0
+                    ? tt('common:cellabot-step-documents', 'Reading the documents…')
+                    : '',
+            pending: true
+        };
         setMessages((prev) => [...prev, userMessage, pendingMessage]);
         setIsSending(true);
 
-        const variables = {
-            prompt: text,
+        const turn = new AbortController();
+        turnRef.current = turn;
+        setCanStop(true);
+        const isCurrent = () => turnRef.current === turn;
+
+        const variables: AiChatVariables = {
+            prompt,
             history,
             context: aiContext,
             conversationId,
-            capabilities: CELLABOT_CAPABILITIES
+            capabilities: CELLABOT_CAPABILITIES,
+            ...(attachments.length > 0 && {
+                documents: attachments.map(({ filename, base64 }) => ({ filename, base64 })),
+                ...(kind && { kind })
+            })
         };
-        // Streamed by default (live step progress); the mutation stays as fallback — but ONLY when
-        // the stream never started: past the first event the agent may already have run tools
-        // (including mutations), and re-sending could re-execute them.
+        // Streamed by default (live progress + the answer as it is written); the mutation stays as
+        // fallback — but ONLY when the stream never started: past the first event the agent may
+        // already have run tools (including mutations), and re-sending could re-execute them.
         let streamStarted = false;
         streamAiChat(
             variables,
-            (event) => {
-                const label = progressLabel(event);
-                setMessages((prev) => prev.map((m) => (m.pending ? { ...m, content: label } : m)));
+            {
+                onStarted: () => {
+                    streamStarted = true;
+                },
+                // A new step or tool replaces any text streamed so far: text written before a tool
+                // call is the model thinking aloud, the final answer comes in the last step.
+                onProgress: (event) => {
+                    if (!isCurrent()) return;
+                    const label = progressLabel(event);
+                    setMessages((prev) =>
+                        prev.map((m) =>
+                            m.pending ? { ...m, content: label, streaming: false } : m
+                        )
+                    );
+                },
+                onDelta: (delta) => {
+                    if (!isCurrent()) return;
+                    setMessages((prev) =>
+                        prev.map((m) =>
+                            m.pending
+                                ? {
+                                      ...m,
+                                      content: (m.streaming ? m.content : '') + delta,
+                                      streaming: true
+                                  }
+                                : m
+                        )
+                    );
+                }
             },
-            () => {
-                streamStarted = true;
-            }
+            turn.signal
         )
-            .then(applyResult)
-            .catch(() => {
-                if (streamStarted) {
-                    applyError();
+            .then((result) => {
+                if (isCurrent()) applyResult(result);
+            })
+            .catch((error) => {
+                if (!isCurrent() || aiChatErrorKind(error) === 'aborted') return;
+                if (aiChatErrorKind(error) === 'notStarted' && !streamStarted) {
+                    // The mutation cannot be cancelled (the backend would run the turn to its end
+                    // anyway): no Stop button while it runs, sending stays blocked.
+                    setCanStop(false);
+                    chat.mutate(variables, {
+                        onSuccess: (data) => {
+                            if (isCurrent()) applyResult(data?.aiChat);
+                        },
+                        onError: (mutationError) => {
+                            if (isCurrent()) applyError(mutationError);
+                        }
+                    });
                     return;
                 }
-                chat.mutate(variables, {
-                    onSuccess: (data) => applyResult(data?.aiChat),
-                    onError: applyError
-                });
+                applyError(error);
             });
     };
 
@@ -401,6 +663,8 @@ const CellaBotWidget = () => {
     if (!isAuthenticated) return null;
     if (!hasCellabotRead) return null;
     if (availability.data?.aiAvailability?.enabled !== true) return null;
+
+    const documentAnalysis = availability.data?.aiAvailability?.documentAnalysis ?? null;
 
     return (
         // Recolor antd primaries (FAB, send button, spinners) to the Cella brand: yellow surface.
@@ -488,6 +752,8 @@ const CellaBotWidget = () => {
                             loading={historyLoading}
                             activeId={conversationId}
                             onContinue={loadConversation}
+                            onRename={handleRenameConversation}
+                            renamingIds={renamingIds}
                             onDelete={handleDeleteConversation}
                         />
                     ) : (
@@ -502,12 +768,20 @@ const CellaBotWidget = () => {
                                     exposedDocuments={
                                         availability.data?.aiAvailability?.exposedDocuments ?? []
                                     }
-                                    onPick={handleSend}
+                                    documentAnalysis={documentAnalysis}
+                                    onPick={(prompt) =>
+                                        handleSend({ text: prompt, attachments: [], kind: null })
+                                    }
                                 />
                             )}
                             <CellaBotComposer
+                                // Keyed by the user (as the chat in CellaBotContext): a user change
+                                // discards the draft and the staged files of the previous one.
+                                key={userKey ?? 'anonymous'}
                                 onSend={handleSend}
-                                loading={isSending || chat.isPending}
+                                onStop={canStop ? handleStop : undefined}
+                                loading={isSending || chat.isPending || loadingConversation}
+                                documentAnalysis={documentAnalysis}
                             />
                         </>
                     )}
