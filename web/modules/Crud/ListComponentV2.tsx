@@ -2686,17 +2686,23 @@ const ListComponent = (props: IListProps) => {
                         ) : null}
                         {!firstLoad && rows ? (
                             <>
+                                {/* bulk-action buttons at the left, search bar at the right; the
+                                    row wraps and the bar (class in styles/globals.css) takes the
+                                    full width under 768px, where the inline form used to overflow
+                                    the screen */}
                                 <div
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
                                         width: '100%'
                                         // maxHeight: 40
                                     }}
                                 >
                                     <div>{props.actionButtons?.actionsComponent}</div>
                                     {props.searchable ? (
-                                        <Space>
+                                        <Space className="list-search-bar">
                                             <Form
                                                 form={formSearch}
                                                 layout="inline"

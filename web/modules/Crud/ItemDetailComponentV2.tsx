@@ -54,6 +54,14 @@ const StyledPageContent = styled(Layout.Content)`
     padding: 15px 40px 15px 15px;
     margin: 0px 15px;
     position: relative;
+
+    /* phone / narrow window (same 768px threshold as DetailsList and the page header): no 40px
+       gutter for the floating reload button - it is inline there - and the whole width for the
+       field tables */
+    @media (max-width: 767px) {
+        padding: 4px 12px 16px;
+        margin: 0;
+    }
 `;
 
 const WrapperStickyActions = styled.div`
@@ -61,6 +69,13 @@ const WrapperStickyActions = styled.div`
     right: 0px;
     top: 50px;
     align-self: flex-end;
+
+    @media (max-width: 767px) {
+        position: static;
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 4px;
+    }
 `;
 
 export type HeaderData = {

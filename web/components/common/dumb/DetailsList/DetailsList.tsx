@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { FC } from 'react';
-import { Descriptions, Typography, Row, Col } from 'antd';
+import { Descriptions, Grid, Typography } from 'antd';
 import {
     formatDigits,
     formatUTCLocaleDateTime,
@@ -47,6 +47,13 @@ const DetailsList: FC<IDetailsListProps> = ({
     const { t } = useTranslation();
     const router = useRouter();
     const { Title } = Typography;
+    // `md` is false under 768px (a phone, a narrow window). The grid then shows ONE label/value
+    // pair per row: the two-column grid, i.e. four cells, squeezed into 390px made the browser
+    // break every value letter by letter. The label width and cell padding for that case are in
+    // styles/globals.css (`.details-list`). `screens` is empty on the server and on the very first
+    // client render, so a page always starts from the desktop layout and re-renders once.
+    const screens = Grid.useBreakpoint();
+    const isNarrow = screens.md === false;
     const tmp_detail = { ...details };
     delete tmp_detail['id'];
 
@@ -54,10 +61,15 @@ const DetailsList: FC<IDetailsListProps> = ({
         <>
             {groupTitle ? <Title level={5}>{t(`common:${groupTitle}`)}</Title> : <></>}
             <Descriptions
+                className="details-list"
                 style={
-                    groupTitle ? { marginTop: '10px', marginBottom: '20px' } : { marginTop: '35px' }
+                    groupTitle
+                        ? { marginTop: '10px', marginBottom: '20px' }
+                        : // the 35px desktop gap is the room of the floating reload button of the
+                          // detail screen; it is inline on a narrow screen
+                          { marginTop: isNarrow ? '8px' : '35px' }
                 }
-                column={2}
+                column={{ xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
                 size="small"
                 bordered
             >
@@ -98,7 +110,9 @@ const DetailsList: FC<IDetailsListProps> = ({
                             <img
                                 src={details[key]}
                                 alt={`${key}_image`}
-                                style={{ maxWidth: '5%', height: 'auto' }}
+                                // 5% of a phone-wide cell is a dozen pixels: give the thumbnail
+                                // a readable size there
+                                style={{ maxWidth: isNarrow ? '50%' : '5%', height: 'auto' }}
                             />
                         ) : isString(details[key]) && details[key].startsWith('data:') ? (
                             ' '

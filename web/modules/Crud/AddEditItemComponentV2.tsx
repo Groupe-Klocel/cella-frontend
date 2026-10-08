@@ -60,6 +60,20 @@ import { FormGroup } from './submodules/FormGroupV2';
 const StyledPageContent = styled(Layout.Content)`
     margin: 0px 30px 50px 30px;
     padding: 0px 20px;
+
+    /* phone / narrow window: this wrapper is nested twice below (page, then form body), which
+       cost 100px on each side and left 190px for the inputs on a 390px screen. The page level
+       loses its inset entirely - the header then sits at the same 12px as on the detail screen -
+       and the form body keeps a 12px gutter. */
+    @media (max-width: 767px) {
+        margin: 0;
+        padding: 0;
+
+        &.add-edit-form-body {
+            margin: 0 0 24px;
+            padding: 0 12px;
+        }
+    }
 `;
 
 export interface IAddItemFormProps {
@@ -558,7 +572,7 @@ const AddEditItemComponentInner: FC<IAddItemFormProps> = (props: IAddItemFormPro
                             {processedOptions && dataInitialized && (
                                 <>
                                     {props.headerComponent}
-                                    <StyledPageContent>
+                                    <StyledPageContent className="add-edit-form-body">
                                         <Form
                                             form={form}
                                             layout="vertical"
