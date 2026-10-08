@@ -379,13 +379,7 @@ export const EquipmentModelV2: ModelType = {
             config: null,
             param: null
         },
-        // Sorting gauge of a sorting equipment: the three maximum dimensions an item footprint
-        // must fit into for the equipment to accept it. Each one is optional (empty or 0 = not
-        // taken into account). Stored on the generic extra columns extraNumber1..3, labelled with
-        // the business `d:sorting-max-dimension1..3` codes shared by the list, the detail and both
-        // hand-written equipment forms. detailGroup stays null: ItemDetailComponentV2 switches to
-        // the grouped renderer as soon as one field declares a group, hiding the ungrouped ones.
-        extraNumber1: {
+        articleMaxDimension1: {
             isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,
@@ -405,7 +399,7 @@ export const EquipmentModelV2: ModelType = {
             config: null,
             param: null
         },
-        extraNumber2: {
+        articleMaxDimension2: {
             isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,
@@ -425,7 +419,7 @@ export const EquipmentModelV2: ModelType = {
             config: null,
             param: null
         },
-        extraNumber3: {
+        articleMaxDimension3: {
             isListRequested: true,
             isDefaultHiddenList: true,
             isExcludedFromList: false,
