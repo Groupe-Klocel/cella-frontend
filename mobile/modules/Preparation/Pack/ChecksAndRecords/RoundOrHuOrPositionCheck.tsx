@@ -64,6 +64,7 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
             'Packing with control in progress'
         );
 
+        const roundStatusCanceled = parseInt(findCodeByScope(configs, 'round_status', 'Canceled'));
         const roundStatusToBePacked = parseInt(
             findCodeByScope(configs, 'round_status', 'To be packed')
         );
@@ -76,6 +77,7 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
         return {
             equipmentHuType,
             packingWithControlInprogressHuoStatus,
+            roundStatusCanceled,
             roundStatusToBePacked,
             roundStatusPackingInProgress,
             cancelledHuoStatus
@@ -171,6 +173,24 @@ export const RoundOrHuOrPositionCheck = ({ dataToCheck }: IRoundOrHuOrPositionCh
 
     useEffect(() => {
         if (fetchResult) {
+            // A cancelled box, or the box of a cancelled round, must never be packed nor take
+            // ownership of its round. The scan function refuses it (FAPI_000002, handled above),
+            // but a warehouse still running an older version answers OK: refuse it here as well,
+            // before anything is written.
+            const isCancelledBox =
+                !!fetchResult.huo && fetchResult.huo.status === cancelledHuoStatus;
+            const isCancelledRound =
+                !!fetchResult.round &&
+                fetchResult.round.status === configsParamsCodes.roundStatusCanceled;
+            if (isCancelledBox || isCancelledRound) {
+                showError(t(isCancelledBox ? 'messages:box-cancelled' : 'errors:FAPI_000002'));
+                setIsLoading(false);
+                setResetForm(true);
+                setScannedInfo(undefined);
+                setFetchResult(undefined);
+                return;
+            }
+
             const processResult = async () => {
                 // Scan of a cart position barcode: the scan function found the box through its
                 // equipmentPositionBarcode, so the scanned code is neither the box name nor its
