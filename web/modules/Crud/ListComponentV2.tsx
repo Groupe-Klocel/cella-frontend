@@ -71,7 +71,7 @@ import { FormDataType, ModelType } from 'models/ModelsV2';
 import { ExportFormat, ModeEnum, Table as tableList } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, isString } from 'lodash';
+import _, { debounce, isEqual, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useAiContextStore } from 'context/CellaBotContext';
@@ -473,10 +473,11 @@ const ListComponent = (props: IListProps) => {
             ascending: value.defaultSort === 'ascending'
         }));
 
+    const defaultSort = props.triggerPriorityChange
+        ? [{ field: props.triggerPriorityChange.orderingField, ascending: true }]
+        : (props.sortDefault ?? sortParameter);
     const [sort, setSort] = useState<any>(
-        props.triggerPriorityChange
-            ? [{ field: props.triggerPriorityChange.orderingField, ascending: true }]
-            : (savedSorters ?? props.sortDefault ?? sortParameter)
+        props.triggerPriorityChange ? defaultSort : (savedSorters ?? defaultSort)
     );
 
     const defaultPagination: newPaginationType = {
@@ -649,28 +650,8 @@ const ListComponent = (props: IListProps) => {
         }
     }
 
-    async function deleteUserSettings() {
-        if (!userSettings) {
-            return;
-        }
-        const deleteQuery = gql`
-            mutation ($id: String!) {
-                deleteWarehouseWorkerSetting(id: $id)
-            }
-        `;
-        const deleteVariables = {
-            id: userSettings.id
-        };
-        await graphqlRequestClient.request(deleteQuery, deleteVariables);
-        showWarning(
-            t(
-                'messages:vos filtres, tri et pagination vont être réinitialisés car une erreur est survenue'
-            )
-        );
-        setTimeout(() => {
-            router.reload();
-        }, 3000);
-    }
+    // filters and sort of the last successful load: criteria the API refuses go back to them
+    const previousCriteriaRef = useRef<any>(null);
 
     const debouncedUpdateUserSettings = useRef(
         debounce(
@@ -1363,6 +1344,40 @@ const ListComponent = (props: IListProps) => {
         props.withArchive ?? false
     );
 
+    // `useList` sets `data` to null when the list query fails (`isLoading` is in the deps because
+    // `data` stays null across consecutive failures). Every failure goes back to the criteria of
+    // the last successful load - before the first one, to the page defaults (no user filter,
+    // default sort): the filters when they changed, otherwise the sort. Already on them, the error
+    // does not come from the criteria and nothing is changed: the API error stays displayed.
+    useEffect(() => {
+        if (data !== null || isLoading) return;
+        const previous = previousCriteriaRef.current ?? {
+            filter: {},
+            advancedFilters: [],
+            sort: defaultSort
+        };
+        const previousSearch = { ...previous.filter, ...props.searchCriteria };
+        const savedAdvancedFilters = userSettings?.valueJson?.advancedFilters ?? [];
+        if (
+            !isEqual(searchCriterias, previousSearch) ||
+            !isEqual(savedAdvancedFilters, previous.advancedFilters)
+        ) {
+            // clear the refused values from the search form, or its next submit sends them again
+            formSearch.setFieldsValue(
+                Object.fromEntries(
+                    Object.keys(searchCriterias).map((key) => [key, previousSearch[key] ?? null])
+                )
+            );
+            handleUserSettings(previous.filter, null, defaultPagination, previous.advancedFilters);
+        } else if (!isEqual(sort, previous.sort)) {
+            setSort(previous.sort);
+            handleUserSettings(null, previous.sort, defaultPagination);
+        } else {
+            return;
+        }
+        showWarning(t('messages:previous-filters-restored'));
+    }, [data, isLoading]);
+
     useEffect(() => {
         // Time delay before reloading data
         const delay = 100;
@@ -1469,6 +1484,11 @@ const ListComponent = (props: IListProps) => {
                 ? JSON.parse(JSON.stringify(data[props.dataModel.endpoints.list]))
                 : undefined;
             if (listData && listData['results']) {
+                previousCriteriaRef.current = {
+                    filter: userSettings?.valueJson?.filter ?? {},
+                    advancedFilters: userSettings?.valueJson?.advancedFilters ?? [],
+                    sort
+                };
                 const result_list: Array<any> = [];
                 switch (props.dataModel.modelName) {
                     case 'RecordHistoryDetail':
@@ -2127,8 +2147,6 @@ const ListComponent = (props: IListProps) => {
                 }
                 setFirstLoad(false);
             }
-        } else {
-            deleteUserSettings();
         }
     }, [data]);
 
