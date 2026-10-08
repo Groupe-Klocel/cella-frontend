@@ -269,17 +269,42 @@ const getModesFromPermissions = (permissions: any, tableName: string) => {
     return modes;
 };
 
-function flatten(data: any) {
-    let result: any = {};
+/**
+ * Flattens a nested record into `a_b_c` keys (`stockOwner: { name }` -> `stockOwner_name`).
+ *
+ * Arrays: by default every element is written under the SAME key, so only the last element
+ * survives (`roles: [{ name: 'A' }, { name: 'B' }]` -> `roles_name: 'B'`) - historical behaviour
+ * that many screens rely on. With `arraysAsLists` every element is flattened on its own and each
+ * sub-key is collected into an array aligned on the elements (`roles_name: ['A', 'B']`), so a
+ * list cell can display every value. A list inside a list gives an array of arrays, still
+ * aligned on the parent elements (`articleLus_articleLuBarcodes_barcode_name:
+ * [['b1', 'b2'], undefined, ['b3']]` next to `articleLus_name: ['LU1', 'LU2', 'LU3']`).
+ */
+function flatten(data: any, options?: { arraysAsLists?: boolean }) {
+    const arraysAsLists = options?.arraysAsLists === true;
+    const result: any = {};
     function recurse(cur: any, prop: any) {
         if (Object(cur) !== cur) {
             result[prop] = cur;
         } else if (Array.isArray(cur)) {
-            for (var i = 0, l = cur.length; i < l; i++) recurse(cur[i], prop); //  + "[" + i + "]"
-            if (l == 0) result[prop] = [];
+            if (arraysAsLists) {
+                const flats = cur.map((element: any) =>
+                    Object(element) !== element ? { '': element } : flatten(element, options)
+                );
+                const keys = new Set<string>();
+                flats.forEach((flat: any) => Object.keys(flat).forEach((k) => keys.add(k)));
+                keys.forEach((k) => {
+                    const key = k === '' ? prop : prop ? prop + '_' + k : k;
+                    result[key] = flats.map((flat: any) => flat[k]);
+                });
+            } else {
+                // every element lands under the same key (no "[i]" suffix) - see arraysAsLists
+                for (let i = 0; i < cur.length; i++) recurse(cur[i], prop);
+            }
+            if (cur.length === 0) result[prop] = [];
         } else {
-            var isEmpty = true;
-            for (var p in cur) {
+            let isEmpty = true;
+            for (const p in cur) {
                 isEmpty = false;
                 recurse(cur[p], prop ? prop + '_' + p : p);
             }

@@ -140,6 +140,9 @@ export type FieldInfo = {
     // the field holds an attached document (base64 data URI, bare base64 or URL): the detail
     // shows a link opening it instead of the raw value
     documentLink?: boolean;
+    // list cell (a to-many relation such as `carrierShippingModes{name}`, or a JSON array): how
+    // many values stay visible in the row before the "+N" tag that opens the full list (default 1)
+    listVisibleCount?: number;
 };
 
 export type FieldsInfo = {
