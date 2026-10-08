@@ -142,7 +142,7 @@ export const SelectRoundForm = ({
                 { field: 'name', ascending: true }
             ],
             page: 1,
-            itemsPerPage: 100
+            itemsPerPage: 10000
         };
 
         const roundsList_result = await graphqlRequestClient.request(
