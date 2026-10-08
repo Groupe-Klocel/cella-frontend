@@ -152,7 +152,7 @@ export const SelectEquipmentForm = ({
                         ]
                     }
                 ],
-                itemsPerPage: 100
+                itemsPerPage: 10000
                 // functions: [{ function: 'count', fields: ['equipmentId'] }]
             };
 
