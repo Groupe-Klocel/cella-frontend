@@ -20,7 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { Progress } from 'antd';
 import { ProgressBar } from 'components/common/dumb/ProgressBar/ProgressBar';
 import { useAuth } from 'context/AuthContext';
-import configs from '../../../../common/configs.json';
+import { useAppState } from 'context/AppContext';
+import { findCodeByScopeAndValue } from '@helpers';
 import {
     GetAllPurchaseOrderLinesQuery,
     GetPurchaseOrderLineByIdQuery,
@@ -36,19 +37,28 @@ interface IPurchaseOrderProgressBarProps {
 }
 
 const PurchaseOrderProgressBar = ({ id, status, done }: IPurchaseOrderProgressBarProps) => {
-    const [value, setValue] = useState(status == configs.PURCHASE_ORDER_STATUS_CLOSED ? 100 : 0);
+    const { configs } = useAppState();
+    // A closed purchase order is shown as 100% even when some lines were short-received,
+    // so its lines are not fetched
+    const isClosed =
+        status == findCodeByScopeAndValue(configs ?? [], 'purchase_order_status', 'closed');
+    const [value, setValue] = useState(0);
     const { graphqlRequestClient } = useAuth();
 
     const { isLoading, data, error } = useGetAllPurchaseOrderLinesQuery<
         GetAllPurchaseOrderLinesQuery,
         Error
-    >(graphqlRequestClient, {
-        filters: {
-            purchaseOrderId: id as any
+    >(
+        graphqlRequestClient,
+        {
+            filters: {
+                purchaseOrderId: id as any
+            },
+            page: 1,
+            itemsPerPage: 100
         },
-        page: 1,
-        itemsPerPage: 100
-    });
+        { enabled: !isClosed }
+    );
 
     useEffect(() => {
         if (data?.purchaseOrderLines && !isLoading) {
@@ -74,7 +84,7 @@ const PurchaseOrderProgressBar = ({ id, status, done }: IPurchaseOrderProgressBa
         }
     }, [data]);
 
-    return <Progress type="dashboard" percent={value} width={80} />;
+    return <Progress type="dashboard" percent={isClosed ? 100 : value} width={80} />;
 };
 
 export { PurchaseOrderProgressBar };
