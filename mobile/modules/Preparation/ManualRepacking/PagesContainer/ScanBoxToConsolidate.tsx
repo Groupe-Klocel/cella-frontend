@@ -78,6 +78,7 @@ export const ScanBoxToConsolidate = ({
                             name
                             status
                             statusText
+                            loadId
                             preparationMode
                             preparationModeText
                             theoriticalWeight
