@@ -216,26 +216,25 @@ export const ValidateReceptionForm = ({
 
                 updatedObject[`step10`] = { previousStep: 0, data: step10Data };
                 updatedObject[`step20`] = { data: step20Data };
-                updatedObject['currentStep'] =
-                    final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND ||
-                    isHuScannedAtEnd
-                        ? 40
-                        : 30;
-                isHuScannedAtEnd
-                    ? ((updatedObject[`step30`] = {
-                          data: { handlingUnit: 'huScannedAtEnd' }
-                      }),
-                      (updatedObject[`step40`] = {
-                          previousStep: 10
-                      }))
-                    : final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND
-                      ? (updatedObject[`step30`] = {
-                            previousStep: 10,
-                            data: step30Data
-                        })
-                      : (updatedObject[`step30`] = {
-                            previousStep: 10
-                        });
+                const isHuKept =
+                    final_handling_unit.category === parameters.HANDLING_UNIT_CATEGORY_INBOUND;
+                if (isHuScannedAtEnd) {
+                    // HU scanned at the end: the next article comes right after the goods-in
+                    updatedObject[`step30`] = { data: { handlingUnit: 'huScannedAtEnd' } };
+                    updatedObject[`step40`] = { previousStep: 10 };
+                    updatedObject['currentStep'] = 40;
+                } else if (isHuKept) {
+                    // HU scanned at the start and still open: keep it and go back to the article
+                    // step. step40 has to exist with its previousStep: ScanArticle only creates it
+                    // when currentStep < 40, and ArticleChecks / the back button read it (#36955)
+                    updatedObject[`step30`] = { previousStep: 10, data: step30Data };
+                    updatedObject[`step40`] = { previousStep: 30 };
+                    updatedObject['currentStep'] = 40;
+                } else {
+                    // HU closed (or no HU management): a new HU has to be scanned
+                    updatedObject[`step30`] = { previousStep: 10 };
+                    updatedObject['currentStep'] = 30;
+                }
                 dispatch({
                     type: 'UPDATE_BY_PROCESS',
                     processName: processName,

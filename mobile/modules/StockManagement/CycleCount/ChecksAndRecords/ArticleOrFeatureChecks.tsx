@@ -319,8 +319,11 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                 // Récupérer les features si nécessaire
                 let featuresForNewHUC = newHUCFeatures;
 
+                // The feature codes (with their mask) are needed when the content does not exist yet
+                // (new HU or new content) and when the features come from a previous pass' CCM, whose
+                // feature code snapshot may not carry the current mask.
                 const shouldFetchFeatures =
-                    (isHuToCreate || isHucToCreate) &&
+                    (isHuToCreate || isHucToCreate || isHuFromCCM) &&
                     (fetchResult.resType === 'serialNumber'
                         ? fetchResult.article.featureType
                         : fetchResult.articleLuBarcodes[0].article.featureType) &&
@@ -336,6 +339,7 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                     identifiable
                                     unique
                                     dateType
+                                    mask
                                 }
                             }
                         }
@@ -360,11 +364,33 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     setNewHUCFeatures(formattedFeatures);
                 }
 
+                // Features stored on a CCM carry a snapshot of their feature code: refresh the mask from
+                // the current feature codes so that ReviewFeatures validates the operator's entry against it.
+                const withCurrentMask = (features: any) => {
+                    if (!Array.isArray(features) || !featuresForNewHUC) return features;
+                    return features.map((feature: any) => {
+                        const current = featuresForNewHUC.find(
+                            (item: any) =>
+                                item.featureCode.id === feature?.featureCode?.id ||
+                                item.featureCode.name === feature?.featureCode?.name
+                        );
+                        return current && feature?.featureCode
+                            ? {
+                                  ...feature,
+                                  featureCode: {
+                                      ...feature.featureCode,
+                                      mask: current.featureCode.mask
+                                  }
+                              }
+                            : feature;
+                    });
+                };
+
                 //set ExpectedFeatures depending if needed, created by new HU, not yet created but in CCMs or retrieved from existing HU
                 const expectedFeatures = isHuToCreate
                     ? featuresForNewHUC
                     : isHuFromCCM
-                      ? currentCCMovements[0].features
+                      ? withCurrentMask(currentCCMovements[0].features)
                       : contents
                         ? contents.length != 0
                             ? contents?.[0]?.handlingUnitContentFeatures.filter(
