@@ -65,6 +65,11 @@ export const BoxToConsolidateChecks = ({ dataToCheck }: IBoxToConsolidateChecksP
         'handling_unit_content_outbound_status',
         'Cancelled'
     );
+    const toBeLoadedHuoStatus = findCodeByScopeAndValue(
+        state.configs,
+        'handling_unit_outbound_status',
+        'To be loaded'
+    );
 
     const updateBoxToManualPacking = async (huo: any) => {
         if (!manualPackingHuoStatus) {
@@ -146,6 +151,21 @@ export const BoxToConsolidateChecks = ({ dataToCheck }: IBoxToConsolidateChecksP
             // Box from the same delivery?
             if (handlingUnitOutbound.deliveryId !== originalBox?.deliveryId) {
                 handleError(t('messages:unexpected-scanned-item'));
+                return;
+            }
+            // Same rule as the original box (BoxChecks): the box to consolidate must be
+            // "To be loaded" (expected 1400) or "Manual packing" (expected 1410), and must
+            // not be on a load. A loaded box (1500) has to be unloaded first, otherwise its
+            // deletion at consolidation leaves an orphan load line.
+            const allowedStatuses = [toBeLoadedHuoStatus, manualPackingHuoStatus]
+                .filter(Boolean)
+                .map((status: string) => parseInt(status));
+            if (!allowedStatuses.includes(handlingUnitOutbound.status)) {
+                handleError(t('messages:box-not-expected-status'));
+                return;
+            }
+            if (handlingUnitOutbound.loadId) {
+                handleError(t('messages:box-not-expected-status'));
                 return;
             }
             // Update HUO/HUCO status to "Manual packing" and add the box to the

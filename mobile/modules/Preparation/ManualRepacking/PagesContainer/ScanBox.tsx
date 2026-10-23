@@ -76,6 +76,7 @@ export const ScanBox = ({
                             name
                             status
                             statusText
+                            loadId
                             preparationMode
                             preparationModeText
                             theoriticalWeight
