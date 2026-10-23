@@ -88,6 +88,8 @@ const ManualRepacking: PageComponent = () => {
     // 80 -> scan box(s) to consolidate [button: finish packing]
     // 90 -> packaging + actual weight (new box)
     // 95 -> autovalidate consolidation (END)
+    // Abandon (reset, exit, back from 30 to the box scan): the boxes put in "Manual packing" are
+    // released (back to "To be loaded"); back from 80 releases the boxes scanned to consolidate.
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
@@ -202,8 +204,55 @@ const ManualRepacking: PageComponent = () => {
     const headerDisplay = buildHeaderDisplay(headerManagement);
     //#endregion
 
+    //#region abandon
+    // The boxes scanned on this screen are put in "Manual packing": an abandoned repacking must not
+    // leave them there. The function brings them back to "To be loaded" (the new box being filled
+    // is emptied back into the original box and deleted, an original box already emptied into
+    // closed boxes is deleted). A failure is shown but never blocks the operator: a box left in
+    // "Manual packing" can still be scanned again, then released.
+    const releaseHeldBoxes = async (scope: 'all' | 'consolidatedBoxes') => {
+        const input: { originalHuoId?: string; newHuoId?: string; consolidatedHuoIds: string[] } = {
+            consolidatedHuoIds: consolidatedBoxes.map((box: any) => box.id)
+        };
+        if (scope === 'all') {
+            input.originalHuoId = originalBox?.id;
+            input.newHuoId = createdBox?.id;
+        }
+        if (!input.originalHuoId && !input.newHuoId && input.consolidatedHuoIds.length === 0) {
+            return;
+        }
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+        setIsLoading(true);
+        try {
+            const abandonResult = await graphqlRequestClient.request(query, {
+                functionName: 'RF_manualRepacking',
+                event: { input: { action: 'abandon', ...input } }
+            });
+            if (abandonResult.executeFunction.status === 'ERROR') {
+                showError(abandonResult.executeFunction.output);
+            } else if (abandonResult.executeFunction.output.status === 'KO') {
+                showError(t(`errors:${abandonResult.executeFunction.output.output.code}`));
+                console.log('Backend_message', abandonResult.executeFunction.output.output);
+            }
+        } catch (error) {
+            showError(t('messages:error-executing-function'));
+            console.log('executeFunctionError', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    //#endregion
+
     //#region global buttons
-    const onReset = () => {
+    const onReset = async () => {
+        await releaseHeldBoxes('all');
         dispatch({
             type: 'DELETE_RF_PROCESS',
             processName
@@ -212,7 +261,8 @@ const ManualRepacking: PageComponent = () => {
         form.resetFields();
     };
 
-    const previousPage = () => {
+    const previousPage = async () => {
+        await releaseHeldBoxes('all');
         dispatch({
             type: 'DELETE_RF_PROCESS',
             processName
@@ -222,7 +272,34 @@ const ManualRepacking: PageComponent = () => {
         router.back();
     };
 
-    const onBack = () => {
+    const onBack = async () => {
+        // Step 30 -> 20: back to the box scan, the original box (and whatever the process still
+        // holds) is released, and forgotten with the rest of the process
+        if (storedObject.currentStep === 30) {
+            await releaseHeldBoxes('all');
+            dispatch({
+                type: 'UPDATE_BY_PROCESS',
+                processName,
+                object: {
+                    currentStep: 20,
+                    step10: storedObject['step10'],
+                    step20: { previousStep: storedObject['step20']?.previousStep }
+                }
+            });
+            setNextAction(null);
+            form.resetFields();
+            return;
+        }
+        // Step 80 -> 30: the consolidation is given up, the boxes scanned to consolidate are
+        // released (the original box stays held for the next action)
+        if (storedObject.currentStep === 80 && consolidatedBoxes.length > 0) {
+            await releaseHeldBoxes('consolidatedBoxes');
+            dispatch({
+                type: 'UPDATE_BY_PROCESS',
+                processName,
+                object: { ...storedObject, consolidatedBoxes: [] }
+            });
+        }
         // Step 60 (split): the generic ON_BACK cannot be used since steps 40/50 were consumed by
         // the product loop; return to the product scan instead (the new box is not closed yet)
         if (action === 'split' && isBoxFinished && !isNewBoxClosed) {
@@ -430,7 +507,7 @@ const ManualRepacking: PageComponent = () => {
                             <NavButton
                                 icon={<UndoOutlined />}
                                 onClick={onReset}
-                                disabled={isLocked}
+                                disabled={isLocked || isLoading}
                             ></NavButton>
                         ) : (
                             <></>
@@ -438,7 +515,7 @@ const ManualRepacking: PageComponent = () => {
                         <NavButton
                             icon={<ArrowLeftOutlined />}
                             onClick={previousPage}
-                            disabled={isLocked}
+                            disabled={isLocked || isLoading}
                         ></NavButton>
                     </Space>
                 }
