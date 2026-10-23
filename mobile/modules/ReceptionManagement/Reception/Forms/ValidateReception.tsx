@@ -97,6 +97,42 @@ export const ValidateReceptionForm = ({
             ? step110?.data?.handlingUnit
             : step30?.data?.handlingUnit;
 
+    // Redmine #36690 — RF_reception_validate refuses a validation whose purchase order snapshot
+    // (step10, frozen when the order was scanned) turns out to be stale: a line already received in
+    // the meantime (RECEPTION-000100) or a quantity above what is left to receive on a line
+    // (RECEPTION-000110). Nothing was written, and the refusal carries the fresh purchase order in
+    // `variables.purchaseOrder`: the flow is brought back to the article scan on that fresh snapshot,
+    // as after a successful validation, instead of leaving the operator on the refused line where a
+    // retry would be refused again (same lesson as the picking anti-replay, #36084).
+    const STALE_SNAPSHOT_REFUSAL_CODES = ['RECEPTION-000100', 'RECEPTION-000110'];
+    const resyncPurchaseOrder = (freshPurchaseOrder: any) => {
+        const purchaseOrderLines = (freshPurchaseOrder.purchaseOrderLines ?? []).map(
+            (line: any) => ({
+                ...line,
+                blockingStatusText: purchaseOrder?.purchaseOrderLines?.find(
+                    (linePo: any) => linePo.blockingStatus === line.blockingStatus
+                )?.blockingStatusText
+            })
+        );
+        dispatch({
+            type: 'UPDATE_BY_PROCESS',
+            processName,
+            object: {
+                step10: {
+                    ...step10,
+                    data: {
+                        ...step10?.data,
+                        purchaseOrder: { ...freshPurchaseOrder, purchaseOrderLines }
+                    }
+                },
+                step20,
+                step30,
+                // the article scan (step 40) initialises itself from here, as in the nominal flow
+                currentStep: 30
+            }
+        });
+    };
+
     //ValidateReception-1a: fetch front API
     const onFinish = async () => {
         const inputToValidate = {
@@ -140,13 +176,20 @@ export const ValidateReceptionForm = ({
                 validateReceptionResult.executeFunction.status === 'OK' &&
                 validateReceptionResult.executeFunction.output.status === 'KO'
             ) {
+                const refusal = validateReceptionResult.executeFunction.output.output;
+                // `variables` (e.g. the refused line numbers) fill the {{placeholders}} of the label
                 showError(
-                    t(`errors:${validateReceptionResult.executeFunction.output.output.code}`)
+                    refusal?.variables
+                        ? t(`errors:${refusal?.code}`, refusal.variables)
+                        : t(`errors:${refusal?.code}`)
                 );
-                console.log(
-                    'Backend_message',
-                    validateReceptionResult.executeFunction.output.output
-                );
+                console.log('Backend_message', refusal);
+                if (
+                    STALE_SNAPSHOT_REFUSAL_CODES.includes(refusal?.code) &&
+                    refusal?.variables?.purchaseOrder
+                ) {
+                    resyncPurchaseOrder(refusal.variables.purchaseOrder);
+                }
             } else {
                 showSuccess(t('messages:reception-success'));
                 const updatedObject: any = {};
