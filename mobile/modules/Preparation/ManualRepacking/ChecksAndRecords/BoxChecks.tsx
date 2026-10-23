@@ -146,6 +146,11 @@ export const BoxChecks = ({ dataToCheck }: IBoxChecksProps) => {
                 handleError(t('messages:box-not-expected-status'));
                 return;
             }
+            // A box still attached to a load cannot be repacked: it has to be unloaded first.
+            if (handlingUnitOutbound.loadId) {
+                handleError(t('messages:box-not-expected-status'));
+                return;
+            }
             // Update HUO/HUCO status to "Manual packing", then record the original box
             const recordData = async () => {
                 try {
