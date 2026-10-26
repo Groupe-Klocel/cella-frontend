@@ -143,6 +143,10 @@ export type FieldInfo = {
     // list cell (a to-many relation such as `carrierShippingModes{name}`, or a JSON array): how
     // many values stay visible in the row before the "+N" tag that opens the full list (default 1)
     listVisibleCount?: number;
+    // multiple add/edit field (`isMultipleAddEdit`) where an empty list and null do not mean the
+    // same thing for the API (e.g. cubing tags: null = any, [] = none): an emptied selection is
+    // sent as null
+    emptyListAsNull?: boolean;
 };
 
 export type FieldsInfo = {
