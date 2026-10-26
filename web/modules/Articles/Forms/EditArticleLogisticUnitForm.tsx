@@ -49,6 +49,10 @@ import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
 import { FormOptionType } from 'models/ModelsV2';
 import TextArea from 'antd/es/input/TextArea';
+import {
+    ArticleLuCubingFormItems,
+    normalizeArticleLuCubingInput
+} from './ArticleLuCubingFormItems';
 
 export type EditArticleLogisticUnitFormProps = {
     details: any;
@@ -321,6 +325,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
                 delete formData['automaticPickingLocationPattern'];
                 delete formData['automaticStorageLocationPattern'];
                 delete formData['statusText'];
+                normalizeArticleLuCubingInput(formData);
                 updateArticleLu({ input: formData, id: details.id });
                 setUnsavedChanges(false);
             })
@@ -643,6 +648,7 @@ export const EditArticleLogisticUnitForm: FC<EditArticleLogisticUnitFormProps> =
                             <InputNumber />
                         </Form.Item>
                     </Col>
+                    <ArticleLuCubingFormItems />
                     <Col xs={8} xl={12}>
                         <Form.Item
                             label={minimumReplenishmentThreshold}
