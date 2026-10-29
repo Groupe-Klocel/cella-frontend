@@ -597,7 +597,13 @@ const PickAndPack: PageComponent = () => {
                 console.log('Backend_message', closeHUOsResult.executeFunction.output.output);
             } else {
                 showSuccess(t('messages:hu-ready-to-be-loaded'));
-                const newStoredObject: any = storedObject;
+                // A copy: the step deleted below must not vanish from the current state as well.
+                const newStoredObject: any = { ...storedObject };
+                // The pallet just closed is no longer the one being prepared. Keeping step15
+                // left the parent scan step hidden (PICK_AND_PACK_MANUALLY_GENERATE_PARENT = 1),
+                // so no name reached RF_pickAndPack_validate and it generated a pallet of its
+                // own, and the header kept showing the closed one (Redmine #36653).
+                delete newStoredObject['step15'];
                 if (ignoreHUContentIds.length > 0) {
                     newStoredObject.ignoreHUContentIds = ignoreHUContentIds;
                 } else {
@@ -821,6 +827,14 @@ const PickAndPack: PageComponent = () => {
     }, [triggerNextRaa]);
 
     const currentShippingPalletId = storedObject?.step10?.data?.round.extraText1 ?? undefined;
+
+    // Whether the parent handling unit has to be scanned is the backend's own criterion:
+    // RF_pickAndPack_validate reuses round.extraText1 when it holds a pallet and only otherwise
+    // takes the scanned name (or generates one). The former test - no handling unit outbound of
+    // the round in status 500 - stood for "a pallet is under way" when boxes reached PREPARED
+    // inside an open pallet; boxes of a closed pallet now get there too once their label is
+    // known, which hid the scan after "Close shipping HU" (Redmine #36653).
+    const isShippingPalletInProgress = !!currentShippingPalletId;
 
     useEffect(() => {
         if (triggerHuClose) {
@@ -1126,9 +1140,7 @@ const PickAndPack: PageComponent = () => {
                         <></>
                     )}
                     {storedObject['step10']?.data &&
-                    storedObject['step10']?.data?.round?.handlingUnitOutbounds?.filter(
-                        (huo: any) => huo.status === 500
-                    ).length === 0 &&
+                    !isShippingPalletInProgress &&
                     !storedObject['step15']?.data &&
                     manuallyGenerateParent ? (
                         <ScanHandlingUnit
@@ -1144,12 +1156,7 @@ const PickAndPack: PageComponent = () => {
                         <></>
                     )}
                     {storedObject[
-                        !manuallyGenerateParent ||
-                        storedObject['step10']?.data?.round?.handlingUnitOutbounds?.filter(
-                            (huo: any) => huo.status === 500
-                        ).length !== 0
-                            ? 'step10'
-                            : 'step15'
+                        !manuallyGenerateParent || isShippingPalletInProgress ? 'step10' : 'step15'
                     ]?.data && !storedObject['step20']?.data ? (
                         <ScanLocation
                             processName={processName}
