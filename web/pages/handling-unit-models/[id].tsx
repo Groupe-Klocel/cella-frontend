@@ -155,7 +155,9 @@ const HandlingUnitModelPage: PageComponent = () => {
         <>
             <AppHead title={headerData.title} />
             <ItemDetailComponent
-                extraDataComponent={<HandlingUnitModelDetailsExtra handlingUnitModelId={id!} />}
+                extraDataComponent={
+                    <HandlingUnitModelDetailsExtra handlingUnitModelId={id!} data={data} />
+                }
                 id={id!}
                 headerData={headerData}
                 dataModel={model}

@@ -402,7 +402,7 @@ export const HandlingUnitModelModelV2: ModelType = {
         },
         autoCubingOrder: {
             isListRequested: true,
-            isDefaultHiddenList: true,
+            isDefaultHiddenList: false,
             isExcludedFromList: false,
             isSortable: true,
             searchingFormat: 'Number',
@@ -414,12 +414,14 @@ export const HandlingUnitModelModelV2: ModelType = {
             addEditStep: null,
             maxLength: null,
             displayName: null,
-            isMandatory: false,
+            isMandatory: true,
             minRule: 0,
             maxRule: null,
             config: null,
             param: null,
-            numberPrecision: 0
+            numberPrecision: 0,
+            // backend default (bee_v2 HandlingUnitModel.auto_cubing_order)
+            addEditInitialValue: 999
         },
         cubingMaxFillRate: {
             isListRequested: true,
