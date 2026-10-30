@@ -31,6 +31,7 @@ import { Button, Modal, Space } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { BoxDetailsExtra } from 'modules/Boxes/Elements/BoxDetailsExtra';
+import { BoxPlacementPlanButton } from 'modules/Boxes/Elements/BoxPlacementPlanButton';
 import { BarcodeOutlined } from '@ant-design/icons';
 import { cancelHuoDeliveryStatus as statusForCancelation } from '@helpers';
 
@@ -81,6 +82,7 @@ const BoxPage: PageComponent = () => {
         routes: breadCrumb,
         actionsComponent: (
             <Space>
+                <BoxPlacementPlanButton boxId={id} />
                 {modes.length > 0 &&
                 modes.includes(ModeEnum.Update) &&
                 model.isEditable &&

@@ -48,6 +48,10 @@ import { FormOptionType } from 'models/Models';
 import configs from '../../../../common/configs.json';
 import parameters from '../../../../common/parameters.json';
 import TextArea from 'antd/es/input/TextArea';
+import {
+    ArticleLuCubingFormItems,
+    normalizeArticleLuCubingInput
+} from './ArticleLuCubingFormItems';
 
 interface IOption {
     value: string;
@@ -345,6 +349,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
                 delete formData.articleName;
                 delete formData.stockOwnerName;
                 delete formData.logisticUnit;
+                normalizeArticleLuCubingInput(formData);
                 createArticleLu({ input: formData });
                 setUnsavedChanges(false);
             })
@@ -665,6 +670,7 @@ export const AddArticleLogisticUnitForm = (props: ISingleItemProps) => {
                             <InputNumber />
                         </Form.Item>
                     </Col>
+                    <ArticleLuCubingFormItems />
                     <Col xs={8} xl={12}>
                         <Form.Item
                             label={minimumReplenishmentThreshold}

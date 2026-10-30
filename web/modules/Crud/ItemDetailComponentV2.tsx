@@ -305,7 +305,21 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
                 }
             });
 
-            let flattenedData = flatten(detailObj);
+            // `flatten` keeps only the last element of an array: a top-level list of plain values
+            // (e.g. cubing tags `["FRAGILE", "FOOD"]`) is joined on the display copy instead, so
+            // the detail shows every value. `props.setData` still gets the raw record.
+            const displayObj = { ...detailObj };
+            Object.keys(displayObj).forEach((key) => {
+                const value = displayObj[key];
+                if (
+                    Array.isArray(value) &&
+                    value.length > 0 &&
+                    value.every((element: any) => Object(element) !== element)
+                ) {
+                    displayObj[key] = value.join(', ');
+                }
+            });
+            let flattenedData = flatten(displayObj);
 
             if (props.setData) props.setData(flatten(detailObj));
 
