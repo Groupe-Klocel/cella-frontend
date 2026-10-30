@@ -26,17 +26,20 @@ import {
     CaretDownOutlined,
     CaretUpOutlined
 } from '@ant-design/icons';
-import { getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
+import {
+    findCodeByScopeAndValue,
+    getModesFromPermissions,
+    pathParamsFromDictionary
+} from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Button, Divider, Modal, Space } from 'antd';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum, Table } from 'generated/graphql';
 import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StatusHistoryDetailExtraModelV2 } from '@helpers';
 import { CustomerOrderLineModelV2 } from '@helpers';
 import { CustomerOrderAddressModelV2 } from '@helpers';
-import configs from '../../../../common/configs.json';
 import { PaymentLineModelV2 } from '@helpers';
 import { DeliveryModelV2 } from '@helpers';
 
@@ -66,7 +69,7 @@ const CustomerOrderDetailsExtra = ({
     refetchPaymentLine
 }: IItemDetailsProps) => {
     const { t } = useTranslation();
-    const { permissions } = useAppState();
+    const { configs, permissions } = useAppState();
     const [idToDeleteAddress, setIdToDeleteAddress] = useState<string | undefined>();
     const [idToDisableAddress, setIdToDisableAddress] = useState<string | undefined>();
     const [idToDeleteLine, setIdToDeleteLine] = useState<string | undefined>();
@@ -81,6 +84,34 @@ const CustomerOrderDetailsExtra = ({
         newOrder: null as number | null
     });
     const [customerOrderLinedata, setCustomerOrderLineData] = useState<any[]>([]);
+
+    const configsParamsCodes = useMemo(() => {
+        const third_party_address_category_delivery = parseInt(
+            findCodeByScopeAndValue(configs, 'third_party_address_category', `Delivery`)
+        );
+
+        const third_party_address_category_invoice = parseInt(
+            findCodeByScopeAndValue(configs, 'third_party_address_category', `Invoice`)
+        );
+
+        const order_status_to_invoice = parseInt(
+            findCodeByScopeAndValue(configs, 'order_status', `To invoice`)
+        );
+
+        const order_status_closed = parseInt(
+            findCodeByScopeAndValue(configs, 'order_status', `Closed`)
+        );
+
+        return {
+            third_party_address_category_delivery,
+            third_party_address_category_invoice,
+            order_status_to_invoice,
+            order_status_closed
+        };
+    }, [configs]);
+
+    // order lines can no longer be modified once the order reached a final status (closed/canceled)
+    const isOrderClosed = status >= configsParamsCodes.order_status_closed;
 
     const customerOrderAddressHeaderData: HeaderData = {
         title: t('common:associated', { name: t('common:customer-order-addresses') }),
@@ -117,7 +148,7 @@ const CustomerOrderDetailsExtra = ({
             customerOrderLineModes.length > 0 &&
             customerOrderLineModes.includes(ModeEnum.Create) &&
             !fixedPrice &&
-            status < configs.ORDER_STATUS_TO_INVOICE ? (
+            status < configsParamsCodes.order_status_to_invoice ? (
                 <LinkButton
                     title={t('actions:add2', { name: t('common:customer-order-line') })}
                     path={pathParamsFromDictionary('/customer-orders/line/add', {
@@ -220,10 +251,11 @@ const CustomerOrderDetailsExtra = ({
                                         customerOrderAddressModes.includes(ModeEnum.Update) &&
                                         CustomerOrderAddressModelV2.isEditable &&
                                         (record.category ==
-                                            configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY ||
+                                            configsParamsCodes.third_party_address_category_delivery ||
                                             (record.category ==
-                                                configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE &&
-                                                status <= configs.ORDER_STATUS_TO_INVOICE)) ? (
+                                                configsParamsCodes.third_party_address_category_invoice &&
+                                                status <=
+                                                    configsParamsCodes.order_status_to_invoice)) ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
                                                 path={pathParamsFromDictionary(
@@ -240,10 +272,11 @@ const CustomerOrderDetailsExtra = ({
                                         customerOrderAddressModes.includes(ModeEnum.Delete) &&
                                         CustomerOrderAddressModelV2.isSoftDeletable &&
                                         (record.category ==
-                                            configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY ||
+                                            configsParamsCodes.third_party_address_category_delivery ||
                                             (record.category ==
-                                                configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE &&
-                                                status <= configs.ORDER_STATUS_TO_INVOICE)) ? (
+                                                configsParamsCodes.third_party_address_category_invoice &&
+                                                status <=
+                                                    configsParamsCodes.order_status_to_invoice)) ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
                                                 onClick={() =>
@@ -261,10 +294,11 @@ const CustomerOrderDetailsExtra = ({
                                         customerOrderAddressModes.includes(ModeEnum.Delete) &&
                                         CustomerOrderAddressModelV2.isDeletable &&
                                         (record.category ==
-                                            configs.THIRD_PARTY_ADDRESS_CATEGORY_DELIVERY ||
+                                            configsParamsCodes.third_party_address_category_delivery ||
                                             (record.category ==
-                                                configs.THIRD_PARTY_ADDRESS_CATEGORY_INVOICE &&
-                                                status <= configs.ORDER_STATUS_TO_INVOICE)) ? (
+                                                configsParamsCodes.third_party_address_category_invoice &&
+                                                status <=
+                                                    configsParamsCodes.order_status_to_invoice)) ? (
                                             <Button
                                                 icon={<DeleteOutlined />}
                                                 danger
@@ -339,7 +373,7 @@ const CustomerOrderDetailsExtra = ({
                                                 />
                                             </>
                                         )}
-                                        {record?.lineNumber === null ? (
+                                        {record?.lineNumber === null || isOrderClosed ? (
                                             <></>
                                         ) : (
                                             <>
@@ -381,6 +415,8 @@ const CustomerOrderDetailsExtra = ({
                                         )}
                                         {customerOrderLineModes.length > 0 &&
                                         customerOrderLineModes.includes(ModeEnum.Update) &&
+                                        !fixedPrice &&
+                                        !isOrderClosed &&
                                         CustomerOrderLineModelV2.isEditable ? (
                                             <LinkButton
                                                 icon={<EditTwoTone />}
@@ -397,6 +433,7 @@ const CustomerOrderDetailsExtra = ({
                                         {customerOrderLineModes.length > 0 &&
                                         customerOrderLineModes.includes(ModeEnum.Delete) &&
                                         !fixedPrice &&
+                                        !isOrderClosed &&
                                         CustomerOrderLineModelV2.isSoftDeletable ? (
                                             <Button
                                                 icon={<LockTwoTone twoToneColor="#ffbbaf" />}
@@ -414,6 +451,7 @@ const CustomerOrderDetailsExtra = ({
                                         {customerOrderLineModes.length > 0 &&
                                         customerOrderLineModes.includes(ModeEnum.Delete) &&
                                         !fixedPrice &&
+                                        !isOrderClosed &&
                                         CustomerOrderLineModelV2.isDeletable ? (
                                             <Button
                                                 icon={<DeleteOutlined />}
