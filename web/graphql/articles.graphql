@@ -361,6 +361,10 @@ query GetArticleLuById($id: String!, $language: String = "en") {
         }
         expansionCoefficient
         emptyCoefficient
+        upright
+        maxLoad
+        cubingCriteria
+        cubingAllowedCriteria
         minimumReplenishmentThreshold
         maximumReplenishmentThreshold
         status

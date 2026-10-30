@@ -486,7 +486,15 @@ const AddEditItemComponentInner: FC<IAddItemFormProps> = (props: IAddItemFormPro
     // models exposing an editable `translation` field split it into en/fr/de inputs; collapse
     // them back into a single `translation` object (or null when all empty) before submitting
     const hasTranslation = props.dataModel.fieldsInfo['translation']?.addEditFormat != null;
-    const buildInput = (values: any) => {
+    // fields flagged `emptyListAsNull`: an emptied multiple selection is sent as null
+    const emptyListAsNullFields = Object.keys(props.dataModel.fieldsInfo).filter(
+        (key) => props.dataModel.fieldsInfo[key].emptyListAsNull
+    );
+    const buildInput = (formValues: any) => {
+        const values = { ...formValues };
+        emptyListAsNullFields.forEach((key) => {
+            if (Array.isArray(values[key]) && values[key].length === 0) values[key] = null;
+        });
         if (!hasTranslation) return values;
         const { en, fr, de, ...rest } = values;
         return {
