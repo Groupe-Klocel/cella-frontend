@@ -107,7 +107,7 @@ export interface ISingleItemProps {
 }
 
 const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
-    const { permissions } = useAppState();
+    const { permissions, configs, parameters } = useAppState();
     const { t } = useTranslation();
     const router = useRouter();
     const filteredLanguage = getLanguageCode(router);
@@ -307,7 +307,10 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
 
             // `flatten` keeps only the last element of an array: a top-level list of plain values
             // (e.g. cubing tags `["FRAGILE", "FOOD"]`) is joined on the display copy instead, so
-            // the detail shows every value. `props.setData` still gets the raw record.
+            // the detail shows every value. When the model gives the field a `param` / `config`
+            // scope, the values are its codes and each one is shown with the label the forms
+            // offer (translation in the screen's language, else the row's value, else the code).
+            // `props.setData` still gets the raw record.
             const displayObj = { ...detailObj };
             Object.keys(displayObj).forEach((key) => {
                 const value = displayObj[key];
@@ -316,7 +319,22 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
                     value.length > 0 &&
                     value.every((element: any) => Object(element) !== element)
                 ) {
-                    displayObj[key] = value.join(', ');
+                    const fieldInfo = props.dataModel.fieldsInfo[key];
+                    const scopedRows = fieldInfo?.param
+                        ? (parameters ?? []).filter((row: any) => row.scope === fieldInfo.param)
+                        : fieldInfo?.config
+                          ? (configs ?? []).filter((row: any) => row.scope === fieldInfo.config)
+                          : [];
+                    displayObj[key] = value
+                        .map((element: any) => {
+                            const row = scopedRows.find(
+                                (item: any) => String(item.code) === String(element)
+                            );
+                            return row
+                                ? (row.translation?.[filteredLanguage] ?? row.value ?? element)
+                                : element;
+                        })
+                        .join(', ');
                 }
             });
             let flattenedData = flatten(displayObj);
