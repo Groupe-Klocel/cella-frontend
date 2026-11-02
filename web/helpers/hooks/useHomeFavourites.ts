@@ -30,8 +30,11 @@ import { useCallback } from 'react';
  *
  * Stored per user like the theme or the language: a `warehouseWorkerSetting` row with code
  * `homeFavourites` and `valueJson: { hrefs: string[] }`. AppLayout loads every setting of the user
- * into AppContext at boot, so reading is synchronous; toggling updates the context first
- * (optimistic) and then creates or updates the row.
+ * into AppContext at boot, so reading is synchronous; toggling or reordering updates the context
+ * first (optimistic) and then creates or updates the row.
+ *
+ * The order of `hrefs` is the order the user chose (drag and drop on the home page): the home
+ * panel and the side-menu group both list the favourites in that order, a new favourite goes last.
  */
 export const HOME_FAVOURITES_CODE = 'homeFavourites';
 
@@ -69,11 +72,9 @@ export const useHomeFavourites = () => {
 
     const isFavourite = useCallback((href: string) => favourites.includes(href), [favourites]);
 
-    const toggleFavourite = useCallback(
-        async (href: string) => {
-            const next = favourites.includes(href)
-                ? favourites.filter((item) => item !== href)
-                : [...favourites, href];
+    /** Persist `next` as the whole list, the context first so the UI reacts immediately. */
+    const save = useCallback(
+        async (next: string[]) => {
             const valueJson = { ...(setting?.valueJson ?? {}), hrefs: next };
             const withValue = (id?: string) =>
                 setting
@@ -84,7 +85,7 @@ export const useHomeFavourites = () => {
                       )
                     : [...settings, { id, code: HOME_FAVOURITES_CODE, valueJson }];
 
-            // optimistic: the star reacts immediately
+            // optimistic: the star (or the new order) reacts immediately
             dispatch({ type: 'SWITCH_USER_SETTINGS', userSettings: withValue() });
             try {
                 if (setting?.id) {
@@ -111,8 +112,37 @@ export const useHomeFavourites = () => {
                 dispatch({ type: 'SWITCH_USER_SETTINGS', userSettings: settings });
             }
         },
-        [favourites, setting, settings, dispatch, graphqlRequestClient, user?.id, t]
+        [setting, settings, dispatch, graphqlRequestClient, user?.id, t]
     );
 
-    return { favourites, isFavourite, toggleFavourite };
+    const toggleFavourite = useCallback(
+        (href: string) =>
+            save(
+                favourites.includes(href)
+                    ? favourites.filter((item) => item !== href)
+                    : [...favourites, href]
+            ),
+        [favourites, save]
+    );
+
+    /**
+     * Give the listed favourites this relative order. A favourite that is not listed keeps its
+     * slot: the home page only shows (and lets the user drag) the screens they may still open, so
+     * a pinned screen whose permission was removed is neither lost nor moved.
+     */
+    const reorderFavourites = useCallback(
+        (ordered: string[]) => {
+            const listed = new Set(ordered.filter((href) => favourites.includes(href)));
+            const queue = ordered.filter((href) => listed.has(href));
+            const next = favourites.map((href) =>
+                listed.has(href) ? (queue.shift() ?? href) : href
+            );
+            if (next.some((href, index) => href !== favourites[index])) {
+                save(next);
+            }
+        },
+        [favourites, save]
+    );
+
+    return { favourites, isFavourite, toggleFavourite, reorderFavourites };
 };

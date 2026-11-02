@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import {
     AppstoreOutlined,
     HistoryOutlined,
+    HolderOutlined,
     RightOutlined,
     StarFilled,
     StarOutlined
@@ -39,8 +40,15 @@ import { Avatar, Card, Col, Row, Space, Typography } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FC, KeyboardEvent, MouseEvent, useEffect, useMemo, useState } from 'react';
-import styled, { css, keyframes } from 'styled-components';
+import { FC, KeyboardEvent, MouseEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import {
+    SortableContainer,
+    SortableElement,
+    SortableHandle,
+    SortEnd,
+    SortStart
+} from 'react-sortable-hoc';
+import styled, { createGlobalStyle, css, keyframes } from 'styled-components';
 
 const { Title, Text } = Typography;
 
@@ -52,6 +60,12 @@ type PageComponent = FC & { layout: typeof MainLayout };
  * and favourites. Everything derives from what `SideMenu` publishes (`useSideMenuSections`), so
  * permissions and customer menus are honoured for free. Leaving the page from here behaves like a
  * side-menu click: the breadcrumb trail starts over on the destination.
+ *
+ * The favourites can be reordered by drag and drop (`react-sortable-hoc`, already used by the
+ * column drawer of the lists — the template's package.json does not reach the customer repos, so
+ * no new dependency): drag the grip of a row, or focus it and use space, the arrows, then space.
+ * The order is saved with the favourites themselves (`useHomeFavourites`), so the side menu's
+ * « Favourites » group follows it.
  *
  * Labels are DB translations (`common:recently-visited`, `common:favourites`, …): create the rows
  * for the four languages when deploying.
@@ -249,6 +263,7 @@ const PanelRow = styled.div`
 
     .home-panel-row-main {
         display: flex;
+        flex: 1 1 auto;
         align-items: center;
         gap: 8px;
         min-width: 0;
@@ -264,7 +279,49 @@ const PanelRow = styled.div`
         line-height: 1;
     }
 
+    .home-favourite-handle {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        margin-left: -2px;
+        padding: 4px 2px;
+        border: none;
+        background: transparent;
+        cursor: grab;
+        touch-action: none;
+        color: rgba(128, 128, 128, 0.55);
+        font-size: 14px;
+        line-height: 1;
+        transition: color 0.15s ease;
+    }
+
+    .home-favourite-handle:hover,
+    .home-favourite-handle:focus-visible {
+        color: rgba(128, 128, 128, 0.95);
+    }
+
+    .home-favourite-handle:focus-visible {
+        outline: 2px solid #faad14;
+        outline-offset: 1px;
+        border-radius: 4px;
+    }
+
+    .home-favourite-handle:active {
+        cursor: grabbing;
+    }
+
     ${reducedMotion}
+`;
+
+// the favourite being dragged is a clone that react-sortable-hoc appends to <body>, outside the
+// card: it is lifted here, and gets the card's background when the drag starts (see SidePanel)
+const FavouriteDragHelperStyle = createGlobalStyle`
+    .home-favourite-dragging {
+        z-index: 1050;
+        border-radius: 6px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+        cursor: grabbing;
+    }
 `;
 
 // ----------------------------------------------------------------------------------- sections
@@ -490,13 +547,89 @@ const SectionDetail: FC<{
     );
 };
 
+/** `items` with the element at `from` moved to `to` — what the user just did with a row. */
+function moveItem<T>(items: T[], from: number, to: number): T[] {
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next;
+}
+
+/** The grip of a favourite row: drag it, or focus it and use space, the arrows, then space. */
+const FavouriteHandle = SortableHandle<{ label: string }>(({ label }: { label: string }) => (
+    <button
+        type="button"
+        className="home-favourite-handle"
+        aria-label={label}
+        title={label}
+        data-testid="home-favourite-handle"
+    >
+        <HolderOutlined />
+    </button>
+));
+
+interface IFavouriteRowProps {
+    section: HomeSection;
+    entry: SideMenuEntry;
+    /** false with a single favourite: nothing to reorder, so no grip */
+    sortable: boolean;
+    onToggleFavourite: (href: string) => void;
+    onNavigate: (href: string) => void;
+}
+
+/** A favourite of the side panel: the grip, the link to the screen, the star that unpins it. */
+const FavouriteRowView: FC<IFavouriteRowProps> = ({
+    section,
+    entry,
+    sortable,
+    onToggleFavourite,
+    onNavigate
+}: IFavouriteRowProps) => {
+    const { t } = useTranslation();
+    return (
+        <PanelRow data-testid="home-favourite" data-href={entry.href}>
+            {sortable && <FavouriteHandle label={t('actions:drag-to-reorder')} />}
+            <Link
+                href={entry.href}
+                className="home-panel-row-main"
+                onClick={() => onNavigate(entry.href)}
+            >
+                <StarFilled style={{ color: '#faad14' }} />
+                <span style={{ lineHeight: 1.2 }}>
+                    <span style={{ display: 'block', fontSize: 13 }}>{entry.title}</span>
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                        {entry.section.join(' › ') || section.label}
+                    </Text>
+                </span>
+            </Link>
+            <button
+                type="button"
+                className="home-panel-row-star"
+                aria-label={t('actions:remove-favourite')}
+                title={t('actions:remove-favourite')}
+                onClick={() => onToggleFavourite(entry.href)}
+            >
+                <StarFilled />
+            </button>
+        </PanelRow>
+    );
+};
+const FavouriteRow = SortableElement<IFavouriteRowProps>(FavouriteRowView);
+
+/** The favourites as a sortable list: the library slides the rows, the panel saves the order. */
+const FavouriteListView: FC<{ children: ReactNode }> = ({ children }: { children: ReactNode }) => (
+    <div data-testid="home-favourites-list">{children}</div>
+);
+const FavouriteList = SortableContainer<{ children: ReactNode }>(FavouriteListView);
+
 /** "Recently visited" (pages recorded by the breadcrumb) and "Favourites" (pinned screens). */
 const SidePanel: FC<{
     sections: HomeSection[];
     favourites: string[];
     onToggleFavourite: (href: string) => void;
+    onReorderFavourites: (hrefs: string[]) => void;
     onNavigate: (href: string) => void;
-}> = ({ sections, favourites, onToggleFavourite, onNavigate }) => {
+}> = ({ sections, favourites, onToggleFavourite, onReorderFavourites, onNavigate }) => {
     const { t } = useTranslation();
     const recent = useRecentPages();
     const label = (value: string) => (isNumeric(value) ? value : t(value));
@@ -507,6 +640,36 @@ const SidePanel: FC<{
         const entry = section?.entries.find((e) => e.href === href);
         return section && entry ? [{ section, entry }] : [];
     });
+
+    // the rows slide into place unless the user asked their system for reduced motion
+    const slideDuration = useMemo(
+        () =>
+            typeof window !== 'undefined' &&
+            window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+                ? 0
+                : 200,
+        []
+    );
+
+    const onSortStart = ({ node, helper }: SortStart) => {
+        // the dragged clone lives in <body>: give it the card's background, whatever the theme
+        const card = node.closest('.ant-card');
+        if (card) {
+            helper.style.background = window.getComputedStyle(card).backgroundColor;
+        }
+    };
+
+    const onSortEnd = ({ oldIndex, newIndex }: SortEnd) => {
+        if (oldIndex !== newIndex) {
+            onReorderFavourites(
+                moveItem(
+                    pinned.map(({ entry }) => entry.href),
+                    oldIndex,
+                    newIndex
+                )
+            );
+        }
+    };
 
     return (
         <>
@@ -567,34 +730,34 @@ const SidePanel: FC<{
                         {t('common:favourites-empty')}
                     </Text>
                 ) : (
-                    pinned.map(({ section, entry }) => (
-                        <PanelRow key={entry.href}>
-                            <Link
-                                href={entry.href}
-                                className="home-panel-row-main"
-                                onClick={() => onNavigate(entry.href)}
-                            >
-                                <StarFilled style={{ color: '#faad14' }} />
-                                <span style={{ lineHeight: 1.2 }}>
-                                    <span style={{ display: 'block', fontSize: 13 }}>
-                                        {entry.title}
-                                    </span>
-                                    <Text type="secondary" style={{ fontSize: 11 }}>
-                                        {entry.section.join(' › ') || section.label}
-                                    </Text>
-                                </span>
-                            </Link>
-                            <button
-                                type="button"
-                                className="home-panel-row-star"
-                                aria-label={t('actions:remove-favourite')}
-                                title={t('actions:remove-favourite')}
-                                onClick={() => onToggleFavourite(entry.href)}
-                            >
-                                <StarFilled />
-                            </button>
-                        </PanelRow>
-                    ))
+                    <>
+                        <FavouriteDragHelperStyle />
+                        <FavouriteList
+                            useDragHandle
+                            lockAxis="y"
+                            lockToContainerEdges
+                            helperClass="home-favourite-dragging"
+                            transitionDuration={slideDuration}
+                            // by default the library refuses to start from a <button>, which
+                            // would silence the keyboard on the grip; only the grip can start
+                            // a sort anyway (useDragHandle), so nothing else needs cancelling
+                            shouldCancelStart={() => false}
+                            onSortStart={onSortStart}
+                            onSortEnd={onSortEnd}
+                        >
+                            {pinned.map(({ section, entry }, index) => (
+                                <FavouriteRow
+                                    key={entry.href}
+                                    index={index}
+                                    section={section}
+                                    entry={entry}
+                                    sortable={pinned.length > 1}
+                                    onToggleFavourite={onToggleFavourite}
+                                    onNavigate={onNavigate}
+                                />
+                            ))}
+                        </FavouriteList>
+                    </>
                 )}
             </Card>
         </>
@@ -608,7 +771,7 @@ const HomePage: PageComponent = () => {
     const { t } = useTranslation();
     const menuSections = useSideMenuSections();
     const sections = useMemo(() => toHomeSections(menuSections), [menuSections]);
-    const { favourites, isFavourite, toggleFavourite } = useHomeFavourites();
+    const { favourites, isFavourite, toggleFavourite, reorderFavourites } = useHomeFavourites();
     const [selected, setSelected] = useState<string | null>(null);
 
     useEffect(() => {
@@ -672,6 +835,7 @@ const HomePage: PageComponent = () => {
                             sections={sections}
                             favourites={favourites}
                             onToggleFavourite={toggleFavourite}
+                            onReorderFavourites={reorderFavourites}
                             onNavigate={navigate}
                         />
                     </Col>
