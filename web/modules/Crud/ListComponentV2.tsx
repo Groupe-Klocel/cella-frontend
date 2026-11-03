@@ -127,6 +127,12 @@ export interface IListProps {
     functions?: any;
     /** read production + the warehouse's archive (see `useList`); page state only, never saved */
     withArchive?: boolean;
+    /**
+     * send a text filter as the string the API reads (`^` in front: case-insensitive, `%` around:
+     * contains) instead of the stored `[flags, text]` pair, which the API takes for an IN list -
+     * on a table with empty values the pair also matches every empty row
+     */
+    textFiltersAsString?: boolean;
     //from here : props used for drag and/or drop handling
     items?: any;
     addRow?: (item: any, index: number) => void;
@@ -350,6 +356,14 @@ const ListComponent = (props: IListProps) => {
                         dayjs().add(1, 'day').startOf('day').toISOString(),
                         dayjs().add(1, 'day').endOf('day').toISOString()
                     ];
+                } else if (
+                    props.textFiltersAsString &&
+                    typeof value[1] === 'string' &&
+                    ['', '%', '^', '%^', '^%'].includes(start)
+                ) {
+                    // a text filter stores [flags, text] (the case / joker toggles) - see the prop
+                    const text = start.includes('%') ? `%${value[1]}%` : value[1];
+                    result[key] = start.includes('^') ? `^${text}` : text;
                 } else {
                     // presets above already use startOf/endOf day, a hand-typed range does not
                     result[key] = isDateOnlyField(key) ? toFullDayBounds(value as any[]) : value;

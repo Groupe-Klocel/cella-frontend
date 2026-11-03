@@ -155,6 +155,7 @@ const DocumentHistoryPages: PageComponent = () => {
                 headerData={headerData}
                 dataModel={model}
                 withArchive={withArchive}
+                textFiltersAsString
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
                 actionColumns={[
