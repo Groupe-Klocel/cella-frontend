@@ -140,7 +140,9 @@ const ScreenPermissions = ({ roleId, roleName }: IItemDetailsProps) => {
 
         const updatedPermissions = [
             ...getPermissions(mobileUpdatedRows),
-            ...getPermissions(wmUpdatedRows)
+            ...getPermissions(mobileButtonUpdatedRows),
+            ...getPermissions(wmUpdatedRows),
+            ...getPermissions(wmButtonUpdatedRows)
         ];
 
         updateRole({
