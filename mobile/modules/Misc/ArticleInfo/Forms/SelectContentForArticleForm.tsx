@@ -219,7 +219,11 @@ export const SelectContentForArticleForm = ({
             setData(data);
         });
     }
-    dataFunction();
+    // Run the query once per change of its filter inputs, not on every render: calling it in
+    // the component body re-fired it after each response, for as long as the form stayed mounted.
+    useEffect(() => {
+        dataFunction();
+    }, [articleId, locationId, handlingUnitId, searchedLanguage]);
 
     //SelectContentForArticle-2: set contents to provide to carousel
     const [contents, setContents] = useState<any>([]);
