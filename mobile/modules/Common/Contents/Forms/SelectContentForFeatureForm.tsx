@@ -204,7 +204,11 @@ export const SelectContentForFeatureForm = ({
                 setData(data);
             });
     }
-    dataFunction();
+    // Run the query once per change of its filter inputs, not on every render: calling it in
+    // the component body re-fired it after each response, for as long as the form stayed mounted.
+    useEffect(() => {
+        dataFunction();
+    }, [uniqueId]);
 
     //SelectContentForFeature-2: set ContentFeatures to provide to carousel
     const [ContentFeatures, setContentFeatures] = useState<any>([]);
