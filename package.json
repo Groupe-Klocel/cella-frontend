@@ -5,6 +5,8 @@
     "mobile"
   ],
   "resolutions": {
-    "graphql": "16.14.1"
+    "graphql": "16.14.1",
+    "postcss": "^8.5.26",
+    "@eslint/plugin-kit": "^0.2.3"
   }
 }
