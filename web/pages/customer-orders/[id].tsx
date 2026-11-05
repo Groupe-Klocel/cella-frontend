@@ -46,6 +46,7 @@ import { useAuth } from 'context/AuthContext';
 import configs from '../../../common/configs.json';
 import parameters from '../../../common/parameters.json';
 import { PaymentModal } from 'modules/CustomerOrders/Modals/PaymentModal';
+import { SingleCreditModal } from 'modules/CustomerOrders/Modals/SingleCreditModal';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -104,6 +105,7 @@ const CustomerOrderPage: PageComponent = () => {
     const [documentToPrint, setDocumentToPrint] = useState<string>();
     const [invoiceAddress, setInvoiceAddress] = useState<any>();
     const [refetchPaymentLine, setRefetchPaymentLine] = useState<boolean>(false);
+    const [showCreditModal, setShowCreditModal] = useState(false);
 
     // #region to customize information
     const breadCrumb = [
@@ -556,13 +558,9 @@ const CustomerOrderPage: PageComponent = () => {
                 model.isEditable &&
                 data?.status >= configs.ORDER_STATUS_TO_INVOICE ? (
                     <Button
-                        onClick={() =>
-                            switchNextStatus(
-                                data.id,
-                                data.status,
-                                configs.ORDER_STATUS_CREDIT_TO_BE_ISSUED
-                            )
-                        }
+                        onClick={() => {
+                            setShowCreditModal(true);
+                        }}
                         style={{ background: 'orange', fontStyle: 'italic' }}
                     >
                         {t(`actions:generate-credit`)}
@@ -623,6 +621,17 @@ const CustomerOrderPage: PageComponent = () => {
                     documentName={documentToPrint!}
                     documentReference={data?.name}
                     customLanguage={data?.printLanguage ?? undefined}
+                />
+                <SingleCreditModal
+                    orderId={data?.id}
+                    showModal={{
+                        showCreditModal,
+                        setShowCreditModal
+                    }}
+                    triggerRefresh={triggerRefresh}
+                    setTriggerRefresh={() => {
+                        setTriggerRefresh(!triggerRefresh);
+                    }}
                 />
             </Space>
         )

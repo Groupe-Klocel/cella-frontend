@@ -60,6 +60,20 @@ import { FormGroup } from './submodules/FormGroupV2';
 const StyledPageContent = styled(Layout.Content)`
     margin: 0px 30px 50px 30px;
     padding: 0px 20px;
+
+    /* phone / narrow window: this wrapper is nested twice below (page, then form body), which
+       cost 100px on each side and left 190px for the inputs on a 390px screen. The page level
+       loses its inset entirely - the header then sits at the same 12px as on the detail screen -
+       and the form body keeps a 12px gutter. */
+    @media (max-width: 767px) {
+        margin: 0;
+        padding: 0;
+
+        &.add-edit-form-body {
+            margin: 0 0 24px;
+            padding: 0 12px;
+        }
+    }
 `;
 
 export interface IAddItemFormProps {
@@ -116,7 +130,9 @@ const AddEditItemComponentInner: FC<IAddItemFormProps> = (props: IAddItemFormPro
                 optionTable: fieldInfo.optionTable ?? undefined,
                 filterConfigParam: fieldInfo.filterConfigParam
                     ? JSON.parse(fieldInfo.filterConfigParam)
-                    : undefined
+                    : undefined,
+                // a date-only field is entered as a date, without a time
+                dateOnly: fieldInfo.dateOnly ?? undefined
             });
 
             // the `translation` field is edited as one input per language (en/fr/de) and
@@ -470,7 +486,15 @@ const AddEditItemComponentInner: FC<IAddItemFormProps> = (props: IAddItemFormPro
     // models exposing an editable `translation` field split it into en/fr/de inputs; collapse
     // them back into a single `translation` object (or null when all empty) before submitting
     const hasTranslation = props.dataModel.fieldsInfo['translation']?.addEditFormat != null;
-    const buildInput = (values: any) => {
+    // fields flagged `emptyListAsNull`: an emptied multiple selection is sent as null
+    const emptyListAsNullFields = Object.keys(props.dataModel.fieldsInfo).filter(
+        (key) => props.dataModel.fieldsInfo[key].emptyListAsNull
+    );
+    const buildInput = (formValues: any) => {
+        const values = { ...formValues };
+        emptyListAsNullFields.forEach((key) => {
+            if (Array.isArray(values[key]) && values[key].length === 0) values[key] = null;
+        });
         if (!hasTranslation) return values;
         const { en, fr, de, ...rest } = values;
         return {
@@ -556,7 +580,7 @@ const AddEditItemComponentInner: FC<IAddItemFormProps> = (props: IAddItemFormPro
                             {processedOptions && dataInitialized && (
                                 <>
                                     {props.headerComponent}
-                                    <StyledPageContent>
+                                    <StyledPageContent className="add-edit-form-body">
                                         <Form
                                             form={form}
                                             layout="vertical"

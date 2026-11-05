@@ -19,22 +19,29 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Logo, StyledForm, WelcomeText, WrapperLogin } from '@components';
-import { cookie, META_DEFAULTS, showSuccess, showWarning } from '@helpers';
+import { cookie, LsIsSecured, META_DEFAULTS, showSuccess, showWarning } from '@helpers';
 import { Button, Form, Input } from 'antd';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import useTranslation from 'next-translate/useTranslation';
 import router from 'next/router';
-import { useCallback, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSession, signIn, getProviders } from 'next-auth/react';
 
 export interface ILoginFormProps {}
 
+type SsoProvider = NonNullable<Awaited<ReturnType<typeof getProviders>>>[string];
+
 export const LoginForm = () => {
     const { t } = useTranslation('global');
-    const { login, graphqlRequestClient, isAuthenticated, ssoLogin, ssoConfig } = useAuth();
+    const { login, graphqlRequestClient, isAuthenticated, ssoLogin } = useAuth();
     const { data: session, status } = useSession();
+    const [ssoProvider, setSsoProvider] = useState<SsoProvider | null>(null);
+
+    useEffect(() => {
+        getProviders().then((providers) => setSsoProvider(providers?.oidc ?? null));
+    }, []);
     // TEXTS TRANSLATION
 
     const welcome = t('welcome');
@@ -60,6 +67,11 @@ export const LoginForm = () => {
     const [form] = Form.useForm();
     useEffect(() => {
         if (isAuthenticated) {
+            // Fresh session: drop the RF process state a previous session left on this device.
+            // Both sides must be cleared: the secure-ls localStorage AND the in-memory context,
+            // otherwise AppLayout's debounced sync would write the old state right back.
+            LsIsSecured().removeAll();
+            dispatchUser({ type: 'DELETE_RF_PROCESS' });
             const token = cookie.get('token');
             if (token) {
                 try {
@@ -202,23 +214,16 @@ export const LoginForm = () => {
                     >
                         {loginButton}
                     </Button>
-                    {ssoConfig &&
-                        ssoConfig.warehouseSsoConfiguration.type &&
-                        ssoConfig.warehouseSsoConfiguration.authUrl &&
-                        ssoConfig.warehouseSsoConfiguration.clientId &&
-                        ssoConfig.warehouseSsoConfiguration.clientSecret &&
-                        ssoConfig.warehouseSsoConfiguration.redirectUri &&
-                        ssoConfig.warehouseSsoConfiguration.tokenUrl &&
-                        ssoConfig.warehouseSsoConfiguration.scope && (
-                            <Button
-                                type="default"
-                                onClick={() => signIn('oidc')}
-                                block
-                                style={{ height: '50px', fontSize: '16px', marginTop: '10px' }}
-                            >
-                                SSO
-                            </Button>
-                        )}
+                    {ssoProvider && (
+                        <Button
+                            type="default"
+                            onClick={() => signIn('oidc')}
+                            block
+                            style={{ height: '50px', fontSize: '16px', marginTop: '10px' }}
+                        >
+                            SSO
+                        </Button>
+                    )}
                 </Form.Item>
             </StyledForm>
         </WrapperLogin>

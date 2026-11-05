@@ -27,15 +27,24 @@ import {
     QuestionCircleOutlined,
     SettingOutlined,
     SlidersOutlined,
+    StarOutlined,
     TruckOutlined
 } from '@ant-design/icons';
-import { Menu } from 'antd';
+import { Menu, MenuProps } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import Link from 'next/link';
-import React, { FC } from 'react';
+import { useRouter } from 'next/router';
+import React, { FC, useEffect } from 'react';
 import { useAppState } from 'context/AppContext';
 import { ModeEnum } from 'generated/graphql';
-import { getModesFromPermissions } from '@helpers';
+import {
+    collectSideMenuSectionIcons,
+    flattenSideMenuItems,
+    getModesFromPermissions,
+    publishSideMenuEntries,
+    resetBreadcrumbTrailOnNavigation,
+    useHomeFavourites
+} from '@helpers';
 import styled from 'styled-components';
 import { ItemType, MenuItemType } from 'antd/lib/menu/interface';
 
@@ -56,6 +65,20 @@ const StyledMenu = styled(Menu)`
 const SideMenu: FC = () => {
     const { t } = useTranslation('menu');
     const { permissions } = useAppState();
+    const router = useRouter();
+
+    // A side-menu item starts a new breadcrumb trail on its destination page: the breadcrumb
+    // otherwise follows the path the user travelled (see helpers/utils/breadcrumbTrail.ts).
+    const onMenuItemClick: MenuProps['onClick'] = ({ domEvent }) => {
+        const target = domEvent.target as HTMLElement | null;
+        const anchor =
+            target?.closest?.('a') ?? (domEvent.currentTarget as HTMLElement)?.querySelector?.('a');
+        resetBreadcrumbTrailOnNavigation(
+            anchor?.getAttribute('href'),
+            router.asPath,
+            router.locales
+        );
+    };
 
     const bi_link = process.env.NEXT_PUBLIC_BI_URL || 'https://bi.cella.cloud';
 
@@ -87,13 +110,8 @@ const SideMenu: FC = () => {
                     : null,
 
                 // ACCESS-MANAGEMENT
-                [
-                    'wm_roles',
-                    'wm_warehouse-workers',
-                    'wm_security',
-                    'wm_custom-permissions'
-                ].some((perm) =>
-                    getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
+                ['wm_roles', 'wm_warehouse-workers', 'wm_security', 'wm_custom-permissions'].some(
+                    (perm) => getModesFromPermissions(permissions, perm).includes(ModeEnum.Read)
                 ) && {
                     key: 'administration-access-management',
                     label: t('access-management'),
@@ -189,6 +207,7 @@ const SideMenu: FC = () => {
             'wm_buildings',
             'wm_blocks',
             'wm_locations',
+            'wm_cartography',
             'wm_patterns',
             'wm_pattern-paths',
             'wm_conversions',
@@ -220,6 +239,7 @@ const SideMenu: FC = () => {
                     'wm_buildings',
                     'wm_blocks',
                     'wm_locations',
+                    'wm_cartography',
                     'wm_patterns',
                     'wm_pattern-paths'
                 ].some((perm) =>
@@ -263,6 +283,15 @@ const SideMenu: FC = () => {
                             ? {
                                   key: 'configuration-cartography-pattern-paths',
                                   label: <Link href="/pattern-paths">{t('pattern-paths')}</Link>
+                              }
+                            : null,
+                        // CARTOGRAPHY EDITOR
+                        getModesFromPermissions(permissions, 'wm_cartography').includes(
+                            ModeEnum.Read
+                        )
+                            ? {
+                                  key: 'configuration-cartography-editor',
+                                  label: <Link href="/cartography">{t('cartography-editor')}</Link>
                               }
                             : null
                     ].filter(Boolean)
@@ -461,6 +490,16 @@ const SideMenu: FC = () => {
                     ? {
                           key: 'articles-articles',
                           label: <Link href="/articles">{t('articles')}</Link>
+                      }
+                    : null,
+                // PACKAGINGS (article logistic units) - the /articles/lu management screen.
+                // Gated on the existing `wm_articles` screen permission: there is no
+                // `wm_article-lus` screen entity on the API side, and row-level actions are
+                // governed by the ARTICLE_LU table rights anyway.
+                getModesFromPermissions(permissions, 'wm_articles').includes(ModeEnum.Read)
+                    ? {
+                          key: 'articles-logistic-units',
+                          label: <Link href="/articles/lu">{t('logistic-units')}</Link>
                       }
                     : null,
                 // ARTICLE SETS
@@ -961,7 +1000,44 @@ const SideMenu: FC = () => {
         }
     ].filter(Boolean) as ItemType<MenuItemType>[];
 
-    return <StyledMenu mode="inline" className="menu" items={menuItems} />;
+    const entries = flattenSideMenuItems(menuItems);
+
+    // FAVOURITES — the screens the user starred on the home page, as a first group (closed like
+    // the others). Resolved against the entries above, so a screen the user may no longer open is
+    // simply not listed. Not published below: the picker and the home page would show duplicates.
+    const { favourites } = useHomeFavourites();
+    const favouriteItems: ItemType<MenuItemType>[] = favourites.flatMap((href) => {
+        const entry = entries.find((item) => item.href === href);
+        return entry
+            ? [
+                  {
+                      key: `favourites-${entry.key}`,
+                      label: <Link href={entry.href}>{entry.title}</Link>
+                  }
+              ]
+            : [];
+    });
+    const items: ItemType<MenuItemType>[] =
+        favouriteItems.length > 0
+            ? [
+                  {
+                      key: 'favourites',
+                      icon: <StarOutlined />,
+                      label: t('common:favourites'),
+                      children: favouriteItems
+                  },
+                  ...menuItems
+              ]
+            : menuItems;
+
+    // Share the navigable entries (already filtered by the user's permissions, labels translated)
+    // and the section icons with the breadcrumb's menu picker and the home page — see
+    // helpers/utils/sideMenuEntries.ts. Cheap: the store ignores a publication that changes nothing.
+    useEffect(() => {
+        publishSideMenuEntries(entries, collectSideMenuSectionIcons(menuItems));
+    });
+
+    return <StyledMenu mode="inline" className="menu" items={items} onClick={onMenuItemClick} />;
 };
 
 SideMenu.displayName = 'SideMenu';

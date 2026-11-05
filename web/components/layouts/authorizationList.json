@@ -1340,6 +1340,16 @@
         "mode": "read"
     },
     {
+        "route": "/rounds/route-analysis/[id]",
+        "permission": "wm_rounds",
+        "mode": "read"
+    },
+    {
+        "route": "/cartography",
+        "permission": "wm_cartography",
+        "mode": "read"
+    },
+    {
         "route": "/rules/[id]",
         "permission": "wm_rules",
         "mode": "read"

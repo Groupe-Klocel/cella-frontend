@@ -17,33 +17,33 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { ScanForm } from '@CommonRadio';
+import { ScanForm_reducer } from '@CommonRadio';
 import { useEffect, useState } from 'react';
-import { useHandlingUnitOutbounds } from '@helpers';
-import { LsIsSecured } from '@helpers';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface IScanPalletBoxProps {
-    process: string;
+    processName: string;
     stepNumber: number;
     label: string;
-    trigger: { [label: string]: any };
-    buttons: { [label: string]: any };
+    buttons?: { [label: string]: any };
     checkComponent: any;
+    formToUse?: any;
 }
 
 export const ScanPalletBox = ({
-    process,
+    processName,
     stepNumber,
     label,
-    trigger: { triggerRender, setTriggerRender },
     buttons,
-    checkComponent
+    checkComponent,
+    formToUse
 }: IScanPalletBoxProps) => {
     const { graphqlRequestClient } = useAuth();
-    const storage = LsIsSecured();
-    const storedObject = JSON.parse(storage.get(process) || '{}');
+    const state = useAppState();
+    const dispatch = useAppDispatch();
+    const storedObject = state[processName] || {};
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [handlingUnitOutboundInfos, setHandlingUnitOutboundInfos] = useState<any>();
     const [resetForm, setResetForm] = useState<boolean>(false);
@@ -52,12 +52,14 @@ export const ScanPalletBox = ({
     useEffect(() => {
         //check workflow direction and assign current step accordingly
         if (storedObject.currentStep < stepNumber) {
-            storedObject[`step${stepNumber}`] = {
-                previousStep: storedObject.currentStep
-            };
-            storedObject.currentStep = stepNumber;
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName,
+                stepName: `step${stepNumber}`,
+                object: { previousStep: storedObject.currentStep },
+                customFields: [{ key: 'currentStep', value: stepNumber }]
+            });
         }
-        storage.set(process, JSON.stringify(storedObject));
     }, []);
 
     // ScanPalletBox-2: launch query
@@ -79,6 +81,7 @@ export const ScanPalletBox = ({
                             preparationMode
                             preparationModeText
                             theoriticalWeight
+                            finalWeight
                             carrier {
                                 id
                                 name
@@ -205,30 +208,28 @@ export const ScanPalletBox = ({
             if (result) setHandlingUnitOutboundInfos(result);
         }
         fetchData();
-        setTriggerRender(!triggerRender);
     }, [scannedInfo]);
 
     const dataToCheck = {
-        process,
+        processName,
         stepNumber,
         scannedInfo: { scannedInfo, setScannedInfo },
         handlingUnitOutboundInfos,
-        trigger: { triggerRender, setTriggerRender },
         setResetForm
     };
 
     return (
         <>
             <>
-                <ScanForm
-                    process={process}
+                <ScanForm_reducer
+                    processName={processName}
                     stepNumber={stepNumber}
                     label={label}
-                    trigger={{ triggerRender, setTriggerRender }}
-                    buttons={{ ...buttons }}
+                    buttons={buttons ?? {}}
                     setScannedInfo={setScannedInfo}
                     resetForm={{ resetForm, setResetForm }}
-                ></ScanForm>
+                    formToUse={formToUse}
+                ></ScanForm_reducer>
                 {checkComponent(dataToCheck)}
             </>
         </>

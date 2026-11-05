@@ -40,18 +40,7 @@ import {
 import { useExportData } from './listComponentSubModule/export';
 import { useListRequests } from './listComponentSubModule/requests';
 import type { InputRef, TableProps, TableColumnType } from 'antd';
-import {
-    Space,
-    Form,
-    Button,
-    Empty,
-    Alert,
-    Badge,
-    Tag,
-    Spin,
-    Table,
-    Input
-} from 'antd';
+import { Space, Form, Button, Empty, Alert, Badge, Tag, Spin, Table, Input } from 'antd';
 import { isNumeric, useTranslationWithFallback as useTranslation } from '@helpers';
 import dayjs from 'dayjs';
 import {
@@ -72,7 +61,9 @@ import {
     formatUTCLocaleDateTime,
     isStringDateTime,
     isStringDate,
-    formatUTCLocaleDate
+    formatUTCLocaleDate,
+    setUTCDateTime,
+    formatLocaleDate
 } from '@helpers';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ListFilters } from './submodules/ListFiltersV2';
@@ -80,13 +71,14 @@ import { FormDataType, ModelType } from 'models/ModelsV2';
 import { ExportFormat, ModeEnum, Table as tableList } from 'generated/graphql';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
-import _, { debounce, isString } from 'lodash';
+import _, { debounce, isEqual, isString } from 'lodash';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useAiContextStore } from 'context/CellaBotContext';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import StringInput from 'components/common/smart/Form/MainInputs/StringInput';
 import { FormGroupV3 } from './submodules/FormGroupV3';
+import { ListValuesCell } from './submodules/ListValuesCell';
 import { AdvancedFilters, AdvancedFilterTags } from './listComponentSubModule/AdvancedFilters';
 import MagicFilterButton from './listComponentSubModule/MagicFilter';
 import { useImportData } from './listComponentSubModule/import';
@@ -133,6 +125,14 @@ export interface IListProps {
     itemperpage?: number;
     advancedFilters?: any;
     functions?: any;
+    /** read production + the warehouse's archive (see `useList`); page state only, never saved */
+    withArchive?: boolean;
+    /**
+     * send a text filter as the string the API reads (`^` in front: case-insensitive, `%` around:
+     * contains) instead of the stored `[flags, text]` pair, which the API takes for an IN list -
+     * on a table with empty values the pair also matches every empty row
+     */
+    textFiltersAsString?: boolean;
     //from here : props used for drag and/or drop handling
     items?: any;
     addRow?: (item: any, index: number) => void;
@@ -203,6 +203,7 @@ const ListComponent = (props: IListProps) => {
     const modes = getModesFromPermissions(permissions, props.dataModel.tableName);
     const { t } = useTranslation();
     const router = useRouter();
+
     const { graphqlRequestClient } = useAuth();
     const filteredLanguage = getLanguageCode(router);
     const state = useAppState();
@@ -301,6 +302,44 @@ const ListComponent = (props: IListProps) => {
         ...props.searchCriteria
     };
 
+    // #region date-only fields
+    // A field flagged `dateOnly` in the model (see the model fieldsInfo) carries a date whose time part
+    // is meaningless: it is hidden in the list, the detail and the filters, and a range filter is
+    // widened to full days so that filtering on one day returns the whole day. The flag lives on
+    // the model, so the same field names on the other entities keep the standard behaviour.
+    const dateOnlyFields = useMemo(
+        () =>
+            new Set(
+                Object.entries(props.dataModel.fieldsInfo)
+                    .filter(([, value]) => value.dateOnly)
+                    .map(([key]) => key.replace(/{/g, '_').replace(/}/g, ''))
+            ),
+        [props.dataModel]
+    );
+    const isDateOnlyField = (name?: string) => !!name && dateOnlyFields.has(name);
+
+    // Renders a date-only value as a plain date. The API returns naive datetimes (no Z, no offset)
+    // and the standard rendering shifts them by the browser offset, so a value stored at 22:00 UTC
+    // is already shown on the NEXT day. Dropping the time must not move that day: we keep the exact
+    // `setUTCDateTime` pipeline `formatUTCLocaleDateTime` uses and only drop the time style.
+    const formatDateOnly = (value: any) => {
+        const shifted = new Date(setUTCDateTime(value));
+        if (isNaN(shifted.getTime())) return value;
+        return formatLocaleDate(shifted, router.locale);
+    };
+
+    // A manually entered range sends 00:00 on BOTH bounds, so a one-day filter used to return only
+    // the very first instant of the day. Widen it to [start of day, end of day]; an empty bound
+    // (open-ended range) is left as is.
+    const toFullDayBounds = (value: any[]): any[] => {
+        const [start, end] = value;
+        return [
+            start ? dayjs(start).startOf('day').toISOString() : start,
+            end ? dayjs(end).endOf('day').toISOString() : end
+        ];
+    };
+    // #endregion
+
     function resolveDynamicDateFilters(filters: any): any {
         if (!filters) return filters;
         const result: any = {};
@@ -317,8 +356,17 @@ const ListComponent = (props: IListProps) => {
                         dayjs().add(1, 'day').startOf('day').toISOString(),
                         dayjs().add(1, 'day').endOf('day').toISOString()
                     ];
+                } else if (
+                    props.textFiltersAsString &&
+                    typeof value[1] === 'string' &&
+                    ['', '%', '^', '%^', '^%'].includes(start)
+                ) {
+                    // a text filter stores [flags, text] (the case / joker toggles) - see the prop
+                    const text = start.includes('%') ? `%${value[1]}%` : value[1];
+                    result[key] = start.includes('^') ? `^${text}` : text;
                 } else {
-                    result[key] = value;
+                    // presets above already use startOf/endOf day, a hand-typed range does not
+                    result[key] = isDateOnlyField(key) ? toFullDayBounds(value as any[]) : value;
                 }
             } else {
                 result[key] = value;
@@ -328,6 +376,101 @@ const ListComponent = (props: IListProps) => {
     }
 
     const resolvedSearchCriterias = resolveDynamicDateFilters(searchCriterias);
+
+    // the advanced-filter modal sends ONE bound plus an operator, and its picker now yields a
+    // day (midnight). The API stores real timestamps - staging holds no value at all at midnight -
+    // so comparing against a bare midnight is useless: the operator is rewritten into a day range.
+    //   >= / >  -> start of day          <= / <  -> end of day
+    //   =       -> TWO groups (groups are ANDed):            >= start of day AND <= end of day
+    //   !=      -> ONE group with two predicates (ORed):     <  start of day OR  >  end of day
+    // Applied on the way out only: the stored filters, their tags and their removal keep seeing the
+    // single value the user picked. A group that already holds several ORed predicates keeps its
+    // = / != untouched (only its single-bound operators are snapped), so a group built elsewhere
+    // (magic filter) is never restructured.
+    function resolveAdvancedDateFilters(filters: any): any {
+        if (!Array.isArray(filters)) return filters;
+
+        // null unless the predicate targets a date-only field with a usable single value
+        const dateOnlyBound = (predicate: any) => {
+            const field = predicate?.field;
+            if (!field || typeof field !== 'object' || Array.isArray(field)) return null;
+            const name = Object.keys(field)[0];
+            const value = field[name];
+            if (!isDateOnlyField(name) || !value || Array.isArray(value)) return null;
+            const day = dayjs(value);
+            if (!day.isValid()) return null;
+            return {
+                field,
+                name,
+                startOfDay: day.startOf('day').toISOString(),
+                endOfDay: day.endOf('day').toISOString()
+            };
+        };
+        const asBound = (predicate: any, bound: any, searchType: string, value: string) => ({
+            ...predicate,
+            searchType,
+            field: { ...bound.field, [bound.name]: value }
+        });
+        // Default the operator to EQUAL, exactly as the tag rendering does: a magic-filter or
+        // otherwise malformed predicate may omit searchType (sanitizeAiFilters requires `field`, not
+        // `searchType`), and such a predicate must still be snapped to the day range rather than
+        // compared against a bare midnight.
+        const operatorOf = (predicate: any) => predicate?.searchType ?? 'EQUAL';
+
+        return filters.flatMap((group: any) => {
+            if (!Array.isArray(group?.filter)) return [group];
+
+            // = and != have to change the shape of the group itself
+            if (group.filter.length === 1) {
+                const predicate = group.filter[0];
+                const bound = dateOnlyBound(predicate);
+                if (bound && operatorOf(predicate) === 'EQUAL') {
+                    return [
+                        {
+                            ...group,
+                            filter: [
+                                asBound(predicate, bound, 'SUPERIOR_OR_EQUAL', bound.startOfDay)
+                            ]
+                        },
+                        {
+                            ...group,
+                            filter: [asBound(predicate, bound, 'INFERIOR_OR_EQUAL', bound.endOfDay)]
+                        }
+                    ];
+                }
+                if (bound && operatorOf(predicate) === 'DIFFERENT') {
+                    return [
+                        {
+                            ...group,
+                            filter: [
+                                asBound(predicate, bound, 'INFERIOR', bound.startOfDay),
+                                asBound(predicate, bound, 'SUPERIOR', bound.endOfDay)
+                            ]
+                        }
+                    ];
+                }
+            }
+
+            // every other operator only needs its bound snapped to the matching edge of the day
+            return [
+                {
+                    ...group,
+                    filter: group.filter.map((predicate: any) => {
+                        const bound = dateOnlyBound(predicate);
+                        if (!bound) return predicate;
+                        const searchType = operatorOf(predicate);
+                        if (['SUPERIOR', 'SUPERIOR_OR_EQUAL'].includes(searchType)) {
+                            return asBound(predicate, bound, searchType, bound.startOfDay);
+                        }
+                        if (['INFERIOR', 'INFERIOR_OR_EQUAL'].includes(searchType)) {
+                            return asBound(predicate, bound, searchType, bound.endOfDay);
+                        }
+                        return predicate;
+                    })
+                }
+            ];
+        });
+    }
 
     // #region sorter / pagination
 
@@ -344,10 +487,11 @@ const ListComponent = (props: IListProps) => {
             ascending: value.defaultSort === 'ascending'
         }));
 
+    const defaultSort = props.triggerPriorityChange
+        ? [{ field: props.triggerPriorityChange.orderingField, ascending: true }]
+        : (props.sortDefault ?? sortParameter);
     const [sort, setSort] = useState<any>(
-        props.triggerPriorityChange
-            ? [{ field: props.triggerPriorityChange.orderingField, ascending: true }]
-            : (savedSorters ?? props.sortDefault ?? sortParameter)
+        props.triggerPriorityChange ? defaultSort : (savedSorters ?? defaultSort)
     );
 
     const defaultPagination: newPaginationType = {
@@ -520,28 +664,8 @@ const ListComponent = (props: IListProps) => {
         }
     }
 
-    async function deleteUserSettings() {
-        if (!userSettings) {
-            return;
-        }
-        const deleteQuery = gql`
-            mutation ($id: String!) {
-                deleteWarehouseWorkerSetting(id: $id)
-            }
-        `;
-        const deleteVariables = {
-            id: userSettings.id
-        };
-        await graphqlRequestClient.request(deleteQuery, deleteVariables);
-        showWarning(
-            t(
-                'messages:vos filtres, tri et pagination vont être réinitialisés car une erreur est survenue'
-            )
-        );
-        setTimeout(() => {
-            router.reload();
-        }, 3000);
-    }
+    // filters and sort of the last successful load: criteria the API refuses go back to them
+    const previousCriteriaRef = useRef<any>(null);
 
     const debouncedUpdateUserSettings = useRef(
         debounce(
@@ -746,6 +870,8 @@ const ListComponent = (props: IListProps) => {
                 param: value.param ?? undefined,
                 paramList: parameters.filter((param: any) => param.scope === value.param),
                 optionTable: value.optionTable ? JSON.parse(value.optionTable) : undefined,
+                // hides the time part in the advanced-filter modal and in the filter tags
+                dateOnly: value.dateOnly ?? undefined,
                 initialValue:
                     searchCriterias[
                         key
@@ -764,7 +890,8 @@ const ListComponent = (props: IListProps) => {
             param: undefined,
             paramList: [],
             optionTable: undefined,
-            maxLength: undefined
+            maxLength: undefined,
+            dateOnly: undefined
         });
 
         return fields;
@@ -877,6 +1004,82 @@ const ListComponent = (props: IListProps) => {
         return text;
     };
 
+    // formats one scalar cell value (boolean, URL, date, plain text)
+    const renderScalar = (text: any, dataIndex: string) =>
+        text === true ? (
+            <CheckCircleOutlined style={{ color: 'green' }} />
+        ) : text === false ? (
+            <CloseSquareOutlined style={{ color: 'red' }} />
+        ) : isString(text) && /^https?:\/\//.test(text) ? (
+            <a href={text} target="_blank" rel="noopener noreferrer">
+                {text}
+            </a>
+        ) : isString(text) &&
+          isDateOnlyField(dataIndex) &&
+          (isStringDateTime(text) || isStringDate(text)) ? (
+            // date-only field, drop the time part
+            formatDateOnly(text)
+        ) : isString(text) && isStringDateTime(text) ? (
+            formatUTCLocaleDateTime(text, router.locale)
+        ) : isString(text) && isStringDate(text) ? (
+            formatUTCLocaleDate(text, router.locale)
+        ) : (
+            text
+        );
+
+    // a list inside a list (array of arrays): the labels of the parent elements, read on a
+    // sibling column of the first list level (`articleLus_name` for
+    // `articleLus_articleLuBarcodes_barcode_name`), so the full list can be grouped
+    const parentLabelsFor = (record: any, dataIndex: string, values: any[]) => {
+        if (!values.some(Array.isArray)) return undefined;
+        const segments = dataIndex.split('_');
+        for (let i = 1; i < segments.length; i++) {
+            const prefix = segments.slice(0, i).join('_');
+            const labels = ['name', 'code', 'entityName', 'username', 'description']
+                .map((field) => record[`${prefix}_${field}`])
+                .find((value) => Array.isArray(value) && value.length === values.length);
+            if (labels) return labels;
+        }
+        return undefined;
+    };
+
+    // the FieldInfo behind a column (`stockOwner{name}` for the `stockOwner_name` column)
+    const fieldInfoOf = (dataIndex: string) =>
+        props.dataModel.fieldsInfo[
+            Object.keys(props.dataModel.fieldsInfo).find(
+                (key) => key.replace(/{/g, '_').replace(/}/g, '') === dataIndex
+            ) ?? ''
+        ];
+
+    // a cell holding several values (a to-many relation or a JSON array, kept as a list by
+    // flatten(item, { arraysAsLists: true }) below) renders through ListValuesCell: the first
+    // value(s) and a "+N" tag opening the full list. When the column carries a link, every value
+    // links to its own record through the id array aligned on the values
+    const renderListValues = (values: any[], column: any, record: any) => {
+        const linkObject = linkFields.find((item: any) => item.name === column.dataIndex);
+        let hrefFor: ((index: number) => string | undefined) | undefined;
+        if (linkObject?.link && !props.disableRowLinks) {
+            const suffix = linkObject.link.substring(linkObject.link.lastIndexOf('/') + 1);
+            const recordKey = Object.keys(record).find((key) => key.endsWith(suffix));
+            const ids = recordKey ? record[recordKey] : undefined;
+            const base = linkObject.link.replace(`/${suffix}`, '');
+            hrefFor = (index: number) => {
+                const id = Array.isArray(ids) ? ids[index] : ids;
+                return id ? `/${base}/${id}` : undefined;
+            };
+        }
+        return (
+            <ListValuesCell
+                values={values}
+                visibleCount={fieldInfoOf(column.dataIndex)?.listVisibleCount}
+                title={typeof column.title === 'string' ? t(column.title) : undefined}
+                renderValue={(value) => renderScalar(value, column.dataIndex)}
+                hrefFor={hrefFor}
+                groupLabels={parentLabelsFor(record, column.dataIndex, values)}
+            />
+        );
+    };
+
     const columnWithLinks = allColumns?.map((e: any) => {
         // if the column is in linkFields.name too, do the following
         const linkObject = linkFields.find((item: any) => item.name === e.dataIndex);
@@ -884,23 +1087,18 @@ const ListComponent = (props: IListProps) => {
         return linkObject
             ? {
                   ...e,
-                  render: (text: any, record: any) => renderLink(text, record, e.dataIndex),
+                  render: (text: any, record: any) =>
+                      Array.isArray(text)
+                          ? renderListValues(text, e, record)
+                          : renderLink(text, record, e.dataIndex),
                   dataIndex: e.dataIndex
               }
             : {
                   ...e,
-                  render: (text: any) =>
-                      text === true ? (
-                          <CheckCircleOutlined style={{ color: 'green' }} />
-                      ) : text === false ? (
-                          <CloseSquareOutlined style={{ color: 'red' }} />
-                      ) : isString(text) && isStringDateTime(text) ? (
-                          formatUTCLocaleDateTime(text, router.locale)
-                      ) : isString(text) && isStringDate(text) ? (
-                          formatUTCLocaleDate(text, router.locale)
-                      ) : (
-                          text
-                      )
+                  render: (text: any, record: any) =>
+                      Array.isArray(text)
+                          ? renderListValues(text, e, record)
+                          : renderScalar(text, e.dataIndex)
               };
     });
 
@@ -1138,6 +1336,9 @@ const ListComponent = (props: IListProps) => {
 
     // #region USELIST
     const functions = props.functions ?? null;
+    // only what is sent to the API is normalized - the stored filters and the tags keep the
+    // value the user picked.
+    const resolvedAdvancedFilters = resolveAdvancedDateFilters(advancedFilters);
     const {
         isLoading,
         data,
@@ -1152,9 +1353,44 @@ const ListComponent = (props: IListProps) => {
         sort,
         filteredLanguage,
         defaultModelSort,
-        advancedFilters,
-        functions
+        resolvedAdvancedFilters,
+        functions,
+        props.withArchive ?? false
     );
+
+    // `useList` sets `data` to null when the list query fails (`isLoading` is in the deps because
+    // `data` stays null across consecutive failures). Every failure goes back to the criteria of
+    // the last successful load - before the first one, to the page defaults (no user filter,
+    // default sort): the filters when they changed, otherwise the sort. Already on them, the error
+    // does not come from the criteria and nothing is changed: the API error stays displayed.
+    useEffect(() => {
+        if (data !== null || isLoading) return;
+        const previous = previousCriteriaRef.current ?? {
+            filter: {},
+            advancedFilters: [],
+            sort: defaultSort
+        };
+        const previousSearch = { ...previous.filter, ...props.searchCriteria };
+        const savedAdvancedFilters = userSettings?.valueJson?.advancedFilters ?? [];
+        if (
+            !isEqual(searchCriterias, previousSearch) ||
+            !isEqual(savedAdvancedFilters, previous.advancedFilters)
+        ) {
+            // clear the refused values from the search form, or its next submit sends them again
+            formSearch.setFieldsValue(
+                Object.fromEntries(
+                    Object.keys(searchCriterias).map((key) => [key, previousSearch[key] ?? null])
+                )
+            );
+            handleUserSettings(previous.filter, null, defaultPagination, previous.advancedFilters);
+        } else if (!isEqual(sort, previous.sort)) {
+            setSort(previous.sort);
+            handleUserSettings(null, previous.sort, defaultPagination);
+        } else {
+            return;
+        }
+        showWarning(t('messages:previous-filters-restored'));
+    }, [data, isLoading]);
 
     useEffect(() => {
         // Time delay before reloading data
@@ -1176,10 +1412,11 @@ const ListComponent = (props: IListProps) => {
         props.refetch,
         router.locale,
         JSON.stringify(resolvedSearchCriterias),
-        JSON.stringify(advancedFilters),
+        JSON.stringify(resolvedAdvancedFilters),
         JSON.stringify(sort),
         pagination.current,
-        pagination.itemsPerPage
+        pagination.itemsPerPage,
+        props.withArchive
     ]);
 
     // #endregion
@@ -1261,6 +1498,11 @@ const ListComponent = (props: IListProps) => {
                 ? JSON.parse(JSON.stringify(data[props.dataModel.endpoints.list]))
                 : undefined;
             if (listData && listData['results']) {
+                previousCriteriaRef.current = {
+                    filter: userSettings?.valueJson?.filter ?? {},
+                    advancedFilters: userSettings?.valueJson?.advancedFilters ?? [],
+                    sort
+                };
                 const result_list: Array<any> = [];
                 switch (props.dataModel.modelName) {
                     case 'RecordHistoryDetail':
@@ -1633,7 +1875,8 @@ const ListComponent = (props: IListProps) => {
                     default:
                         if (listData['results'].length > 0) {
                             listData['results'] = listData['results'].map((item: any) => {
-                                const flatItem = flatten(item);
+                                // arrays stay arrays so a multi-value cell can show every value
+                                const flatItem = flatten(item, { arraysAsLists: true });
                                 Object.keys(flatItem).map((key: string) => {
                                     if (key.startsWith('functionSum')) {
                                         const newKey = key.split('_');
@@ -1918,8 +2161,6 @@ const ListComponent = (props: IListProps) => {
                 }
                 setFirstLoad(false);
             }
-        } else {
-            deleteUserSettings();
         }
     }, [data]);
 
@@ -2082,7 +2323,12 @@ const ListComponent = (props: IListProps) => {
                     }
                     return {
                         [key]: searchForTags[key].map((date: any) => ({
-                            text: date ? new Date(date).toLocaleString(router.locale) : '*',
+                            // no time part in the tag of a date-only field
+                            text: !date
+                                ? '*'
+                                : isDateOnlyField(key)
+                                  ? new Date(date).toLocaleDateString(router.locale)
+                                  : new Date(date).toLocaleString(router.locale),
                             code: date
                         }))
                     };
@@ -2093,7 +2339,15 @@ const ListComponent = (props: IListProps) => {
 
         function findDisplayNameForKey(key: string) {
             const field = filterFields.find((field: any) => field.name === key);
-            return field.displayName || field.name;
+            // `searchCriterias` comes straight out of the persisted user settings
+            // (`userSettings.valueJson.filter`) and is never reconciled with the model, so it can
+            // name a field the model no longer declares searchable - a `searchingFormat` dropped, a
+            // field a release removed. `filterFields` then holds no entry and dereferencing it threw
+            // `Cannot read properties of undefined (reading 'displayName')`, taking the whole list
+            // down to the error boundary; since the crash happens while rendering the filter tags,
+            // the user could not even clear the stale filter that caused it. Fall back to the raw
+            // key so the tag still renders and stays closable.
+            return field?.displayName || field?.name || key;
         }
 
         let allTags: any[] = [];
@@ -2529,17 +2783,23 @@ const ListComponent = (props: IListProps) => {
                         ) : null}
                         {!firstLoad && rows ? (
                             <>
+                                {/* bulk-action buttons at the left, search bar at the right; the
+                                    row wraps and the bar (class in styles/globals.css) takes the
+                                    full width under 768px, where the inline form used to overflow
+                                    the screen */}
                                 <div
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
                                         width: '100%'
                                         // maxHeight: 40
                                     }}
                                 >
                                     <div>{props.actionButtons?.actionsComponent}</div>
                                     {props.searchable ? (
-                                        <Space>
+                                        <Space className="list-search-bar">
                                             <Form
                                                 form={formSearch}
                                                 layout="inline"

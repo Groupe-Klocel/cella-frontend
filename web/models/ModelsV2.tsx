@@ -71,6 +71,8 @@ export type FilterFieldType = {
         filtersToApply?: { [key: string]: any };
     };
     isMultipleSearch?: boolean;
+    // field holding a date whose time part must never be shown nor entered
+    dateOnly?: boolean;
 };
 
 // Used for defining endpoints inside ModelType
@@ -133,6 +135,18 @@ export type FieldInfo = {
     isMultipleAddEdit?: boolean | null;
     filterConfigParam?: string;
     highlight?: any;
+    // the field carries a date only - no time in lists, details, filters and forms
+    dateOnly?: boolean;
+    // the field holds an attached document (base64 data URI, bare base64 or URL): the detail
+    // shows a link opening it instead of the raw value
+    documentLink?: boolean;
+    // list cell (a to-many relation such as `carrierShippingModes{name}`, or a JSON array): how
+    // many values stay visible in the row before the "+N" tag that opens the full list (default 1)
+    listVisibleCount?: number;
+    // multiple add/edit field (`isMultipleAddEdit`) where an empty list and null do not mean the
+    // same thing for the API (e.g. cubing tags: null = any, [] = none): an emptied selection is
+    // sent as null
+    emptyListAsNull?: boolean;
 };
 
 export type FieldsInfo = {

@@ -24,6 +24,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 declare module 'next-auth' {
     interface Session {
         jwtToken?: string;
+        disconnectUrl?: string | null;
     }
 
     interface JWT {
@@ -31,113 +32,131 @@ declare module 'next-auth' {
     }
 }
 
-// get sso configuration from the warehouse
-const getWarehouseSsoConfiguration = async () => {
-    const graphqlRequestClient = new GraphQLClient(
-        process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT as string
+type WarehouseSsoConfiguration = {
+    type?: string | null;
+    authUrl?: string | null;
+    clientId?: string | null;
+    clientSecret?: string | null;
+    redirectUri?: string | null;
+    tokenUrl?: string | null;
+    disconnectUrl?: string | null;
+    scope?: string | null;
+};
+
+const SSO_CONFIGURATION_QUERY = gql`
+    query ($warehouseId: ID!, $envSecret: String!) {
+        warehouseSsoConfiguration(warehouseId: $warehouseId, secret: $envSecret) {
+            type
+            authUrl
+            clientId
+            clientSecret
+            redirectUri
+            tokenUrl
+            disconnectUrl
+            scope
+        }
+    }
+`;
+
+function isSsoConfigured(
+    config: WarehouseSsoConfiguration | null
+): config is WarehouseSsoConfiguration & {
+    type: string;
+    authUrl: string;
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+    tokenUrl: string;
+    scope: string;
+} {
+    return !!(
+        config &&
+        config.type &&
+        config.authUrl &&
+        config.clientId &&
+        config.clientSecret &&
+        config.redirectUri &&
+        config.tokenUrl &&
+        config.scope
     );
+}
 
-    const query = gql`
-        query ($warehouseId: ID!, $envSecret: String!) {
-            warehouseSsoConfiguration(warehouseId: $warehouseId, secret: $envSecret) {
-                type
-                authUrl
-                clientId
-                clientSecret
-                redirectUri
-                tokenUrl
-                scope
-            }
-        }
-    `;
-
-    const variables = {
-        warehouseId: process.env.NEXT_PUBLIC_WAREHOUSE_ID,
-        envSecret: process.env.NEXT_PUBLIC_SSO_SECRET
-    };
-
-    let result: {
-        warehouseSsoConfiguration: {
-            type: string;
-            authUrl: string;
-            clientId: string;
-            clientSecret: string;
-            redirectUri: string;
-            tokenUrl: string;
-            scope: string;
-        };
-    };
-
-    if (process.env.NEXT_PUBLIC_SSO_SECRET) {
-        try {
-            result = await graphqlRequestClient.request<{
-                warehouseSsoConfiguration: {
-                    type: string;
-                    authUrl: string;
-                    clientId: string;
-                    clientSecret: string;
-                    redirectUri: string;
-                    tokenUrl: string;
-                    scope: string;
-                };
-            }>(query, variables);
-            return result.warehouseSsoConfiguration;
-        } catch (error) {
-            console.error('Error fetching SSO configuration:', error);
-            return null;
-        }
-    } else {
+// get sso configuration from the warehouse
+async function getWarehouseSsoConfiguration(): Promise<WarehouseSsoConfiguration | null> {
+    if (!process.env.NEXT_PUBLIC_SSO_SECRET) {
         return null;
     }
-};
+    try {
+        const graphqlRequestClient = new GraphQLClient(
+            process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT as string
+        );
+        const result = await graphqlRequestClient.request<{
+            warehouseSsoConfiguration: WarehouseSsoConfiguration;
+        }>(SSO_CONFIGURATION_QUERY, {
+            warehouseId: process.env.NEXT_PUBLIC_WAREHOUSE_ID,
+            envSecret: process.env.NEXT_PUBLIC_SSO_SECRET
+        });
+        return result.warehouseSsoConfiguration ?? null;
+    } catch (error) {
+        console.error('Error fetching SSO configuration:', error);
+        return null;
+    }
+}
 
 // next-auth provider configuration
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     const ssoConfiguration = await getWarehouseSsoConfiguration();
-    if (!ssoConfiguration) {
+    if (!isSsoConfigured(ssoConfiguration)) {
         return res.status(200).json({});
-    } else {
-        return NextAuth(req, res, {
-            providers: [
-                {
-                    id: 'oidc',
-                    name: 'oidc',
-                    type: 'oauth',
-                    wellKnown: ssoConfiguration.redirectUri,
-                    authorization: {
-                        url: ssoConfiguration.authUrl,
-                        params: {
-                            response_type: 'code',
-                            scope: ssoConfiguration.scope,
-                            prompt: 'select_account'
-                        }
-                    },
-                    token: ssoConfiguration.tokenUrl,
-                    clientId: ssoConfiguration.clientId,
-                    clientSecret: ssoConfiguration.clientSecret,
-                    profile(profile) {
-                        return {
-                            id: profile.sub || profile.id,
-                            name: profile.name,
-                            email: profile.email,
-                            image: profile.picture
-                        };
+    }
+
+    return NextAuth(req, res, {
+        providers: [
+            {
+                id: 'oidc',
+                name: 'oidc',
+                type: 'oauth',
+                // Despite the name, `redirectUri` here holds the IdP's OIDC discovery base
+                // URL, not our app's own callback URL — confirmed working in staging. Do not
+                // "fix" this without re-verifying against a real warehouse first.
+                wellKnown: ssoConfiguration.redirectUri,
+                authorization: {
+                    url: ssoConfiguration.authUrl,
+                    params: {
+                        response_type: 'code',
+                        scope: ssoConfiguration.scope,
+                        prompt: 'select_account'
                     }
-                }
-            ],
-            secret: process.env.NEXTAUTH_SECRET,
-            callbacks: {
-                async jwt({ token, account }) {
-                    if (account && account.id_token) {
-                        token.jwtToken = account.id_token as string;
-                    }
-                    return token;
                 },
-                async session({ session, token }) {
-                    session.jwtToken = token.jwtToken as string;
-                    return session;
+                token: ssoConfiguration.tokenUrl,
+                clientId: ssoConfiguration.clientId,
+                clientSecret: ssoConfiguration.clientSecret,
+                profile(profile) {
+                    return {
+                        id: profile.sub || profile.id,
+                        name: profile.name,
+                        email: profile.email,
+                        image: profile.picture
+                    };
                 }
             }
-        });
-    }
+        ],
+        secret: process.env.NEXTAUTH_SECRET,
+        callbacks: {
+            async jwt({ token, account }) {
+                if (account && account.id_token) {
+                    token.jwtToken = account.id_token as string;
+                }
+                return token;
+            },
+            async session({ session, token }) {
+                session.jwtToken = token.jwtToken as string;
+                // getProviders() (client-safe, no secrets) tells the login page whether to show
+                // the SSO button; disconnectUrl rides along on the session the same way, since
+                // it's equally harmless to expose and AuthContext already reads useSession().
+                session.disconnectUrl = ssoConfiguration.disconnectUrl ?? null;
+                return session;
+            }
+        }
+    });
 }

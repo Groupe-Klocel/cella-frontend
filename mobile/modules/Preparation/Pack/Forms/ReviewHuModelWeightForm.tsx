@@ -40,6 +40,8 @@ export interface IReviewHuModelWeightProps {
     defaultValue?: any;
     initialControlState?: boolean | null;
     formToUse?: any;
+    // whether the box content is controlled (scanned) at packing: drives the weight recomputation
+    isToControl?: boolean | null;
 }
 
 export const ReviewHuModelWeightForm = ({
@@ -49,7 +51,8 @@ export const ReviewHuModelWeightForm = ({
     checkComponent,
     currentHuo,
     defaultValue,
-    formToUse
+    formToUse,
+    isToControl
 }: IReviewHuModelWeightProps) => {
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
@@ -136,6 +139,7 @@ export const ReviewHuModelWeightForm = ({
                         status
                         statusText
                         weight
+                        closureWeight
                         length
                         height
                         width
@@ -248,6 +252,99 @@ export const ReviewHuModelWeightForm = ({
         };
         fetchHuModels();
     }, [packagingToExclude]);
+
+    // Theoretical weight of what this box actually holds. `currentHuo.theoriticalWeight` is the
+    // cubing one, computed for the whole content planned on the box: it is too heavy as soon as
+    // the box is closed before the end (forced closure, finish position), the remainder leaving
+    // for another box. Recomputed here with the same formula as the cubing/closeBox one -
+    // packaging (selected model weight + closure weight) + Σ packed quantity × article base unit
+    // weight - but on the quantities that end up in the box.
+    // `undefined` = not resolved yet, `null` = not computable (contents unreadable).
+    const [boxContents, setBoxContents] = useState<Array<any> | null>();
+
+    useEffect(() => {
+        const fetchBoxContents = async () => {
+            if (!currentHuo?.id) return;
+            const query = gql`
+                query handlingUnitContentOutbounds(
+                    $filters: HandlingUnitContentOutboundSearchFilters
+                    $itemsPerPage: Int!
+                ) {
+                    handlingUnitContentOutbounds(filters: $filters, itemsPerPage: $itemsPerPage) {
+                        results {
+                            id
+                            quantityToBePicked
+                            pickedQuantity
+                            missingQuantity
+                            article {
+                                id
+                                baseUnitWeight
+                            }
+                        }
+                    }
+                }
+            `;
+            try {
+                const result = await graphqlRequestClient.request(query, {
+                    filters: { handlingUnitOutboundId: currentHuo.id },
+                    itemsPerPage: 1000
+                });
+                setBoxContents(result?.handlingUnitContentOutbounds?.results ?? null);
+            } catch (error) {
+                // Contents not readable: the cubing weight stays the prefilled value.
+                console.warn('box contents not resolved, cubing weight kept', error);
+                setBoxContents(null);
+            }
+        };
+        fetchBoxContents();
+    }, [currentHuo?.id]);
+
+    // The packaging part follows the model the operator selects, which is not necessarily the one
+    // proposed by cubing.
+    const selectedHuModelId = Form.useWatch('huModel', form);
+
+    const prefilledWeight = useMemo(() => {
+        if (boxContents === undefined) return undefined;
+        if (boxContents === null) return currentHuo?.theoriticalWeight ?? undefined;
+
+        // Quantity entered at step 50, already counted as packed although the backend has not
+        // validated it yet (that happens after this step).
+        const pendingHucoId = storedObject?.step40?.data?.currentHuco?.id;
+        const pendingQuantity =
+            typeof storedObject?.step50?.data?.movingQuantity === 'number'
+                ? storedObject.step50.data.movingQuantity
+                : 0;
+
+        const contentWeight = boxContents.reduce((total: number, huco: any) => {
+            // While controlling, the box only holds what has been scanned; without control
+            // nothing is scanned and the whole remainder is packed at validation.
+            const packedQuantity = isToControl
+                ? (huco.pickedQuantity ?? 0) + (huco.id === pendingHucoId ? pendingQuantity : 0)
+                : Math.max((huco.quantityToBePicked ?? 0) - (huco.missingQuantity ?? 0), 0);
+            return total + packedQuantity * (huco.article?.baseUnitWeight ?? 0);
+        }, 0);
+
+        const selectedHuModel = huModelsList?.find((e: any) => e.id === selectedHuModelId);
+        const packagingWeight =
+            (selectedHuModel?.weight ?? 0) + (selectedHuModel?.closureWeight ?? 0);
+
+        return Math.round(contentWeight + packagingWeight);
+    }, [
+        boxContents,
+        isToControl,
+        storedObject,
+        huModelsList,
+        selectedHuModelId,
+        currentHuo?.theoriticalWeight
+    ]);
+
+    // The weight input is shared with the quantity step (same `number` field on the same form),
+    // so its value is set explicitly rather than through the form item's initial value, which
+    // antd ignores once the field holds a value.
+    useEffect(() => {
+        if (prefilledWeight === undefined) return;
+        form.setFieldsValue({ number: prefilledWeight });
+    }, [prefilledWeight]);
 
     const dataToCheck = {
         processName,

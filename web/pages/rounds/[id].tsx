@@ -23,12 +23,12 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useEffect, useState } from 'react';
 import MainLayout from '../../components/layouts/MainLayout';
-import { getModesFromPermissions, showError, showSuccess } from '@helpers';
+import { findValueByScopeAndCode, getModesFromPermissions, showError, showSuccess } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { roundsRoutes as itemRoutes } from 'modules/Rounds/Static/roundsRoutes';
 import { Button, Modal, Space } from 'antd';
-import { ModeEnum } from 'generated/graphql';
+import { ModeEnum, Table } from 'generated/graphql';
 import configs from '../../../common/configs.json';
 import { RoundDetailsExtra } from 'modules/Rounds/Elements/RoundDetailsExtra';
 import { useAuth } from 'context/AuthContext';
@@ -38,7 +38,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 
 const RoundPage: PageComponent = () => {
     const router = useRouter();
-    const { permissions, configs } = useAppState();
+    const { permissions, configs, parameters } = useAppState();
     const { t } = useTranslation();
     const [data, setData] = useState<any>();
     const modes = getModesFromPermissions(permissions, model.tableName);
@@ -73,6 +73,12 @@ const RoundPage: PageComponent = () => {
     const roundsStatusStarted = parseInt(
         configs.filter((c: any) => c.scope === 'round_status' && c.value === 'Started')[0]?.code
     );
+
+    // The Started code comes from the config table and can be missing: parseInt then yields NaN
+    // and `status >= NaN` is always false, which would silently remove the boxes labels button
+    // altogether. When the code cannot be resolved we display the button (the behaviour that
+    // existed before the lower threshold was added) rather than taking a feature away.
+    const hasUsableRoundsStatusStarted = Number.isFinite(roundsStatusStarted);
 
     //This specific request is to sort boxes according to raa order
     const getRoundWithSortedRaa = async () => {
@@ -269,25 +275,50 @@ const RoundPage: PageComponent = () => {
                 ) : (
                     <></>
                 )}
-                <Button
-                    type="primary"
-                    ghost
-                    onClick={() => {
-                        setShowNumberOfPrintsModal(true);
-                        setIdsToPrint(boxesList);
-                    }}
-                >
-                    {t('actions:print-boxes-labels')}
-                </Button>
-                <NumberOfPrintsModalV2
-                    showModal={{
-                        showNumberOfPrintsModal,
-                        setShowNumberOfPrintsModal
-                    }}
-                    dataToPrint={{ boxes: idsToPrint }}
-                    documentName="K_OutboundHandlingUnitLabel"
-                    documentReference={data?.name}
-                />
+                {/* Print boxes labels: only once the round has actually been launched
+                    (from Started onwards). No upper bound on purpose: hiding the button on a
+                    terminated round would prevent reprinting labels. */}
+                {!hasUsableRoundsStatusStarted || Number(data?.status) >= roundsStatusStarted ? (
+                    <>
+                        <Button
+                            type="primary"
+                            ghost
+                            onClick={() => {
+                                setShowNumberOfPrintsModal(true);
+                                setIdsToPrint(boxesList);
+                            }}
+                        >
+                            {t('actions:print-boxes-labels')}
+                        </Button>
+                        <NumberOfPrintsModalV2
+                            showModal={{
+                                showNumberOfPrintsModal,
+                                setShowNumberOfPrintsModal
+                            }}
+                            dataToPrint={{ boxes: idsToPrint }}
+                            documentName="K_OutboundHandlingUnitLabel"
+                            documentReference={data?.name}
+                        />
+                    </>
+                ) : (
+                    <></>
+                )}
+                {String(
+                    // parameters is undefined until loaded (or if the fetch errored):
+                    // fail closed rather than crash the whole round page
+                    findValueByScopeAndCode(parameters ?? [], 'round', 'SHOW_VISUAL_ROUTE') ?? ''
+                ) === '1' &&
+                getModesFromPermissions(permissions, Table.RoundAdvisedAddress).includes(
+                    ModeEnum.Read
+                ) ? (
+                    <LinkButton
+                        title={t('actions:route-analysis')}
+                        path={`/rounds/route-analysis/${id}`}
+                        type="primary"
+                    />
+                ) : (
+                    <></>
+                )}
             </Space>
         )
     };

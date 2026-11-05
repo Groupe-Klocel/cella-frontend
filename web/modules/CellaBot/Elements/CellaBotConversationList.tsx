@@ -17,11 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
-import { Button, Empty, List, Popconfirm, Spin, Typography } from 'antd';
+import { Button, Empty, Input, List, Popconfirm, Spin, Typography } from 'antd';
+import { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { AiConversationSummary } from '../cellaBotApi';
+import { AiConversationSummary, CONVERSATION_TITLE_MAX_LENGTH } from '../cellaBotApi';
 import { CELLA_YELLOW } from '../cellaBotColors';
 
 const Scroller = styled.div`
@@ -54,7 +55,7 @@ const formatDate = (value?: string | null): string => {
 };
 
 /**
- * The user's saved CellaBot conversations: click one to continue it, or delete it. The list is
+ * The user's saved CellaBot conversations: click one to continue it, rename it, or delete it. The list is
  * row-scoped server-side (a worker only ever sees their own). Rendered inside the widget drawer in
  * place of the message list when the history panel is open.
  */
@@ -63,18 +64,41 @@ const CellaBotConversationList = ({
     loading,
     activeId,
     onContinue,
+    onRename,
+    renamingIds = [],
     onDelete
 }: {
     conversations: Array<AiConversationSummary>;
     loading: boolean;
     activeId: string | null;
     onContinue: (id: string) => void;
+    onRename: (id: string, title: string) => void;
+    // Conversations whose rename is still being saved: renaming them again waits for it.
+    renamingIds?: Array<string>;
     onDelete: (id: string) => void;
 }) => {
     const { t } = useTranslation();
     const tt = (key: string, def: string) => {
         const v = t(key);
         return v && v !== key ? v : def;
+    };
+    // The conversation whose title is being edited inline, and the draft title. The ref closes the
+    // edit synchronously: Enter then the blur of the unmounting input must not rename twice.
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [draft, setDraft] = useState('');
+    const editingRef = useRef<string | null>(null);
+
+    const startEditing = (conversation: AiConversationSummary) => {
+        editingRef.current = conversation.id;
+        setEditingId(conversation.id);
+        setDraft(conversation.title ?? '');
+    };
+
+    const stopEditing = (save: boolean) => {
+        const id = editingRef.current;
+        editingRef.current = null;
+        setEditingId(null);
+        if (save && id) onRename(id, draft);
     };
 
     if (loading) {
@@ -107,10 +131,44 @@ const CellaBotConversationList = ({
                     // Compute the formatted date once: it was parsed twice (guard + render), which
                     // also risked inconsistent output if locale/timezone shifted between the calls.
                     const created = formatDate(conversation.created);
+                    if (conversation.id === editingId) {
+                        return (
+                            <List.Item key={conversation.id}>
+                                <Input
+                                    size="small"
+                                    autoFocus
+                                    value={draft}
+                                    maxLength={CONVERSATION_TITLE_MAX_LENGTH}
+                                    aria-label={tt('common:cellabot-rename', 'Rename')}
+                                    onChange={(e) => setDraft(e.target.value)}
+                                    onPressEnter={() => stopEditing(true)}
+                                    onBlur={() => stopEditing(true)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Escape') {
+                                            // Cancel: leave edit mode without saving (and without
+                                            // letting the drawer treat Escape as "close").
+                                            e.stopPropagation();
+                                            stopEditing(false);
+                                        }
+                                    }}
+                                />
+                            </List.Item>
+                        );
+                    }
                     return (
                         <List.Item
                             key={conversation.id}
                             actions={[
+                                <Button
+                                    key="rename"
+                                    type="text"
+                                    size="small"
+                                    icon={<EditOutlined />}
+                                    aria-label={tt('common:cellabot-rename', 'Rename')}
+                                    title={tt('common:cellabot-rename', 'Rename')}
+                                    loading={renamingIds.includes(conversation.id)}
+                                    onClick={() => startEditing(conversation)}
+                                />,
                                 <Popconfirm
                                     key="delete"
                                     title={tt(

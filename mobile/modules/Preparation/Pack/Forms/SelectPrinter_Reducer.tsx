@@ -27,7 +27,7 @@ import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
-import { useAppDispatch } from 'context/AppContext';
+import { useAppDispatch, useAppState } from 'context/AppContext';
 
 export interface ISelectPrinterProps {
     processName: string;
@@ -47,6 +47,7 @@ export const SelectPrinter = ({
     const { graphqlRequestClient } = useAuth();
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
+    const { parameters } = useAppState();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(processName) || '{}');
 
@@ -89,29 +90,20 @@ export const SelectPrinter = ({
 
         const fetchData = async () => {
             const printerCodeList = await fetchRuleResult();
-            //get printer list from parameters
-            const query = gql`
-                query parameters($filters: ParameterSearchFilters!) {
-                    parameters(filters: $filters) {
-                        results {
-                            value
-                            code
-                            value
-                        }
-                    }
-                }
-            `;
-            const variables = {
-                filters: { scope: 'printer' }
-            };
-            const printerInfos = await graphqlRequestClient.request(query, variables);
-            const printerList = printerInfos.parameters.results.map((printer: any) => ({
-                value: printer.value,
-                code: printer.code
-            }));
-            const printerCodeListFiltered = printerList.filter((printer: any) =>
-                printerCodeList.includes(printer.code)
-            );
+            //get printer list from app state parameters
+            const printerList = parameters
+                .filter((parameter: any) => parameter.scope === 'printer')
+                .map((printer: any) => ({
+                    value: printer.value,
+                    code: printer.code
+                }));
+            // printerCodeList is a stringified array; indexOf reflects the rule's order
+            const printerCodeListFiltered = printerList
+                .filter((printer: any) => printerCodeList.includes(printer.code))
+                .sort(
+                    (a: any, b: any) =>
+                        printerCodeList.indexOf(a.code) - printerCodeList.indexOf(b.code)
+                );
             setPrinterList(printerCodeListFiltered);
         };
 

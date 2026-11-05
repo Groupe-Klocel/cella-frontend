@@ -23,8 +23,9 @@ import { HeaderData, ItemDetailComponent } from 'modules/Crud/ItemDetailComponen
 import { useRouter } from 'next/router';
 import { FC, useState } from 'react';
 import MainLayout from '../../../components/layouts/MainLayout';
-import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
-import { articlesRoutes as itemRoutes } from 'modules/Articles/Static/articlesRoutes';
+import { META_DEFAULTS, getModesFromPermissions, pathParamsFromDictionary } from '@helpers';
+import { articleLusRoutes as itemRoutes } from 'modules/Articles/Static/articleLusRoutes';
+import { ArticleLuDetailsExtra } from 'modules/Articles/Elements/ArticleLuDetailsExtra';
 import { Button, Modal, Space } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useAppState } from 'context/AppContext';
@@ -56,12 +57,12 @@ const ArticleLuPage: PageComponent = () => {
         }
     ];
 
+    const rootPathLu = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
+
     const title = data?.article_name + ' / ' + data?.name;
     const pageTitle = `${t('common:logistic-unit')} ${title}`;
 
     // #region handle standard buttons according to Model (can be customized when additional buttons are needed)
-    const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
-
     const confirmAction = (id: string | undefined, setId: any) => {
         return () => {
             Modal.confirm({
@@ -78,13 +79,21 @@ const ArticleLuPage: PageComponent = () => {
     const headerData: HeaderData = {
         title: pageTitle,
         routes: breadcrumb,
-        onBackRoute: `/articles/${data?.articleId}`,
+        onBackRoute: rootPathLu,
         actionsComponent: (
             <Space>
                 {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                     <LinkButton
                         title={t('actions:edit')}
-                        path={`${rootPath}/lu/edit/${id}`}
+                        // same query params as the packaging list passes, so the edit screen
+                        // gets its name whichever way it is reached - its <AppHead> title is built
+                        // from router.query.name and otherwise reads "edit undefined" from here.
+                        path={pathParamsFromDictionary(`${rootPathLu}/edit/[id]`, {
+                            id: id,
+                            articleId: data?.articleId,
+                            articleName: data?.article_name,
+                            name: data?.name
+                        })}
                         type="primary"
                     />
                 ) : (
@@ -116,6 +125,17 @@ const ArticleLuPage: PageComponent = () => {
             <AppHead title={headerData.title} />
             <ItemDetailComponent
                 id={id!}
+                extraDataComponent={
+                    <ArticleLuDetailsExtra
+                        articleLuId={id}
+                        articleLuName={data?.name}
+                        articleLuStatus={data?.status}
+                        articleId={data?.articleId}
+                        articleName={data?.article_name}
+                        stockOwnerId={data?.stockOwnerId}
+                        stockOwnerName={data?.stockOwner_name}
+                    />
+                }
                 headerData={headerData}
                 dataModel={model}
                 setData={setData}

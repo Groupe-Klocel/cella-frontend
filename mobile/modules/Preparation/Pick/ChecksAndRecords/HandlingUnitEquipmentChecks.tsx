@@ -88,22 +88,70 @@ export const HandlingUnitChecksWithoutChecks = ({ dataToCheck }: IHandlingUnitCh
             } else if (handlingUnitInfos.handlingUnits?.results[0]) {
                 const handlingUnit = handlingUnitInfos.handlingUnits.results[0];
                 const currentRoundId = storedObject['step10']?.data?.round?.id;
+                const scannedHuName = handlingUnit.name ?? handlingUnit.barcode ?? scannedInfo;
+                const handlingUnitOutbound = handlingUnit.handlingUnitOutbounds?.[0];
 
                 // Check if handlingUnitOutbounds[0] exists and if the roundId matches
                 if (
-                    handlingUnit.handlingUnitOutbounds?.[0] &&
-                    handlingUnit.handlingUnitOutbounds[0].roundId === currentRoundId &&
+                    handlingUnitOutbound &&
+                    handlingUnitOutbound.roundId === currentRoundId &&
                     handlingUnit.type === configsParamsCodes.equipmentHuType
                 ) {
                     data['handlingUnit'] = handlingUnit;
                     data['isHUToCreate'] = false;
                 } else {
-                    showError(t('messages:unexpected-scanned-item'));
+                    // Explicit messages instead of a single generic one, one per cause. The type
+                    // is tested before the round so that a box coming from another round is
+                    // reported as "not an equipment" rather than as an equipment conflict.
+                    if (!handlingUnitOutbound) {
+                        // the handling unit exists but is attached to no shipment at all
+                        showError(
+                            t('messages:handling-unit-without-shipment', { name: scannedHuName })
+                        );
+                    } else if (handlingUnit.type !== configsParamsCodes.equipmentHuType) {
+                        // the handling unit is attached to a shipment, but it is not an equipment
+                        showError(
+                            t('messages:scanned-item-is-not-an-equipment', { name: scannedHuName })
+                        );
+                    } else {
+                        // an equipment, but already attached to another round
+                        showError(
+                            t('messages:equipment-assigned-to-another-round', {
+                                equipment: scannedHuName,
+                                round:
+                                    handlingUnitOutbound.round?.name ??
+                                    handlingUnitOutbound.roundId ??
+                                    '-'
+                            })
+                        );
+                    }
                     setResetForm(true);
                     setScannedInfo(undefined);
                 }
             } else {
-                showError(t('messages:unexpected-scanned-item'));
+                // unknown barcode while an equipment is already assigned to the round
+                const alreadyAssignedEquipment = storedObject[
+                    'step10'
+                ]?.data?.round?.handlingUnitOutbounds?.find(
+                    (huo: any) => huo.handlingUnit?.type === configsParamsCodes.equipmentHuType
+                );
+                const assignedEquipmentName =
+                    alreadyAssignedEquipment?.handlingUnit?.name ?? alreadyAssignedEquipment?.name;
+                const currentRoundName = storedObject['step10']?.data?.round?.name;
+                // Only name the assigned equipment when there is actually one to name:
+                // without both values the message would render its substitutions empty
+                // ("Equipment - already assigned to round -"), announcing a conflict that
+                // does not exist. Fall back to the pre-existing generic message instead.
+                if (assignedEquipmentName && currentRoundName) {
+                    showError(
+                        t('messages:wrong-equipment-scanned', {
+                            expected: assignedEquipmentName,
+                            round: currentRoundName
+                        })
+                    );
+                } else {
+                    showError(t('messages:unexpected-scanned-item'));
+                }
                 setResetForm(true);
                 setScannedInfo(undefined);
             }

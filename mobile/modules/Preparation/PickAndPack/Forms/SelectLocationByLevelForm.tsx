@@ -25,6 +25,10 @@ import { Select, Form, Modal } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import CameraScanner from 'modules/Common/CameraScanner';
+import {
+    getExpectedArticleId,
+    isContentOfExpectedLine
+} from 'modules/Preparation/PickAndPack/Elements/expectedArticle';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
@@ -37,6 +41,9 @@ export interface ISelectLocationByLevelProps {
     showSimilarLocations?: any;
     roundsCheck?: boolean;
     dontAskBeforeLocationChange?: boolean;
+    // Same object the location step receives: a location refused here sends the operator back to
+    // it, and it has to ask for a scan instead of re-enforcing the location just refused.
+    forceLocation?: { tmpForceLocation?: any; setTmpforceLocation?: (value: any) => void };
     formToUse?: any;
 }
 
@@ -48,6 +55,7 @@ export const SelectLocationByLevelForm = ({
     locations,
     roundsCheck,
     dontAskBeforeLocationChange,
+    forceLocation,
     formToUse
 }: ISelectLocationByLevelProps) => {
     const { t } = useTranslation();
@@ -318,19 +326,16 @@ export const SelectLocationByLevelForm = ({
             const location = chosenLocation;
             const proposedRoundAdvisedAddress =
                 storedObject[`step10`]?.data?.proposedRoundAdvisedAddresses?.[0];
-            const { articleId, stockOwnerId, stockStatus, reservation } =
-                proposedRoundAdvisedAddress?.roundLineDetail?.deliveryLine || {};
+            const expectedArticleId = getExpectedArticleId(proposedRoundAdvisedAddress);
 
+            // Same rule as step20 (isContentOfExpectedLine): this step is handed the locations
+            // step20 stored, so judging their stock differently is what made the two steps bounce
+            // the operator back and forth. It also keeps the line checkable when the payload
+            // carries no delivery line - comparing the owner/status/reservation with undefined
+            // refused every content and sent the flow back to step20 on a correct location.
             const matchingHandlingUnitContent = location.handlingUnits
                 ?.flatMap((unit: any) => unit.handlingUnitContents)
-                ?.find(
-                    (content: any) =>
-                        content.articleId === articleId &&
-                        content.stockOwnerId === stockOwnerId &&
-                        content.stockStatus === stockStatus &&
-                        content.reservation === reservation &&
-                        content.quantity > 0
-                );
+                ?.find(isContentOfExpectedLine(proposedRoundAdvisedAddress));
 
             if (
                 location.id === proposedRoundAdvisedAddress?.locationId &&
@@ -375,8 +380,23 @@ export const SelectLocationByLevelForm = ({
                     bodyStyle: { fontSize: '2px' }
                 });
             } else {
-                showError(t('messages:unexpected-scanned-item'));
+                showError(
+                    location.handlingUnits
+                        ?.flatMap((unit: any) => unit.handlingUnitContents)
+                        ?.some(
+                            (content: any) =>
+                                (content?.articleId ?? content?.article?.id) == expectedArticleId
+                        )
+                        ? t('messages:no-huc-quantity-in-location')
+                        : t('messages:unexpected-scanned-item')
+                );
                 form.resetFields();
+                // Going back to step20 is what lets the operator pick another location - but that
+                // step re-enforces the advised location on its own when the round carries one, so
+                // an advised location refused here came straight back and was refused again, ad
+                // infinitum. Asking for the scan (as the "Change location" button does) puts a
+                // human action back in the cycle; the page lowers the flag again on the next line.
+                forceLocation?.setTmpforceLocation?.(true);
                 dispatch({
                     type: 'ON_BACK',
                     processName: processName,
