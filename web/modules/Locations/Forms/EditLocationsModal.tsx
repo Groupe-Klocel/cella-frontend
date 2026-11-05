@@ -26,7 +26,21 @@ import {
     showSuccess,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
-import { Col, Divider, Form, Input, InputNumber, Modal, Row, Select, Typography } from 'antd';
+import { ClearOutlined } from '@ant-design/icons';
+import {
+    Button,
+    Col,
+    Divider,
+    Form,
+    Input,
+    InputNumber,
+    Modal,
+    Row,
+    Select,
+    Space,
+    Tooltip,
+    Typography
+} from 'antd';
 import { useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -93,10 +107,9 @@ const isClearable = (field: string) =>
  * here on purpose (disabling or re-enabling a whole range of locations is the typical mass
  * gesture), with the codes of the `location_status` scope.
  *
- * Same three states per field as EditArticleLusModal: an untouched field (`undefined`) is left
- * alone and not sent; an explicitly blanked one ("clear the field" option, emptied input) is sent
- * as `null` so the value is actually erased, for the fields `isClearable` accepts; anything else
- * is sent as is. A recap confirmation separates the two gestures before anything is sent.
+ * Only the filled fields are sent; a field is cleared (sent as `null`) only through its eraser
+ * button, offered on the fields `isClearable` accepts. A recap confirmation lists the edited and
+ * the cleared fields before anything is sent.
  *
  * The three replenishment fields are kept coherent the way the single-record form keeps them (a
  * replenish type only makes sense on a replenished location, a rotation only with the "Same
@@ -122,6 +135,8 @@ const EditLocationsRenderModal = ({
     const filteredLanguage = getLanguageCode(router);
     const [form] = Form.useForm();
     const [isUpdating, setIsUpdating] = useState(false);
+    // Fields whose eraser button is pressed.
+    const [cleared, setCleared] = useState<string[]>([]);
     const errorMessageUpdateData = t('messages:error-update-data');
     const successMessageUpdateData = t('messages:success-updated');
 
@@ -140,21 +155,12 @@ const EditLocationsRenderModal = ({
 
     // Options come from the app-wide config/parameter stores already loaded by AppLayout, so the
     // modal issues no query of its own. Labels are resolved like SelectInput does: the DB
-    // translation for the active language, falling back to the raw value. The clearable code
-    // fields get a leading "clear the field" option resolving to null, which buildInput turns
-    // into an explicit clear; it is labelled rather than blank so the gesture is obvious.
+    // translation for the active language, falling back to the raw value.
     const codeOptions = useMemo(() => {
         const optionsOf = (field: string) => {
             const { store, scope } = CODE_SOURCES[field];
             const entries = (store === 'configs' ? dbConfigs : dbParameters) ?? [];
             return [
-                ...(isClearable(field)
-                    ? [
-                          <Select.Option key="__clear__" value={null}>
-                              {t('actions:clear-field')}
-                          </Select.Option>
-                      ]
-                    : []),
                 ...entries
                     .filter((entry: any) => entry.scope === scope)
                     .sort((a: any, b: any) =>
@@ -203,31 +209,61 @@ const EditLocationsRenderModal = ({
             const rotation = changed.baseUnitRotation;
             if (rotation !== undefined && rotation !== null) {
                 form.setFieldsValue({ replenish: true, replenishType: sameRotationType });
+                setCleared((list) => list.filter((f) => f !== 'replenishType'));
             }
         }
     };
 
-    // Three states per field, which is what a mass update needs:
-    //   undefined -> untouched, not sent. antd leaves a field undefined until it is used, and the
-    //                Select clear icon puts it back to undefined, so "leave alone" stays reachable.
-    //   null / '' -> explicitly blanked by the user ("clear the field" option, emptied input):
-    //                sent as null so the value is actually erased, for the fields that accept it.
-    //   anything else -> sent as is.
+    const toggleClear = (field: string) => {
+        form.setFieldValue(field, undefined);
+        setCleared((list) =>
+            list.includes(field) ? list.filter((f) => f !== field) : [...list, field]
+        );
+    };
+
+    // Props of an input: locked while its eraser button is pressed.
+    const lockProps = (field: string) =>
+        cleared.includes(field)
+            ? { disabled: true, placeholder: t('actions:clear-field') }
+            : { disabled: false };
+
+    // Eraser button: the only way to clear a field (sent as null).
+    const clearButton = (field: string) =>
+        isClearable(field) ? (
+            <Tooltip title={t('actions:clear-field')}>
+                <Button
+                    icon={<ClearOutlined />}
+                    type={cleared.includes(field) ? 'primary' : 'default'}
+                    danger={cleared.includes(field)}
+                    onClick={() => toggleClear(field)}
+                    style={{ height: 'auto' }}
+                />
+            </Tooltip>
+        ) : null;
+
+    const withClear = (field: string, input: JSX.Element) => (
+        <Form.Item label={labelOf(field)}>
+            <Space.Compact style={{ width: '100%' }}>
+                <Form.Item name={field} noStyle>
+                    {input}
+                </Form.Item>
+                {clearButton(field)}
+            </Space.Compact>
+        </Form.Item>
+    );
+
+    // Only the filled fields are sent, plus null for the fields cleared with their eraser button.
     const buildInput = (formData: any) => {
         const input: Record<string, any> = {};
         Object.entries(formData ?? {}).forEach(([key, value]) => {
-            if (value === undefined) return;
-            if (value === null || (typeof value === 'string' && value.trim() === '')) {
-                // A non-clearable field emptied by hand reads as "leave alone", exactly like one
-                // that was never touched - dropping the key here is what makes the two identical.
-                if (isClearable(key)) input[key] = null;
-                return;
-            }
+            if (value === undefined || value === null) return;
+            if (typeof value === 'string' && value.trim() === '') return;
             input[key] =
                 INT_FIELDS.includes(key) && typeof value === 'string' && isNumeric(value)
                     ? parseInt(value)
                     : value;
         });
+        cleared.forEach((field) => (input[field] = null));
         // Replenishment coherence, same rules as EditLocationForm at submit (safety net behind
         // the form-level sync above).
         if (input.baseUnitRotation !== undefined && input.baseUnitRotation !== null) {
@@ -264,6 +300,7 @@ const EditLocationsRenderModal = ({
             }
             showSuccess(successMessageUpdateData);
             form.resetFields();
+            setCleared([]);
             setSelectedRowKeys([]);
             setRefetch();
             showhideModal();
@@ -278,6 +315,7 @@ const EditLocationsRenderModal = ({
     const handleCancel = () => {
         showhideModal();
         form.resetFields();
+        setCleared([]);
     };
 
     const onClickOk = () => {
@@ -355,9 +393,16 @@ const EditLocationsRenderModal = ({
                         </Form.Item>
                     </Col>
                     <Col xs={24} md={8}>
-                        <Form.Item label={labelOf('stockStatus')} name="stockStatus">
-                            <Select allowClear>{codeOptions.stockStatus}</Select>
-                        </Form.Item>
+                        {withClear(
+                            'stockStatus',
+                            <Select
+                                allowClear
+                                style={{ width: '100%' }}
+                                {...lockProps('stockStatus')}
+                            >
+                                {codeOptions.stockStatus}
+                            </Select>
+                        )}
                     </Col>
                     <Col xs={24} md={8}>
                         {/* Three-state on purpose: leaving it untouched means "leave alone". A
@@ -371,9 +416,10 @@ const EditLocationsRenderModal = ({
                         </Form.Item>
                     </Col>
                     <Col xs={24} md={16}>
-                        <Form.Item label={labelOf('comment')} name="comment">
-                            <Input.TextArea rows={2} />
-                        </Form.Item>
+                        {withClear(
+                            'comment',
+                            <Input.TextArea rows={2} {...lockProps('comment')} />
+                        )}
                     </Col>
                 </Row>
                 <Divider orientation="left">{labelOf('replenish')}</Divider>
@@ -384,37 +430,71 @@ const EditLocationsRenderModal = ({
                         </Form.Item>
                     </Col>
                     <Col xs={24} md={8}>
-                        <Form.Item label={labelOf('replenishType')} name="replenishType">
-                            <Select allowClear>{codeOptions.replenishType}</Select>
-                        </Form.Item>
+                        {withClear(
+                            'replenishType',
+                            <Select
+                                allowClear
+                                style={{ width: '100%' }}
+                                {...lockProps('replenishType')}
+                            >
+                                {codeOptions.replenishType}
+                            </Select>
+                        )}
                     </Col>
                     <Col xs={24} md={8}>
-                        <Form.Item label={labelOf('baseUnitRotation')} name="baseUnitRotation">
-                            <Select allowClear>{codeOptions.baseUnitRotation}</Select>
-                        </Form.Item>
+                        {withClear(
+                            'baseUnitRotation',
+                            <Select
+                                allowClear
+                                style={{ width: '100%' }}
+                                {...lockProps('baseUnitRotation')}
+                            >
+                                {codeOptions.baseUnitRotation}
+                            </Select>
+                        )}
                     </Col>
                 </Row>
                 <Divider orientation="left">{t('common:dimensions')}</Divider>
                 <Row gutter={gutter}>
                     <Col xs={24} md={6}>
-                        <Form.Item label={labelOf('length')} name="length">
-                            <InputNumber min={0} style={{ width: '100%' }} />
-                        </Form.Item>
+                        {withClear(
+                            'length',
+                            <InputNumber
+                                min={0}
+                                style={{ width: '100%' }}
+                                {...lockProps('length')}
+                            />
+                        )}
                     </Col>
                     <Col xs={24} md={6}>
-                        <Form.Item label={labelOf('width')} name="width">
-                            <InputNumber min={0} style={{ width: '100%' }} />
-                        </Form.Item>
+                        {withClear(
+                            'width',
+                            <InputNumber
+                                min={0}
+                                style={{ width: '100%' }}
+                                {...lockProps('width')}
+                            />
+                        )}
                     </Col>
                     <Col xs={24} md={6}>
-                        <Form.Item label={labelOf('height')} name="height">
-                            <InputNumber min={0} style={{ width: '100%' }} />
-                        </Form.Item>
+                        {withClear(
+                            'height',
+                            <InputNumber
+                                min={0}
+                                style={{ width: '100%' }}
+                                {...lockProps('height')}
+                            />
+                        )}
                     </Col>
                     <Col xs={24} md={6}>
-                        <Form.Item label={labelOf('weight')} name="weight">
-                            <InputNumber min={0} style={{ width: '100%' }} />
-                        </Form.Item>
+                        {withClear(
+                            'weight',
+                            <InputNumber
+                                min={0}
+                                style={{ width: '100%' }}
+                                {...lockProps('weight')}
+                            />
+                        )}
                     </Col>
                 </Row>
             </Form>
