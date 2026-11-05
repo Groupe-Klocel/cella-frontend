@@ -159,9 +159,9 @@ query GetEquipmentById($id: String!) {
         width
         height
         toleranceDimension
-        extraNumber1
-        extraNumber2
-        extraNumber3
+        articleMaxDimension1
+        articleMaxDimension2
+        articleMaxDimension3
         allowPickingOrderFree
         extras
         monoDelivery
