@@ -18,6 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
+// On top of the per-zone acceptance, the step hands the NEXT step the identity of the
+// documents it actually displayed (id / name / modified / size / fingerprint), each tagged with the
+// ZONE it was resolved for — the per-zone dimension is part of the evidence. The mandatory
+// checkboxes are unchanged in behaviour.
+// Tablet UI: The progress alert sits ABOVE the documents so it stays in view, each
+// zone card turns green once accepted, and the acceptance row is a large tap target carrying a
+// Required tag until it is ticked.
+
 // DESCRIPTION: visitor-entry step 40 - safety documents to read and accept, one set per destination
 // zone. The `VISITOR_INFOS_DOCUMENTS` business rule (input: kiosk language + allowedZones) is
 // executed once per zone and now returns a flat list of custom-object NAMES; we resolve each name to
@@ -26,13 +34,21 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, ContentSpin } from '@components';
 import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Alert, Checkbox, Divider, Form, Space, Typography } from 'antd';
+import { Alert, Checkbox, Form, Space, Tag, Typography } from 'antd';
+import { CheckCircleFilled } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
-import { DocumentViewer, fetchCustomObjectDocuments, parseDocumentNames } from '@CommonRadio';
+import {
+    AcceptedDocument,
+    CustomObjectDocument,
+    DocumentViewer,
+    fetchCustomObjectDocuments,
+    parseDocumentNames,
+    toAcceptedDocuments
+} from '@CommonRadio';
 import { Visit, VisitorRegistrationData, getZoneLabel, parseAllowedZones } from '../types';
 
 const { Title } = Typography;
@@ -43,6 +59,8 @@ interface ZoneDocuments {
     zone: string;
     // documentAttached data URIs, resolved from the custom-object names returned by the rule
     documents: string[];
+    // Identity + fingerprint of those same documents, in the same order, to be persisted
+    acceptedDocuments: AcceptedDocument[];
     // number of names the rule returned for this zone (to detect resolution failures)
     expectedCount: number;
     // true when the rule call itself failed for this zone
@@ -124,7 +142,9 @@ export const VisitorSafetyChecklistForm = ({
                 // De-duplicate names across every zone -> a single documents fetch for the union.
                 const nameSet = new Set<string>();
                 perZone.forEach((z) => z.names.forEach((n) => nameSet.add(n)));
-                let byName = new Map<string, string>();
+                // Keep the whole resolved row (id / modified / payload) per name, not just the
+                // payload, so the per-zone snapshot can be built from it.
+                let byName = new Map<string, CustomObjectDocument>();
                 let fetchFailed = false;
                 try {
                     const docs = await fetchCustomObjectDocuments(
@@ -132,18 +152,27 @@ export const VisitorSafetyChecklistForm = ({
                         state.parameters,
                         Array.from(nameSet)
                     );
-                    byName = new Map(docs.map((d) => [d.name, d.documentAttached]));
+                    byName = new Map(docs.map((d) => [d.name, d]));
                 } catch {
                     // the shared documents fetch failed -> block every zone that expected documents
                     fetchFailed = true;
                 }
                 // Map each zone's names back to the shared documents, preserving order.
-                const resolved: ZoneDocuments[] = perZone.map((z) => ({
-                    zone: z.zone,
-                    documents: z.names.map((n) => byName.get(n)).filter((d): d is string => !!d),
-                    expectedCount: z.names.length,
-                    error: z.error || (fetchFailed && z.names.length > 0)
-                }));
+                const resolved: ZoneDocuments[] = await Promise.all(
+                    perZone.map(async (z) => {
+                        const rows = z.names
+                            .map((n) => byName.get(n))
+                            .filter((d): d is CustomObjectDocument => !!d?.documentAttached);
+                        return {
+                            zone: z.zone,
+                            documents: rows.map((d) => d.documentAttached),
+                            // Fingerprint the payloads as served, tagged with this zone.
+                            acceptedDocuments: await toAcceptedDocuments(rows, z.zone),
+                            expectedCount: z.names.length,
+                            error: z.error || (fetchFailed && z.names.length > 0)
+                        };
+                    })
+                );
                 if (!active) return;
                 setZoneDocs(resolved);
                 // Re-entry: documents were already accepted -> pre-tick them.
@@ -181,15 +210,23 @@ export const VisitorSafetyChecklistForm = ({
             );
             return;
         }
+        // Flatten the per-zone snapshots in display order. A document shared by two zones is
+        // listed once per zone on purpose — the acceptance is per zone.
+        const documents: AcceptedDocument[] = zonesWithDocs.reduce(
+            (acc: AcceptedDocument[], d) => acc.concat(d.acceptedDocuments),
+            []
+        );
         dispatch({
             type: 'UPDATE_BY_STEP',
             processName,
             stepName: `step${stepNumber}`,
             object: {
                 previousStep: storedObject.currentStep,
-                // Store only metadata (zones + language + acceptance) — NOT the
-                // documents. The web re-fetches them from the rule + custom objects.
-                data: { zones, language, accepted: true }
+                // Store metadata (zones + language + acceptance) and the IDENTITY of the documents
+                // shown — NOT their payloads. The identity is what makes the acceptance
+                // auditable; without it the review screen has to re-run the rule and would show
+                // today's documents instead of the ones that were signed.
+                data: { zones, language, accepted: true, documents }
             },
             customFields: [{ key: 'currentStep', value: 50 }]
         });
@@ -199,41 +236,87 @@ export const VisitorSafetyChecklistForm = ({
         return <ContentSpin />;
     }
 
-    return (
-        <WrapperForm>
+    // Status line, kept ABOVE the documents so it stays in view while the PDFs scroll.
+    const statusAlert =
+        zonesFailed.length > 0 ? (
+            <Alert type="error" showIcon message={t('common:safety-documents-load-error')} />
+        ) : zonesWithDocs.length === 0 ? (
+            <Alert type="info" showIcon message={t('common:no-safety-documents')} />
+        ) : (
             <Alert
-                type="info"
+                type={complete ? 'success' : 'warning'}
                 showIcon
                 message={t('common:documents-msg')}
-                style={{ marginBottom: 12 }}
+                description={
+                    complete
+                        ? t('common:all-confirmed')
+                        : t('common:count-confirmed', {
+                              y: acceptedCount,
+                              total: zonesWithDocs.length
+                          })
+                }
             />
+        );
+
+    return (
+        <WrapperForm>
+            <div style={{ marginBottom: 16 }}>{statusAlert}</div>
             <StyledForm name="visitor-checklist" form={form} onFinish={onFinish}>
                 <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                    {zonesWithDocs.map((d) => (
-                        <div
-                            key={d.zone}
-                            style={{
-                                border: '1px solid #f0f0f0',
-                                borderRadius: 5,
-                                padding: 12
-                            }}
-                        >
-                            <Title level={5} style={{ marginTop: 0 }}>
-                                {t('common:zone')}:{' '}
-                                {getZoneLabel(d.zone, state.parameters, language)}
-                            </Title>
-                            <DocumentViewer documents={d.documents} />
-                            <Checkbox
-                                checked={!!checked[d.zone]}
-                                onChange={() => toggle(d.zone)}
-                                style={{ display: 'flex', alignItems: 'flex-start', marginTop: 10 }}
+                    {zonesWithDocs.map((d) => {
+                        const accepted = !!checked[d.zone];
+                        return (
+                            <div
+                                key={d.zone}
+                                className={`kiosk-zone-card${accepted ? ' is-accepted' : ''}`}
+                                style={{
+                                    border: `2px solid ${accepted ? '#52c41a' : '#e0e0e0'}`,
+                                    background: accepted ? '#f6ffed' : '#ffffff'
+                                }}
                             >
-                                <span style={{ fontSize: 15, lineHeight: 1.4 }}>
-                                    {t('common:read-and-accept-docs')}
-                                </span>
-                            </Checkbox>
-                        </div>
-                    ))}
+                                <Title level={4} style={{ marginTop: 0, marginBottom: 12 }}>
+                                    {t('common:zone')}:{' '}
+                                    {getZoneLabel(d.zone, state.parameters, language)}
+                                </Title>
+                                <DocumentViewer documents={d.documents} />
+                                {/* The whole row is the tap target (antd Checkbox renders a label). */}
+                                <Checkbox
+                                    checked={accepted}
+                                    onChange={() => toggle(d.zone)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        width: '100%',
+                                        marginTop: 16,
+                                        padding: '14px 18px',
+                                        borderRadius: 10,
+                                        background: accepted ? '#d9f7be' : '#fafafa'
+                                    }}
+                                >
+                                    <span className="kiosk-accept-label">
+                                        {t('common:read-and-accept-docs')}
+                                        {accepted ? (
+                                            <CheckCircleFilled
+                                                style={{ color: '#52c41a', fontSize: 24 }}
+                                            />
+                                        ) : (
+                                            <Tag
+                                                color="red"
+                                                style={{
+                                                    fontSize: 13,
+                                                    fontWeight: 600,
+                                                    lineHeight: '22px',
+                                                    margin: 0
+                                                }}
+                                            >
+                                                {t('common:mandatory')}
+                                            </Tag>
+                                        )}
+                                    </span>
+                                </Checkbox>
+                            </div>
+                        );
+                    })}
                     {zonesFailed.map((d) => (
                         <Alert
                             key={`failed-${d.zone}`}
@@ -247,29 +330,6 @@ export const VisitorSafetyChecklistForm = ({
                         />
                     ))}
                 </Space>
-                <Divider />
-                {zonesFailed.length > 0 ? (
-                    <Alert
-                        type="error"
-                        showIcon
-                        message={t('common:safety-documents-load-error')}
-                    />
-                ) : zonesWithDocs.length === 0 ? (
-                    <Alert type="info" showIcon message={t('common:no-safety-documents')} />
-                ) : (
-                    <Alert
-                        type={complete ? 'success' : 'warning'}
-                        showIcon
-                        message={
-                            complete
-                                ? t('common:all-confirmed')
-                                : t('common:count-confirmed', {
-                                      y: acceptedCount,
-                                      total: zonesWithDocs.length
-                                  })
-                        }
-                    />
-                )}
             </StyledForm>
         </WrapperForm>
     );

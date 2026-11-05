@@ -144,51 +144,79 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 console.log('Result of Box Status', resultBoxResponse);
             }
         }
-        // Update load
+        // Update load: numberHuLoaded/weight are decremented atomically server-side
+        // (advancedInput) instead of from the client's local count, which can be stale
+        // if another operator is working the same load concurrently.
+        // Same box weight as validateLoad adds: finalWeight when filled, else theoriticalWeight.
+        const boxWeightField = box.finalWeight != null ? 'finalWeight' : 'theoriticalWeight';
+        const boxWeight = Number(box[boxWeightField]);
+        if (!Number.isFinite(boxWeight) || boxWeight < 0) {
+            throw new Error(`Invalid ${boxWeightField} for box ${box.id}: ${box[boxWeightField]}`);
+        }
+
         const updatedLoadMutation = gql`
-            mutation updateLoad($id: String!, $input: UpdateLoadInput!) {
-                updateLoad(id: $id, input: $input) {
+            mutation updateLoad($id: String!, $input: UpdateLoadInput!, $advancedInput: JSON) {
+                updateLoad(id: $id, input: $input, advancedInput: $advancedInput) {
                     id
                     status
+                    numberHuLoaded
+                    weight
                 }
             }
         `;
-        // If there is no support/box in load set the load status to "To be loaded"
-        if (load.numberHuLoaded - 1 == 0) {
-            const dataForLoad = {
-                status: configs.LOAD_STATUS_CREATED,
-                numberHuLoaded: load.numberHuLoaded - 1,
-                weight: load.weight - box.theoriticalWeight,
-                lastTransactionId
-            };
-            const updatedLoadVariables = {
-                id: load.id,
-                input: dataForLoad
-            };
+        const updatedLoadVariables = {
+            id: load.id,
+            input: { lastTransactionId },
+            advancedInput: {
+                numberHuLoaded: 'numberHuLoaded-1',
+                weight: `weight-${boxWeight}`
+            }
+        };
 
-            const resultLoadResponse = await graphqlRequestClient.request(
-                updatedLoadMutation,
-                updatedLoadVariables,
+        let resultLoadResponse: GraphQLResponseType = await graphqlRequestClient.request(
+            updatedLoadMutation,
+            updatedLoadVariables,
+            requestHeader
+        );
+        console.log('Result of Load Status', resultLoadResponse);
+        if (!resultLoadResponse?.updateLoad) {
+            throw new Error(`updateLoad mutation returned no data for load ${load.id}`);
+        }
+
+        // If the box we just unloaded was the last one, flip the load back to
+        // "to be loaded". Re-read the count right before writing the status (rather than
+        // trusting the decrement response above) to shrink the window where a concurrent
+        // operator loads another box onto this same Load between the two calls - this
+        // narrows but can't fully close that race without a backend-side atomic
+        // conditional update.
+        if (resultLoadResponse.updateLoad.numberHuLoaded <= 0) {
+            const currentLoadQuery = gql`
+                query load($id: String!) {
+                    load(id: $id) {
+                        id
+                        numberHuLoaded
+                    }
+                }
+            `;
+            const currentLoadResponse: GraphQLResponseType = await graphqlRequestClient.request(
+                currentLoadQuery,
+                { id: load.id },
                 requestHeader
             );
-            console.log('Result of Load Status', resultLoadResponse);
-        } else {
-            const dataForLoad = {
-                numberHuLoaded: load.numberHuLoaded - 1,
-                weight: load.weight - box.theoriticalWeight,
-                lastTransactionId
-            };
-            const updatedLoadVariables = {
-                id: load.id,
-                input: dataForLoad
-            };
-
-            const resultLoadResponse = await graphqlRequestClient.request(
-                updatedLoadMutation,
-                updatedLoadVariables,
-                requestHeader
-            );
-            console.log('Result of Load Status', resultLoadResponse);
+            if (currentLoadResponse?.load?.numberHuLoaded <= 0) {
+                resultLoadResponse = await graphqlRequestClient.request(
+                    updatedLoadMutation,
+                    {
+                        id: load.id,
+                        input: { status: configs.LOAD_STATUS_CREATED, lastTransactionId }
+                    },
+                    requestHeader
+                );
+                console.log('Result of Load Status (reset to CREATED)', resultLoadResponse);
+                if (!resultLoadResponse?.updateLoad) {
+                    throw new Error(`updateLoad mutation returned no data for load ${load.id}`);
+                }
+            }
         }
 
         // Query Load Line
@@ -233,6 +261,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         res.status(200).json({
             response: {
                 updatedBox: boxesResponse,
+                updatedLoad: resultLoadResponse.updateLoad,
                 lastTransactionId
             }
         });

@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { showError } from '@helpers';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { Modal } from 'antd';
@@ -41,15 +41,31 @@ export const AdvisedInventoryModal = ({
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
     const [isConfirmLoading, setIsConfirmLoading] = useState<boolean>(false);
+    // Synchronous re-entry guard: the state above only re-renders after the click handler
+    // returned, so two taps on "No" in the same frame would both reach executeFunction and
+    // create two advised inventories for the same location.
+    const isAnsweringRef = useRef<boolean>(false);
 
     const handleYes = async () => {
-        onCancel();
-        setIsConfirmLoading(false);
-        onSuccess();
+        if (isAnsweringRef.current) return;
+        isAnsweringRef.current = true;
+        try {
+            onCancel();
+            setIsConfirmLoading(false);
+            onSuccess();
+        } finally {
+            isAnsweringRef.current = false;
+        }
     };
 
     const handleNo = async () => {
-        await handleCreateInventory();
+        if (isAnsweringRef.current) return;
+        isAnsweringRef.current = true;
+        try {
+            await handleCreateInventory();
+        } finally {
+            isAnsweringRef.current = false;
+        }
     };
 
     const handleCreateInventory = async () => {
@@ -125,6 +141,13 @@ export const AdvisedInventoryModal = ({
             confirmLoading={isConfirmLoading}
             okText={t('common:bool-yes')}
             cancelText={t('common:bool-no')}
+            // "No" creates an advised inventory, so only the explicit button may answer it:
+            // a tap beside the modal, the Escape key or the close cross must not create one.
+            maskClosable={false}
+            keyboard={false}
+            closable={false}
+            okButtonProps={{ disabled: isConfirmLoading }}
+            cancelButtonProps={{ disabled: isConfirmLoading, loading: isConfirmLoading }}
         ></Modal>
     );
 };

@@ -18,24 +18,39 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-import {
-    PageContentWrapper,
-    HeaderContent,
-    RadioInfosHeader,
-    NavButton,
-    ContentSpin
-} from '@components';
+// Tablet rendering, same shell as visitor-entry.tsx. The step machine, the polling and every onClick
+// are unchanged; the shell around the steps is the kiosk skin — KioskProvider (bigger antd tokens,
+// Required / Optional field tags on step 30, dvh viewport fix, phone variant), KioskProgress,
+// KioskRecap and a sticky KioskActionBar with the back action on the left and the forward action on
+// the right — all from modules/Common/Kiosk/KioskSkin.tsx. RadioButtonWrapper / RadioInfosHeader
+// are not used here (their 10 px sizing is for RF handhelds).
+
+import { PageContentWrapper, HeaderContent, ContentSpin } from '@components';
 import { FC, useEffect, useMemo, useState } from 'react';
 import MainLayout from 'components/layouts/MainLayout';
 import {
     resolveAppointmentStatusCodes,
     useTranslationWithFallback as useTranslation
 } from '@helpers';
-import { Form, Space } from 'antd';
-import { UndoOutlined } from '@ant-design/icons';
+import { Button, Form, Popconfirm } from 'antd';
+import {
+    ArrowLeftOutlined,
+    ArrowRightOutlined,
+    CheckOutlined,
+    IdcardOutlined,
+    SearchOutlined,
+    TagOutlined,
+    UndoOutlined
+} from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import { gql } from 'graphql-request';
-import { RadioButtonWrapper, ButtonConfig } from 'helpers/utils/radioButtonWrapper';
+import {
+    KioskActionBar,
+    KioskButton,
+    KioskProgress,
+    KioskProvider,
+    KioskRecap
+} from 'modules/Common/Kiosk/KioskSkin';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { SelectLanguage } from 'modules/GateEntry/PagesContainer/SelectLanguage';
@@ -73,6 +88,8 @@ const GateEntry: PageComponent = () => {
     const [triggerSubmitSignature, setTriggerSubmitSignature] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [timedOut, setTimedOut] = useState(false);
+    // true once something has been drawn on the signature pad (step 50) — gates "Validate"
+    const [canSubmitSignature, setCanSubmitSignature] = useState(false);
 
     const currentStep: number = storedObject.currentStep ?? 10;
     // Status codes from the configs reducer (no extra request). Resolved through the shared
@@ -87,9 +104,10 @@ const GateEntry: PageComponent = () => {
         }
     }, [loading, isAuthenticated, router]);
 
-    // Reset the form whenever the step changes.
+    // Reset the form (and the signature gate) whenever the step changes.
     useEffect(() => {
         form.resetFields();
+        setCanSubmitSignature(false);
     }, [currentStep, form]);
 
     //#region global buttons
@@ -99,12 +117,17 @@ const GateEntry: PageComponent = () => {
         form.resetFields();
     };
 
+    // Return to the step completed just before the current one. The kiosk steps record their
+    // entry (with `previousStep` = their own number) only when they COMPLETE, unlike the RF forms
+    // which create it on arrival; reading the current step's entry, which does not exist yet,
+    // therefore always fell back to step 10 and "Back" restarted the whole flow.
     const onBack = () => {
-        dispatch({
-            type: 'ON_BACK',
-            processName,
-            stepToReturn: `step${storedObject[`step${currentStep}`]?.previousStep ?? 10}`
-        });
+        const completedBefore = Object.keys(storedObject)
+            .filter((k) => /^step\d+$/.test(k))
+            .map((k) => Number(k.slice(4)))
+            .filter((n) => n < currentStep);
+        const stepToReturn = completedBefore.length > 0 ? Math.max(...completedBefore) : 10;
+        dispatch({ type: 'ON_BACK', processName, stepToReturn: `step${stepToReturn}` });
         form.resetFields();
     };
 
@@ -201,47 +224,64 @@ const GateEntry: PageComponent = () => {
     }, [currentStep, appointmentId, statusCodes]);
     //#endregion
 
-    //#region RadioInfosHeader recap (found appointment)
-    const headerDisplay: { [k: string]: any } = {};
+    //#region recap (found appointment)
     const appointment = storedObject['step20']?.data?.appointment;
-    if (appointment && currentStep >= 30 && currentStep < 70) {
-        if (appointment.appointmentTypeText)
-            headerDisplay[t('common:type')] = appointment.appointmentTypeText;
-    }
+    const showRecap = !!appointment && currentStep >= 30 && currentStep < 70;
+    const recapType: string | null = showRecap ? (appointment.appointmentTypeText ?? null) : null;
+    const recapRefNumber: string | null = showRecap ? (appointment.name ?? null) : null;
     //#endregion
 
     //#region module buttons
-    const buttonManagement: ButtonConfig[] = [
+    // Secondary actions (back, ad hoc) render on the left of the sticky bar, the single forward
+    // action on the right — position and look tell them apart, not just the label.
+    const buttonManagement: KioskButton[] = [
         {
-            label: t('common:search'),
-            visibleOnSteps: [20],
-            onClick: () => form.submit(),
+            key: 'back',
+            label: t('common:back'),
+            icon: <ArrowLeftOutlined />,
+            variant: 'secondary',
+            visibleOnSteps: [30, 40, 50],
+            onClick: onBack,
             position: 'bottom'
         },
         {
+            key: 'ad-hoc',
             label: t('common:ad-hoc'),
+            variant: 'ghost',
             visibleOnSteps: [20],
             onClick: onAdHoc,
             position: 'bottom'
         },
         {
+            key: 'search',
+            label: t('common:search'),
+            icon: <SearchOutlined />,
+            variant: 'primary',
+            visibleOnSteps: [20],
+            onClick: () => form.submit(),
+            position: 'bottom'
+        },
+        {
+            key: 'next',
             label: t('common:next'),
+            icon: <ArrowRightOutlined />,
+            variant: 'primary',
             visibleOnSteps: [30, 40],
             onClick: () => form.submit(),
             position: 'bottom'
         },
         {
+            key: 'validate-signature',
             label: t('common:validate-signature'),
+            icon: <CheckOutlined />,
+            variant: 'primary',
             visibleOnSteps: [50],
+            // enabled once something has been drawn (SignatureForm reports it)
+            disabled: !canSubmitSignature,
+            loading: isSubmitting,
             onClick: () => {
                 if (!isSubmitting) setTriggerSubmitSignature(true);
             },
-            position: 'bottom'
-        },
-        {
-            label: t('common:back'),
-            visibleOnSteps: [30, 40, 50],
-            onClick: onBack,
             position: 'bottom'
         }
     ];
@@ -259,59 +299,101 @@ const GateEntry: PageComponent = () => {
 
     return (
         <PageContentWrapper>
-            <HeaderContent
-                title={t('common:title')}
-                actionsRight={
-                    showReset ? (
-                        <Space>
-                            <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
-                        </Space>
-                    ) : undefined
-                }
-            />
-            {Object.keys(headerDisplay).length > 0 && (
-                <RadioInfosHeader input={{ displayed: headerDisplay }} />
-            )}
+            <KioskProvider
+                requiredMarks={currentStep === 30}
+                className={`kiosk-gate step-${currentStep}`}
+            >
+                <HeaderContent
+                    title={t('common:title')}
+                    actionsRight={
+                        showReset ? (
+                            // a big, readable "start over" needs a confirmation: a driver tapping it
+                            // by mistake would otherwise lose the whole form
+                            <Popconfirm
+                                title={t('common:restart-confirm')}
+                                okText={t('common:yes')}
+                                cancelText={t('common:no')}
+                                onConfirm={onReset}
+                                placement="bottomRight"
+                            >
+                                <Button
+                                    type="text"
+                                    icon={<UndoOutlined />}
+                                    style={{ fontSize: 17 }}
+                                >
+                                    {t('common:retry')}
+                                </Button>
+                            </Popconfirm>
+                        ) : undefined
+                    }
+                />
+                <KioskProgress currentStep={currentStep} />
 
-            <RadioButtonWrapper buttonManagement={buttonManagement} currentStep={currentStep}>
-                {currentStep === 10 && <SelectLanguage processName={processName} stepNumber={10} />}
-                {currentStep === 20 && (
-                    <SearchAppointmentForm
-                        processName={processName}
-                        stepNumber={20}
-                        formToUse={form}
+                <div className="kiosk-body">
+                    <KioskRecap
+                        items={[
+                            {
+                                key: 'type',
+                                icon: <TagOutlined />,
+                                label: t('common:type'),
+                                value: recapType
+                            },
+                            {
+                                key: 'ref',
+                                icon: <IdcardOutlined />,
+                                label: t('common:ref-number'),
+                                value: recapRefNumber
+                            }
+                        ]}
                     />
-                )}
-                {currentStep === 30 && (
-                    <RegistrationForm processName={processName} stepNumber={30} formToUse={form} />
-                )}
-                {currentStep === 40 && (
-                    <SafetyChecklistForm
-                        processName={processName}
-                        stepNumber={40}
-                        formToUse={form}
-                    />
-                )}
-                {currentStep === 50 && (
-                    <SignatureForm
-                        processName={processName}
-                        stepNumber={50}
-                        submitTrigger={{
-                            triggerSubmit: triggerSubmitSignature,
-                            setTriggerSubmit: setTriggerSubmitSignature
-                        }}
-                        loading={{ isLoading: isSubmitting, setIsLoading: setIsSubmitting }}
-                    />
-                )}
-                {currentStep === 60 && <WaitingScreen timedOut={timedOut} onCancel={onReset} />}
-                {currentStep === 70 && (
-                    <ResultScreen
-                        processName={processName}
-                        onContinue={onReset}
-                        onContact={onReset}
-                    />
-                )}
-            </RadioButtonWrapper>
+                    {currentStep === 10 && (
+                        <SelectLanguage processName={processName} stepNumber={10} />
+                    )}
+                    {currentStep === 20 && (
+                        <SearchAppointmentForm
+                            processName={processName}
+                            stepNumber={20}
+                            formToUse={form}
+                        />
+                    )}
+                    {currentStep === 30 && (
+                        <RegistrationForm
+                            processName={processName}
+                            stepNumber={30}
+                            formToUse={form}
+                        />
+                    )}
+                    {currentStep === 40 && (
+                        <SafetyChecklistForm
+                            processName={processName}
+                            stepNumber={40}
+                            formToUse={form}
+                        />
+                    )}
+                    {currentStep === 50 && (
+                        <SignatureForm
+                            processName={processName}
+                            stepNumber={50}
+                            submitTrigger={{
+                                triggerSubmit: triggerSubmitSignature,
+                                setTriggerSubmit: setTriggerSubmitSignature
+                            }}
+                            loading={{ isLoading: isSubmitting, setIsLoading: setIsSubmitting }}
+                            onCanSubmitChange={setCanSubmitSignature}
+                        />
+                    )}
+                    {currentStep === 60 && <WaitingScreen timedOut={timedOut} onCancel={onReset} />}
+                    {currentStep === 70 && (
+                        <ResultScreen
+                            processName={processName}
+                            onContinue={onReset}
+                            onContact={onReset}
+                        />
+                    )}
+                </div>
+
+                <KioskActionBar buttons={buttonManagement} currentStep={currentStep} />
+            </KioskProvider>
         </PageContentWrapper>
     );
 };

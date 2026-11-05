@@ -20,6 +20,23 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { showError, showSuccess } from '@helpers';
 
+/**
+ * What the operator walks through with "next" is a location/article couple, not a location:
+ * several advised addresses can share one couple (the same article picked twice at the same
+ * place), and one location can carry several couples (two articles stored side by side).
+ * handlingUnitContentId is exactly that couple for a line backed by picking stock; a line
+ * without picking stock has none, so its couple falls back to its location and its article.
+ *
+ * This is THE key of the skip list (storedObject.ignoreHUContentIds): every reader of that
+ * list must compare with this function and never with a raw handlingUnitContentId, otherwise
+ * a line the operator skipped is proposed to him again.
+ */
+export const roundAdvisedAddressCouple = (raa: any) =>
+    raa?.handlingUnitContentId ??
+    `no-content:${raa?.locationId ?? 'no-location'}:${
+        raa?.roundLineDetail?.roundLine?.articleId ?? raa?.roundLineDetailId ?? raa?.id
+    }`;
+
 export interface IProcessHandlingParams {
     result: any;
     t: (key: string, options?: any) => string;
@@ -162,7 +179,7 @@ const handleRoundContinuation = (
     let ignoreHUContentIds = [...initialIgnoreHUContentIds];
 
     let remainingHUContentIds = updatedRound.roundAdvisedAddresses
-        .filter((raa: any) => !ignoreHUContentIds.includes(raa.handlingUnitContentId))
+        .filter((raa: any) => !ignoreHUContentIds.includes(roundAdvisedAddressCouple(raa)))
         .filter((raa: any) => raa.quantity != 0);
 
     if (remainingHUContentIds.length === 0) {
@@ -177,7 +194,8 @@ const handleRoundContinuation = (
         .filter((raa: any) => raa.quantity != 0)
         .filter(
             (raa: any) =>
-                raa.handlingUnitContentId === remainingHUContentIds[0]?.handlingUnitContentId
+                roundAdvisedAddressCouple(raa) ===
+                roundAdvisedAddressCouple(remainingHUContentIds[0])
         );
 
     // Prepare step10 data

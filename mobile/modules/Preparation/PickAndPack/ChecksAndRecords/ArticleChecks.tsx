@@ -22,6 +22,7 @@ import { showError } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
+import { getExpectedArticleId } from 'modules/Preparation/PickAndPack/Elements/expectedArticle';
 
 export interface IArticleChecksProps {
     dataToCheck: any;
@@ -51,19 +52,19 @@ export const ArticleChecks = ({ dataToCheck }: IArticleChecksProps) => {
         if (scannedInfo && articleLuBarcodesInfos) {
             if (articleLuBarcodesInfos.articleLuBarcodes?.count !== 0) {
                 const articleLuBarcode = articleLuBarcodesInfos.articleLuBarcodes?.results[0];
-                if (
-                    articleLuBarcode.articleId ==
-                    storedObject[`step10`].data.proposedRoundAdvisedAddresses[0]
-                        ?.handlingUnitContent?.articleId
-                ) {
+                // Same article reference as step20/step30/step40 (the delivery line): comparing the
+                // scan to the advised content refuses the article those steps just accepted.
+                const expectedArticleId = getExpectedArticleId(
+                    storedObject[`step10`]?.data?.proposedRoundAdvisedAddresses?.[0]
+                );
+                const scannedContent = contents?.find(
+                    (content: any) => content.articleId == articleLuBarcode.articleId
+                );
+                if (articleLuBarcode.articleId == expectedArticleId && scannedContent) {
                     const data: { [label: string]: any } = {};
                     data['articleLuBarcode'] = articleLuBarcode;
                     data['contents'] = contents;
-                    data['article'] = contents.find(
-                        (content: any) =>
-                            content.articleId ==
-                            articleLuBarcodesInfos.articleLuBarcodes.results[0].articleId
-                    ).article;
+                    data['article'] = scannedContent.article;
                     if (featureTypeDetailsInfos) {
                         data['article']['featureType'] = featureTypeDetailsInfos;
                     } else {

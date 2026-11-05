@@ -97,8 +97,18 @@ export const SelectHuModelForm = ({
     //query hums
     const getHUMs = async (): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
-            query handlingUnitModels($filters: HandlingUnitModelSearchFilters) {
-                handlingUnitModels(filters: $filters) {
+            query handlingUnitModels(
+                $filters: HandlingUnitModelSearchFilters
+                $orderBy: [HandlingUnitModelOrderByCriterion!]
+                $page: Int!
+                $itemsPerPage: Int!
+            ) {
+                handlingUnitModels(
+                    filters: $filters
+                    orderBy: $orderBy
+                    page: $page
+                    itemsPerPage: $itemsPerPage
+                ) {
                     results {
                         id
                         name

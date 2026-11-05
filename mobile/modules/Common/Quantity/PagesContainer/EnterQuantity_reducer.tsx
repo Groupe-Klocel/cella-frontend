@@ -176,7 +176,10 @@ export const EnterQuantity_reducer = ({
         stepNumber,
         enteredInfo: { enteredInfo, setEnteredInfo },
         requiredMaxQuantity,
-        stockMaxQuantity
+        stockMaxQuantity,
+        // Forwarded so the check component only asks "is the location empty?" when the
+        // *_CHECK_REMAINING_QUANTITY parameter of the flow is on.
+        checkRemainingQuantity
     };
 
     let rules: Array<any> = [{ required: true, message: t('messages:error-message-empty-input') }];

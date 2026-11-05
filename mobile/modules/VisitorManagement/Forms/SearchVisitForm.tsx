@@ -24,12 +24,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm, StyledForm, StyledFormItem } from '@components';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Alert, Divider, Form, Input } from 'antd';
+import moment from 'moment';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { useAuth } from 'context/AuthContext';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { Visit, resolveVisitStatusCodes, resolveVisitTypeCode } from '../types';
+
+// API dates are naive UTC strings ("2026-07-13T06:00:00"): read them as UTC, compare in the
+// tablet's local time. Day granularity on purpose - a visit booked 08:00 -> 12:00 and re-entered at
+// 14:00 is still the same visit, and a multi-day visit stays open until the end of its last day.
+// A visit with no end date is limited to the day it began.
+const isWithinVisitDates = (visit: Visit): boolean => {
+    if (!visit?.appointmentDateBegin) return false;
+    const begin = moment.utc(visit.appointmentDateBegin).local();
+    if (!begin.isValid()) return false;
+    const end = visit.appointmentDateEnd ? moment.utc(visit.appointmentDateEnd).local() : begin;
+    const last = end.isValid() && end.isAfter(begin) ? end : begin;
+    const now = moment();
+    return !now.isBefore(begin.clone().startOf('day')) && !now.isAfter(last.clone().endOf('day'));
+};
 
 export interface ISearchVisitFormProps {
     processName: string;
@@ -108,25 +123,35 @@ export const SearchVisitForm = ({ processName, stepNumber, formToUse }: ISearchV
             const visit =
                 results.find((r) => !visitTypeCode || r.appointmentType === visitTypeCode) ?? null;
 
-            if (!visit) {
-                setErrorKey('common:visit-not-found');
-            } else if (statusCodes.checkedIn && visit.status === statusCodes.checkedIn) {
-                setErrorKey('common:visit-already-checked-in');
-            } else if (statusCodes.checkedOut && visit.status === statusCodes.checkedOut) {
-                setErrorKey('common:visit-already-checked-out');
-            } else if (statusCodes.cancelled && visit.status === statusCodes.cancelled) {
-                setErrorKey('common:visit-cancelled');
-            } else if (!statusCodes.preRegistered || visit.status === statusCodes.preRegistered) {
+            const goToRegistration = () =>
                 dispatch({
                     type: 'UPDATE_BY_STEP',
                     processName,
                     stepName: `step${stepNumber}`,
                     object: {
                         previousStep: storedObject.currentStep,
-                        data: { visit, isWalkIn: false }
+                        data: { visit: visit!, isWalkIn: false }
                     },
                     customFields: [{ key: 'currentStep', value: 30 }]
                 });
+
+            if (!visit) {
+                setErrorKey('common:visit-not-found');
+            } else if (statusCodes.checkedIn && visit.status === statusCodes.checkedIn) {
+                setErrorKey('common:visit-already-checked-in');
+            } else if (statusCodes.checkedOut && visit.status === statusCodes.checkedOut) {
+                // A visit can be entered and left several times, as long as it is still running:
+                // a checked-out visitor coming back inside the booked dates starts a new entry
+                // (which the security desk validates again, like any other one).
+                if (isWithinVisitDates(visit)) {
+                    goToRegistration();
+                } else {
+                    setErrorKey('common:visit-already-checked-out');
+                }
+            } else if (statusCodes.cancelled && visit.status === statusCodes.cancelled) {
+                setErrorKey('common:visit-cancelled');
+            } else if (!statusCodes.preRegistered || visit.status === statusCodes.preRegistered) {
+                goToRegistration();
             } else {
                 setErrorKey('common:visit-not-found');
             }

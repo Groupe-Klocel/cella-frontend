@@ -19,13 +19,29 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
 import { WrapperForm, ContentSpin } from '@components';
-import { getLastStepWithPreviousStep, showError, showSuccess } from '@helpers';
+import { getLastStepWithPreviousStep, showError, showSuccess, showWarning } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { handlePickProcessResult } from '../Elements/endOfProcessHandling';
+// Redmine #36084 — anti-replay guard, see the header comment of that file
+import {
+    PICK_VALIDATION_GUARD_FIELD,
+    buildPickValidationKey,
+    fetchAdvisedAddressQuantities,
+    isPickValidationAlreadySent,
+    pickValidationMessages,
+    refreshAdvisedAddressQuantities,
+    translatePickValidationMessage,
+    withPickValidationSent,
+    withoutPickValidationSent,
+    withReadableErrorCodes,
+    isFailedPickValidationResult,
+    buildRoundSelectionSlice,
+    isStaleSnapshotServerRefusal
+} from 'helpers/utils/pickValidationGuard';
 
 export interface IAutoValidatePickProps {
     processName: string;
@@ -145,12 +161,90 @@ export const AutoValidatePickForm = ({
                 return;
             }
 
+            // #region Redmine #36084 — do not let a stale snapshot be picked twice
+            // Same round, same advised addresses, same advised quantities, same picked quantity
+            // => this exact validation already left this component. Refuse it, whether the repeat
+            // comes from a remount or from a process slice restored out of local storage.
+            const validationKey = buildPickValidationKey(
+                round?.id,
+                currentRoundInfo.roundAdvisedAddresses,
+                movingQuantity
+            );
+            if (isPickValidationAlreadySent(storedObject, validationKey)) {
+                showError(translatePickValidationMessage(t, pickValidationMessages.alreadySent));
+                setIsAutoValidateLoading(false);
+                // the snapshot is stale: send him back to the round selection, not one step back
+                backToRoundSelection();
+                return;
+            }
+
+            setIsAutoValidateLoading(true);
+
+            // Re-read the advised addresses instead of trusting the snapshot frozen at step 10,
+            // then recompute what may still be picked from that fresh value.
+            let refreshed;
+            try {
+                const dbQuantities = await fetchAdvisedAddressQuantities(
+                    graphqlRequestClient,
+                    currentRoundInfo.roundAdvisedAddresses.map((advised: any) => advised.id)
+                );
+                refreshed = refreshAdvisedAddressQuantities(
+                    currentRoundInfo.roundAdvisedAddresses,
+                    dbQuantities
+                );
+            } catch (error) {
+                showError(t('messages:error-executing-function'));
+                console.log('roundAdvisedAddressesRefreshError', error);
+                setIsAutoValidateLoading(false);
+                onBack();
+                return;
+            }
+
+            // Nothing left in database (or the advised address is gone): say so instead of
+            // sending a decrement that would drive the quantity negative.
+            if (refreshed.missingIds.length > 0 || refreshed.availableQuantity <= 0) {
+                showError(
+                    translatePickValidationMessage(t, pickValidationMessages.nothingLeftToPick)
+                );
+                setIsAutoValidateLoading(false);
+                backToRoundSelection();
+                return;
+            }
+
+            // Partial rest in database: pick what is left rather than what the snapshot claimed
+            const effectiveMovingQuantity = Math.min(
+                Number(movingQuantity ?? 0),
+                refreshed.availableQuantity
+            );
+            if (effectiveMovingQuantity < Number(movingQuantity ?? 0)) {
+                showWarning(
+                    translatePickValidationMessage(t, pickValidationMessages.quantityAdjusted)
+                );
+            }
+
+            // Stored *before* the request is issued: AppLayout mirrors the process slice into
+            // local storage with a 1 s debounce, so a slice restored later carries the guard.
+            dispatch({
+                type: 'UPDATE_BY_STEP',
+                processName: processName,
+                stepName: `step${stepNumber}`,
+                customFields: [
+                    {
+                        key: PICK_VALIDATION_GUARD_FIELD,
+                        value: withPickValidationSent(storedObject, validationKey)
+                    }
+                ]
+            });
+            // #endregion
+
             const inputToValidate = {
-                movementInput,
-                currentRoundInfo
+                movementInput: { ...movementInput, movingQuantity: effectiveMovingQuantity },
+                currentRoundInfo: {
+                    ...currentRoundInfo,
+                    roundAdvisedAddresses: refreshed.advisedAddresses
+                }
             };
             //For HU creation : look at the ValidateRoundPacking API
-            setIsAutoValidateLoading(true);
             const query = gql`
                 mutation executeFunction($functionName: String!, $event: JSON!) {
                     executeFunction(functionName: $functionName, event: $event) {
@@ -168,13 +262,24 @@ export const AutoValidatePickForm = ({
             };
             try {
                 const validateFullBoxResult = await graphqlRequestClient.request(query, variables);
+                // Same reasoning as the catch below: an ERROR or a business KO wrote nothing, so
+                // the guard must not outlive the failure and refuse the retry.
+                if (isFailedPickValidationResult(validateFullBoxResult)) {
+                    releasePickValidationGuard(validationKey);
+                }
+                // The server's own anti-replay refusal also proves the snapshot is stale, so it
+                // gets the same recovery; every other business error keeps the plain back action.
+                const recovery = isStaleSnapshotServerRefusal(validateFullBoxResult)
+                    ? backToRoundSelection
+                    : onBack;
                 handlePickProcessResult({
                     result: validateFullBoxResult,
-                    t,
+                    // the server refuses a replay with the untranslated code `errors:500`
+                    t: withReadableErrorCodes(t),
                     storedObject,
                     processName,
                     dispatch,
-                    onBack,
+                    onBack: recovery,
                     setIsAutoValidateLoading,
                     huName: hu.name || hu,
                     huType,
@@ -182,6 +287,8 @@ export const AutoValidatePickForm = ({
                     context: 'autoValidate'
                 });
             } catch (error) {
+                // Nothing was validated: let the operator send this exact pick again
+                releasePickValidationGuard(validationKey);
                 showError(t('messages:error-executing-function'));
                 console.log('executeFunctionError', error);
                 onBack();
@@ -191,12 +298,43 @@ export const AutoValidatePickForm = ({
         onFinish();
     }, []);
 
+    // Redmine #36084 — undo the guard written just before the call, on the failure paths only.
+    // `ON_BACK` keeps every non-`step*` field of the process slice, so without this the key would
+    // survive the failure and the operator's retry would be refused as "already validated".
+    // Never called on the success path, where `handlePick*ProcessResult` replaces the whole slice.
+    const releasePickValidationGuard = (validationKey: string) => {
+        dispatch({
+            type: 'UPDATE_BY_STEP',
+            processName: processName,
+            stepName: `step${stepNumber}`,
+            customFields: [
+                {
+                    key: PICK_VALIDATION_GUARD_FIELD,
+                    value: withoutPickValidationSent(storedObject, validationKey)
+                }
+            ]
+        });
+    };
+
     //AutoValidatePick-1b: handle back to previous step settings
     const onBack = () => {
         dispatch({
             type: 'ON_BACK',
             processName: processName,
             stepToReturn: `step${getLastStepWithPreviousStep(storedObject)}`
+        });
+    };
+
+    // Redmine #36084 — recovery for a refusal caused by a stale snapshot. `onBack()` pops one step
+    // and keeps `step10`, so the operator was re-proposed the very line that was just refused and
+    // looped on it; on `pick-and-pack` the back action could not even reach the round selection any
+    // more. Replacing the whole slice puts him on the round selection with the equipment kept, so
+    // his next tap re-reads the round from the database and lands him on the correct next line.
+    const backToRoundSelection = () => {
+        dispatch({
+            type: 'UPDATE_BY_PROCESS',
+            processName: processName,
+            object: buildRoundSelectionSlice(storedObject)
         });
     };
 

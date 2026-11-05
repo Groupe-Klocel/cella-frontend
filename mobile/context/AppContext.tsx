@@ -52,6 +52,7 @@ interface State {
     movementToProcess: Record<string, any>;
     pick: Record<string, any>;
     pack: Record<string, any>;
+    manualRepacking: Record<string, any>;
     gateEntry: Record<string, any>;
     visitorEntry: Record<string, any>;
     contentMvt: Record<string, any>;
@@ -199,6 +200,7 @@ const initialState: State = {
     movementToProcess: {},
     pick: {},
     pack: {},
+    manualRepacking: {},
     gateEntry: {},
     visitorEntry: {},
     equipmentPositionRelease: {},
@@ -303,6 +305,7 @@ function reducer(state: State, action: Action): State {
                     movementToProcess: {},
                     pick: {},
                     pack: {},
+                    manualRepacking: {},
                     gateEntry: {},
                     visitorEntry: {},
                     equipmentPositionRelease: {},

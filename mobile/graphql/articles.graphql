@@ -66,47 +66,6 @@ query GetAllArticles(
     }
 }
 
-query GetArticleById($id: String!, $language: String = "en") {
-    article(id: $id, language: $language) {
-        id
-        extras
-        created
-        createdBy
-        modified
-        modifiedBy
-        status
-        description
-        name
-        additionalDescription
-        genericArticleComment
-        supplierName
-        translation
-        length
-        width
-        height
-        baseUnitPrice
-        baseUnitWeight
-        baseUnitPicking
-        baseUnitRotation
-        cubingType
-        featureType
-        permanentProduct
-        tariffClassification
-        family
-        subfamily
-        groupingId
-        countryOfOrigin
-        newProduct
-        endOfLife
-        supportQuantity
-        stockOwnerId
-        statusText
-        cubingTypeText
-        baseUnitRotationText
-        featureTypeText
-    }
-}
-
 query GetArticleIds(
     $filters: ArticleSearchFilters
     $orderBy: [ArticleOrderByCriterion!]

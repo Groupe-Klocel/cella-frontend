@@ -22,7 +22,6 @@ import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
-    ButtonManagementType,
     HeaderManagementType,
     applyRfActionButtonsConfig,
     buildHeaderDisplay,
@@ -50,7 +49,8 @@ import { QuantityChecks_reducer } from 'modules/StockManagement/ContentMovement/
 import { HandlingUnitOriginChecks_reducer } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitOriginChecks_reducer';
 import { HandlingUnitFinalChecks_reducer } from 'modules/StockManagement/ContentMovement/ChecksAndRecords/HandlingUnitFinalChecks_reducer';
 import { ValidateQuantityMoveForm_reducer } from 'modules/StockManagement/ContentMovement/Forms/ValidateQuantityMove_reducer';
-import { RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { ButtonConfig, RadioButtonWrapper } from 'helpers/utils/radioButtonWrapper';
+import { useRfButtonLock } from 'helpers/utils/rfButtonLock';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
@@ -67,6 +67,8 @@ const ContentMvmt: PageComponent = () => {
     const [showSimilarLocations, setShowSimilarLocations] = useState<boolean>(false);
     const [showEmptyLocations, setShowEmptyLocations] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    // Locked while an action button runs or a step validates itself (helpers/utils/rfButtonLock.ts)
+    const { isLocked } = useRfButtonLock();
     const [form] = Form.useForm();
 
     const { originLocation: enforcedOriginLocation } = router.query;
@@ -363,12 +365,14 @@ const ContentMvmt: PageComponent = () => {
     //#endregion
 
     //#region module buttons
-    const buttonManagement: ButtonManagementType = [
+    const buttonManagement: ButtonConfig[] = [
         {
             key: 'submit',
             label: t('actions:submit'),
             visibleOnSteps: [10, 15, 20, 30, 35, 50, 60, 65, 70, 80],
-            onClick: () => form.submit(),
+            // hold: the step behind may call the API without rendering a spinner
+            onClick: () => form.validateFields().then(() => form.submit()),
+            lock: true,
             position: 'bottom'
         },
         {
@@ -380,6 +384,7 @@ const ContentMvmt: PageComponent = () => {
                 setHeaderContent(true);
                 setShowSimilarLocations(true);
             },
+            lock: false, // display toggle
             position: 'bottom'
         },
         {
@@ -391,6 +396,7 @@ const ContentMvmt: PageComponent = () => {
                 setShowSimilarLocations(false);
                 setShowEmptyLocations(true);
             },
+            lock: false, // display toggle
             position: 'bottom'
         },
         {
@@ -461,11 +467,19 @@ const ContentMvmt: PageComponent = () => {
                 actionsRight={
                     <Space>
                         {storedObject.currentStep > 10 ? (
-                            <NavButton icon={<UndoOutlined />} onClick={onReset}></NavButton>
+                            <NavButton
+                                icon={<UndoOutlined />}
+                                onClick={onReset}
+                                disabled={isLocked}
+                            ></NavButton>
                         ) : (
                             <></>
                         )}
-                        <NavButton icon={<ArrowLeftOutlined />} onClick={previousPage}></NavButton>
+                        <NavButton
+                            icon={<ArrowLeftOutlined />}
+                            onClick={previousPage}
+                            disabled={isLocked}
+                        ></NavButton>
                     </Space>
                 }
             />
