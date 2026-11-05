@@ -19,6 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { AppLink, ContentSpin, DetailsList, HeaderContent } from '@components';
 import { Alert, Button, Layout, Space, Typography } from 'antd';
+import dayjs from 'dayjs';
+import { toDataUrl } from 'modules/CustomObjects/Elements/DocumentPreview';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
@@ -34,7 +36,8 @@ import {
     useDetail,
     useFieldRules,
     useSoftDelete,
-    useUpdate
+    useUpdate,
+    setUTCDateTime
 } from '@helpers';
 import { ModelType } from 'models/ModelsV2';
 import { useRouter } from 'next/router';
@@ -51,6 +54,14 @@ const StyledPageContent = styled(Layout.Content)`
     padding: 15px 40px 15px 15px;
     margin: 0px 15px;
     position: relative;
+
+    /* phone / narrow window (same 768px threshold as DetailsList and the page header): no 40px
+       gutter for the floating reload button - it is inline there - and the whole width for the
+       field tables */
+    @media (max-width: 767px) {
+        padding: 4px 12px 16px;
+        margin: 0;
+    }
 `;
 
 const WrapperStickyActions = styled.div`
@@ -58,6 +69,13 @@ const WrapperStickyActions = styled.div`
     right: 0px;
     top: 50px;
     align-self: flex-end;
+
+    @media (max-width: 767px) {
+        position: static;
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 4px;
+    }
 `;
 
 export type HeaderData = {
@@ -89,7 +107,7 @@ export interface ISingleItemProps {
 }
 
 const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
-    const { permissions } = useAppState();
+    const { permissions, configs, parameters } = useAppState();
     const { t } = useTranslation();
     const router = useRouter();
     const filteredLanguage = getLanguageCode(router);
@@ -139,6 +157,40 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
             }
             return obj;
         });
+    // fields whose time part must never be displayed (`dateOnly` flag carried by the model)
+    const dateOnlyDetailFields = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].dateOnly)
+        .map((key) => key.replaceAll('{', '_').replaceAll('}', ''));
+
+    // fields holding an attached document, displayed as a link (flag carried by the model)
+    const documentLinkDetailFields = Object.keys(props.dataModel.fieldsInfo)
+        .filter((key) => props.dataModel.fieldsInfo[key].documentLink)
+        .map((key) => key.replaceAll('{', '_').replaceAll('}', ''));
+
+    // Opens an attached document in a new tab. The value is a base64 data URI (or a bare base64 /
+    // URL, see toDataUrl); browsers refuse top-level navigations to data: URLs, so the payload is
+    // served through a short-lived blob URL.
+    const openAttachedDocument = (src: string) => {
+        try {
+            const dataUrl = toDataUrl(src);
+            if (!dataUrl.startsWith('data:')) {
+                window.open(dataUrl, '_blank', 'noopener');
+                return;
+            }
+            const header = dataUrl.substring(5, dataUrl.indexOf(','));
+            const mime = header.split(';')[0] || 'application/octet-stream';
+            const byteArray = Uint8Array.from(
+                window.atob(dataUrl.substring(dataUrl.indexOf(',') + 1)),
+                (char) => char.charCodeAt(0)
+            );
+            const url = URL.createObjectURL(new Blob([byteArray], { type: mime }));
+            window.open(url, '_blank');
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } catch (error) {
+            console.error('Error opening the attached document:', error);
+            showError(t('messages:error-downloading-document'));
+        }
+    };
     const displayedLabels = Object.keys(props.dataModel.fieldsInfo)
         .filter((key) => props.dataModel.fieldsInfo[key].displayName !== null)
         .reduce((obj: any, key) => {
@@ -253,9 +305,71 @@ const ItemDetailComponent: FC<ISingleItemProps> = (props: ISingleItemProps) => {
                 }
             });
 
-            let flattenedData = flatten(detailObj);
+            // `flatten` keeps only the last element of an array: a top-level list of plain values
+            // (e.g. cubing tags `["FRAGILE", "FOOD"]`) is joined on the display copy instead, so
+            // the detail shows every value. When the model gives the field a `param` / `config`
+            // scope, the values are its codes and each one is shown with the label the forms
+            // offer (translation in the screen's language, else the row's value, else the code).
+            // `props.setData` still gets the raw record.
+            const displayObj = { ...detailObj };
+            Object.keys(displayObj).forEach((key) => {
+                const value = displayObj[key];
+                if (
+                    Array.isArray(value) &&
+                    value.length > 0 &&
+                    value.every((element: any) => Object(element) !== element)
+                ) {
+                    const fieldInfo = props.dataModel.fieldsInfo[key];
+                    const scopedRows = fieldInfo?.param
+                        ? (parameters ?? []).filter((row: any) => row.scope === fieldInfo.param)
+                        : fieldInfo?.config
+                          ? (configs ?? []).filter((row: any) => row.scope === fieldInfo.config)
+                          : [];
+                    displayObj[key] = value
+                        .map((element: any) => {
+                            const row = scopedRows.find(
+                                (item: any) => String(item.code) === String(element)
+                            );
+                            return row
+                                ? (row.translation?.[filteredLanguage] ?? row.value ?? element)
+                                : element;
+                        })
+                        .join(', ');
+                }
+            });
+            let flattenedData = flatten(displayObj);
 
             if (props.setData) props.setData(flatten(detailObj));
+
+            // a field flagged `dateOnly` in the model (see the model fieldsInfo) carries a date
+            // whose time part is meaningless. Reducing the value to YYYY-MM-DD is enough: the
+            // shared - and deliberately untouched - DetailsList then takes its `isStringDate`
+            // branch and renders a plain date. The day MUST be the one the standard date+time
+            // rendering shows: the API returns naive datetimes that are displayed shifted by the
+            // browser offset (22:00 UTC already shows on the next day), so the day is derived from
+            // the very same `setUTCDateTime` pipeline instead of from the raw string. Done on the
+            // display copy only, so `props.setData` - used by the pages' extra components - still
+            // gets the raw value.
+            dateOnlyDetailFields.forEach((key) => {
+                const value = flattenedData[key];
+                if (typeof value === 'string' && !isNaN(new Date(value).getTime())) {
+                    flattenedData[key] = dayjs(setUTCDateTime(value)).format('YYYY-MM-DD');
+                }
+            });
+            // A field flagged `documentLink` in the model holds an attached document (base64 data
+            // URI). The display copy gets a link opening it instead of the raw value, which the
+            // shared DetailsList would otherwise blank out; `props.setData` (used by the pages'
+            // extra components and print lists) still gets the raw value.
+            documentLinkDetailFields.forEach((key) => {
+                const value = flattenedData[key];
+                if (typeof value === 'string' && value) {
+                    flattenedData[key] = (
+                        <Typography.Link onClick={() => openAttachedDocument(value)}>
+                            {t('actions:view-document')}
+                        </Typography.Link>
+                    );
+                }
+            });
             // detect if linkfields.name is part of flattenedData keys and replace it if yes
             const keys = Object.keys(flattenedData); // get all the keys in flattenedData
             const linksList: Array<any> = [];

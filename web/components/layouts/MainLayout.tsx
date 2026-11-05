@@ -135,11 +135,14 @@ const MainLayout: FC<IMainLayoutProps> = ({ children }: IMainLayoutProps) => {
                         )}
                         <AppContent>{children}</AppContent>
                     </StyledBodyLayout>
+                    {/* forceRender: on compact screens this is the only SideMenu, and it must
+                        publish the menu entries for the breadcrumb picker before being opened */}
                     <ResponsiveMenuDrawer
                         placement="left"
                         width={280}
                         onClose={closeResponsiveMenu}
                         open={isCompactDesktop && isResponsiveMenuOpen}
+                        forceRender
                     >
                         <div className="scrollbar" style={{ height: '100%' }}>
                             <SideMenu />

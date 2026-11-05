@@ -748,10 +748,12 @@ const PrintLocationsModalForm = ({ showModal }: IPrintLocationsModalFormProps) =
                                 </Option>
                             ))}
                         </Select>
-                        <Text disabled italic style={{ fontSize: '10px' }}>
-                            {t('messages:no-printer-behaviour')}
-                        </Text>
                     </Form.Item>
+                    {/* outside the Form.Item: with two children the item no longer binds the
+                    Select (value / onChange), so the chosen printer was never submitted */}
+                    <Text disabled italic style={{ fontSize: '10px' }}>
+                        {t('messages:no-printer-behaviour')}
+                    </Text>
                 </Row>
             </Form>
         </Modal>

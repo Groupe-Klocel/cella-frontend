@@ -22,6 +22,12 @@ import { Layout, Input } from 'antd';
 
 const WrapperForm = styled.div`
     padding: 20px;
+
+    /* phone / narrow window: the page containers around the hand-written forms already keep a
+       20px gutter once their side margins are dropped (see styles/globals.css) */
+    @media (max-width: 767px) {
+        padding: 12px;
+    }
 `;
 const WrapperStepContent = styled.div`
     margin: 40px auto;
@@ -31,6 +37,20 @@ const WrapperStickyActions = styled.div`
     right: 0px;
     top: 15px;
     align-self: flex-end;
+
+    /* phone / narrow window: the column of table buttons (columns, import, export, reload)
+       becomes a right-aligned row above the table instead of floating in a 40px gutter the
+       screen cannot spare (see PageTableContentWrapper) */
+    @media (max-width: 767px) {
+        position: static;
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
+
+        .ant-space-vertical {
+            flex-direction: row;
+        }
+    }
 `;
 
 const InputWrapper = styled.div`
@@ -93,6 +113,10 @@ const PageTableContentWrapper = styled(Layout.Content)`
     padding: 15px 40px 15px 15px;
     position: relative;
     min-width: 0;
+
+    @media (max-width: 767px) {
+        padding: 8px 8px 12px;
+    }
 `;
 export {
     PageContentWrapper,

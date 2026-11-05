@@ -337,6 +337,16 @@ export const AddLocationForm = () => {
                 >
                     <InputNumber min={0} />
                 </Form.Item>
+                <Form.Item
+                    label={t('d:aisle-step')}
+                    name="aisleStep"
+                    initialValue={1}
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
+                    <InputNumber min={1} precision={0} />
+                </Form.Item>
                 <Divider />
                 <Form.Item
                     label={t('common:column')}
@@ -359,6 +369,16 @@ export const AddLocationForm = () => {
                     ]}
                 >
                     <InputNumber min={0} />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:column-step')}
+                    name="columnStep"
+                    initialValue={1}
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
+                    <InputNumber min={1} precision={0} />
                 </Form.Item>
                 <Divider />
                 <Form.Item
@@ -383,6 +403,16 @@ export const AddLocationForm = () => {
                 >
                     <InputNumber min={0} />
                 </Form.Item>
+                <Form.Item
+                    label={t('d:level-step')}
+                    name="levelStep"
+                    initialValue={1}
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
+                    <InputNumber min={1} precision={0} />
+                </Form.Item>
                 <Divider />
                 <Form.Item
                     label={t('d:position')}
@@ -402,6 +432,16 @@ export const AddLocationForm = () => {
                     ]}
                 >
                     <InputNumber min={0} />
+                </Form.Item>
+                <Form.Item
+                    label={t('d:position-step')}
+                    name="positionStep"
+                    initialValue={1}
+                    rules={[
+                        { required: true, message: `${t('messages:error-message-empty-input')}` }
+                    ]}
+                >
+                    <InputNumber min={1} precision={0} />
                 </Form.Item>
                 <Divider />
                 <Form.Item label={t('d:length')} name="length">

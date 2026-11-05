@@ -17,12 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { BulbOutlined } from '@ant-design/icons';
+import { BulbOutlined, PaperClipOutlined } from '@ant-design/icons';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { Tag } from 'antd';
 import { AiUiContext } from 'context/CellaBotContext';
 import styled from 'styled-components';
-import { AiExposedDocument } from '../cellaBotApi';
+import { AiDocumentAnalysisAvailability, AiExposedDocument } from '../cellaBotApi';
 
 const Wrapper = styled.div`
     padding: 8px 12px 4px;
@@ -40,6 +40,9 @@ const Hint = styled.div`
     margin-bottom: 6px;
 `;
 
+// Document sources through which the assistant can read the files stored on the record on screen.
+const RECORD_DOCUMENT_SOURCES = ['record', 'attached', 'attachment'];
+
 interface Suggestion {
     key: string;
     label: string;
@@ -52,15 +55,19 @@ const normalizeEntity = (entityType?: string) => (entityType ?? '').replace(/_/g
 /**
  * Contextual quick prompts shown while the conversation is empty: a static screen-aware set
  * (detail page / filtered list) + data-driven "generate <document>" chips from the warehouse's
- * exposed documents. Clicking a chip sends the prompt right away.
+ * exposed documents. Clicking a chip sends the prompt right away. When the warehouse lets the chat
+ * read documents, a detail page also offers to analyze the record's own documents, and a hint
+ * points at the paperclip.
  */
 const CellaBotSuggestions = ({
     context,
     exposedDocuments,
+    documentAnalysis,
     onPick
 }: {
     context: AiUiContext;
     exposedDocuments: Array<AiExposedDocument>;
+    documentAnalysis?: AiDocumentAnalysisAvailability | null;
     onPick: (prompt: string) => void;
 }) => {
     const { t } = useTranslation();
@@ -113,6 +120,21 @@ const CellaBotSuggestions = ({
                 )
             });
         }
+        // The assistant reads the record's stored files itself (analyze_document with the record
+        // from the UI context) — offered only when the warehouse allows that source.
+        const readsRecordDocuments = (documentAnalysis?.allowedSources ?? []).some((source) =>
+            RECORD_DOCUMENT_SOURCES.includes(source)
+        );
+        if (documentAnalysis?.enabled && readsRecordDocuments) {
+            suggestions.push({
+                key: 'record-documents',
+                label: tt('common:cellabot-suggest-documents', "Analyze this record's documents"),
+                prompt: tt(
+                    'common:cellabot-suggest-documents-prompt',
+                    'Analyze the documents attached to the record I am viewing and report anything that needs attention.'
+                )
+            });
+        }
     } else if (onList) {
         suggestions.push(
             {
@@ -161,10 +183,20 @@ const CellaBotSuggestions = ({
             });
         });
 
-    if (suggestions.length === 0) return null;
+    const canAttach = documentAnalysis?.enabled === true;
+    if (suggestions.length === 0 && !canAttach) return null;
 
     return (
         <Wrapper>
+            {canAttach && (
+                <Hint>
+                    <PaperClipOutlined />{' '}
+                    {tt(
+                        'common:cellabot-attach-hint',
+                        'Attach a photo, a PDF or a spreadsheet with the paperclip.'
+                    )}
+                </Hint>
+            )}
             <Hint>
                 <BulbOutlined /> {tt('common:cellabot-suggestions', 'Suggestions')}
             </Hint>

@@ -42,6 +42,7 @@ import { appointmentsRoutes as itemRoutes } from 'modules/Appointments/Static/ap
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
 import { AppointmentDetailsExtra } from 'modules/Appointments/Elements/AppointmentDetailsExtra';
+import { AppointmentSignature } from 'modules/Appointments/Elements/AppointmentSignature';
 import { NoShowReasonModal } from 'modules/Appointments/Elements/NoShowReasonModal';
 
 type PageComponent = FC & { layout: typeof MainLayout };
@@ -74,6 +75,12 @@ const AppointmentPage: PageComponent = () => {
     // undefined = not loaded yet (never write extras in that state, it would wipe the
     // driver's signature and safety-checklist acceptance); null = loaded and empty.
     const [extrasData, setExtrasData] = useState<any>();
+    // The raw `extras` read below feeds the signed-documents list. 'loading' and 'error' are not
+    // absences of documents, so the state travels down to AcceptedDocumentsList instead of being
+    // swallowed by a bare console.error - the visitor detail page reads the same payload this way.
+    const [extrasReadState, setExtrasReadState] = useState<'loading' | 'error' | 'ready'>(
+        'loading'
+    );
     // Real column now, no longer a key inside `extras`.
     const [pagerNumber, setPagerNumber] = useState<string | null>(null);
 
@@ -388,6 +395,7 @@ const AppointmentPage: PageComponent = () => {
                     }
                 }
             `;
+            setExtrasReadState('loading');
             try {
                 const result = await graphqlRequestClient.request(query, { id });
                 setContentData(result?.appointment?.content ?? undefined);
@@ -398,8 +406,10 @@ const AppointmentPage: PageComponent = () => {
                 // merge against, so it must be the fresh server copy, not a flattened view.
                 setExtrasData(result?.appointment?.extras ?? null);
                 setPagerNumber(result?.appointment?.pagerNumber ?? null);
+                setExtrasReadState('ready');
             } catch (e) {
                 console.error(e);
+                setExtrasReadState('error');
             }
         };
         fetchContent();
@@ -746,20 +756,29 @@ const AppointmentPage: PageComponent = () => {
             <AppHead title={headerData.title} />
             <ItemDetailComponent
                 extraDataComponent={
-                    <AppointmentDetailsExtra
-                        appointmentId={id}
-                        appointmentName={data?.name}
-                        appointmentType={data?.appointmentType}
-                        stockOwnerId={data?.stockOwnerId}
-                        stockOwnerName={data?.stockOwner_name}
-                        carrierId={data?.carrierId}
-                        status={data?.status}
-                        content={contentData}
-                        gateCheckIn={extrasData?.gateCheckIn}
-                        pagerNumber={pagerNumber}
-                        printLanguage={data?.printLanguage ?? undefined}
-                        setDocumentAttachmentsData={setDocumentAttachmentsData}
-                    />
+                    <>
+                        <AppointmentSignature
+                            signature={
+                                extrasData?.gateSignature ?? extrasData?.visitorSignature ?? null
+                            }
+                            safetyChecklist={extrasData?.safetyChecklist}
+                            extrasReadState={extrasReadState}
+                        />
+                        <AppointmentDetailsExtra
+                            appointmentId={id}
+                            appointmentName={data?.name}
+                            appointmentType={data?.appointmentType}
+                            stockOwnerId={data?.stockOwnerId}
+                            stockOwnerName={data?.stockOwner_name}
+                            carrierId={data?.carrierId}
+                            status={data?.status}
+                            content={contentData}
+                            gateCheckIn={extrasData?.gateCheckIn}
+                            pagerNumber={pagerNumber}
+                            printLanguage={data?.printLanguage ?? undefined}
+                            setDocumentAttachmentsData={setDocumentAttachmentsData}
+                        />
+                    </>
                 }
                 headerData={headerData}
                 id={id!}

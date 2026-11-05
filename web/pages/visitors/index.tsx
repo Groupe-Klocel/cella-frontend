@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-import { FC, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { Button, Modal, Space, Tag, Tooltip } from 'antd';
 import { ModeEnum } from 'generated/graphql';
 import MainLayout from 'components/layouts/MainLayout';
@@ -38,7 +38,12 @@ import {
 } from '@helpers';
 import { VisitorModelV2 as model } from '@helpers';
 import { visitorsRoutes as itemRoutes } from 'modules/Visitors/Static/visitorsRoutes';
-import { checkOutVisit, cancelVisit } from 'modules/Visitors/Functions/visitorActions';
+import {
+    checkOutVisit,
+    cancelVisit,
+    isVisitWithinDateRange,
+    normalizeZones
+} from 'modules/Visitors/Functions/visitorActions';
 import { gql } from 'graphql-request';
 import { ActionButtons, HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { AppHead, LinkButton } from '@components';
@@ -81,6 +86,58 @@ const VisitorsPage: PageComponent = () => {
         return criteria;
     }, [visitTypeCode, onSiteOnly, visitStatuses]);
 
+    // The generic list FLATTENS every record before rendering it (helpers/utils/utils.ts): an array
+    // of strings collapses to its last element, so `record.allowedZones` reaches the column as a
+    // single zone - or as nothing when the visit has none - and the column stayed empty. The zones
+    // are therefore read back for the rows on screen, exactly like the visit detail does for extras.
+    const [displayedRows, setDisplayedRows] = useState<any[]>([]);
+    const [zonesById, setZonesById] = useState<Record<string, string[]>>({});
+
+    const displayedIdsKey = useMemo(
+        () =>
+            (displayedRows ?? [])
+                .map((row: any) => row?.id)
+                .filter(Boolean)
+                .join(','),
+        [displayedRows]
+    );
+
+    useEffect(() => {
+        const ids = displayedIdsKey ? displayedIdsKey.split(',') : [];
+        if (ids.length === 0) {
+            setZonesById({});
+            return;
+        }
+        let active = true;
+        const query = gql`
+            query visitAllowedZones($filters: AppointmentSearchFilters, $itemsPerPage: Int!) {
+                appointments(filters: $filters, itemsPerPage: $itemsPerPage) {
+                    results {
+                        id
+                        allowedZones
+                    }
+                }
+            }
+        `;
+        graphqlRequestClient
+            .request(query, { filters: { id: ids }, itemsPerPage: ids.length })
+            .then((res: any) => {
+                if (!active) return;
+                const map: Record<string, string[]> = {};
+                (res?.appointments?.results ?? []).forEach((visit: any) => {
+                    map[visit.id] = normalizeZones(visit.allowedZones);
+                });
+                setZonesById(map);
+            })
+            .catch((error: any) => {
+                // an unreadable zone list must not break the list itself
+                console.error('Error getting the allowed zones:', error);
+            });
+        return () => {
+            active = false;
+        };
+    }, [displayedIdsKey, graphqlRequestClient]);
+
     const printEvacuationList = async () => {
         if (!visitTypeCode || !visitStatuses.checkedIn) {
             showError(t('messages:error-getting-data'));
@@ -114,11 +171,9 @@ const VisitorsPage: PageComponent = () => {
             const printedAt = new Date().toLocaleString(language);
             const rows = visitors
                 .map((visitor: any) => {
-                    const zones = Array.isArray(visitor.allowedZones)
-                        ? visitor.allowedZones
-                              .map((zone: string) => getVisitZoneLabel(parameters, zone, language))
-                              .join(', ')
-                        : '';
+                    const zones = normalizeZones(visitor.allowedZones)
+                        .map((zone: string) => getVisitZoneLabel(parameters, zone, language))
+                        .join(', ');
                     const entryTime = visitor.extraText1
                         ? new Date(visitor.extraText1).toLocaleString(language)
                         : '';
@@ -270,19 +325,22 @@ const VisitorsPage: PageComponent = () => {
                         {
                             title: 'd:allowed-zones',
                             key: 'allowedZones',
-                            render: (record: { allowedZones?: string[] }) =>
-                                Array.isArray(record.allowedZones)
-                                    ? record.allowedZones
-                                          .map((zone: string) =>
-                                              getVisitZoneLabel(parameters, zone, language)
-                                          )
-                                          .join(', ')
-                                    : ''
+                            render: (record: { id: string; allowedZones?: string[] | string }) =>
+                                (zonesById[record.id] ?? normalizeZones(record.allowedZones))
+                                    .map((zone: string) =>
+                                        getVisitZoneLabel(parameters, zone, language)
+                                    )
+                                    .join(', ')
                         },
                         {
                             title: 'actions:actions',
                             key: 'actions',
-                            render: (record: { id: string; status: number }) => (
+                            render: (record: {
+                                id: string;
+                                status: number;
+                                appointmentDateBegin?: string | null;
+                                appointmentDateEnd?: string | null;
+                            }) => (
                                 <Space>
                                     {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                         <LinkButton
@@ -292,7 +350,10 @@ const VisitorsPage: PageComponent = () => {
                                     ) : null}
                                     {checkInModes.includes(ModeEnum.Read) &&
                                     (record.status === visitStatuses.toBeChecked ||
-                                        record.status === visitStatuses.preRegistered) ? (
+                                        record.status === visitStatuses.preRegistered ||
+                                        // a visitor who left can come back while the visit lasts
+                                        (record.status === visitStatuses.checkedOut &&
+                                            isVisitWithinDateRange(record))) ? (
                                         <LinkButton
                                             icon={<LoginOutlined />}
                                             tooltip={t('actions:visitor-check-in')}
@@ -331,6 +392,7 @@ const VisitorsPage: PageComponent = () => {
                         }
                     ]}
                     routeDetailPage={`${rootPath}/:id`}
+                    setData={setDisplayedRows}
                     refetch={triggerRefresh}
                 />
             ) : null}

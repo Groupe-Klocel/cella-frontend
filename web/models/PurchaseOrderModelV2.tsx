@@ -161,6 +161,27 @@ export const PurchaseOrderModelV2: ModelType = {
             param: null,
             isEditDisabled: true
         },
+        supplierName: {
+            isListRequested: true,
+            isDefaultHiddenList: false,
+            isExcludedFromList: false,
+            isSortable: true,
+            searchingFormat: 'String',
+            isDetailRequested: true,
+            isExcludedFromDetail: false,
+            detailGroup: '{"label":"supplier-details", "position":1}',
+            link: null,
+            addEditFormat: 'String',
+            addEditStep: null,
+            maxLength: null,
+            displayName: null,
+            isMandatory: false,
+            minRule: null,
+            maxRule: null,
+            config: null,
+            param: null,
+            isEditDisabled: true
+        },
         orderDate: {
             isListRequested: true,
             isDefaultHiddenList: false,

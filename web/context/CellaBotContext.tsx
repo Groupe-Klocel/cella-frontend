@@ -53,15 +53,31 @@ export interface AiChatMessage {
     content: string;
     toolCalls?: Array<{ tool?: string | null; arguments?: any }>;
     documents?: Array<{ filename?: string | null; base64?: string | null; url?: string | null }>;
+    // Files the user attached to this turn: metadata only, the content is sent once and never kept.
+    attachments?: Array<{ filename: string; size?: number; mediaType?: string }>;
     // Mutations the assistant proposes instead of executing ({summary, operations, count});
     // rendered as a Confirm/Cancel card, executed with the user's own client on confirmation.
     proposedActions?: { summary: string; operations: Array<any>; count: number } | null;
     proposalResolution?: 'confirmed' | 'cancelled';
     // Validated chart specs (render_chart tool) rendered inline as SVG.
     charts?: Array<any>;
+    // Token cost of the turn ({ inputTokens, outputTokens, totalTokens, ... }).
+    usage?: { totalTokens?: number | null } | null;
     pending?: boolean;
+    // On a pending bubble: `content` holds the answer being streamed (else: a progress label).
+    streaming?: boolean;
     error?: boolean;
+    // A local information line (e.g. "answer stopped"): shown, but never sent back as history.
+    notice?: boolean;
 }
+
+/** The completed turns to send back as `history`: transient and local-only bubbles excluded. */
+export const chatHistory = (
+    messages: Array<AiChatMessage>
+): Array<{ role: 'user' | 'assistant'; content: string }> =>
+    messages
+        .filter((m) => !m.pending && !m.error && !m.notice)
+        .map((m) => ({ role: m.role, content: m.content }));
 
 // The UI-context store is consumed by the deep, heavy CRUD components (to push context).
 interface IAiContextStore {

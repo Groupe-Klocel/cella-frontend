@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 export * from './hooks/crudHooks';
 export * from './hooks/hooks';
 export * from './hooks/useFieldRules';
+export * from './hooks/useHomeFavourites';
 export * from './types/types';
 export * from './utils/cancelHuoDeliveryStatus';
 export * from './utils/constant';
@@ -39,6 +40,8 @@ export * from './utils/appointmentCapacity';
 export * from './utils/fieldRules';
 export * from './utils/appointmentFieldRules';
 export * from './utils/appointmentGateQueue';
+export * from './utils/breadcrumbTrail';
+export * from './utils/sideMenuEntries';
 export * from './configs/misc';
 export * from './configs/cors-config';
 export * from './utils/passwordValidation';

@@ -96,9 +96,13 @@ const DeliveryPage: PageComponent = () => {
         });
     };
     const [documentAttachmentsData, setDocumentAttachmentsData] = useState<any>();
-    const [defaultDeliveryDocuments, setDefaultDeliveryDocuments] = useState<any>();
+    // Documents proposed by the DOCUMENT_LIST rule for this delivery
+    const [ruleDeliveryDocuments, setRuleDeliveryDocuments] = useState<any>();
 
     useEffect(() => {
+        // The rule is asked again on every `data` change (first with an empty context): a late
+        // answer to a previous request must not overwrite the one matching the current data.
+        let stale = false;
         const fetchRuleResult = async () => {
             const ruleVariables = {
                 context: {
@@ -117,11 +121,31 @@ const DeliveryPage: PageComponent = () => {
                 }
             `;
             const ruleResult = await graphqlRequestClient.request(ruleQuery, ruleVariables);
-            setDefaultDeliveryDocuments(ruleResult?.executeRule?.document_list?.value);
+            if (!stale) {
+                setRuleDeliveryDocuments(ruleResult?.executeRule?.document_list?.value);
+            }
         };
 
         fetchRuleResult();
+        return () => {
+            stale = true;
+        };
     }, [data]);
+
+    // The document attached to the delivery by the host system (documentAttached, shown as a
+    // link in the detail) is printable as K_ExportDocument when present. Derived from the rule
+    // result instead of being set inside the rule effect, so that it never depends on which rule
+    // answer lands last.
+    const defaultDeliveryDocuments = useMemo(
+        () =>
+            data?.documentAttached
+                ? [
+                      ...(ruleDeliveryDocuments ?? []),
+                      { name: 'K_ExportDocument', description: t('d:documentAttached') }
+                  ]
+                : ruleDeliveryDocuments,
+        [ruleDeliveryDocuments, data?.documentAttached, t]
+    );
 
     const configsParamsCodes = useMemo(() => {
         const toBeEstimatedDeliveryStatus = parseInt(
@@ -327,7 +351,9 @@ const DeliveryPage: PageComponent = () => {
                     data?.status < configsParamsCodes.dispatchedDeliveryStatus ? (
                         <Space>
                             {
-                                // CUBING button
+                                // CUBING button - not on a delivery whose packing is produced by an
+                                // external system
+                                !data?.managedByExternalSystem &&
                                 data?.status <= configsParamsCodes.toBeEstimatedDeliveryStatus &&
                                 deliveryLines?.data?.deliveryLines &&
                                 deliveryLines?.data?.deliveryLines?.count > 0 ? (
@@ -343,6 +369,7 @@ const DeliveryPage: PageComponent = () => {
                             }
                             {
                                 // RECUBING button only if TO_BE_ESTIMATED < status <= ESTIMATED
+                                !data?.managedByExternalSystem &&
                                 data?.status > configsParamsCodes.toBeEstimatedDeliveryStatus &&
                                 data?.status <= configsParamsCodes.estimatedDeliveryStatus &&
                                 deliveryLines?.data?.deliveryLines &&

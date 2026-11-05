@@ -18,17 +18,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import {
+    CopyOutlined,
     DownloadOutlined,
     ExclamationCircleOutlined,
     ThunderboltOutlined
 } from '@ant-design/icons';
-import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
-import { Button, Collapse, Space, Spin, Tag } from 'antd';
+import { showError, showSuccess, useTranslationWithFallback as useTranslation } from '@helpers';
+import { Button, Collapse, Space, Spin, Tag, Tooltip } from 'antd';
 import { AiChatMessage } from 'context/CellaBotContext';
 import Markdown from 'markdown-to-jsx';
-import styled from 'styled-components';
-import { executableProposalOperations } from '../cellaBotApi';
+import styled, { css, keyframes } from 'styled-components';
+import { executableProposalOperations, interpolate } from '../cellaBotApi';
 import { CELLA_ON_YELLOW, CELLA_YELLOW } from '../cellaBotColors';
+import CellaBotAttachmentChip from './CellaBotAttachmentChip';
 import CellaBotChart from './CellaBotChart';
 import CellaBotEntityLink from './CellaBotEntityLink';
 
@@ -43,11 +45,25 @@ const Row = styled.div<{ $role: 'user' | 'assistant' }>`
     margin-bottom: 12px;
 `;
 
-const Bubble = styled.div<{ $role: 'user' | 'assistant'; $error?: boolean }>`
-    background: ${(p) => (p.$role === 'user' ? CELLA_YELLOW : p.$error ? '#fff1f0' : '#f5f5f5')};
+const Bubble = styled.div<{ $role: 'user' | 'assistant'; $error?: boolean; $notice?: boolean }>`
+    background: ${(p) =>
+        p.$role === 'user'
+            ? CELLA_YELLOW
+            : p.$error
+              ? '#fff1f0'
+              : p.$notice
+                ? 'transparent'
+                : '#f5f5f5'};
     color: ${(p) =>
-        p.$role === 'user' ? CELLA_ON_YELLOW : p.$error ? '#cf1322' : 'rgba(0, 0, 0, 0.88)'};
-    border: ${(p) => (p.$error ? '1px solid #ffccc7' : 'none')};
+        p.$role === 'user'
+            ? CELLA_ON_YELLOW
+            : p.$error
+              ? '#cf1322'
+              : p.$notice
+                ? 'rgba(0, 0, 0, 0.55)'
+                : 'rgba(0, 0, 0, 0.88)'};
+    border: ${(p) =>
+        p.$error ? '1px solid #ffccc7' : p.$notice ? '1px dashed rgba(0, 0, 0, 0.15)' : 'none'};
     border-radius: 10px;
     padding: 8px 12px;
     max-width: 90%;
@@ -56,10 +72,40 @@ const Bubble = styled.div<{ $role: 'user' | 'assistant'; $error?: boolean }>`
     line-height: 1.5;
 `;
 
+const blink = keyframes`
+    to {
+        visibility: hidden;
+    }
+`;
+
+// The blinking caret after the text while the answer is being streamed. markdown-to-jsx wraps
+// several blocks in a <div>: the caret then goes after that wrapper's last block, not after the
+// wrapper itself (which would put it alone on a new line).
+const streamingCaret = css`
+    > :not(div):last-child::after,
+    > div:last-child > :last-child::after {
+        content: '';
+        display: inline-block;
+        width: 7px;
+        height: 1em;
+        margin-left: 2px;
+        vertical-align: text-bottom;
+        background: ${CELLA_YELLOW};
+        animation: ${blink} 1s steps(2, start) infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        > :not(div):last-child::after,
+        > div:last-child > :last-child::after {
+            animation: none;
+        }
+    }
+`;
+
 // Renders the assistant's Markdown inside the bubble. Overrides the bubble's pre-wrap with normal
 // whitespace (Markdown owns the structure) and gives sensible spacing/code/list/table styling.
-const MarkdownContent = styled.div`
+const MarkdownContent = styled.div<{ $streaming?: boolean }>`
     white-space: normal;
+    ${(p) => (p.$streaming ? streamingCaret : '')}
 
     > *:first-child {
         margin-top: 0;
@@ -129,6 +175,37 @@ const Extras = styled.div`
     width: 100%;
 `;
 
+const Attachments = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 90%;
+    margin-bottom: 2px;
+`;
+
+const Meta = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    font-size: 12px;
+    /* ~7:1 on white: readable 12px text (WCAG AA asks 4.5:1). */
+    color: rgba(0, 0, 0, 0.65);
+`;
+
+// Assistant Markdown options. Assistant content is untrusted: any embedded raw HTML renders as text
+// (no iframes/forms/img injection); `a` handles cella://<entity>/<id> in-app links (permission gated)
+// and opens other links in a new tab (see CellaBotEntityLink); Markdown `![alt](url)` still renders
+// an <img> even with raw HTML disabled, which would fire an external request from untrusted content
+// (tracking/privacy), so images render their alt text instead.
+const MARKDOWN_OPTIONS = {
+    disableParsingRawHTML: true,
+    overrides: {
+        a: { component: CellaBotEntityLink },
+        img: { component: BlockedImage }
+    }
+};
+
 const ProposalCard = styled.div`
     border: 1px solid #ffe58f;
     background: #fffbe6;
@@ -176,10 +253,34 @@ const CellaBotMessage = ({
     message: AiChatMessage;
     onProposalDecision?: (confirmed: boolean) => void;
 }) => {
-    const { t } = useTranslation();
+    const { t, lang } = useTranslation();
     const tt = (key: string, def: string) => {
         const v = t(key);
         return v && v !== key ? v : def;
+    };
+
+    const attachments = (message.attachments ?? []).filter(Boolean);
+    const totalTokens = Number(message.usage?.totalTokens) || 0;
+    const tokensLabel =
+        totalTokens > 0
+            ? interpolate(tt('common:cellabot-tokens', '{{count}} tokens'), {
+                  count: new Intl.NumberFormat(lang, {
+                      notation: 'compact',
+                      maximumFractionDigits: 1
+                  }).format(totalTokens)
+              })
+            : '';
+    // A finished assistant answer (not a progress bubble, an error or a local notice).
+    const isAnswer =
+        message.role === 'assistant' && !message.pending && !message.error && !message.notice;
+
+    const copyAnswer = async () => {
+        try {
+            await navigator.clipboard.writeText(message.content);
+            showSuccess(tt('common:cellabot-copied', 'Answer copied'));
+        } catch (error) {
+            showError(tt('common:cellabot-copy-error', 'Could not copy the answer.'));
+        }
     };
 
     const toolCalls = (message.toolCalls ?? []).filter(Boolean);
@@ -192,40 +293,57 @@ const CellaBotMessage = ({
 
     return (
         <Row $role={message.role}>
-            <Bubble $role={message.role} $error={message.error}>
-                {message.pending ? (
+            {attachments.length > 0 && (
+                <Attachments>
+                    {attachments.map((attachment, idx) => (
+                        <CellaBotAttachmentChip
+                            key={`att-${idx}`}
+                            filename={attachment.filename}
+                            size={attachment.size}
+                            mediaType={attachment.mediaType}
+                        />
+                    ))}
+                </Attachments>
+            )}
+            <Bubble $role={message.role} $error={message.error} $notice={message.notice}>
+                {message.pending && message.streaming ? (
+                    // The answer as it is being written (token streaming), replaced by the final
+                    // message when the turn ends.
+                    <MarkdownContent $streaming aria-busy="true">
+                        <Markdown options={MARKDOWN_OPTIONS}>{message.content}</Markdown>
+                    </MarkdownContent>
+                ) : message.pending ? (
                     <Space size="small">
                         <Spin size="small" />
                         {/* Streamed step progress lands in `content` (e.g. "Querying data…"). */}
                         {message.content || tt('common:cellabot-thinking', 'Thinking…')}
                     </Space>
                 ) : message.role === 'assistant' && !message.error ? (
-                    // Assistant replies are Markdown; user input + error text stay plain.
-                    // `a` is overridden: cella://<entity>/<id> links navigate in-app (permission
-                    // gated), other links open in a new tab (see CellaBotEntityLink).
+                    // Assistant replies (and local notices) are Markdown; user input + error text
+                    // stay plain.
                     <MarkdownContent>
-                        <Markdown
-                            options={{
-                                // Assistant content is untrusted: render any embedded raw HTML as
-                                // text (no iframes/forms/img injection). Our `a` override still applies.
-                                disableParsingRawHTML: true,
-                                overrides: {
-                                    a: { component: CellaBotEntityLink },
-                                    // Markdown `![alt](url)` still renders an <img> even with raw
-                                    // HTML disabled; that would fire an external request from
-                                    // untrusted assistant content (tracking/privacy). Render the
-                                    // alt text instead of loading the image.
-                                    img: { component: BlockedImage }
-                                }
-                            }}
-                        >
-                            {message.content}
-                        </Markdown>
+                        <Markdown options={MARKDOWN_OPTIONS}>{message.content}</Markdown>
                     </MarkdownContent>
                 ) : (
                     message.content
                 )}
             </Bubble>
+
+            {isAnswer && message.content && (
+                <Meta>
+                    <Tooltip title={tt('common:cellabot-copy', 'Copy the answer')}>
+                        <Button
+                            type="text"
+                            size="small"
+                            aria-label={tt('common:cellabot-copy', 'Copy the answer')}
+                            icon={<CopyOutlined />}
+                            onClick={copyAnswer}
+                        />
+                    </Tooltip>
+                    {/* With tool calls, the token count rides on the "Actions" header below. */}
+                    {tokensLabel && toolCalls.length === 0 ? <span>{tokensLabel}</span> : null}
+                </Meta>
+            )}
 
             {charts.length > 0 && (
                 <Extras>
@@ -348,10 +466,12 @@ const CellaBotMessage = ({
                             {
                                 key: 'tools',
                                 label: (
+                                    // One text node: Space puts a gap between each of its children.
                                     <Space size={4}>
                                         <ThunderboltOutlined />
-                                        {tt('common:cellabot-actions', 'Actions')} (
-                                        {toolCalls.length})
+                                        {`${tt('common:cellabot-actions', 'Actions')} (${
+                                            toolCalls.length
+                                        })${tokensLabel ? ` · ${tokensLabel}` : ''}`}
                                     </Space>
                                 ),
                                 children: (

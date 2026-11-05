@@ -118,49 +118,74 @@ const LoadsPage: PageComponent = () => {
     // DISPATCH LOAD
     const statusDispatched = configs.DELIVERY_STATUS_DISPATCHED;
     const [isDispatchLoading, setIsDispatchLoading] = useState(false);
-    const dispatchLoad = async (id: String) => {
+    // LOADDISPATCH-000001 means the load carries deliveries that are not complete. Instead of a
+    // dead end, warn the user and let them confirm; confirming replays load_dispatch with an
+    // explicit force flag (the load_dispatch version deployed on the warehouse has to read it).
+    // Every other error code keeps the previous, blocking behaviour.
+    const runDispatchLoad = async (id: string, force: boolean) => {
+        const query = gql`
+            mutation executeFunction($functionName: String!, $event: JSON!) {
+                executeFunction(functionName: $functionName, event: $event) {
+                    status
+                    output
+                }
+            }
+        `;
+
+        const variables = {
+            functionName: 'load_dispatch',
+            event: { input: force ? { loadId: id, force: true } : { loadId: id } }
+        };
+        setIsDispatchLoading(true);
+        try {
+            const deliveryHUO = await graphqlRequestClient.request(query, variables);
+            if (deliveryHUO.executeFunction.status === 'ERROR') {
+                showError(deliveryHUO.executeFunction.output);
+            } else if (
+                deliveryHUO.executeFunction.status === 'OK' &&
+                deliveryHUO.executeFunction.output.status === 'KO'
+            ) {
+                const dispatchOutput = deliveryHUO.executeFunction.output.output;
+                const deliveryList = dispatchOutput.delivery.join(', ');
+                const dispatchWarning = t(`errors:${dispatchOutput.code}`, {
+                    name: t(deliveryList)
+                });
+                if (dispatchOutput.code === 'LOADDISPATCH-000001' && !force) {
+                    Modal.confirm({
+                        title: (
+                            <>
+                                <span style={{ color: 'red' }}>{dispatchWarning}</span>
+                                <br />
+                                {t('messages:dispatch-load-incomplete-confirm')}
+                            </>
+                        ),
+                        onOk: async () => {
+                            await runDispatchLoad(id, true);
+                        },
+                        okText: t('messages:confirm'),
+                        cancelText: t('messages:cancel')
+                    });
+                } else {
+                    showError(dispatchWarning);
+                }
+                console.log('Backend_message', dispatchOutput);
+            } else {
+                showSuccess(t('messages:success-dispatched'));
+                // functional update: two quick dispatches must not lose a refresh on a stale value
+                setTriggerRefresh((previousTriggerRefresh) => !previousTriggerRefresh);
+            }
+        } catch (error) {
+            console.error('Error during dispatch request:', error);
+            showError(t('messages:error-executing-function'));
+        }
+        setIsDispatchLoading(false);
+    };
+
+    const dispatchLoad = async (id: string) => {
         Modal.confirm({
             title: t('messages:dispatch-load-confirm'),
             onOk: async () => {
-                const query = gql`
-                    mutation executeFunction($functionName: String!, $event: JSON!) {
-                        executeFunction(functionName: $functionName, event: $event) {
-                            status
-                            output
-                        }
-                    }
-                `;
-
-                const variables = {
-                    functionName: 'load_dispatch',
-                    event: { input: { loadId: id } }
-                };
-                setIsDispatchLoading(true);
-                try {
-                    const deliveryHUO = await graphqlRequestClient.request(query, variables);
-                    if (deliveryHUO.executeFunction.status === 'ERROR') {
-                        showError(deliveryHUO.executeFunction.output);
-                    } else if (
-                        deliveryHUO.executeFunction.status === 'OK' &&
-                        deliveryHUO.executeFunction.output.status === 'KO'
-                    ) {
-                        const deliveryList =
-                            deliveryHUO.executeFunction.output.output.delivery.join(', ');
-                        showError(
-                            t(`errors:${deliveryHUO.executeFunction.output.output.code}`, {
-                                name: t(deliveryList)
-                            })
-                        );
-                        console.log('Backend_message', deliveryHUO.executeFunction.output.output);
-                    } else {
-                        showSuccess(t('messages:success-dispatched'));
-                        setTriggerRefresh(!triggerRefresh);
-                    }
-                } catch (error) {
-                    console.error('Error during dispatch request:', error);
-                    showError(t('messages:error-executing-function'));
-                }
-                setIsDispatchLoading(false);
+                await runDispatchLoad(id, false);
             },
             okText: t('messages:confirm'),
             cancelText: t('messages:cancel')
