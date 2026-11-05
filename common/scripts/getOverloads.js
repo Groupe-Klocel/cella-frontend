@@ -25,6 +25,10 @@ const ignoredFiles = [
   "configs.json",
   "configOverloads.json",
   "parameters.json",
+  // Agent/AI tooling docs: repo-local, never shipped in the release. Without this
+  // they are deleted on every pull (not in the zip + no totem possible in some formats).
+  "CLAUDE.md",
+  "AGENTS.md",
 ];
 const ignoredFolders = [
   "node_modules",
@@ -38,6 +42,9 @@ const ignoredFolders = [
   "locales",
   "modelsSpe",
   "getMoreInfosUtils",
+  // Claude Code harness (hooks/scripts/skills): repo-local and excluded from the
+  // template -> public sync, so it must never be treated as a stale upstream file.
+  ".claude",
 ];
 
 const ignoredRoutes = [];
