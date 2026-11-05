@@ -623,13 +623,13 @@ export const AddEquipmentForm = () => {
                     equipment to accept it. Each one is optional - empty or 0 means that dimension
                     is not taken into account. Kept outside the limit-type conditional above: a
                     sorter's gauge does not depend on how its capacity is limited. */}
-                <Form.Item label={t('d:sorting-max-dimension1')} name="extraNumber1">
+                <Form.Item label={t('d:sorting-max-dimension1')} name="articleMaxDimension1">
                     <InputNumber min={0} />
                 </Form.Item>
-                <Form.Item label={t('d:sorting-max-dimension2')} name="extraNumber2">
+                <Form.Item label={t('d:sorting-max-dimension2')} name="articleMaxDimension2">
                     <InputNumber min={0} />
                 </Form.Item>
-                <Form.Item label={t('d:sorting-max-dimension3')} name="extraNumber3">
+                <Form.Item label={t('d:sorting-max-dimension3')} name="articleMaxDimension3">
                     <InputNumber min={0} />
                 </Form.Item>
 
