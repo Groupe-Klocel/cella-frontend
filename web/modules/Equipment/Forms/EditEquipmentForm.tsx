@@ -41,6 +41,15 @@ import {
 import configs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
 
+// #37211: dimensions of the equipment and their tolerance, i.e. its volume limit ([name, label])
+const DIMENSION_FIELDS = [
+    ['length', 'common:length'],
+    ['width', 'common:width'],
+    ['height', 'common:height'],
+    ['toleranceDimension', 'd:dimension-tolerance']
+];
+const DIMENSION_NAMES = DIMENSION_FIELDS.map(([name]) => name);
+
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -60,15 +69,11 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     const [unsavedChanges, setUnsavedChanges] = useState(false); // tracks if form has unsaved changes
     const [stockOwners, setStockOwners] = useState<any>();
     const [pattern, setPattern] = useState<any>();
-    const [equipmentLimitTypes, setEquipmentLimitTypes] = useState<any>();
     const [equipmentMechanizedSystem, setEquipmentMechanizedSystem] = useState<any>();
     const [equipmentAutomaticLabelPrinting, setEquipmentAutomaticLabelPrinting] = useState<any>();
     const [printers, setPrinter] = useState<any>();
     const [disableTypeRelated] = useState<boolean>(
         details.type === configs['EQUIPMENT_TYPE_MONO-PRODUCT_EQUIPMENT'] ? true : false
-    );
-    const [displayLimitTypeRelated, setDisplayLimitTypeRelated] = useState<boolean>(
-        details.limitType === configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY ? false : true
     );
     const [availableValue, setAvailableValue] = useState(details.available);
     const [patternIdValue, setPatternIdValue] = useState(details.patternId);
@@ -112,6 +117,18 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     // TYPED SAFE ALL
     const [form] = Form.useForm();
 
+    // #37211: the dimensions of the equipment and their tolerance (its volume limit) are all
+    // filled in or all empty - with only part of them the volume would be meaningless.
+    const isEmptyValue = (value: any) => value === null || value === undefined || value === '';
+    const dimensionRule = ({ getFieldValue }: any) => ({
+        validator(_: any, value: any) {
+            const oneFilled = DIMENSION_NAMES.some((field) => !isEmptyValue(getFieldValue(field)));
+            return oneFilled && isEmptyValue(value)
+                ? Promise.reject(new Error(t('messages:error-message-empty-input')))
+                : Promise.resolve();
+        }
+    });
+
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
         const handleWindowClose = (e: BeforeUnloadEvent) => {
@@ -144,18 +161,6 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
             setStockOwners(stockOwnerList?.data?.stockOwners?.results);
         }
     }, [stockOwnerList]);
-
-    //To render Equipment Limit types list configs
-    const equipmentLimitTypeList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: 'equipment_limit_type',
-        language: filteredLanguage
-    });
-
-    useEffect(() => {
-        if (equipmentLimitTypeList) {
-            setEquipmentLimitTypes(equipmentLimitTypeList?.data?.listConfigsForAScope);
-        }
-    }, [equipmentLimitTypeList]);
 
     //To render Pattern list configs
     const patternList = useGetAllPatternsQuery<Partial<GetAllPatternsQuery>, Error>(
@@ -274,14 +279,6 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
         setForcePickingCheckValue(!forcePickingCheckValue);
         form.setFieldsValue({ forcePickingCheck: e.target.checked });
     };
-    //handle call back on equipment Type change for displays
-    const handleEquipmentLimitTypeChange = (value: any) => {
-        if (value === configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY) {
-            setDisplayLimitTypeRelated(false);
-        } else {
-            setDisplayLimitTypeRelated(true);
-        }
-    };
     const onPatternIdChange = (value: any) => {
         setPatternIdValue(!patternIdValue);
         form.setFieldsValue({ patternId: value });
@@ -297,14 +294,6 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                 checkUndefinedValues(form);
                 // Here make api call of something else
                 const formData = form.getFieldsValue(true);
-                if (formData.limitType === configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY) {
-                    formData['length'] = null;
-                    formData['width'] = null;
-                    formData['height'] = null;
-                    formData['toleranceDimension'] = null;
-                } else {
-                    formData['nbMaxBox'] = null;
-                }
                 if (formData['stockOwnerId'] == '') {
                     formData['stockOwnerId'] = null;
                 }
@@ -531,101 +520,36 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         </Form.Item>
                     </Col>
                 </Row>
-                <Form.Item label={t('d:qty-max-article')} name="qtyMaxArticle">
-                    <InputNumber disabled />
-                </Form.Item>
-                <Form.Item
-                    label={t('d:limit-type')}
-                    name="limitType"
-                    rules={[
-                        {
-                            required: true,
-                            message: `${t('messages:error-message-empty-input')}`
-                        }
-                    ]}
-                >
-                    <Select
-                        placeholder={`${t('messages:please-select-a', {
-                            name: t('d:limit-type')
-                        })}`}
-                        disabled={!disableTypeRelated}
-                        onChange={handleEquipmentLimitTypeChange}
-                    >
-                        {equipmentLimitTypes?.map((equipmentLimitType: any) => (
-                            <Option
-                                key={equipmentLimitType.id}
-                                value={parseInt(equipmentLimitType.code)}
-                            >
-                                {equipmentLimitType.text}
-                            </Option>
-                        ))}
-                    </Select>
-                </Form.Item>
-                {displayLimitTypeRelated == true ? (
-                    <>
-                        <Form.Item
-                            label={t('common:length')}
-                            name="length"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: `${t('messages:error-message-empty-input')}`
-                                }
-                            ]}
-                        >
-                            <InputNumber />
-                        </Form.Item>
-                        <Form.Item
-                            label={t('common:width')}
-                            name="width"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: `${t('messages:error-message-empty-input')}`
-                                }
-                            ]}
-                        >
-                            <InputNumber />
-                        </Form.Item>
-                        <Form.Item
-                            label={t('common:height')}
-                            name="height"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: `${t('messages:error-message-empty-input')}`
-                                }
-                            ]}
-                        >
-                            <InputNumber />
-                        </Form.Item>
-                        <Form.Item
-                            label={t('d:dimension-tolerance')}
-                            name="toleranceDimension"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: `${t('messages:error-message-empty-input')}`
-                                }
-                            ]}
-                        >
-                            <InputNumber />
-                        </Form.Item>
-                    </>
-                ) : (
-                    <Form.Item
-                        label={t('d:nb-max-box')}
-                        name="nbMaxBox"
-                        rules={[
-                            {
-                                required: true,
-                                message: `${t('messages:error-message-empty-input')}`
+                {/* #37211: no more limit type. The three limits of the equipment are independent
+                    and optional: each one applies as soon as it is filled in (empty or 0 = no
+                    limit), and the round calculation (estimate_rounds) closes a round on the first
+                    one reached - volume (length x width x height, + tolerance), number of boxes and
+                    number of units. */}
+                {/* #37211: the dimensions and their tolerance go together - all filled in
+                    (volume limit) or all empty (no volume limit) */}
+                {DIMENSION_FIELDS.map(([field, label]) => (
+                    <Form.Item key={field} label={t(label)} name={field} rules={[dimensionRule]}>
+                        {/* The other fields are revalidated right away: antd `dependencies` skips
+                            the fields not touched yet (all of them on the add form) */}
+                        <InputNumber
+                            min={0}
+                            onChange={() =>
+                                form
+                                    .validateFields(
+                                        DIMENSION_NAMES.filter((other) => other !== field)
+                                    )
+                                    .catch(() => undefined)
                             }
-                        ]}
-                    >
-                        <InputNumber />
+                        />
                     </Form.Item>
-                )}
+                ))}
+                <Form.Item label={t('d:nb-max-box')} name="nbMaxBox">
+                    <InputNumber min={1} />
+                </Form.Item>
+                {/* Locked on a mono-product equipment (forced to 1 at creation) */}
+                <Form.Item label={t('d:qty-max-article')} name="qtyMaxArticle">
+                    <InputNumber min={1} disabled={disableTypeRelated} />
+                </Form.Item>
 
                 {/* Sorting gauge: the max dimensions an item footprint must fit into for this
                     equipment to accept it. Each one is optional - empty or 0 means that dimension

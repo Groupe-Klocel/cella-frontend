@@ -499,13 +499,17 @@ export const EquipmentModelV2: ModelType = {
             config: null,
             param: null
         },
+        // #37211: the limit type is no longer used - the volume, number of boxes and number of units
+        // limits of an equipment are independent, each one applies as soon as it is filled in (see
+        // the add / edit forms and estimate_rounds). Kept in the model but hidden from the list, its
+        // filters and the detail view: the value stored on the existing equipments is not read.
         limitType: {
-            isListRequested: true,
+            isListRequested: false,
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: 'Dropdown',
-            isDetailRequested: true,
+            searchingFormat: null,
+            isDetailRequested: false,
             isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
@@ -520,13 +524,13 @@ export const EquipmentModelV2: ModelType = {
             param: null
         },
         limitTypeText: {
-            isListRequested: true,
+            isListRequested: false,
             isDefaultHiddenList: true,
-            isExcludedFromList: false,
+            isExcludedFromList: true,
             isSortable: false,
             searchingFormat: null,
-            isDetailRequested: true,
-            isExcludedFromDetail: false,
+            isDetailRequested: false,
+            isExcludedFromDetail: true,
             detailGroup: null,
             link: null,
             addEditFormat: null,
