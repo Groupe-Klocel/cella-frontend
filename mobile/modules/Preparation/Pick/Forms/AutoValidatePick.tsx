@@ -126,8 +126,35 @@ export const AutoValidatePickForm = ({
             ) || []
     };
 
+    // Redmine #37124 — the movement takes its article from the stock sent (originalContentIdStr),
+    // while the quantity is counted on the round lines of the advised addresses. A stock of another
+    // article than these lines counted them as picked while that other article went into the
+    // equipment, and the round could no longer be closed. Refused here, before anything is sent.
+    // An article id the snapshot does not carry is not compared (RF_pick_validate checks it again).
+    const expectedArticleIds: string[] = (proposedRoundAdvisedAddresses ?? [])
+        .map(
+            (advised: any) =>
+                advised?.roundLineDetail?.roundLine?.articleId ??
+                advised?.handlingUnitContent?.articleId
+        )
+        .filter((articleId: string | undefined) => !!articleId);
+    const pickedArticleIds: string[] = [huc?.articleId, articleInfo?.id].filter(
+        (articleId: string | undefined) => !!articleId
+    );
+    const isUnexpectedArticle = pickedArticleIds.some((pickedArticleId) =>
+        expectedArticleIds.some((expectedArticleId) => expectedArticleId !== pickedArticleId)
+    );
+
     useEffect(() => {
         const onFinish = async () => {
+            if (isUnexpectedArticle) {
+                console.log('unexpectedArticle', { expectedArticleIds, pickedArticleIds });
+                showError(t('messages:unexpected-scanned-item'));
+                setIsAutoValidateLoading(false);
+                backToArticleStep();
+                return;
+            }
+
             //check if assigned user is still good
 
             const assignedUserQuery = gql`
@@ -322,6 +349,16 @@ export const AutoValidatePickForm = ({
             type: 'ON_BACK',
             processName: processName,
             stepToReturn: `step${getLastStepWithPreviousStep(storedObject)}`
+        });
+    };
+
+    // Redmine #37124 — a stock of another article than the line: drop the article, the stock and
+    // the quantity (steps 50 and above) so that the article step asks again, on the line on screen.
+    const backToArticleStep = () => {
+        dispatch({
+            type: 'ON_BACK',
+            processName: processName,
+            stepToReturn: `step50`
         });
     };
 
