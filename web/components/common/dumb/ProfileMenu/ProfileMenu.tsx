@@ -38,8 +38,13 @@ const ProfileMenu: FC<IProfileMenuProps> = ({ username, profileMenu }: IProfileM
             <Space>
                 <Avatar>{username.charAt(0).toUpperCase()}</Avatar>
                 <Dropdown menu={{ items }} placement="bottom">
-                    <a onClick={(e) => e.preventDefault()} style={{ color: 'black' }}>
-                        {`${username}   `} <DownOutlined />
+                    <a
+                        onClick={(e) => e.preventDefault()}
+                        style={{ color: 'var(--header-text-color, black)', whiteSpace: 'nowrap' }}
+                    >
+                        {/* the name is hidden on the narrowest phones (Header.tsx) */}
+                        <span className="profile-username">{`${username}   `} </span>
+                        <DownOutlined />
                     </a>
                 </Dropdown>
             </Space>

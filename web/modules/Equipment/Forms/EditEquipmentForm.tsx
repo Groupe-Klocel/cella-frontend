@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import { Button, Col, Input, InputNumber, Row, Form, Checkbox, Select, Space, Modal } from 'antd';
 import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
-import { FC, useEffect, useState } from 'react';
+import { CSSProperties, FC, Fragment, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import { showError, showSuccess, showInfo, checkUndefinedValues } from '@helpers';
@@ -41,14 +41,19 @@ import {
 import configs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
 
-// #37211: dimensions of the equipment and their tolerance, i.e. its volume limit ([name, label])
+// #37211: dimensions of the equipment in mm ([name, label]) and their tolerance in %, i.e. its
+// volume limit. Same labels as the list and the detail.
 const DIMENSION_FIELDS = [
-    ['length', 'common:length'],
-    ['width', 'common:width'],
-    ['height', 'common:height'],
-    ['toleranceDimension', 'd:dimension-tolerance']
+    ['length', 'd:length'],
+    ['width', 'd:width'],
+    ['height', 'd:height']
 ];
-const DIMENSION_NAMES = DIMENSION_FIELDS.map(([name]) => name);
+const TOLERANCE_FIELD = 'toleranceDimension';
+const DIMENSION_NAMES = [...DIMENSION_FIELDS.map(([name]) => name), TOLERANCE_FIELD];
+// the "x" between two dimensions, level with the inputs (below the labels of the vertical form)
+const DIMENSION_SEPARATOR_STYLE = { paddingTop: 30, lineHeight: '32px' };
+// fixed width of a dimension column, so that an error message wraps instead of pushing the next one
+const DIMENSION_COLUMN_FLEX = '0 0 130px';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -72,7 +77,9 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
     const [equipmentMechanizedSystem, setEquipmentMechanizedSystem] = useState<any>();
     const [equipmentAutomaticLabelPrinting, setEquipmentAutomaticLabelPrinting] = useState<any>();
     const [printers, setPrinter] = useState<any>();
-    const [disableTypeRelated] = useState<boolean>(
+    // #37211: the type can be changed, see handleEquipmentTypeChange
+    const [equipmentTypes, setEquipmentTypes] = useState<any>();
+    const [disableTypeRelated, setDisableTypeRelated] = useState<boolean>(
         details.type === configs['EQUIPMENT_TYPE_MONO-PRODUCT_EQUIPMENT'] ? true : false
     );
     const [availableValue, setAvailableValue] = useState(details.available);
@@ -128,6 +135,19 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                 : Promise.resolve();
         }
     });
+    // The other fields are revalidated right away: antd `dependencies` skips the fields not
+    // touched yet
+    const dimensionInput = (field: string, style?: CSSProperties) => (
+        <InputNumber
+            min={0}
+            style={style}
+            onChange={() =>
+                form
+                    .validateFields(DIMENSION_NAMES.filter((other) => other !== field))
+                    .catch(() => undefined)
+            }
+        />
+    );
 
     // prompt the user if they try and leave with unsaved changes
     useEffect(() => {
@@ -178,6 +198,35 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
             setPattern;
         }
     }, [filteredPatterns]);
+
+    // #37211: equipment types, for the type to be changed on an existing equipment
+    const equipmentTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
+        scope: 'equipment_type',
+        language: filteredLanguage
+    });
+
+    useEffect(() => {
+        if (equipmentTypesList) {
+            setEquipmentTypes(equipmentTypesList?.data?.listConfigsForAScope);
+        }
+    }, [equipmentTypesList]);
+
+    // #37211: same rules as at creation. The only business effect of a mono-product equipment
+    // is its mono-product boxes (boxMonoArticle, read by estimate_rounds): checked and locked on
+    // that type, unchecked and free on the others. Free picking order stays reserved to the
+    // mono-product type. Nothing else is forced (grouped box lines, max quantity of units).
+    const handleEquipmentTypeChange = (value: any) => {
+        if (value === configs['EQUIPMENT_TYPE_MONO-PRODUCT_EQUIPMENT']) {
+            setDisableTypeRelated(true);
+            setBoxMonoArticleValue(true);
+            form.setFieldsValue({ boxMonoArticle: true });
+        } else {
+            setDisableTypeRelated(false);
+            setBoxMonoArticleValue(false);
+            setAllowPickingOrderFreeValue(false);
+            form.setFieldsValue({ boxMonoArticle: false, allowPickingOrderFree: false });
+        }
+    };
 
     //To render Equipment mechanizedSystem list configs
     const equipmentMechanizedSystemList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -396,9 +445,12 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         ))}
                     </Select>
                 </Form.Item>
+                {/* #37211: the type can be changed on an existing equipment (it was a
+                    read-only text, displayed in English as the equipment query is not
+                    translated) */}
                 <Form.Item
                     label={t('d:type')}
-                    name="typeText"
+                    name="type"
                     rules={[
                         {
                             required: true,
@@ -406,7 +458,18 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                         }
                     ]}
                 >
-                    <Input disabled />
+                    <Select
+                        placeholder={`${t('messages:please-select-a', {
+                            name: t('d:type')
+                        })}`}
+                        onChange={handleEquipmentTypeChange}
+                    >
+                        {equipmentTypes?.map((equipmentType: any) => (
+                            <Option key={equipmentType.id} value={parseInt(equipmentType.code)}>
+                                {equipmentType.text}
+                            </Option>
+                        ))}
+                    </Select>
                 </Form.Item>
                 <Form.Item
                     label={t('common:name')}
@@ -526,29 +589,37 @@ export const EditEquipmentForm: FC<EditEquipmentFormProps> = ({
                     one reached - volume (length x width x height, + tolerance), number of boxes and
                     number of units. */}
                 {/* #37211: the dimensions and their tolerance go together - all filled in
-                    (volume limit) or all empty (no volume limit) */}
-                {DIMENSION_FIELDS.map(([field, label]) => (
-                    <Form.Item key={field} label={t(label)} name={field} rules={[dimensionRule]}>
-                        {/* The other fields are revalidated right away: antd `dependencies` skips
-                            the fields not touched yet (all of them on the add form) */}
-                        <InputNumber
-                            min={0}
-                            onChange={() =>
-                                form
-                                    .validateFields(
-                                        DIMENSION_NAMES.filter((other) => other !== field)
-                                    )
-                                    .catch(() => undefined)
-                            }
-                        />
-                    </Form.Item>
-                ))}
+                    (volume limit) or all empty (no volume limit). Length x width x height on one
+                    line, still three separate fields. */}
+                <Row gutter={8} align="top">
+                    {DIMENSION_FIELDS.map(([field, label], index) => (
+                        <Fragment key={field}>
+                            {index > 0 && (
+                                <Col flex="none" style={DIMENSION_SEPARATOR_STYLE}>
+                                    x
+                                </Col>
+                            )}
+                            <Col flex={DIMENSION_COLUMN_FLEX}>
+                                <Form.Item label={t(label)} name={field} rules={[dimensionRule]}>
+                                    {dimensionInput(field, { width: '100%' })}
+                                </Form.Item>
+                            </Col>
+                        </Fragment>
+                    ))}
+                </Row>
+                <Form.Item
+                    label={t('d:toleranceDimension')}
+                    name={TOLERANCE_FIELD}
+                    rules={[dimensionRule]}
+                >
+                    {dimensionInput(TOLERANCE_FIELD)}
+                </Form.Item>
                 <Form.Item label={t('d:nb-max-box')} name="nbMaxBox">
                     <InputNumber min={1} />
                 </Form.Item>
-                {/* Locked on a mono-product equipment (forced to 1 at creation) */}
+                {/* #37211: free on every type, mono-product included */}
                 <Form.Item label={t('d:qty-max-article')} name="qtyMaxArticle">
-                    <InputNumber min={1} disabled={disableTypeRelated} />
+                    <InputNumber min={1} />
                 </Form.Item>
 
                 {/* Sorting gauge: the max dimensions an item footprint must fit into for this
