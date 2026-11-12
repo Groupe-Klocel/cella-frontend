@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { isoLangs, LanguageType } from '@helpers';
 import { Row, Col, Divider, Select, Switch, Button, Modal } from 'antd';
 import { useRouter } from 'next/router';
+import { useSeason } from 'components/layouts/SeasonProvider';
 import { FC, useCallback, useState, useEffect } from 'react';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
@@ -67,6 +68,11 @@ export const UserSettings: FC = () => {
 
     const isSettingMenuCollapsed = generalUserSettings?.valueJson?.isSettingMenuCollapsed;
     const theme = tempTheme ?? generalUserSettings?.valueJson?.theme;
+    // the seasonal decorations of the header and the side menu (helpers/utils/season.ts): off
+    // until the user switches them on; the setting is only shown where they exist (SeasonProvider,
+    // the environment variable NEXT_PUBLIC_SEASONAL_DECORATIONS)
+    const { available: seasonAvailable } = useSeason();
+    const seasonalDecorations = generalUserSettings?.valueJson?.seasonalDecorations === true;
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalByScreenVisible, setIsModalByScreenVisible] = useState(false);
@@ -180,6 +186,13 @@ export const UserSettings: FC = () => {
         [updateGeneralSettings]
     );
 
+    const toggleSeasonalDecorations = useCallback(
+        (checked: boolean) => {
+            updateGeneralSettings({ seasonalDecorations: checked });
+        },
+        [updateGeneralSettings]
+    );
+
     const switchTheme = useCallback(
         (checked: boolean) => {
             const newTheme = checked ? 'dark' : 'light';
@@ -233,6 +246,17 @@ export const UserSettings: FC = () => {
                     />
                 </Col>
             </Row>
+            {seasonAvailable && (
+                <Row justify="space-between">
+                    <Col>{t('actions:seasonal-decorations')}</Col>
+                    <Col>
+                        <StyledSwitch
+                            checked={seasonalDecorations}
+                            onChange={toggleSeasonalDecorations}
+                        />
+                    </Col>
+                </Row>
+            )}
             <Divider orientation="left">{t('common:reset-settings')}</Divider>
             <Row justify="center">
                 <Button
