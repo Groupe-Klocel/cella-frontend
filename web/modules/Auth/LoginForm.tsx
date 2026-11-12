@@ -64,13 +64,9 @@ export const LoginForm = () => {
 
     const [form] = Form.useForm();
     useEffect(() => {
-        console.log('if isAuthenticated');
         if (isAuthenticated) {
-            console.log('isAuthenticated', isAuthenticated);
             const token = cookie.get('token');
-            console.log('if token');
             if (token) {
-                console.log('token', token);
                 try {
                     const query = gql`
                         query GetMyInfo {
@@ -128,15 +124,12 @@ export const LoginForm = () => {
                     `;
 
                     graphqlRequestClient.request(query).then((data: any) => {
-                        console.log('if data.me');
                         if (data.me) {
-                            console.log('data.me', data.me);
                             setUserInfo(data.me);
                             if (data.me.resetPassword === true) {
                                 router.push('/reset-password');
                                 showWarning(t('please-reset-password'));
                             } else {
-                                console.log('redirect to /');
                                 router.push('/');
                                 showSuccess(t('login-success'));
                             }
