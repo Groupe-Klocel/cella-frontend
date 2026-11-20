@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
+import { useRouter } from 'next/router';
+import { getLanguageCode } from '@helpers';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
@@ -47,6 +49,8 @@ export const ScanBox = ({
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [handlingUnitOutboundInfos, setHandlingUnitOutboundInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -66,8 +70,9 @@ export const ScanBox = ({
             const query = gql`
                 query handlingUnitOutbounds(
                     $advancedFilters: [HandlingUnitOutboundAdvancedSearchFilters!]
+                    $language: String = "en"
                 ) {
-                    handlingUnitOutbounds(advancedFilters: $advancedFilters) {
+                    handlingUnitOutbounds(advancedFilters: $advancedFilters, language: $language) {
                         count
                         itemsPerPage
                         totalPages
@@ -162,7 +167,8 @@ export const ScanBox = ({
                         { searchType: 'EQUAL', field: { handlingUnit_Barcode: scannedInfo } },
                         { searchType: 'EQUAL', field: { carrierBox: scannedInfo } }
                     ]
-                }
+                },
+                language: filteredLanguage
             };
             const handlingUnitOutboundInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitOutboundInfos;

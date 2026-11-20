@@ -24,7 +24,8 @@ import {
     StyledFormItem,
     StyledForm
 } from '@components';
-import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
+import { getLanguageCode, showError, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -98,6 +99,9 @@ export const SimilarLocationsV2 = ({
     features
 }: ISimilarLocationsV2Props) => {
     const { t } = useTranslation();
+    const router = useRouter();
+    // get_locations resolves locationCategoryText in input.language ("en" when omitted)
+    const language = getLanguageCode(router);
     const [similarLocations, setSimilarLocationsV2Infos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
     const { parameters } = useAppState();
@@ -286,6 +290,7 @@ export const SimilarLocationsV2 = ({
             functionName: 'get_locations',
             event: {
                 input: {
+                    language,
                     nbResultsPicking: nbResultsPicking,
                     nbResultsStock: nbResultsStock,
                     ...filters,
@@ -315,7 +320,10 @@ export const SimilarLocationsV2 = ({
                 executeFunction.status === 'ERROR' ||
                 (executeFunction.status === 'OK' && executeFunction.output?.status === 'KO')
             ) {
-                console.log('Backend_message', executeFunction.output?.output ?? executeFunction.output);
+                console.log(
+                    'Backend_message',
+                    executeFunction.output?.output ?? executeFunction.output
+                );
                 setSimilarLocationsV2Infos([]);
                 return;
             }

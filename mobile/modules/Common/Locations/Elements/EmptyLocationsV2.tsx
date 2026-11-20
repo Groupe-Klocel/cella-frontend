@@ -24,7 +24,8 @@ import {
     StyledFormItem,
     StyledForm
 } from '@components';
-import { showError, useTranslationWithFallback as useTranslation } from '@helpers';
+import { getLanguageCode, showError, useTranslationWithFallback as useTranslation } from '@helpers';
+import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -72,6 +73,9 @@ const SmallSelect = styled(Select)`
 
 export const EmptyLocationsV2 = ({ withAvailableHU }: IEmptyLocationsV2Props) => {
     const { t } = useTranslation();
+    const router = useRouter();
+    // get_locations resolves locationCategoryText in input.language ("en" when omitted)
+    const language = getLanguageCode(router);
     const { graphqlRequestClient } = useAuth();
     const { parameters } = useAppState();
     const [locationsData, setLocationsData] = useState<any>();
@@ -183,6 +187,7 @@ export const EmptyLocationsV2 = ({ withAvailableHU }: IEmptyLocationsV2Props) =>
             functionName: 'get_locations',
             event: {
                 input: {
+                    language,
                     isEmptyLocations: true,
                     isEmptyWithHu: withAvailableHU,
                     nbResultsPicking: configsParamsCodes.nbPicking,
@@ -212,7 +217,10 @@ export const EmptyLocationsV2 = ({ withAvailableHU }: IEmptyLocationsV2Props) =>
                 executeFunction.status === 'ERROR' ||
                 (executeFunction.status === 'OK' && executeFunction.output?.status === 'KO')
             ) {
-                console.log('Backend_message', executeFunction.output?.output ?? executeFunction.output);
+                console.log(
+                    'Backend_message',
+                    executeFunction.output?.output ?? executeFunction.output
+                );
                 setLocationsData([]);
                 return;
             }

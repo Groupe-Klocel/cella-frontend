@@ -21,9 +21,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 // with its theoretical weight (recomputed over every absorbed box for a consolidation)
 
 import { WrapperForm, StyledForm, StyledFormItem } from '@components';
+import { useRouter } from 'next/router';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ParametersQuery, useParametersQuery } from 'generated/graphql';
 import { gql } from 'graphql-request';
@@ -54,6 +55,8 @@ export const ReviewHuModelWeightForm = ({
     consolidatedHuos
 }: IReviewHuModelWeightProps) => {
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation();
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -124,11 +127,13 @@ export const ReviewHuModelWeightForm = ({
                 $filters: HandlingUnitModelSearchFilters
                 $advancedFilters: [HandlingUnitModelAdvancedSearchFilters!]
                 $itemsPerPage: Int!
+                $language: String = "en"
             ) {
                 handlingUnitModels(
                     filters: $filters
                     advancedFilters: $advancedFilters
                     itemsPerPage: $itemsPerPage
+                    language: $language
                 ) {
                     results {
                         id
@@ -170,7 +175,8 @@ export const ReviewHuModelWeightForm = ({
                     { searchType: 'DIFFERENT', field: { type: configsParamsCodes.equipmentHuType } }
                 ]
             },
-            itemsPerPage: 10000
+            itemsPerPage: 10000,
+            language: filteredLanguage
         };
         const huModelInfos = await graphqlRequestClient.request(query, variables);
         return huModelInfos;

@@ -48,18 +48,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     );
 
-    const { scannedInfo } = req.body;
+    // `language` (short ISO code, e.g. "fr") drives the *Text labels resolved by the API
+    const { scannedInfo, language = 'en' } = req.body;
 
     const hucFeatureFilter = {
-        filters: { value: scannedInfo, featureCode_Unique: true }
+        filters: { value: scannedInfo, featureCode_Unique: true },
+        language
     };
 
     const huFeaturesQuery = gql`
         query GetHUCFeatures(
             $filters: HandlingUnitContentFeatureSearchFilters
             $orderBy: [HandlingUnitContentFeatureOrderByCriterion!]
+            $language: String = "en"
         ) {
-            handlingUnitContentFeatures(filters: $filters, orderBy: $orderBy) {
+            handlingUnitContentFeatures(filters: $filters, orderBy: $orderBy, language: $language) {
                 count
                 results {
                     id

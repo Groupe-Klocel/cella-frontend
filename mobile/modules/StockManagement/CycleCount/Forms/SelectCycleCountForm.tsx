@@ -144,8 +144,8 @@ export const SelectCycleCountForm = ({
         const data: { [label: string]: any } = {};
 
         const query = gql`
-            query return($id: String!) {
-                cycleCount(id: $id) {
+            query return($id: String!, $language: String = "en") {
+                cycleCount(id: $id, language: $language) {
                     id
                     name
                     status
@@ -173,7 +173,8 @@ export const SelectCycleCountForm = ({
         `;
 
         const variables = {
-            id: values.cycleCounts
+            id: values.cycleCounts,
+            language: filteredLanguage
         };
         const selectedCycleCount = await graphqlRequestClient.request(query, variables);
 

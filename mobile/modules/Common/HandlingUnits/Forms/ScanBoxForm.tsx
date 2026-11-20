@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select list handling unit type = pallet corresponding to a given barcode
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { showError, LsIsSecured, getLanguageCode } from '@helpers';
 import { Form, Input } from 'antd';
 import CameraScanner from 'modules/Common/CameraScanner';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -45,6 +45,8 @@ export const ScanBoxForm = ({
     buttons
 }: IScanBoxFormProps) => {
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation('common');
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -88,8 +90,9 @@ export const ScanBoxForm = ({
             const query = gql`
                 query handlingUnitOutbounds(
                     $advancedFilters: [HandlingUnitOutboundAdvancedSearchFilters!]
+                    $language: String = "en"
                 ) {
-                    handlingUnitOutbounds(advancedFilters: $advancedFilters) {
+                    handlingUnitOutbounds(advancedFilters: $advancedFilters, language: $language) {
                         count
                         itemsPerPage
                         totalPages
@@ -202,7 +205,8 @@ export const ScanBoxForm = ({
                         { searchType: 'EQUAL', field: { handlingUnit_Barcode: scannedInfo } },
                         { searchType: 'EQUAL', field: { carrierBox: scannedInfo } }
                     ]
-                }
+                },
+                language: filteredLanguage
             };
             const handlingUnitOutboundInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitOutboundInfos;

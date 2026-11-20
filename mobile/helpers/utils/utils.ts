@@ -408,6 +408,34 @@ const findCodeByScopeAndValue = (items: any[], scope: string, value: string) => 
 };
 
 /**
+ * Display label of a config / parameter row (`useAppState().configs` / `.parameters`) in the
+ * user's language. The row's `translation` JSON is keyed by short ISO codes ("en", "fr", "de",
+ * "es" - what getLanguageCode returns) and `value` is the English fallback, so a screen must
+ * never print `value` directly: it stays in English whatever the UI language (ticket #37447).
+ */
+const getConfigLabel = (item: any, language?: string): string | undefined => {
+    if (!item) return undefined;
+    return (language && item.translation?.[language]) || item.value;
+};
+
+/**
+ * Label of the config / parameter `(scope, code)` in the given language - the display-side
+ * counterpart of findValueByScopeAndCode (which returns the raw English `value`).
+ */
+const findLabelByScopeAndCode = (
+    items: any[],
+    scope: string,
+    code: string | number,
+    language?: string
+): string | undefined => {
+    const item = items?.find(
+        (item: any) =>
+            item.scope === scope && String(item.code).toLowerCase() === String(code).toLowerCase()
+    );
+    return getConfigLabel(item, language);
+};
+
+/**
  * Backend `advancedFilters` excluding reserved carriers (virtual or closed) from an option list.
  * Uses DIFFERENT so carriers with a null value are kept (only the excluded value is filtered out).
  * `carrierClosedStatus` is the closed status code resolved from AppState configs
@@ -555,6 +583,8 @@ export {
     getLastStepWithPreviousStep,
     findValueByScopeAndCode,
     findCodeByScopeAndValue,
+    getConfigLabel,
+    findLabelByScopeAndCode,
     getReservedCarrierExclusionFilters,
     findAllByScope,
     advancedFilter,

@@ -204,7 +204,8 @@ export const SimilarLocations = ({
                         locationId: e.handlingUnit.locationId,
                         locationName: e.handlingUnit.location.name,
                         quantity: e.quantity,
-                        type: 'Stock'
+                        // categoryText is resolved by the API in the UI language (query `language`)
+                        type: e.handlingUnit.location.categoryText
                     });
                 });
             similarLocations?.handlingUnitContents?.results
@@ -221,7 +222,7 @@ export const SimilarLocations = ({
                         locationId: e.handlingUnit.locationId,
                         locationName: e.handlingUnit.location.name,
                         quantity: e.quantity,
-                        type: 'Picking'
+                        type: e.handlingUnit.location.categoryText
                     });
                 });
             setDisplayedLocations(locData);

@@ -17,16 +17,57 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
-import { cookie, isoLangs, LanguageType } from '@helpers';
+import {
+    isoLangs,
+    LanguageType,
+    showError,
+    useTranslationWithFallback as useTranslation
+} from '@helpers';
 import { useAppState, useAppDispatch } from 'context/AppContext';
 import { Select } from 'antd';
 import { useRouter } from 'next/router';
-import React, { FC, useCallback, useState, useEffect, useRef } from 'react';
+import React, { FC } from 'react';
 import styled from 'styled-components';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 
 const { Option } = Select;
+
+const SETTING_CODE = 'globalParametersMobile';
+
+const FIND_SETTING = gql`
+    query ($warehouseWorkerId: String!) {
+        warehouseWorkerSettings(
+            filters: { warehouseWorkerId: $warehouseWorkerId, code: "globalParametersMobile" }
+        ) {
+            results {
+                id
+                code
+                valueJson
+            }
+        }
+    }
+`;
+
+const CREATE_SETTING = gql`
+    mutation ($input: CreateWarehouseWorkerSettingInput!) {
+        createWarehouseWorkerSetting(input: $input) {
+            id
+            code
+            valueJson
+        }
+    }
+`;
+
+const UPDATE_SETTING = gql`
+    mutation ($id: String!, $input: UpdateWarehouseWorkerSettingInput!) {
+        updateWarehouseWorkerSetting(id: $id, input: $input) {
+            id
+            code
+            valueJson
+        }
+    }
+`;
 
 const StyledSelect = styled(Select)`
     width: 40px;
@@ -52,89 +93,57 @@ const StyledSelect = styled(Select)`
 const LanguageSelector: FC = () => {
     const { graphqlRequestClient } = useAuth();
     const router = useRouter();
+    const { t } = useTranslation();
 
-    const { userSettings, user: userInfo, translations } = useAppState();
+    const { userSettings, user: userInfo } = useAppState();
 
     const dispatchUserSettings = useAppDispatch();
 
     const generalUserSettings = userSettings?.find((item: any) => {
-        return 'globalParametersMobile' === item.code;
+        return SETTING_CODE === item.code;
     });
 
-    const createUsersSettings = useCallback(
-        async (lang: any) => {
-            const newsSettings = {
-                code: 'globalParametersMobile',
-                warehouseWorkerId: userInfo.id,
-                valueJson: {
-                    lang: lang,
-                    theme: generalUserSettings?.valueJson?.theme
-                }
-            };
-            const createQuery = gql`
-                mutation ($input: CreateWarehouseWorkerSettingInput!) {
-                    createWarehouseWorkerSetting(input: $input) {
-                        id
-                        code
-                        valueJson
-                    }
-                }
-            `;
-            const userSettingsQuery = await graphqlRequestClient.request(createQuery, {
-                input: newsSettings
-            });
+    const saveSettings = async (lang: any) => {
+        try {
+            // A user has at most one RF row: creating a second one fails (DB-000112). When the
+            // state does not know its id (the boot fetch failed, or has not returned yet), the row
+            // may still exist, so look it up before creating it.
+            let stored: any = generalUserSettings?.id ? generalUserSettings : undefined;
+            if (!stored) {
+                const found: any = await graphqlRequestClient.request(FIND_SETTING, {
+                    warehouseWorkerId: userInfo.id
+                });
+                stored = found?.warehouseWorkerSettings?.results?.[0];
+            }
+            // only the language changes: the theme and any other key keep their stored value
+            const valueJson = { ...(stored ?? generalUserSettings)?.valueJson, lang };
 
-            const updatedSettings = userSettings.map((setting: any) =>
-                setting.code === userSettingsQuery.createWarehouseWorkerSetting.code
-                    ? userSettingsQuery.createWarehouseWorkerSetting
-                    : setting
-            );
+            let saved: any;
+            if (stored?.id) {
+                const updated: any = await graphqlRequestClient.request(UPDATE_SETTING, {
+                    id: stored.id,
+                    input: { valueJson }
+                });
+                saved = updated.updateWarehouseWorkerSetting;
+            } else {
+                const created: any = await graphqlRequestClient.request(CREATE_SETTING, {
+                    input: { code: SETTING_CODE, warehouseWorkerId: userInfo.id, valueJson }
+                });
+                saved = created.createWarehouseWorkerSetting;
+            }
 
             dispatchUserSettings({
                 type: 'SWITCH_USER_SETTINGS',
-                userSettings: [...updatedSettings]
+                userSettings: [
+                    ...(userSettings ?? []).filter((item: any) => item.code !== SETTING_CODE),
+                    saved
+                ]
             });
             router.push(router.asPath, router.asPath, { locale: lang });
-        },
-        [graphqlRequestClient, userInfo]
-    );
-    const updateUsersSettings = async (lang: any) => {
-        const newsSettings = {
-            ...generalUserSettings,
-            valueJson: {
-                lang: lang,
-                theme: generalUserSettings?.valueJson?.theme
-            }
-        };
-        const updateQuery = gql`
-            mutation ($id: String!, $input: UpdateWarehouseWorkerSettingInput!) {
-                updateWarehouseWorkerSetting(id: $id, input: $input) {
-                    id
-                    code
-                    valueJson
-                }
-            }
-        `;
-        const userSettingsQuery = await graphqlRequestClient.request(updateQuery, {
-            id: generalUserSettings?.id,
-            input: { valueJson: newsSettings.valueJson }
-        });
-        dispatchUserSettings({
-            type: 'SWITCH_USER_SETTINGS',
-            userSettings: userSettings.map((item: any) =>
-                item.code === 'globalParametersMobile'
-                    ? userSettingsQuery.updateWarehouseWorkerSetting
-                    : item
-            )
-        });
-        router.push(router.asPath, router.asPath, { locale: lang });
-    };
-
-    const saveSettings = (lang: any) => {
-        if (generalUserSettings?.id) {
-            updateUsersSettings(lang);
-        } else {
-            createUsersSettings(lang);
+        } catch (error) {
+            // the flag stays on the current language: say so instead of failing silently
+            console.error('LanguageSelector: could not save the language', error);
+            showError(t('messages:error-updating-data'));
         }
     };
 

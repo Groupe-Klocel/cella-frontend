@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, showError } from '@helpers';
+import { LsIsSecured, showError, getLanguageCode } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -54,6 +54,7 @@ export const SelectHuModelForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     // TYPED SAFE ALL
     const [huModels, setHuModels] = useState<Array<any>>();
 
@@ -102,12 +103,14 @@ export const SelectHuModelForm = ({
                 $orderBy: [HandlingUnitModelOrderByCriterion!]
                 $page: Int!
                 $itemsPerPage: Int!
+                $language: String = "en"
             ) {
                 handlingUnitModels(
                     filters: $filters
                     orderBy: $orderBy
                     page: $page
                     itemsPerPage: $itemsPerPage
+                    language: $language
                 ) {
                     results {
                         id
@@ -145,7 +148,8 @@ export const SelectHuModelForm = ({
             },
             orderBy: null,
             page: 1,
-            itemsPerPage: 100
+            itemsPerPage: 100,
+            language: filteredLanguage
         };
         const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
         return handlingUnitInfos;

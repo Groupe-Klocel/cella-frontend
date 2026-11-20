@@ -57,7 +57,10 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                     configs.LOCATION_CATEGORY_RECEPTION
             ) {
                 const data: { [label: string]: any } = {};
-                data['handlingUnit'] = handlingUnitInfos.data?.handlingUnits?.results[0];
+                // handlingUnitInfos is the raw GraphQL response (see ScanHandlingUnit), not a
+                // react-query result: there is no `.data` level, the condition above reads
+                // `handlingUnitInfos.handlingUnits` and so must the stored value
+                data['handlingUnit'] = handlingUnitInfos.handlingUnits?.results[0];
                 setTriggerRender(!triggerRender);
                 storedObject[`step${stepNumber}`] = {
                     ...storedObject[`step${stepNumber}`],
