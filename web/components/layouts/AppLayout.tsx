@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
+import { SeasonProvider } from 'components/layouts/SeasonProvider';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
@@ -313,7 +314,10 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
 
     return (
         <ThemeSwitcherProvider defaultTheme={theme} themeMap={themes}>
-            <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
+            {/* the seasonal decorations of the header and the side menu (helpers/utils/season.ts) */}
+            <SeasonProvider>
+                <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
+            </SeasonProvider>
         </ThemeSwitcherProvider>
     );
 };
