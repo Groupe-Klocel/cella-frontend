@@ -20,7 +20,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { LsIsSecured, extractGivenConfigsParams, showError, showSuccess } from '@helpers';
+import { useRouter } from 'next/router';
+import {
+    LsIsSecured,
+    extractGivenConfigsParams,
+    showError,
+    showSuccess,
+    getLanguageCode
+} from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useSimpleGetRoundsQuery, SimpleGetRoundsQuery } from 'generated/graphql';
@@ -44,6 +51,8 @@ export const SelectRoundForm = ({
     buttons
 }: ISelectRoundProps) => {
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
@@ -94,7 +103,8 @@ export const SelectRoundForm = ({
             filters: { status: configsToFilterOn, category: [configs.ROUND_CATEGORY_OUTBOUND] },
             orderBy: null,
             page: 1,
-            itemsPerPage: 100
+            itemsPerPage: 100,
+            language: filteredLanguage
         }
     );
 
@@ -115,8 +125,8 @@ export const SelectRoundForm = ({
     const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
         const query = gql`
-            query round($id: String!) {
-                round(id: $id) {
+            query round($id: String!, $language: String = "en") {
+                round(id: $id, language: $language) {
                     id
                     name
                     status
@@ -223,7 +233,8 @@ export const SelectRoundForm = ({
         `;
 
         const variables = {
-            id: values.rounds
+            id: values.rounds,
+            language: filteredLanguage
         };
 
         const selectedRound = await graphqlRequestClient.request(query, variables);

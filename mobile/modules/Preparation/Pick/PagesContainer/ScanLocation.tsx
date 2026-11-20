@@ -19,12 +19,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
 import { ScanForm_reducer } from '@CommonRadio';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import {
     getLastStepWithPreviousStep,
-    useTranslationWithFallback as useTranslation
+    useTranslationWithFallback as useTranslation,
+    getLanguageCode
 } from '@helpers';
 import { useAppDispatch, useAppState } from 'context/AppContext';
 
@@ -65,6 +67,8 @@ export const ScanLocation = ({
     const [locationInfos, setLocationInfos] = useState<any>();
     const [locationQuantity, setLocationQuantity] = useState<number>(0);
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation();
 
     //Pre-requisite: initialize current step
@@ -119,8 +123,8 @@ export const ScanLocation = ({
         locationName: any
     ): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
-            query GetLocationIds($advancedFilters: [LocationAdvancedSearchFilters!]) {
-                locations(advancedFilters: $advancedFilters) {
+            query GetLocationIds($advancedFilters: [LocationAdvancedSearchFilters!], $language: String = "en") {
+                locations(advancedFilters: $advancedFilters, language: $language) {
                     count
                     itemsPerPage
                     totalPages
@@ -199,7 +203,8 @@ export const ScanLocation = ({
                     { searchType: 'EQUAL', field: { name: `${searchValue}` } },
                     { searchType: 'EQUAL', field: { barcode: `${searchValue}` } }
                 ]
-            }
+            },
+            language: filteredLanguage
         };
         const locationInfos = await graphqlRequestClient.request(query, variables);
 

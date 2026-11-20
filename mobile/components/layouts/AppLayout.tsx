@@ -222,9 +222,20 @@ const AppLayout = ({ Component, pageProps, getLayout, Layout }: AppLayoutProps) 
     // #endregion
 
     const getUserSettings = useCallback(async () => {
+        // Only the RF row is read, by its code: the mobile uses no other setting, and the pair
+        // (warehouseWorkerId, code) is unique, so this returns at most one row whatever the page
+        // size. Unfiltered, the query got the API's default page — the first 25 settings in id
+        // order — and a back-office user has one setting per list screen: when the RF row fell
+        // beyond them, the saved language was ignored at boot and the language picker tried to
+        // create a second row (DB-000112).
         const query = gql`
             query getUserSettings($warehouseWorkerId: String!) {
-                warehouseWorkerSettings(filters: { warehouseWorkerId: $warehouseWorkerId }) {
+                warehouseWorkerSettings(
+                    filters: {
+                        warehouseWorkerId: $warehouseWorkerId
+                        code: "globalParametersMobile"
+                    }
+                ) {
                     results {
                         id
                         code

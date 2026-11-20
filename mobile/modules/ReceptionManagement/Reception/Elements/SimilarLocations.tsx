@@ -142,7 +142,8 @@ export const SimilarLocations = ({
                         locationId: e.handlingUnit.locationId,
                         locationName: e.handlingUnit.location.name,
                         quantity: e.quantity,
-                        type: 'Stock'
+                        // categoryText is resolved by the API in the UI language (hook `language`)
+                        type: e.handlingUnit.location.categoryText
                     });
                 });
             contentsToDisplay
@@ -159,7 +160,7 @@ export const SimilarLocations = ({
                         locationId: e.handlingUnit.locationId,
                         locationName: e.handlingUnit.location.name,
                         quantity: e.quantity,
-                        type: 'Reception'
+                        type: e.handlingUnit.location.categoryText
                     });
                 });
             locData.sort(compare);

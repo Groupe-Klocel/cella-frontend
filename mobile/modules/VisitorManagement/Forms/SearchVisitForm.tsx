@@ -22,7 +22,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 // number (or QR), otherwise the visitor can continue as a walk-in.
 
 import { WrapperForm, StyledForm, StyledFormItem } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useRouter } from 'next/router';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { Alert, Divider, Form, Input } from 'antd';
 import moment from 'moment';
 import { useEffect, useState } from 'react';
@@ -55,6 +56,8 @@ export interface ISearchVisitFormProps {
 export const SearchVisitForm = ({ processName, stepNumber, formToUse }: ISearchVisitFormProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const state = useAppState();
     const dispatch = useAppDispatch();
     const { configs } = state;
@@ -85,8 +88,11 @@ export const SearchVisitForm = ({ processName, stepNumber, formToUse }: ISearchV
         setErrorKey(null);
 
         const query = gql`
-            query searchVisitForVisitor($filters: AppointmentSearchFilters) {
-                appointments(filters: $filters) {
+            query searchVisitForVisitor(
+                $filters: AppointmentSearchFilters
+                $language: String = "en"
+            ) {
+                appointments(filters: $filters, language: $language) {
                     results {
                         id
                         name
@@ -113,7 +119,10 @@ export const SearchVisitForm = ({ processName, stepNumber, formToUse }: ISearchV
         `;
 
         try {
-            const res = await graphqlRequestClient.request(query, { filters: { name } });
+            const res = await graphqlRequestClient.request(query, {
+                filters: { name },
+                language: filteredLanguage
+            });
             const results: Visit[] = res?.appointments?.results ?? [];
             // Visit type and status codes resolved at runtime from the configs.
             const visitTypeCode = resolveVisitTypeCode(configs);

@@ -20,8 +20,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select a content among a list of contents corresponding to a given article and a given location
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/router';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { getLastStepWithPreviousStep, showError } from '@helpers';
+import { getLastStepWithPreviousStep, showError, getLanguageCode } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -93,6 +94,8 @@ export const SelectContentForArticleForm_reducer = ({
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const [data, setData] = useState<any>();
 
@@ -211,7 +214,8 @@ export const SelectContentForArticleForm_reducer = ({
         filters: filter,
         orderBy: [{ field: 'handlingUnit_location_category', ascending: true }],
         page: 1,
-        itemsPerPage: 100
+        itemsPerPage: 100,
+        language: filteredLanguage
     };
 
     function dataFunction() {

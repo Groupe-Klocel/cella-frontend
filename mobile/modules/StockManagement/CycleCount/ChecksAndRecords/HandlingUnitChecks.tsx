@@ -18,7 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured, showSuccess } from '@helpers';
+import { useRouter } from 'next/router';
+import { showError, LsIsSecured, showSuccess, getLanguageCode } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useRef, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -36,6 +37,8 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
     const { t } = useTranslation();
     const storage = LsIsSecured();
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const {
         process,
@@ -72,11 +75,13 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                     $filters: CycleCountMovementSearchFilters
                     $advancedFilters: [CycleCountMovementAdvancedSearchFilters!]
                     $itemsPerPage: Int
+                    $language: String = "en"
                 ) {
                     cycleCountMovements(
                         filters: $filters
                         itemsPerPage: $itemsPerPage
                         advancedFilters: $advancedFilters
+                        language: $language
                     ) {
                         count
                         itemsPerPage
@@ -132,7 +137,8 @@ export const HandlingUnitChecks = ({ dataToCheck }: IHandlingUnitChecksProps) =>
                           filter: { field: { locationId }, searchType: 'DIFFERENT' }
                       }
                     : undefined,
-                itemsPerPage: 1000
+                itemsPerPage: 1000,
+                language: filteredLanguage
             };
             const ccMovementsInfos = await graphqlRequestClient.request(query, variables);
             return ccMovementsInfos;

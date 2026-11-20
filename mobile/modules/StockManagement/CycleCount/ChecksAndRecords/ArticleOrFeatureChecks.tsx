@@ -18,7 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured, showSuccess } from '@helpers';
+import { useRouter } from 'next/router';
+import { showError, LsIsSecured, showSuccess, getLanguageCode } from '@helpers';
 import { Modal } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
@@ -36,6 +37,8 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
     const storage = LsIsSecured();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     const {
         process,
@@ -70,11 +73,13 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     $filters: CycleCountMovementSearchFilters
                     $advancedFilters: [CycleCountMovementAdvancedSearchFilters!]
                     $itemsPerPage: Int
+                    $language: String = "en"
                 ) {
                     cycleCountMovements(
                         filters: $filters
                         itemsPerPage: $itemsPerPage
                         advancedFilters: $advancedFilters
+                        language: $language
                     ) {
                         count
                         itemsPerPage
@@ -124,7 +129,8 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     cycleCountLineId: currentCycleCountLineId,
                     cycleCountId: currentCycleCountId
                 },
-                itemsPerPage: 1000
+                itemsPerPage: 1000,
+                language: filteredLanguage
             };
             const ccMovementsInfos = await graphqlRequestClient.request(query, variables);
             return ccMovementsInfos;
@@ -226,8 +232,11 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                     let contentsResults: any;
                     const fetchContents = async () => {
                         const query = gql`
-                            query huCs($filters: HandlingUnitContentSearchFilters) {
-                                handlingUnitContents(filters: $filters) {
+                            query huCs(
+                                $filters: HandlingUnitContentSearchFilters
+                                $language: String = "en"
+                            ) {
+                                handlingUnitContents(filters: $filters, language: $language) {
                                     results {
                                         id
                                         stockOwnerId
@@ -298,7 +307,8 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                                     articleResponse.resType === 'serialNumber'
                                         ? articleResponse.article.articleId
                                         : articleResponse.articleLuBarcodes[0].article.id
-                            }
+                            },
+                            language: filteredLanguage
                         };
 
                         contentsResults = await graphqlRequestClient.request(query, variables);

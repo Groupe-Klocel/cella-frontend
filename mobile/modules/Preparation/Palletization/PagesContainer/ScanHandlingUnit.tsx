@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
+import { LsIsSecured, getLanguageCode } from '@helpers';
 import { useAuth } from 'context/AuthContext';
 import { gql } from 'graphql-request';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -51,6 +52,8 @@ export const ScanHandlingUnit = ({
     const [resetForm, setResetForm] = useState<boolean>(false);
     const [handlingUnitInfos, setHandlingUnitInfos] = useState<any>();
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation();
     const [formData, setFormData] = useState<string>();
 
@@ -75,8 +78,11 @@ export const ScanHandlingUnit = ({
     const getHU = async (scannedInfo: any): Promise<{ [key: string]: any } | undefined> => {
         if (scannedInfo) {
             const query = gql`
-                query handlingUnits($advancedFilters: [HandlingUnitAdvancedSearchFilters!]) {
-                    handlingUnits(advancedFilters: $advancedFilters) {
+                query handlingUnits(
+                    $advancedFilters: [HandlingUnitAdvancedSearchFilters!]
+                    $language: String = "en"
+                ) {
+                    handlingUnits(advancedFilters: $advancedFilters, language: $language) {
                         count
                         itemsPerPage
                         totalPages
@@ -222,7 +228,8 @@ export const ScanHandlingUnit = ({
                             field: { handlingUnitOutbound_CarrierBox: scannedInfo }
                         }
                     ]
-                }
+                },
+                language: filteredLanguage
             };
             const handlingUnitInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitInfos;
