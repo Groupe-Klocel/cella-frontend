@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { LsIsSecured, showError } from '@helpers';
+import { LsIsSecured, showError, getLanguageCode } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -30,7 +30,6 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
-import { useAppState } from 'context/AppContext';
 import { lang } from 'moment';
 
 const { Title } = Typography;
@@ -91,12 +90,9 @@ export const SelectContentForArticleForm = ({
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
     const { graphqlRequestClient } = useAuth();
-    const { userSettings } = useAppState();
-    const generalUserSettings = userSettings?.find((item: any) => {
-        return 'globalParametersMobile' === item.code;
-    });
-    const globalLocale = generalUserSettings?.valueJson?.lang;
-    const searchedLanguage = globalLocale == 'en-us' ? 'en' : globalLocale;
+    // The API resolves *Text fields only for a short ISO code ("de"): the user setting holds the
+    // full locale ("de-DE"), which the API ignores, so the contents came back in English (#37447)
+    const searchedLanguage = getLanguageCode(router);
 
     const [data, setData] = useState<any>();
 

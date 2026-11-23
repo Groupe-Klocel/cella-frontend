@@ -112,6 +112,10 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                         : t('actions:back')}
                 </StyledButton>
 
+                {/* The location-list callbacks below are optional: a page that only uses the
+                    empty-locations button (pallet / reception movement) passes no
+                    setShowSimilarLocations, and ScanLocationForm passes no headerContent, so
+                    every call is guarded with `?.()` instead of throwing a TypeError. */}
                 {/* Case where both buttons are used */}
                 {input.emptyButton && input.locationButton ? (
                     emptyButton ? (
@@ -119,8 +123,8 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                             type="primary"
                             hidden={emptyButton ? false : true}
                             onClick={() => {
-                                output?.setShowSimilarLocations(!input?.showSimilarLocations);
-                                output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                                output?.setShowSimilarLocations?.(!input?.showSimilarLocations);
+                                output?.setShowEmptyLocations?.(!input?.showEmptyLocations);
                                 setBackTrigger(!backTrigger);
                                 setEmptyButton(!emptyButton);
                                 setLocButtonTrigger(!locButtonTrigger);
@@ -135,8 +139,8 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                             type="primary"
                             hidden={locButtonTrigger ? false : true}
                             onClick={() => {
-                                output?.setShowSimilarLocations(!input?.showSimilarLocations);
-                                output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                                output?.setShowSimilarLocations?.(!input?.showSimilarLocations);
+                                output?.setShowEmptyLocations?.(!input?.showEmptyLocations);
                                 setBackTrigger(!backTrigger);
                                 setEmptyButton(!emptyButton);
                                 setLocButtonTrigger(!locButtonTrigger);
@@ -153,11 +157,11 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                         type="primary"
                         hidden={!input.locationButton ? true : false}
                         onClick={() => {
-                            output?.headerContent.setHeaderContent(!input?.headerContent);
-                            output?.setShowSimilarLocations(!input?.showSimilarLocations);
+                            output?.headerContent?.setHeaderContent?.(!input?.headerContent);
+                            output?.setShowSimilarLocations?.(!input?.showSimilarLocations);
                             !input.emptyButton
-                                ? output?.setShowEmptyLocations(false)
-                                : output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                                ? output?.setShowEmptyLocations?.(false)
+                                : output?.setShowEmptyLocations?.(!input?.showEmptyLocations);
                             setBackTrigger(!backTrigger);
                         }}
                     >
@@ -171,10 +175,10 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                         type="primary"
                         hidden={!input.emptyButton ? true : false}
                         onClick={() => {
-                            output?.setShowEmptyLocations(!input?.showEmptyLocations);
+                            output?.setShowEmptyLocations?.(!input?.showEmptyLocations);
                             !input.locationButton
-                                ? output?.setShowSimilarLocations(false)
-                                : output?.setShowSimilarLocations(!input?.showSimilarLocations);
+                                ? output?.setShowSimilarLocations?.(false)
+                                : output?.setShowSimilarLocations?.(!input?.showSimilarLocations);
                             setBackTrigger(!backTrigger);
                         }}
                     >
@@ -193,8 +197,8 @@ const RadioButtons: FC<IRadioButtonsProps> = ({
                             : true
                     }
                     onClick={() => {
-                        output?.headerContent.setHeaderContent(!input?.headerContent);
-                        output?.setShowSimilarLocations(!input?.showSimilarLocations);
+                        output?.headerContent?.setHeaderContent?.(!input?.headerContent);
+                        output?.setShowSimilarLocations?.(!input?.showSimilarLocations);
                         setEmptyButton(!emptyButton);
                         setBackTrigger(!backTrigger);
                         setLocButtonTrigger(false);

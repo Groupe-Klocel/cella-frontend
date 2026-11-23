@@ -20,9 +20,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem } from '@components';
+import { useRouter } from 'next/router';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { useEffect, useMemo, useRef, useState } from 'react';
 // import configs from '../../../../../common/configs.json';
 // import parameters from '../../../../../common/parameters.json';
@@ -55,6 +56,8 @@ export const ReviewHuModelWeightForm = ({
     isToControl
 }: IReviewHuModelWeightProps) => {
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation();
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -124,11 +127,13 @@ export const ReviewHuModelWeightForm = ({
                 $filters: HandlingUnitModelSearchFilters
                 $advancedFilters: [HandlingUnitModelAdvancedSearchFilters!]
                 $itemsPerPage: Int!
+                $language: String = "en"
             ) {
                 handlingUnitModels(
                     filters: $filters
                     advancedFilters: $advancedFilters
                     itemsPerPage: $itemsPerPage
+                    language: $language
                 ) {
                     results {
                         id
@@ -170,7 +175,8 @@ export const ReviewHuModelWeightForm = ({
                     { searchType: 'DIFFERENT', field: { type: configsParamsCodes.equipmentHuType } }
                 ]
             },
-            itemsPerPage: 10000
+            itemsPerPage: 10000,
+            language: filteredLanguage
         };
         const huModelInfos = await graphqlRequestClient.request(query, variables);
         return huModelInfos;

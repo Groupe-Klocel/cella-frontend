@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
 import { EnterNumberForm } from 'modules/Common/EnterNumberForm_reducer';
-import { showError } from '@helpers';
+import { getConfigLabel, showError } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useListParametersForAScopeQuery } from 'generated/graphql';
@@ -78,6 +78,8 @@ export const SelectStockStatusAndQuantityForm_reducer = ({
     })();
 
     const configsParamsCodes = useMemo(() => {
+        // `value` stays the raw (English) parameter value so business matches like 'Sale' keep
+        // working in every language; `text` is the label shown to the user (ticket #37447)
         const findAllByScope = (items: any[], scope: string) => {
             return items
                 .filter((item: any) => item.scope === scope)
@@ -86,7 +88,7 @@ export const SelectStockStatusAndQuantityForm_reducer = ({
                     return {
                         ...item,
                         code: parseInt(item.code),
-                        value: item.translation?.[language] || item.value
+                        text: getConfigLabel(item, language)
                     };
                 });
         };
@@ -104,10 +106,10 @@ export const SelectStockStatusAndQuantityForm_reducer = ({
 
     useEffect(() => {
         if (camData) {
-            if (configsParamsCodes.stockStatuses?.some((option) => option.value === camData)) {
-                const stockStatusToFind = configsParamsCodes.stockStatuses?.find(
-                    (option) => option.value === camData
-                );
+            const matchesScan = (option: any) =>
+                option.text === camData || option.value === camData;
+            if (configsParamsCodes.stockStatuses?.some(matchesScan)) {
+                const stockStatusToFind = configsParamsCodes.stockStatuses?.find(matchesScan);
                 form.setFieldsValue({ stockStatus: stockStatusToFind.code });
             } else {
                 showError(t('messages:unexpected-scanned-item'));
@@ -265,7 +267,7 @@ export const SelectStockStatusAndQuantityForm_reducer = ({
                         >
                             {configsParamsCodes.stockStatuses?.map((option: any) => (
                                 <Select.Option key={option.code} value={option.code}>
-                                    {option.value}
+                                    {option.text}
                                 </Select.Option>
                             ))}
                         </Select>

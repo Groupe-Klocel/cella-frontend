@@ -27,7 +27,8 @@ import {
     buildHeaderDisplay,
     getLastStepWithPreviousStep,
     getStockOwnerIdFromArticleLuBarcode,
-    useTranslationWithFallback as useTranslation
+    useTranslationWithFallback as useTranslation,
+    getLanguageCode
 } from '@helpers';
 import { Form, Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
@@ -61,6 +62,7 @@ const ContentMvmt: PageComponent = () => {
     //#region Common variables
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { graphqlRequestClient } = useAuth();
     const { parameters } = useAppState();
     const [headerContent, setHeaderContent] = useState<boolean>(false);
@@ -133,8 +135,8 @@ const ContentMvmt: PageComponent = () => {
     //#region origin location handling (enforced reception flow)
     const getLocations = async (name: string): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
-            query locations($filters: LocationSearchFilters) {
-                locations(filters: $filters) {
+            query locations($filters: LocationSearchFilters, $language: String = "en") {
+                locations(filters: $filters, language: $language) {
                     count
                     itemsPerPage
                     totalPages
@@ -169,7 +171,8 @@ const ContentMvmt: PageComponent = () => {
         `;
 
         const variables = {
-            filters: { name }
+            filters: { name },
+            language: filteredLanguage
         };
         const locationResults = await graphqlRequestClient.request(query, variables);
         return locationResults;

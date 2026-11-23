@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { LsIsSecured, useHandlingUnits } from '@helpers';
+import { LsIsSecured, useHandlingUnits, getLanguageCode } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -77,6 +77,8 @@ export const SelectChildHuForHuForm = ({
     huId
 }: ISelectChildHuForHuProps) => {
     const { t } = useTranslation('common');
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
 
@@ -95,10 +97,16 @@ export const SelectChildHuForHuForm = ({
     const defaultFilter = { id: `${huId}` };
     let filter = defaultFilter;
 
-    const { isLoading, data, error } = useHandlingUnits(filter, 1, 100, {
-        field: 'name',
-        ascending: true
-    });
+    const { isLoading, data, error } = useHandlingUnits(
+        filter,
+        1,
+        100,
+        {
+            field: 'name',
+            ascending: true
+        },
+        filteredLanguage
+    );
 
     //SelectChildHuForHU-2: set contents to provide to carousel
     const [childHus, setChildHus] = useState<any>([]);

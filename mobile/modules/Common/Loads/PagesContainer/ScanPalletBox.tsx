@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm_reducer } from '@CommonRadio';
+import { useRouter } from 'next/router';
+import { getLanguageCode } from '@helpers';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useAuth } from 'context/AuthContext';
@@ -41,6 +43,8 @@ export const ScanPalletBox = ({
     formToUse
 }: IScanPalletBoxProps) => {
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const state = useAppState();
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
@@ -68,8 +72,9 @@ export const ScanPalletBox = ({
             const query = gql`
                 query handlingUnitOutbounds(
                     $advancedFilters: [HandlingUnitOutboundAdvancedSearchFilters!]
+                    $language: String = "en"
                 ) {
-                    handlingUnitOutbounds(advancedFilters: $advancedFilters) {
+                    handlingUnitOutbounds(advancedFilters: $advancedFilters, language: $language) {
                         count
                         itemsPerPage
                         totalPages
@@ -194,7 +199,8 @@ export const ScanPalletBox = ({
                         { searchType: 'EQUAL', field: { name: scannedInfo } },
                         { searchType: 'EQUAL', field: { carrierBox: scannedInfo } }
                     ]
-                }
+                },
+                language: filteredLanguage
             };
             const handlingUnitOutboundInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitOutboundInfos;

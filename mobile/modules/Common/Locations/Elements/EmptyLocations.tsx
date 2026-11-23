@@ -342,7 +342,8 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
                 locData.push({
                     locationId: e.id,
                     locationName: e.name,
-                    type: e.category === configs.LOCATION_CATEGORY_PICKING ? 'Picking' : 'Stock',
+                    // categoryText is resolved by the API in the UI language (query `language`)
+                    type: e.categoryText,
                     withHU: false
                 });
             });
@@ -353,10 +354,7 @@ export const EmptyLocations = ({ withAvailableHU }: IEmptyLocationsProps) => {
                         locData.push({
                             locationId: e.locationId,
                             locationName: e.location.name,
-                            type:
-                                e.location.category === configs.LOCATION_CATEGORY_PICKING
-                                    ? 'Picking'
-                                    : 'Stock',
+                            type: e.location.categoryText,
                             withHU: true
                         });
                     });
