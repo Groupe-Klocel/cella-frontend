@@ -524,7 +524,11 @@ const ContentMvmt: PageComponent = () => {
                     ) : (
                         <></>
                     )}
-                    {!storedObject['step10']?.data ? (
+                    {/* mounted only once the workflow is initialised (currentStep set): in the
+                        enforced-reception flow this step writes its default location on mount,
+                        and the page's own step-10 initialisation would otherwise overwrite that
+                        data right after a reset (DELETE_RF_PROCESS), leaving the loader on forever */}
+                    {!storedObject['step10']?.data && storedObject.currentStep ? (
                         <ScanLocation_reducer
                             processName={processName}
                             stepNumber={10}
