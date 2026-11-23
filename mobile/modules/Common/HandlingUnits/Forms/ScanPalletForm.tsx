@@ -20,7 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select list handling unit type = pallet corresponding to a given barcode
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { showError, LsIsSecured, useHandlingUnits } from '@helpers';
+import { useRouter } from 'next/router';
+import { showError, LsIsSecured, useHandlingUnits, getLanguageCode } from '@helpers';
 import { Form, Input } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
@@ -42,6 +43,8 @@ export const ScanPalletForm = ({
     buttons
 }: IScanPalletProps) => {
     const { t } = useTranslation('common');
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '{}');
     const [form] = Form.useForm();
@@ -65,7 +68,13 @@ export const ScanPalletForm = ({
     };
 
     // ScanPallet-2: launch query
-    const handlingUnitInfos = useHandlingUnits({ name: `${handlingUnitBarcode}` }, 1, 100, null);
+    const handlingUnitInfos = useHandlingUnits(
+        { name: `${handlingUnitBarcode}` },
+        1,
+        100,
+        null,
+        filteredLanguage
+    );
 
     //ScanPallet-3: manage information for persistence storage and front-end errors
     useEffect(() => {

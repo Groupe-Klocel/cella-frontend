@@ -20,7 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { showError } from '@helpers';
+import { useRouter } from 'next/router';
+import { showError, getLanguageCode } from '@helpers';
 import { Select, Form, Modal } from 'antd';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
@@ -63,6 +64,8 @@ export const SelectLocationByLevelForm = ({
     const dispatch = useAppDispatch();
     const storedObject = state[processName] || {};
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     // TYPED SAFE ALL
     const [levelsChoices, setLevelsChoices] = useState<Array<any>>();
@@ -191,8 +194,11 @@ export const SelectLocationByLevelForm = ({
         );
         if (updateRoundAdvisedAddressesResponse.updateRoundAdvisedAddresses) {
             const raaQuery = gql`
-                query roundAdvisedAddresses($filters: RoundAdvisedAddressSearchFilters!) {
-                    roundAdvisedAddresses(filters: $filters) {
+                query roundAdvisedAddresses(
+                    $filters: RoundAdvisedAddressSearchFilters!
+                    $language: String = "en"
+                ) {
+                    roundAdvisedAddresses(filters: $filters, language: $language) {
                         count
                         results {
                             id
@@ -299,7 +305,8 @@ export const SelectLocationByLevelForm = ({
             const raaVariables = {
                 filters: {
                     id: proposedRaaIds
-                }
+                },
+                language: filteredLanguage
             };
 
             const raaResults = await graphqlRequestClient.request(raaQuery, raaVariables);
