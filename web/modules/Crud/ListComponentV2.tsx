@@ -87,6 +87,16 @@ import {
     RANGE_PRESET_TOMORROW
 } from 'components/common/smart/Form/MainInputs/RangePickerInput';
 
+// filter tag of a date range picked to the minute (`filterWithTime`): the locale's date and time
+// without the seconds
+const MINUTE_DATE_TIME_FORMAT: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+};
+
 export type HeaderData = {
     title: string;
     routes: Array<any>;
@@ -872,6 +882,8 @@ const ListComponent = (props: IListProps) => {
                 optionTable: value.optionTable ? JSON.parse(value.optionTable) : undefined,
                 // hides the time part in the advanced-filter modal and in the filter tags
                 dateOnly: value.dateOnly ?? undefined,
+                // the date range column filter also takes a time - never on a date-only field
+                filterWithTime: (value.filterWithTime && !value.dateOnly) || undefined,
                 initialValue:
                     searchCriterias[
                         key
@@ -891,7 +903,8 @@ const ListComponent = (props: IListProps) => {
             paramList: [],
             optionTable: undefined,
             maxLength: undefined,
-            dateOnly: undefined
+            dateOnly: undefined,
+            filterWithTime: undefined
         });
 
         return fields;
@@ -1985,13 +1998,18 @@ const ListComponent = (props: IListProps) => {
                                     return {};
                                 }
 
+                                // a range taking a time shows "YYYY-MM-DD HH:mm" in both inputs
+                                const dropdownWidth = filterField?.filterWithTime
+                                    ? '360px'
+                                    : '280px';
+
                                 return {
                                     filterDropdown: () => (
                                         <div
                                             style={{
                                                 padding: 8,
-                                                minWidth: '280px',
-                                                maxWidth: '280px'
+                                                minWidth: dropdownWidth,
+                                                maxWidth: dropdownWidth
                                             }}
                                             onKeyDown={(e) => e.stopPropagation()}
                                         >
@@ -2008,7 +2026,12 @@ const ListComponent = (props: IListProps) => {
                                                     configList: filterField?.configList,
                                                     param: filterField?.param,
                                                     paramList: filterField?.paramList,
-                                                    optionTable: filterField?.optionTable
+                                                    optionTable: filterField?.optionTable,
+                                                    // date range picked to the minute (model flag
+                                                    // `filterWithTime`, see RangePickerInput)
+                                                    showTime: filterField?.filterWithTime
+                                                        ? { format: 'HH:mm' }
+                                                        : undefined
                                                 }}
                                                 defaultSubOptions={props.defaultSubOptions}
                                                 handleSubmit={submitLatestSearch}
@@ -2321,14 +2344,22 @@ const ListComponent = (props: IListProps) => {
                             [key]: [{ text: t(`common:${firstVal}`), code: firstVal }]
                         };
                     }
+                    const withTime = !!filterFields.find((field: any) => field.name === key)
+                        ?.filterWithTime;
                     return {
                         [key]: searchForTags[key].map((date: any) => ({
-                            // no time part in the tag of a date-only field
+                            // no time part in the tag of a date-only field, no seconds in the tag
+                            // of a range picked to the minute
                             text: !date
                                 ? '*'
                                 : isDateOnlyField(key)
                                   ? new Date(date).toLocaleDateString(router.locale)
-                                  : new Date(date).toLocaleString(router.locale),
+                                  : withTime
+                                    ? new Date(date).toLocaleString(
+                                          router.locale,
+                                          MINUTE_DATE_TIME_FORMAT
+                                      )
+                                    : new Date(date).toLocaleString(router.locale),
                             code: date
                         }))
                     };

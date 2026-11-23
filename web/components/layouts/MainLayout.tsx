@@ -25,6 +25,8 @@ import { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
+import { useSeason } from 'components/layouts/SeasonProvider';
+import { SeasonSiderDecor } from 'components/common/smart/Header/SeasonDecor';
 
 const StyledMainLayout = styled(Layout)`
     height: 100vh;
@@ -32,6 +34,8 @@ const StyledMainLayout = styled(Layout)`
 `;
 
 const StyledBodyLayout = styled(Layout)`
+    /* the season's layer over the sider is positioned in it (SeasonSiderDecor) */
+    position: relative;
     min-height: 0;
 `;
 
@@ -61,6 +65,8 @@ const MainLayout: FC<IMainLayoutProps> = ({ children }: IMainLayoutProps) => {
     const { status } = useThemeSwitcher();
     const dispatchUserSettings = useAppDispatch();
     const router = useRouter();
+    // the season of the header, for the side menu's share of its decorations
+    const { theme: seasonTheme } = useSeason();
     const screens = Grid.useBreakpoint();
     const [isResponsiveMenuOpen, setIsResponsiveMenuOpen] = useState<boolean>(false);
     const safeUserSettings = userSettings ?? [];
@@ -133,6 +139,14 @@ const MainLayout: FC<IMainLayoutProps> = ({ children }: IMainLayoutProps) => {
                                 <SideMenu />
                             </Layout.Sider>
                         )}
+                        {/* the season's decorations over the sider (none without SeasonProvider),
+                            clicks going through */}
+                        {!isCompactDesktop && seasonTheme ? (
+                            <SeasonSiderDecor
+                                theme={seasonTheme}
+                                collapsed={!!isSettingMenuCollapsed}
+                            />
+                        ) : null}
                         <AppContent>{children}</AppContent>
                     </StyledBodyLayout>
                     {/* forceRender: on compact screens this is the only SideMenu, and it must

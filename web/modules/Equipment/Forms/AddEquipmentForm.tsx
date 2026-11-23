@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import { Button, Col, Input, InputNumber, Row, Form, Checkbox, Select, Modal, Space } from 'antd';
 import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
-import { useEffect, useState } from 'react';
+import { CSSProperties, Fragment, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import {
@@ -44,14 +44,19 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import configs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
 
-// #37211: dimensions of the equipment and their tolerance, i.e. its volume limit ([name, label])
+// #37211: dimensions of the equipment in mm ([name, label]) and their tolerance in %, i.e. its
+// volume limit. Same labels as the list and the detail.
 const DIMENSION_FIELDS = [
-    ['length', 'common:length'],
-    ['width', 'common:width'],
-    ['height', 'common:height'],
-    ['toleranceDimension', 'd:dimension-tolerance']
+    ['length', 'd:length'],
+    ['width', 'd:width'],
+    ['height', 'd:height']
 ];
-const DIMENSION_NAMES = DIMENSION_FIELDS.map(([name]) => name);
+const TOLERANCE_FIELD = 'toleranceDimension';
+const DIMENSION_NAMES = [...DIMENSION_FIELDS.map(([name]) => name), TOLERANCE_FIELD];
+// the "x" between two dimensions, level with the inputs (below the labels of the vertical form)
+const DIMENSION_SEPARATOR_STYLE = { paddingTop: 30, lineHeight: '32px' };
+// fixed width of a dimension column, so that an error message wraps instead of pushing the next one
+const DIMENSION_COLUMN_FLEX = '0 0 130px';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -218,28 +223,37 @@ export const AddEquipmentForm = () => {
                 : Promise.resolve();
         }
     });
+    // The other fields are revalidated right away: antd `dependencies` skips the fields not
+    // touched yet (all of them on the add form)
+    const dimensionInput = (field: string, style?: CSSProperties) => (
+        <InputNumber
+            min={0}
+            style={style}
+            onChange={() =>
+                form
+                    .validateFields(DIMENSION_NAMES.filter((other) => other !== field))
+                    .catch(() => undefined)
+            }
+        />
+    );
 
     //handle call back on equipment Type change for displays
+    // #37211: the only business effect of a mono-product equipment is its mono-product boxes
+    // (boxMonoArticle, read by estimate_rounds): that box is checked and locked, and nothing else
+    // is forced. Grouped box lines is not read by the round calculation any more, and the max
+    // quantity of units is an independent limit like the others - forcing it to 1 would cap every
+    // round of the equipment to a single unit - so it stays free on every type.
     const handleEquipmentTypeChange = (value: any) => {
         if (value === configs['EQUIPMENT_TYPE_MONO-PRODUCT_EQUIPMENT']) {
             setDisableTypeRelated(true);
-            setBoxLineGroupValue(true);
             setBoxMonoArticleChange(true);
-            form.setFieldsValue({
-                qtyMaxArticle: 1,
-                boxLineGrouped: true,
-                boxMonoArticle: true
-            });
+            form.setFieldsValue({ boxMonoArticle: true });
         } else {
             setDisableTypeRelated(false);
-            setBoxLineGroupValue(false);
             setBoxMonoArticleChange(false);
             setFreePickingOrderChange(false);
-            form.setFieldsValue({
-                boxLineGrouped: false
-            });
-            delete form.getFieldsValue(true)['boxMonoArticle'];
-            delete form.getFieldsValue(true)['qtyMaxArticle'];
+            // free picking order is only available on a mono-product equipment
+            form.setFieldsValue({ boxMonoArticle: false, allowPickingOrderFree: false });
         }
     };
 
@@ -521,29 +535,37 @@ export const AddEquipmentForm = () => {
                     one reached - volume (length x width x height, + tolerance), number of boxes and
                     number of units. */}
                 {/* #37211: the dimensions and their tolerance go together - all filled in
-                    (volume limit) or all empty (no volume limit) */}
-                {DIMENSION_FIELDS.map(([field, label]) => (
-                    <Form.Item key={field} label={t(label)} name={field} rules={[dimensionRule]}>
-                        {/* The other fields are revalidated right away: antd `dependencies` skips
-                            the fields not touched yet (all of them on the add form) */}
-                        <InputNumber
-                            min={0}
-                            onChange={() =>
-                                form
-                                    .validateFields(
-                                        DIMENSION_NAMES.filter((other) => other !== field)
-                                    )
-                                    .catch(() => undefined)
-                            }
-                        />
-                    </Form.Item>
-                ))}
+                    (volume limit) or all empty (no volume limit). Length x width x height on one
+                    line, still three separate fields. */}
+                <Row gutter={8} align="top">
+                    {DIMENSION_FIELDS.map(([field, label], index) => (
+                        <Fragment key={field}>
+                            {index > 0 && (
+                                <Col flex="none" style={DIMENSION_SEPARATOR_STYLE}>
+                                    x
+                                </Col>
+                            )}
+                            <Col flex={DIMENSION_COLUMN_FLEX}>
+                                <Form.Item label={t(label)} name={field} rules={[dimensionRule]}>
+                                    {dimensionInput(field, { width: '100%' })}
+                                </Form.Item>
+                            </Col>
+                        </Fragment>
+                    ))}
+                </Row>
+                <Form.Item
+                    label={t('d:toleranceDimension')}
+                    name={TOLERANCE_FIELD}
+                    rules={[dimensionRule]}
+                >
+                    {dimensionInput(TOLERANCE_FIELD)}
+                </Form.Item>
                 <Form.Item label={t('d:nb-max-box')} name="nbMaxBox">
                     <InputNumber min={1} />
                 </Form.Item>
-                {/* Locked on a mono-product equipment (forced to 1 at creation) */}
+                {/* #37211: free on every type, mono-product included */}
                 <Form.Item label={t('d:qty-max-article')} name="qtyMaxArticle">
-                    <InputNumber min={1} disabled={disableTypeRelated} />
+                    <InputNumber min={1} />
                 </Form.Item>
 
                 {/* Sorting gauge: the max dimensions an item footprint must fit into for this

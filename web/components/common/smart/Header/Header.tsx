@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ExportOutlined, MenuOutlined, SettingOutlined } from '@ant-design/icons';
-import { DrawerItems, Logo, ProfileMenu, UserSettings } from '@components';
+import { DrawerItems, ProfileMenu, UserSettings } from '@components';
 import { Button, Col, Layout, Row, Space } from 'antd';
 import { useAppState, useAppDispatch } from 'context/AppContext';
 import { useAuth } from 'context/AuthContext';
@@ -29,11 +29,13 @@ import {
     cookie,
     getEnvironmentLabel
 } from '@helpers';
+import { useSeason } from 'components/layouts/SeasonProvider';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
 import Link from 'next/link';
 import { gql } from 'graphql-request';
+import { SeasonDecorLayers, SeasonLeftExtras, SeasonLogo } from './SeasonDecor';
 
 const StyledHeader = styled(Layout.Header)`
     padding: 3px 10px 3px 10px;
@@ -43,11 +45,31 @@ const StyledHeader = styled(Layout.Header)`
     @media (max-width: 991px) {
         padding: 0px 8px;
     }
+
+    /* the avatar and the user's name keep their width and their line: on a narrow screen the
+       left side gives way — the season's greeting goes first (styles/seasons.css), the user's
+       name on the narrowest phones */
+    .ssn-controls {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 359px) {
+        .profile-username {
+            display: none;
+        }
+    }
 `;
 
 const StyledCol = styled(Col)`
     min-width: 0;
     padding: 0px 5px 0px 5px;
+`;
+
+// the left side of the bar: what does not fit is clipped (sideways only: the logo's seasonal
+// accessory stands above the bar's line)
+const LeftCol = styled(StyledCol)`
+    overflow-x: clip;
 `;
 
 export interface IHeaderProps {
@@ -73,6 +95,15 @@ const Header: FC<IHeaderProps> = ({ showMenuButton = false, onMenuButtonClick }:
     const { userSettings, user: userInfo, tempTheme } = useAppState();
     const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState<boolean>(false);
 
+    // seasonal decorations (helpers/utils/season.ts; AppLayout mounts the SeasonProvider) —
+    // data-season* attributes on the header, the scene's layers, the logo's accessory; the
+    // greeting comes from the DB translations and shows only once its row exists (the raw key
+    // would show otherwise)
+    const { theme: seasonTheme } = useSeason();
+    const greetingKey = seasonTheme ? `common:season-greeting-${seasonTheme.season}` : '';
+    const greetingLabel = greetingKey ? t(greetingKey) : '';
+    const seasonGreeting = greetingLabel !== greetingKey ? greetingLabel : '';
+
     const generalUserSettingsRef = useRef<any>(null);
     const tempThemeRef = useRef<any>(null);
 
@@ -91,7 +122,8 @@ const Header: FC<IHeaderProps> = ({ showMenuButton = false, onMenuButtonClick }:
                 lang: generalUserSettingsRef.current?.valueJson?.lang,
                 isSettingMenuCollapsed:
                     generalUserSettingsRef.current?.valueJson?.isSettingMenuCollapsed,
-                theme: tempThemeRef.current ?? generalUserSettingsRef.current?.valueJson?.theme
+                theme: tempThemeRef.current ?? generalUserSettingsRef.current?.valueJson?.theme,
+                seasonalDecorations: generalUserSettingsRef.current?.valueJson?.seasonalDecorations
             }
         };
         const createQuery = gql`
@@ -146,7 +178,8 @@ const Header: FC<IHeaderProps> = ({ showMenuButton = false, onMenuButtonClick }:
         saveSettings();
         setIsSearchDrawerOpen(false);
         switcher({
-            theme: tempThemeRef.current ?? generalUserSettingsRef.current?.valueJson?.theme!
+            theme: (tempThemeRef.current ??
+                generalUserSettingsRef.current?.valueJson?.theme) as string
         });
     };
 
@@ -245,10 +278,11 @@ const Header: FC<IHeaderProps> = ({ showMenuButton = false, onMenuButtonClick }:
         setFirstValue(true);
     }
     return (
-        <StyledHeader>
+        <StyledHeader data-season={seasonTheme?.season} data-season-tone={seasonTheme?.tone}>
             <DrawerItems {...drawerProps()} />
+            {seasonTheme && <SeasonDecorLayers theme={seasonTheme} />}
             <Row wrap={false} align="middle" justify="space-between">
-                <StyledCol flex="0 1 auto">
+                <LeftCol flex="1 1 auto">
                     <Space size="small" align="center">
                         {showMenuButton && (
                             <Button
@@ -259,7 +293,7 @@ const Header: FC<IHeaderProps> = ({ showMenuButton = false, onMenuButtonClick }:
                             />
                         )}
                         <Link href="/" passHref>
-                            <Logo width={45} />
+                            <SeasonLogo theme={seasonTheme} />
                         </Link>
                         {(() => {
                             const envLabel = getEnvironmentLabel();
@@ -284,13 +318,17 @@ const Header: FC<IHeaderProps> = ({ showMenuButton = false, onMenuButtonClick }:
                                 </span>
                             ) : null;
                         })()}
+                        {seasonTheme && (
+                            <SeasonLeftExtras theme={seasonTheme} greeting={seasonGreeting} />
+                        )}
                     </Space>
-                </StyledCol>
+                </LeftCol>
                 <StyledCol
-                    flex="1 1 auto"
+                    flex="0 0 auto"
                     style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}
                 >
-                    <Space size="middle" align="center">
+                    {/* ssn-controls: on a frosted plate over a seasonal scene (styles/seasons.css) */}
+                    <Space size="middle" align="center" className="ssn-controls">
                         {timeLeft !== null &&
                             timeLeft > 0 &&
                             timeLeft < delayNotificationBeforeLogout && (
