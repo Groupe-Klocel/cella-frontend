@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { WrapperForm } from '@components';
 import { Button, Col, Input, InputNumber, Row, Form, Checkbox, Select, Modal, Space } from 'antd';
 import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
-import { useEffect, useState } from 'react';
+import { CSSProperties, Fragment, useEffect, useState } from 'react';
 import { useAuth } from 'context/AuthContext';
 import { useRouter } from 'next/router';
 import {
@@ -44,6 +44,20 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import configs from '../../../../common/configs.json';
 import { gql } from 'graphql-request';
 
+// #37211: dimensions of the equipment in mm ([name, label]) and their tolerance in %, i.e. its
+// volume limit. Same labels as the list and the detail.
+const DIMENSION_FIELDS = [
+    ['length', 'd:length'],
+    ['width', 'd:width'],
+    ['height', 'd:height']
+];
+const TOLERANCE_FIELD = 'toleranceDimension';
+const DIMENSION_NAMES = [...DIMENSION_FIELDS.map(([name]) => name), TOLERANCE_FIELD];
+// the "x" between two dimensions, level with the inputs (below the labels of the vertical form)
+const DIMENSION_SEPARATOR_STYLE = { paddingTop: 30, lineHeight: '32px' };
+// fixed width of a dimension column, so that an error message wraps instead of pushing the next one
+const DIMENSION_COLUMN_FLEX = '0 0 130px';
+
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -61,7 +75,6 @@ export const AddEquipmentForm = () => {
     const [stockOwners, setStockOwners] = useState<any>();
     const [equipmentTypes, setEquipmentTypes] = useState<any>();
     const [pattern, setPattern] = useState<any>();
-    const [equipmentLimitTypes, setEquipmentLimitTypes] = useState<any>();
     const [equipmentMechanizedSystem, setEquipmentMechanizedSystem] = useState<any>();
     const [equipmentAutomaticLabelPrinting, setEquipmentAutomaticLabelPrinting] = useState<any>();
     const [printers, setPrinter] = useState<any>();
@@ -69,7 +82,6 @@ export const AddEquipmentForm = () => {
     const [boxMonoArticleChange, setBoxMonoArticleChange] = useState<boolean>();
     const [freePickingOrderChange, setFreePickingOrderChange] = useState<boolean>();
     const [disableTypeRelated, setDisableTypeRelated] = useState<boolean>(false);
-    const [displayLimitTypeRelated, setDisplayLimitTypeRelated] = useState<boolean>(false);
     const [maxPriority, setMaxPriority] = useState<number>(0);
 
     // prompt the user if they try and leave with unsaved changes
@@ -142,18 +154,6 @@ export const AddEquipmentForm = () => {
         }
     }, [equipmentTypesList]);
 
-    //To render Equipment Limit types list configs
-    const equipmentLimitTypeList = useListConfigsForAScopeQuery(graphqlRequestClient, {
-        scope: 'equipment_limit_type',
-        language: filteredLanguage
-    });
-
-    useEffect(() => {
-        if (equipmentLimitTypeList) {
-            setEquipmentLimitTypes(equipmentLimitTypeList?.data?.listConfigsForAScope);
-        }
-    }, [equipmentLimitTypeList]);
-
     //To render Pattern list configs
     const patternList = useGetAllPatternsQuery<Partial<GetAllPatternsQuery>, Error>(
         graphqlRequestClient,
@@ -212,41 +212,48 @@ export const AddEquipmentForm = () => {
     // TYPED SAFE ALL
     const [form] = Form.useForm();
 
+    // #37211: the dimensions of the equipment and their tolerance (its volume limit) are all
+    // filled in or all empty - with only part of them the volume would be meaningless.
+    const isEmptyValue = (value: any) => value === null || value === undefined || value === '';
+    const dimensionRule = ({ getFieldValue }: any) => ({
+        validator(_: any, value: any) {
+            const oneFilled = DIMENSION_NAMES.some((field) => !isEmptyValue(getFieldValue(field)));
+            return oneFilled && isEmptyValue(value)
+                ? Promise.reject(new Error(t('messages:error-message-empty-input')))
+                : Promise.resolve();
+        }
+    });
+    // The other fields are revalidated right away: antd `dependencies` skips the fields not
+    // touched yet (all of them on the add form)
+    const dimensionInput = (field: string, style?: CSSProperties) => (
+        <InputNumber
+            min={0}
+            style={style}
+            onChange={() =>
+                form
+                    .validateFields(DIMENSION_NAMES.filter((other) => other !== field))
+                    .catch(() => undefined)
+            }
+        />
+    );
+
     //handle call back on equipment Type change for displays
+    // #37211: the only business effect of a mono-product equipment is its mono-product boxes
+    // (boxMonoArticle, read by estimate_rounds): that box is checked and locked, and nothing else
+    // is forced. Grouped box lines is not read by the round calculation any more, and the max
+    // quantity of units is an independent limit like the others - forcing it to 1 would cap every
+    // round of the equipment to a single unit - so it stays free on every type.
     const handleEquipmentTypeChange = (value: any) => {
         if (value === configs['EQUIPMENT_TYPE_MONO-PRODUCT_EQUIPMENT']) {
             setDisableTypeRelated(true);
-            setBoxLineGroupValue(true);
             setBoxMonoArticleChange(true);
-            form.setFieldsValue({
-                qtyMaxArticle: 1,
-                boxLineGrouped: true,
-                boxMonoArticle: true
-            });
+            form.setFieldsValue({ boxMonoArticle: true });
         } else {
             setDisableTypeRelated(false);
-            setBoxLineGroupValue(false);
             setBoxMonoArticleChange(false);
             setFreePickingOrderChange(false);
-            form.setFieldsValue({
-                boxLineGrouped: false,
-                limitType: configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY,
-                limitTypeText: equipmentLimitTypes?.find(
-                    (e: any) => e.code == configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY
-                ).text
-            });
-            setDisplayLimitTypeRelated(false);
-            delete form.getFieldsValue(true)['boxMonoArticle'];
-            delete form.getFieldsValue(true)['qtyMaxArticle'];
-        }
-    };
-
-    //handle call back on equipment Type change for displays
-    const handleEquipmentLimitTypeChange = (value: any) => {
-        if (value === configs.EQUIPMENT_LIMIT_TYPE_MAXIMUM_QUANTITY) {
-            setDisplayLimitTypeRelated(false);
-        } else {
-            setDisplayLimitTypeRelated(true);
+            // free picking order is only available on a mono-product equipment
+            form.setFieldsValue({ boxMonoArticle: false, allowPickingOrderFree: false });
         }
     };
 
@@ -522,102 +529,44 @@ export const AddEquipmentForm = () => {
                     </Col>
                 </Row>
 
-                <Form.Item label={t('d:qty-max-article')} name="qtyMaxArticle">
-                    <InputNumber disabled value={1} />
-                </Form.Item>
-
+                {/* #37211: no more limit type. The three limits of the equipment are independent
+                    and optional: each one applies as soon as it is filled in (empty or 0 = no
+                    limit), and the round calculation (estimate_rounds) closes a round on the first
+                    one reached - volume (length x width x height, + tolerance), number of boxes and
+                    number of units. */}
+                {/* #37211: the dimensions and their tolerance go together - all filled in
+                    (volume limit) or all empty (no volume limit). Length x width x height on one
+                    line, still three separate fields. */}
+                <Row gutter={8} align="top">
+                    {DIMENSION_FIELDS.map(([field, label], index) => (
+                        <Fragment key={field}>
+                            {index > 0 && (
+                                <Col flex="none" style={DIMENSION_SEPARATOR_STYLE}>
+                                    x
+                                </Col>
+                            )}
+                            <Col flex={DIMENSION_COLUMN_FLEX}>
+                                <Form.Item label={t(label)} name={field} rules={[dimensionRule]}>
+                                    {dimensionInput(field, { width: '100%' })}
+                                </Form.Item>
+                            </Col>
+                        </Fragment>
+                    ))}
+                </Row>
                 <Form.Item
-                    label={t('d:limit-type')}
-                    name="limitType"
-                    rules={[
-                        {
-                            required: true,
-                            message: `${t('messages:error-message-empty-input')}`
-                        }
-                    ]}
+                    label={t('d:toleranceDimension')}
+                    name={TOLERANCE_FIELD}
+                    rules={[dimensionRule]}
                 >
-                    <Select
-                        placeholder={`${t('messages:please-select-a', {
-                            name: t('d:limit-type')
-                        })}`}
-                        disabled={disableTypeRelated === true ? false : true}
-                        onChange={handleEquipmentLimitTypeChange}
-                    >
-                        {equipmentLimitTypes?.map((equipmentLimitType: any) => (
-                            <Option
-                                key={equipmentLimitType.id}
-                                value={parseInt(equipmentLimitType.code)}
-                            >
-                                {equipmentLimitType.text}
-                            </Option>
-                        ))}
-                    </Select>
+                    {dimensionInput(TOLERANCE_FIELD)}
                 </Form.Item>
-                {displayLimitTypeRelated == true ? (
-                    <>
-                        <Form.Item
-                            label={t('common:length')}
-                            name="length"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: `${t('messages:error-message-empty-input')}`
-                                }
-                            ]}
-                        >
-                            <InputNumber />
-                        </Form.Item>
-                        <Form.Item
-                            label={t('common:width')}
-                            name="width"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: `${t('messages:error-message-empty-input')}`
-                                }
-                            ]}
-                        >
-                            <InputNumber />
-                        </Form.Item>
-                        <Form.Item
-                            label={t('common:height')}
-                            name="height"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: `${t('messages:error-message-empty-input')}`
-                                }
-                            ]}
-                        >
-                            <InputNumber />
-                        </Form.Item>
-                        <Form.Item
-                            label={t('d:dimension-tolerance')}
-                            name="toleranceDimension"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: `${t('messages:error-message-empty-input')}`
-                                }
-                            ]}
-                        >
-                            <InputNumber />
-                        </Form.Item>
-                    </>
-                ) : (
-                    <Form.Item
-                        label={t('d:nb-max-box')}
-                        name="nbMaxBox"
-                        rules={[
-                            {
-                                required: true,
-                                message: `${t('messages:error-message-empty-input')}`
-                            }
-                        ]}
-                    >
-                        <InputNumber />
-                    </Form.Item>
-                )}
+                <Form.Item label={t('d:nb-max-box')} name="nbMaxBox">
+                    <InputNumber min={1} />
+                </Form.Item>
+                {/* #37211: free on every type, mono-product included */}
+                <Form.Item label={t('d:qty-max-article')} name="qtyMaxArticle">
+                    <InputNumber min={1} />
+                </Form.Item>
 
                 {/* Sorting gauge: the max dimensions an item footprint must fit into for this
                     equipment to accept it. Each one is optional - empty or 0 means that dimension
