@@ -73,6 +73,8 @@ export type FilterFieldType = {
     isMultipleSearch?: boolean;
     // field holding a date whose time part must never be shown nor entered
     dateOnly?: boolean;
+    // date range filter that also takes a time (see FieldInfo.filterWithTime)
+    filterWithTime?: boolean;
 };
 
 // Used for defining endpoints inside ModelType
@@ -137,6 +139,10 @@ export type FieldInfo = {
     highlight?: any;
     // the field carries a date only - no time in lists, details, filters and forms
     dateOnly?: boolean;
+    // date range column filter (`searchingFormat: 'CalendarRange'`) that also takes a time
+    // (HH:mm): picking days only covers them whole (00:00 -> 23:59), and an end bound covers
+    // its whole minute. Opt-in per field; ignored on a `dateOnly` field
+    filterWithTime?: boolean;
     // the field holds an attached document (base64 data URI, bare base64 or URL): the detail
     // shows a link opening it instead of the raw value
     documentLink?: boolean;
