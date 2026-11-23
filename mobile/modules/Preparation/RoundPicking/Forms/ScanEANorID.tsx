@@ -68,8 +68,9 @@ export const ScanEANorID = ({
             const query = gql`
                 query handlingUnitOutbounds(
                     $advancedFilters: [HandlingUnitOutboundAdvancedSearchFilters!]
+                    $language: String = "en"
                 ) {
-                    handlingUnitOutbounds(advancedFilters: $advancedFilters) {
+                    handlingUnitOutbounds(advancedFilters: $advancedFilters, language: $language) {
                         count
                         itemsPerPage
                         totalPages
@@ -182,7 +183,8 @@ export const ScanEANorID = ({
                         { searchType: 'EQUAL', field: { handlingUnit_Barcode: scannedInfo } },
                         { searchType: 'EQUAL', field: { carrierBox: scannedInfo } }
                     ]
-                }
+                },
+                language: filteredLanguage
             };
             const handlingUnitOutboundInfos = await graphqlRequestClient.request(query, variables);
             return handlingUnitOutboundInfos;

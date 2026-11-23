@@ -20,7 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { showError } from '@helpers';
+import { useRouter } from 'next/router';
+import { showError, getLanguageCode } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -48,6 +49,8 @@ export const SelectGoodsInForm = ({
     triggerAlternativeSubmit1: { triggerAlternativeSubmit1, setTriggerAlternativeSubmit1 }
 }: ISelectGoodsInProps) => {
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation();
     const state = useAppState();
     const dispatch = useAppDispatch();
@@ -121,8 +124,8 @@ export const SelectGoodsInForm = ({
     const onFinish = async (values: any) => {
         const data: { [label: string]: any } = {};
         const query = gql`
-            query round($id: String!) {
-                round(id: $id) {
+            query round($id: String!, $language: String = "en") {
+                round(id: $id, language: $language) {
                     id
                     name
                     roundLines {
@@ -169,7 +172,8 @@ export const SelectGoodsInForm = ({
         `;
 
         const variables = {
-            id: values.goodsIn
+            id: values.goodsIn,
+            language: filteredLanguage
         };
 
         const selectedRound = await graphqlRequestClient.request(query, variables);

@@ -45,18 +45,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
     );
 
-    const { scannedInfo } = req.body;
+    // `language` (short ISO code, e.g. "fr") drives the *Text labels resolved by the API
+    const { scannedInfo, language = 'en' } = req.body;
 
     const sharedFilter = {
-        filters: { barcode: scannedInfo }
+        filters: { barcode: scannedInfo },
+        language
     };
 
     const husQuery = gql`
         query GetHandlingUnits(
             $filters: HandlingUnitSearchFilters
             $orderBy: [HandlingUnitOrderByCriterion!]
+            $language: String = "en"
         ) {
-            handlingUnits(filters: $filters, orderBy: $orderBy) {
+            handlingUnits(filters: $filters, orderBy: $orderBy, language: $language) {
                 count
                 results {
                     id
@@ -86,8 +89,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     `;
 
     const locationsQuery = gql`
-        query GetLocations($filters: LocationSearchFilters, $orderBy: [LocationOrderByCriterion!]) {
-            locations(filters: $filters, orderBy: $orderBy) {
+        query GetLocations(
+            $filters: LocationSearchFilters
+            $orderBy: [LocationOrderByCriterion!]
+            $language: String = "en"
+        ) {
+            locations(filters: $filters, orderBy: $orderBy, language: $language) {
                 count
                 itemsPerPage
                 totalPages

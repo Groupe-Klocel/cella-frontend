@@ -18,7 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { WrapperForm, ContentSpin } from '@components';
-import { showError, LsIsSecured } from '@helpers';
+import { useRouter } from 'next/router';
+import { showError, LsIsSecured, getLanguageCode } from '@helpers';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { useEffect, useState } from 'react';
 import configs from '../../../../../common/configs.json';
@@ -29,6 +30,8 @@ export interface IArticleOrFeatureChecksProps {
 
 export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksProps) => {
     const { t } = useTranslation();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const storage = LsIsSecured();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -54,7 +57,8 @@ export const ArticleOrFeatureChecks = ({ dataToCheck }: IArticleOrFeatureChecksP
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        scannedInfo
+                        scannedInfo,
+                        language: filteredLanguage
                     })
                 });
                 const response = await res.json();

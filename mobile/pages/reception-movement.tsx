@@ -126,8 +126,8 @@ const ReceptionMovement: PageComponent = () => {
                 ></RadioInfosHeader>
             )}
             {showEmptyLocations &&
-            storedObject[`step${workflow.expectedSteps[0]}`].data.handlingUnit
-                .handlingUnitContents ? (
+            storedObject[`step${workflow.expectedSteps[0]}`]?.data?.handlingUnit
+                ?.handlingUnitContents ? (
                 <EmptyLocations />
             ) : (
                 <></>
