@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { PageContentWrapper, NavButton } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
-import { FC, use, useEffect, useMemo, useState } from 'react';
+import { FC, use, useEffect, useMemo, useRef, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
 import {
     HeaderManagementType,
@@ -736,7 +736,10 @@ const Pick: PageComponent = () => {
     const ignoreHUContentIds = storedObject.ignoreHUContentIds || [];
 
     useEffect(() => {
-        if (triggerNextRaa && storedObject['step20']) {
+        // Redmine #37124 — the two blocks are exclusive: once the operator is at the article step,
+        // step20 exists as well, and both blocks used to run on the same press (the second one reads
+        // the triggerNextRaa of this render, not the false set by the first one).
+        if (triggerNextRaa && storedObject['step20'] && !storedObject['step50']) {
             setTriggerNextRaa(false);
             let newIgnoreHUContentIds = [...ignoreHUContentIds, currentRoundAdvisedAddressCouple];
             let remainingHUContentIds = (
@@ -914,6 +917,26 @@ const Pick: PageComponent = () => {
                 return;
             }
 
+            // Redmine #37124 — the article (step50), the stock and its features (step60) and the
+            // quantity (step70) already entered belong to the line left behind. Only steps 30/40 are
+            // refilled below, so they used to survive the press: the operator was sent on with the
+            // stock of the previous article, and AutoValidatePick validated it on the new line (the
+            // movement takes the stock's article, the round counts the line's). Cutting the state
+            // back to step40 drops them; the article step then mounts again on the new line and
+            // asks for its article (or derives it from the new stock, as on any other line).
+            // Only needed when the article step has already been answered: while it is still asked
+            // (no step50.data) nothing above it exists, and its component stays mounted.
+            const isArticleStepToReset = !!storedObject['step50']?.data;
+            if (isArticleStepToReset) {
+                dispatch({
+                    type: 'ON_BACK',
+                    processName,
+                    stepToReturn: `step40`
+                });
+                setIsEnterQtyDisplay(false);
+                setUptodateQty(null);
+            }
+
             // Transform raaToUse.handlingUnitContent to handlingUnit format
             const handlingUnitContent = raaToUse?.handlingUnitContent;
             const handlingUnitFromRaa = {
@@ -960,7 +983,12 @@ const Pick: PageComponent = () => {
                         ...storedObject[`step40`]?.data,
                         handlingUnit: handlingUnitFromRaa
                     }
-                }
+                },
+                // ON_BACK above left currentStep on step40's previous step: put it back on step40,
+                // so that the article step mounting next records 40 as its previous step.
+                ...(isArticleStepToReset
+                    ? { customFields: [{ key: 'currentStep', value: 40 }] }
+                    : {})
             });
         }
     }, [triggerNextRaa]);
@@ -1199,6 +1227,12 @@ const Pick: PageComponent = () => {
 
     // #region EnterQuantity pre checks
     // this part to adjust pick movement quantitites not yet terminated and display step 70 accordingly
+    // Redmine #37124 — the stock the screen is on right now. The re-read below is asynchronous:
+    // when "next" leaves the line while it is in flight, its answer arrives for a stock that is no
+    // longer the current one, and used to bring the quantity screen up over the article step of the
+    // new line. Its answer is only applied while it still describes the stock on screen.
+    const currentContentIdRef = useRef<string | undefined>(undefined);
+    currentContentIdRef.current = storedObject['step60']?.data?.content?.id;
     if (
         storedObject['step60']?.data &&
         storedObject['step60']?.data.processedFeatures?.length >=
@@ -1255,6 +1289,9 @@ const Pick: PageComponent = () => {
                 })
             ]);
 
+            if (currentContentIdRef.current !== originalContentId) {
+                return;
+            }
             if (movementsResponse.movements.results && contentResponse.handlingUnitContent) {
                 const movementsQuantity =
                     movementsResponse.movements.results[0]?.functionSum.quantity ?? 0;
