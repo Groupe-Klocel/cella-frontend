@@ -160,7 +160,7 @@ export const ArticlePriceModelV2: ModelType = {
             config: null,
             param: null
         },
-        genericArticleComment: {
+        'article{genericArticleComment}': {
             isListRequested: true,
             isDefaultHiddenList: false,
             isExcludedFromList: false,

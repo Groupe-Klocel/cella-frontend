@@ -245,7 +245,8 @@ const useHandlingUnitOutbounds = (
     advancedSearch: any,
     page: number,
     itemsPerPage: number,
-    sort: any
+    sort: any,
+    language?: any
 ) => {
     const { graphqlRequestClient } = useAuth();
 
@@ -268,7 +269,8 @@ const useHandlingUnitOutbounds = (
             filters: search,
             orderBy: newSort,
             page: page,
-            itemsPerPage: itemsPerPage
+            itemsPerPage: itemsPerPage,
+            language: language
         }
     );
 

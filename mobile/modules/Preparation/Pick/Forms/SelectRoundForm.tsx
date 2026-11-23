@@ -20,7 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 //DESCRIPTION: select manually or automatically one location in a list of locations according to their level
 
 import { WrapperForm, StyledForm, StyledFormItem, RadioButtons } from '@components';
-import { showError } from '@helpers';
+import { useRouter } from 'next/router';
+import { showError, getLanguageCode } from '@helpers';
 import { Form, Select } from 'antd';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -48,6 +49,8 @@ export const SelectRoundForm = ({
     formToUse
 }: ISelectRoundProps) => {
     const { graphqlRequestClient, user } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { t } = useTranslation();
     const { configs } = useAppState();
     const state = useAppState();
@@ -269,8 +272,8 @@ export const SelectRoundForm = ({
         await graphqlRequestClient.request(updateRoundMutation, updateRoundVariables);
 
         const query = gql`
-            query round($id: String!) {
-                round(id: $id) {
+            query round($id: String!, $language: String = "en") {
+                round(id: $id, language: $language) {
                     id
                     name
                     status
@@ -416,7 +419,8 @@ export const SelectRoundForm = ({
         `;
 
         const variables = {
-            id: values.rounds
+            id: values.rounds,
+            language: filteredLanguage
         };
 
         const selectedRound = await graphqlRequestClient.request(query, variables);

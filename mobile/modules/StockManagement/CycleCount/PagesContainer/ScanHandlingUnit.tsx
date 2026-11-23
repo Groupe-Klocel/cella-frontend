@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import { ScanForm } from '@CommonRadio';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { LsIsSecured } from '@helpers';
+import { LsIsSecured, getLanguageCode } from '@helpers';
 import { GetHandlingUnitsQuery, useGetHandlingUnitsQuery } from 'generated/graphql';
 import { useAuth } from 'context/AuthContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -53,6 +54,8 @@ export const ScanCCHandlingUnit = ({
     const [scannedInfo, setScannedInfo] = useState<string>();
     const [resetForm, setResetForm] = useState<boolean>(false);
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
 
     //Pre-requisite: initialize current step
     useEffect(() => {
@@ -81,7 +84,8 @@ export const ScanCCHandlingUnit = ({
             filters: { barcode: [`${scannedInfo}`] },
             orderBy: null,
             page: 1,
-            itemsPerPage: 100
+            itemsPerPage: 100,
+            language: filteredLanguage
         }
     );
 

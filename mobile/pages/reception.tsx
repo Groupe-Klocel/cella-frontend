@@ -21,7 +21,7 @@ import { PageContentWrapper, NavButton, UpperMobileSpinner } from '@components';
 import MainLayout from 'components/layouts/MainLayout';
 import { FC, useEffect, useState } from 'react';
 import { HeaderContent, RadioInfosHeader } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { Space } from 'antd';
 import { ArrowLeftOutlined, UndoOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
@@ -58,6 +58,7 @@ type PageComponent = FC & { layout: typeof MainLayout };
 const Reception: PageComponent = () => {
     const { t } = useTranslation();
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { graphqlRequestClient } = useAuth();
 
     const [headerContent, setHeaderContent] = useState<boolean>(false);
@@ -126,8 +127,8 @@ const Reception: PageComponent = () => {
 
     const getLocations = async (name: string): Promise<{ [key: string]: any } | undefined> => {
         const query = gql`
-            query locations($filters: LocationSearchFilters) {
-                locations(filters: $filters) {
+            query locations($filters: LocationSearchFilters, $language: String = "en") {
+                locations(filters: $filters, language: $language) {
                     count
                     itemsPerPage
                     totalPages
@@ -162,7 +163,8 @@ const Reception: PageComponent = () => {
         `;
 
         const variables = {
-            filters: { name }
+            filters: { name },
+            language: filteredLanguage
         };
         const receptionParameters = await graphqlRequestClient.request(query, variables);
         return receptionParameters;
@@ -259,7 +261,8 @@ const Reception: PageComponent = () => {
     }
     if (storedObject['step70']?.data?.stockStatus) {
         const stockStatus = storedObject['step70']?.data?.stockStatus;
-        headerDisplay[t('common:stock-status')] = stockStatus.value;
+        // `text` is the parameter label in the UI language, `value` the raw English one
+        headerDisplay[t('common:stock-status')] = stockStatus.text ?? stockStatus.value;
     }
     if (storedObject['step70']?.data?.movingQuantity) {
         const movingQuantity = storedObject['step70']?.data?.movingQuantity;

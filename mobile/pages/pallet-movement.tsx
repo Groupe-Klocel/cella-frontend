@@ -127,7 +127,8 @@ const PalletMovement: PageComponent = () => {
                 ></RadioInfosHeader>
             )}
             {showEmptyLocations &&
-            palletMvt[`step${workflow.expectedSteps[0]}`].data.handlingUnit.handlingUnitContents ? (
+            palletMvt[`step${workflow.expectedSteps[0]}`]?.data?.handlingUnit
+                ?.handlingUnitContents ? (
                 <EmptyLocations />
             ) : (
                 <></>

@@ -22,7 +22,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 // truck plate (or QR), otherwise the driver can request an ad-hoc entry.
 
 import { WrapperForm, StyledForm, StyledFormItem } from '@components';
-import { useTranslationWithFallback as useTranslation } from '@helpers';
+import { useRouter } from 'next/router';
+import { useTranslationWithFallback as useTranslation, getLanguageCode } from '@helpers';
 import { Alert, Divider, Form, Input } from 'antd';
 import { useEffect, useState } from 'react';
 import { gql } from 'graphql-request';
@@ -43,6 +44,8 @@ export const SearchAppointmentForm = ({
 }: ISearchAppointmentFormProps) => {
     const { t } = useTranslation();
     const { graphqlRequestClient } = useAuth();
+    const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const state = useAppState();
     const dispatch = useAppDispatch();
     const { configs, parameters } = state;
@@ -97,8 +100,13 @@ export const SearchAppointmentForm = ({
             query searchAppointmentForGate(
                 $filters: AppointmentSearchFilters
                 $advancedFilters: [AppointmentAdvancedSearchFilters!]
+                $language: String = "en"
             ) {
-                appointments(filters: $filters, advancedFilters: $advancedFilters) {
+                appointments(
+                    filters: $filters
+                    advancedFilters: $advancedFilters
+                    language: $language
+                ) {
                     results {
                         id
                         name
@@ -159,7 +167,10 @@ export const SearchAppointmentForm = ({
         try {
             let appointment: any = null;
             for (const variables of attempts) {
-                const res = await graphqlRequestClient.request(query, variables);
+                const res = await graphqlRequestClient.request(query, {
+                    ...variables,
+                    language: filteredLanguage
+                });
                 const results: any[] = res?.appointments?.results ?? [];
                 if (results.length > 0) {
                     appointment = { ...results[0], locationName: results[0].location?.name ?? null };

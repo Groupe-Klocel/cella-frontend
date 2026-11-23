@@ -30,6 +30,8 @@ import Head from 'next/head';
 import { Fragment } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../styles/globals.css';
+// the seasonal decorations of the header and the side menu (components/layouts/SeasonProvider)
+import '../styles/seasons.css';
 import HomePage from 'pages';
 import AppLayout from '../components/layouts/AppLayout'; // Import the new AppLayout component
 import { SessionProvider } from 'next-auth/react';

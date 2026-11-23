@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { WrapperForm, WrapperSlide, RadioButtons, ContentSpin } from '@components';
-import { useHandlingUnitContents, LsIsSecured, showError } from '@helpers';
+import { useHandlingUnitContents, LsIsSecured, showError, getLanguageCode } from '@helpers';
 import { Button, Carousel, Col, Divider, Form, Row, Typography } from 'antd';
 import Text from 'antd/lib/typography/Text';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
@@ -90,6 +90,7 @@ export const SelectContentForArticleForm = ({
     const storage = LsIsSecured();
     const storedObject = JSON.parse(storage.get(process) || '[]');
     const router = useRouter();
+    const filteredLanguage = getLanguageCode(router);
     const { graphqlRequestClient } = useAuth();
 
     const [data, setData] = useState<any>();
@@ -204,7 +205,8 @@ export const SelectContentForArticleForm = ({
         filters: filter,
         orderBy: [{ field: 'handlingUnit_location_category', ascending: true }],
         page: 1,
-        itemsPerPage: 100
+        itemsPerPage: 100,
+        language: filteredLanguage
     };
 
     function dataFunction() {
