@@ -42,6 +42,19 @@ export function resolveRangePreset(value: any): any {
     return value;
 }
 
+// display format of a range that takes a time (`item.showTime`)
+const DATE_TIME_RANGE_FORMAT = 'YYYY-MM-DD HH:mm';
+
+// A range picked to the minute covers its whole end minute: the API compares both bounds
+// inclusively against values stored to the microsecond, so an end bound at 10:30:00 would miss a
+// document of 10:30:42. Applied to the form value itself, so that the list, the export and the
+// filter tags all read the same bounds.
+function toMinuteBounds(dates: any): any {
+    if (!Array.isArray(dates)) return dates;
+    const [start, end] = dates;
+    return [start ? start.startOf('minute') : start, end ? end.endOf('minute') : end];
+}
+
 export interface IDraggerRangePickerInputProps {
     item: {
         name: string;
@@ -52,6 +65,7 @@ export interface IDraggerRangePickerInputProps {
         subOptions?: FormOptionType[];
         startDate?: string | null;
         endDate?: string | null;
+        // the range also takes a time (see FieldInfo.filterWithTime)
         showTime?: { format: 'HH:mm' };
         rules?: any[];
     };
@@ -68,6 +82,12 @@ const RangePickerInput: FC<IDraggerRangePickerInputProps> = ({ item, mode }) => 
     moment.locale(router.locale);
 
     const presetKeyRef = useRef<string | null>(null);
+
+    // Until the user sets a time, the first bound starts at 00:00 and the last one ends at 23:59:
+    // picking days only still covers them whole (only the time of these values is used)
+    const showTime = item.showTime
+        ? { defaultOpenValue: [dayjs().startOf('day'), dayjs().endOf('day')], ...item.showTime }
+        : undefined;
 
     const todayLabel = t('common:today');
     const tomorrowLabel = t('common:tomorrow');
@@ -117,7 +137,7 @@ const RangePickerInput: FC<IDraggerRangePickerInputProps> = ({ item, mode }) => 
                 if (preset) {
                     return [preset, preset];
                 }
-                return dates;
+                return showTime ? toMinuteBounds(dates) : dates;
             }}
             getValueProps={(value) => ({ value: resolveRangePreset(value) })}
             initialValue={
@@ -130,8 +150,10 @@ const RangePickerInput: FC<IDraggerRangePickerInputProps> = ({ item, mode }) => 
             }
         >
             <RangePicker
-                showTime={item.showTime}
-                format={item.localeDateTimeFormat}
+                showTime={showTime}
+                format={
+                    item.localeDateTimeFormat ?? (showTime ? DATE_TIME_RANGE_FORMAT : undefined)
+                }
                 locale={router.locale === 'fr-FR' ? fr_FR : en_US}
                 allowEmpty={[true, true]}
                 placeholder={[t('common:start-date'), t('common:end-date')]}

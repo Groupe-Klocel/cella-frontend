@@ -201,10 +201,8 @@ const RoundPages: PageComponent = () => {
             }
         `;
         const variables = {
-            functionName: 'update_rounds_status',
-            event: {
-                input: { rounds: rounds, status: Number(configsParamsCodes.startedStatusCode) }
-            }
+            functionName: 'launch_rounds',
+            event: { input: { rounds: rounds } }
         };
         try {
             const launchRoundsResult = await graphqlRequestClient.request(query, variables);
