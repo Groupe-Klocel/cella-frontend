@@ -27,10 +27,14 @@ import { META_DEFAULTS, getModesFromPermissions } from '@helpers';
 import { useAppState } from 'context/AppContext';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { documentHistoriesRoutes as itemRoutes } from 'modules/DocumentHistories/Static/documentHistoriesRoutes';
-import { Button, Modal, Space } from 'antd';
+import { Button, Divider, Modal, Space } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { ModeEnum } from 'generated/graphql';
-import configs from '../../../common/configs.json';
 import { DocumentHistoryDetailComponent } from 'modules/DocumentHistories/Elements/DocumentHistoryDetailComponent';
+import {
+    DocumentHistoryPreview,
+    useDocumentHistoryDownload
+} from 'modules/DocumentHistories/Elements/DocumentHistoryPreview';
 
 type PageComponent = FC & { layout: typeof MainLayout };
 
@@ -45,6 +49,7 @@ const DocumentHistoryPage: PageComponent = () => {
     const withArchive = router.query.withArchive === 'true';
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    const { download, downloadingKey } = useDocumentHistoryDownload();
 
     // #region to customize information
     const breadCrumb = [
@@ -79,6 +84,18 @@ const DocumentHistoryPage: PageComponent = () => {
         onBackRoute: rootPath,
         actionsComponent: (
             <Space>
+                {data?.binaryDocument ? (
+                    <Button
+                        type="primary"
+                        icon={<DownloadOutlined />}
+                        loading={downloadingKey !== null}
+                        onClick={() => download(data)}
+                    >
+                        {t('actions:download')}
+                    </Button>
+                ) : (
+                    <></>
+                )}
                 {modes.length > 0 && modes.includes(ModeEnum.Update) && model.isEditable ? (
                     <LinkButton
                         title={t('actions:edit')}
@@ -121,6 +138,14 @@ const DocumentHistoryPage: PageComponent = () => {
                 setData={setData}
                 triggerDelete={{ idToDelete, setIdToDelete }}
                 triggerSoftDelete={{ idToDisable, setIdToDisable }}
+                extraDataComponent={
+                    data?.binaryDocument ? (
+                        <>
+                            <Divider />
+                            <DocumentHistoryPreview record={data} height="75vh" />
+                        </>
+                    ) : undefined
+                }
             />
         </>
     );

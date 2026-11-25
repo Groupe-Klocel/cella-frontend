@@ -33,6 +33,7 @@ export * from './configs/env';
 export * from './utils/TranslationFromDB';
 export * from './utils/visitorManagement';
 export * from './utils/customObjectDocuments';
+export * from './utils/documentFiles';
 export * from './utils/loadDirection';
 export * from './utils/appointmentPermissions';
 export * from './utils/appointmentStatuses';
