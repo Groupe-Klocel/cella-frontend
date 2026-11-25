@@ -19,13 +19,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 import {
     DeleteOutlined,
+    DownloadOutlined,
     EditTwoTone,
     EyeTwoTone,
-    PrinterOutlined,
+    FileSearchOutlined,
     LockTwoTone
 } from '@ant-design/icons';
 import { AppHead, ArchiveToggle, LinkButton } from '@components';
-import { getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
+import { detectDocumentKind, getModesFromPermissions, META_DEFAULTS, pathParams } from '@helpers';
 import { Button, Modal, Space } from 'antd';
 import MainLayout from 'components/layouts/MainLayout';
 import { useAppState } from 'context/AppContext';
@@ -35,7 +36,18 @@ import { HeaderData, ListComponent } from 'modules/Crud/ListComponentV2';
 import { useTranslationWithFallback as useTranslation } from '@helpers';
 import { FC, useState } from 'react';
 import { documentHistoriesRoutes as itemRoutes } from 'modules/DocumentHistories/Static/documentHistoriesRoutes';
+import {
+    DocumentHistoryPreviewModal,
+    useDocumentHistoryDownload
+} from 'modules/DocumentHistories/Elements/DocumentHistoryPreview';
 type PageComponent = FC & { layout: typeof MainLayout };
+
+type DocumentHistoryRow = {
+    id: string;
+    binaryDocument: string;
+    documentName: string;
+    documentType: string;
+};
 
 const DocumentHistoryPages: PageComponent = () => {
     const { permissions } = useAppState();
@@ -44,6 +56,9 @@ const DocumentHistoryPages: PageComponent = () => {
     const rootPath = (itemRoutes[itemRoutes.length - 1] as { path: string }).path;
     const [idToDelete, setIdToDelete] = useState<string | undefined>();
     const [idToDisable, setIdToDisable] = useState<string | undefined>();
+    // the document shown in the preview modal (null: closed)
+    const [previewRecord, setPreviewRecord] = useState<DocumentHistoryRow | null>(null);
+    const { download, downloadingKey } = useDocumentHistoryDownload();
 
     // read production + archive; page state only, never saved
     const [withArchive, setWithArchive] = useState<boolean>(false);
@@ -78,76 +93,6 @@ const DocumentHistoryPages: PageComponent = () => {
         };
     };
 
-    async function fetchData(
-        dpmm: string,
-        width: string,
-        height: string,
-        format: string,
-        zpl: string
-    ) {
-        const headers: { [key: string]: string } = {};
-        if (format == 'png') {
-            headers['Accept'] = 'image/png';
-        } else if (format == 'pdf') {
-            headers['Accept'] = 'application/pdf';
-        }
-        headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        const response = await fetch(
-            `https://api.labelary.com/v1/printers/${dpmm}/labels/${width}x${height}`,
-            {
-                method: 'POST',
-                headers: headers,
-                body: zpl
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        if (format == 'png') {
-            return response.blob();
-        } else if (format == 'pdf') {
-            return response.arrayBuffer();
-        }
-    }
-
-    function downloadDocument(base64Data: string, fileName: string, fileType: string) {
-        const byteCharacters = window.atob(base64Data);
-
-        if (fileType === 'zpl') {
-            const outputFormat = 'pdf';
-            fetchData('8dpmm', '4', '6', outputFormat, byteCharacters)
-                .then((data: any) => {
-                    let blobData = data;
-                    if (outputFormat === 'pdf') {
-                        blobData = new Blob([data], { type: 'application/pdf' });
-                    }
-                    const url = URL.createObjectURL(blobData);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = fileName.replace(/\.[^/.]+$/, `.${outputFormat}`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                })
-                .catch((error) => console.error(error));
-        } else {
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: fileType });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    }
-
     return (
         <>
             <AppHead title={headerData.title} />
@@ -162,12 +107,7 @@ const DocumentHistoryPages: PageComponent = () => {
                     {
                         title: 'actions:actions',
                         key: 'actions',
-                        render: (record: {
-                            id: string;
-                            binaryDocument: string;
-                            documentName: string;
-                            documentType: string;
-                        }) => (
+                        render: (record: DocumentHistoryRow) => (
                             <Space>
                                 {modes.length > 0 && modes.includes(ModeEnum.Read) ? (
                                     <LinkButton
@@ -213,20 +153,33 @@ const DocumentHistoryPages: PageComponent = () => {
                                     <></>
                                 )}
                                 <Button
-                                    onClick={() =>
-                                        downloadDocument(
-                                            record.binaryDocument,
-                                            record.documentName,
-                                            record.documentType
+                                    icon={<FileSearchOutlined />}
+                                    title={t('actions:preview')}
+                                    // nothing to show for an empty record or a format the
+                                    // browser cannot display (xlsx …): download it instead
+                                    disabled={
+                                        !['pdf', 'zpl', 'image', 'text'].includes(
+                                            detectDocumentKind(record) ?? ''
                                         )
                                     }
-                                    icon={<PrinterOutlined />}
+                                    onClick={() => setPreviewRecord(record)}
+                                />
+                                <Button
+                                    icon={<DownloadOutlined />}
+                                    title={t('actions:download')}
+                                    disabled={!record.binaryDocument}
+                                    loading={downloadingKey === String(record.id)}
+                                    onClick={() => download(record, String(record.id))}
                                 />
                             </Space>
                         )
                     }
                 ]}
                 routeDetailPage={`${rootPath}/:id`}
+            />
+            <DocumentHistoryPreviewModal
+                record={previewRecord}
+                onClose={() => setPreviewRecord(null)}
             />
         </>
     );
