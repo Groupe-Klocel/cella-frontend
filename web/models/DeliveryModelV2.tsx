@@ -43,8 +43,10 @@ export const DeliveryModelV2: ModelType = {
             isDefaultHiddenList: false,
             isExcludedFromList: true,
             isSortable: false,
-            searchingFormat: null,
-            displayName: 'name',
+            searchingFormat: 'AutoComplete',
+            // the filter label, `d:delivery-list`: picking a delivery in the list - kept apart
+            // from `name`'s free-text filter, which also reads `d:name`
+            displayName: 'delivery-list',
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,

@@ -44,7 +44,9 @@ export const ManualAllocationModelV2: ModelType = {
             isExcludedFromList: true,
             isSortable: false,
             searchingFormat: 'AutoComplete',
-            displayName: 'name',
+            // the filter label, `d:delivery-list`: picking a delivery in the list - kept apart
+            // from `name`'s free-text filter, which also reads `d:name`
+            displayName: 'delivery-list',
             isDetailRequested: true,
             isExcludedFromDetail: true,
             detailGroup: null,
