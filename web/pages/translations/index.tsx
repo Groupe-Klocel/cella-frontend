@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 **/
 
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Modal, Popconfirm, Table, Select, Space } from 'antd';
 import type { InputRef, TableProps, TableColumnType } from 'antd';
@@ -92,6 +92,23 @@ interface DataType {
 
 type ColumnTypes = Exclude<TableProps<DataType>['columns'], undefined>;
 
+type ListOption = { text: string; value: string };
+
+// The wildcard type: a translation valid for every type (wm, mobile, …). It is not a
+// `translation_type` config row, yet it must be filterable and creatable like the others.
+const WILDCARD_TRANSLATION_TYPE = '*';
+
+// Options of the Type / Language / Category lists (column filters and add form): the codes every
+// warehouse needs whatever its configs hold, then the codes of the config scope — deduplicated,
+// in that order. The value is the config's code, which is what a translation row stores.
+const buildListOptions = (
+    baseCodes: readonly string[],
+    configs?: ReadonlyArray<{ code: string }> | null
+): ListOption[] =>
+    Array.from(new Set([...baseCodes, ...(configs ?? []).map((config) => config.code)]))
+        .filter((code) => !!code)
+        .map((code) => ({ text: code, value: code }));
+
 const Translation: PageComponent = () => {
     const [dataSource, setDataSource] = useState<any>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -104,29 +121,21 @@ const Translation: PageComponent = () => {
     const [searchedColumn, setSearchedColumn] = useState('');
     const searchInput = useRef<InputRef>(null);
     const { t } = useTranslation();
-    const [translationTypes, setTranslationTypes] = useState<any>();
-    const [translationLanguages, setTranslationLanguages] = useState<any>();
-    const [translationCategories, setTranslationCategories] = useState<any>();
-
     //To render translation_types from configs
     const translationTypesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
         scope: 'translation_type',
         language: filteredLanguage
     });
 
-    useEffect(() => {
-        if (translationTypesList) {
-            const formattedTranslationTypes: Array<{ text: string; value: string }> = [];
-
-            const cData = translationTypesList?.data?.listConfigsForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    formattedTranslationTypes.push({ text: item.code, value: item.text });
-                });
-                setTranslationTypes(formattedTranslationTypes);
-            }
-        }
-    }, [translationTypesList.data]);
+    // The wildcard '*' first, then the configured types
+    const translationTypes = useMemo(
+        () =>
+            buildListOptions(
+                [WILDCARD_TRANSLATION_TYPE],
+                translationTypesList.data?.listConfigsForAScope
+            ),
+        [translationTypesList.data]
+    );
 
     //To render translation_languages from configs
     const translationLanguagesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -134,19 +143,15 @@ const Translation: PageComponent = () => {
         language: filteredLanguage
     });
 
-    useEffect(() => {
-        if (translationLanguagesList) {
-            const formattedTranslationLanguages: Array<{ text: string; value: string }> = [];
-
-            const cData = translationLanguagesList?.data?.listConfigsForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    formattedTranslationLanguages.push({ text: item.code, value: item.text });
-                });
-                setTranslationLanguages(formattedTranslationLanguages);
-            }
-        }
-    }, [translationLanguagesList.data]);
+    // Every locale the app is built in (i18n.json), then any other configured language
+    const translationLanguages = useMemo(
+        () =>
+            buildListOptions(
+                router.locales ?? [],
+                translationLanguagesList.data?.listConfigsForAScope
+            ),
+        [router.locales, translationLanguagesList.data]
+    );
 
     //To render translation_categories from configs
     const translationCategoriesList = useListConfigsForAScopeQuery(graphqlRequestClient, {
@@ -154,19 +159,10 @@ const Translation: PageComponent = () => {
         language: filteredLanguage
     });
 
-    useEffect(() => {
-        if (translationCategoriesList) {
-            const formattedTranslationCategories: Array<{ text: string; value: string }> = [];
-
-            const cData = translationCategoriesList?.data?.listConfigsForAScope;
-            if (cData) {
-                cData.forEach((item) => {
-                    formattedTranslationCategories.push({ text: item.code, value: item.text });
-                });
-                setTranslationCategories(formattedTranslationCategories);
-            }
-        }
-    }, [translationCategoriesList.data]);
+    const translationCategories = useMemo(
+        () => buildListOptions([], translationCategoriesList.data?.listConfigsForAScope),
+        [translationCategoriesList.data]
+    );
 
     const headerData: HeaderData = {
         title: `${t('common:translations')}`,
@@ -353,7 +349,8 @@ const Translation: PageComponent = () => {
             dataIndex: 'type',
             width: '10%',
             filters: translationTypes,
-            onFilter: (value, record) => record.type === value || record.type === '*'
+            onFilter: (value, record) =>
+                record.type === value || record.type === WILDCARD_TRANSLATION_TYPE
         },
         {
             title: `${t('common:language')}`,
@@ -541,7 +538,11 @@ const Translation: PageComponent = () => {
                                     if (key == 'code') {
                                         acc[key] = `%${filterValue[0]}%`;
                                     } else if (key == 'type') {
-                                        acc[key] = ['*', ...filterValue];
+                                        // '*' rows apply to every type: list them with the
+                                        // selected type(s), once even when '*' is selected
+                                        acc[key] = Array.from(
+                                            new Set([WILDCARD_TRANSLATION_TYPE, ...filterValue])
+                                        );
                                     } else {
                                         acc[key] = filterValue;
                                     }
